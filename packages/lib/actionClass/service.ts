@@ -16,6 +16,7 @@ import { unstable_cache } from "next/cache";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 import { formatDateFields } from "../utils/datetime";
+
 const select = {
   id: true,
   createdAt: true,
@@ -44,9 +45,6 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
             createdAt: "asc",
           },
         });
-        if (!actionClasses) {
-          throw new ResourceNotFoundError("actionClasses", environmentId);
-        }
         return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
       } catch (error) {
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
