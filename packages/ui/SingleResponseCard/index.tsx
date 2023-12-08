@@ -29,6 +29,7 @@ import { FileUploadResponse } from "../FileUploadResponse";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { LoadingWrapper } from "../LoadingWrapper";
+import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -59,6 +60,13 @@ function TooltipRenderer(props: TooltipRendererProps) {
   }
 
   return <>{children}</>;
+}
+
+function DateResponse({ date }: { date?: string }) {
+  if (!date) return null;
+
+  const formattedDateString = formatDateWithOrdinal(new Date(date));
+  return <p className="ph-no-capture my-1 font-semibold text-slate-700">{formattedDateString}</p>;
 }
 
 export default function SingleResponseCard({
@@ -321,6 +329,8 @@ export default function SingleResponseCard({
                           range={question.range}
                         />
                       </div>
+                    ) : question.type === TSurveyQuestionType.Date ? (
+                      <DateResponse date={response.data[question.id] as string} />
                     ) : (
                       <p className="ph-no-capture my-1 font-semibold text-slate-700">
                         {response.data[question.id]}
