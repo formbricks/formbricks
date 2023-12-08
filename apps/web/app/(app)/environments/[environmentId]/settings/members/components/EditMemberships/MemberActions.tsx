@@ -53,7 +53,6 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
       setIsDeleting(false);
       router.refresh();
     } catch (err) {
-      console.log({ err });
       setIsDeleting(false);
       toast.error("Something went wrong");
     }
