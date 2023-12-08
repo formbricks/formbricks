@@ -1,13 +1,14 @@
+import { useCallback, useState } from "preact/hooks";
+
 import { TSurveyCalQuestion } from "@formbricks/types/surveys";
+import { TResponseData } from "@formbricks/types/responses";
+import { TResponseTtc } from "@formbricks/types/responses";
+
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import { TResponseData } from "@formbricks/types/responses";
-
 import CalEmbed from "@/components/general/CalEmbed";
-import { useCallback, useState } from "preact/hooks";
-import ThankYouCard from "@/components/general/ThankYouCard";
-import { TResponseTtc } from "@formbricks/types/responses";
+
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface CalQuestionProps {
@@ -36,32 +37,51 @@ export default function CalQuestion({
   const [startTime, setStartTime] = useState(performance.now());
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
-  const [bookingStatus, setBookingStatus] = useState(value);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const onSuccessfulBooking = useCallback(() => {
-    setBookingStatus("Accepted");
-  }, []);
+    onChange({ [question.id]: "booked" });
+    const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedttc);
+    onSubmit({ [question.id]: "booked" }, updatedttc);
+  }, [onChange, onSubmit, question.id, setTtc, startTime, ttc]);
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onChange({ [question.id]: bookingStatus });
+        if (question.required && !value) {
+          setErrorMessage("Please book an appointment");
+          return;
+        }
+
         const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedttc);
-        onSubmit({ [question.id]: bookingStatus }, updatedttc);
+
+        onChange({ [question.id]: value });
+        onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="w-full">
       <Headline headline={question.headline} questionId={question.id} />
-      {value === "Accepted" ? (
-        <ThankYouCard
-          headline={"Thank you for booking!"}
-          subheader={"To make any changes, please refer to your email to modify your appointment"}
-          isRedirectDisabled={true}
-          redirectUrl={null}
-        />
+
+      <>
+        {errorMessage && <span className="text-red-500">{errorMessage}</span>}
+        <CalEmbed question={question} onSuccessfulBooking={onSuccessfulBooking} />
+      </>
+
+      {/* {value === "booked" ? (
+        <div className="rounded-lg border border-slate-200 p-4">
+          <ThankYouCard
+            headline={"Thank you for booking!"}
+            subheader={"To make any changes, please refer to your email to modify your appointment"}
+            isRedirectDisabled={true}
+            redirectUrl={null}
+          />
+        </div>
       ) : (
-        <CalEmbed question={question} onSuccessfulBooking={onSuccessfulBooking} value={bookingStatus} />
-      )}
+        
+      )} */}
+
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton

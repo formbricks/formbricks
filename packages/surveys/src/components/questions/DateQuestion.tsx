@@ -113,7 +113,6 @@ export default function DateQuestion({
       onSubmit={(e) => {
         e.preventDefault();
         if (question.required && !value) {
-          // alert("Please select a date");
           setErrorMessage("Please select a date.");
           return;
         }

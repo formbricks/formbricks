@@ -1,36 +1,23 @@
 import snippet from "@calcom/embed-snippet";
-import { useEffect, useMemo, useRef } from "preact/hooks";
+import { useEffect, useMemo } from "preact/hooks";
 import { TSurveyCalQuestion } from "@formbricks/types/surveys";
+import { cn } from "@/lib/utils";
+
 interface CalEmbedProps {
   question: TSurveyCalQuestion;
-  value: string | number | string[];
-  onSuccessfulBooking: (data: string) => void;
+  onSuccessfulBooking: () => void;
 }
 
-export enum BookingStatus {
-  ACCEPTED = "Accepted",
-}
-
-export default function CalEmbed({ question, value, onSuccessfulBooking }: CalEmbedProps) {
-  const calEmbedRef = useRef<HTMLDivElement>(null);
-
+export default function CalEmbed({ question, onSuccessfulBooking }: CalEmbedProps) {
   const cal = useMemo(() => {
-    const cal = snippet("https://cal.com/embed.js");
+    const calInline = snippet("https://cal.com/embed.js");
+
     const calCssVars = {
       "cal-border-subtle": "transparent",
       "cal-border-booker": "transparent",
     };
 
-    cal("on", {
-      action: "__iframeReady",
-      callback: () => {
-        const calEl = document.querySelector("cal-inline") as HTMLElement;
-        if (calEl) {
-          calEl.style.overflow = "auto";
-        }
-      },
-    });
-    cal("ui", {
+    calInline("ui", {
       theme: "light",
       cssVarsPerTheme: {
         light: {
@@ -43,32 +30,26 @@ export default function CalEmbed({ question, value, onSuccessfulBooking }: CalEm
         },
       },
     });
-    cal("on", {
+
+    calInline("on", {
       action: "bookingSuccessful",
-      callback: (e) => {
-        onSuccessfulBooking(JSON.stringify(e.detail.data));
+      callback: () => {
+        onSuccessfulBooking();
       },
     });
-    return cal;
+
+    return calInline;
   }, [onSuccessfulBooking]);
 
   useEffect(() => {
+    // remove any existing cal-inline elements
     document.querySelectorAll("cal-inline").forEach((el) => el.remove());
-    cal("inline", { elementOrSelector: "#cal-embed", calLink: question.calUserName });
+    cal("inline", { elementOrSelector: "#fb-cal-embed", calLink: question.calUserName });
   }, [cal, question.calUserName]);
 
   return (
     <div className="relative mt-4">
-      <div id="cal-embed" style={{ height: "42vh", display: "inline" }} ref={calEmbedRef} />
-      <input
-        name={question.id}
-        id={question.id}
-        required={question.required}
-        pattern={Object.values(BookingStatus).join("|")}
-        value={value}
-        className="b-0 l-0 absolute h-[1px] w-full opacity-0"
-        autocomplete="off"
-      />
+      <div id="fb-cal-embed" className={cn("h-96 overflow-auto rounded-lg border border-slate-200")} />
     </div>
   );
 }
