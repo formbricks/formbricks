@@ -49,7 +49,7 @@ export default function DateQuestion({
       script.src =
         process.env.SURVEYS_PACKAGE_MODE === "development"
           ? "http://localhost:3003/question-date.umd.js"
-          : "https://unpkg.com/@formbricks/surveys@^1.0.0/dist/question-date.umd.js";
+          : "https://unpkg.com/@formbricks/surveys@^1.0.1/dist/question-date.umd.js";
 
       script.async = true;
 
