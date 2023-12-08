@@ -1,6 +1,11 @@
 # Installer stage: Building the application
 FROM node:20-alpine AS installer
+
+# Enable corepack and prepare pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Install necessary build tools and compilers
+RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev
 
 # Install Supercronic (cron for containers without super user privileges)
 RUN apk add --no-cache curl \
@@ -8,6 +13,7 @@ RUN apk add --no-cache curl \
        "https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64" \
     && chmod +x /tmp/supercronic
 
+# Set environment variables
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
@@ -17,12 +23,18 @@ ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 ARG ENCRYPTION_KEY
 ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
 
+# Set the working directory
 WORKDIR /app
 
+# Copy the application files
 COPY . .
+
+# Create a .env file
 RUN touch /app/apps/web/.env
 
+# Install the dependencies
 RUN pnpm install
+
 
 # Build the project
 RUN pnpm post-install --filter=web...
