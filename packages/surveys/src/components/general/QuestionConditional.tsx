@@ -8,9 +8,10 @@ import OpenTextQuestion from "@/components/questions/OpenTextQuestion";
 import PictureSelectionQuestion from "@/components/questions/PictureSelectionQuestion";
 import RatingQuestion from "@/components/questions/RatingQuestion";
 import DateQuestion from "@/components/questions/DateQuestion";
+import CalQuestion from "@/components/questions/CalQuestion";
+
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import MeetScheduleQuestion from "@/components/questions/MeetScheduleQuestion";
 import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 interface QuestionConditionalProps {
@@ -165,8 +166,8 @@ export default function QuestionConditional({
       ttc={ttc}
       setTtc={setTtc}
     />
-  ) : question.type === TSurveyQuestionType.MeetSchedule ? (
-    <MeetScheduleQuestion
+  ) : question.type === TSurveyQuestionType.Cal ? (
+    <CalQuestion
       question={question}
       value={value}
       onChange={onChange}

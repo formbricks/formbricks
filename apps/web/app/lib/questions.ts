@@ -155,13 +155,13 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
-    id: QuestionId.MeetSchedule,
-    label: "Meet Schedule",
+    id: QuestionId.Cal,
+    label: "Bookin With Cal.com",
     description: "Allow respondents to schedule a meet",
     icon: CalendarDaysIcon,
     preset: {
-      headline: "Meet Schedule",
-      meetingLink: "johannes",
+      headline: "Schedule a call with me",
+      calUserName: "rick",
     },
   },
 ];

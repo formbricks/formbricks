@@ -1,18 +1,18 @@
 import { timeSince } from "@formbricks/lib/time";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
-import { TSurveyMeetScheduleQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveyCalQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 
-interface MeetScheduleSummaryProps {
-  questionSummary: TSurveyQuestionSummary<TSurveyMeetScheduleQuestion>;
+interface CalSummaryProps {
+  questionSummary: TSurveyQuestionSummary<TSurveyCalQuestion>;
   environmentId: string;
 }
 
-export default function MeetScheduleSummary({ questionSummary, environmentId }: MeetScheduleSummaryProps) {
+export default function CalSummary({ questionSummary, environmentId }: CalSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   return (

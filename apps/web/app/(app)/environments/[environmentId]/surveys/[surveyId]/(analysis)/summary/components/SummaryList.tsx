@@ -6,7 +6,7 @@ import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import type {
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
-  TSurveyMeetScheduleQuestion,
+  TSurveyCalQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionSummary,
 } from "@formbricks/types/surveys";
@@ -31,7 +31,7 @@ import RatingSummary from "./RatingSummary";
 import DateQuestionSummary from "./DateQuestionSummary";
 import FileUploadSummary from "./FileUploadSummary";
 import PictureChoiceSummary from "./PictureChoiceSummary";
-import MeetScheduleSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/MeetScheduleSummary";
+import CalSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
 
 interface SummaryListProps {
   environment: TEnvironment;
@@ -159,11 +159,11 @@ export default function SummaryList({ environment, survey, responses, responsesP
               );
             }
 
-            if (questionSummary.question.type === TSurveyQuestionType.MeetSchedule) {
+            if (questionSummary.question.type === TSurveyQuestionType.Cal) {
               return (
-                <MeetScheduleSummary
+                <CalSummary
                   key={questionSummary.question.id}
-                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyMeetScheduleQuestion>}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCalQuestion>}
                   environmentId={environment.id}
                 />
               );

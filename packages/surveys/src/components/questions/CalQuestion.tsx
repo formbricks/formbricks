@@ -1,4 +1,4 @@
-import { TSurveyMeetScheduleQuestion } from "@formbricks/types/surveys";
+import { TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
@@ -10,8 +10,8 @@ import ThankYouCard from "@/components/general/ThankYouCard";
 import { TResponseTtc } from "@formbricks/types/responses";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
-interface MeetScheduleQuestionProps {
-  question: TSurveyMeetScheduleQuestion;
+interface CalQuestionProps {
+  question: TSurveyCalQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
@@ -22,7 +22,7 @@ interface MeetScheduleQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function MeetScheduleQuestion({
+export default function CalQuestion({
   question,
   value,
   onChange,
@@ -32,7 +32,7 @@ export default function MeetScheduleQuestion({
   isLastQuestion,
   ttc,
   setTtc,
-}: MeetScheduleQuestionProps) {
+}: CalQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 

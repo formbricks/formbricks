@@ -1,8 +1,8 @@
 import snippet from "@calcom/embed-snippet";
 import { useEffect, useMemo, useRef } from "preact/hooks";
-import { TSurveyMeetScheduleQuestion } from "@formbricks/types/surveys";
+import { TSurveyCalQuestion } from "@formbricks/types/surveys";
 interface CalEmbedProps {
-  question: TSurveyMeetScheduleQuestion;
+  question: TSurveyCalQuestion;
   value: string | number | string[];
   onSuccessfulBooking: (data: string) => void;
 }
@@ -54,8 +54,8 @@ export default function CalEmbed({ question, value, onSuccessfulBooking }: CalEm
 
   useEffect(() => {
     document.querySelectorAll("cal-inline").forEach((el) => el.remove());
-    cal("inline", { elementOrSelector: "#cal-embed", calLink: question.meetingLink });
-  }, [cal, question.meetingLink]);
+    cal("inline", { elementOrSelector: "#cal-embed", calLink: question.calUserName });
+  }, [cal, question.calUserName]);
 
   return (
     <div className="relative mt-4">

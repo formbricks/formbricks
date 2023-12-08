@@ -1,4 +1,4 @@
-import { TSurveyMeetScheduleQuestion } from "@formbricks/types/surveys";
+import { TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 
@@ -6,20 +6,20 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { useState } from "react";
 
-interface MeetScheduleQuestionFormProps {
-  question: TSurveyMeetScheduleQuestion;
+interface CalQuestionFormProps {
+  question: TSurveyCalQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
   isInValid: boolean;
 }
 
-export default function MeetScheduleQuestionForm({
+export default function CalQuestionForm({
   question,
   questionIdx,
   updateQuestion,
   isInValid,
-}: MeetScheduleQuestionFormProps): JSX.Element {
+}: CalQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
   return (
@@ -65,15 +65,13 @@ export default function MeetScheduleQuestionForm({
           </Button>
         )}
         <div className="mt-3">
-          <Label htmlFor="meetingLink">
-            cal.com username or username/meetType (naitikkapadia or naitikkapadia/15min)
-          </Label>
+          <Label htmlFor="calUserName">cal.com username or username/meetType</Label>
           <div className="mt-2">
             <Input
-              id="meetingLink"
-              name="meetingLink"
-              value={question.meetingLink}
-              onChange={(e) => updateQuestion(questionIdx, { meetingLink: e.target.value })}
+              id="calUserName"
+              name="calUserName"
+              value={question.calUserName}
+              onChange={(e) => updateQuestion(questionIdx, { calUserName: e.target.value })}
             />
           </div>
         </div>
