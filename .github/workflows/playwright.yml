@@ -1,7 +1,6 @@
 name: E2E Tests
 on:
-  # workflow_call:
-  push:
+  workflow_call:
 jobs:
   build:
     name: Run E2E Tests
@@ -29,10 +28,6 @@ jobs:
 
       - name: Run Playwright tests
         run: pnpm test:e2e
-
-      - name: Setup tmate session
-        if: always()
-        uses: mxschmitt/action-tmate@v3
 
       - uses: actions/upload-artifact@v3
         if: always()
