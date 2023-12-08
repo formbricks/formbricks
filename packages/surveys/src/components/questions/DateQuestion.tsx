@@ -88,8 +88,15 @@ export default function DateQuestion({
       // @ts-expect-error
       const date = e.detail as Date;
 
-      // YYYY-MM-DD
-      const dateString = date.toISOString().split("T")[0];
+      // Get the timezone offset in minutes and convert it to milliseconds
+      const timezoneOffset = date.getTimezoneOffset() * 60000;
+
+      // Adjust the date by subtracting the timezone offset
+      const adjustedDate = new Date(date.getTime() - timezoneOffset);
+
+      // Format the date as YYYY-MM-DD
+      const dateString = adjustedDate.toISOString().split("T")[0];
+
       onChange({ [question.id]: dateString });
     });
   }, [onChange, question.id]);
