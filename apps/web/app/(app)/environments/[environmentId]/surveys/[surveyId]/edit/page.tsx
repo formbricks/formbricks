@@ -2,7 +2,7 @@ export const revalidate = REVALIDATION_INTERVAL;
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { REVALIDATION_INTERVAL, colours } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -58,16 +58,15 @@ export default async function SurveysEditPage({ params }) {
   }
 
   return (
-    <>
-      <SurveyEditor
-        survey={survey}
-        product={product}
-        environment={environment}
-        actionClasses={actionClasses}
-        attributeClasses={attributeClasses}
-        responseCount={responseCount}
-        membershipRole={currentUserMembership?.role}
-      />
-    </>
+    <SurveyEditor
+      survey={survey}
+      product={product}
+      environment={environment}
+      actionClasses={actionClasses}
+      attributeClasses={attributeClasses}
+      responseCount={responseCount}
+      membershipRole={currentUserMembership?.role}
+      colours={colours}
+    />
   );
 }

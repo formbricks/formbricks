@@ -2,13 +2,13 @@ import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 import {
   ArrowUpTrayIcon,
   ChatBubbleBottomCenterTextIcon,
-  CheckIcon,
   CursorArrowRippleIcon,
   ListBulletIcon,
   PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
+  CheckIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
@@ -132,6 +132,16 @@ export const questionTypes: TSurveyQuestionType[] = [
       headline: "Terms and Conditions",
       label: "I agree to the terms and conditions",
       dismissButtonLabel: "Skip",
+    },
+  },
+  {
+    id: QuestionId.Date,
+    label: "Date",
+    description: "Ask your users to select a date",
+    icon: CalendarDaysIcon,
+    preset: {
+      headline: "When is your birthday?",
+      format: "M-d-y",
     },
   },
   {

@@ -19,6 +19,7 @@ export enum TSurveyQuestionType {
   Consent = "consent",
   PictureSelection = "pictureSelection",
   MeetSchedule = "meetSchedule",
+  Date = "date",
 }
 
 export const ZSurveyWelcomeCard = z.object({
@@ -28,6 +29,7 @@ export const ZSurveyWelcomeCard = z.object({
   fileUrl: z.string().optional(),
   buttonLabel: z.string().optional(),
   timeToFinish: z.boolean().default(true),
+  showResponseCount: z.boolean().default(false),
 });
 
 export const ZSurveyHiddenFields = z.object({
@@ -44,6 +46,24 @@ export const ZSurveyProductOverwrites = z.object({
 });
 
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
+
+export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
+
+export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
+
+export const ZSurveyStylingBackground = z.object({
+  bg: z.string().nullish(),
+  bgType: z.enum(["animation", "color", "image"]).nullish(),
+  brightness: z.number().nullish(),
+});
+
+export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
+
+export const ZSurveyStyling = z.object({
+  background: ZSurveyStylingBackground.nullish(),
+});
+
+export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;
 
 export const ZSurveyClosedMessage = z
   .object({
@@ -314,6 +334,14 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
+export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.Date),
+  html: z.string().optional(),
+  format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
+});
+
+export type TSurveyDateQuestion = z.infer<typeof ZSurveyDateQuestion>;
+
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
 export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
@@ -340,6 +368,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
   ZSurveyPictureSelectionQuestion,
+  ZSurveyDateQuestion,
   ZSurveyFileUploadQuestion,
   ZSurveyMeetScheduleQuestion,
 ]);
@@ -392,6 +421,7 @@ export const ZSurvey = z.object({
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
   productOverwrites: ZSurveyProductOverwrites.nullable(),
+  styling: ZSurveyStyling.nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
@@ -438,6 +468,7 @@ export const ZSurveyTSurveyQuestionType = z.union([
   z.literal("consent"),
   z.literal("pictureSelection"),
   z.literal("meetSchedule"),
+  z.literal("date"),
 ]);
 
 export type TSurveyTSurveyQuestionType = z.infer<typeof ZSurveyTSurveyQuestionType>;
