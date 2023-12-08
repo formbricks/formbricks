@@ -31,6 +31,7 @@ jobs:
         run: pnpm test:e2e
 
       - name: Setup tmate session
+        if: always()
         uses: mxschmitt/action-tmate@v3
 
       - uses: actions/upload-artifact@v3
