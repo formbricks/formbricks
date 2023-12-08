@@ -88,7 +88,7 @@ export default function SurveyMenuBar({
       setDeleteDialogOpen(false);
       router.back();
     } catch (error) {
-      console.log("An error occurred deleting the survey");
+      toast.error("An error occurred deleting the survey");
     }
   };
 
