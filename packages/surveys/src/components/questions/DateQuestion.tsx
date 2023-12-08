@@ -88,7 +88,9 @@ export default function DateQuestion({
       // @ts-expect-error
       const date = e.detail as Date;
 
-      onChange({ [question.id]: date.toDateString() });
+      // YYYY-MM-DD
+      const dateString = date.toISOString().split("T")[0];
+      onChange({ [question.id]: dateString });
     });
   }, [onChange, question.id]);
 

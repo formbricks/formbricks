@@ -66,7 +66,6 @@ function DateResponse({ date }: { date?: string }) {
   if (!date) return null;
 
   const formattedDateString = formatDateWithOrdinal(new Date(date));
-
   return <p className="ph-no-capture my-1 font-semibold text-slate-700">{formattedDateString}</p>;
 }
 
@@ -330,13 +329,13 @@ export default function SingleResponseCard({
                           range={question.range}
                         />
                       </div>
+                    ) : question.type === TSurveyQuestionType.Date ? (
+                      <DateResponse date={response.data[question.id] as string} />
                     ) : (
                       <p className="ph-no-capture my-1 font-semibold text-slate-700">
                         {response.data[question.id]}
                       </p>
                     )
-                  ) : question.type === TSurveyQuestionType.Date ? (
-                    <DateResponse date={response.data[question.id] as string} />
                   ) : question.type === TSurveyQuestionType.PictureSelection ? (
                     <PictureSelectionResponse
                       choices={question.choices}
