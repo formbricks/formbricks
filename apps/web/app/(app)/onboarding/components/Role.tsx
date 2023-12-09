@@ -54,7 +54,6 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, sessio
         } catch (e) {
           setIsUpdating(false);
           toast.error("An error occured saving your settings");
-          console.error(e);
         }
         if (formbricksEnabled && env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID) {
           const res = await createResponse(env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID, session.user.id, {
