@@ -60,7 +60,6 @@ const EditProductName: React.FC<EditProductNameProps> = ({
         router.refresh();
       }
     } catch (err) {
-      console.error(err);
       toast.error(`Error: Unable to save product information`);
     }
   };
