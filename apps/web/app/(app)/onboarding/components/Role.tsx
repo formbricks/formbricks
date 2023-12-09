@@ -63,7 +63,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, sessio
             const response = res.data;
             setFormbricksResponseId(response.id);
           } else {
-            console.error("Error sending response to Formbricks", res.error);
+            toast.error("Error sending response to Formbricks", res.error);
           }
         }
         next();
