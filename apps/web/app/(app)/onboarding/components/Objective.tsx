@@ -58,7 +58,6 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
           setIsProfileUpdating(false);
         } catch (e) {
           setIsProfileUpdating(false);
-          console.error(e);
           toast.error("An error occured saving your settings");
         }
         if (formbricksEnabled && env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID && formbricksResponseId) {
