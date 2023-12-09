@@ -69,7 +69,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
             true
           );
           if (!res.ok) {
-            console.error("Error updating response", res.error);
+            toast.error("Error updating response", res.error);
           }
         }
         next();
