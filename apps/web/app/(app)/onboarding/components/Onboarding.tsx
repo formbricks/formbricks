@@ -63,7 +63,6 @@ export default function Onboarding({ session, environmentId, profile, product }:
     } catch (e) {
       toast.error("An error occured saving your settings.");
       setIsLoading(false);
-      console.error(e);
     }
   };
 
