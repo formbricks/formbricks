@@ -252,7 +252,6 @@ export default function SurveyMenuBar({
         router.refresh();
       }
     } catch (e) {
-      console.error(e);
       setIsSurveySaving(false);
       toast.error(`Error saving changes`);
       return;
