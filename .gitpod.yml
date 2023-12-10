@@ -2,7 +2,7 @@ tasks:
   - name: demo
     init: |
       gp sync-await init-install && 
-      bash .gitpod/setup-demo.bash
+      bash ./scripts/setup-demo.bash
     command: |
       cd apps/demo && 
       cp .env.example .env &&
@@ -16,7 +16,7 @@ tasks:
   - name: Init Formbricks
     init: |
       cp .env.example .env &&
-      bash .gitpod/init.bash && 
+      bash ./scripts/init.bash && 
       turbo --filter "@formbricks/js" build && 
       gp sync-done init-install
     command: |
@@ -27,7 +27,7 @@ tasks:
   - name: web
     init: |
       gp sync-await init-install && 
-      bash .gitpod/setup-web.bash &&
+      bash ./scripts/setup-web.bash &&
       turbo --filter "@formbricks/database" db:down
     command: |
       gp sync-await init &&
