@@ -270,14 +270,15 @@ export const createResponseLegacy = async (responseInput: TResponseLegacyInput):
     if (responseInput.personId) {
       person = await getPerson(responseInput.personId);
     }
-    const ttcTemp = responseInput.ttc;
+    const ttcTemp = responseInput.ttc ?? {};
     const questionId = Object.keys(ttcTemp)[0];
-    const ttc = responseInput.finished
-      ? {
-          ...ttcTemp,
-          _total: ttcTemp[questionId], // Add _total property with the same value
-        }
-      : ttcTemp;
+    const ttc =
+      responseInput.finished && responseInput.ttc
+        ? {
+            ...ttcTemp,
+            _total: ttcTemp[questionId], // Add _total property with the same value
+          }
+        : ttcTemp;
     const responsePrisma = await prisma.response.create({
       data: {
         survey: {
@@ -512,7 +513,11 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
-    const ttc = responseInput.finished ? calculateTtcTotal(responseInput.ttc) : responseInput.ttc;
+    const ttc = responseInput.ttc
+      ? responseInput.finished
+        ? calculateTtcTotal(responseInput.ttc)
+        : responseInput.ttc
+      : {};
 
     const responsePrisma = await prisma.response.update({
       where: {

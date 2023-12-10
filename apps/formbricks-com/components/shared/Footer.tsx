@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { FaDiscord, FaGithub, FaXTwitter } from "react-icons/fa6";
 import { FooterLogo } from "./Logo";
-import { FaGithub, FaXTwitter, FaDiscord } from "react-icons/fa6";
 
 const navigation = {
   other: [
@@ -33,7 +33,7 @@ export default function Footer() {
 
   return (
     <footer
-      className="mt-32 bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-900 dark:to-slate-800"
+      className="bg-gradient-to-b from-slate-50 to-slate-200 pt-32 dark:from-slate-900 dark:to-slate-800"
       aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
         Footer
