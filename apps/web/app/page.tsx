@@ -4,6 +4,7 @@ import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { ONBOARDING_DISABLED } from "@formbricks/lib/constants";
 
 export default async function Home() {
   const session: Session | null = await getServerSession(authOptions);
@@ -12,7 +13,7 @@ export default async function Home() {
     redirect("/auth/login");
   }
 
-  if (session?.user && !session?.user?.onboardingCompleted) {
+  if (!ONBOARDING_DISABLED && session?.user && !session?.user?.onboardingCompleted) {
     return redirect(`/onboarding`);
   }
 
