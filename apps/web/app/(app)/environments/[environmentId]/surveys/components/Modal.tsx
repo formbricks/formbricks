@@ -20,11 +20,14 @@ export default function Modal({
   const modalRef = useRef<HTMLDivElement | null>(null);
 
   const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor) return {};
+    if (!highlightBorderColor)
+      return {
+        overflow: "visible",
+      };
 
     return {
       border: `2px solid ${highlightBorderColor}`,
-      overflow: "hidden",
+      overflow: "visible",
     };
   }, [highlightBorderColor]);
 
@@ -51,12 +54,12 @@ export default function Modal({
       : "";
 
   return (
-    <div aria-live="assertive" className="relative h-full w-full overflow-hidden">
+    <div aria-live="assertive" className="relative h-full w-full overflow-visible">
       <div
         ref={modalRef}
         style={highlightBorderColorStyle}
         className={cn(
-          "pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm overflow-y-auto rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out ",
+          "pointer-events-auto absolute h-auto max-h-[90%] w-full max-w-sm overflow-y-auto rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out ",
           previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full ",
           slidingAnimationClass
         )}>

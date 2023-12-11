@@ -8,16 +8,19 @@ import {
   TProfile,
   TProfileCreateInput,
   TProfileUpdateInput,
+  ZProfile,
   ZProfileUpdateInput,
 } from "@formbricks/types/profile";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { profileCache } from "./cache";
-import { updateMembership } from "../membership/service";
+import { formatProfileDateFields } from "./util";
 
 const responseSelection = {
   id: true,
@@ -34,8 +37,8 @@ const responseSelection = {
 };
 
 // function to retrive basic information about a user's profile
-export const getProfile = async (id: string): Promise<TProfile | null> =>
-  unstable_cache(
+export const getProfile = async (id: string): Promise<TProfile | null> => {
+  const profile = await unstable_cache(
     async () => {
       validateInputs([id, ZId]);
 
@@ -50,7 +53,6 @@ export const getProfile = async (id: string): Promise<TProfile | null> =>
         if (!profile) {
           return null;
         }
-
         return profile;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -67,8 +69,16 @@ export const getProfile = async (id: string): Promise<TProfile | null> =>
     }
   )();
 
-export const getProfileByEmail = async (email: string): Promise<TProfile | null> =>
-  unstable_cache(
+  return profile
+    ? {
+        ...profile,
+        ...formatDateFields(profile, ZProfile),
+      }
+    : null;
+};
+
+export const getProfileByEmail = async (email: string): Promise<TProfile | null> => {
+  const profile = await unstable_cache(
     async () => {
       validateInputs([email, z.string().email()]);
 
@@ -79,10 +89,6 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
           },
           select: responseSelection,
         });
-
-        if (!profile) {
-          return null;
-        }
 
         return profile;
       } catch (error) {
@@ -99,6 +105,14 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
+  return profile
+    ? {
+        ...profile,
+        ...formatProfileDateFields(profile),
+      }
+    : null;
+};
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
   memberships.filter((membership) => membership.role === "admin");

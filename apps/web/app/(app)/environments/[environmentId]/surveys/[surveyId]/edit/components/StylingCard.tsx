@@ -38,6 +38,8 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
       productOverwrites: {
         ...localSurvey.productOverwrites,
         placement: !!placement ? null : "bottomRight",
+        clickOutsideClose: false,
+        darkOverlay: false,
       },
     });
   };

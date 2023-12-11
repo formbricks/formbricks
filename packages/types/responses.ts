@@ -22,7 +22,7 @@ export const ZResponseNoteUser = z.object({
 
 export type TResponseNoteUser = z.infer<typeof ZResponseNoteUser>;
 
-const ZResponseNote = z.object({
+export const ZResponseNote = z.object({
   updatedAt: z.date(),
   createdAt: z.date(),
   id: z.string(),
@@ -65,12 +65,6 @@ export const ZResponse = z.object({
 });
 
 export type TResponse = z.infer<typeof ZResponse>;
-
-export type TResponseDates = {
-  createdAt: TResponse["createdAt"];
-  updatedAt: TResponse["updatedAt"];
-  notes: TResponse["notes"];
-};
 
 export const ZResponseInput = z.object({
   environmentId: z.string().cuid2(),

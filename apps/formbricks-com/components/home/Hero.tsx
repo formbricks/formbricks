@@ -27,7 +27,7 @@ export const Hero: React.FC = ({}) => {
           <ChevronRightIcon className="mb-1 ml-1 inline h-4 w-4 text-slate-300" />
         </a>
         <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
-          <span className="xl:inline">Prviacy-first Experience Management</span>
+          <span className="xl:inline">Privacy-first Experience Management</span>
         </h1>
 
         <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 dark:text-slate-400 sm:text-lg md:mt-5 md:text-xl">

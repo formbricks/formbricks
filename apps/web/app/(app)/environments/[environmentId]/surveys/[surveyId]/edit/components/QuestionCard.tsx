@@ -20,6 +20,7 @@ import {
   StarIcon,
   ArrowUpTrayIcon,
   PhotoIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
@@ -33,6 +34,7 @@ import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
+import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
 import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 import { TProduct } from "@formbricks/types/product";
 
@@ -146,6 +148,8 @@ export default function QuestionCard({
                       <CheckIcon />
                     ) : question.type === TSurveyQuestionType.PictureSelection ? (
                       <PhotoIcon />
+                    ) : question.type === TSurveyQuestionType.Date ? (
+                      <CalendarDaysIcon />
                     ) : null}
                   </div>
                   <div>
@@ -232,6 +236,15 @@ export default function QuestionCard({
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === TSurveyQuestionType.Date ? (
+                <DateQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
