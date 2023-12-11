@@ -276,7 +276,9 @@ export default function LogicEditor({
                       <SelectContent>
                         {logicConditions[logic.condition].values?.map((value) => (
                           <SelectItem key={value} value={value} title={value}>
-                            {value}
+                            <div className="w-fit">
+                              <p>{value}</p>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
