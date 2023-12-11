@@ -1,107 +1,20 @@
 import { prismaMock } from "@formbricks/database/src/jestClient";
-import { Prisma } from "@prisma/client";
-import { randUuid, randBrowser, randUrl, randBoolean, randText, randFullName } from "@ngneat/falso";
-import { randomCuid2 } from "../utils/common";
-import { selectPerson, transformPrismaPerson } from "../person/service";
+import { selectPerson, transformPrismaPerson } from "../../person/service";
 import { TTag } from "@formbricks/types/tags";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
-
-import { responseNoteSelect } from "../responseNote/service";
-import { createResponse, responseSelection } from "./service";
-
-type ResponseMock = Prisma.ResponseGetPayload<{
-  include: typeof responseSelection;
-}>;
-type ResponseNoteMock = Prisma.ResponseNoteGetPayload<{
-  include: typeof responseNoteSelect;
-}>;
-
-type ResponsePersonMock = Prisma.PersonGetPayload<{
-  select: typeof responseSelection.person.select;
-}>;
-
-jest.mock("server-only", () => jest.fn());
-
-const mockEnvironmentId = randomCuid2();
-const mockPersonId = randomCuid2();
-const mockResponseId = randomCuid2();
-const mockSingleUseId = randomCuid2();
-const mockSurveyId = randomCuid2();
-const mockUserId = randomCuid2();
-
-const mockMeta = {
-  source: randUrl(),
-  url: randUrl(),
-  userAgent: {
-    browser: randBrowser(),
-    os: randText(),
-    device: randText(),
-  },
-};
-
-const mockResponseNote: ResponseNoteMock = {
-  id: "clnndevho0mqrqp0fm2ozul8p",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  text: randText(),
-  isEdited: randBoolean(),
-  isResolved: randBoolean(),
-  responseId: mockResponseId,
-  userId: mockUserId,
-  response: {
-    id: mockResponseId,
-    surveyId: mockSurveyId,
-  },
-  user: {
-    id: mockPersonId,
-    name: randFullName(),
-  },
-};
-
-const mockPerson: ResponsePersonMock = {
-  id: mockPersonId,
-  userId: mockUserId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  environmentId: mockEnvironmentId,
-  attributes: [
-    {
-      value: "attribute1",
-      attributeClass: {
-        name: "attributeClass1",
-      },
-    },
-  ],
-};
-
-const mockTags = [
-  {
-    tag: {
-      id: randUuid(),
-      name: "tag1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
-    },
-  },
-];
-
-const mockResponse: ResponseMock = {
-  id: mockResponseId,
-  surveyId: mockSurveyId,
-  singleUseId: mockSingleUseId,
-  data: {},
-  person: null,
-  personAttributes: {},
-  createdAt: new Date(),
-  finished: randBoolean(),
-  meta: mockMeta,
-  notes: [mockResponseNote],
-  tags: mockTags,
-  personId: mockPersonId,
-  updatedAt: new Date(),
-  ttc: {},
-};
+import {
+  mockEnvironmentId,
+  mockMeta,
+  mockPerson,
+  mockResponse,
+  mockResponseNote,
+  mockSingleUseId,
+  mockSurveyId,
+  mockTags,
+  mockUserId,
+} from "./__mocks__/data.mock";
+import { createResponse } from "../service";
+import { randBoolean } from "./constants";
 
 const expectedResponseWithoutPerson: TResponse = {
   ...mockResponse,
@@ -130,9 +43,6 @@ const mockResponseInputWithUserId: TResponseInput = {
 };
 
 beforeEach(() => {
-  prismaMock.response.findMany.mockResolvedValue([mockResponse]);
-  prismaMock.response.findUnique.mockResolvedValue(mockResponse);
-
   // @ts-expect-error
   prismaMock.response.create.mockImplementation(async (args) => {
     if (args.data.person && args.data.person.connect) {
@@ -147,11 +57,6 @@ beforeEach(() => {
 
   // mocking the person findFirst call as it is used in the transformPrismaPerson function
   prismaMock.person.findFirst.mockResolvedValue(mockPerson);
-
-  prismaMock.response.update.mockResolvedValue(mockResponse);
-  prismaMock.response.delete.mockResolvedValue(mockResponse);
-  prismaMock.response.count.mockResolvedValue(1);
-
   prismaMock.responseNote.findMany.mockResolvedValue([mockResponseNote]);
 });
 

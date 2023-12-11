@@ -25,15 +25,17 @@
     "generate": "turbo run generate",
     "lint": "turbo run lint",
     "release": "turbo run build --filter=js... && turbo run build --filter=n8n-node... && changeset publish",
-    "test": "turbo run test",
+    "test:unit": "jest --watch",
     "prepare": "husky install"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
     "eslint-config-formbricks": "workspace:*",
     "husky": "^8.0.3",
+    "jest": "^29.7.0",
     "lint-staged": "^15.1.0",
     "rimraf": "^5.0.5",
+    "ts-jest": "^29.1.1",
     "tsx": "^4.2.0",
     "turbo": "^1.10.16"
   },

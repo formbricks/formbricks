@@ -3,7 +3,7 @@ module.exports = {
   collectCoverage: true,
   // on node 14.x coverage provider v8 offers good speed and more or less good report
   coverageProvider: "v8",
-  testMatch: ["**/*.test.ts"],
+  testMatch: ["<rootDir>/packages/**/*.test.ts"],
   collectCoverageFrom: [
     "**/*.{js,jsx,ts,tsx}",
     "!**/*.d.ts",
@@ -12,17 +12,9 @@ module.exports = {
     "!<rootDir>/.next/**",
     "!<rootDir>/*.config.js",
     "!<rootDir>/coverage/**",
-    "!<rootDir>/jest/**",
   ],
+  projects: ["<rootDir>/packages/*"],
   testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/.next/"],
-  setupFilesAfterEnv: ["<rootDir>/jest/jestSetup.ts", "<rootDir>/../database/src/jestClient.ts"],
-  transform: {
-    // Use babel-jest to transpile tests with the next/babel preset
-    // https://jestjs.io/docs/configuration#transform-objectstring-pathtotransformer--pathtotransformer-object
-    "^.+\\.(ts|tsx)$": "ts-jest",
-    "^.+\\.(js|jsx)$": ["babel-jest", { presets: ["next/babel"] }],
-    "^.+\\.mjs$": "babel-jest",
-  },
   transformIgnorePatterns: [
     "/node_modules/",
     "^.+\\.module\\.(css|sass|scss)$",
