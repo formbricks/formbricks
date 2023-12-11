@@ -333,9 +333,7 @@ export default function LogicEditor({
                       idx !== questionIdx && (
                         <SelectItem key={question.id} value={question.id} title={question.headline}>
                           <div className="w-40">
-                            <p className="truncate">
-                              {idx + 1} - {question.headline}
-                            </p>
+                            <p className="truncate">{question.headline}</p>
                           </div>
                         </SelectItem>
                       )
