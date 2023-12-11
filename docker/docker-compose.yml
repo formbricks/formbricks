@@ -23,6 +23,10 @@ x-environment: &environment
     # PostgreSQL password
     POSTGRES_PASSWORD: postgres
 
+    # Enterprise License Key
+    # Required to access Enterprise-only features
+    # ENTERPRISE_LICENSE_KEY:
+
     # Email Configuration
     # MAIL_FROM:
     # SMTP_HOST:
