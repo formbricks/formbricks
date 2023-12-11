@@ -4,8 +4,9 @@ import "@formbricks/lib/env.mjs";
 
 /** @type {import('next').NextConfig} */
 
-function removeHttps(url) {
-  return url.replace('https://', '');
+function getHostname(url) {
+  const urlObj = new URL(url);
+  return urlObj.hostname;
 }
 
 const nextConfig = {
@@ -36,10 +37,6 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
-      },
-      {
-        protocol: "https",
-        hostname: `${removeHttps(process.env.WEBAPP_URL)}`,
       },
     ],
   },
@@ -115,6 +112,10 @@ if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
     allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
   };
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: getHostname(process.env.WEBAPP_URL),
+  });
 }
 
 const sentryOptions = {

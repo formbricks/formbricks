@@ -24,18 +24,15 @@ x-encryption-key: &encryption_key 1b3d888592454d23b520040950654669
 
 x-mail-from: &mail_from
 x-smtp-host: &smtp_host
-x-smtp-port: &smtp_port # Enable SMTP_SECURE_ENABLED for TLS (port 465)
+x-smtp-port: &smtp_port
+x-smtp-secure-enabled: &smtp_secure_enabled # Enable SMTP_SECURE_ENABLED for TLS (port 465)
 
 
-x-smtp-secure-enabled: &smtp_secure_enabled
 x-smtp-user: &smtp_user
 x-smtp-password: &smtp_password
-  # Set the below value to your public-facing URL, e.g., https://example.com
-
-  # Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
 
 x-short-url-base:
-  &short_url_base # Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
+  &short_url_base # Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
 
 
 x-email-verification-disabled: &email_verification_disabled 1
@@ -52,23 +49,21 @@ x-invite-disabled: &invite_disabled 0
 # Set the below values to display privacy policy, imprint and terms of service links in the footer of signup & public pages.
 x-privacy-url: &privacy_url
 x-terms-url: &terms_url
-x-imprint-url: &imprint_url # Configure Github Login
+x-imprint-url: &imprint_url
 
-
-x-github-auth-enabled: &github_auth_enabled 0
+x-github-auth-enabled: &github_auth_enabled 0 # Configure Github Login
 x-github-id: &github_id
-x-github-secret: &github_secret # Configure Google Login
+x-github-secret: &github_secret
 
-x-google-auth-enabled: &google_auth_enabled 0
+x-google-auth-enabled: &google_auth_enabled 0 # Configure Google Login
 x-google-client-id: &google_client_id
-x-google-client-secret: &google_client_secret # Disable Sentry warning
+x-google-client-secret: &google_client_secret
 
-x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Enable Sentry Error Tracking
+x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Disable Sentry warning
 
-x-next-public-sentry-dsn: &next_public_sentry_dsn # Cron Secret
+x-next-public-sentry-dsn: &next_public_sentry_dsn # Enable Sentry Error Tracking
 
-# Set this to a random string to secure your cron endpoints
-x-cron-secret: &cron_secret YOUR_CRON_SECRET
+x-cron-secret: &cron_secret YOUR_CRON_SECRET # Set this to a random string to secure your cron endpoints
 
 services:
   postgres:
