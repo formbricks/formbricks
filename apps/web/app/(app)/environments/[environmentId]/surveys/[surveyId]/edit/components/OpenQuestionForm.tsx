@@ -61,6 +61,7 @@ export default function OpenQuestionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
         isInValid={isInValid}
         question={question}

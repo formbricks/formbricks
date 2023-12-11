@@ -33,6 +33,7 @@ export default function PictureSelectionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
         isInValid={isInValid}
         question={question}

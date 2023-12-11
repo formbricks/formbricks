@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
-
+import { TSurveyQuestion } from "@formbricks/types/surveys";
 export function Survey({
   survey,
   isBrandingEnabled,
@@ -107,6 +107,28 @@ export function Survey({
     onActiveQuestionChange(nextQuestionId);
   };
 
+  const parseRecallInformation = (question: TSurveyQuestion) => {
+    let que = { ...question };
+
+    // Regular expression to match 'recall:<id>/fallback:<value>'
+    const recallFallbackRegex = /recall:([a-zA-Z0-9]+)\/fallback:([a-zA-Z0-9\s]+)/;
+    const match = que.headline.match(recallFallbackRegex);
+    console.log(match);
+    if (match) {
+      const recallQuestionId = match[1];
+      const fallbackValue = match[2];
+      const recallData = responseData[recallQuestionId];
+
+      // Replace the recall identifier with either the recall data or the fallback value
+      const newHeadline = que.headline.replace(
+        `recall:${recallQuestionId}/fallback:${fallbackValue}`,
+        recallData !== undefined ? recallData : fallbackValue
+      );
+      que.headline = newHeadline;
+    }
+    return que;
+  };
+
   const onBack = (): void => {
     let prevQuestionId;
     // use history if available
@@ -151,7 +173,7 @@ export function Survey({
         currQues && (
           <QuestionConditional
             surveyId={survey.id}
-            question={currQues}
+            question={parseRecallInformation(currQues)}
             value={responseData[currQues.id]}
             onChange={onChange}
             onSubmit={onSubmit}

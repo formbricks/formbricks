@@ -29,6 +29,7 @@ export default function ConsentQuestionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
         isInValid={isInValid}
         question={question}

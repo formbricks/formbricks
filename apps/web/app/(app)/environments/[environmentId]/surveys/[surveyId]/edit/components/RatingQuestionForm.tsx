@@ -31,6 +31,7 @@ export default function RatingQuestionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
         isInValid={isInValid}
         question={question}

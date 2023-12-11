@@ -196,7 +196,7 @@ export default function QuestionsView({
         <div className="mb-5 grid grid-cols-1 gap-5 ">
           <StrictModeDroppable droppableId="questionsList">
             {(provided) => (
-              <div className="grid gap-5" ref={provided.innerRef} {...provided.droppableProps}>
+              <div className="grid w-full gap-5" ref={provided.innerRef} {...provided.droppableProps}>
                 {localSurvey.questions.map((question, questionIdx) => (
                   // display a question form
                   <QuestionCard

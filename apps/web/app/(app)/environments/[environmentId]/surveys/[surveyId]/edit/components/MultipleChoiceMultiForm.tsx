@@ -164,6 +164,7 @@ export default function MultipleChoiceMultiForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
         isInValid={isInValid}
         ref={questionRef}
