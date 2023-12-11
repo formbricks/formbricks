@@ -69,7 +69,7 @@ export default function TemplateContainerWithPreview({
         </div>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
           {activeTemplate && (
-            <div className="my-6 flex h-full w-full flex-col items-center justify-center">
+            <div className="my-6 flex h-5/6 w-full flex-col items-center justify-center">
               <p className="pb-2 text-center text-sm font-normal text-slate-400">Preview</p>
               <PreviewSurvey
                 survey={{ ...minimalSurvey, ...activeTemplate.preset }}
