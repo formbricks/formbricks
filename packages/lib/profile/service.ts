@@ -8,6 +8,7 @@ import {
   TProfile,
   TProfileCreateInput,
   TProfileUpdateInput,
+  ZProfile,
   ZProfileUpdateInput,
 } from "@formbricks/types/profile";
 import { Prisma } from "@prisma/client";
@@ -16,6 +17,7 @@ import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { profileCache } from "./cache";
 import { formatProfileDateFields } from "./util";
@@ -51,7 +53,6 @@ export const getProfile = async (id: string): Promise<TProfile | null> => {
         if (!profile) {
           return null;
         }
-
         return profile;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -68,14 +69,12 @@ export const getProfile = async (id: string): Promise<TProfile | null> => {
     }
   )();
 
-  if (!profile) {
-    return null;
-  }
-
-  return {
-    ...profile,
-    ...formatProfileDateFields(profile),
-  } as TProfile;
+  return profile
+    ? {
+        ...profile,
+        ...formatDateFields(profile, ZProfile),
+      }
+    : null;
 };
 
 export const getProfileByEmail = async (email: string): Promise<TProfile | null> => {
@@ -90,10 +89,6 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
           },
           select: responseSelection,
         });
-
-        if (!profile) {
-          return null;
-        }
 
         return profile;
       } catch (error) {
@@ -111,14 +106,12 @@ export const getProfileByEmail = async (email: string): Promise<TProfile | null>
     }
   )();
 
-  if (!profile) {
-    return null;
-  }
-
-  return {
-    ...profile,
-    ...formatProfileDateFields(profile),
-  } as TProfile;
+  return profile
+    ? {
+        ...profile,
+        ...formatProfileDateFields(profile),
+      }
+    : null;
 };
 
 const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>

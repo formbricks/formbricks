@@ -2,7 +2,12 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/actionClasses";
+import {
+  TActionClass,
+  TActionClassInput,
+  ZActionClass,
+  ZActionClassInput,
+} from "@formbricks/types/actionClasses";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -11,6 +16,7 @@ import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
+import { formatDateFields } from "../utils/datetime";
 
 const select = {
   id: true,
@@ -23,8 +29,8 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = (environmentId: string, page?: number): Promise<TActionClass[]> =>
-  unstable_cache(
+export const getActionClasses = async (environmentId: string, page?: number): Promise<TActionClass[]> => {
+  const actionClasses = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -40,8 +46,7 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
             createdAt: "asc",
           },
         });
-
-        return actionClasses;
+        return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
       } catch (error) {
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
       }
@@ -52,12 +57,14 @@ export const getActionClasses = (environmentId: string, page?: number): Promise<
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
+};
 
 export const getActionClassByEnvironmentIdAndName = async (
   environmentId: string,
   name: string
-): Promise<TActionClass | null> =>
-  unstable_cache(
+): Promise<TActionClass | null> => {
+  const actionClass = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [name, ZString]);
 
@@ -81,9 +88,11 @@ export const getActionClassByEnvironmentIdAndName = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
+};
 
-export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> =>
-  unstable_cache(
+export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> => {
+  const actionClass = await unstable_cache(
     async () => {
       validateInputs([actionClassId, ZId]);
 
@@ -106,6 +115,8 @@ export const getActionClass = async (actionClassId: string): Promise<TActionClas
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
+};
 
 export const deleteActionClass = async (
   environmentId: string,
