@@ -10,6 +10,7 @@ import {
   StarIcon,
   CheckIcon,
   CalendarDaysIcon,
+  PhoneIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -156,9 +157,9 @@ export const questionTypes: TSurveyQuestionType[] = [
   },
   {
     id: QuestionId.Cal,
-    label: "Bookin With Cal.com",
+    label: "Booking With Cal.com",
     description: "Allow respondents to schedule a meet",
-    icon: CalendarDaysIcon,
+    icon: PhoneIcon,
     preset: {
       headline: "Schedule a call with me",
       calUserName: "rick",

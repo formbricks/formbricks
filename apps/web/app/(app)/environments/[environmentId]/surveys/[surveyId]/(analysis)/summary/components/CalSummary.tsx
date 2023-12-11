@@ -64,7 +64,7 @@ export default function CalSummary({ questionSummary, environmentId }: CalSummar
                   </div>
                 )}
               </div>
-              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
+              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold capitalize">
                 {response.value}
               </div>
               <div className="px-4 text-slate-500 md:px-6">{timeSince(response.updatedAt.toISOString())}</div>

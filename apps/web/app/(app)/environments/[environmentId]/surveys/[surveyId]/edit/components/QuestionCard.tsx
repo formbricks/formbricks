@@ -21,6 +21,7 @@ import {
   ArrowUpTrayIcon,
   PhotoIcon,
   CalendarDaysIcon,
+  PhoneIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
@@ -151,6 +152,8 @@ export default function QuestionCard({
                       <PhotoIcon />
                     ) : question.type === TSurveyQuestionType.Date ? (
                       <CalendarDaysIcon />
+                    ) : question.type === TSurveyQuestionType.Cal ? (
+                      <PhoneIcon />
                     ) : null}
                   </div>
                   <div>

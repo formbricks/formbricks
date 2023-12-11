@@ -331,6 +331,10 @@ export default function SingleResponseCard({
                       </div>
                     ) : question.type === TSurveyQuestionType.Date ? (
                       <DateResponse date={response.data[question.id] as string} />
+                    ) : question.type === TSurveyQuestionType.Cal ? (
+                      <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
+                        {response.data[question.id]}
+                      </p>
                     ) : (
                       <p className="ph-no-capture my-1 font-semibold text-slate-700">
                         {response.data[question.id]}

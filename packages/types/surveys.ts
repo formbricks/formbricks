@@ -129,6 +129,7 @@ export const ZSurveyLogicCondition = z.enum([
   "includesOne",
   "uploaded",
   "notUploaded",
+  "booked",
 ]);
 
 export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
@@ -208,7 +209,7 @@ const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
 });
 
 const ZSurveyCalLogic = ZSurveyLogicBase.extend({
-  condition: z.enum(["submitted", "skipped", "accepted"]).optional(),
+  condition: z.enum(["booked", "skipped"]).optional(),
   value: z.undefined(),
 });
 
@@ -356,6 +357,7 @@ export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion
 export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Cal),
   calUserName: z.string(),
+  logic: z.array(ZSurveyCalLogic).optional(),
 });
 
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
