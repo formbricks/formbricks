@@ -119,7 +119,7 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   }
 };
 
-export const getInvite = async (inviteId: string): Promise<InviteWithCreator | null> => {
+export const getInvite = async (inviteId: string): Promise<InviteWithCreator> => {
   const invite = await unstable_cache(
     async () => {
       validateInputs([inviteId, ZString]);
@@ -137,17 +137,19 @@ export const getInvite = async (inviteId: string): Promise<InviteWithCreator | n
           },
         },
       });
+
+      if (!invite) {
+        throw new ResourceNotFoundError("Invite", inviteId);
+      }
       return invite;
     },
     [`getInvite-${inviteId}`],
     { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
-  return invite
-    ? {
-        ...formatDateFields(invite, ZInvite),
-        creator: invite.creator,
-      }
-    : null;
+  return {
+    ...formatDateFields(invite, ZInvite),
+    creator: invite.creator,
+  };
 };
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {
