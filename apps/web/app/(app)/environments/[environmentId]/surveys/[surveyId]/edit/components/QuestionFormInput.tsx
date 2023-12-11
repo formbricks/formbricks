@@ -22,6 +22,7 @@ import { toast } from "react-hot-toast";
 import {
   extractId,
   extractFallbackValue,
+  checkForRecall,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/utils";
 
 interface QuestionFormInputProps {
@@ -294,7 +295,8 @@ const QuestionFormInput = ({
                           addRecallQuestion(q);
                           setShowQuestionSelect(false);
                         }}>
-                        {IconComponent && <IconComponent className="mr-2 h-4 w-4" />} {q.headline}
+                        {IconComponent && <IconComponent className="mr-2 h-4 w-4" />}{" "}
+                        {checkForRecall(q.headline, localSurvey)}
                       </div>
                     );
                   })}

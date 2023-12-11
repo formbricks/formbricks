@@ -1,3 +1,5 @@
+import { TSurvey } from "@formbricks/types/surveys";
+
 export function extractId(text) {
   const pattern = /recall:([A-Za-z0-9]+)/;
 
@@ -29,7 +31,7 @@ export function extractRecallInfo(headline) {
   return match ? match[0] : null;
 }
 
-export const checkForRecall = (headline, survey) => {
+export const checkForRecall = (headline: String, survey: TSurvey) => {
   if (headline.includes("recall:")) {
     const recallInfo = extractRecallInfo(headline);
     const questionId = extractId(headline);

@@ -37,10 +37,7 @@ import RatingQuestionForm from "./RatingQuestionForm";
 import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
 import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 import { TProduct } from "@formbricks/types/product";
-import {
-  extractId,
-  extractRecallInfo,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/utils";
+import { checkForRecall } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/utils";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -158,7 +155,8 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {checkForRecall(question.headline) || getTSurveyQuestionTypeName(question.type)}
+                      {checkForRecall(question.headline, localSurvey) ||
+                        getTSurveyQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-slate-500">
