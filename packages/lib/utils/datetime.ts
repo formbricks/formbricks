@@ -42,3 +42,33 @@ export function formatDateFields<T extends z.ZodRawShape>(
 
   return formattedObject as z.infer<typeof zodSchema>;
 }
+export const formatDateWithOrdinal = (date: Date): string => {
+  const getOrdinalSuffix = (day: number) => {
+    const suffixes = ["th", "st", "nd", "rd"];
+    const relevantDigits = day < 30 ? day % 20 : day % 30;
+    return suffixes[relevantDigits <= 3 ? relevantDigits : 0];
+  };
+
+  const dayOfWeekNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const dayOfWeek = dayOfWeekNames[date.getDay()];
+  const day = date.getDate();
+  const monthIndex = date.getMonth();
+  const year = date.getFullYear();
+
+  return `${dayOfWeek}, ${monthNames[monthIndex]} ${day}${getOrdinalSuffix(day)}, ${year}`;
+};
