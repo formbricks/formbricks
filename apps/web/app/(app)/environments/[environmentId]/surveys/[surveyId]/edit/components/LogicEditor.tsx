@@ -267,7 +267,7 @@ export default function LogicEditor({
               </Select>
 
               {logic.condition && logicConditions[logic.condition].values != null && (
-                <div className="flex-1 basis-2/5">
+                <div className="flex-1 basis-1/5">
                   {!logicConditions[logic.condition].multiSelect ? (
                     <Select value={logic.value} onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
                       <SelectTrigger className="w-full overflow-hidden">
