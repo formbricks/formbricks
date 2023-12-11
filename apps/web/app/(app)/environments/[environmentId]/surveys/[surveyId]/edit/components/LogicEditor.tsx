@@ -267,7 +267,7 @@ export default function LogicEditor({
               </Select>
 
               {logic.condition && logicConditions[logic.condition].values != null && (
-                <div className="flex-1 basis-1/5">
+                <div className="flex-1 basis-1/4">
                   {!logicConditions[logic.condition].multiSelect ? (
                     <Select value={logic.value} onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
                       <SelectTrigger className="w-full overflow-hidden">
@@ -332,7 +332,7 @@ export default function LogicEditor({
                     (question, idx) =>
                       idx !== questionIdx && (
                         <SelectItem key={question.id} value={question.id} title={question.headline}>
-                          <div className="w-40">
+                          <div className="w-32">
                             <p className="truncate">{question.headline}</p>
                           </div>
                         </SelectItem>
