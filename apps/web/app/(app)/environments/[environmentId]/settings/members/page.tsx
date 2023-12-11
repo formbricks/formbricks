@@ -1,7 +1,11 @@
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/TeamActions";
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getMembershipsByUserId, getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import { getMembershipByUserIdTeamId, getMembershipsByUserId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { SettingsId } from "@formbricks/ui/SettingsId";
 import { Skeleton } from "@formbricks/ui/Skeleton";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
@@ -10,9 +14,6 @@ import SettingsTitle from "../components/SettingsTitle";
 import DeleteTeam from "./components/DeleteTeam";
 import { EditMemberships } from "./components/EditMemberships";
 import EditTeamName from "./components/EditTeamName";
-import { INVITE_DISABLED } from "@formbricks/lib/constants";
-import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 const MembersLoading = () => (
   <div className="rounded-lg border border-slate-200">
@@ -103,6 +104,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
           isUserOwner={currentUserRole === "owner"}
         />
       </SettingsCard>
+      <SettingsId title="Team" id={team.id}></SettingsId>
     </div>
   );
 }

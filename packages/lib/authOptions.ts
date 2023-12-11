@@ -1,19 +1,19 @@
-import { env } from "./env.mjs";
-import { verifyPassword } from "@/app/lib/auth";
 import { prisma } from "@formbricks/database";
-import { EMAIL_VERIFICATION_DISABLED } from "./constants";
-import { verifyToken } from "./jwt";
-import { createProfile, getProfileByEmail, updateProfile } from "./profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
+import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import AzureAD from "next-auth/providers/azure-ad";
-import { createTeam } from "./team/service";
-import { createProduct } from "./product/service";
 import { createAccount } from "./account/service";
+import { verifyPassword } from "./auth/util";
+import { EMAIL_VERIFICATION_DISABLED } from "./constants";
+import { env } from "./env.mjs";
+import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
+import { createProduct } from "./product/service";
+import { createProfile, getProfileByEmail, updateProfile } from "./profile/service";
+import { createTeam, getTeam } from "./team/service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -219,14 +219,35 @@ export const authOptions: NextAuthOptions = {
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
-        const team = await createTeam({ name: userProfile.name + "'s Team" });
-        await createAccount({
-          ...account,
-          userId: userProfile.id,
-        });
-        await createProduct(team.id, { name: "My Product" });
-        await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
-        return true;
+        // Default team assignment if env variable is set
+        if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
+          // check if team exists
+          let team = await getTeam(env.DEFAULT_TEAM_ID);
+          let isNewTeam = false;
+          if (!team) {
+            // create team with id from env
+            team = await createTeam({ id: env.DEFAULT_TEAM_ID, name: userProfile.name + "'s Team" });
+            isNewTeam = true;
+          }
+          const role = isNewTeam ? "owner" : env.DEFAULT_TEAM_ROLE || "admin";
+          await createMembership(team.id, userProfile.id, { role, accepted: true });
+          await createAccount({
+            ...account,
+            userId: userProfile.id,
+          });
+          return true;
+        }
+        // Without default team assignment
+        else {
+          const team = await createTeam({ name: userProfile.name + "'s Team" });
+          await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
+          await createAccount({
+            ...account,
+            userId: userProfile.id,
+          });
+          await createProduct(team.id, { name: "My Product" });
+          return true;
+        }
       }
 
       return true;
