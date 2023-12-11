@@ -65,6 +65,15 @@ x-environment: &environment
     # GOOGLE_CLIENT_ID:
     # GOOGLE_CLIENT_SECRET:
 
+    # Uncomment the below to automatically assign new users to a specific team and role within that team
+    # Insert an existing team id or generate a valid CUID for a new one at https://www.getuniqueid.com/cuid (e.g. cjld2cjxh0000qzrmn831i7rn)
+    # (Role Management is an Enterprise feature)
+    # DEFAULT_TEAM_ID:
+    # DEFAULT_TEAM_ROLE: admin
+
+    # Uncomment and set to 1 to skip onboarding for new users
+    # ONBOARDING_DISABLED: 1
+
 services:
   postgres:
     restart: always

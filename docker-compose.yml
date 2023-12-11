@@ -34,6 +34,7 @@ x-smtp-password: &smtp_password
 
   # Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
 
+
 x-short-url-base:
   &short_url_base # Email Verification. If you enable Email Verification you have to setup SMTP-Settings, too.
 
@@ -59,15 +60,20 @@ x-github-auth-enabled: &github_auth_enabled 0
 x-github-id: &github_id
 x-github-secret: &github_secret # Configure Google Login
 
+
 x-google-auth-enabled: &google_auth_enabled 0
 x-google-client-id: &google_client_id
 x-google-client-secret: &google_client_secret # Disable Sentry warning
 
+
 x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Enable Sentry Error Tracking
 
-x-next-public-sentry-dsn: &next_public_sentry_dsn # Cron Secret
 
-# Set this to a random string to secure your cron endpoints
+x-next-public-sentry-dsn: &next_public_sentry_dsn
+  # Cron Secret
+
+  # Set this to a random string to secure your cron endpoints
+
 x-cron-secret: &cron_secret YOUR_CRON_SECRET
 
 services:
