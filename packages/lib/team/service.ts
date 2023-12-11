@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TTeam, TTeamBilling, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/teams";
+import { TTeam, TTeamBilling, TTeamUpdateInput, ZTeam, ZTeamUpdateInput } from "@formbricks/types/teams";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
@@ -12,6 +12,7 @@ import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
 import { validateInputs } from "../utils/validate";
 import { teamCache } from "./cache";
+import { formatDateFields } from "../utils/datetime";
 
 export const select = {
   id: true,
@@ -25,8 +26,8 @@ export const getTeamsTag = (teamId: string) => `teams-${teamId}`;
 export const getTeamsByUserIdCacheTag = (userId: string) => `users-${userId}-teams`;
 export const getTeamByEnvironmentIdCacheTag = (environmentId: string) => `environments-${environmentId}-team`;
 
-export const getTeamsByUserId = async (userId: string, page?: number): Promise<TTeam[]> =>
-  unstable_cache(
+export const getTeamsByUserId = async (userId: string, page?: number): Promise<TTeam[]> => {
+  const teams = await unstable_cache(
     async () => {
       validateInputs([userId, ZString], [page, ZOptionalNumber]);
 
@@ -43,7 +44,9 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
-
+        if (!teams) {
+          throw new ResourceNotFoundError("Teams by UserId", userId);
+        }
         return teams;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -59,9 +62,11 @@ export const getTeamsByUserId = async (userId: string, page?: number): Promise<T
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return teams.map((team) => formatDateFields(team, ZTeam));
+};
 
-export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTeam | null> =>
-  unstable_cache(
+export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTeam | null> => {
+  const team = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
 
@@ -97,9 +102,11 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return team ? formatDateFields(team, ZTeam) : null;
+};
 
-export const getTeam = async (teamId: string): Promise<TTeam | null> =>
-  unstable_cache(
+export const getTeam = async (teamId: string): Promise<TTeam | null> => {
+  const team = await unstable_cache(
     async () => {
       validateInputs([teamId, ZString]);
 
@@ -110,7 +117,6 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> =>
           },
           select,
         });
-
         return team;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -126,6 +132,8 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return team ? formatDateFields(team, ZTeam) : null;
+};
 
 export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> => {
   try {
@@ -281,7 +289,7 @@ export const getTeamsWithPaidPlan = async (): Promise<TTeam[]> => {
     }
   )();
 
-  return teams;
+  return teams.map((team) => formatDateFields(team, ZTeam));
 };
 
 export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<number> =>

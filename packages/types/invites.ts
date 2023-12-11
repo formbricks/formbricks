@@ -1,7 +1,7 @@
 import z from "zod";
 import { ZMembershipRole } from "./memberships";
 
-const ZInvite = z.object({
+export const ZInvite = z.object({
   id: z.string(),
   email: z.string(),
   name: z.string().nullish(),
