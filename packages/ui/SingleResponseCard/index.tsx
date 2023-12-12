@@ -3,7 +3,7 @@
 import { timeSince } from "@formbricks/lib/time";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -34,7 +34,7 @@ import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
-  profile: TProfile;
+  user: TUser;
   pageType: string;
   environmentTags: TTag[];
   environment: TEnvironment;
@@ -72,7 +72,7 @@ function DateResponse({ date }: { date?: string }) {
 export default function SingleResponseCard({
   survey,
   response,
-  profile,
+  user,
   pageType,
   environmentTags,
   environment,
@@ -393,7 +393,7 @@ export default function SingleResponseCard({
       </div>
       {pageType === "response" && (
         <ResponseNotes
-          profile={profile}
+          user={user}
           responseId={response.id}
           notes={response.notes}
           isOpen={isOpen}

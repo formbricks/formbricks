@@ -2,7 +2,7 @@
 
 import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { TResponseNote } from "@formbricks/types/responses";
 import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
@@ -15,14 +15,14 @@ import { Button } from "../../Button";
 import { resolveResponseNoteAction, updateResponseNoteAction, createResponseNoteAction } from "../actions";
 
 interface ResponseNotesProps {
-  profile: TProfile;
+  user: TUser;
   responseId: string;
   notes: TResponseNote[];
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function ResponseNotes({ profile, responseId, notes, isOpen, setIsOpen }: ResponseNotesProps) {
+export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOpen }: ResponseNotesProps) {
   const router = useRouter();
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
@@ -35,7 +35,7 @@ export default function ResponseNotes({ profile, responseId, notes, isOpen, setI
     e.preventDefault();
     setIsCreatingNote(true);
     try {
-      await createResponseNoteAction(responseId, profile.id, noteText);
+      await createResponseNoteAction(responseId, user.id, noteText);
       router.refresh();
       setIsCreatingNote(false);
       setNoteText("");
@@ -162,7 +162,7 @@ export default function ResponseNotes({ profile, responseId, notes, isOpen, setI
                 </span>
                 <div className="flex items-center">
                   <span className="block text-slate-700">{note.text}</span>
-                  {profile.id === note.user.id && (
+                  {user.id === note.user.id && (
                     <button
                       className="ml-auto hidden group-hover/notetext:block"
                       onClick={() => {

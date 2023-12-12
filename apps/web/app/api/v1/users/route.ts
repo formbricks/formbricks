@@ -6,7 +6,7 @@ import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createProduct } from "@formbricks/lib/product/service";
-import { createProfile } from "@formbricks/lib/profile/service";
+import { createUser } from "@formbricks/lib/user/service";
 import { createTeam, getTeam } from "@formbricks/lib/team/service";
 import { NextResponse } from "next/server";
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     let invite;
 
     // create the user
-    user = await createProfile(user);
+    user = await createUser(user);
 
     // User is invited to team
     if (inviteToken) {

@@ -53,7 +53,7 @@ export default async function SurveysList({ environmentId }: { environmentId: st
         environmentId={environmentId}
         environment={environment}
         product={product}
-        profile={session.user}
+        user={session.user}
       />
     );
   }

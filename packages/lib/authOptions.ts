@@ -12,7 +12,7 @@ import { env } from "./env.mjs";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
 import { createProduct } from "./product/service";
-import { createProfile, getProfileByEmail, updateProfile } from "./profile/service";
+import { createUser, getUserByEmail, updateUser } from "./user/service";
 import { createTeam, getTeam } from "./team/service";
 
 export const authOptions: NextAuthOptions = {
@@ -110,7 +110,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email already verified");
         }
 
-        user = await updateProfile(user.id, { emailVerified: new Date() });
+        user = await updateUser(user.id, { emailVerified: new Date() });
 
         return user;
       },
@@ -132,7 +132,7 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token }) {
-      const existingUser = await getProfileByEmail(token?.email!);
+      const existingUser = await getUserByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
@@ -191,10 +191,10 @@ export const authOptions: NextAuthOptions = {
           // check if user with this email already exist
           // if not found just update user with new email address
           // if found throw an error (TODO find better solution)
-          const otherUserWithEmail = await getProfileByEmail(user.email);
+          const otherUserWithEmail = await getUserByEmail(user.email);
 
           if (!otherUserWithEmail) {
-            await updateProfile(existingUserWithAccount.id, { email: user.email });
+            await updateUser(existingUserWithAccount.id, { email: user.email });
             return true;
           }
           throw new Error(
@@ -205,13 +205,13 @@ export const authOptions: NextAuthOptions = {
         // There is no existing account for this identity provider / account id
         // check if user account with this email already exists
         // if user already exists throw error and request password login
-        const existingUserWithEmail = await getProfileByEmail(user.email);
+        const existingUserWithEmail = await getUserByEmail(user.email);
 
         if (existingUserWithEmail) {
           throw new Error("A user with this email exists already.");
         }
 
-        const userProfile = await createProfile({
+        const userProfile = await createUser({
           name: user.name,
           email: user.email,
           emailVerified: new Date(Date.now()),
