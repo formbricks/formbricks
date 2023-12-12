@@ -13,7 +13,7 @@ export function extractId(text) {
 }
 
 export function extractFallbackValue(text) {
-  const pattern = /fallback:([A-Za-z0-9\s]+)/; // Regex to match fallback value
+  const pattern = /fallback:([A-Za-z0-9]+)/; // Regex to match fallback value
 
   const match = text.match(pattern);
 
@@ -25,7 +25,7 @@ export function extractFallbackValue(text) {
 }
 
 export function extractRecallInfo(headline) {
-  const pattern = /recall:[A-Za-z0-9]+(\/fallback:[A-Za-z0-9\s]*)?/;
+  const pattern = /recall:[A-Za-z0-9]+(\/fallback:[A-Za-z0-9]*)?/;
   const match = headline.match(pattern);
 
   return match ? match[0] : null;
