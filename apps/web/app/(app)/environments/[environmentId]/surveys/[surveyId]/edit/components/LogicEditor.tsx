@@ -277,7 +277,7 @@ export default function LogicEditor({
                         {logicConditions[logic.condition].values?.map((value) => (
                           <SelectItem key={value} value={value} title={value}>
                             <div className="w-fit">
-                              <p className="line-clamp-1 max-w-sm">{value}</p>
+                              <p className="line-clamp-1 w-40 2xl:w-96">{value}</p>
                             </div>
                           </SelectItem>
                         ))}
@@ -296,7 +296,7 @@ export default function LogicEditor({
                               {logic.value.join(", ")}
                             </p>
                           )}
-                          <ChevronDown className="h-4 w-4 flex-shrink-0 opacity-50" />
+                          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                         </div>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -343,7 +343,7 @@ export default function LogicEditor({
               </Select>
 
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
+                className="h-4 w-4 cursor-pointer text-slate-400"
                 onClick={() => deleteLogic(logicIdx)}
               />
             </div>
