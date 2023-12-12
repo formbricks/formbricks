@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import { validateQuestion } from "./Validation";
 import { deleteSurveyAction, updateSurveyAction } from "../actions";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
@@ -48,6 +49,7 @@ export default function SurveyMenuBar({
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const cautionText = "This survey received responses, make changes with caution.";
 
   let faultyQuestions: String[] = [];
 
@@ -222,6 +224,11 @@ export default function SurveyMenuBar({
         const { isDraft, ...rest } = question;
         return rest;
       }),
+      attributeFilters: localSurvey.attributeFilters.filter((attributeFilter) => {
+        if (attributeFilter.attributeClassId && attributeFilter.value) {
+          return true;
+        }
+      }),
     };
 
     if (!validateSurvey(localSurvey)) {
@@ -251,6 +258,14 @@ export default function SurveyMenuBar({
       return;
     }
   };
+
+  function containsEmptyTriggers() {
+    return (
+      localSurvey.type === "web" &&
+      localSurvey.triggers &&
+      (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
+    );
+  }
 
   return (
     <>
@@ -282,11 +297,20 @@ export default function SurveyMenuBar({
           />
         </div>
         {responseCount > 0 && (
-          <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
-            <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
-            <p className=" pl-1 text-xs lg:text-sm">
-              This survey received responses, make changes with caution.
-            </p>
+          <div className="ju flex items-center rounded-lg border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm lg:mx-auto">
+            <TooltipProvider delayDuration={50}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
+                </TooltipTrigger>
+                <TooltipContent side={"top"} className="lg:hidden">
+                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400 ">
+                    {cautionText}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <p className=" hidden pl-1 text-xs md:text-sm lg:block">{cautionText}</p>
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
@@ -298,7 +322,7 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            disabled={isSurveyPublishing}
+            disabled={isSurveyPublishing || containsEmptyTriggers()}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
@@ -318,11 +342,7 @@ export default function SurveyMenuBar({
           )}
           {localSurvey.status === "draft" && !audiencePrompt && (
             <Button
-              disabled={
-                localSurvey.type === "web" &&
-                localSurvey.triggers &&
-                (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0 || isSurveySaving)
-              }
+              disabled={isSurveySaving || containsEmptyTriggers()}
               variant="darkCTA"
               loading={isSurveyPublishing}
               onClick={async () => {
@@ -366,7 +386,7 @@ export default function SurveyMenuBar({
             router.back();
           }}
           text="You have unsaved changes in your survey. Would you like to save them before leaving?"
-          useSaveInsteadOfCancel={true}
+          confirmButtonLabel="Save"
           onSave={() => saveSurveyAction(true)}
         />
       </div>

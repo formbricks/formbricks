@@ -12,28 +12,30 @@
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
   },
   "dependencies": {
+    "@aws-sdk/s3-presigned-post": "3.465.0",
+    "@aws-sdk/client-s3": "3.465.0",
+    "@aws-sdk/s3-request-presigner": "3.465.0",
+    "@t3-oss/env-nextjs": "^0.7.1",
+    "mime": "4.0.0",
     "@formbricks/api": "*",
-    "@aws-sdk/client-s3": "^3.429.0",
-    "@aws-sdk/s3-request-presigner": "^3.429.0",
-    "mime": "3.0.0",
     "@formbricks/database": "*",
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",
-    "aws-crt": "^1.18.1",
+    "aws-crt": "^1.19.0",
     "date-fns": "^2.30.0",
     "jsonwebtoken": "^9.0.2",
     "markdown-it": "^13.0.2",
-    "nanoid": "^5.0.2",
-    "next-auth": "^4.23.2",
-    "nodemailer": "^6.9.6",
-    "posthog-node": "^3.1.2",
+    "nanoid": "^5.0.4",
+    "next-auth": "^4.24.5",
+    "nodemailer": "^6.9.7",
+    "posthog-node": "^3.2.0",
     "server-only": "^0.0.1",
-    "tailwind-merge": "^1.14.0"
+    "tailwind-merge": "^2.1.0"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
-    "@types/jsonwebtoken": "^9.0.3",
-    "@types/mime": "3.0.3",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/mime": "3.0.4",
     "eslint-config-formbricks": "workspace:*"
   }
 }

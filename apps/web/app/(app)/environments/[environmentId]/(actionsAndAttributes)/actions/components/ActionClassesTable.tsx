@@ -3,9 +3,12 @@
 import { Button } from "@formbricks/ui/Button";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import AddNoCodeActionModal from "./AddNoCodeActionModal";
+import AddNoCodeActionModal from "./AddActionModal";
 import ActionDetailModal from "./ActionDetailModal";
 import { TActionClass } from "@formbricks/types/actionClasses";
+import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { LoadingWrapper } from "@formbricks/ui/LoadingWrapper";
 
 export default function ActionClassesTable({
   environmentId,
@@ -18,6 +21,8 @@ export default function ActionClassesTable({
 }) {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
+  const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   const [activeActionClass, setActiveActionClass] = useState<TActionClass>({
     environmentId,
@@ -38,16 +43,20 @@ export default function ActionClassesTable({
 
   return (
     <>
-      <div className="mb-6 text-right">
-        <Button
-          variant="darkCTA"
-          onClick={() => {
-            setAddActionModalOpen(true);
-          }}>
-          <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
-          Add Action
-        </Button>
-      </div>
+      <LoadingWrapper isLoading={isLoading} error={error}>
+        {!isViewer && (
+          <div className="mb-6 text-right">
+            <Button
+              variant="darkCTA"
+              onClick={() => {
+                setAddActionModalOpen(true);
+              }}>
+              <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
+              Add Action
+            </Button>
+          </div>
+        )}
+      </LoadingWrapper>
       <div className="rounded-lg border border-slate-200">
         {TableHeading}
         <div className="grid-cols-7">
@@ -68,11 +77,13 @@ export default function ActionClassesTable({
         open={isActionDetailModalOpen}
         setOpen={setActionDetailModalOpen}
         actionClass={activeActionClass}
+        membershipRole={membershipRole}
       />
       <AddNoCodeActionModal
         environmentId={environmentId}
         open={isAddActionModalOpen}
         setOpen={setAddActionModalOpen}
+        isViewer={isViewer}
       />
     </>
   );

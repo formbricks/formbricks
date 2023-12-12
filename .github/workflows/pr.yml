@@ -24,11 +24,16 @@ jobs:
 
   build:
     name: Build Formbricks-web
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/build-web.yml
+    secrets: inherit
+
+  e2e-test:
+    name: Run E2E Tests
+    uses: ./.github/workflows/playwright.yml
     secrets: inherit
 
   required:
-    needs: [lint, test, build]
+    needs: [lint, test, build, e2e-test]
     if: always()
     runs-on: ubuntu-latest
     steps:

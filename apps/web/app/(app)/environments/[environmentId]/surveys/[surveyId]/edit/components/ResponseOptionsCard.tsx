@@ -76,7 +76,7 @@ export default function ResponseOptionsCard({
   };
 
   const handleProtectSurveyWithPinToggle = () => {
-    setLocalSurvey((prevSurvey) => ({ ...prevSurvey, pin: isPinProtectionEnabled ? null : 1234 }));
+    setLocalSurvey((prevSurvey) => ({ ...prevSurvey, pin: isPinProtectionEnabled ? null : "1234" }));
   };
 
   const handleProtectSurveyPinChange = (pin: string) => {

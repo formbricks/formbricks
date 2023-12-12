@@ -40,6 +40,11 @@ export default function UpdateQuestionId({
       updateQuestion(questionIdx, { id: prevValue });
       toast.error("ID should not be empty.");
       return;
+    } else if (["userId", "source", "suid", "end", "start", "welcomeCard", "hidden"].includes(currentValue)) {
+      setCurrentValue(prevValue);
+      updateQuestion(questionIdx, { id: prevValue });
+      toast.error("Reserved words cannot be used as question ID");
+      return;
     } else {
       setIsInputInvalid(false);
       toast.success("Question ID updated.");

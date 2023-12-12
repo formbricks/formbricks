@@ -56,10 +56,11 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
         <SurveyInline
           brandColor={brandColor}
           survey={survey}
-          formbricksSignature={false}
+          isBrandingEnabled={false}
           autoFocus={false}
           isRedirectDisabled={false}
           key={survey.id}
+          onFileUpload={async () => ""}
         />
 
         <Button

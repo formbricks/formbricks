@@ -81,6 +81,7 @@ export default function TemplateContainerWithPreview({
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
+                onFileUpload={async (file) => file.name}
               />
             </div>
           )}

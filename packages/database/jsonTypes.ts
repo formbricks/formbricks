@@ -6,17 +6,19 @@ import {
   TSurveyClosedMessage,
   TSurveyHiddenFields,
   TSurveyProductOverwrites,
+  TSurveyStyling,
   TSurveyQuestions,
   TSurveySingleUse,
   TSurveyThankYouCard,
   TSurveyVerifyEmail,
 } from "@formbricks/types/surveys";
+import { TTeamBilling } from "@formbricks/types/teams";
 import { TUserNotificationSettings } from "@formbricks/types/users";
 
 declare global {
   namespace PrismaJson {
-    export type EventProperties = { [key: string]: string };
-    export type EventClassNoCodeConfig = TActionClassNoCodeConfig;
+    export type ActionProperties = { [key: string]: string };
+    export type ActionClassNoCodeConfig = TActionClassNoCodeConfig;
     export type IntegrationConfig = TIntegrationConfig;
     export type ResponseData = TResponseData;
     export type ResponseMeta = TResponseMeta;
@@ -26,9 +28,11 @@ declare global {
     export type SurveyThankYouCard = TSurveyThankYouCard;
     export type SurveyHiddenFields = TSurveyHiddenFields;
     export type SurveyProductOverwrites = TSurveyProductOverwrites;
+    export type SurveyStyling = TSurveyStyling;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;
     export type SurveyVerifyEmail = TSurveyVerifyEmail;
+    export type TeamBilling = TTeamBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
   }
 }

@@ -1,8 +1,13 @@
-import { withSentryConfig } from "@sentry/nextjs";
-import "./env.mjs";
 import { createId } from "@paralleldrive/cuid2";
+import { withSentryConfig } from "@sentry/nextjs";
+import "@formbricks/lib/env.mjs";
 
 /** @type {import('next').NextConfig} */
+
+function getHostname(url) {
+  const urlObj = new URL(url);
+  return urlObj.hostname;
+}
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
@@ -29,6 +34,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "app.formbricks.com",
       },
+      {
+        protocol: "https",
+        hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
+      },
     ],
   },
   async redirects() {
@@ -41,6 +50,11 @@ const nextConfig = {
       {
         source: "/api/v1/surveys",
         destination: "/api/v1/management/surveys",
+        permanent: true,
+      },
+      {
+        source: "/api/v1/responses",
+        destination: "/api/v1/management/responses",
         permanent: true,
       },
       {
@@ -92,6 +106,17 @@ const nextConfig = {
     INTERNAL_SECRET: createId(),
   },
 };
+
+// set actions allowed origins
+if (process.env.WEBAPP_URL) {
+  nextConfig.experimental.serverActions = {
+    allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
+  };
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: getHostname(process.env.WEBAPP_URL),
+  });
+}
 
 const sentryOptions = {
   // For all available options, see:

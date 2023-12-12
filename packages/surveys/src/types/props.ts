@@ -1,10 +1,10 @@
-import { TSurveyWithTriggers } from "@formbricks/types/js";
 import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 
 export interface SurveyBaseProps {
-  survey: TSurveyWithTriggers;
-  brandColor: string;
-  formbricksSignature: boolean;
+  survey: TSurvey;
+  isBrandingEnabled: boolean;
   activeQuestionId?: string;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
@@ -16,6 +16,8 @@ export interface SurveyBaseProps {
   prefillResponseData?: TResponseData;
   showErrorComponent?: boolean;
   errorComponent?: JSX.Element;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  responseCount?: number;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

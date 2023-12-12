@@ -1,29 +1,34 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
   TResponseInput,
+  TResponseLegacyInput,
   TResponseUpdateInput,
+  ZResponse,
   ZResponseInput,
+  ZResponseLegacyInput,
+  ZResponseNote,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
 import { TTag } from "@formbricks/types/tags";
 import { Prisma } from "@prisma/client";
-import { getPerson, transformPrismaPerson } from "../person/service";
-import { captureTelemetry } from "../telemetry";
-import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/environment";
 import { unstable_cache } from "next/cache";
-import { deleteDisplayByResponseId } from "../display/service";
-import { ZString, ZOptionalNumber } from "@formbricks/types/common";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { responseCache } from "./cache";
-import { formatResponseDateFields } from "../response/util";
-import { getResponseNotes } from "../responseNote/service";
+import { deleteDisplayByResponseId } from "../display/service";
+import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
+import { calculateTtcTotal } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
+import { getResponseNotes } from "../responseNote/service";
+import { captureTelemetry } from "../telemetry";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
+import { responseCache } from "./cache";
 
 const responseSelection = {
   id: true,
@@ -33,11 +38,13 @@ const responseSelection = {
   finished: true,
   data: true,
   meta: true,
+  ttc: true,
   personAttributes: true,
   singleUseId: true,
   person: {
     select: {
       id: true,
+      userId: true,
       createdAt: true,
       updatedAt: true,
       environmentId: true,
@@ -66,6 +73,22 @@ const responseSelection = {
       },
     },
   },
+  notes: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      text: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      isResolved: true,
+      isEdited: true,
+    },
+  },
 };
 
 export const getResponsesByPersonId = async (
@@ -92,11 +115,9 @@ export const getResponsesByPersonId = async (
 
         let responses: Array<TResponse> = [];
 
-        responsePrisma.forEach(async (response) => {
-          const responseNotes = await getResponseNotes(response.id);
+        responsePrisma.forEach((response) => {
           responses.push({
             ...response,
-            notes: responseNotes,
             person: response.person ? transformPrismaPerson(response.person) : null,
             tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
           });
@@ -119,8 +140,8 @@ export const getResponsesByPersonId = async (
   )();
 
   return responses.map((response) => ({
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
 };
 
@@ -144,10 +165,8 @@ export const getResponseBySingleUseId = async (
           return null;
         }
 
-        const responseNotes = await getResponseNotes(responsePrisma.id);
         const response: TResponse = {
           ...responsePrisma,
-          notes: responseNotes,
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
@@ -168,18 +187,82 @@ export const getResponseBySingleUseId = async (
     }
   )();
 
-  if (!response) {
-    return null;
-  }
-
-  return {
-    ...response,
-    ...formatResponseDateFields(response),
-  };
+  return response
+    ? {
+        ...formatDateFields(response, ZResponse),
+        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
+      }
+    : null;
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
+  captureTelemetry("response created");
+
+  const { environmentId, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
+
+  try {
+    let person: TPerson | null = null;
+
+    if (userId) {
+      person = await getPersonByUserId(environmentId, userId);
+      if (!person) {
+        // create person if it does not exist
+        person = await createPerson(environmentId, userId);
+      }
+    }
+
+    const responsePrisma = await prisma.response.create({
+      data: {
+        survey: {
+          connect: {
+            id: surveyId,
+          },
+        },
+        finished: finished,
+        data: data,
+        ...(person?.id && {
+          person: {
+            connect: {
+              id: person.id,
+            },
+          },
+          personAttributes: person?.attributes,
+        }),
+        ...(meta && ({ meta } as Prisma.JsonObject)),
+        singleUseId,
+      },
+      select: responseSelection,
+    });
+
+    const response: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
+
+    responseCache.revalidate({
+      id: response.id,
+      personId: response.person?.id,
+      surveyId: response.surveyId,
+    });
+
+    responseNoteCache.revalidate({
+      responseId: response.id,
+    });
+
+    return response;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const createResponseLegacy = async (responseInput: TResponseLegacyInput): Promise<TResponse> => {
+  validateInputs([responseInput, ZResponseLegacyInput]);
   captureTelemetry("response created");
 
   try {
@@ -188,7 +271,15 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     if (responseInput.personId) {
       person = await getPerson(responseInput.personId);
     }
-
+    const ttcTemp = responseInput.ttc ?? {};
+    const questionId = Object.keys(ttcTemp)[0];
+    const ttc =
+      responseInput.finished && responseInput.ttc
+        ? {
+            ...ttcTemp,
+            _total: ttcTemp[questionId], // Add _total property with the same value
+          }
+        : ttcTemp;
     const responsePrisma = await prisma.response.create({
       data: {
         survey: {
@@ -198,6 +289,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         },
         finished: responseInput.finished,
         data: responseInput.data,
+        ttc,
         ...(responseInput.personId && {
           person: {
             connect: {
@@ -206,16 +298,15 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           },
           personAttributes: person?.attributes,
         }),
+
         ...(responseInput.meta && ({ meta: responseInput?.meta } as Prisma.JsonObject)),
         singleUseId: responseInput.singleUseId,
       },
       select: responseSelection,
     });
 
-    const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
-      notes: responseNotes,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
@@ -257,10 +348,8 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
           throw new ResourceNotFoundError("Response", responseId);
         }
 
-        const responseNotes = await getResponseNotes(responsePrisma.id);
         const response: TResponse = {
           ...responsePrisma,
-          notes: responseNotes,
           person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
         };
@@ -281,13 +370,9 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     }
   )();
 
-  if (!response) {
-    return null;
-  }
-
   return {
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   } as TResponse;
 };
 
@@ -313,11 +398,8 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
 
         const transformedResponses: TResponse[] = await Promise.all(
           responses.map(async (responsePrisma) => {
-            const responseNotes = await getResponseNotes(responsePrisma.id);
-
             return {
               ...responsePrisma,
-              notes: responseNotes,
               person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
               tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             };
@@ -341,8 +423,8 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
   )();
 
   return responses.map((response) => ({
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
 };
 
@@ -373,11 +455,8 @@ export const getResponsesByEnvironmentId = async (
 
         const transformedResponses: TResponse[] = await Promise.all(
           responses.map(async (responsePrisma) => {
-            const responseNotes = await getResponseNotes(responsePrisma.id);
-
             return {
               ...responsePrisma,
-              notes: responseNotes,
               person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
               tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
             };
@@ -401,8 +480,8 @@ export const getResponsesByEnvironmentId = async (
   )();
 
   return responses.map((response) => ({
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
 };
 
@@ -431,6 +510,11 @@ export const updateResponse = async (
       ...currentResponse.data,
       ...responseInput.data,
     };
+    const ttc = responseInput.ttc
+      ? responseInput.finished
+        ? calculateTtcTotal(responseInput.ttc)
+        : responseInput.ttc
+      : {};
 
     const responsePrisma = await prisma.response.update({
       where: {
@@ -439,14 +523,13 @@ export const updateResponse = async (
       data: {
         finished: responseInput.finished,
         data,
+        ttc,
       },
       select: responseSelection,
     });
 
-    const responseNotes = await getResponseNotes(responsePrisma.id);
     const response: TResponse = {
       ...responsePrisma,
-      notes: responseNotes,
       person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
