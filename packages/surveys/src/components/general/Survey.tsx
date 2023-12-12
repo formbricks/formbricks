@@ -130,6 +130,9 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
   function getCardContent() {
+    if (showErrorComponent) {
+      return <ErrorComponent />;
+    }
     if (questionId === "start" && survey.welcomeCard.enabled) {
       return (
         <WelcomeCard
@@ -185,8 +188,6 @@ export function Survey({
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled
               <div>No questions available.</div>
-            ) : showErrorComponent ? (
-              <ErrorComponent />
             ) : (
               getCardContent()
             )}

@@ -5,14 +5,29 @@ import { type TSurveyQuestion } from "@formbricks/types/surveys";
 type ResponseErrorComponentProps = {
   questions: TSurveyQuestion[];
   responses: TResponseData;
+  brandColor: string;
   supportEmail: string | null;
 };
 
 export const ResponseErrorComponent = ({
   questions,
   responses,
+  brandColor,
   supportEmail,
 }: ResponseErrorComponentProps) => {
+  const transformResponses = (isEmail = false) => {
+    const questionIdToHeadline = new Map(questions.map((q) => [q.id, q.headline]));
+
+    return Object.entries(responses).reduce((acc, [key, value]) => {
+      const question = questionIdToHeadline.get(key) || "Question not found";
+      const line = isEmail
+        ? `${encodeURIComponent(question)}%0D%0A${encodeURIComponent(value as string)}`
+        : `${question}\n${value}`;
+
+      return acc ? `${acc}${isEmail ? "%0D%0A%0D%0A" : "\n\n"}${line}` : line;
+    }, "");
+  };
+
   return (
     <div className={"flex flex-col bg-white"}>
       <span className={"mb-1.5 text-base font-bold leading-6 text-slate-900"}>
@@ -43,7 +58,7 @@ export const ResponseErrorComponent = ({
         <button
           type="button"
           onClick={() => {
-            navigator.clipboard.writeText(JSON.stringify(responses));
+            navigator.clipboard.writeText(transformResponses());
           }}
           className={cn(
             "flex items-center rounded-md border border-transparent bg-slate-200 px-3 py-3 text-base font-medium leading-4 text-black shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
@@ -52,17 +67,16 @@ export const ResponseErrorComponent = ({
         </button>
         {supportEmail && (
           <>
-            <span className={"text-md font-normal"}>&</span>
             <button
               type="button"
               onClick={() => {
-                window.open(`mailto:${supportEmail}`);
+                window.open(`mailto:${supportEmail}?body=${transformResponses(true)}`);
               }}
               className={cn(
                 "flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2",
-                isLight("#6464C8") ? "text-black" : "text-white"
+                isLight(brandColor) ? "text-black" : "text-white"
               )}
-              style={{ backgroundColor: "#6464C8" }}>
+              style={{ backgroundColor: brandColor }}>
               <span className="text-md">Send via email</span>
             </button>
           </>

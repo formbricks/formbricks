@@ -16,6 +16,7 @@ export interface SurveyBaseProps {
   prefillResponseData?: TResponseData;
   showErrorComponent?: boolean;
   errorComponent?: JSX.Element;
+  brandColor: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
 }

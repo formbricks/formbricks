@@ -5,6 +5,7 @@ import { ResponseErrorComponent } from "./ResponseErrorComponent";
 
 export function SurveyInline({
   survey,
+  brandColor,
   isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
@@ -24,6 +25,7 @@ export function SurveyInline({
   const ErrorComponent = responseAccumulator ? (
     <ResponseErrorComponent
       responses={responseAccumulator.data}
+      brandColor={brandColor}
       questions={survey.questions}
       supportEmail={survey.supportEmail}
     />
@@ -40,6 +42,7 @@ export function SurveyInline({
       <Survey
         survey={survey}
         isBrandingEnabled={isBrandingEnabled}
+        brandColor={brandColor}
         activeQuestionId={activeQuestionId}
         onDisplay={onDisplay}
         onActiveQuestionChange={onActiveQuestionChange}

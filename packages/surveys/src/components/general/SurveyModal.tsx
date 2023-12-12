@@ -8,6 +8,7 @@ export function SurveyModal({
   survey,
   isBrandingEnabled,
   activeQuestionId,
+  brandColor,
   placement,
   clickOutside,
   darkOverlay,
@@ -32,6 +33,7 @@ export function SurveyModal({
     <ResponseErrorComponent
       responses={responseAccumulator.data}
       questions={survey.questions}
+      brandColor={brandColor}
       supportEmail={survey.supportEmail}
     />
   ) : undefined;
@@ -61,6 +63,7 @@ export function SurveyModal({
         <Survey
           survey={survey}
           isBrandingEnabled={isBrandingEnabled}
+          brandColor={brandColor}
           activeQuestionId={activeQuestionId}
           onDisplay={onDisplay}
           onActiveQuestionChange={onActiveQuestionChange}
