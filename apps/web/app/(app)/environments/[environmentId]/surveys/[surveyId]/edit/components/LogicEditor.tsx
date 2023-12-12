@@ -273,7 +273,7 @@ export default function LogicEditor({
                       <SelectTrigger className="w-full overflow-hidden">
                         <SelectValue placeholder="Select match type" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="w-40 bg-slate-50 text-slate-700 2xl:w-96">
                         {logicConditions[logic.condition].values?.map((value) => (
                           <SelectItem key={value} value={value} title={value}>
                             <div className="w-fit">
