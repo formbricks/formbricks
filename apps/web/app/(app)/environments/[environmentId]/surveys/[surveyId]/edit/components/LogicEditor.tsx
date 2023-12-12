@@ -296,7 +296,7 @@ export default function LogicEditor({
                               {logic.value.join(", ")}
                             </p>
                           )}
-                          <ChevronDown className="h-4 w-4 opacity-50" />
+                          <ChevronDown className="h-4 w-4 flex-shrink-0 opacity-50" />
                         </div>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
