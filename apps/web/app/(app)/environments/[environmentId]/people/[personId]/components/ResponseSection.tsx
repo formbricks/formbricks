@@ -29,7 +29,7 @@ export default async function ResponseSection({
     <>
       {responses && (
         <ResponseTimeline
-          profile={session.user}
+          user={session.user}
           surveys={surveys}
           responses={responses}
           environment={environment}

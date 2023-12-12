@@ -1,7 +1,7 @@
 import { authOptions } from "@formbricks/lib/authOptions";
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { prisma } from "@formbricks/database";
-import { TUserNotificationSettings } from "@formbricks/types/users";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 import { getServerSession } from "next-auth";
 import SettingsTitle from "../components/SettingsTitle";
 import EditAlerts from "./components/EditAlerts";

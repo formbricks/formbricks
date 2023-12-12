@@ -1,7 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
-/* import { config } from 'dotenv';
-config({ path: '../../.env' }); */
 
 export const env = createEnv({
   /*
@@ -66,6 +64,9 @@ export const env = createEnv({
     AZUREAD_CLIENT_SECRET: z.string().optional(),
     AZUREAD_TENANT_ID: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
+    DEFAULT_TEAM_ID: z.string().optional(),
+    DEFAULT_TEAM_ROLE: z.enum(["owner", "admin", "editor", "developer", "viewer"]).optional(),
+    ONBOARDING_DISABLED: z.string().optional(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
   },
 
@@ -141,7 +142,10 @@ export const env = createEnv({
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
-    AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
+    AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
+    DEFAULT_TEAM_ID: process.env.DEFAULT_TEAM_ID,
+    DEFAULT_TEAM_ROLE: process.env.DEFAULT_TEAM_ROLE,
+    ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
   },
 });

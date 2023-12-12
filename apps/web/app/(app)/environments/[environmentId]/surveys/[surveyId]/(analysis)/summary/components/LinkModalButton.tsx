@@ -7,14 +7,14 @@ import { useState } from "react";
 import clsx from "clsx";
 import { TProduct } from "@formbricks/types/product";
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
   webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
 }
 
 export default function LinkSurveyShareButton({
@@ -22,7 +22,7 @@ export default function LinkSurveyShareButton({
   className,
   webAppUrl,
   product,
-  profile,
+  user,
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
 
@@ -46,7 +46,7 @@ export default function LinkSurveyShareButton({
           setOpen={setShowLinkModal}
           product={product}
           webAppUrl={webAppUrl}
-          profile={profile}
+          user={user}
         />
       )}
     </>

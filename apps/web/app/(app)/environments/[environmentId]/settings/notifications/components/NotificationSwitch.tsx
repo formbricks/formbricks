@@ -4,7 +4,7 @@ import { Switch } from "@formbricks/ui/Switch";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { updateNotificationSettingsAction } from "../actions";
-import { TUserNotificationSettings } from "@formbricks/types/users";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 import { useState } from "react";
 
 interface NotificationSwitchProps {

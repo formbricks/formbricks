@@ -3,7 +3,7 @@
 import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
@@ -19,7 +19,7 @@ interface ShareEmbedSurveyProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
 }
 export default function ShareEmbedSurvey({
   survey,
@@ -27,11 +27,11 @@ export default function ShareEmbedSurvey({
   setOpen,
   webAppUrl,
   product,
-  profile,
+  user,
 }: ShareEmbedSurveyProps) {
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey]);
   const isSingleUseLinkSurvey = survey.singleUse?.enabled;
-  const { email } = profile;
+  const { email } = user;
   const { brandColor } = product;
   const surveyBrandColor = survey.productOverwrites?.brandColor || brandColor;
 
