@@ -3,13 +3,14 @@ import { test } from "@playwright/test";
 
 const { name, email, password } = getUser();
 
-test.describe("Signup Flow Test", async () => {
+test.describe("Email Signup Flow Test", async () => {
   test.describe.configure({ mode: "serial" });
-
-  test("Valid User", async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto("/auth/signup");
     await page.getByText("Continue with Email").click();
+  });
 
+  test("Valid User", async ({ page }) => {
     await page.waitForSelector('input[name="name"]');
     await page.fill('input[name="name"]', name);
     await page.press('input[name="name"]', "Tab");
@@ -24,9 +25,6 @@ test.describe("Signup Flow Test", async () => {
   });
 
   test("Email is taken", async ({ page }) => {
-    await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
-
     await page.waitForSelector('input[name="name"]');
     await page.fill('input[name="name"]', name);
     await page.press('input[name="name"]', "Tab");
@@ -43,9 +41,6 @@ test.describe("Signup Flow Test", async () => {
   });
 
   test("No Name", async ({ page }) => {
-    await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
-
     await page.waitForSelector('input[name="name"]');
     await page.fill('input[name="name"]', "");
     await page.press('input[name="name"]', "Tab");
@@ -60,9 +55,6 @@ test.describe("Signup Flow Test", async () => {
   });
 
   test("Invalid Email", async ({ page }) => {
-    await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
-
     await page.waitForSelector('input[name="name"]');
     await page.fill('input[name="name"]', name);
     await page.press('input[name="name"]', "Tab");
@@ -77,9 +69,6 @@ test.describe("Signup Flow Test", async () => {
   });
 
   test("Invalid Password", async ({ page }) => {
-    await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
-
     await page.waitForSelector('input[name="name"]');
     await page.fill('input[name="name"]', name);
     await page.press('input[name="name"]', "Tab");
