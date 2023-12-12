@@ -12,11 +12,11 @@ import { TMembershipUpdateInput } from "../../../types/memberships";
 import { hasTeamAccess, hasTeamAuthority, isOwner } from "@formbricks/lib/auth";
 import { getServerSession } from "next-auth";
 import { AuthenticationError, AuthorizationError, ValidationError } from "../../../types/errors";
-import { TProfile } from "../../../types/profile";
+import { TUser } from "../../../types/user";
 
 export const transferOwnershipAction = async (teamId: string, newOwnerId: string) => {
   const session = await getServerSession(authOptions);
-  const user = session?.user as TProfile;
+  const user = session?.user as TUser;
   if (!session) {
     throw new AuthenticationError("Not authenticated");
   }
@@ -49,7 +49,7 @@ export const transferOwnershipAction = async (teamId: string, newOwnerId: string
 
 export const updateInviteAction = async (inviteId: string, teamId: string, data: TInviteUpdateInput) => {
   const session = await getServerSession(authOptions);
-  const user = session?.user as TProfile;
+  const user = session?.user as TUser;
 
   if (!user) {
     throw new AuthenticationError("Not authenticated");
@@ -74,7 +74,7 @@ export const updateMembershipAction = async (
   data: TMembershipUpdateInput
 ) => {
   const session = await getServerSession(authOptions);
-  const user = session?.user as TProfile;
+  const user = session?.user as TUser;
 
   if (!user) {
     throw new AuthenticationError("Not authenticated");

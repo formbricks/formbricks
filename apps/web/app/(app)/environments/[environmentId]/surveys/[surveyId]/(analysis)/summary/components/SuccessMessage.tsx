@@ -8,14 +8,14 @@ import toast from "react-hot-toast";
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
 import { TProduct } from "@formbricks/types/product";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;
   survey: TSurvey;
   webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
   singleUseIds?: string[];
 }
 
@@ -24,7 +24,7 @@ export default function SuccessMessage({
   survey,
   webAppUrl,
   product,
-  profile,
+  user,
 }: SummaryMetadataProps) {
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -62,7 +62,7 @@ export default function SuccessMessage({
         setOpen={setShowLinkModal}
         webAppUrl={webAppUrl}
         product={product}
-        profile={profile}
+        user={user}
       />
       {confetti && <Confetti />}
     </>

@@ -28,7 +28,7 @@ export default async function SurveyTemplatesPage({ params }) {
   return (
     <TemplateContainerWithPreview
       environmentId={environmentId}
-      profile={session.user}
+      user={session.user}
       environment={environment}
       product={product}
     />

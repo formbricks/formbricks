@@ -68,7 +68,7 @@ export default function SettingsNavbar({
             name: "Profile",
             href: `/environments/${environmentId}/settings/profile`,
             icon: UserCircleIcon,
-            current: pathname?.includes("/profile"),
+            current: pathname?.includes("/user"),
             hidden: false,
           },
           {

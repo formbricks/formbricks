@@ -88,7 +88,7 @@ export const resetPassword = async (token: string, password: string): Promise<an
   }
 };
 
-export const deleteProfile = async (): Promise<any> => {
+export const deleteUser = async (): Promise<any> => {
   try {
     const res = await fetch("/api/v1/users/me/", {
       method: "DELETE",

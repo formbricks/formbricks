@@ -13,7 +13,7 @@ import {
   TSurveyVerifyEmail,
 } from "@formbricks/types/surveys";
 import { TTeamBilling } from "@formbricks/types/teams";
-import { TUserNotificationSettings } from "@formbricks/types/users";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 
 declare global {
   namespace PrismaJson {

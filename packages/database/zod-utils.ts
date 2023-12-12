@@ -24,4 +24,4 @@ export {
 } from "@formbricks/types/surveys";
 
 export { ZTeamBilling } from "@formbricks/types/teams";
-export { ZUserNotificationSettings } from "@formbricks/types/users";
+export { ZUserNotificationSettings } from "@formbricks/types/user";

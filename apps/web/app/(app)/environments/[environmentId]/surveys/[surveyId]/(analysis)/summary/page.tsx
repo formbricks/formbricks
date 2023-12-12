@@ -7,7 +7,7 @@ import { REVALIDATION_INTERVAL, TEXT_RESPONSES_PER_PAGE, WEBAPP_URL } from "@for
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getProfile } from "@formbricks/lib/profile/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getServerSession } from "next-auth";
@@ -31,8 +31,8 @@ export default async function Page({ params }) {
     throw new Error("Product not found");
   }
 
-  const profile = await getProfile(session.user.id);
-  if (!profile) {
+  const user = await getUser(session.user.id);
+  if (!user) {
     throw new Error("Profile not found");
   }
 
@@ -55,7 +55,7 @@ export default async function Page({ params }) {
         surveyId={params.surveyId}
         webAppUrl={WEBAPP_URL}
         product={product}
-        profile={profile}
+        user={user}
         environmentTags={tags}
         displayCount={displayCount}
         responsesPerPage={TEXT_RESPONSES_PER_PAGE}
