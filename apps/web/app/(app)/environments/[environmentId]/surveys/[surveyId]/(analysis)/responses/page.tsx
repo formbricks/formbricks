@@ -6,7 +6,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getProfile } from "@formbricks/lib/profile/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getServerSession } from "next-auth";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -29,9 +29,9 @@ export default async function Page({ params }) {
     throw new Error("Product not found");
   }
 
-  const profile = await getProfile(session.user.id);
-  if (!profile) {
-    throw new Error("Profile not found");
+  const user = await getUser(session.user.id);
+  if (!user) {
+    throw new Error("User not found");
   }
   const tags = await getTagsByEnvironmentId(params.environmentId);
   const team = await getTeamByEnvironmentId(params.environmentId);
@@ -51,7 +51,7 @@ export default async function Page({ params }) {
         webAppUrl={WEBAPP_URL}
         product={product}
         environmentTags={tags}
-        profile={profile}
+        user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
         membershipRole={currentUserMembership?.role}
       />

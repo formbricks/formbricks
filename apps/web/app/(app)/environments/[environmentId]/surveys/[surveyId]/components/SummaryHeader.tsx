@@ -23,7 +23,7 @@ import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surv
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -34,7 +34,7 @@ interface SummaryHeaderProps {
   survey: TSurvey;
   webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
   membershipRole?: TMembershipRole;
 }
 const SummaryHeader = ({
@@ -43,7 +43,7 @@ const SummaryHeader = ({
   survey,
   webAppUrl,
   product,
-  profile,
+  user,
   membershipRole,
 }: SummaryHeaderProps) => {
   const router = useRouter();
@@ -60,7 +60,7 @@ const SummaryHeader = ({
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
         {survey.type === "link" && (
-          <LinkSurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} profile={profile} />
+          <LinkSurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
         )}
         {!isViewer &&
         (environment?.widgetSetupCompleted || survey.type === "link") &&
@@ -92,7 +92,7 @@ const SummaryHeader = ({
                   survey={survey}
                   webAppUrl={webAppUrl}
                   product={product}
-                  profile={profile}
+                  user={user}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -177,7 +177,7 @@ const SummaryHeader = ({
         survey={survey}
         webAppUrl={webAppUrl}
         product={product}
-        profile={profile}
+        user={user}
       />
     </div>
   );
