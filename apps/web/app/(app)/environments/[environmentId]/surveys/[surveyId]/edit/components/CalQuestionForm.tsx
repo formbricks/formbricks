@@ -65,7 +65,7 @@ export default function CalQuestionForm({
           </Button>
         )}
         <div className="mt-3">
-          <Label htmlFor="calUserName">cal.com username or username/meetType</Label>
+          <Label htmlFor="calUserName">Add your Cal.com username or username/event</Label>
           <div className="mt-2">
             <Input
               id="calUserName"

@@ -8,6 +8,7 @@ import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import CalEmbed from "@/components/general/CalEmbed";
+import Subheader from "@/components/general/Subheader";
 
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
@@ -62,25 +63,14 @@ export default function CalQuestion({
         onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="w-full">
-      <Headline headline={question.headline} questionId={question.id} />
+      <Headline headline={question.headline} questionId={question.id} required={question.required} />
+
+      <Subheader subheader={question.subheader} questionId={question.id} />
 
       <>
         {errorMessage && <span className="text-red-500">{errorMessage}</span>}
-        <CalEmbed question={question} onSuccessfulBooking={onSuccessfulBooking} />
+        <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
       </>
-
-      {/* {value === "booked" ? (
-        <div className="rounded-lg border border-slate-200 p-4">
-          <ThankYouCard
-            headline={"Thank you for booking!"}
-            subheader={"To make any changes, please refer to your email to modify your appointment"}
-            isRedirectDisabled={true}
-            redirectUrl={null}
-          />
-        </div>
-      ) : (
-        
-      )} */}
 
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
@@ -92,7 +82,13 @@ export default function CalQuestion({
           />
         )}
         <div></div>
-        <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
+        {!question.required && (
+          <SubmitButton
+            buttonLabel={question.buttonLabel}
+            isLastQuestion={isLastQuestion}
+            onClick={() => {}}
+          />
+        )}
       </div>
     </form>
   );
