@@ -31,7 +31,7 @@ export default async function Page({ params }) {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error("Profile not found");
+    throw new Error("User not found");
   }
   const tags = await getTagsByEnvironmentId(params.environmentId);
   const team = await getTeamByEnvironmentId(params.environmentId);

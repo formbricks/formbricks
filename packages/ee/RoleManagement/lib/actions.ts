@@ -7,12 +7,12 @@ import {
   updateMembership,
 } from "@formbricks/lib/membership/service";
 import { updateInvite } from "@formbricks/lib/invite/service";
-import { TInviteUpdateInput } from "../../../types/invites";
-import { TMembershipUpdateInput } from "../../../types/memberships";
+import { TInviteUpdateInput } from "@formbricks/types/invites";
+import { TMembershipUpdateInput } from "@formbricks/types/memberships";
 import { hasTeamAccess, hasTeamAuthority, isOwner } from "@formbricks/lib/auth";
 import { getServerSession } from "next-auth";
-import { AuthenticationError, AuthorizationError, ValidationError } from "../../../types/errors";
-import { TUser } from "../../../types/user";
+import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
+import { TUser } from "@formbricks/types/user";
 
 export const transferOwnershipAction = async (teamId: string, newOwnerId: string) => {
   const session = await getServerSession(authOptions);
