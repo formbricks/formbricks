@@ -286,7 +286,7 @@ export default function LogicEditor({
                   ) : (
                     <DropdownMenu>
                       <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-                        <div className="flex h-10 w-40 items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ">
+                        <div className="flex h-10 w-40 w-full items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                           {logic.value?.length === 0 ? (
                             <p className="truncate text-slate-400" title="Select match type">
                               Select match type
