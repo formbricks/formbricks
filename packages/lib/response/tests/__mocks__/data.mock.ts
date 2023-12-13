@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { responseNoteSelect } from "../../../responseNote/service";
 import { responseSelection } from "../../service";
-import { randomCuid2 } from "../../../utils/common";
 import { randBoolean, randBrowser, randFullName, randText, randUrl, randUuid } from "../constants";
 
 type ResponseMock = Prisma.ResponseGetPayload<{
@@ -14,12 +13,12 @@ type ResponsePersonMock = Prisma.PersonGetPayload<{
   select: typeof responseSelection.person.select;
 }>;
 
-export const mockEnvironmentId = randomCuid2();
-export const mockPersonId = randomCuid2();
-export const mockResponseId = randomCuid2();
-export const mockSingleUseId = randomCuid2();
-export const mockSurveyId = randomCuid2();
-export const mockUserId = randomCuid2();
+export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
+export const mockPersonId = "lhwy39ga2zy8by1ol1bnaiso";
+export const mockResponseId = "z32bqib0nlcw8vqymlj6m8x7";
+export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
+export const mockSurveyId = "nlg30c8btxljivh6dfcoxve2";
+export const mockUserId = "qwywazmugeezyfr3zcg9jk8a";
 
 export const mockMeta = {
   source: randUrl(),
