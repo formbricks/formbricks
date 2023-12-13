@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendResponseFinishedEmail } from "@/app/lib/email";
-import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
@@ -10,6 +9,9 @@ import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { handleIntegrations } from "./lib/handleIntegrations";
+import { getIntegrations } from "@formbricks/lib/integration/service";
+import { prisma } from "@formbricks/database";
+import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 
 export async function POST(request: Request) {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -95,11 +97,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const integrations = await prisma.integration.findMany({
-      where: {
-        environmentId,
-      },
-    });
+    const integrations = await getIntegrations(environmentId);
     if (integrations.length > 0) {
       handleIntegrations(integrations, inputValidation.data);
     }
@@ -143,17 +141,9 @@ export async function POST(request: Request) {
         })
       );
     }
-
     const updateSurveyStatus = async (surveyId: string) => {
       // Get the survey instance by surveyId
-      const survey = await prisma.survey.findUnique({
-        where: {
-          id: surveyId,
-        },
-        select: {
-          autoComplete: true,
-        },
-      });
+      const survey = await getSurvey(surveyId);
 
       if (survey?.autoComplete) {
         // Get the number of responses to a survey
@@ -163,17 +153,13 @@ export async function POST(request: Request) {
           },
         });
         if (responseCount === survey.autoComplete) {
-          await prisma.survey.update({
-            where: {
-              id: surveyId,
-            },
-            data: {
-              status: "completed",
-            },
-          });
+          const updatedSurvey = { ...survey };
+          updatedSurvey.status = "completed";
+          await updateSurvey(updatedSurvey);
         }
       }
     };
+
     await updateSurveyStatus(surveyId);
   }
 
