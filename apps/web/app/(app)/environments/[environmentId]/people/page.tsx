@@ -1,12 +1,10 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import { truncateMiddle } from "@formbricks/lib/strings";
-import { ITEMS_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
+import { truncateMiddle } from "@formbricks/lib/strings";
 import { TPerson } from "@formbricks/types/people";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { Pagination } from "@formbricks/ui/Pagination";
 
 import Link from "next/link";

@@ -1,8 +1,5 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
 import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/profile/components/AccountSecurity";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 import { getServerSession } from "next-auth";

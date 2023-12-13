@@ -1,7 +1,5 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
 import Navigation from "@/app/(app)/environments/[environmentId]/components/Navigation";
-import { IS_FORMBRICKS_CLOUD, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProducts } from "@formbricks/lib/product/service";

@@ -1,12 +1,9 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
 import ActivitySection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivitySection";
 import AttributesSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/AttributesSection";
-import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponseSection";
 import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/HeadingSection";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
+import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponseSection";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 export default async function PersonPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
