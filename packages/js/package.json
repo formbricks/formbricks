@@ -34,6 +34,7 @@
     "build": "tsc && vite build",
     "go": "vite build --watch",
     "lint": "eslint ./src --fix",
+    "test": "jest --coverage --no-cache",
     "clean": "rimraf .turbo node_modules dist coverage"
   },
   "author": "Formbricks <hola@formbricks.com>",

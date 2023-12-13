@@ -14,6 +14,7 @@ import {
   mockUserId,
 } from "./__mocks__/data.mock";
 import { createResponse } from "../service";
+
 import { randBoolean } from "./constants";
 
 const expectedResponseWithoutPerson: TResponse = {
