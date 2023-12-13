@@ -26,6 +26,14 @@ export const ZTeam = z.object({
   billing: ZTeamBilling,
 });
 
+export const ZTeamCreateInput = z.object({
+  id: z.string().cuid2().optional(),
+  name: z.string(),
+  billing: ZTeamBilling.optional(),
+});
+
+export type TTeamCreateInput = z.infer<typeof ZTeamCreateInput>;
+
 export const ZTeamUpdateInput = z.object({
   name: z.string(),
   billing: ZTeamBilling.optional(),

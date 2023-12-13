@@ -4,15 +4,22 @@ import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TTeam, TTeamBilling, TTeamUpdateInput, ZTeam, ZTeamUpdateInput } from "@formbricks/types/teams";
+import {
+  TTeam,
+  TTeamBilling,
+  TTeamCreateInput,
+  TTeamUpdateInput,
+  ZTeam,
+  ZTeamCreateInput,
+} from "@formbricks/types/teams";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { teamCache } from "./cache";
-import { formatDateFields } from "../utils/datetime";
 
 export const select = {
   id: true,
@@ -135,9 +142,9 @@ export const getTeam = async (teamId: string): Promise<TTeam | null> => {
   return team ? formatDateFields(team, ZTeam) : null;
 };
 
-export const createTeam = async (teamInput: TTeamUpdateInput): Promise<TTeam> => {
+export const createTeam = async (teamInput: TTeamCreateInput): Promise<TTeam> => {
   try {
-    validateInputs([teamInput, ZTeamUpdateInput]);
+    validateInputs([teamInput, ZTeamCreateInput]);
 
     const team = await prisma.team.create({
       data: teamInput,

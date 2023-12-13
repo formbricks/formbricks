@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -26,7 +26,7 @@ interface SummaryPageProps {
   responses: TResponse[];
   webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
   environmentTags: TTag[];
   displayCount: number;
   responsesPerPage: number;
@@ -40,7 +40,7 @@ const SummaryPage = ({
   responses,
   webAppUrl,
   product,
-  profile,
+  user,
   environmentTags,
   displayCount,
   responsesPerPage,
@@ -69,7 +69,7 @@ const SummaryPage = ({
         surveyId={surveyId}
         webAppUrl={webAppUrl}
         product={product}
-        profile={profile}
+        user={user}
         membershipRole={membershipRole}
       />
       <CustomFilter

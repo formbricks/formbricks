@@ -1,8 +1,8 @@
 "use client";
 
-import { updateProfileAction } from "@/app/(app)/onboarding/actions";
+import { updateUserAction } from "@/app/(app)/onboarding/actions";
 import { TProduct } from "@formbricks/types/product";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { Logo } from "@formbricks/ui/Logo";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { Session } from "next-auth";
@@ -19,11 +19,11 @@ const MAX_STEPS = 6;
 interface OnboardingProps {
   session: Session;
   environmentId: string;
-  profile: TProfile;
+  user: TUser;
   product: TProduct;
 }
 
-export default function Onboarding({ session, environmentId, profile, product }: OnboardingProps) {
+export default function Onboarding({ session, environmentId, user, product }: OnboardingProps) {
   const [formbricksResponseId, setFormbricksResponseId] = useState<string | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,8 +53,8 @@ export default function Onboarding({ session, environmentId, profile, product }:
     setIsLoading(true);
 
     try {
-      const updatedProfile = { ...profile, onboardingCompleted: true };
-      await updateProfileAction(updatedProfile);
+      const updatedProfile = { ...user, onboardingCompleted: true };
+      await updateUserAction(updatedProfile);
 
       if (environmentId) {
         router.push(`/environments/${environmentId}/surveys`);
@@ -85,7 +85,7 @@ export default function Onboarding({ session, environmentId, profile, product }:
       </div>
       <div className="flex grow items-center justify-center">
         {currentStep === 1 && (
-          <Greeting next={next} skip={doLater} name={profile.name ? profile.name : ""} session={session} />
+          <Greeting next={next} skip={doLater} name={user.name ? user.name : ""} session={session} />
         )}
         {currentStep === 2 && (
           <Role
@@ -96,12 +96,7 @@ export default function Onboarding({ session, environmentId, profile, product }:
           />
         )}
         {currentStep === 3 && (
-          <Objective
-            next={next}
-            skip={skipStep}
-            formbricksResponseId={formbricksResponseId}
-            profile={profile}
-          />
+          <Objective next={next} skip={skipStep} formbricksResponseId={formbricksResponseId} user={user} />
         )}
         {currentStep === 4 && (
           <Product done={done} environmentId={environmentId} isLoading={isLoading} product={product} />
