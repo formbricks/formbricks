@@ -1,9 +1,10 @@
 import { evaluateCondition } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/evaluateLogic";
+import { TimerIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { TimerIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface SummaryDropOffsProps {
   survey: TSurvey;

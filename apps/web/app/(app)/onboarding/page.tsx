@@ -1,9 +1,11 @@
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+
 import Onboarding from "./components/Onboarding";
 
 export default async function OnboardingPage() {

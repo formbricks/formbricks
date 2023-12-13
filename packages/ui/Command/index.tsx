@@ -1,10 +1,11 @@
 "use client";
 
-import * as React from "react";
 import { DialogProps } from "@radix-ui/react-dialog";
 import { Command as CommandPrimitive } from "cmdk";
+import * as React from "react";
 
 import { cn } from "@formbricks/lib/cn";
+
 import { Dialog, DialogContent } from "../Dialog";
 
 const Command = React.forwardRef<

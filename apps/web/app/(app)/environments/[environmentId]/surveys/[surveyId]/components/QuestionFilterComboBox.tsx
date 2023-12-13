@@ -1,17 +1,18 @@
 "use client";
 
+import clsx from "clsx";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import * as React from "react";
+
+import useClickOutside from "@formbricks/lib/useClickOutside";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { Command, CommandEmpty, CommandGroup, CommandItem } from "@formbricks/ui/Command";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Command, CommandGroup, CommandItem, CommandEmpty } from "@formbricks/ui/Command";
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import clsx from "clsx";
 
 type QuestionFilterComboBoxProps = {
   filterOptions: string[] | undefined;

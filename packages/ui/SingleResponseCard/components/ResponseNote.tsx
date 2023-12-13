@@ -1,18 +1,20 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
-import { timeSince } from "@formbricks/lib/time";
-import { TUser } from "@formbricks/types/user";
-import { TResponseNote } from "@formbricks/types/responses";
 import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+
+import { cn } from "@formbricks/lib/cn";
+import { timeSince } from "@formbricks/lib/time";
+import { TResponseNote } from "@formbricks/types/responses";
+import { TUser } from "@formbricks/types/user";
+
 import { Button } from "../../Button";
-import { resolveResponseNoteAction, updateResponseNoteAction, createResponseNoteAction } from "../actions";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
 
 interface ResponseNotesProps {
   user: TUser;

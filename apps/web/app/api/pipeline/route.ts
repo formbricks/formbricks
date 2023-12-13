@@ -1,17 +1,19 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendResponseFinishedEmail } from "@/app/lib/email";
-import { INTERNAL_SECRET } from "@formbricks/lib/constants";
-import { convertDatesInObject } from "@formbricks/lib/time";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
-import { TUserNotificationSettings } from "@formbricks/types/user";
-import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { handleIntegrations } from "./lib/handleIntegrations";
-import { getIntegrations } from "@formbricks/lib/integration/service";
+
 import { prisma } from "@formbricks/database";
+import { INTERNAL_SECRET } from "@formbricks/lib/constants";
+import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { convertDatesInObject } from "@formbricks/lib/time";
+import { ZPipelineInput } from "@formbricks/types/pipelines";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TUserNotificationSettings } from "@formbricks/types/user";
+
+import { handleIntegrations } from "./lib/handleIntegrations";
 
 export async function POST(request: Request) {
   // check authentication with x-api-key header and CRON_SECRET env variable

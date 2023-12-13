@@ -1,4 +1,8 @@
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import "server-only";
+import "server-only";
+import { z } from "zod";
 
 import { prisma } from "@formbricks/database";
 import type {
@@ -13,16 +17,13 @@ import {
   ZId,
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-import "server-only";
-import { z } from "zod";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getProducts } from "../product/service";
+import { getTeamsByUserId } from "../team/service";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
-import { formatDateFields } from "../utils/datetime";
-import { getTeamsByUserId } from "../team/service";
-import { getProducts } from "../product/service";
 
 export const getEnvironment = async (environmentId: string): Promise<TEnvironment | null> => {
   const environment = await unstable_cache(

@@ -1,12 +1,13 @@
 import MemberActions from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/MemberActions";
-import { EditMembershipRole } from "@formbricks/ee/RoleManagement/components/EditMembershipRole";
 import { isInviteExpired } from "@/app/lib/utils";
+import React from "react";
+
+import { EditMembershipRole } from "@formbricks/ee/RoleManagement/components/EditMembershipRole";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember, TMembershipRole } from "@formbricks/types/memberships";
 import { TTeam } from "@formbricks/types/teams";
-import { Badge } from "@formbricks/ui/Badge";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
-import React from "react";
+import { Badge } from "@formbricks/ui/Badge";
 
 type MembersInfoProps = {
   team: TTeam;

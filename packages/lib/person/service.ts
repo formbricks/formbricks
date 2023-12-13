@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import "server-only";
 
 import { prisma } from "@formbricks/database";
@@ -5,13 +7,12 @@ import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TPerson, TPersonUpdateInput, ZPerson, ZPersonUpdateInput } from "@formbricks/types/people";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+
+import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
-import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
-import { formatDateFields } from "../utils/datetime";
 
 export const selectPerson = {
   id: true,

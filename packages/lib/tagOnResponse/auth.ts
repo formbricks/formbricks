@@ -1,15 +1,16 @@
+import { unstable_cache } from "next/cache";
 import "server-only";
 
-import { validateInputs } from "../utils/validate";
-import { unstable_cache } from "next/cache";
 import { ZId } from "@formbricks/types/environment";
-import { canUserAccessResponse } from "../response/auth";
-import { canUserAccessTag } from "../tag/auth";
-import { tagOnResponseCache } from "./cache";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+
 import { getMembershipByUserIdTeamId } from "../../lib/membership/service";
 import { getAccessFlags } from "../../lib/membership/utils";
 import { getTeamByEnvironmentId } from "../../lib/team/service";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { canUserAccessResponse } from "../response/auth";
+import { canUserAccessTag } from "../tag/auth";
+import { validateInputs } from "../utils/validate";
+import { tagOnResponseCache } from "./cache";
 
 export const canUserAccessTagOnResponse = async (
   userId: string,

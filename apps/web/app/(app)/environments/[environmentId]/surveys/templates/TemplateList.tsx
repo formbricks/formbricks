@@ -1,19 +1,21 @@
 "use client";
 
 import { replacePresetPlaceholders } from "@/app/lib/templates";
-import { cn } from "@formbricks/lib/cn";
-import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct } from "@formbricks/types/product";
-import { TUser } from "@formbricks/types/user";
-import { TSurveyInput } from "@formbricks/types/surveys";
-import { TTemplate } from "@formbricks/types/templates";
-import { Button } from "@formbricks/ui/Button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+import { cn } from "@formbricks/lib/cn";
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TSurveyInput } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
+import { TUser } from "@formbricks/types/user";
+import { Button } from "@formbricks/ui/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+
 import { createSurveyAction } from "../actions";
 import { customSurvey, templates, testTemplate } from "./templates";
 

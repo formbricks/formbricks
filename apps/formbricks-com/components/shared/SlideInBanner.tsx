@@ -1,8 +1,9 @@
 import LFGLuigi from "@/images/blog/lfg-luigi-200px.webp";
-import { Button } from "@formbricks/ui/Button";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
+
+import { Button } from "@formbricks/ui/Button";
 
 interface Props {
   delay?: number;

@@ -1,12 +1,12 @@
 "use client";
 
-import { createContext, Fragment, Suspense, useContext, useEffect, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { Header } from "@/components/docs/Header";
 import { Dialog, Transition } from "@headlessui/react";
 import { motion } from "framer-motion";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Fragment, Suspense, createContext, useContext, useEffect, useRef } from "react";
 import { create } from "zustand";
 
-import { Header } from "@/components/docs/Header";
 import { Navigation } from "./Navigation";
 
 function MenuIcon(props: React.ComponentPropsWithoutRef<"svg">) {

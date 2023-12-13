@@ -1,20 +1,20 @@
 "use client";
 
-import { PasswordInput } from "@formbricks/ui/PasswordInput";
-import { Button } from "@formbricks/ui/Button";
+import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
+import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
+import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import TwoFactor from "@/app/(auth)/auth/login/components/TwoFactor";
+import TwoFactorBackup from "@/app/(auth)/auth/login/components/TwoFactorBackup";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useRef, useState, useEffect } from "react";
-import { Controller, SubmitHandler, useForm, FormProvider } from "react-hook-form";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Controller, FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { cn } from "@formbricks/lib/cn";
-import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
-import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
-import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
-import TwoFactor from "@/app/(auth)/auth/login/components/TwoFactor";
-import TwoFactorBackup from "@/app/(auth)/auth/login/components/TwoFactorBackup";
+import { Button } from "@formbricks/ui/Button";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
 
 type TSigninFormState = {
   email: string;

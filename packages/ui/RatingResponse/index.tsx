@@ -1,3 +1,5 @@
+import { StarIcon } from "@heroicons/react/24/solid";
+
 import {
   ConfusedFace,
   FrowningFace,
@@ -10,8 +12,6 @@ import {
   TiredFace,
   WearyFace,
 } from "../SingleResponseCard/components/Smileys";
-
-import { StarIcon } from "@heroicons/react/24/solid";
 
 interface RatingResponseProps {
   scale?: "number" | "star" | "smiley";

@@ -1,7 +1,8 @@
 import { getPlacementStyle } from "@/app/lib/preview";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
-import { ReactNode, useEffect, useMemo, useState, useRef } from "react";
 
 export default function Modal({
   children,

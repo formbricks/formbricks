@@ -2,6 +2,10 @@ import { UsageAttributesUpdater } from "@/app/(app)/components/FormbricksClient"
 import SurveyDropDownMenu from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyDropDownMenu";
 import SurveyStarter from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyStarter";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { getServerSession } from "next-auth";
+import Link from "next/link";
+
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -13,9 +17,6 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { Badge } from "@formbricks/ui/Badge";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
-import { ComputerDesktopIcon, LinkIcon, PlusIcon } from "@heroicons/react/24/solid";
-import { getServerSession } from "next-auth";
-import Link from "next/link";
 
 export default async function SurveysList({ environmentId }: { environmentId: string }) {
   const session = await getServerSession(authOptions);

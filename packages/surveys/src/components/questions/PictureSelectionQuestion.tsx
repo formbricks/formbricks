@@ -3,11 +3,13 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "preact/hooks";
+
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
-import { useEffect, useState } from "preact/hooks";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
   value: string | number | string[];

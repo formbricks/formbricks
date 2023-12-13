@@ -1,9 +1,10 @@
 "use client";
 
-import { env } from "@formbricks/lib/env.mjs";
 import { formbricksEnabled } from "@/app/lib/formbricks";
-import formbricks from "@formbricks/js";
 import { useEffect } from "react";
+
+import formbricks from "@formbricks/js";
+import { env } from "@formbricks/lib/env.mjs";
 
 type UsageAttributesUpdaterProps = {
   numSurveys: number;

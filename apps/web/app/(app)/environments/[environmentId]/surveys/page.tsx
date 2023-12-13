@@ -1,6 +1,8 @@
 import WidgetStatusIndicator from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { Metadata } from "next";
+
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+
 import SurveysList from "./components/SurveyList";
 
 export const metadata: Metadata = {

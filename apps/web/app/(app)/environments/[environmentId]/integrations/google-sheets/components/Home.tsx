@@ -1,5 +1,9 @@
 "use client";
+
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { useState } from "react";
+import toast from "react-hot-toast";
+
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
@@ -9,8 +13,6 @@ import {
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import { useState } from "react";
-import toast from "react-hot-toast";
 
 interface HomeProps {
   environment: TEnvironment;

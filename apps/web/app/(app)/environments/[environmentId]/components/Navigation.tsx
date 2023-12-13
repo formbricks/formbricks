@@ -1,6 +1,41 @@
 "use client";
 
 import FaveIcon from "@/app/favicon.ico";
+import { formbricksLogout } from "@/app/lib/formbricks";
+import {
+  AdjustmentsVerticalIcon,
+  ArrowRightOnRectangleIcon,
+  ChatBubbleBottomCenterTextIcon,
+  ChevronDownIcon,
+  CodeBracketIcon,
+  CreditCardIcon,
+  DocumentCheckIcon,
+  HeartIcon,
+  LinkIcon,
+  PaintBrushIcon,
+  PlusIcon,
+  UserCircleIcon,
+  UsersIcon,
+} from "@heroicons/react/24/solid";
+import clsx from "clsx";
+import { MenuIcon } from "lucide-react";
+import type { Session } from "next-auth";
+import { signOut } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+import formbricks from "@formbricks/js";
+import { cn } from "@formbricks/lib/cn";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProduct } from "@formbricks/types/product";
+import { TTeam } from "@formbricks/types/teams";
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,45 +51,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
-import UrlShortenerModal from "./UrlShortenerModal";
-import { formbricksLogout } from "@/app/lib/formbricks";
-import { capitalizeFirstLetter, truncate } from "@formbricks/lib/strings";
-import formbricks from "@formbricks/js";
-import { cn } from "@formbricks/lib/cn";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
-import { TTeam } from "@formbricks/types/teams";
-import { CustomersIcon, DashboardIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
-import {
-  AdjustmentsVerticalIcon,
-  ArrowRightOnRectangleIcon,
-  ChatBubbleBottomCenterTextIcon,
-  ChevronDownIcon,
-  CodeBracketIcon,
-  CreditCardIcon,
-  DocumentCheckIcon,
-  HeartIcon,
-  PaintBrushIcon,
-  PlusIcon,
-  UserCircleIcon,
-  UsersIcon,
-  LinkIcon,
-} from "@heroicons/react/24/solid";
-import clsx from "clsx";
-import { MenuIcon } from "lucide-react";
-import type { Session } from "next-auth";
-import { signOut } from "next-auth/react";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { CustomersIcon, DashboardIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
+
 import AddProductModal from "./AddProductModal";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import UrlShortenerModal from "./UrlShortenerModal";
 
 interface NavigationProps {
   environment: TEnvironment;

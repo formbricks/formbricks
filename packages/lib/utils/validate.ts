@@ -1,4 +1,5 @@
 import z from "zod";
+
 import { ValidationError } from "@formbricks/types/errors";
 
 type ValidationPair = [any, z.ZodSchema<any>];

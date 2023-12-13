@@ -1,4 +1,7 @@
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import "server-only";
+import { z } from "zod";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
@@ -6,9 +9,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-import { z } from "zod";
+
 import { IS_S3_CONFIGURED, ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { createEnvironment } from "../environment/service";

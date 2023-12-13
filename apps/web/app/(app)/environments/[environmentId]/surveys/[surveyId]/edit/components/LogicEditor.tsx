@@ -1,9 +1,15 @@
+import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { ChevronDown, SplitIcon } from "lucide-react";
+import { useMemo } from "react";
+import { toast } from "react-hot-toast";
+import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
+
 import {
   TSurvey,
   TSurveyLogic,
+  TSurveyLogicCondition,
   TSurveyQuestion,
   TSurveyQuestionType,
-  TSurveyLogicCondition,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import {
@@ -15,11 +21,6 @@ import {
 import { Label } from "@formbricks/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
-import { ChevronDown, SplitIcon } from "lucide-react";
-import { useMemo } from "react";
-import { toast } from "react-hot-toast";
-import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 interface LogicEditorProps {
   localSurvey: TSurvey;

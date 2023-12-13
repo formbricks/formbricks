@@ -5,17 +5,18 @@ import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
 import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { TResponse } from "@formbricks/types/responses";
-import type { Metadata } from "next";
-
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
-import { notFound } from "next/navigation";
+import { TResponse } from "@formbricks/types/responses";
+
 import { getEmailVerificationStatus } from "./lib/helpers";
 
 interface LinkSurveyPageProps {

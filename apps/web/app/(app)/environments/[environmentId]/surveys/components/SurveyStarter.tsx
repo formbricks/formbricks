@@ -1,15 +1,18 @@
 "use client";
-import { createSurveyAction } from "../actions";
+
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
+
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurveyInput } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "react-hot-toast";
 import { TUser } from "@formbricks/types/user";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+
+import { createSurveyAction } from "../actions";
 
 export default function SurveyStarter({
   environmentId,

@@ -1,7 +1,7 @@
+import CalComLogo from "@/images/cal-logo-light.svg";
+import Peer from "@/images/peer.webp";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import Peer from "@/images/peer.webp";
-import CalComLogo from "@/images/cal-logo-light.svg";
 
 export default function Testimonial() {
   return (

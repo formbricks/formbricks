@@ -1,11 +1,11 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { Button } from "@formbricks/ui/Button";
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Input } from "@formbricks/ui/Input";
-
 import { Label } from "@radix-ui/react-dropdown-menu";
 import clsx from "clsx";
 import { Control, Controller, UseFormRegister } from "react-hook-form";
+
+import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface PageUrlSelectorProps {
   isPageUrl: boolean;

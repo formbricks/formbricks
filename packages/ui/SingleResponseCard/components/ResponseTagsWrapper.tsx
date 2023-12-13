@@ -1,14 +1,16 @@
 "use client";
 
-import TagsCombobox from "../../TagsCombobox";
+import { Cog6ToothIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Tag } from "../../Tag";
-import { ExclamationCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
-import { useRouter } from "next/navigation";
-import { Button } from "../../Button";
+
 import { TTag } from "@formbricks/types/tags";
-import { createTagToResponeAction, createTagAction, deleteTagOnResponseAction } from "../actions";
+
+import { Button } from "../../Button";
+import { Tag } from "../../Tag";
+import TagsCombobox from "../../TagsCombobox";
+import { createTagAction, createTagToResponeAction, deleteTagOnResponseAction } from "../actions";
 
 interface ResponseTagsWrapperProps {
   tags: {

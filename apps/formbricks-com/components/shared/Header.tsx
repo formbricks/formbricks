@@ -1,5 +1,14 @@
 import GitHubMarkWhite from "@/images/github-mark-white.svg";
 import GitHubMarkDark from "@/images/github-mark.svg";
+import { Popover, Transition } from "@headlessui/react";
+import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
+import { usePlausible } from "next-plausible";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { Fragment, useEffect, useState } from "react";
+
 import { Button } from "@formbricks/ui/Button";
 import {
   BaseballIcon,
@@ -11,14 +20,7 @@ import {
   OnboardingIcon,
   PMFIcon,
 } from "@formbricks/ui/icons";
-import { Popover, Transition } from "@headlessui/react";
-import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
-import { usePlausible } from "next-plausible";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { Fragment, useEffect, useState } from "react";
+
 import { FooterLogo } from "./Logo";
 
 function GitHubIcon(props: any) {

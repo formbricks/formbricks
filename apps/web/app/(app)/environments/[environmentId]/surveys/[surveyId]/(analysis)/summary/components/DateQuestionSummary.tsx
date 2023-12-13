@@ -1,13 +1,14 @@
-import React, { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import { timeSince } from "@formbricks/lib/time";
-import type { TSurveyDateQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { questionTypes } from "@/app/lib/questions";
+import React, { useState } from "react";
+
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
+import type { TSurveyDateQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
 
 interface DateQuestionSummary {
   questionSummary: TSurveyQuestionSummary<TSurveyDateQuestion>;

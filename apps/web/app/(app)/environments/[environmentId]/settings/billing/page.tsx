@@ -1,6 +1,8 @@
-import { IS_FORMBRICKS_CLOUD, PRICING_APPSURVEYS_FREE_RESPONSES } from "@formbricks/lib/constants";
+import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { IS_FORMBRICKS_CLOUD, PRICING_APPSURVEYS_FREE_RESPONSES } from "@formbricks/lib/constants";
 import { PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -10,8 +12,7 @@ import {
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { getServerSession } from "next-auth";
-import { notFound } from "next/navigation";
+
 import SettingsTitle from "../components/SettingsTitle";
 import PricingTable from "./components/PricingTable";
 

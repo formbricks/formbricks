@@ -1,7 +1,8 @@
-import { TAllowedFileExtension } from "@formbricks/types/common";
 import { useMemo } from "preact/hooks";
 import { JSXInternal } from "preact/src/jsx";
 import { useState } from "react";
+
+import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 
 interface MultipleFileInputProps {

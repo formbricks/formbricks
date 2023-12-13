@@ -1,11 +1,12 @@
-import { authOptions } from "@formbricks/lib/authOptions";
-import { connectAirtable, fetchAirtableAuthToken } from "@formbricks/lib/airtable/service";
-import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { responses } from "@/app/lib/api/response";
 import * as z from "zod";
+
+import { connectAirtable, fetchAirtableAuthToken } from "@formbricks/lib/airtable/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 async function getEmail(token: string) {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {

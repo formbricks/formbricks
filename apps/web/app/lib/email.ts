@@ -1,4 +1,5 @@
 import { getQuestionResponseMapping } from "@/app/lib/responses/questionResponseMapping";
+
 import {
   MAIL_FROM,
   SMTP_HOST,
@@ -9,8 +10,9 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
 import { TResponse } from "@formbricks/types/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+
 import { withEmailTemplate } from "./email-template";
 
 const nodemailer = require("nodemailer");

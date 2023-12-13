@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
+
+import { Button } from "../Button";
 import { Command, CommandGroup, CommandInput, CommandItem } from "../Command";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
-import { Button } from "../Button";
-import { useEffect, useMemo } from "react";
 
 interface ITagsComboboxProps {
   tags: Tag[];

@@ -1,7 +1,9 @@
-import { getTeam } from "@formbricks/lib/team/service";
-import { StripePriceLookupKeys } from "./constants";
 import Stripe from "stripe";
+
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { getTeam } from "@formbricks/lib/team/service";
+
+import { StripePriceLookupKeys } from "./constants";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",

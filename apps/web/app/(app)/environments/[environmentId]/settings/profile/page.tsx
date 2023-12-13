@@ -1,8 +1,10 @@
 import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/profile/components/AccountSecurity";
+import { getServerSession } from "next-auth";
+
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsId } from "@formbricks/ui/SettingsId";
-import { getServerSession } from "next-auth";
+
 import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
 import { DeleteAccount } from "./components/DeleteAccount";

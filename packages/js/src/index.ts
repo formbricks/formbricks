@@ -1,4 +1,5 @@
 import { TJsConfigInput } from "@formbricks/types/js";
+
 import { trackAction } from "./lib/actions";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";

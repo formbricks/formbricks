@@ -1,7 +1,8 @@
-import { cn } from "@formbricks/lib/cn";
-import { PresentationChartLineIcon, InboxStackIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import revalidateSurveyIdPath from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { InboxStackIcon, PresentationChartLineIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+
+import { cn } from "@formbricks/lib/cn";
 
 interface SurveyResultsTabProps {
   activeId: string;

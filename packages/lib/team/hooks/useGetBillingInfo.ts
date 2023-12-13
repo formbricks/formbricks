@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
+
 import { TTeamBilling } from "@formbricks/types/teams";
-import { useState, useEffect } from "react";
+
 import { getTeamBillingInfoAction } from "./actions";
 
 export const useGetBillingInfo = (teamId: string) => {
