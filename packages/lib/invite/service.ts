@@ -10,6 +10,7 @@ import {
   ZInviteUpdateInput,
   ZCurrentUser,
   TCurrentUser,
+  ZInvite,
 } from "@formbricks/types/invites";
 import { ResourceNotFoundError, ValidationError, DatabaseError } from "@formbricks/types/errors";
 import { ZString, ZOptionalNumber } from "@formbricks/types/common";
@@ -18,8 +19,8 @@ import { validateInputs } from "../utils/validate";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { inviteCache } from "./cache";
-import { formatInviteDateFields } from "./util";
 import { getMembershipByUserIdTeamId } from "../membership/service";
+import { formatDateFields } from "../utils/datetime";
 
 const inviteSelect = {
   id: true,
@@ -33,8 +34,13 @@ const inviteSelect = {
   expiresAt: true,
   role: true,
 };
-
-export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[] | null> => {
+interface InviteWithCreator extends TInvite {
+  creator: {
+    name: string | null;
+    email: string;
+  };
+}
+export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[]> => {
   const invites = await unstable_cache(
     async () => {
       validateInputs([teamId, ZString], [page, ZOptionalNumber]);
@@ -52,8 +58,7 @@ export const getInvitesByTeamId = async (teamId: string, page?: number): Promise
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return invites.map(formatInviteDateFields);
+  return invites.map((invite: TInvite) => formatDateFields(invite, ZInvite));
 };
 
 export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite | null> => {
@@ -114,8 +119,8 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   }
 };
 
-export const getInvite = async (inviteId: string): Promise<{ inviteId: string; email: string }> =>
-  unstable_cache(
+export const getInvite = async (inviteId: string): Promise<InviteWithCreator> => {
+  const invite = await unstable_cache(
     async () => {
       validateInputs([inviteId, ZString]);
 
@@ -123,23 +128,29 @@ export const getInvite = async (inviteId: string): Promise<{ inviteId: string; e
         where: {
           id: inviteId,
         },
-        select: {
-          email: true,
+        include: {
+          creator: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
         },
       });
 
       if (!invite) {
         throw new ResourceNotFoundError("Invite", inviteId);
       }
-
-      return {
-        inviteId,
-        email: invite.email,
-      };
+      return invite;
     },
     [`getInvite-${inviteId}`],
     { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
+  return {
+    ...formatDateFields(invite, ZInvite),
+    creator: invite.creator,
+  };
+};
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {
   validateInputs([inviteId, ZString]);

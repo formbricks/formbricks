@@ -1,13 +1,15 @@
 import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 import {
+  ArrowUpTrayIcon,
   ChatBubbleBottomCenterTextIcon,
-  CheckIcon,
   CursorArrowRippleIcon,
   ListBulletIcon,
   PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
+  CheckIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { replaceQuestionPresetPlaceholders } from "./templates";
@@ -24,7 +26,7 @@ export const questionTypes: TSurveyQuestionType[] = [
   {
     id: QuestionId.OpenText,
     label: "Free text",
-    description: "A single line of text",
+    description: "Ask for a text-based answer",
     icon: ChatBubbleBottomCenterTextIcon,
     preset: {
       headline: "Who let the dogs out?",
@@ -66,7 +68,7 @@ export const questionTypes: TSurveyQuestionType[] = [
   {
     id: QuestionId.PictureSelection,
     label: "Picture Selection",
-    description: "Select one or more pictures",
+    description: "Ask respondents to select one or more pictures",
     icon: PhotoIcon,
     preset: {
       headline: "Which is the cutest puppy?",
@@ -87,7 +89,7 @@ export const questionTypes: TSurveyQuestionType[] = [
   {
     id: QuestionId.Rating,
     label: "Rating",
-    description: "Ask your users to rate something",
+    description: "Ask respondents for a rating",
     icon: StarIcon,
     preset: {
       headline: "How would you rate {{productName}}",
@@ -112,7 +114,7 @@ export const questionTypes: TSurveyQuestionType[] = [
   {
     id: QuestionId.CTA,
     label: "Call-to-Action",
-    description: "Ask your users to perform an action",
+    description: "Prompt respondents to perform an action",
     icon: CursorArrowRippleIcon,
     preset: {
       headline: "You are one of our power users!",
@@ -124,12 +126,32 @@ export const questionTypes: TSurveyQuestionType[] = [
   {
     id: QuestionId.Consent,
     label: "Consent",
-    description: "Ask your users to accept something",
+    description: "Ask respondents for consent",
     icon: CheckIcon,
     preset: {
       headline: "Terms and Conditions",
       label: "I agree to the terms and conditions",
       dismissButtonLabel: "Skip",
+    },
+  },
+  {
+    id: QuestionId.Date,
+    label: "Date",
+    description: "Ask your users to select a date",
+    icon: CalendarDaysIcon,
+    preset: {
+      headline: "When is your birthday?",
+      format: "M-d-y",
+    },
+  },
+  {
+    id: QuestionId.FileUpload,
+    label: "File Upload",
+    description: "Allow respondents to upload a file",
+    icon: ArrowUpTrayIcon,
+    preset: {
+      headline: "File Upload",
+      allowMultipleFiles: false,
     },
   },
 ];

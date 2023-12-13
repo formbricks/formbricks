@@ -1,7 +1,5 @@
 import "server-only";
-import path from "path";
-import { env } from "@/env.mjs";
-
+import { env } from "./env.mjs";
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
@@ -44,7 +42,7 @@ export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = env.GOOGLE_SHEETS_CLIENT_SECRET;
 export const GOOGLE_SHEETS_REDIRECT_URL = env.GOOGLE_SHEETS_REDIRECT_URL;
 
-export const AIR_TABLE_CLIENT_ID = env.AIR_TABLE_CLIENT_ID;
+export const AIRTABLE_CLIENT_ID = env.AIRTABLE_CLIENT_ID;
 
 export const SMTP_HOST = env.SMTP_HOST;
 export const SMTP_PORT = env.SMTP_PORT;
@@ -57,10 +55,14 @@ export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
 export const RESPONSES_PER_PAGE = 10;
-export const OPEN_TEXT_RESPONSES_PER_PAGE = 5;
+export const TEXT_RESPONSES_PER_PAGE = 5;
+
+export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
+export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE || "";
+export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
 
 // Storage constants
-export const UPLOADS_DIR = path.resolve("./uploads");
+export const UPLOADS_DIR = "./uploads";
 export const MAX_SIZES = {
   public: 1024 * 1024 * 10, // 10MB
   free: 1024 * 1024 * 10, // 10MB
@@ -68,7 +70,52 @@ export const MAX_SIZES = {
 } as const;
 export const IS_S3_CONFIGURED: boolean =
   env.S3_ACCESS_KEY && env.S3_SECRET_KEY && env.S3_REGION && env.S3_BUCKET_NAME ? true : false;
-export const LOCAL_UPLOAD_URL = {
-  public: new URL(`${WEBAPP_URL}/api/v1/management/storage/local`).href,
-  private: new URL(`${WEBAPP_URL}/api/v1/client/storage/local`).href,
-} as const;
+
+// Pricing
+export const PRICING_USERTARGETING_FREE_MTU = 2500;
+export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
+
+// Colors for Survey Bg
+export const colours = [
+  "#FFF2D8",
+  "#EAD7BB",
+  "#BCA37F",
+  "#113946",
+  "#04364A",
+  "#176B87",
+  "#64CCC5",
+  "#DAFFFB",
+  "#132043",
+  "#1F4172",
+  "#F1B4BB",
+  "#FDF0F0",
+  "#001524",
+  "#445D48",
+  "#D6CC99",
+  "#FDE5D4",
+  "#BEADFA",
+  "#D0BFFF",
+  "#DFCCFB",
+  "#FFF8C9",
+  "#FF8080",
+  "#FFCF96",
+  "#F6FDC3",
+  "#CDFAD5",
+];
+
+// Rate Limiting
+export const SIGNUP_RATE_LIMIT = {
+  interval: 60 * 60 * 1000, // 60 minutes
+  allowedPerInterval: 30,
+};
+export const LOGIN_RATE_LIMIT = {
+  interval: 15 * 60 * 1000, // 15 minutes
+  allowedPerInterval: 30,
+};
+export const CLIENT_SIDE_API_RATE_LIMIT = {
+  interval: 10 * 15 * 1000, // 15 minutes
+  allowedPerInterval: 60,
+};
+
+// Enterprise License constant
+export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;

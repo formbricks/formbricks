@@ -20,20 +20,20 @@ import { z } from "zod";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
-import { formatEnvironmentDateFields } from "./util";
+import { formatDateFields } from "../utils/datetime";
 
-export const getEnvironment = (environmentId: string) =>
-  unstable_cache(
-    async (): Promise<TEnvironment> => {
+export const getEnvironment = async (environmentId: string): Promise<TEnvironment | null> => {
+  const environment = await unstable_cache(
+    async () => {
       validateInputs([environmentId, ZId]);
-      let environmentPrisma;
 
       try {
-        environmentPrisma = await prisma.environment.findUnique({
+        const environment = await prisma.environment.findUnique({
           where: {
             id: environmentId,
           },
         });
+        return environment;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
@@ -42,16 +42,6 @@ export const getEnvironment = (environmentId: string) =>
 
         throw error;
       }
-
-      try {
-        const environment = ZEnvironment.parse(environmentPrisma);
-        return environment;
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          console.error(JSON.stringify(error.errors, null, 2));
-        }
-        throw new ValidationError("Data validation of environment failed");
-      }
     },
     [`getEnvironment-${environmentId}`],
     {
@@ -59,9 +49,11 @@ export const getEnvironment = (environmentId: string) =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return environment ? formatDateFields(environment, ZEnvironment) : null;
+};
 
-export const getEnvironments = async (productId: string): Promise<TEnvironment[]> =>
-  unstable_cache(
+export const getEnvironments = async (productId: string): Promise<TEnvironment[]> => {
+  const environments = await unstable_cache(
     async (): Promise<TEnvironment[]> => {
       validateInputs([productId, ZId]);
       let productPrisma;
@@ -106,6 +98,8 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return environments.map((environment) => formatDateFields(environment, ZEnvironment));
+};
 
 export const updateEnvironment = async (
   environmentId: string,
@@ -141,7 +135,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
     async () => {
       validateInputs([userId, ZId]);
       try {
-        return await prisma.environment.findFirst({
+        const environment = await prisma.environment.findFirst({
           where: {
             type: "production",
             product: {
@@ -155,6 +149,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
             },
           },
         });
+        return environment;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -170,7 +165,7 @@ export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvi
     }
   )();
 
-  return environment ? formatEnvironmentDateFields(environment) : environment;
+  return environment ? formatDateFields(environment, ZEnvironment) : null;
 };
 
 export const createEnvironment = async (
@@ -184,7 +179,7 @@ export const createEnvironment = async (
       type: environmentInput.type || "development",
       product: { connect: { id: productId } },
       widgetSetupCompleted: environmentInput.widgetSetupCompleted || false,
-      eventClasses: {
+      actionClasses: {
         create: [
           {
             name: "New Session",

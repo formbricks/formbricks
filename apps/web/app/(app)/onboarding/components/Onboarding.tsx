@@ -1,5 +1,8 @@
 "use client";
 
+import { updateUserAction } from "@/app/(app)/onboarding/actions";
+import { TProduct } from "@formbricks/types/product";
+import { TUser } from "@formbricks/types/user";
 import { Logo } from "@formbricks/ui/Logo";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { Session } from "next-auth";
@@ -10,20 +13,17 @@ import Greeting from "./Greeting";
 import Objective from "./Objective";
 import Product from "./Product";
 import Role from "./Role";
-import { TProfile } from "@formbricks/types/profile";
-import { TProduct } from "@formbricks/types/product";
-import { updateProfileAction } from "@/app/(app)/onboarding/actions";
 
 const MAX_STEPS = 6;
 
 interface OnboardingProps {
-  session: Session | null;
+  session: Session;
   environmentId: string;
-  profile: TProfile;
+  user: TUser;
   product: TProduct;
 }
 
-export default function Onboarding({ session, environmentId, profile, product }: OnboardingProps) {
+export default function Onboarding({ session, environmentId, user, product }: OnboardingProps) {
   const [formbricksResponseId, setFormbricksResponseId] = useState<string | undefined>();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,8 +53,8 @@ export default function Onboarding({ session, environmentId, profile, product }:
     setIsLoading(true);
 
     try {
-      const updatedProfile = { ...profile, onboardingCompleted: true };
-      await updateProfileAction(updatedProfile);
+      const updatedProfile = { ...user, onboardingCompleted: true };
+      await updateUserAction(updatedProfile);
 
       if (environmentId) {
         router.push(`/environments/${environmentId}/surveys`);
@@ -75,7 +75,7 @@ export default function Onboarding({ session, environmentId, profile, product }:
         </div>
         <div className="col-span-2 flex items-center justify-center gap-8">
           <div className="relative grow overflow-hidden rounded-full bg-slate-200">
-            <ProgressBar progress={percent} barColor="bg-brand" height={2} />
+            <ProgressBar progress={percent} barColor="bg-brand-dark" height={2} />
           </div>
           <div className="grow-0 text-xs font-semibold text-slate-700">
             {currentStep < 5 ? <>{Math.floor(percent * 100)}% complete</> : <>Almost there!</>}
@@ -85,23 +85,18 @@ export default function Onboarding({ session, environmentId, profile, product }:
       </div>
       <div className="flex grow items-center justify-center">
         {currentStep === 1 && (
-          <Greeting next={next} skip={doLater} name={profile.name ? profile.name : ""} session={session} />
+          <Greeting next={next} skip={doLater} name={user.name ? user.name : ""} session={session} />
         )}
         {currentStep === 2 && (
           <Role
             next={next}
             skip={skipStep}
             setFormbricksResponseId={setFormbricksResponseId}
-            profile={profile}
+            session={session}
           />
         )}
         {currentStep === 3 && (
-          <Objective
-            next={next}
-            skip={skipStep}
-            formbricksResponseId={formbricksResponseId}
-            profile={profile}
-          />
+          <Objective next={next} skip={skipStep} formbricksResponseId={formbricksResponseId} user={user} />
         )}
         {currentStep === 4 && (
           <Product done={done} environmentId={environmentId} isLoading={isLoading} product={product} />

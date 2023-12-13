@@ -3,7 +3,7 @@
 import { timeSince } from "@formbricks/lib/time";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -25,11 +25,16 @@ import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { PictureSelectionResponse } from "../PictureSelectionResponse";
+import { FileUploadResponse } from "../FileUploadResponse";
+import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { LoadingWrapper } from "../LoadingWrapper";
+import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
-  profile: TProfile;
+  user: TUser;
   pageType: string;
   environmentTags: TTag[];
   environment: TEnvironment;
@@ -57,10 +62,17 @@ function TooltipRenderer(props: TooltipRendererProps) {
   return <>{children}</>;
 }
 
+function DateResponse({ date }: { date?: string }) {
+  if (!date) return null;
+
+  const formattedDateString = formatDateWithOrdinal(new Date(date));
+  return <p className="ph-no-capture my-1 font-semibold text-slate-700">{formattedDateString}</p>;
+}
+
 export default function SingleResponseCard({
   survey,
   response,
-  profile,
+  user,
   pageType,
   environmentTags,
   environment,
@@ -74,6 +86,9 @@ export default function SingleResponseCard({
   const isSubmissionFresh = isSubmissionTimeLessThan5Minutes(response.updatedAt);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
+  const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
+  const { isViewer } = getAccessFlags(membershipRole);
+  const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
 
   function isValidValue(value: any) {
     return (
@@ -128,6 +143,9 @@ export default function SingleResponseCard({
   const handleDeleteSubmission = async () => {
     setIsDeleting(true);
     try {
+      if (isViewer) {
+        throw new Error("You are not authorized to perform this action.");
+      }
       await deleteResponseAction(response.id);
       router.refresh();
       toast.success("Submission deleted successfully.");
@@ -246,80 +264,94 @@ export default function SingleResponseCard({
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
-              <TooltipRenderer
-                shouldRender={isSubmissionFresh || !response.finished}
-                tooltipContent={deleteSubmissionToolTip}>
-                <TrashIcon
-                  onClick={() => {
-                    if (!isSubmissionFresh || !response.finished) {
-                      setDeleteDialogOpen(true);
-                    }
-                  }}
-                  className={`h-4 w-4 ${
-                    isSubmissionFresh || !response.finished
-                      ? "cursor-not-allowed text-gray-400"
-                      : "text-slate-500 hover:text-red-700"
-                  } `}
-                />
-              </TooltipRenderer>
+              {!isViewer && (
+                <TooltipRenderer shouldRender={isSubmissionFresh} tooltipContent={deleteSubmissionToolTip}>
+                  <TrashIcon
+                    onClick={() => {
+                      if (!isSubmissionFresh) {
+                        setDeleteDialogOpen(true);
+                      }
+                    }}
+                    className={`h-4 w-4 ${
+                      isSubmissionFresh
+                        ? "cursor-not-allowed text-gray-400"
+                        : "text-slate-500 hover:text-red-700"
+                    } `}
+                  />
+                </TooltipRenderer>
+              )}
             </div>
           </div>
         </div>
-        <div className="space-y-6 rounded-b-lg bg-white p-6">
-          {survey.questions.map((question) => {
-            const skipped = skippedQuestions.find((skippedQuestionElement) =>
-              skippedQuestionElement.includes(question.id)
-            );
+        <div className="rounded-b-lg bg-white p-6">
+          {survey.welcomeCard.enabled && (
+            <QuestionSkip
+              skippedQuestions={[]}
+              questions={survey.questions}
+              status={"welcomeCard"}
+              isFirstQuestionAnswered={isFirstQuestionAnswered}
+            />
+          )}
+          <div className="space-y-6">
+            {survey.questions.map((question) => {
+              const skipped = skippedQuestions.find((skippedQuestionElement) =>
+                skippedQuestionElement.includes(question.id)
+              );
 
-            // If found, remove it from the list
-            if (skipped) {
-              skippedQuestions = skippedQuestions.filter((item) => item !== skipped);
-            }
+              // If found, remove it from the list
+              if (skipped) {
+                skippedQuestions = skippedQuestions.filter((item) => item !== skipped);
+              }
 
-            return (
-              <div key={`${question.id}`}>
-                {isValidValue(response.data[question.id]) ? (
-                  <p className="text-sm text-slate-500">{question.headline}</p>
-                ) : (
-                  <QuestionSkip
-                    skippedQuestions={skipped}
-                    questions={survey.questions}
-                    status={
-                      response.finished ||
-                      (skippedQuestions.length > 0 &&
-                        !skippedQuestions[skippedQuestions.length - 1].includes(question.id))
-                        ? "skipped"
-                        : "aborted"
-                    }
-                  />
-                )}
-                {typeof response.data[question.id] !== "object" ? (
-                  question.type === TSurveyQuestionType.Rating ? (
-                    <div>
-                      <RatingResponse
-                        scale={question.scale}
-                        answer={response.data[question.id]}
-                        range={question.range}
-                      />
-                    </div>
+              return (
+                <div key={`${question.id}`}>
+                  {isValidValue(response.data[question.id]) ? (
+                    <p className="text-sm text-slate-500">{question.headline}</p>
+                  ) : (
+                    <QuestionSkip
+                      skippedQuestions={skipped}
+                      questions={survey.questions}
+                      status={
+                        response.finished ||
+                        (skippedQuestions.length > 0 &&
+                          !skippedQuestions[skippedQuestions.length - 1].includes(question.id))
+                          ? "skipped"
+                          : "aborted"
+                      }
+                    />
+                  )}
+                  {typeof response.data[question.id] !== "object" ? (
+                    question.type === TSurveyQuestionType.Rating ? (
+                      <div>
+                        <RatingResponse
+                          scale={question.scale}
+                          answer={response.data[question.id]}
+                          range={question.range}
+                        />
+                      </div>
+                    ) : question.type === TSurveyQuestionType.Date ? (
+                      <DateResponse date={response.data[question.id] as string} />
+                    ) : (
+                      <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                        {response.data[question.id]}
+                      </p>
+                    )
+                  ) : question.type === TSurveyQuestionType.PictureSelection ? (
+                    <PictureSelectionResponse
+                      choices={question.choices}
+                      selected={response.data[question.id]}
+                    />
+                  ) : question.type === TSurveyQuestionType.FileUpload ? (
+                    <FileUploadResponse selected={response.data[question.id]} />
                   ) : (
                     <p className="ph-no-capture my-1 font-semibold text-slate-700">
-                      {response.data[question.id]}
+                      {handleArray(response.data[question.id])}
                     </p>
-                  )
-                ) : question.type === TSurveyQuestionType.PictureSelection ? (
-                  <PictureSelectionResponse
-                    choices={question.choices}
-                    selected={response.data[question.id]}
-                  />
-                ) : (
-                  <p className="ph-no-capture my-1 font-semibold text-slate-700">
-                    {handleArray(response.data[question.id])}
-                  </p>
-                )}
-              </div>
-            );
-          })}
+                  )}
+                </div>
+              );
+            })}
+          </div>
           {hasHiddenFieldsEnabled && hasFieldIds && (
             <div className="mt-6 flex flex-col gap-6">
               {fieldIds.map((field) => {
@@ -333,19 +365,23 @@ export default function SingleResponseCard({
             </div>
           )}
           {response.finished && (
-            <div className="flex">
+            <div className="mt-4 flex">
               <CheckCircleIcon className="h-6 w-6 text-slate-400" />
               <p className="mx-2 rounded-lg bg-slate-100 px-2 text-slate-700">Completed</p>
             </div>
           )}
         </div>
 
-        <ResponseTagsWrapper
-          environmentId={environmentId}
-          responseId={response.id}
-          tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-          environmentTags={environmentTags}
-        />
+        <LoadingWrapper isLoading={isLoading} error={error}>
+          {!isViewer && (
+            <ResponseTagsWrapper
+              environmentId={environmentId}
+              responseId={response.id}
+              tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+              environmentTags={environmentTags}
+            />
+          )}
+        </LoadingWrapper>
 
         <DeleteDialog
           open={deleteDialogOpen}
@@ -357,7 +393,7 @@ export default function SingleResponseCard({
       </div>
       {pageType === "response" && (
         <ResponseNotes
-          profile={profile}
+          user={user}
           responseId={response.id}
           notes={response.notes}
           isOpen={isOpen}

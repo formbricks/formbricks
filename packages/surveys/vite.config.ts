@@ -1,22 +1,35 @@
 import { resolve } from "path";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import preact from "@preact/preset-vite";
 import dts from "vite-plugin-dts";
+import tsconfigPaths from "vite-tsconfig-paths";
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  build: {
-    emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
-    minify: "terser",
-    sourcemap: true,
-    lib: {
-      // Could also be a dictionary or array of multiple entry points
-      entry: resolve(__dirname, "src/index.ts"),
-      name: "formbricks-surveys",
-      formats: ["cjs", "es", "umd"],
-      // the proper extensions will be added
-      fileName: "index",
+const buildPackage = process.env.SURVEYS_PACKAGE_BUILD || "surveys";
+
+const entryPoint = buildPackage === "surveys" ? "src/index.ts" : "src/sideload/question-date/index.tsx";
+const name = buildPackage === "surveys" ? "formbricks-surveys" : "formbricks-question-date";
+const fileName = buildPackage === "surveys" ? "index" : "question-date";
+
+const config = ({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+
+  return defineConfig({
+    define: {
+      "process.env": env,
     },
-  },
-  plugins: [preact(), dts({ rollupTypes: true })],
-});
+    build: {
+      emptyOutDir: false,
+      minify: "terser",
+      sourcemap: true,
+      lib: {
+        entry: resolve(__dirname, entryPoint),
+        name,
+        formats: ["cjs", "es", "umd"],
+        fileName,
+      },
+    },
+    plugins: [preact(), dts({ rollupTypes: true }), tsconfigPaths()],
+  });
+};
+
+export default config;

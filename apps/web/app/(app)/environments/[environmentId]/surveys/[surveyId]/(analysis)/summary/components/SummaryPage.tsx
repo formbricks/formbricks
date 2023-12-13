@@ -11,12 +11,13 @@ import { useEffect, useMemo, useState } from "react";
 import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { useSearchParams } from "next/navigation";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SummaryPageProps {
   environment: TEnvironment;
@@ -25,10 +26,11 @@ interface SummaryPageProps {
   responses: TResponse[];
   webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
   environmentTags: TTag[];
   displayCount: number;
-  openTextResponsesPerPage: number;
+  responsesPerPage: number;
+  membershipRole?: TMembershipRole;
 }
 
 const SummaryPage = ({
@@ -38,10 +40,11 @@ const SummaryPage = ({
   responses,
   webAppUrl,
   product,
-  profile,
+  user,
   environmentTags,
   displayCount,
-  openTextResponsesPerPage,
+  responsesPerPage,
+  membershipRole,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
@@ -66,7 +69,8 @@ const SummaryPage = ({
         surveyId={surveyId}
         webAppUrl={webAppUrl}
         product={product}
-        profile={profile}
+        user={user}
+        membershipRole={membershipRole}
       />
       <CustomFilter
         environmentTags={environmentTags}
@@ -87,7 +91,7 @@ const SummaryPage = ({
         responses={filterResponses}
         survey={survey}
         environment={environment}
-        openTextResponsesPerPage={openTextResponsesPerPage}
+        responsesPerPage={responsesPerPage}
       />
     </ContentWrapper>
   );

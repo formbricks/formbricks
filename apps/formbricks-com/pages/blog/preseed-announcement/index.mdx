@@ -1,0 +1,56 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import AuthorBox from "@/components/shared/AuthorBox";
+import Preseed from "./preseed-header.webp";
+
+export const meta = {
+  title: "We raised Pre-Seed Funding 💸",
+  description:
+    "We’re delighted to announce that Formbricks successfully acquired pre-seed funding in May 2023.",
+  date: "2023-11-01",
+  publishedTime: "2023-11-01T12:00:00",
+  authors: ["Johannes"],
+  section: "Open Source Surveys",
+  tags: ["Open Source Surveys", "Formbricks", "Typeform", "SurveyJS", "Typebot", "OpnForm", "LimeSurvey"],
+};
+
+<Image
+  src={Preseed}
+  alt="Formbricks raises a preseed round led by OSS Capital"
+  className="w-full rounded-lg"
+/>
+
+_We’re delighted to announce that Formbricks successfully acquired pre-seed funding in May 2023._
+
+<AuthorBox name="Johannes" title="Co-Founder" date="November 1st, 2023" duration="2" />
+
+The Formbricks pre-seed round was led by [OSS Capital](https://oss.capital/portfolio) with participation of Peer Richelsen, co-founder at [Cal.com](http://Cal.com), as well as other angel investors.
+
+## OSS Capital leads the round
+
+We are both humbled and excited to have won such highly specialized and experienced investors for our mission! This influx of capital allows us to be even more ambitious in shaping the future of Experience Management globally.
+
+We are on a mission to enable organizations to **gather, analyze and leverage** qualitative data to improve customer experience from first principles. Building Open Source uniquely allows us to offer a privacy-first solution which can be natively embedded into existing products and services.
+
+Even in large organizations, every product decision **can** be based on user insight. We make that possible.
+
+## How it started, and how it's going
+
+Matti and Johannes kicked this off as a side project a good year ago. Today, we have several thousand users collecting valuable insights with both in-product surveys and standalone surveys.
+
+Over the past couple of months, we gathered:
+
+- 4.000+ GitHub stars ⭐
+- 3.200+ Dockerhub clones 🐳
+- 750+ Discord Members 👻
+- 120+ community contributors 👨‍👩‍👧
+
+… and we are just warming up!
+
+Our journey has just begun, and with the support of our investors and the enthusiasm of our community, we can’t wait to see where we stand 6 months from now!
+
+## Onwards,
+
+The Formbricks Team 🤍
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

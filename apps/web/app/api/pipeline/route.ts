@@ -4,7 +4,7 @@ import { sendResponseFinishedEmail } from "@/app/lib/email";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
-import { TUserNotificationSettings } from "@formbricks/types/users";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";

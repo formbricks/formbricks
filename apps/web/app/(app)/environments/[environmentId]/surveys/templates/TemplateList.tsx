@@ -4,7 +4,7 @@ import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { cn } from "@formbricks/lib/cn";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { TSurveyInput } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/Button";
@@ -15,11 +15,11 @@ import { SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createSurveyAction } from "../actions";
-import { customSurvey, templates } from "./templates";
+import { customSurvey, templates, testTemplate } from "./templates";
 
 type TemplateList = {
   environmentId: string;
-  profile: TProfile;
+  user: TUser;
   onTemplateClick: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
@@ -30,7 +30,7 @@ const ALL_CATEGORY_NAME = "All";
 const RECOMMENDED_CATEGORY_NAME = "For you";
 export default function TemplateList({
   environmentId,
-  profile,
+  user,
   onTemplateClick,
   product,
   environment,
@@ -50,7 +50,7 @@ export default function TemplateList({
     ];
 
     const fullCategories =
-      !!profile?.objective && profile.objective !== "other"
+      !!user?.objective && user.objective !== "other"
         ? [RECOMMENDED_CATEGORY_NAME, ALL_CATEGORY_NAME, ...defaultCategories]
         : [ALL_CATEGORY_NAME, ...defaultCategories];
 
@@ -58,11 +58,11 @@ export default function TemplateList({
 
     const activeFilter = templateSearch
       ? ALL_CATEGORY_NAME
-      : !!profile?.objective && profile.objective !== "other"
+      : !!user?.objective && user.objective !== "other"
       ? RECOMMENDED_CATEGORY_NAME
       : ALL_CATEGORY_NAME;
     setSelectedFilter(activeFilter);
-  }, [profile, templateSearch]);
+  }, [user, templateSearch]);
 
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
@@ -81,9 +81,9 @@ export default function TemplateList({
     const matchesCategory =
       selectedFilter === ALL_CATEGORY_NAME ||
       template.category === selectedFilter ||
-      (profile.objective &&
+      (user.objective &&
         selectedFilter === RECOMMENDED_CATEGORY_NAME &&
-        template.objectives?.includes(profile.objective));
+        template.objectives?.includes(user.objective));
 
     const templateName = template.name?.toLowerCase();
     const templateDescription = template.description?.toLowerCase();
@@ -147,7 +147,10 @@ export default function TemplateList({
             </div>
           )}
         </button>
-        {filteredTemplates.map((template: TTemplate) => (
+        {(process.env.NODE_ENV === "development"
+          ? [...filteredTemplates, testTemplate]
+          : filteredTemplates
+        ).map((template: TTemplate) => (
           <div
             onClick={() => {
               const newTemplate = replacePresetPlaceholders(template, product);

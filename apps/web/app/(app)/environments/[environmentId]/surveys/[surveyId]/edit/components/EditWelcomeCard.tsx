@@ -157,7 +157,7 @@ export default function EditWelcomeCard({
                 </div>
               </div>
             </div>
-            {/*             <div className="mt-8 flex items-center">
+            <div className="mt-8 flex items-center">
               <div className="mr-2">
                 <Switch
                   id="timeToFinish"
@@ -176,7 +176,29 @@ export default function EditWelcomeCard({
                   Display an estimate of completion time for survey
                 </div>
               </div>
-            </div> */}
+            </div>
+            {localSurvey?.type === "link" && (
+              <div className="mt-6 flex items-center">
+                <div className="mr-2">
+                  <Switch
+                    id="showResponseCount"
+                    name="showResponseCount"
+                    checked={localSurvey?.welcomeCard?.showResponseCount}
+                    onCheckedChange={() =>
+                      updateSurvey({ showResponseCount: !localSurvey.welcomeCard.showResponseCount })
+                    }
+                  />
+                </div>
+                <div className="flex-column">
+                  <Label htmlFor="showResponseCount" className="">
+                    Show Response Count
+                  </Label>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Display number of responses for survey
+                  </div>
+                </div>
+              </div>
+            )}
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

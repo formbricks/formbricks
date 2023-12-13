@@ -10,8 +10,8 @@ import { createPresignedPost, PresignedPostOptions } from "@aws-sdk/s3-presigned
 import { access, mkdir, writeFile, readFile, unlink, rmdir } from "fs/promises";
 import { join } from "path";
 import mime from "mime";
-import { env } from "@/env.mjs";
-import { IS_S3_CONFIGURED, LOCAL_UPLOAD_URL, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
+import { env } from "../env.mjs";
+import { IS_S3_CONFIGURED, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
 import { unstable_cache } from "next/cache";
 import { storageCache } from "./cache";
 import { TAccessType } from "@formbricks/types/storage";
@@ -67,10 +67,9 @@ type TGetSignedUrlResponse =
       };
     };
 
-export const getS3File = (fileKey: string): Promise<string> => {
+const getS3SignedUrl = async (fileKey: string): Promise<string> => {
   const [_, accessType] = fileKey.split("/");
   const expiresIn = accessType === "public" ? 60 * 60 : 10 * 60;
-
   const revalidateAfter = accessType === "public" ? expiresIn - 60 * 5 : expiresIn - 60 * 2;
 
   return unstable_cache(
@@ -92,6 +91,52 @@ export const getS3File = (fileKey: string): Promise<string> => {
       tags: [storageCache.tag.byFileKey(fileKey)],
     }
   )();
+};
+
+export const getS3File = async (fileKey: string): Promise<string> => {
+  const signedUrl = await getS3SignedUrl(fileKey);
+
+  // The logic below is to check if the signed url has expired.
+  // We do this by parsing the X-Amz-Date and Expires query parameters from the signed url
+  // and checking if the current time is past the expiration time.
+  // If it is, we generate a new signed url and return that instead.
+  // We do this because the time-based revalidation for the signed url is not working as expected. (mayve a bug in next.js caching?)
+
+  const amzDate = signedUrl.match(/X-Amz-Date=(.*?)&/)?.[1];
+  const amzExpires = signedUrl.match(/X-Amz-Expires=(.*?)&/)?.[1];
+
+  if (amzDate && amzExpires) {
+    // Parse the X-Amz-Date and calculate the expiration date
+    const expiryDate = new Date(
+      Date.UTC(
+        parseInt(amzDate.slice(0, 4), 10), // year
+        parseInt(amzDate.slice(4, 6), 10) - 1, // month (0-indexed)
+        parseInt(amzDate.slice(6, 8), 10), // day
+        parseInt(amzDate.slice(9, 11), 10), // hour
+        parseInt(amzDate.slice(11, 13), 10), // minute
+        parseInt(amzDate.slice(13, 15), 10) // second
+      )
+    );
+
+    const expiryDateSeconds = expiryDate.getSeconds();
+    const expiresSeconds = parseInt(amzExpires, 10);
+
+    expiryDate.setSeconds(expiryDateSeconds + expiresSeconds);
+
+    // Get the current UTC time
+    const now = new Date();
+
+    // Check if the current time is past the expiration time
+    const isExpired = now > expiryDate;
+
+    if (isExpired) {
+      // generate a new signed url
+      storageCache.revalidate({ fileKey });
+      return await getS3SignedUrl(fileKey);
+    }
+  }
+
+  return signedUrl;
 };
 
 export const getLocalFile = async (filePath: string): Promise<TGetFileResponse> => {
@@ -130,7 +175,10 @@ export const getUploadSignedUrl = async (
       const { signature, timestamp, uuid } = generateLocalSignedUrl(fileName, environmentId, fileType);
 
       return {
-        signedUrl: LOCAL_UPLOAD_URL[accessType],
+        signedUrl:
+          accessType === "private"
+            ? new URL(`${WEBAPP_URL}/api/v1/client/${environmentId}/storage/local`).href
+            : new URL(`${WEBAPP_URL}/api/v1/management/storage/local`).href,
         signingData: {
           signature,
           timestamp,
