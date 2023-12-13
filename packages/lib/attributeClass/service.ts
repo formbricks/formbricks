@@ -5,6 +5,7 @@ import {
   ZAttributeClassUpdateInput,
   TAttributeClassType,
   ZAttributeClassType,
+  ZAttributeClass,
 } from "@formbricks/types/attributeClasses";
 import { ZId } from "@formbricks/types/environment";
 import { validateInputs } from "../utils/validate";
@@ -13,7 +14,7 @@ import { unstable_cache } from "next/cache";
 import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { attributeClassCache } from "./cache";
-import { formatAttributeClassDateFields } from "./util";
+import { formatDateFields } from "../utils/datetime";
 
 export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> => {
   const attributeClass = await unstable_cache(
@@ -37,11 +38,7 @@ export const getAttributeClass = async (attributeClassId: string): Promise<TAttr
     }
   )();
 
-  if (!attributeClass) {
-    return null;
-  }
-
-  return formatAttributeClassDateFields(attributeClass);
+  return attributeClass ? formatDateFields(attributeClass, ZAttributeClass) : null;
 };
 
 export const getAttributeClasses = async (
@@ -77,8 +74,7 @@ export const getAttributeClasses = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return attributeClasses.map(formatAttributeClassDateFields);
+  return attributeClasses.map((attributeClass) => formatDateFields(attributeClass, ZAttributeClass));
 };
 
 export const updateAttributeClass = async (
@@ -110,17 +106,19 @@ export const updateAttributeClass = async (
   }
 };
 
-export const getAttributeClassByName = async (environmentId: string, name: string) =>
-  await unstable_cache(
+export const getAttributeClassByName = async (environmentId: string, name: string) => {
+  const attributeClass = await unstable_cache(
     async (): Promise<TAttributeClass | null> => {
       validateInputs([environmentId, ZId], [name, ZString]);
 
-      return await prisma.attributeClass.findFirst({
+      const attributeClass = await prisma.attributeClass.findFirst({
         where: {
           environmentId,
           name,
         },
       });
+
+      return attributeClass;
     },
     [`getAttributeClassByName-${environmentId}-${name}`],
     {
@@ -128,6 +126,8 @@ export const getAttributeClassByName = async (environmentId: string, name: strin
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return attributeClass ? formatDateFields(attributeClass, ZAttributeClass) : null;
+};
 
 export const createAttributeClass = async (
   environmentId: string,

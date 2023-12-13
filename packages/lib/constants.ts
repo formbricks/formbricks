@@ -57,6 +57,10 @@ export const ITEMS_PER_PAGE = 50;
 export const RESPONSES_PER_PAGE = 10;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 
+export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
+export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE || "";
+export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
+
 // Storage constants
 export const UPLOADS_DIR = "./uploads";
 export const MAX_SIZES = {

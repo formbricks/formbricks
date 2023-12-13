@@ -1,8 +1,8 @@
 import CalLogoDark from "@/images/clients/cal-logo-dark.svg";
 import CalLogoLight from "@/images/clients/cal-logo-light.svg";
-import ClovyrLogo from "@/images/clients/clovyr-logo.svg";
 import CrowdLogoDark from "@/images/clients/crowd-logo-dark.svg";
 import CrowdLogoLight from "@/images/clients/crowd-logo-light.svg";
+import FlixbusLogo from "@/images/clients/flixbus-white.svg";
 import NILogoDark from "@/images/clients/niLogoDark.svg";
 import NILogoLight from "@/images/clients/niLogoWhite.svg";
 import AnimationFallback from "@/public/animations/opensource-xm-platform-formbricks-fallback.png";
@@ -41,6 +41,12 @@ export const Hero: React.FC = ({}) => {
           </p>
           <div className="grid grid-cols-4 items-center gap-6 pt-2 md:gap-8">
             <Image
+              src={FlixbusLogo}
+              alt="Flixbus Flix Flixtrain Logo"
+              className="rounded-lg pb-1 hover:opacity-100 md:opacity-50"
+              width={200}
+            />
+            <Image
               src={CalLogoLight}
               alt="Cal Logo"
               className="block rounded-lg hover:opacity-100 dark:hidden md:opacity-50"
@@ -74,12 +80,6 @@ export const Hero: React.FC = ({}) => {
               src={NILogoLight}
               alt="Neverinstall Logo"
               className="hidden  pb-1 hover:opacity-100 dark:block md:opacity-50"
-              width={200}
-            />
-            <Image
-              src={ClovyrLogo}
-              alt="Clovyr Logo"
-              className="rounded-lg pb-1 hover:opacity-100 md:opacity-50"
               width={200}
             />
           </div>

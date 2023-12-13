@@ -6,6 +6,7 @@ import {
   TDisplayLegacyCreateInput,
   TDisplayLegacyUpdateInput,
   TDisplayUpdateInput,
+  ZDisplay,
   ZDisplayCreateInput,
   ZDisplayLegacyCreateInput,
   ZDisplayLegacyUpdateInput,
@@ -19,8 +20,8 @@ import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
-import { formatDisplaysDateFields } from "./util";
 import { TPerson } from "@formbricks/types/people";
+import { formatDateFields } from "../utils/datetime";
 
 const selectDisplay = {
   id: true,
@@ -31,20 +32,20 @@ const selectDisplay = {
   personId: true,
 };
 
-export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
-  await unstable_cache(
+export const getDisplay = async (displayId: string): Promise<TDisplay | null> => {
+  const display = await unstable_cache(
     async () => {
       validateInputs([displayId, ZId]);
 
       try {
-        const responsePrisma = await prisma.response.findUnique({
+        const display = await prisma.response.findUnique({
           where: {
             id: displayId,
           },
           select: selectDisplay,
         });
 
-        return responsePrisma;
+        return display;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
@@ -59,6 +60,8 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return display ? formatDateFields(display, ZDisplay) : null;
+};
 
 export const updateDisplay = async (
   displayId: string,
@@ -293,10 +296,6 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
           },
         });
 
-        if (!displays) {
-          throw new ResourceNotFoundError("Display from PersonId", personId);
-        }
-
         return displays;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -312,8 +311,7 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return formatDisplaysDateFields(displays);
+  return displays.map((display) => formatDateFields(display, ZDisplay));
 };
 
 export const deleteDisplayByResponseId = async (

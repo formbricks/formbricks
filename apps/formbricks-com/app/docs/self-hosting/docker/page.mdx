@@ -242,8 +242,10 @@ These variables can be provided at the runtime i.e. in your docker-compose file.
 | TELEMETRY_DISABLED          | Disables telemetry if set to `1`.                                                       | optional                                                |                                                                         |
 | INSTANCE_ID                 | Instance ID for Formbricks Cloud to be sent to Telemetry.                               | optional                                                |                                                                         |
 | INTERNAL_SECRET             | Internal Secret (Currently we overwrite the value with a random value).                 | optional                                                |                                                                         |
-| IS_FORMBRICKS_CLOUD         | Uses Formbricks Cloud if set to `1`                                                     | optional                                                |                                                                         |
 | DEFAULT_BRAND_COLOR         | Default brand color for your app (Can be overwritten from the UI as well).              | optional                                                | `#64748b`                                                               |
+| DEFAULT_TEAM_ID             | Automatically assign new users to a specific team when joining                          | optional                                                |                                                                         |
+| DEFAULT_TEAM_ROLE           | Role of the user in the default team.                                                   | optional                                                | `admin`                                                                 |
+| ONBOARDING_DISABLED         | Disables onboarding for new users if set to `1`                                         | optional                                                |                                                                         |
 
 ## Build-time Variables
 

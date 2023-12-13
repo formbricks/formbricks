@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -14,7 +14,7 @@ interface ResponseTimelineProps {
   surveyId: string;
   responses: TResponse[];
   survey: TSurvey;
-  profile: TProfile;
+  user: TUser;
   environmentTags: TTag[];
   responsesPerPage: number;
 }
@@ -23,7 +23,7 @@ export default function ResponseTimeline({
   environment,
   responses,
   survey,
-  profile,
+  user,
   environmentTags,
   responsesPerPage,
 }: ResponseTimelineProps) {
@@ -76,7 +76,7 @@ export default function ResponseTimeline({
                 <SingleResponseCard
                   survey={survey}
                   response={response}
-                  profile={profile}
+                  user={user}
                   environmentTags={environmentTags}
                   pageType="response"
                   environment={environment}

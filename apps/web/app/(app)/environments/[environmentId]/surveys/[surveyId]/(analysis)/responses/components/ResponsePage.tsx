@@ -13,7 +13,7 @@ import { useEffect, useMemo } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TTag } from "@formbricks/types/tags";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface ResponsePageProps {
@@ -23,7 +23,7 @@ interface ResponsePageProps {
   responses: TResponse[];
   webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
   environmentTags: TTag[];
   responsesPerPage: number;
   membershipRole?: TMembershipRole;
@@ -36,7 +36,7 @@ const ResponsePage = ({
   responses,
   webAppUrl,
   product,
-  profile,
+  user,
   environmentTags,
   responsesPerPage,
   membershipRole,
@@ -63,7 +63,7 @@ const ResponsePage = ({
         surveyId={surveyId}
         webAppUrl={webAppUrl}
         product={product}
-        profile={profile}
+        user={user}
         membershipRole={membershipRole}
       />
       <CustomFilter
@@ -78,7 +78,7 @@ const ResponsePage = ({
         surveyId={surveyId}
         responses={filterResponses}
         survey={survey}
-        profile={profile}
+        user={user}
         environmentTags={environmentTags}
         responsesPerPage={responsesPerPage}
       />

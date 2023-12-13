@@ -1,18 +1,17 @@
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-
-import SettingsCard from "../components/SettingsCard";
-import SettingsTitle from "../components/SettingsTitle";
-
-import EditProductName from "./components/EditProductName";
-import EditWaitingTime from "./components/EditWaitingTime";
-import DeleteProduct from "./components/DeleteProduct";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { SettingsId } from "@formbricks/ui/SettingsId";
+import { getServerSession } from "next-auth";
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import DeleteProduct from "./components/DeleteProduct";
+import EditProductName from "./components/EditProductName";
+import EditWaitingTime from "./components/EditWaitingTime";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [, product, session, team] = await Promise.all([
@@ -60,6 +59,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         description="Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.">
         <DeleteProduct environmentId={params.environmentId} product={product} />
       </SettingsCard>
+      <SettingsId title="Product" id={product.id}></SettingsId>
     </div>
   );
 }
