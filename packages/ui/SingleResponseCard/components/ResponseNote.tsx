@@ -97,8 +97,8 @@ export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOp
         isOpen
           ? "-right-5 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
           : unresolvedNotes.length
-          ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
-          : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
+            ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
+            : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
       )}
       onClick={() => {
         if (!isOpen) setIsOpen(true);

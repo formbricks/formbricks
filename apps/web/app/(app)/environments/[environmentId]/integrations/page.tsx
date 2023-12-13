@@ -83,8 +83,8 @@ export default async function IntegrationsPage({ params }) {
         zapierWebhookCount === 1
           ? "1 zap"
           : zapierWebhookCount === 0
-          ? "Not Connected"
-          : `${zapierWebhookCount} zaps`,
+            ? "Not Connected"
+            : `${zapierWebhookCount} zaps`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
@@ -101,8 +101,8 @@ export default async function IntegrationsPage({ params }) {
         userWebhookCount === 1
           ? "1 webhook"
           : userWebhookCount === 0
-          ? "Not Connected"
-          : `${userWebhookCount} webhooks`,
+            ? "Not Connected"
+            : `${userWebhookCount} webhooks`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
@@ -145,8 +145,8 @@ export default async function IntegrationsPage({ params }) {
         n8nwebhookCount === 1
           ? "1 integration"
           : n8nwebhookCount === 0
-          ? "Not Connected"
-          : `${n8nwebhookCount} integrations`,
+            ? "Not Connected"
+            : `${n8nwebhookCount} integrations`,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/make",
@@ -163,8 +163,8 @@ export default async function IntegrationsPage({ params }) {
         makeWebhookCount === 1
           ? "1 integration"
           : makeWebhookCount === 0
-          ? "Not Connected"
-          : `${makeWebhookCount} integration`,
+            ? "Not Connected"
+            : `${makeWebhookCount} integration`,
     },
   ];
 

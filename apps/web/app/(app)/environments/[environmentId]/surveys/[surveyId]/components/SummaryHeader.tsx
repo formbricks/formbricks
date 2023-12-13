@@ -126,10 +126,10 @@ const SummaryHeader = ({
                                 value === "inProgress"
                                   ? "Survey live"
                                   : value === "paused"
-                                  ? "Survey paused"
-                                  : value === "completed"
-                                  ? "Survey completed"
-                                  : ""
+                                    ? "Survey paused"
+                                    : value === "completed"
+                                      ? "Survey completed"
+                                      : ""
                               );
                               router.refresh();
                             })

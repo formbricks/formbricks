@@ -43,10 +43,10 @@ export default function SurveyStatusDropdown({
                   value === "inProgress"
                     ? "Survey live"
                     : value === "paused"
-                    ? "Survey paused"
-                    : value === "completed"
-                    ? "Survey completed"
-                    : ""
+                      ? "Survey paused"
+                      : value === "completed"
+                        ? "Survey completed"
+                        : ""
                 );
               })
               .catch((error) => {

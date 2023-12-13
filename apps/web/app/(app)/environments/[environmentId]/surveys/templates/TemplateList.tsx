@@ -59,8 +59,8 @@ export default function TemplateList({
     const activeFilter = templateSearch
       ? ALL_CATEGORY_NAME
       : !!user?.objective && user.objective !== "other"
-      ? RECOMMENDED_CATEGORY_NAME
-      : ALL_CATEGORY_NAME;
+        ? RECOMMENDED_CATEGORY_NAME
+        : ALL_CATEGORY_NAME;
     setSelectedFilter(activeFilter);
   }, [user, templateSearch]);
 
@@ -168,14 +168,14 @@ export default function TemplateList({
                   template.category === "Product Experience"
                     ? "border-blue-300 bg-blue-50 text-blue-500"
                     : template.category === "Exploration"
-                    ? "border-pink-300 bg-pink-50 text-pink-500"
-                    : template.category === "Growth"
-                    ? "border-orange-300 bg-orange-50 text-orange-500"
-                    : template.category === "Increase Revenue"
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-500"
-                    : template.category === "Customer Success"
-                    ? "border-violet-300 bg-violet-50 text-violet-500"
-                    : "border-slate-300 bg-slate-50 text-slate-500" // default color
+                      ? "border-pink-300 bg-pink-50 text-pink-500"
+                      : template.category === "Growth"
+                        ? "border-orange-300 bg-orange-50 text-orange-500"
+                        : template.category === "Increase Revenue"
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-500"
+                          : template.category === "Customer Success"
+                            ? "border-violet-300 bg-violet-50 text-violet-500"
+                            : "border-slate-300 bg-slate-50 text-slate-500" // default color
                 }`}>
                 {template.category}
               </div>

@@ -108,8 +108,8 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                   option.comingSoon
                     ? "border-slate-200 bg-slate-50/50"
                     : option.id === localSurvey.type
-                    ? "border-brand-dark cursor-pointer bg-slate-50"
-                    : "cursor-pointer bg-slate-50"
+                      ? "border-brand-dark cursor-pointer bg-slate-50"
+                      : "cursor-pointer bg-slate-50"
                 )}>
                 <RadioGroupItem
                   value={option.id}

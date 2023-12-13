@@ -171,10 +171,10 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
                       endpointAccessible === true
                         ? "border-green-500 bg-green-50"
                         : endpointAccessible === false
-                        ? "border-red-200 bg-red-50"
-                        : endpointAccessible === undefined
-                        ? "border-slate-200 bg-white"
-                        : null
+                          ? "border-red-200 bg-red-50"
+                          : endpointAccessible === undefined
+                            ? "border-slate-200 bg-white"
+                            : null
                     )}
                     placeholder="Paste the URL you want the event to trigger on"
                   />

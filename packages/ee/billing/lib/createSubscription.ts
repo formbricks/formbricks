@@ -90,10 +90,13 @@ export const createSubscription = async (
 
           const combinedLineItems = [...lineItems, ...existingItemsInScheduledSubscription];
 
-          const uniqueItemsMap = combinedLineItems.reduce((acc, item) => {
-            acc[item.price] = item; // This will overwrite duplicate items based on price
-            return acc;
-          }, {} as { [key: string]: { price: string; quantity?: number } });
+          const uniqueItemsMap = combinedLineItems.reduce(
+            (acc, item) => {
+              acc[item.price] = item; // This will overwrite duplicate items based on price
+              return acc;
+            },
+            {} as { [key: string]: { price: string; quantity?: number } }
+          );
 
           const lineItemsForScheduledSubscription = Object.values(uniqueItemsMap);
 

@@ -107,10 +107,10 @@ export default function UrlShortenerModal({ open, setOpen, webAppUrl }: UrlShort
                   urlValidationState === "valid"
                     ? "border-green-500 bg-green-50"
                     : urlValidationState === "invalid"
-                    ? "border-red-200 bg-red-50"
-                    : urlValidationState === "default"
-                    ? "border-slate-200"
-                    : "bg-white"
+                      ? "border-red-200 bg-red-50"
+                      : urlValidationState === "default"
+                        ? "border-slate-200"
+                        : "bg-white"
                 )}
                 {...register("url", {
                   required: true,

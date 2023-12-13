@@ -90,8 +90,8 @@ export default async function SurveysList({ environmentId }: { environmentId: st
                         survey.type === "link"
                           ? "Link Survey"
                           : survey.type === "web"
-                          ? "In-Product Survey"
-                          : ""
+                            ? "In-Product Survey"
+                            : ""
                       }
                       type="gray"
                       size={"tiny"}
