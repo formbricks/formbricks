@@ -277,7 +277,7 @@ export default function LogicEditor({
                         {logicConditions[logic.condition].values?.map((value) => (
                           <SelectItem key={value} value={value} title={value}>
                             <div className="w-full">
-                              <p className="line-clamp-1 w-40 2xl:w-96">{value}</p>
+                              <p className="line-clamp-1 w-40 text-left 2xl:w-80">{value}</p>
                             </div>
                           </SelectItem>
                         ))}
@@ -333,7 +333,7 @@ export default function LogicEditor({
                       idx !== questionIdx && (
                         <SelectItem key={question.id} value={question.id} title={question.headline}>
                           <div className="w-32">
-                            <p className="truncate">{question.headline}</p>
+                            <p className="truncate text-left">{question.headline}</p>
                           </div>
                         </SelectItem>
                       )
