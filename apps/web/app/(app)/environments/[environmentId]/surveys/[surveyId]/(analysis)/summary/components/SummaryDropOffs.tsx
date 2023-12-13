@@ -125,14 +125,18 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
         responseCounts[questionId] > 0 ? totalTtc[questionId] / responseCounts[questionId] : 0;
     });
 
-    // Calculate drop-off percentages
-    dropoffArr[0] = displayCount - viewsArr[0];
-    if (viewsArr[0] > displayCount) dropoffPercentageArr[0] = 0;
+    if (!survey.welcomeCard.enabled) {
+      dropoffArr[0] = displayCount - viewsArr[0];
+      if (viewsArr[0] > displayCount) dropoffPercentageArr[0] = 0;
 
-    dropoffPercentageArr[0] =
-      viewsArr[0] - displayCount >= 0 ? 0 : ((displayCount - viewsArr[0]) / displayCount) * 100 || 0;
+      dropoffPercentageArr[0] =
+        viewsArr[0] - displayCount >= 0 ? 0 : ((displayCount - viewsArr[0]) / displayCount) * 100 || 0;
 
-    // dropoffPercentageArr[0] = viewsArr[0] = displayCount;
+      viewsArr[0] = displayCount;
+    } else {
+      dropoffPercentageArr[0] = (dropoffArr[0] / viewsArr[0]) * 100;
+    }
+
     for (let i = 1; i < survey.questions.length; i++) {
       if (viewsArr[i] !== 0) {
         dropoffPercentageArr[i] = (dropoffArr[i] / viewsArr[i]) * 100;
