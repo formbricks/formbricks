@@ -9,10 +9,9 @@ import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { handleIntegrations } from "./lib/handleIntegrations";
-import { getWebhooksWithEvent } from "@formbricks/lib/webhook/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
-import { updateSurveyStatus, getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamMembershipUsers } from "@formbricks/lib/profile/service";
+import { prisma } from "@formbricks/database";
+import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 
 export async function POST(request: Request) {
   // check authentication with x-api-key header and CRON_SECRET env variable
@@ -37,7 +36,26 @@ export async function POST(request: Request) {
   const { environmentId, surveyId, event, response } = inputValidation.data;
 
   // get all webhooks of this environment where event in triggers
-  const webhooks = await getWebhooksWithEvent(environmentId, surveyId, event);
+  const webhooks = await prisma.webhook.findMany({
+    where: {
+      environmentId,
+      triggers: {
+        has: event,
+      },
+      OR: [
+        {
+          surveyIds: {
+            has: surveyId,
+          },
+        },
+        {
+          surveyIds: {
+            isEmpty: true,
+          },
+        },
+      ],
+    },
+  });
 
   // send request to all webhooks
   await Promise.all(
@@ -59,7 +77,25 @@ export async function POST(request: Request) {
   if (event === "responseFinished") {
     // check for email notifications
     // get all users that have a membership of this environment's team
-    const users = await getTeamMembershipUsers(environmentId);
+    const users = await prisma.user.findMany({
+      where: {
+        memberships: {
+          some: {
+            team: {
+              products: {
+                some: {
+                  environments: {
+                    some: {
+                      id: environmentId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
 
     const integrations = await getIntegrations(environmentId);
     if (integrations.length > 0) {
@@ -76,7 +112,16 @@ export async function POST(request: Request) {
 
     if (usersWithNotifications.length > 0) {
       // get survey
-      const surveyData = await getSurvey(surveyId);
+      const surveyData = await prisma.survey.findUnique({
+        where: {
+          id: surveyId,
+        },
+        select: {
+          id: true,
+          name: true,
+          questions: true,
+        },
+      });
       if (!surveyData) {
         console.error(`Pipeline: Survey with id ${surveyId} not found`);
         return new Response("Survey not found", {
@@ -96,6 +141,24 @@ export async function POST(request: Request) {
         })
       );
     }
+    const updateSurveyStatus = async (surveyId: string) => {
+      // Get the survey instance by surveyId
+      const survey = await getSurvey(surveyId);
+
+      if (survey?.autoComplete) {
+        // Get the number of responses to a survey
+        const responseCount = await prisma.response.count({
+          where: {
+            surveyId: surveyId,
+          },
+        });
+        if (responseCount === survey.autoComplete) {
+          const updatedSurvey = { ...survey };
+          updatedSurvey.status = "completed";
+          await updateSurvey(updatedSurvey);
+        }
+      }
+    };
 
     await updateSurveyStatus(surveyId);
   }
