@@ -13,7 +13,14 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
 import { $isAtNodeEnd, $wrapNodes } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
-import type { EditorState, GridSelection, LexicalEditor, NodeSelection, RangeSelection } from "lexical";
+import type {
+  BaseSelection,
+  EditorState,
+  GridSelection,
+  LexicalEditor,
+  NodeSelection,
+  RangeSelection,
+} from "lexical";
 import {
   $createParagraphNode,
   $getRoot,
@@ -69,9 +76,9 @@ function FloatingLinkEditor({ editor }: { editor: LexicalEditor }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
   const [isEditMode, setEditMode] = useState(false);
-  const [lastSelection, setLastSelection] = useState<RangeSelection | NodeSelection | GridSelection | null>(
-    null
-  );
+  const [lastSelection, setLastSelection] = useState<
+    RangeSelection | NodeSelection | GridSelection | BaseSelection | null
+  >(null);
 
   const updateLinkEditor = useCallback(() => {
     const selection = $getSelection();
