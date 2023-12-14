@@ -1,4 +1,6 @@
 import { sendToPipeline } from "@/app/lib/pipelines";
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { transformPrismaPerson } from "@formbricks/lib/person/service";
@@ -6,7 +8,6 @@ import { responseCache } from "@formbricks/lib/response/cache";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();

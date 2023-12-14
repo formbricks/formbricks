@@ -1,10 +1,12 @@
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import DashboardMockupDark from "@/images/dashboard-mockup-dark.png";
 import DashboardMockup from "@/images/dashboard-mockup.png";
-import { Button } from "@formbricks/ui/Button";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useState } from "react";
+
+import { Button } from "@formbricks/ui/Button";
+
 import AddEventDummy from "../dummyUI/AddEventDummy";
 import AddNoCodeEventModalDummy from "../dummyUI/AddNoCodeEventModalDummy";
 import HeadingCentered from "../shared/HeadingCentered";

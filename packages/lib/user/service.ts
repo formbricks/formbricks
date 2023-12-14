@@ -1,19 +1,22 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+import { z } from "zod";
+
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } from "@formbricks/types/user";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-import { z } from "zod";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
+
 const responseSelection = {
   id: true,
   name: true,

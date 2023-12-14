@@ -1,17 +1,19 @@
 import { sendInviteAcceptedEmail } from "@/app/lib/email";
-import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
-import {
-  NotLoggedInContent,
-  WrongAccountContent,
-  ExpiredContent,
-  UsedContent,
-  RightAccountContent,
-} from "./components/InviteContentComponents";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
+
+import {
+  ExpiredContent,
+  NotLoggedInContent,
+  RightAccountContent,
+  UsedContent,
+  WrongAccountContent,
+} from "./components/InviteContentComponents";
 
 export default async function JoinTeam({ searchParams }) {
   const currentUser = await getServerSession(authOptions);

@@ -1,14 +1,14 @@
-export const revalidate = REVALIDATION_INTERVAL;
+import { getServerSession } from "next-auth";
 
 import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { DEFAULT_BRAND_COLOR, IS_FORMBRICKS_CLOUD, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { DEFAULT_BRAND_COLOR, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { getServerSession } from "next-auth";
+
 import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
 import { EditBrandColor } from "./components/EditBrandColor";

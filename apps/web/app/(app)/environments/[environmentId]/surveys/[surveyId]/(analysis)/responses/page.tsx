@@ -1,16 +1,15 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getUser } from "@formbricks/lib/user/service";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getServerSession } from "next-auth";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getUser } from "@formbricks/lib/user/service";
 
 export default async function Page({ params }) {
   const session = await getServerSession(authOptions);

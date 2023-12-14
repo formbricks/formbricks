@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { type MotionValue, motion, useMotionTemplate, useMotionValue } from "framer-motion";
-
-import { GridPattern } from "./GridPattern";
-import { Heading } from "./Heading";
 import { ChatBubbleIcon } from "@/components/docs/icons/ChatBubbleIcon";
 import { EnvelopeIcon } from "@/components/docs/icons/EnvelopeIcon";
 import { UserIcon } from "@/components/docs/icons/UserIcon";
 import { UsersIcon } from "@/components/docs/icons/UsersIcon";
+import { type MotionValue, motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import Link from "next/link";
+
+import { GridPattern } from "./GridPattern";
+import { Heading } from "./Heading";
 
 interface BestPractice {
   href: string;

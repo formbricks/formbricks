@@ -13,7 +13,7 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   experimental: {
-    serverActions: true,
+    serverComponentsExternalPackages: ['@aws-sdk'],
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
@@ -109,9 +109,9 @@ const nextConfig = {
 
 // set actions allowed origins
 if (process.env.WEBAPP_URL) {
-  nextConfig.experimental.serverActions = {
+/*   nextConfig.experimental.serverActions = {
     allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
-  };
+  }; */
   nextConfig.images.remotePatterns.push({
     protocol: "https",
     hostname: getHostname(process.env.WEBAPP_URL),

@@ -1,12 +1,13 @@
 "use server";
 
+import { getServerSession } from "next-auth";
+
 import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys";
-import { getServerSession } from "next-auth";
 
 export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
   const session = await getServerSession(authOptions);

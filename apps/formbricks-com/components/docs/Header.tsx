@@ -1,11 +1,11 @@
 "use client";
 
+import { FooterLogo } from "@/components/shared/Logo";
 import clsx from "clsx";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { forwardRef } from "react";
 
-import { FooterLogo } from "@/components/shared/Logo";
 import { Button } from "./Button";
 import { MobileNavigation, useIsInsideMobileNavigation, useMobileNavigationStore } from "./MobileNavigation";
 import { MobileSearch, Search } from "./Search";

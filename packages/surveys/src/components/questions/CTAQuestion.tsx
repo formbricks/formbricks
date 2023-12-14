@@ -1,13 +1,15 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
-import { useState } from "react";
-import { TResponseTtc } from "@formbricks/types/responses";
+import QuestionImage from "@/components/general/QuestionImage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { useState } from "react";
+
+import { TResponseData } from "@formbricks/types/responses";
+import { TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
+
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
   value: string | number | string[];

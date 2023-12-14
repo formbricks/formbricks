@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpIcon, ArrowDownIcon, TrashIcon, DocumentDuplicateIcon } from "@heroicons/react/24/solid";
+import { ArrowDownIcon, ArrowUpIcon, DocumentDuplicateIcon, TrashIcon } from "@heroicons/react/24/solid";
 
 interface QuestionDropdownProps {
   questionIdx: number;

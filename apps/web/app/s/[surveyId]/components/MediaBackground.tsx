@@ -1,7 +1,8 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/surveys";
 import React from "react";
+
+import { TSurvey } from "@formbricks/types/surveys";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;

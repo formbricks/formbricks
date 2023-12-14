@@ -1,5 +1,9 @@
 "use client";
 
+import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import { useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+
 import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
@@ -8,9 +12,6 @@ import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
-import { useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;

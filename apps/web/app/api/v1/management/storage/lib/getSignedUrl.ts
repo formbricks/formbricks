@@ -1,5 +1,6 @@
-import { getUploadSignedUrl } from "@formbricks/lib/storage/service";
 import { responses } from "@/app/lib/api/response";
+
+import { getUploadSignedUrl } from "@formbricks/lib/storage/service";
 
 const getSignedUrlForPublicFile = async (fileName: string, environmentId: string, fileType: string) => {
   const accessType = "public"; // public files are accessible by anyone

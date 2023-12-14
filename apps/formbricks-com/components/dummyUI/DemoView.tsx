@@ -1,5 +1,7 @@
-import { TTemplate } from "@formbricks/types/templates";
 import { useEffect, useState } from "react";
+
+import { TTemplate } from "@formbricks/types/templates";
+
 import PreviewSurvey from "./PreviewSurvey";
 import TemplateList from "./TemplateList";
 import { templates } from "./templates";

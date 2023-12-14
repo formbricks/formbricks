@@ -1,13 +1,14 @@
-import React, { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
+import { InboxStackIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import React, { useState } from "react";
+
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { questionTypes } from "@/app/lib/questions";
 
 interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;

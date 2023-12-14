@@ -1,13 +1,14 @@
 import { responses } from "@/app/lib/api/response";
-import {
-  GOOGLE_SHEETS_CLIENT_ID,
-  WEBAPP_URL,
-  GOOGLE_SHEETS_CLIENT_SECRET,
-  GOOGLE_SHEETS_REDIRECT_URL,
-} from "@formbricks/lib/constants";
-import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 import { google } from "googleapis";
 import { NextRequest, NextResponse } from "next/server";
+
+import {
+  GOOGLE_SHEETS_CLIENT_ID,
+  GOOGLE_SHEETS_CLIENT_SECRET,
+  GOOGLE_SHEETS_REDIRECT_URL,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
+import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 
 export async function GET(req: NextRequest) {
   const url = req.url;

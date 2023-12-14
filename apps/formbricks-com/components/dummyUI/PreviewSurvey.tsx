@@ -1,7 +1,9 @@
 import { useState } from "react";
+
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+
 import Modal from "./Modal";
 import QuestionConditional from "./QuestionConditional";
-import { TSurveyQuestion, TSurvey } from "@formbricks/types/surveys";
 import ThankYouCard from "./ThankYouCard";
 
 interface PreviewSurveyProps {

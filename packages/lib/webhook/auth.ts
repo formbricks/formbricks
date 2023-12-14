@@ -1,10 +1,12 @@
-import { validateInputs } from "../utils/validate";
-import { hasUserEnvironmentAccess } from "../environment/auth";
-import { getWebhook } from "./service";
 import { unstable_cache } from "next/cache";
+
 import { ZId } from "@formbricks/types/environment";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { hasUserEnvironmentAccess } from "../environment/auth";
+import { validateInputs } from "../utils/validate";
 import { webhookCache } from "./cache";
+import { getWebhook } from "./service";
 
 export const canUserAccessWebhook = async (userId: string, webhookId: string): Promise<boolean> =>
   await unstable_cache(

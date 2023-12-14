@@ -1,14 +1,15 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
-import { useCallback } from "react";
-import { useState } from "preact/hooks";
-import { TResponseTtc } from "@formbricks/types/responses";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { useState } from "preact/hooks";
+import { useCallback } from "react";
+
+import { TResponseData } from "@formbricks/types/responses";
+import { TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;

@@ -1,17 +1,19 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TPerson, TPersonUpdateInput, ZPerson, ZPersonUpdateInput } from "@formbricks/types/people";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+
+import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
-import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
-import { formatDateFields } from "../utils/datetime";
 
 export const selectPerson = {
   id: true,
@@ -52,10 +54,13 @@ type TransformPersonInput = {
 };
 
 export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
-  const attributes = person.attributes.reduce((acc, attr) => {
-    acc[attr.attributeClass.name] = attr.value;
-    return acc;
-  }, {} as Record<string, string | number>);
+  const attributes = person.attributes.reduce(
+    (acc, attr) => {
+      acc[attr.attributeClass.name] = attr.value;
+      return acc;
+    },
+    {} as Record<string, string | number>
+  );
 
   return {
     id: person.id,

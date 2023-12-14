@@ -1,11 +1,12 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextRequest, NextResponse } from "next/server";
+
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
