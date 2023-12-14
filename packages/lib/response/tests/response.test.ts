@@ -3,17 +3,19 @@ import { selectPerson, transformPrismaPerson } from "../../person/service";
 import { TTag } from "@formbricks/types/tags";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
 import {
+  getMockUpdateResponseInput,
   mockEnvironmentId,
   mockMeta,
   mockPerson,
   mockResponse,
+  mockResponseData,
   mockResponseNote,
   mockSingleUseId,
   mockSurveyId,
   mockTags,
   mockUserId,
 } from "./__mocks__/data.mock";
-import { createResponse } from "../service";
+import { createResponse, updateResponse } from "../service";
 
 import { randBoolean } from "./constants";
 
@@ -59,6 +61,12 @@ beforeEach(() => {
   // mocking the person findFirst call as it is used in the transformPrismaPerson function
   prismaMock.person.findFirst.mockResolvedValue(mockPerson);
   prismaMock.responseNote.findMany.mockResolvedValue([mockResponseNote]);
+
+  prismaMock.response.findUnique.mockResolvedValue(mockResponse);
+  prismaMock.response.update.mockResolvedValue({
+    ...mockResponse,
+    data: mockResponseData,
+  });
 });
 
 describe("Tests for Response Service", () => {
@@ -85,6 +93,14 @@ describe("Tests for Response Service", () => {
         userId: mockUserId,
       },
       select: selectPerson,
+    });
+  });
+
+  it("updates a response", async () => {
+    const response = await updateResponse(mockResponse.id, getMockUpdateResponseInput(true));
+    expect(response).toEqual({
+      ...expectedResponseWithoutPerson,
+      data: mockResponseData,
     });
   });
 });

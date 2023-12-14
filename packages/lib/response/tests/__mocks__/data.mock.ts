@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { responseNoteSelect } from "../../../responseNote/service";
 import { responseSelection } from "../../service";
 import { randBoolean, randBrowser, randFullName, randText, randUrl, randUuid } from "../constants";
+import { TResponseUpdateInput } from "@formbricks/types/responses";
 
 type ResponseMock = Prisma.ResponseGetPayload<{
   include: typeof responseSelection;
@@ -93,3 +94,14 @@ export const mockResponse: ResponseMock = {
   updatedAt: new Date(),
   ttc: {},
 };
+
+export const mockResponseData: TResponseUpdateInput["data"] = {
+  key1: "value",
+  key2: ["value1", "value2"],
+  key3: 20,
+};
+
+export const getMockUpdateResponseInput = (finished: boolean = false): TResponseUpdateInput => ({
+  data: mockResponseData,
+  finished,
+});
