@@ -1,9 +1,11 @@
-import React from "react";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
-import footerLogo from "./lib/footerlogo.svg";
 import Image from "next/image";
-import { Button } from "@formbricks/ui/Button";
 import Link from "next/link";
+import React from "react";
+
+import { Button } from "@formbricks/ui/Button";
+
+import footerLogo from "./lib/footerlogo.svg";
 
 export default function NotFound() {
   return (

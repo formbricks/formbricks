@@ -1,23 +1,25 @@
-import AirtableLogo from "./airtable/images/airtable.svg";
-import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 import JsLogo from "@/images/jslogo.png";
 import MakeLogo from "@/images/make-small.png";
 import n8nLogo from "@/images/n8n.png";
+import notionLogo from "@/images/notion.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
-import notionLogo from "@/images/notion.png";
+import { getServerSession } from "next-auth";
 import Image from "next/image";
-import { Card } from "@formbricks/ui/Card";
-import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getServerSession } from "next-auth";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { TIntegrationType } from "@formbricks/types/integration";
+import { Card } from "@formbricks/ui/Card";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+
+import AirtableLogo from "./airtable/images/airtable.svg";
+import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
@@ -86,8 +88,8 @@ export default async function IntegrationsPage({ params }) {
         zapierWebhookCount === 1
           ? "1 zap"
           : zapierWebhookCount === 0
-          ? "Not Connected"
-          : `${zapierWebhookCount} zaps`,
+            ? "Not Connected"
+            : `${zapierWebhookCount} zaps`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
@@ -104,8 +106,8 @@ export default async function IntegrationsPage({ params }) {
         userWebhookCount === 1
           ? "1 webhook"
           : userWebhookCount === 0
-          ? "Not Connected"
-          : `${userWebhookCount} webhooks`,
+            ? "Not Connected"
+            : `${userWebhookCount} webhooks`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
@@ -148,8 +150,8 @@ export default async function IntegrationsPage({ params }) {
         n8nwebhookCount === 1
           ? "1 integration"
           : n8nwebhookCount === 0
-          ? "Not Connected"
-          : `${n8nwebhookCount} integrations`,
+            ? "Not Connected"
+            : `${n8nwebhookCount} integrations`,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/make",
@@ -166,8 +168,8 @@ export default async function IntegrationsPage({ params }) {
         makeWebhookCount === 1
           ? "1 integration"
           : makeWebhookCount === 0
-          ? "Not Connected"
-          : `${makeWebhookCount} integration`,
+            ? "Not Connected"
+            : `${makeWebhookCount} integration`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/notion`,

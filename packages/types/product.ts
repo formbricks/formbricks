@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { ZEnvironment } from "./environment";
+
 import { ZColor, ZPlacement } from "./common";
+import { ZEnvironment } from "./environment";
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),

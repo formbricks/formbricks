@@ -289,6 +289,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyProductOverwrites)
   /// [SurveyProductOverwrites]
   productOverwrites Json?
+  /// @zod.custom(imports.ZSurveyStyling)
+  /// [SurveyStyling]
+  styling           Json?
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
   singleUse         Json?   @default("{\"enabled\": false, \"isEncrypted\": true}")

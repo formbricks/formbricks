@@ -1,6 +1,7 @@
-import { useState } from "preact/hooks";
-import { SurveyModalProps } from "@/types/props";
 import Modal from "@/components/wrappers/Modal";
+import { SurveyModalProps } from "@/types/props";
+import { useState } from "preact/hooks";
+
 import { Survey } from "./Survey";
 
 export function SurveyModal({
@@ -18,6 +19,7 @@ export function SurveyModal({
   onFinished = () => {},
   onFileUpload,
   isRedirectDisabled = false,
+  responseCount,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -44,7 +46,7 @@ export function SurveyModal({
           onDisplay={onDisplay}
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
-          onClose={onClose}
+          onClose={close}
           onFinished={() => {
             onFinished();
             setTimeout(() => {
@@ -55,6 +57,7 @@ export function SurveyModal({
           }}
           onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
+          responseCount={responseCount}
         />
       </Modal>
     </div>

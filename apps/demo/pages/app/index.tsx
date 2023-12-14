@@ -1,8 +1,10 @@
-import formbricks from "@formbricks/js";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import fbsetup from "../../public/fb-setup.png";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+
+import formbricks from "@formbricks/js";
+
+import fbsetup from "../../public/fb-setup.png";
 
 declare const window: any;
 
@@ -22,11 +24,13 @@ export default function AppPage({}) {
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const isUserId = window.location.href.includes("userId=true");
       const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
+      const attributes = isUserId ? { "Init Attribute 1": "eight", "Init Attribute 2": "two" } : undefined;
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
         debug: true,
+        attributes,
       });
       window.formbricks = formbricks;
     }

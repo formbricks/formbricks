@@ -1,20 +1,21 @@
 "use client";
 
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
-import { SurveyInline } from "@formbricks/ui/Survey";
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { FormbricksAPI } from "@formbricks/api";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurvey } from "@formbricks/types/surveys";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -25,6 +26,7 @@ interface LinkSurveyProps {
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
+  responseCount?: number;
 }
 
 export default function LinkSurvey({
@@ -36,6 +38,7 @@ export default function LinkSurvey({
   singleUseId,
   singleUseResponse,
   webAppUrl,
+  responseCount,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -117,7 +120,7 @@ export default function LinkSurvey({
 
   return (
     <>
-      <ContentWrapper className="h-full w-full p-0 md:max-w-lg">
+      <ContentWrapper className="h-full w-full p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
@@ -187,6 +190,7 @@ export default function LinkSurvey({
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
+          responseCount={responseCount}
         />
       </ContentWrapper>
     </>

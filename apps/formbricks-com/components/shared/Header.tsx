@@ -1,5 +1,14 @@
 import GitHubMarkWhite from "@/images/github-mark-white.svg";
 import GitHubMarkDark from "@/images/github-mark.svg";
+import { Popover, Transition } from "@headlessui/react";
+import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
+import { usePlausible } from "next-plausible";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { Fragment, useEffect, useState } from "react";
+
 import { Button } from "@formbricks/ui/Button";
 import {
   BaseballIcon,
@@ -11,16 +20,8 @@ import {
   OnboardingIcon,
   PMFIcon,
 } from "@formbricks/ui/icons";
-import { Popover, Transition } from "@headlessui/react";
-import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
-import { usePlausible } from "next-plausible";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { Fragment, useEffect, useState } from "react";
+
 import { FooterLogo } from "./Logo";
-import { ThemeSelector } from "./ThemeSelector";
 
 function GitHubIcon(props: any) {
   return (
@@ -279,6 +280,11 @@ export default function Header() {
             Pricing
           </Link>
           <Link
+            href="/concierge"
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            Concierge
+          </Link>
+          <Link
             href="/docs"
             className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
             Docs
@@ -293,15 +299,8 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Careers <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
           </Link> */}
-
-          <Link
-            href="/concierge"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
-            Concierge
-          </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
-          <ThemeSelector className="relative z-10 mr-2 lg:mr-5" />
           <Button
             variant="secondary"
             className="group hidden px-2 lg:block"

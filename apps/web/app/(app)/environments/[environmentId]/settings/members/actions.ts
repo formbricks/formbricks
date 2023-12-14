@@ -1,20 +1,21 @@
 "use server";
 
+import { getServerSession } from "next-auth";
+
+import { hasTeamAuthority } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { createInviteToken } from "@formbricks/lib/jwt";
-import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
+import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
+import { createInviteToken } from "@formbricks/lib/jwt";
 import {
   deleteMembership,
-  getMembershipsByUserId,
   getMembershipByUserIdTeamId,
+  getMembershipsByUserId,
 } from "@formbricks/lib/membership/service";
-import { deleteTeam, updateTeam } from "@formbricks/lib/team/service";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import { getServerSession } from "next-auth";
-import { hasTeamAuthority } from "@formbricks/lib/auth";
-import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { verifyUserRoleAccess } from "@formbricks/lib/team/auth";
+import { deleteTeam, updateTeam } from "@formbricks/lib/team/service";
+import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
+import { TMembershipRole } from "@formbricks/types/memberships";
 
 export const updateTeamNameAction = async (teamId: string, teamName: string) => {
   const session = await getServerSession(authOptions);
@@ -98,7 +99,6 @@ export const leaveTeamAction = async (teamId: string) => {
 
 export const createInviteTokenAction = async (inviteId: string) => {
   const { email } = await getInvite(inviteId);
-
   const inviteToken = createInviteToken(inviteId, email, {
     expiresIn: "7d",
   });

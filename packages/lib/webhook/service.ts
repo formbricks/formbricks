@@ -1,18 +1,21 @@
 import "server-only";
 
-import { TWebhook, TWebhookInput, ZWebhookInput } from "@formbricks/types/webhooks";
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/environment";
-import { ResourceNotFoundError, DatabaseError, InvalidInputError } from "@formbricks/types/errors";
-import { ZOptionalNumber } from "@formbricks/types/common";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { webhookCache } from "./cache";
 import { unstable_cache } from "next/cache";
 
-export const getWebhooks = async (environmentId: string, page?: number): Promise<TWebhook[]> =>
-  unstable_cache(
+import { prisma } from "@formbricks/database";
+import { ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TWebhook, TWebhookInput, ZWebhook, ZWebhookInput } from "@formbricks/types/webhooks";
+
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
+import { webhookCache } from "./cache";
+
+export const getWebhooks = async (environmentId: string, page?: number): Promise<TWebhook[]> => {
+  const webhooks = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
 
@@ -35,6 +38,8 @@ export const getWebhooks = async (environmentId: string, page?: number): Promise
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return webhooks.map((webhook) => formatDateFields(webhook, ZWebhook));
+};
 
 export const getWebhookCountBySource = async (
   environmentId: string,
@@ -63,8 +68,8 @@ export const getWebhookCountBySource = async (
     }
   )();
 
-export const getWebhook = async (id: string): Promise<TWebhook | null> =>
-  unstable_cache(
+export const getWebhook = async (id: string): Promise<TWebhook | null> => {
+  const webhook = await unstable_cache(
     async () => {
       validateInputs([id, ZId]);
 
@@ -81,6 +86,8 @@ export const getWebhook = async (id: string): Promise<TWebhook | null> =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return webhook ? formatDateFields(webhook, ZWebhook) : null;
+};
 
 export const createWebhook = async (
   environmentId: string,

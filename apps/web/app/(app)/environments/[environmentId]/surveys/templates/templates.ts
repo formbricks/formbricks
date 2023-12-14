@@ -1,3 +1,5 @@
+import { createId } from "@paralleldrive/cuid2";
+
 import {
   TSurvey,
   TSurveyHiddenFields,
@@ -5,7 +7,6 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
-import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {
   enabled: true,
@@ -23,6 +24,7 @@ const welcomeCardDefault: TSurveyWelcomeCard = {
   headline: "Welcome!",
   html: "Thanks for providing your feedback - let's go!",
   timeToFinish: true,
+  showResponseCount: false,
 };
 
 export const testTemplate: TTemplate = {
@@ -320,6 +322,7 @@ export const testTemplate: TTemplate = {
     welcomeCard: {
       enabled: false,
       timeToFinish: false,
+      showResponseCount: false,
     },
     hiddenFields: {
       enabled: false,
@@ -2524,4 +2527,5 @@ export const minimalSurvey: TSurvey = {
   },
   productOverwrites: null,
   singleUse: null,
+  styling: null,
 };

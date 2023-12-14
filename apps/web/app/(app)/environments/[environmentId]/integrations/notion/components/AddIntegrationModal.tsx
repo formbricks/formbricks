@@ -5,6 +5,13 @@ import {
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import NotionLogo from "@/images/notion.png";
+import { ArrowPathIcon, ChevronDownIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import Image from "next/image";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
@@ -15,12 +22,6 @@ import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
-import { ArrowPathIcon, ChevronDownIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import Image from "next/image";
-import React, { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -536,7 +537,7 @@ const DropdownSelector = ({
       {label && <Label htmlFor={label}>{label}</Label>}
       <div className="mt-1 flex items-center gap-3">
         <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild placeholder={placeholder}>
+          <DropdownMenu.Trigger asChild>
             <button
               disabled={disabled ? disabled : false}
               type="button"

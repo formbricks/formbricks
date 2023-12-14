@@ -1,7 +1,9 @@
 import { z } from "zod";
+
 import { ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
 import { ZIntegrationGoogleSheetsConfig, ZIntegrationGoogleSheetsInput } from "./googleSheet";
 import { ZIntegrationNotionConfig, ZIntegrationNotionInput } from "./notion";
+
 export * from "./sharedTypes";
 
 export const ZIntegrationType = z.enum(["googleSheets", "n8n", "airtable", "notion"]);

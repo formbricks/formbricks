@@ -1,15 +1,16 @@
 "use client";
 
+import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
+import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
+import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import type { NextPage } from "next";
+import { useCallback, useEffect, useState } from "react";
+
+import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
-import { OTPInput } from "@formbricks/ui/OTPInput";
-import { useCallback, useEffect, useState } from "react";
-import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
-import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
-import { cn } from "@formbricks/lib/cn";
+import { OTPInput } from "@formbricks/ui/OTPInput";
 
 interface LinkSurveyPinScreenProps {
   surveyId: string;

@@ -1,4 +1,9 @@
 "use client";
+
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 import { md } from "@formbricks/lib/markdownIt";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -7,9 +12,6 @@ import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;
@@ -177,6 +179,28 @@ export default function EditWelcomeCard({
                 </div>
               </div>
             </div>
+            {localSurvey?.type === "link" && (
+              <div className="mt-6 flex items-center">
+                <div className="mr-2">
+                  <Switch
+                    id="showResponseCount"
+                    name="showResponseCount"
+                    checked={localSurvey?.welcomeCard?.showResponseCount}
+                    onCheckedChange={() =>
+                      updateSurvey({ showResponseCount: !localSurvey.welcomeCard.showResponseCount })
+                    }
+                  />
+                </div>
+                <div className="flex-column">
+                  <Label htmlFor="showResponseCount" className="">
+                    Show Response Count
+                  </Label>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Display number of responses for survey
+                  </div>
+                </div>
+              </div>
+            )}
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

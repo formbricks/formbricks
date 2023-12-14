@@ -1,4 +1,4 @@
-import { signUpLimiter, loginLimiter, clientSideApiEndpointsLimiter } from "@/app/middleware/bucket";
+import { clientSideApiEndpointsLimiter, loginLimiter, signUpLimiter } from "@/app/middleware/bucket";
 import { clientSideApiRoute, loginRoute, signupRoute } from "@/app/middleware/endpointValidator";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";

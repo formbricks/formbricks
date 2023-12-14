@@ -1,22 +1,22 @@
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProfile } from "@formbricks/types/profile";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
+import { TUser } from "@formbricks/types/user";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
 
 export default async function ResponseFeed({
   responses,
   environment,
   surveys,
-  profile,
+  user,
   environmentTags,
 }: {
   responses: TResponse[];
   environment: TEnvironment;
   surveys: TSurvey[];
-  profile: TProfile;
+  user: TUser;
   environmentTags: TTag[];
 }) {
   return (
@@ -34,7 +34,7 @@ export default async function ResponseFeed({
                 <SingleResponseCard
                   response={response}
                   survey={survey}
-                  profile={profile}
+                  user={user}
                   pageType="people"
                   environmentTags={environmentTags}
                   environment={environment}

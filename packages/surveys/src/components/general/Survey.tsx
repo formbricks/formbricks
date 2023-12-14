@@ -1,14 +1,16 @@
 import FormbricksBranding from "@/components/general/FormbricksBranding";
+import ProgressBar from "@/components/general/ProgressBar";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
-import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
+
+import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
-import ProgressBar from "@/components/general/ProgressBar";
 
 export function Survey({
   survey,
@@ -22,6 +24,7 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
   onFileUpload,
+  responseCount,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -33,7 +36,6 @@ export function Survey({
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [ttc, setTtc] = useState<TResponseTtc>({});
-
   useEffect(() => {
     if (activeQuestionId === "hidden") return;
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
@@ -131,9 +133,9 @@ export function Survey({
           html={survey.welcomeCard.html}
           fileUrl={survey.welcomeCard.fileUrl}
           buttonLabel={survey.welcomeCard.buttonLabel}
-          timeToFinish={survey.welcomeCard.timeToFinish}
           onSubmit={onSubmit}
           survey={survey}
+          responseCount={responseCount}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
@@ -174,7 +176,7 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        <div className="flex h-full w-full flex-col justify-between bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
+        <div className="flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled

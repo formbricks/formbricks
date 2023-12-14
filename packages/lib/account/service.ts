@@ -1,9 +1,10 @@
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
+
+import { prisma } from "@formbricks/database";
+import { TAccount, TAccountInput, ZAccountInput } from "@formbricks/types/account";
 import { DatabaseError } from "@formbricks/types/errors";
 
 import { validateInputs } from "../utils/validate";
-import { ZAccountInput, TAccountInput, TAccount } from "@formbricks/types/account";
 
 export const createAccount = async (accountData: TAccountInput): Promise<TAccount> => {
   validateInputs([accountData, ZAccountInput]);

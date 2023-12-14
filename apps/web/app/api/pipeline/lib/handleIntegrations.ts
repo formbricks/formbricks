@@ -1,12 +1,12 @@
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
-import { TIntegration } from "@formbricks/types/integration";
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { TPipelineInput } from "@formbricks/types/pipelines";
-import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
+import { TIntegration } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
+import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 export async function handleIntegrations(

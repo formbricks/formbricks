@@ -1,3 +1,7 @@
+import { createId } from "@paralleldrive/cuid2";
+
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
 import {
   AppPieChartIcon,
   ArrowRightCircleIcon,
@@ -22,14 +26,16 @@ import {
   VideoTabletAdjustIcon,
 } from "@formbricks/ui/icons";
 
-import { createId } from "@paralleldrive/cuid2";
-import { TTemplate } from "@formbricks/types/templates";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-
 const thankYouCardDefault = {
   enabled: true,
   headline: "Thank you!",
   subheader: "We appreciate your feedback.",
+};
+
+const welcomeCardDefault = {
+  enabled: true,
+  timeToFinish: false,
+  showResponseCount: false,
 };
 
 export const customSurvey: TTemplate = {
@@ -51,10 +57,7 @@ export const customSurvey: TTemplate = {
       },
     ],
     thankYouCard: thankYouCardDefault,
-    welcomeCard: {
-      enabled: false,
-      timeToFinish: false,
-    },
+    welcomeCard: welcomeCardDefault,
     hiddenFields: {
       enabled: false,
     },
@@ -150,10 +153,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -260,10 +260,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -340,10 +337,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -389,10 +383,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -447,10 +438,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -513,10 +501,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -582,10 +567,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -640,10 +622,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -685,10 +664,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -723,10 +699,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -752,10 +725,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -803,10 +773,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -848,10 +815,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -905,10 +869,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -961,10 +922,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -1013,10 +971,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -1043,10 +998,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -1071,10 +1023,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -1098,10 +1047,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -1142,10 +1088,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -1179,10 +1122,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -1216,10 +1156,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },
@@ -1281,10 +1218,7 @@ export const templates: TTemplate[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
-      welcomeCard: {
-        enabled: false,
-        timeToFinish: false,
-      },
+      welcomeCard: welcomeCardDefault,
       hiddenFields: {
         enabled: false,
       },

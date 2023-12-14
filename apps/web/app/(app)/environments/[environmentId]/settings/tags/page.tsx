@@ -1,14 +1,16 @@
-import EditTagsWrapper from "./components/EditTagsWrapper";
-import SettingsTitle from "../components/SettingsTitle";
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTagsOnResponsesCount } from "@formbricks/lib/tagOnResponse/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
+
+import SettingsTitle from "../components/SettingsTitle";
+import EditTagsWrapper from "./components/EditTagsWrapper";
 
 export default async function MembersSettingsPage({ params }) {
   const environment = await getEnvironment(params.environmentId);

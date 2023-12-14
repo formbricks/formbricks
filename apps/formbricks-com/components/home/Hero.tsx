@@ -1,16 +1,18 @@
 import CalLogoDark from "@/images/clients/cal-logo-dark.svg";
 import CalLogoLight from "@/images/clients/cal-logo-light.svg";
-import ClovyrLogo from "@/images/clients/clovyr-logo.svg";
 import CrowdLogoDark from "@/images/clients/crowd-logo-dark.svg";
 import CrowdLogoLight from "@/images/clients/crowd-logo-light.svg";
+import FlixbusLogo from "@/images/clients/flixbus-white.svg";
 import NILogoDark from "@/images/clients/niLogoDark.svg";
 import NILogoLight from "@/images/clients/niLogoWhite.svg";
 import AnimationFallback from "@/public/animations/opensource-xm-platform-formbricks-fallback.png";
-import { Button } from "@formbricks/ui/Button";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { usePlausible } from "next-plausible";
 import Image from "next/image";
 import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
+
 import HeroAnimation from "./HeroAnimation";
 
 export const Hero: React.FC = ({}) => {
@@ -27,11 +29,11 @@ export const Hero: React.FC = ({}) => {
           <ChevronRightIcon className="mb-1 ml-1 inline h-4 w-4 text-slate-300" />
         </a>
         <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
-          <span className="xl:inline">The Open Source Survey Suite</span>
+          <span className="xl:inline">Privacy-first Experience Management</span>
         </h1>
 
         <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 dark:text-slate-400 sm:text-lg md:mt-5 md:text-xl">
-          Run link surveys, in-app surveys and email surveys in one app —{" "}
+          Turn customer insights into irresistible experiences —{" "}
           <span className="decoration-brand-dark underline underline-offset-4">all privacy-first.</span>
         </p>
 
@@ -40,6 +42,12 @@ export const Hero: React.FC = ({}) => {
             Trusted by
           </p>
           <div className="grid grid-cols-4 items-center gap-6 pt-2 md:gap-8">
+            <Image
+              src={FlixbusLogo}
+              alt="Flixbus Flix Flixtrain Logo"
+              className="rounded-lg pb-1 hover:opacity-100 md:opacity-50"
+              width={200}
+            />
             <Image
               src={CalLogoLight}
               alt="Cal Logo"
@@ -76,12 +84,6 @@ export const Hero: React.FC = ({}) => {
               className="hidden  pb-1 hover:opacity-100 dark:block md:opacity-50"
               width={200}
             />
-            <Image
-              src={ClovyrLogo}
-              alt="Clovyr Logo"
-              className="rounded-lg pb-1 hover:opacity-100 md:opacity-50"
-              width={200}
-            />
           </div>
         </div>
         <div className="hidden pt-10 md:block">
@@ -92,7 +94,7 @@ export const Hero: React.FC = ({}) => {
               router.push("https://app.formbricks.com/auth/signup");
               plausible("Hero_CTA_CreateSurvey");
             }}>
-            Create survey
+            Get started
           </Button>
           <Button
             variant="secondary"

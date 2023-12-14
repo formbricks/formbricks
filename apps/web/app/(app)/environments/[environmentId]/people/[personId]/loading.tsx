@@ -2,10 +2,11 @@ import {
   ActivityItemIcon,
   ActivityItemPopover,
 } from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivityItemComponents";
-import { TAction } from "@formbricks/types/actions";
-import { BackIcon } from "@formbricks/ui/icons";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { TrashIcon } from "lucide-react";
+
+import { TAction } from "@formbricks/types/actions";
+import { BackIcon } from "@formbricks/ui/icons";
 
 export default function Loading() {
   const actionItemList: TAction[] = [

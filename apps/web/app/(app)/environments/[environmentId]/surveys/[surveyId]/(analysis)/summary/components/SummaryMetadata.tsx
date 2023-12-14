@@ -1,10 +1,11 @@
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { useMemo, useState } from "react";
+
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
-import { useMemo, useState } from "react";
 
 interface SummaryMetadataProps {
   responses: TResponse[];
@@ -63,7 +64,7 @@ export default function SummaryMetadata({
   const ttc = useMemo(() => {
     let validTtcResponsesCountAcc = 0; //stores the count of responses that contains a _total value
     const ttc = responses.reduce((acc, response) => {
-      if (response.ttc._total) {
+      if (response.ttc?._total) {
         validTtcResponsesCountAcc++;
         return acc + response.ttc._total;
       }
@@ -72,8 +73,6 @@ export default function SummaryMetadata({
     setValidResponsesCount(validTtcResponsesCountAcc);
     return ttc;
   }, [responses]);
-
-  console.log(ttc);
 
   const totalResponses = responses.length;
 

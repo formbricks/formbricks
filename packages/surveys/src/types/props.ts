@@ -1,6 +1,6 @@
 import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurvey } from "@formbricks/types/surveys";
 
 export interface SurveyBaseProps {
   survey: TSurvey;
@@ -15,6 +15,7 @@ export interface SurveyBaseProps {
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  responseCount?: number;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

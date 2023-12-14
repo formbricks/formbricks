@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { ZPerson, ZPersonAttributes } from "./people";
 import { ZSurvey } from "./surveys";
 import { ZTag } from "./tags";
@@ -22,7 +23,7 @@ export const ZResponseNoteUser = z.object({
 
 export type TResponseNoteUser = z.infer<typeof ZResponseNoteUser>;
 
-const ZResponseNote = z.object({
+export const ZResponseNote = z.object({
   updatedAt: z.date(),
   createdAt: z.date(),
   id: z.string(),
@@ -37,11 +38,13 @@ export type TResponseNote = z.infer<typeof ZResponseNote>;
 export const ZResponseMeta = z.object({
   source: z.string().optional(),
   url: z.string().optional(),
-  userAgent: z.object({
-    browser: z.string().optional(),
-    os: z.string().optional(),
-    device: z.string().optional(),
-  }),
+  userAgent: z
+    .object({
+      browser: z.string().optional(),
+      os: z.string().optional(),
+      device: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
@@ -55,7 +58,7 @@ export const ZResponse = z.object({
   personAttributes: ZResponsePersonAttributes,
   finished: z.boolean(),
   data: ZResponseData,
-  ttc: ZResponseTtc,
+  ttc: ZResponseTtc.optional(),
   notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
   meta: ZResponseMeta.nullable(),
@@ -64,12 +67,6 @@ export const ZResponse = z.object({
 
 export type TResponse = z.infer<typeof ZResponse>;
 
-export type TResponseDates = {
-  createdAt: TResponse["createdAt"];
-  updatedAt: TResponse["updatedAt"];
-  notes: TResponse["notes"];
-};
-
 export const ZResponseInput = z.object({
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
@@ -77,7 +74,7 @@ export const ZResponseInput = z.object({
   singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
   data: ZResponseData,
-  ttc: ZResponseTtc,
+  ttc: ZResponseTtc.optional(),
   meta: z
     .object({
       source: z.string().optional(),
@@ -104,7 +101,7 @@ export type TResponseLegacyInput = z.infer<typeof ZResponseLegacyInput>;
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean(),
   data: ZResponseData,
-  ttc: ZResponseTtc,
+  ttc: ZResponseTtc.optional(),
 });
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
@@ -118,7 +115,7 @@ export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
   data: ZResponseData,
-  ttc: ZResponseTtc,
+  ttc: ZResponseTtc.optional(),
   meta: z
     .object({
       url: z.string().optional(),
