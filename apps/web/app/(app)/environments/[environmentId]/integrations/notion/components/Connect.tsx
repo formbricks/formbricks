@@ -1,12 +1,14 @@
-import Image from "next/image";
 import FormbricksLogo from "@/images/logo.svg";
 import NotionLogo from "@/images/notion.png";
+import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@formbricks/ui/Button";
-import { useEffect, useState } from "react";
-import { authorize } from "../lib/notion";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+
+import { Button } from "@formbricks/ui/Button";
+
+import { authorize } from "../lib/notion";
 
 interface ConnectProps {
   enabled: boolean;

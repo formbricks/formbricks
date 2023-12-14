@@ -1,5 +1,5 @@
 import NotionWrapper from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
@@ -12,6 +12,7 @@ import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
+import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function Notion({ params }) {
   const enabled = !!(

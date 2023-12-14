@@ -1,15 +1,16 @@
 "use client";
 
-import Home from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Home";
 import AddIntegrationModal from "@/app/(app)/environments/[environmentId]/integrations/notion/components/AddIntegrationModal";
 import Connect from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Connect";
+import Home from "@/app/(app)/environments/[environmentId]/integrations/notion/components/Home";
 import { useState } from "react";
+
+import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 
 interface NotionWrapperProps {

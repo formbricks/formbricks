@@ -1,3 +1,6 @@
+import { responses } from "@/app/lib/api/response";
+import { NextRequest, NextResponse } from "next/server";
+
 import {
   ENCRYPTION_KEY,
   NOTION_OAUTH_CLIENT_ID,
@@ -5,10 +8,8 @@ import {
   NOTION_REDIRECT_URI,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
-import { responses } from "@/app/lib/api/response";
 import { symmetricEncrypt } from "@formbricks/lib/crypto";
 import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const url = req.url;

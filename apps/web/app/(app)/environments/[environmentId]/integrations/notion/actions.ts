@@ -1,10 +1,11 @@
 "use server";
 
-import { authOptions } from "@formbricks/lib/authOptions";
-import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/errors";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getNotionDatabases } from "@formbricks/lib/notion/service";
+import { AuthorizationError } from "@formbricks/types/errors";
 
 export async function refreshDatabasesAction(environmentId: string) {
   const session = await getServerSession(authOptions);

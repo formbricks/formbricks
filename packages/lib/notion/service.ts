@@ -1,10 +1,11 @@
-import { symmetricDecrypt } from "../crypto";
-import { ENCRYPTION_KEY } from "../constants";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfig,
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
+
+import { ENCRYPTION_KEY } from "../constants";
+import { symmetricDecrypt } from "../crypto";
 import { getIntegrationByType } from "../integration/service";
 
 async function fetchPages(config: TIntegrationNotionConfig) {

@@ -1,12 +1,13 @@
 import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { timeSince } from "@formbricks/lib/time";
-import { Button } from "@formbricks/ui/Button";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+
+import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 
 interface HomeProps {
   environment: TEnvironment;

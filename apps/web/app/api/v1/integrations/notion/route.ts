@@ -1,5 +1,8 @@
-import { authOptions } from "@formbricks/lib/authOptions";
 import { responses } from "@/app/lib/api/response";
+import { getServerSession } from "next-auth";
+import { NextRequest } from "next/server";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
@@ -7,8 +10,6 @@ import {
   NOTION_REDIRECT_URI,
 } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { getServerSession } from "next-auth";
-import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   const environmentId = req.headers.get("environmentId");
