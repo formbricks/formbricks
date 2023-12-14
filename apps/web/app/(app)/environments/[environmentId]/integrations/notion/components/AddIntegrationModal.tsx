@@ -4,6 +4,7 @@ import {
   TYPE_MAPPING,
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
+import { questionTypes } from "@/app/lib/questions";
 import NotionLogo from "@/images/notion.png";
 import { ArrowPathIcon, ChevronDownIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -257,8 +258,9 @@ export default function AddIntegrationModal({
           case ERRORS.MAPPING:
             return (
               <>
-                - <i>{ques.name}</i> of type <b>{ques.type}</b> can&apos;t be mapped to <i>{col.name}</i> of
-                type <b>{col.type}</b>
+                - <i>&quot;{ques.name}&quot;</i> of type{" "}
+                <b>{questionTypes.find((qt) => qt.id === ques.type)?.label}</b> can&apos;t be mapped to the
+                column <i>&quot;{col.name}&quot;</i> of type <b>{col.type}</b>
               </>
             );
           default:
