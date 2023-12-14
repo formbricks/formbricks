@@ -99,9 +99,22 @@ export async function POST(request: Request) {
       },
     });
 
+    let surveyData;
+
     const integrations = await getIntegrations(environmentId);
+
     if (integrations.length > 0) {
-      handleIntegrations(integrations, inputValidation.data);
+      surveyData = await prisma.survey.findUnique({
+        where: {
+          id: surveyId,
+        },
+        select: {
+          id: true,
+          name: true,
+          questions: true,
+        },
+      });
+      handleIntegrations(integrations, inputValidation.data, surveyData);
     }
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
@@ -114,16 +127,19 @@ export async function POST(request: Request) {
 
     if (usersWithNotifications.length > 0) {
       // get survey
-      const surveyData = await prisma.survey.findUnique({
-        where: {
-          id: surveyId,
-        },
-        select: {
-          id: true,
-          name: true,
-          questions: true,
-        },
-      });
+      if (!surveyData) {
+        surveyData = await prisma.survey.findUnique({
+          where: {
+            id: surveyId,
+          },
+          select: {
+            id: true,
+            name: true,
+            questions: true,
+          },
+        });
+      }
+
       if (!surveyData) {
         console.error(`Pipeline: Survey with id ${surveyId} not found`);
         return new Response("Survey not found", {
