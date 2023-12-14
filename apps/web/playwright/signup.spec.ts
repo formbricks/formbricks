@@ -1,7 +1,7 @@
-import { getUser } from "./utils";
+import { users } from "./utils/mock";
 import { test, expect } from "@playwright/test";
 
-const { name, email, password } = getUser();
+const { name, email, password } = users.signup[0];
 
 test.describe("Email Signup Flow Test", async () => {
   test.describe.configure({ mode: "serial" });
@@ -12,7 +12,9 @@ test.describe("Email Signup Flow Test", async () => {
 
   test("Valid User", async ({ page }) => {
     await page.fill('input[name="name"]', name);
+    await page.getByPlaceholder("Full Name").press("Tab");
     await page.fill('input[name="email"]', email);
+    await page.getByPlaceholder("work@email.com").press("Tab");
     await page.fill('input[name="password"]', password);
     await page.press('input[name="password"]', "Enter");
     await page.waitForURL("/auth/signup-without-verification-success");
@@ -21,40 +23,44 @@ test.describe("Email Signup Flow Test", async () => {
 
   test("Email is taken", async ({ page }) => {
     await page.fill('input[name="name"]', name);
+    await page.getByPlaceholder("Full Name").press("Tab");
     await page.fill('input[name="email"]', email);
+    await page.getByPlaceholder("work@email.com").press("Tab");
     await page.fill('input[name="password"]', password);
     await page.press('input[name="password"]', "Enter");
-
     let alertMessage = "user with this email address already exists";
     await (await page.waitForSelector(`text=${alertMessage}`)).isVisible();
   });
 
   test("No Name", async ({ page }) => {
     await page.fill('input[name="name"]', "");
+    await page.getByPlaceholder("Full Name").press("Tab");
     await page.fill('input[name="email"]', email);
+    await page.getByPlaceholder("work@email.com").press("Tab");
     await page.fill('input[name="password"]', password);
     await page.press('input[name="password"]', "Enter");
-
     const button = page.getByText("Continue with Email");
     await expect(button).toBeDisabled();
   });
 
   test("Invalid Email", async ({ page }) => {
     await page.fill('input[name="name"]', name);
+    await page.getByPlaceholder("Full Name").press("Tab");
     await page.fill('input[name="email"]', "invalid");
+    await page.getByPlaceholder("work@email.com").press("Tab");
     await page.fill('input[name="password"]', password);
     await page.press('input[name="password"]', "Enter");
-
     const button = page.getByText("Continue with Email");
     await expect(button).toBeDisabled();
   });
 
   test("Invalid Password", async ({ page }) => {
     await page.fill('input[name="name"]', name);
+    await page.getByPlaceholder("Full Name").press("Tab");
     await page.fill('input[name="email"]', email);
+    await page.getByPlaceholder("work@email.com").press("Tab");
     await page.fill('input[name="password"]', "invalid");
     await page.press('input[name="password"]', "Enter");
-
     const button = page.getByText("Continue with Email");
     await expect(button).toBeDisabled();
   });
