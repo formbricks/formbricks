@@ -1,17 +1,16 @@
-import { getTeam, getUser, signUpAndLogin } from "./utils";
+import { teams, users } from "./utils/mock";
+import { signUpAndLogin } from "./utils/helper";
 import { test, expect } from "@playwright/test";
 
-const { role, productName, useCase } = getTeam();
+const { role, productName, useCase } = teams.onboarding;
 
 test.describe("Onboarding Flow Test", async () => {
-  test.beforeEach(async ({ page }) => {
-    const { name, email, password } = getUser();
+  test("Step by Step", async ({ page }) => {
+    const { name, email, password } = users.onboarding[0];
     await signUpAndLogin(page, name, email, password);
     await page.waitForURL("/onboarding");
     await expect(page).toHaveURL("/onboarding");
-  });
 
-  test("Step by Step", async ({ page }) => {
     await page.getByRole("button", { name: "Begin (1 min)" }).click();
     await page.getByLabel(role).check();
     await page.getByRole("button", { name: "Next" }).click();
@@ -35,6 +34,11 @@ test.describe("Onboarding Flow Test", async () => {
   });
 
   test("Skip", async ({ page }) => {
+    const { name, email, password } = users.onboarding[1];
+    await signUpAndLogin(page, name, email, password);
+    await page.waitForURL("/onboarding");
+    await expect(page).toHaveURL("/onboarding");
+
     await page.getByRole("button", { name: "I'll do it later" }).click();
     await page.getByRole("button", { name: "I'll do it later" }).click();
 
