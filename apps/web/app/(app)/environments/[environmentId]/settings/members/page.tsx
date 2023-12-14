@@ -1,4 +1,7 @@
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/TeamActions";
+import { getServerSession } from "next-auth";
+import { Suspense } from "react";
+
 import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
@@ -7,8 +10,7 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 import { Skeleton } from "@formbricks/ui/Skeleton";
-import { getServerSession } from "next-auth";
-import { Suspense } from "react";
+
 import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
 import DeleteTeam from "./components/DeleteTeam";

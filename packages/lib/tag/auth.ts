@@ -1,14 +1,16 @@
 import "server-only";
 
-import { validateInputs } from "../utils/validate";
-import { hasUserEnvironmentAccess } from "../environment/auth";
-import { getTag } from "./service";
 import { unstable_cache } from "next/cache";
+
 import { ZId } from "@formbricks/types/environment";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getMembershipByUserIdTeamId } from "../../lib/membership/service";
-import { getAccessFlags } from "../../lib/membership/utils";
-import { getTeamByEnvironmentId } from "../../lib/team/service";
+import { hasUserEnvironmentAccess } from "../environment/auth";
+import { getMembershipByUserIdTeamId } from "../membership/service";
+import { getAccessFlags } from "../membership/utils";
+import { getTeamByEnvironmentId } from "../team/service";
+import { validateInputs } from "../utils/validate";
+import { getTag } from "./service";
 
 export const canUserAccessTag = async (userId: string, tagId: string): Promise<boolean> =>
   await unstable_cache(

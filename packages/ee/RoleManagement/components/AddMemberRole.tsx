@@ -1,3 +1,6 @@
+import { Control, Controller } from "react-hook-form";
+
+import { Label } from "@formbricks/ui/Label";
 import {
   Select,
   SelectContent,
@@ -6,8 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui/Select";
-import { Label } from "@formbricks/ui/Label";
-import { Controller, Control } from "react-hook-form";
 
 enum MembershipRole {
   Admin = "admin",

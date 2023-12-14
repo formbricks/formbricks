@@ -1,5 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
 import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
@@ -10,7 +12,6 @@ import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
-import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);

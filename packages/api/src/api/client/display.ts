@@ -1,6 +1,7 @@
 import { TDisplayCreateInput, TDisplayUpdateInput } from "@formbricks/types/displays";
 import { Result } from "@formbricks/types/errorHandlers";
 import { NetworkError } from "@formbricks/types/errors";
+
 import { makeRequest } from "../../utils/makeRequest";
 
 export class DisplayAPI {

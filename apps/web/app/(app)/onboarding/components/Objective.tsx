@@ -2,12 +2,14 @@
 
 import { updateUserAction } from "@/app/(app)/onboarding/actions";
 import { formbricksEnabled, updateResponse } from "@/app/lib/formbricks";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+
 import { cn } from "@formbricks/lib/cn";
 import { env } from "@formbricks/lib/env.mjs";
 import { TUser, TUserObjective } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
+
 import { handleTabNavigation } from "../utils";
 
 type ObjectiveProps = {

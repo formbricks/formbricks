@@ -1,8 +1,9 @@
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
-import { Label } from "@formbricks/ui/Label";
-import { formatDistance } from "date-fns";
-import { TAction } from "@formbricks/types/actions";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import { formatDistance } from "date-fns";
+
+import { TAction } from "@formbricks/types/actions";
+import { Label } from "@formbricks/ui/Label";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 
 export const ActivityItemIcon = ({ actionItem }: { actionItem: TAction }) => (
   <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110 group-hover:text-slate-600">

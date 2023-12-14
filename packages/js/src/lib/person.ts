@@ -1,5 +1,6 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people";
+
 import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,

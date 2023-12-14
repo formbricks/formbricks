@@ -1,7 +1,9 @@
-import { getTeam } from "@formbricks/lib/team/service";
-import { StripePriceLookupKeys } from "./constants";
 import Stripe from "stripe";
+
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { getTeam } from "@formbricks/lib/team/service";
+
+import { StripePriceLookupKeys } from "./constants";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
@@ -90,10 +92,13 @@ export const createSubscription = async (
 
           const combinedLineItems = [...lineItems, ...existingItemsInScheduledSubscription];
 
-          const uniqueItemsMap = combinedLineItems.reduce((acc, item) => {
-            acc[item.price] = item; // This will overwrite duplicate items based on price
-            return acc;
-          }, {} as { [key: string]: { price: string; quantity?: number } });
+          const uniqueItemsMap = combinedLineItems.reduce(
+            (acc, item) => {
+              acc[item.price] = item; // This will overwrite duplicate items based on price
+              return acc;
+            },
+            {} as { [key: string]: { price: string; quantity?: number } }
+          );
 
           const lineItemsForScheduledSubscription = Object.values(uniqueItemsMap);
 

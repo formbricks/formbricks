@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { DocSearchModal, useDocSearchKeyboardEvents } from "@docsearch/react";
 import Link from "next/link";
 import Router from "next/router";
-import { DocSearchModal, useDocSearchKeyboardEvents } from "@docsearch/react";
+import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 const docSearchConfig = {
   appId: process.env.NEXT_PUBLIC_DOCSEARCH_APP_ID || "",

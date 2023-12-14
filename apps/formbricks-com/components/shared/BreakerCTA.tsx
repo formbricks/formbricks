@@ -1,7 +1,8 @@
-import { Button } from "@formbricks/ui/Button";
 import clsx from "clsx";
 import { usePlausible } from "next-plausible";
 import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
 
 interface Props {
   teaser: string;

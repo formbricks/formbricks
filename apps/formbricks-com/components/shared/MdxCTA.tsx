@@ -1,5 +1,6 @@
-import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
 
 export default function CTA() {
   const router = useRouter();

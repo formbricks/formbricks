@@ -3,12 +3,6 @@
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
-import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct } from "@formbricks/types/product";
-import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
-import { SurveyInline } from "@formbricks/ui/Survey";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {
   ArrowsPointingInIcon,
@@ -18,6 +12,13 @@ import {
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { SurveyInline } from "@formbricks/ui/Survey";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 

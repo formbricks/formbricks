@@ -5,17 +5,6 @@ import {
   deleteSurveyAction,
   duplicateSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/actions";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-import type { TEnvironment } from "@formbricks/types/environment";
-import type { TSurvey } from "@formbricks/types/surveys";
 import {
   ArrowUpOnSquareStackIcon,
   DocumentDuplicateIcon,
@@ -29,6 +18,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TSurvey } from "@formbricks/types/surveys";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@formbricks/ui/DropdownMenu";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;

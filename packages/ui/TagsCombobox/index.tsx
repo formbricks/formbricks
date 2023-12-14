@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
+
+import { Button } from "../Button";
 import { Command, CommandGroup, CommandInput, CommandItem } from "../Command";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
-import { Button } from "../Button";
-import { useEffect, useMemo } from "react";
 
 interface ITagsComboboxProps {
   tags: Tag[];
@@ -80,8 +81,8 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && searchValue !== "") {
                   if (
-                    !tagsToSearch?.find((tag) =>
-                      tag?.label?.toLowerCase().includes(searchValue?.toLowerCase())
+                    !tagsToSearch?.find(
+                      (tag) => tag?.label?.toLowerCase().includes(searchValue?.toLowerCase())
                     )
                   ) {
                     createTag?.(searchValue);

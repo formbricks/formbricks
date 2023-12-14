@@ -1,7 +1,9 @@
-import { TSurvey } from "@formbricks/types/surveys";
-import Progress from "./Progress";
 import { calculateElementIdx } from "@/lib/utils";
 import { useCallback, useMemo } from "preact/hooks";
+
+import { TSurvey } from "@formbricks/types/surveys";
+
+import Progress from "./Progress";
 
 interface ProgressBarProps {
   survey: TSurvey;

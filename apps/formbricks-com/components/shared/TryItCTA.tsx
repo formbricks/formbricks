@@ -1,6 +1,7 @@
-import { Button } from "@formbricks/ui/Button";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
 
 export default function HeadingCentered() {
   const router = useRouter();

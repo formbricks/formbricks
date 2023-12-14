@@ -1,5 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
 import { personCache } from "@formbricks/lib/person/cache";
@@ -8,7 +10,6 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { TJsStateSync, ZJsPeopleAttributeInput } from "@formbricks/types/js";
-import { NextResponse } from "next/server";
 
 interface Context {
   params: {

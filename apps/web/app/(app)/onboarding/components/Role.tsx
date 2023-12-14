@@ -2,12 +2,14 @@
 
 import { updateUserAction } from "@/app/(app)/onboarding/actions";
 import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
-import { cn } from "@formbricks/lib/cn";
-import { env } from "@formbricks/lib/env.mjs";
-import { Button } from "@formbricks/ui/Button";
 import { Session } from "next-auth";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { env } from "@formbricks/lib/env.mjs";
+import { Button } from "@formbricks/ui/Button";
+
 import { handleTabNavigation } from "../utils";
 
 type RoleProps = {

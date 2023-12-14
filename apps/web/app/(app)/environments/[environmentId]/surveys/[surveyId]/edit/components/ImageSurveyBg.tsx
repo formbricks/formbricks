@@ -1,5 +1,5 @@
-import FileInput from "@formbricks/ui/FileInput";
 import { TSurvey } from "@formbricks/types/surveys";
+import FileInput from "@formbricks/ui/FileInput";
 
 interface ImageSurveyBgBgProps {
   localSurvey?: TSurvey;

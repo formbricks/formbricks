@@ -1,4 +1,5 @@
 import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
+
 import { Result, err, ok, wrapThrows } from "./errors";
 
 export const LOCAL_STORAGE_KEY = "formbricks-js";

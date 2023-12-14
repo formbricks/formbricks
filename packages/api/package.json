@@ -35,8 +35,8 @@
     "@formbricks/tsconfig": "workspace:*",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-turbo": "latest",
-    "terser": "^5.25.0",
-    "vite": "^5.0.6",
+    "terser": "^5.26.0",
+    "vite": "^5.0.8",
     "vite-plugin-dts": "^3.6.4"
   }
 }

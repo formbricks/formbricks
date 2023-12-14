@@ -1,12 +1,14 @@
 import crypto from "crypto";
 import { authenticator } from "otplib";
 import qrcode from "qrcode";
+
 import { prisma } from "@formbricks/database";
-import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
+
 import { verifyPassword } from "../auth";
+import { ENCRYPTION_KEY } from "../constants";
+import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
 import { totpAuthenticatorCheck } from "../totp";
 import { userCache } from "../user/cache";
-import { ENCRYPTION_KEY } from "../constants";
 
 export const setupTwoFactorAuth = async (
   userId: string,

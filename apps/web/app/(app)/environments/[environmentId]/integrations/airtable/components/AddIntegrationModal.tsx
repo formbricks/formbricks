@@ -1,27 +1,29 @@
 "use client";
 
-import {
-  TIntegrationAirtableTables,
-  TIntegrationAirtable,
-  TIntegrationAirtableConfigData,
-  TIntegrationAirtableInput,
-} from "@formbricks/types/integration/airtable";
-import { TSurvey } from "@formbricks/types/surveys";
-import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { Button } from "@formbricks/ui/Button";
-import { Checkbox } from "@formbricks/ui/Checkbox";
-import { Label } from "@formbricks/ui/Label";
-import { Modal } from "@formbricks/ui/Modal";
-import AirtableLogo from "../images/airtable.svg";
-import { fetchTables } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { fetchTables } from "@/app/(app)/environments/[environmentId]/integrations/airtable/lib/airtable";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+
 import { TIntegrationItem } from "@formbricks/types/integration";
+import {
+  TIntegrationAirtable,
+  TIntegrationAirtableConfigData,
+  TIntegrationAirtableInput,
+  TIntegrationAirtableTables,
+} from "@formbricks/types/integration/airtable";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
+import { Button } from "@formbricks/ui/Button";
+import { Checkbox } from "@formbricks/ui/Checkbox";
+import { Label } from "@formbricks/ui/Label";
+import { Modal } from "@formbricks/ui/Modal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+
+import AirtableLogo from "../images/airtable.svg";
 
 type EditModeProps =
   | { isEditMode: false; defaultData?: never }

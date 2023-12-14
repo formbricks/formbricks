@@ -2,8 +2,9 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { Fragment } from "react";
 import clsx from "clsx";
+import { Fragment } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 
 type Modal = {

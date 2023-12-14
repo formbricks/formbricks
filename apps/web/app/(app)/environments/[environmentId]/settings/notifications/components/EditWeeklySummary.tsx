@@ -1,7 +1,8 @@
 import { UsersIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { NotificationSwitch } from "./NotificationSwitch";
+
 import { Membership, User } from "../types";
+import { NotificationSwitch } from "./NotificationSwitch";
 
 interface EditAlertsProps {
   memberships: Membership[];

@@ -1,8 +1,8 @@
-import { ResponseAPI } from "./response";
-import { DisplayAPI } from "./display";
 import { ApiConfig } from "../../types";
 import { ActionAPI } from "./action";
+import { DisplayAPI } from "./display";
 import { PeopleAPI } from "./people";
+import { ResponseAPI } from "./response";
 import { StorageAPI } from "./storage";
 
 export class Client {
