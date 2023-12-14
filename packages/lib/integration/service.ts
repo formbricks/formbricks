@@ -1,8 +1,5 @@
 import "server-only";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { formatDateFields } from "@/utils/datetime";
-import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -17,6 +14,9 @@ import {
   ZIntegrationType,
 } from "@formbricks/types/integration";
 
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
 import { integrationCache } from "./cache";
 
 export async function createOrUpdateIntegration(

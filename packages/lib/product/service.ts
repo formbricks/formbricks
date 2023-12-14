@@ -1,11 +1,5 @@
 import "server-only";
 
-import { IS_S3_CONFIGURED, ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { environmentCache } from "@/environment/cache";
-import { createEnvironment } from "@/environment/service";
-import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "@/storage/service";
-import { formatDateFields } from "@/utils/datetime";
-import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
@@ -17,6 +11,12 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 
+import { IS_S3_CONFIGURED, ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { environmentCache } from "../environment/cache";
+import { createEnvironment } from "../environment/service";
+import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
 import { productCache } from "./cache";
 
 const selectProduct = {

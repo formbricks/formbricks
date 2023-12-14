@@ -1,4 +1,3 @@
-import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
 import z from "zod";
@@ -6,6 +5,8 @@ import z from "zod";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TShortUrl, ZShortUrlId } from "@formbricks/types/shortUrl";
+
+import { validateInputs } from "../utils/validate";
 
 // Create the short url and return it
 export const createShortUrl = async (url: string): Promise<TShortUrl> => {

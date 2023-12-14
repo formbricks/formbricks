@@ -1,10 +1,5 @@
 import "server-only";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { updateMembership } from "@/membership/service";
-import { deleteTeam } from "@/team/service";
-import { formatDateFields } from "@/utils/datetime";
-import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
@@ -15,6 +10,11 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } from "@formbricks/types/user";
 
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { updateMembership } from "../membership/service";
+import { deleteTeam } from "../team/service";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
 
 const responseSelection = {

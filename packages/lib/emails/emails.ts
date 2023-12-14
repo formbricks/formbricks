@@ -1,10 +1,9 @@
-import { WEBAPP_URL } from "@/constants";
-import { createInviteToken, createToken } from "@/jwt";
-import { getQuestionResponseMapping } from "@/responses";
-
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
+import { WEBAPP_URL } from "../constants";
+import { createInviteToken, createToken } from "../jwt";
+import { getQuestionResponseMapping } from "../responses";
 import { withEmailTemplate } from "./email-template";
 
 const nodemailer = require("nodemailer");

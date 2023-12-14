@@ -1,14 +1,5 @@
 import "server-only";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { deleteDisplayByResponseId } from "@/display/service";
-import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "@/person/service";
-import { calculateTtcTotal } from "@/response/util";
-import { responseNoteCache } from "@/responseNote/cache";
-import { getResponseNotes } from "@/responseNote/service";
-import { captureTelemetry } from "@/telemetry";
-import { formatDateFields } from "@/utils/datetime";
-import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -30,6 +21,15 @@ import {
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { deleteDisplayByResponseId } from "../display/service";
+import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
+import { calculateTtcTotal } from "../response/util";
+import { responseNoteCache } from "../responseNote/cache";
+import { getResponseNotes } from "../responseNote/service";
+import { captureTelemetry } from "../telemetry";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 
 const responseSelection = {

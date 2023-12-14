@@ -1,6 +1,3 @@
-import { IS_S3_CONFIGURED, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "@/constants";
-import { generateLocalSignedUrl } from "@/crypto";
-import { env } from "@/env.mjs";
 import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
@@ -18,6 +15,9 @@ import path from "path";
 
 import { TAccessType } from "@formbricks/types/storage";
 
+import { IS_S3_CONFIGURED, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
+import { generateLocalSignedUrl } from "../crypto";
+import { env } from "../env.mjs";
 import { storageCache } from "./cache";
 
 // global variables

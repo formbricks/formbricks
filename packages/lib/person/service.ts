@@ -1,9 +1,5 @@
 import "server-only";
 
-import { createAttributeClass, getAttributeClassByName } from "@/attributeClass/service";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { formatDateFields } from "@/utils/datetime";
-import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -13,6 +9,10 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TPerson, TPersonUpdateInput, ZPerson, ZPersonUpdateInput } from "@formbricks/types/people";
 
+import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
 
 export const selectPerson = {

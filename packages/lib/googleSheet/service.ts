@@ -1,12 +1,5 @@
 import "server-only";
 
-import {
-  GOOGLE_SHEETS_CLIENT_ID,
-  GOOGLE_SHEETS_CLIENT_SECRET,
-  GOOGLE_SHEETS_REDIRECT_URL,
-} from "@/constants";
-import { getIntegrationByType } from "@/integration/service";
-import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
@@ -19,6 +12,14 @@ import {
   TIntegrationGoogleSheetsCredential,
   ZIntegrationGoogleSheetsCredential,
 } from "@formbricks/types/integration/googleSheet";
+
+import {
+  GOOGLE_SHEETS_CLIENT_ID,
+  GOOGLE_SHEETS_CLIENT_SECRET,
+  GOOGLE_SHEETS_REDIRECT_URL,
+} from "../constants";
+import { getIntegrationByType } from "../integration/service";
+import { validateInputs } from "../utils/validate";
 
 const { google } = require("googleapis");
 

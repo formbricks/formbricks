@@ -1,11 +1,5 @@
 import "server-only";
 
-import { actionClassCache } from "@/actionClass/cache";
-import { createActionClass, getActionClassByEnvironmentIdAndName } from "@/actionClass/service";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { createPerson, getPersonByUserId } from "@/person/service";
-import { formatDateFields } from "@/utils/datetime";
-import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -16,6 +10,12 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
 
+import { actionClassCache } from "../actionClass/cache";
+import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { createPerson, getPersonByUserId } from "../person/service";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
 
 export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {

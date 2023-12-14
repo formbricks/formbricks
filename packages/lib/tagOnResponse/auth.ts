@@ -1,16 +1,16 @@
 import "server-only";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { getMembershipByUserIdTeamId } from "@/membership/service";
-import { getAccessFlags } from "@/membership/utils";
-import { canUserAccessResponse } from "@/response/auth";
-import { canUserAccessTag } from "@/tag/auth";
-import { getTeamByEnvironmentId } from "@/team/service";
-import { validateInputs } from "@/utils/validate";
 import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getMembershipByUserIdTeamId } from "../membership/service";
+import { getAccessFlags } from "../membership/utils";
+import { canUserAccessResponse } from "../response/auth";
+import { canUserAccessTag } from "../tag/auth";
+import { getTeamByEnvironmentId } from "../team/service";
+import { validateInputs } from "../utils/validate";
 import { tagOnResponseCache } from "./cache";
 
 export const canUserAccessTagOnResponse = async (

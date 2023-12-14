@@ -1,13 +1,13 @@
 import "server-only";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { hasUserEnvironmentAccess } from "@/environment/auth";
-import { getSurvey } from "@/survey/service";
-import { validateInputs } from "@/utils/validate";
 import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { hasUserEnvironmentAccess } from "../environment/auth";
+import { getSurvey } from "../survey/service";
+import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 import { getResponse } from "./service";
 

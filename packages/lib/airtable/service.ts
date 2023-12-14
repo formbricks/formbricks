@@ -1,5 +1,3 @@
-import { AIRTABLE_CLIENT_ID } from "@/constants";
-import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "@/integration/service";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@formbricks/database";
@@ -16,6 +14,9 @@ import {
   ZIntegrationAirtableTablesWithFields,
   ZIntegrationAirtableTokenSchema,
 } from "@formbricks/types/integration/airtable";
+
+import { AIRTABLE_CLIENT_ID } from "../constants";
+import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
 
 interface ConnectAirtableOptions {
   environmentId: string;

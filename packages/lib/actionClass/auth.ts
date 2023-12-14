@@ -1,15 +1,15 @@
 import "server-only";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { hasUserEnvironmentAccess } from "@/environment/auth";
-import { getMembershipByUserIdTeamId } from "@/membership/service";
-import { getAccessFlags } from "@/membership/utils";
-import { getTeamByEnvironmentId } from "@/team/service";
-import { validateInputs } from "@/utils/validate";
 import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { hasUserEnvironmentAccess } from "../environment/auth";
+import { getMembershipByUserIdTeamId } from "../membership/service";
+import { getAccessFlags } from "../membership/utils";
+import { getTeamByEnvironmentId } from "../team/service";
+import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 import { getActionClass } from "./service";
 

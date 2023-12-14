@@ -1,14 +1,14 @@
 import "server-only";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { responseCache } from "@/response/cache";
-import { validateInputs } from "@/utils/validate";
 import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
 
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { responseCache } from "../response/cache";
+import { validateInputs } from "../utils/validate";
 import { tagOnResponseCache } from "./cache";
 
 const selectTagsOnResponse = {

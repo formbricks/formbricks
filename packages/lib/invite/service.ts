@@ -1,10 +1,5 @@
 import "server-only";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "@/constants";
-import { sendInviteMemberEmail } from "@/emails/emails";
-import { getMembershipByUserIdTeamId } from "@/membership/service";
-import { formatDateFields } from "@/utils/datetime";
-import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -22,6 +17,11 @@ import {
   ZInvitee,
 } from "@formbricks/types/invites";
 
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { sendInviteMemberEmail } from "../emails/emails";
+import { getMembershipByUserIdTeamId } from "../membership/service";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
 import { inviteCache } from "./cache";
 
 const inviteSelect = {
