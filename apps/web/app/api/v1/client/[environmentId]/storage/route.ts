@@ -1,7 +1,9 @@
 import { responses } from "@/app/lib/api/response";
+import { NextRequest, NextResponse } from "next/server";
+
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { NextRequest, NextResponse } from "next/server";
+
 import uploadPrivateFile from "./lib/uploadPrivateFile";
 
 interface Context {

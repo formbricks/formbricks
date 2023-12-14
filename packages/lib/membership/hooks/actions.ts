@@ -1,12 +1,15 @@
 "use server";
+
 import "server-only";
 
 import { getServerSession } from "next-auth";
+
+import { AuthenticationError } from "@formbricks/types/errors";
+import { TUser } from "@formbricks/types/user";
+
 import { authOptions } from "../../authOptions";
 import { getTeamByEnvironmentId } from "../../team/service";
-import { AuthenticationError } from "@formbricks/types/errors";
 import { getMembershipByUserIdTeamId } from "../service";
-import { TUser } from "@formbricks/types/user";
 
 export const getMembershipByUserIdTeamIdAction = async (environmentId: string) => {
   const session = await getServerSession(authOptions);

@@ -1,8 +1,10 @@
 import { responses } from "@/app/lib/api/response";
-import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+
 import getSignedUrlForPublicFile from "./lib/getSignedUrl";
 
 // api endpoint for uploading public files

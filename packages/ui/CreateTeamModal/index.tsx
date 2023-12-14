@@ -1,13 +1,14 @@
-import { createTeamAction } from "../../../apps/web/app/(app)/environments/[environmentId]/actions";
-import { Modal } from "../Modal";
-import { Button } from "../Button";
-import { Input } from "../Input";
-import { Label } from "../Label";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+
+import { createTeamAction } from "../../../apps/web/app/(app)/environments/[environmentId]/actions";
+import { Button } from "../Button";
+import { Input } from "../Input";
+import { Label } from "../Label";
+import { Modal } from "../Modal";
 
 interface CreateTeamModalProps {
   open: boolean;

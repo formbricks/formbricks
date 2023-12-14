@@ -1,7 +1,9 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
 import { calculateElementIdx } from "@/lib/utils";
+
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
+
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 

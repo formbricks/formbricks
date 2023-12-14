@@ -1,11 +1,12 @@
 "use server";
 
-import { authOptions } from "@formbricks/lib/authOptions";
-import { getProduct, updateProduct } from "@formbricks/lib/product/service";
-import { TProductUpdateInput } from "@formbricks/types/product";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/errors";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessProduct, verifyUserRoleAccess } from "@formbricks/lib/product/auth";
+import { getProduct, updateProduct } from "@formbricks/lib/product/service";
+import { AuthorizationError } from "@formbricks/types/errors";
+import { TProductUpdateInput } from "@formbricks/types/product";
 
 export async function updateProductAction(productId: string, inputProduct: Partial<TProductUpdateInput>) {
   const session = await getServerSession(authOptions);

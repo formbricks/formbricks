@@ -1,10 +1,12 @@
+import { getServerSession } from "next-auth";
+import { notFound, redirect } from "next/navigation";
+
+import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+
 import { upgradePlanAction } from "../actions";
-import { notFound, redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { StripePriceLookupKeys } from "@formbricks/ee/billing/lib/constants";
 
 export default async function UnlimitedPage({ params }) {
   if (!IS_FORMBRICKS_CLOUD) {

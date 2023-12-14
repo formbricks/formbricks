@@ -1,5 +1,4 @@
 // extend this object in order to add more validation rules
-
 import {
   TSurveyConsentQuestion,
   TSurveyMultipleChoiceMultiQuestion,

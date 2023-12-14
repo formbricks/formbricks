@@ -1,4 +1,5 @@
 import { LightBulbIcon } from "@heroicons/react/24/outline";
+
 import { Alert } from "../Alert";
 
 export const UpgradePlanNotice = ({ message }: { message: string }) => {

@@ -3,13 +3,14 @@
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import type { NextPage } from "next";
+import { useCallback, useEffect, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { OTPInput } from "@formbricks/ui/OTPInput";
-import type { NextPage } from "next";
-import { useCallback, useEffect, useState } from "react";
 
 interface LinkSurveyPinScreenProps {
   surveyId: string;

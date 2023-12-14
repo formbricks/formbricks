@@ -1,10 +1,11 @@
-import { TTeam } from "@formbricks/types/teams";
-import React from "react";
 import MembersInfo from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/MembersInfo";
-import { getMembersByTeamId } from "@formbricks/lib/membership/service";
-import { getInvitesByTeamId } from "@formbricks/lib/invite/service";
-import { TMembership } from "@formbricks/types/memberships";
+import React from "react";
+
 import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
+import { getInvitesByTeamId } from "@formbricks/lib/invite/service";
+import { getMembersByTeamId } from "@formbricks/lib/membership/service";
+import { TMembership } from "@formbricks/types/memberships";
+import { TTeam } from "@formbricks/types/teams";
 
 type EditMembershipsProps = {
   team: TTeam;

@@ -1,12 +1,14 @@
-import GoBackButton from "@formbricks/ui/GoBackButton";
-import { DeletePersonButton } from "./DeletePersonButton";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
-import { getPerson } from "@formbricks/lib/person/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getPerson } from "@formbricks/lib/person/service";
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import GoBackButton from "@formbricks/ui/GoBackButton";
+
+import { DeletePersonButton } from "./DeletePersonButton";
 
 interface HeadingSectionProps {
   environmentId: string;

@@ -1,7 +1,8 @@
 import { getSettings } from "@/app/lib/api/clientSettings";
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { prisma } from "@formbricks/database";
 import { personCache } from "@formbricks/lib/person/cache";
-import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();

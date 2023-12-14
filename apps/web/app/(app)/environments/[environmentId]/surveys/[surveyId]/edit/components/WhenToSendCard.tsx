@@ -1,8 +1,14 @@
 "use client";
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
+import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { useCallback, useEffect, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
+import { TMembershipRole } from "@formbricks/types/memberships";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Badge } from "@formbricks/ui/Badge";
@@ -16,11 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui/Select";
-import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useCallback, useEffect, useState } from "react";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TMembershipRole } from "@formbricks/types/memberships";
+
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;

@@ -1,14 +1,16 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/surveys";
-import { Confetti } from "@formbricks/ui/Confetti";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import ShareEmbedSurvey from "./ShareEmbedSurvey";
-import { TProduct } from "@formbricks/types/product";
+
 import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
+import { Confetti } from "@formbricks/ui/Confetti";
+
+import ShareEmbedSurvey from "./ShareEmbedSurvey";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;

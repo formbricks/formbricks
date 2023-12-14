@@ -1,8 +1,9 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
 import { createPerson, getPersonByUserId, updatePerson } from "@formbricks/lib/person/service";
 import { ZPersonUpdateInput } from "@formbricks/types/people";
-import { NextResponse } from "next/server";
 
 interface Context {
   params: {

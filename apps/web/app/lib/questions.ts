@@ -1,17 +1,19 @@
-import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 import {
   ArrowUpTrayIcon,
+  CalendarDaysIcon,
   ChatBubbleBottomCenterTextIcon,
+  CheckIcon,
   CursorArrowRippleIcon,
   ListBulletIcon,
   PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
-  CheckIcon,
-  CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+
+import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
+
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
 export type TSurveyQuestionType = {

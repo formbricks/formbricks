@@ -1,10 +1,11 @@
 import footerLogoDark from "@/images/logo/footerlogo-dark.svg";
-import { Button } from "@formbricks/ui/Button";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+
+import { Button } from "@formbricks/ui/Button";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 
 const navigation = [
   { name: "Roadmap", href: "#roadmap" },

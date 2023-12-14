@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "preact/hooks";
+import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
 
 const CalendarIcon = () => (

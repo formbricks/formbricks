@@ -1,12 +1,14 @@
 "use client";
 
+import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+
 import { AuthenticationError } from "@formbricks/types/errors";
 import { Button } from "@formbricks/ui/Button";
 import CodeBlock from "@formbricks/ui/CodeBlock";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+
 import { getEmailHtmlAction, sendEmailAction } from "../../actions";
 
 interface EmailTabProps {

@@ -1,8 +1,10 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { QuestionMarkCircleIcon, UsersIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { NotificationSwitch } from "./NotificationSwitch";
+
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+
 import { Membership, User } from "../types";
+import { NotificationSwitch } from "./NotificationSwitch";
 
 interface EditAlertsProps {
   memberships: Membership[];

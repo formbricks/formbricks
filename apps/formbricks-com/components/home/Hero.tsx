@@ -6,11 +6,13 @@ import FlixbusLogo from "@/images/clients/flixbus-white.svg";
 import NILogoDark from "@/images/clients/niLogoDark.svg";
 import NILogoLight from "@/images/clients/niLogoWhite.svg";
 import AnimationFallback from "@/public/animations/opensource-xm-platform-formbricks-fallback.png";
-import { Button } from "@formbricks/ui/Button";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { usePlausible } from "next-plausible";
 import Image from "next/image";
 import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
+
 import HeroAnimation from "./HeroAnimation";
 
 export const Hero: React.FC = ({}) => {

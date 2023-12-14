@@ -7,5 +7,15 @@ module.exports = {
   semi: true,
   printWidth: 110,
   arrowParens: "always",
-  plugins: [require("./merged-prettier-plugin.js")],
+  importOrder: [
+    // Mocks must be at the top as they contain vi.mock calls
+    "(.*)/__mocks__/(.*)",
+    "server-only",
+    "<THIRD_PARTY_MODULES>",
+    "^@formbricks/(.*)$",
+    "^~/(.*)$",
+    "^[./]",
+  ],
+  importOrderSeparation: true,
+  importOrderSortSpecifiers: true,
 };

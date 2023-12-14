@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
+import { useState } from "react";
+import toast from "react-hot-toast";
+
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { Alert, AlertDescription } from "@formbricks/ui/Alert";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
-import Link from "next/link";
-import { useState } from "react";
-import toast from "react-hot-toast";
+
 import { updateProductAction } from "../actions";
 
 interface EditFormbricksBrandingProps {

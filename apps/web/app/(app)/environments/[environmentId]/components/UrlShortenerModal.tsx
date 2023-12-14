@@ -1,12 +1,14 @@
-import { Modal } from "@formbricks/ui/Modal";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 import { LinkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Modal } from "@formbricks/ui/Modal";
+
 import { createShortUrlAction } from "../actions";
 
 type UrlShortenerModalProps = {
@@ -107,10 +109,10 @@ export default function UrlShortenerModal({ open, setOpen, webAppUrl }: UrlShort
                   urlValidationState === "valid"
                     ? "border-green-500 bg-green-50"
                     : urlValidationState === "invalid"
-                    ? "border-red-200 bg-red-50"
-                    : urlValidationState === "default"
-                    ? "border-slate-200"
-                    : "bg-white"
+                      ? "border-red-200 bg-red-50"
+                      : urlValidationState === "default"
+                        ? "border-slate-200"
+                        : "bg-white"
                 )}
                 {...register("url", {
                   required: true,

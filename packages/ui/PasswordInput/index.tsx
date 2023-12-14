@@ -1,8 +1,9 @@
 "use client";
 
-import { forwardRef, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
+import { forwardRef, useState } from "react";
+
+import { cn } from "@formbricks/lib/cn";
 
 export interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
   containerClassName?: string;

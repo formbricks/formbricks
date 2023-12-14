@@ -1,6 +1,7 @@
+import { LightBulbIcon } from "@heroicons/react/24/outline";
+
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
-import { LightBulbIcon } from "@heroicons/react/24/outline";
 
 interface EnvironmentNoticeProps {
   environmentId: string;

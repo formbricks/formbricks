@@ -1,10 +1,10 @@
 "use server";
 
-import { authOptions } from "@formbricks/lib/authOptions";
-import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
 import { getServerSession } from "next-auth";
 
+import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 export async function refreshSheetAction(environmentId: string) {
