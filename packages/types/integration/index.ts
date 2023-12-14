@@ -2,12 +2,18 @@ import { z } from "zod";
 
 import { ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
 import { ZIntegrationGoogleSheetsConfig, ZIntegrationGoogleSheetsInput } from "./googleSheet";
+import { ZIntegrationNotionConfig, ZIntegrationNotionInput } from "./notion";
 
 export * from "./sharedTypes";
 
-export const ZIntegrationType = z.enum(["googleSheets", "airtable"]);
+export const ZIntegrationType = z.enum(["googleSheets", "n8n", "airtable", "notion"]);
+export type TIntegrationType = z.infer<typeof ZIntegrationType>;
 
-export const ZIntegrationConfig = z.union([ZIntegrationGoogleSheetsConfig, ZIntegrationAirtableConfig]);
+export const ZIntegrationConfig = z.union([
+  ZIntegrationGoogleSheetsConfig,
+  ZIntegrationAirtableConfig,
+  ZIntegrationNotionConfig,
+]);
 
 export type TIntegrationConfig = z.infer<typeof ZIntegrationConfig>;
 
@@ -31,7 +37,11 @@ export const ZIntegrationBaseSurveyData = z.object({
   surveyName: z.string(),
 });
 
-export const ZIntegrationInput = z.union([ZIntegrationGoogleSheetsInput, ZIntegrationAirtableInput]);
+export const ZIntegrationInput = z.union([
+  ZIntegrationGoogleSheetsInput,
+  ZIntegrationAirtableInput,
+  ZIntegrationNotionInput,
+]);
 export type TIntegrationInput = z.infer<typeof ZIntegrationInput>;
 
 export const ZIntegrationItem = z.object({

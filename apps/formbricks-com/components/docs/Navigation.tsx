@@ -237,6 +237,7 @@ export const navigation: Array<NavGroup> = [
     links: [
       { title: "Airtable", href: "/docs/integrations/airtable" },
       { title: "Google Sheets", href: "/docs/integrations/google-sheets" },
+      { title: "Notion", href: "/docs/integrations/notion" },
       { title: "Make.com", href: "/docs/integrations/make" },
       { title: "n8n", href: "/docs/integrations/n8n" },
       { title: "Zapier", href: "/docs/integrations/zapier" },
