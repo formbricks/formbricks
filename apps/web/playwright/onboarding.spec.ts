@@ -2,7 +2,7 @@ import { teams, users } from "./utils/mock";
 import { signUpAndLogin } from "./utils/helper";
 import { test, expect } from "@playwright/test";
 
-const { role, productName, useCase } = teams.onboarding;
+const { role, productName, useCase } = teams.onboarding[0];
 
 test.describe("Onboarding Flow Test", async () => {
   test("Step by Step", async ({ page }) => {
