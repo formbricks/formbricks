@@ -79,7 +79,7 @@ export const SurveyInline = ({
     onFileUpload,
     responseCount,
   ]);
-  return <div id={containerId} className="h-full w-full" />;
+  return <div id={containerId} className="w-full" />;
 };
 
 export const SurveyModal = ({
