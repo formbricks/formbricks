@@ -63,9 +63,22 @@ beforeEach(() => {
   prismaMock.responseNote.findMany.mockResolvedValue([mockResponseNote]);
 
   prismaMock.response.findUnique.mockResolvedValue(mockResponse);
-  prismaMock.response.update.mockResolvedValue({
-    ...mockResponse,
-    data: mockResponseData,
+
+  // @ts-expect-error
+  prismaMock.response.update.mockImplementation(async (args) => {
+    if (args.data.finished === true) {
+      return {
+        ...mockResponse,
+        finished: true,
+        data: mockResponseData,
+      };
+    }
+
+    return {
+      ...mockResponse,
+      finished: false,
+      data: mockResponseData,
+    };
   });
 });
 
@@ -96,10 +109,19 @@ describe("Tests for Response Service", () => {
     });
   });
 
-  it("updates a response", async () => {
+  it("updates a response (finished = true)", async () => {
     const response = await updateResponse(mockResponse.id, getMockUpdateResponseInput(true));
     expect(response).toEqual({
       ...expectedResponseWithoutPerson,
+      data: mockResponseData,
+    });
+  });
+
+  it("updates a response (finished = false)", async () => {
+    const response = await updateResponse(mockResponse.id, getMockUpdateResponseInput(false));
+    expect(response).toEqual({
+      ...expectedResponseWithoutPerson,
+      finished: false,
       data: mockResponseData,
     });
   });
