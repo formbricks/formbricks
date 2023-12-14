@@ -1,6 +1,10 @@
+import "server-only";
+
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "@/constants";
+import { formatDateFields } from "@/utils/datetime";
+import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
-import "server-only";
 
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
@@ -8,9 +12,6 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TWebhook, TWebhookInput, ZWebhook, ZWebhookInput } from "@formbricks/types/webhooks";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { formatDateFields } from "../utils/datetime";
-import { validateInputs } from "../utils/validate";
 import { webhookCache } from "./cache";
 
 export const getWebhooks = async (environmentId: string, page?: number): Promise<TWebhook[]> => {

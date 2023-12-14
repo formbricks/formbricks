@@ -1,13 +1,14 @@
-import { unstable_cache } from "next/cache";
 import "server-only";
+
+import { SERVICES_REVALIDATION_INTERVAL } from "@/constants";
+import { getMembershipByUserIdTeamId } from "@/membership/service";
+import { getAccessFlags } from "@/membership/utils";
+import { teamCache } from "@/team/cache";
+import { validateInputs } from "@/utils/validate";
+import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
-import { getMembershipByUserIdTeamId } from "../../lib/membership/service";
-import { getAccessFlags } from "../../lib/membership/utils";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { teamCache } from "../team/cache";
-import { validateInputs } from "../utils/validate";
 import { getTeamsByUserId } from "./service";
 
 export const canUserAccessTeam = async (userId: string, teamId: string): Promise<boolean> =>

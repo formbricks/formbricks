@@ -1,11 +1,10 @@
+import { SERVICES_REVALIDATION_INTERVAL } from "@/constants";
+import { teamCache } from "@/team/cache";
+import { validateInputs } from "@/utils/validate";
 import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
-
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { teamCache } from "../team/cache";
-import { validateInputs } from "../utils/validate";
 
 export const hasUserEnvironmentAccess = async (userId: string, environmentId: string) => {
   return await unstable_cache(

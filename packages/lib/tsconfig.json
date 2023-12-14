@@ -3,9 +3,9 @@
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
-    "baseUrl": "packages/lib",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["../../apps/web/*"],
+      "@/*": ["./*"],
       "@prisma/client/*": ["@formbricks/database/client/*"]
     }
   }

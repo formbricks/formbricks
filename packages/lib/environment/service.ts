@@ -1,6 +1,12 @@
+import "server-only";
+
+import { SERVICES_REVALIDATION_INTERVAL } from "@/constants";
+import { getProducts } from "@/product/service";
+import { getTeamsByUserId } from "@/team/service";
+import { formatDateFields } from "@/utils/datetime";
+import { validateInputs } from "@/utils/validate";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
-import "server-only";
 import { z } from "zod";
 
 import { prisma } from "@formbricks/database";
@@ -17,11 +23,6 @@ import {
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getProducts } from "../product/service";
-import { getTeamsByUserId } from "../team/service";
-import { formatDateFields } from "../utils/datetime";
-import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
 export const getEnvironment = async (environmentId: string): Promise<TEnvironment | null> => {

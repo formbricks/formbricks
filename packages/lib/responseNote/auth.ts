@@ -1,10 +1,10 @@
+import { canUserAccessResponse } from "@/response/auth";
+import { getResponse } from "@/response/service";
+import { validateInputs } from "@/utils/validate";
 import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
-import { canUserAccessResponse } from "../response/auth";
-import { getResponse } from "../response/service";
-import { validateInputs } from "../utils/validate";
 import { getResponseNote } from "./service";
 
 export const canUserModifyResponseNote = async (userId: string, responseNoteId: string): Promise<boolean> =>

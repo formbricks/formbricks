@@ -1,12 +1,12 @@
+import { SERVICES_REVALIDATION_INTERVAL } from "@/constants";
+import { getMembershipByUserIdTeamId } from "@/membership/service";
+import { getAccessFlags } from "@/membership/utils";
+import { getTeamsByUserId } from "@/team/service";
+import { validateInputs } from "@/utils/validate";
 import { unstable_cache } from "next/cache";
 
 import { ZId } from "@formbricks/types/environment";
 
-import { getMembershipByUserIdTeamId } from "../../lib/membership/service";
-import { getAccessFlags } from "../../lib/membership/utils";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { getTeamsByUserId } from "../team/service";
-import { validateInputs } from "../utils/validate";
 import { productCache } from "./cache";
 import { getProduct } from "./service";
 

@@ -10,6 +10,7 @@ module.exports = {
   importOrder: [
     // Mocks must be at the top as they contain vi.mock calls
     "(.*)/__mocks__/(.*)",
+    "server-only",
     "<THIRD_PARTY_MODULES>",
     "^@formbricks/(.*)$",
     "^~/(.*)$",
