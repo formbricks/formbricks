@@ -15,7 +15,7 @@ export const SHORT_URL_BASE = env.SHORT_URL_BASE ? env.SHORT_URL_BASE : WEBAPP_U
 
 // encryption keys
 export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
-export const ENCRYPTION_KEY = env.ENCRYPTION_KEY!;
+export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";

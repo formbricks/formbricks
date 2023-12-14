@@ -332,10 +332,6 @@ export const deleteDisplayByResponseId = async (
       select: selectDisplay,
     });
 
-    if (!display) {
-      return null;
-    }
-
     displayCache.revalidate({
       id: display.id,
       personId: display.personId,
