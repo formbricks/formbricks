@@ -21,9 +21,11 @@ export const users = {
 };
 
 export const teams = {
-  onboarding: {
-    role: "Founder",
-    useCase: "Increase conversion",
-    productName: "Formbricks E2E Test Suite",
-  },
+  onboarding: [
+    {
+      role: "Founder",
+      useCase: "Increase conversion",
+      productName: "Formbricks E2E Test Suite",
+    },
+  ],
 };
