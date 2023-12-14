@@ -170,8 +170,9 @@ test.describe("Survey Create & Submit Response", async () => {
     // Single Select Question
     await expect(page.getByText(surveys.createAndSubmit.singleSelectQuestion.question)).toBeVisible();
     await expect(page.getByText(surveys.createAndSubmit.singleSelectQuestion.description)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.singleSelectQuestion.options[0])).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.singleSelectQuestion.options[1])).toBeVisible();
+    for (let i = 0; i < surveys.createAndSubmit.singleSelectQuestion.options.length; i++) {
+      await expect(page.getByText(surveys.createAndSubmit.singleSelectQuestion.options[i])).toBeVisible();
+    }
     await expect(page.getByText("Other")).toBeVisible();
     await expect(page.getByRole("button", { name: "Next" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
@@ -181,9 +182,9 @@ test.describe("Survey Create & Submit Response", async () => {
     // Multi Select Question
     await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.question)).toBeVisible();
     await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.description)).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.options[0])).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.options[1])).toBeVisible();
-    await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.options[2])).toBeVisible();
+    for (let i = 0; i < surveys.createAndSubmit.multiSelectQuestion.options.length; i++) {
+      await expect(page.getByText(surveys.createAndSubmit.multiSelectQuestion.options[i])).toBeVisible();
+    }
     await expect(page.getByRole("button", { name: "Next" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
     await page.getByText(surveys.createAndSubmit.multiSelectQuestion.options[0]).click();
@@ -206,17 +207,10 @@ test.describe("Survey Create & Submit Response", async () => {
     await expect(page.getByText(surveys.createAndSubmit.npsQuestion.highLabel)).toBeVisible();
     await expect(page.getByRole("button", { name: "Next" })).not.toBeVisible();
     await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
-    await expect(page.getByText("0", { exact: true })).toBeVisible();
-    await expect(page.getByText("1", { exact: true })).toBeVisible();
-    await expect(page.getByText("2", { exact: true })).toBeVisible();
-    await expect(page.getByText("3", { exact: true })).toBeVisible();
-    await expect(page.getByText("4", { exact: true })).toBeVisible();
-    await expect(page.getByText("5", { exact: true })).toBeVisible();
-    await expect(page.getByText("6", { exact: true })).toBeVisible();
-    await expect(page.getByText("7", { exact: true })).toBeVisible();
-    await expect(page.getByText("8", { exact: true })).toBeVisible();
-    await expect(page.getByText("9", { exact: true })).toBeVisible();
-    await expect(page.getByText("10", { exact: true })).toBeVisible();
+
+    for (let i = 0; i < 11; i++) {
+      await expect(page.getByText(`${i}`, { exact: true })).toBeVisible();
+    }
     await page.getByText("8").click();
 
     // CTA Question
