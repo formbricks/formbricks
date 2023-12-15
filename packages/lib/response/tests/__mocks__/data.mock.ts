@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { responseNoteSelect } from "../../../responseNote/service";
 import { responseSelection } from "../../service";
-import { randBoolean, randBrowser, randFullName, randText, randUrl, randUuid } from "../constants";
+import { constantsForTests } from "../constants";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
 
 type ResponseMock = Prisma.ResponseGetPayload<{
@@ -22,12 +22,12 @@ export const mockSurveyId = "nlg30c8btxljivh6dfcoxve2";
 export const mockUserId = "qwywazmugeezyfr3zcg9jk8a";
 
 export const mockMeta = {
-  source: randUrl(),
-  url: randUrl(),
+  source: constantsForTests.url,
+  url: constantsForTests.url,
   userAgent: {
-    browser: randBrowser(),
-    os: randText(),
-    device: randText(),
+    browser: constantsForTests.browser,
+    os: constantsForTests.text,
+    device: constantsForTests.text,
   },
 };
 
@@ -35,9 +35,9 @@ export const mockResponseNote: ResponseNoteMock = {
   id: "clnndevho0mqrqp0fm2ozul8p",
   createdAt: new Date(),
   updatedAt: new Date(),
-  text: randText(),
-  isEdited: randBoolean(),
-  isResolved: randBoolean(),
+  text: constantsForTests.text,
+  isEdited: constantsForTests.boolean,
+  isResolved: constantsForTests.boolean,
   responseId: mockResponseId,
   userId: mockUserId,
   response: {
@@ -46,7 +46,7 @@ export const mockResponseNote: ResponseNoteMock = {
   },
   user: {
     id: mockPersonId,
-    name: randFullName(),
+    name: constantsForTests.fullName,
   },
 };
 
@@ -69,7 +69,7 @@ export const mockPerson: ResponsePersonMock = {
 export const mockTags = [
   {
     tag: {
-      id: randUuid(),
+      id: constantsForTests.uuid,
       name: "tag1",
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -86,7 +86,7 @@ export const mockResponse: ResponseMock = {
   person: null,
   personAttributes: {},
   createdAt: new Date(),
-  finished: randBoolean(),
+  finished: constantsForTests.boolean,
   meta: mockMeta,
   notes: [mockResponseNote],
   tags: mockTags,

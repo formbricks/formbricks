@@ -17,7 +17,7 @@ import {
 } from "./__mocks__/data.mock";
 import { createResponse, updateResponse } from "../service";
 
-import { randBoolean } from "./constants";
+import { constantsForTests } from "./constants";
 
 const expectedResponseWithoutPerson: TResponse = {
   ...mockResponse,
@@ -35,7 +35,7 @@ const mockResponseInputWithoutUserId: TResponseInput = {
   environmentId: mockEnvironmentId,
   surveyId: mockSurveyId,
   singleUseId: mockSingleUseId,
-  finished: randBoolean(),
+  finished: constantsForTests.boolean,
   data: {},
   meta: mockMeta,
 };
