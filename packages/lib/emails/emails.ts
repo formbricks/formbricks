@@ -1,8 +1,17 @@
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
-import { WEBAPP_URL } from "../constants";
-import { createInviteToken, createToken } from "../jwt";
+import {
+  IS_SMTP_CONFIGURED,
+  MAIL_FROM,
+  SMTP_HOST,
+  SMTP_PASSWORD,
+  SMTP_PORT,
+  SMTP_SECURE_ENABLED,
+  SMTP_USER,
+  WEBAPP_URL,
+} from "../constants";
+import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
 import { getQuestionResponseMapping } from "../responses";
 import { withEmailTemplate } from "./email-template";
 
@@ -21,22 +30,37 @@ interface TEmailUser {
   email: string;
 }
 
+export interface LinkSurveyEmailData {
+  surveyId: string;
+  email: string;
+  surveyData?: {
+    name?: string;
+    subheading?: string;
+  } | null;
+}
+
 export const sendEmail = async (emailData: sendEmailData) => {
-  let transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE_ENABLED === "1", // true for 465, false for other ports
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-    // logger: true,
-    // debug: true,
-  });
-  const emailDefaults = {
-    from: `Formbricks <${process.env.MAIL_FROM || "noreply@formbricks.com"}>`,
-  };
-  await transporter.sendMail({ ...emailDefaults, ...emailData });
+  try {
+    if (!IS_SMTP_CONFIGURED) throw new Error("Could not Email: SMTP not configured");
+
+    let transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASSWORD,
+      },
+      // logger: true,
+      // debug: true,
+    });
+    const emailDefaults = {
+      from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
+    };
+    await transporter.sendMail({ ...emailDefaults, ...emailData });
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const sendVerificationEmail = async (user: TEmailUser) => {
@@ -138,7 +162,7 @@ export const sendResponseFinishedEmail = async (
     subject: personEmail
       ? `${personEmail} just completed your ${survey.name} survey ✅`
       : `A response for ${survey.name} was completed ✅`,
-    replyTo: personEmail?.toString() || process.env.MAIL_FROM,
+    replyTo: personEmail?.toString() || MAIL_FROM,
     html: withEmailTemplate(`<h1>Hey 👋</h1>Someone just completed your survey <strong>${
       survey.name
     }</strong><br/>
@@ -151,7 +175,7 @@ export const sendResponseFinishedEmail = async (
           question.answer &&
           `<div style="margin-top:1em;">
           <p style="margin:0px;">${question.question}</p>
-          <p style="font-weight: 500; margin:0px;">${question.answer}</p>
+          <p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>  
         </div>`
       )
       .join("")}
@@ -164,7 +188,7 @@ export const sendResponseFinishedEmail = async (
     <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
     ${
       personEmail
-        ? "<p>Hit 'Reply' or reach out manually: ${personEmail}</p>"
+        ? `<p>Hit 'Reply' or reach out manually: ${personEmail}</p>`
         : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
     }
     </div>
@@ -180,5 +204,25 @@ export const sendEmbedSurveyPreviewEmail = async (to: string, subject: string, h
     <h1>Preview Email Embed</h1>
     <p>This is how the code snippet looks embedded into an email:</p>
     ${html}`),
+  });
+};
+
+export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) => {
+  const surveyId = data.surveyId;
+  const email = data.email;
+  const surveyData = data.surveyData;
+  const token = createTokenForLinkSurvey(surveyId, email);
+  const surveyLink = `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+  await sendEmail({
+    to: data.email,
+    subject: "Your Formbricks Survey",
+    html: withEmailTemplate(`<h1>Hey 👋</h1>
+    Thanks for validating your email. Here is your Survey.<br/><br/>
+    <strong>${surveyData?.name}</strong>
+    <p>${surveyData?.subheading}</p>
+    <a class="button" href="${surveyLink}">Take survey</a><br/>
+    <br/>
+    All the best,<br/>
+    Your Formbricks Team 🤍`),
   });
 };

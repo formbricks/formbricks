@@ -1,7 +1,7 @@
-import { sendInviteAcceptedEmail } from "@/app/lib/email";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { sendInviteAcceptedEmail } from "@formbricks/lib/emails/emails";
 import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
@@ -38,7 +38,7 @@ export default async function JoinTeam({ searchParams }) {
       await createMembership(invite.teamId, currentUser.user.id, { accepted: true, role: invite.role });
       await deleteInvite(inviteId);
 
-      sendInviteAcceptedEmail(invite.creator.name ?? "", currentUser.user?.name, invite.creator.email);
+      sendInviteAcceptedEmail(invite.creator.name ?? "", currentUser.user?.name ?? "", invite.creator.email);
 
       return <RightAccountContent />;
     }
