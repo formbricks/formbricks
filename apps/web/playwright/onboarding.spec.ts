@@ -23,7 +23,7 @@ test.describe("Onboarding Flow Test", async () => {
     await expect(page.getByPlaceholder("e.g. Formbricks")).toBeVisible();
     await page.getByPlaceholder("e.g. Formbricks").fill(productName);
 
-    await page.locator(".h-6").click();
+    await page.locator("#color-picker").click();
     await page.getByLabel("Hue").click();
 
     await page.locator("div").filter({ hasText: "Create your team's product." }).nth(1).click();

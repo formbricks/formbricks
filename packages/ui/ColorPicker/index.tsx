@@ -36,6 +36,7 @@ export const PopoverPicker = ({ color, onChange }: { color: string; onChange: (v
   return (
     <div className="picker relative">
       <div
+        id="color-picker"
         className="h-6 w-10 cursor-pointer rounded"
         style={{ backgroundColor: color }}
         onClick={() => toggle(!isOpen)}
