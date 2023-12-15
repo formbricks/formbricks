@@ -1,18 +1,19 @@
+import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
+import { InboxStackIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useMemo } from "react";
+import { useState } from "react";
+
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
-import { useMemo } from "react";
-import Link from "next/link";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
-import { useState } from "react";
 import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
 } from "@formbricks/types/surveys";
-import { questionTypes } from "@/app/lib/questions";
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 interface MultipleChoiceSummaryProps {
   questionSummary: TSurveyQuestionSummary<

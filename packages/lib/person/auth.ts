@@ -1,12 +1,14 @@
 import "server-only";
 
-import { ZId } from "@formbricks/types/environment";
-import { validateInputs } from "../utils/validate";
-import { hasUserEnvironmentAccess } from "../environment/auth";
-import { getPerson } from "./service";
 import { unstable_cache } from "next/cache";
+
+import { ZId } from "@formbricks/types/environment";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { hasUserEnvironmentAccess } from "../environment/auth";
+import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
+import { getPerson } from "./service";
 
 export const canUserAccessPerson = async (userId: string, personId: string): Promise<boolean> =>
   await unstable_cache(

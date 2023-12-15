@@ -1,7 +1,8 @@
 import { getPlacementStyle } from "@/app/lib/preview";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
-import { ReactNode, useEffect, useMemo, useState, useRef } from "react";
 
 export default function Modal({
   children,
@@ -20,11 +21,14 @@ export default function Modal({
   const modalRef = useRef<HTMLDivElement | null>(null);
 
   const highlightBorderColorStyle = useMemo(() => {
-    if (!highlightBorderColor) return {};
+    if (!highlightBorderColor)
+      return {
+        overflow: "visible",
+      };
 
     return {
       border: `2px solid ${highlightBorderColor}`,
-      overflow: "hidden",
+      overflow: "visible",
     };
   }, [highlightBorderColor]);
 
@@ -45,13 +49,13 @@ export default function Modal({
         ? "translate-x-0 opacity-100"
         : "translate-x-32 opacity-0"
       : previewMode === "mobile"
-      ? show
-        ? "bottom-0"
-        : "-bottom-full"
-      : "";
+        ? show
+          ? "bottom-0"
+          : "-bottom-full"
+        : "";
 
   return (
-    <div aria-live="assertive" className="relative h-full w-full overflow-hidden">
+    <div aria-live="assertive" className="relative h-full w-full overflow-visible">
       <div
         ref={modalRef}
         style={highlightBorderColorStyle}

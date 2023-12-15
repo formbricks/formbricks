@@ -12,7 +12,7 @@ npm install @formbricks/api
 <summary>Create API Client</summary>
 
 ```ts
-import { FormbricksAPI, EnvironmentId } from "@formbricks/api";
+import { EnvironmentId, FormbricksAPI } from "@formbricks/api";
 
 const api = new FormbricksAPI({
   apiHost: "http://localhost:3000",

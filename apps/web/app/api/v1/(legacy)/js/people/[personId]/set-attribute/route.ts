@@ -1,13 +1,14 @@
 import { getUpdatedState } from "@/app/api/v1/(legacy)/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
 import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { ZJsPeopleLegacyAttributeInput } from "@formbricks/types/js";
 import { TPersonClient } from "@formbricks/types/people";
-import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);

@@ -1,6 +1,7 @@
-import { teams, users } from "./utils/mock";
+import { expect, test } from "@playwright/test";
+
 import { signUpAndLogin } from "./utils/helper";
-import { test, expect } from "@playwright/test";
+import { teams, users } from "./utils/mock";
 
 const { role, productName, useCase } = teams.onboarding[0];
 

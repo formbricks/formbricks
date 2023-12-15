@@ -1,3 +1,3 @@
 export default async function SurveyLayout({ children }) {
-  return <div>{children}</div>;
+  return <div className="h-full">{children}</div>;
 }

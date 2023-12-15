@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 
@@ -18,6 +19,7 @@ export enum TSurveyQuestionType {
   Rating = "rating",
   Consent = "consent",
   PictureSelection = "pictureSelection",
+  Date = "date",
 }
 
 export const ZSurveyWelcomeCard = z.object({
@@ -326,6 +328,14 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
+export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.Date),
+  html: z.string().optional(),
+  format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
+});
+
+export type TSurveyDateQuestion = z.infer<typeof ZSurveyDateQuestion>;
+
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
 export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
@@ -346,6 +356,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
   ZSurveyPictureSelectionQuestion,
+  ZSurveyDateQuestion,
   ZSurveyFileUploadQuestion,
 ]);
 
@@ -443,6 +454,7 @@ export const ZSurveyTSurveyQuestionType = z.union([
   z.literal("rating"),
   z.literal("consent"),
   z.literal("pictureSelection"),
+  z.literal("date"),
 ]);
 
 export type TSurveyTSurveyQuestionType = z.infer<typeof ZSurveyTSurveyQuestionType>;

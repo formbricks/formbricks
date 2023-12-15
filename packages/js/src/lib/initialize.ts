@@ -1,4 +1,7 @@
 import type { TJsConfig, TJsConfigInput } from "@formbricks/types/js";
+import { TPersonAttributes } from "@formbricks/types/people";
+
+import { trackAction } from "./actions";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -13,11 +16,9 @@ import {
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
+import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
 import { addWidgetContainer, closeSurvey } from "./widget";
-import { trackAction } from "./actions";
-import { updatePersonAttributes } from "./person";
-import { TPersonAttributes } from "@formbricks/types/people";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();

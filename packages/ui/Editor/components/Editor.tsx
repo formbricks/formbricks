@@ -15,9 +15,9 @@ import type { Dispatch, SetStateAction } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 
-import ExampleTheme from "../lib/ExampleTheme";
 import AutoLinkPlugin from "../components/AutoLinkPlugin";
 import ToolbarPlugin from "../components/ToolbarPlugin";
+import ExampleTheme from "../lib/ExampleTheme";
 import "../stylesEditor.css";
 import "../stylesEditorFrontend.css";
 

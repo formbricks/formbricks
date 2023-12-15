@@ -1,13 +1,14 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
+import { InboxStackIcon } from "@heroicons/react/24/solid";
+import { DownloadIcon, FileIcon } from "lucide-react";
+import Link from "next/link";
+
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
-import { DownloadIcon, FileIcon } from "lucide-react";
-import Link from "next/link";
 
 interface FileUploadSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyFileUploadQuestion>;

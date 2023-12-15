@@ -350,6 +350,7 @@ enum EnvironmentType {
 
 enum IntegrationType {
   googleSheets
+  notion
   airtable
 }
 

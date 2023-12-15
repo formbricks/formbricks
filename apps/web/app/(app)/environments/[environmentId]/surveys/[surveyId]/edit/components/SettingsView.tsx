@@ -1,14 +1,15 @@
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TSurvey } from "@formbricks/types/surveys";
+
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
+import StylingCard from "./StylingCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
-import StylingCard from "./StylingCard";
-import { TSurvey } from "@formbricks/types/surveys";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TMembershipRole } from "@formbricks/types/memberships";
 
 interface SettingsViewProps {
   environment: TEnvironment;

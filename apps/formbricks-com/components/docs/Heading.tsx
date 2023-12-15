@@ -1,13 +1,13 @@
 "use client";
 
+import { remToPx } from "@/lib/remToPx";
 import { useInView } from "framer-motion";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-import { remToPx } from "@/lib/remToPx";
 import { useSectionStore } from "./SectionProvider";
 import { Tag } from "./Tag";
-import { usePathname } from "next/navigation";
 
 function AnchorIcon(props: React.ComponentPropsWithoutRef<"svg">) {
   return (

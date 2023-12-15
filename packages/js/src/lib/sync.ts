@@ -1,4 +1,5 @@
 import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
+
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";

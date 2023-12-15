@@ -1,10 +1,5 @@
 "use client";
-import { cn } from "@formbricks/lib/cn";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
-import { Badge } from "@formbricks/ui/Badge";
-import { Label } from "@formbricks/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+
 import {
   CheckCircleIcon,
   ComputerDesktopIcon,
@@ -15,6 +10,13 @@ import {
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { cn } from "@formbricks/lib/cn";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
+import { Badge } from "@formbricks/ui/Badge";
+import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;
@@ -108,8 +110,8 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                   option.comingSoon
                     ? "border-slate-200 bg-slate-50/50"
                     : option.id === localSurvey.type
-                    ? "border-brand-dark cursor-pointer bg-slate-50"
-                    : "cursor-pointer bg-slate-50"
+                      ? "border-brand-dark cursor-pointer bg-slate-50"
+                      : "cursor-pointer bg-slate-50"
                 )}>
                 <RadioGroupItem
                   value={option.id}

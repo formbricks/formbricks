@@ -1,20 +1,22 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
 import { ShareIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
 import clsx from "clsx";
+import { useState } from "react";
+
 import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TUser } from "@formbricks/types/user";
+import { Button } from "@formbricks/ui/Button";
+
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
-import { TProfile } from "@formbricks/types/profile";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
   webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
 }
 
 export default function LinkSurveyShareButton({
@@ -22,7 +24,7 @@ export default function LinkSurveyShareButton({
   className,
   webAppUrl,
   product,
-  profile,
+  user,
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
 
@@ -46,7 +48,7 @@ export default function LinkSurveyShareButton({
           setOpen={setShowLinkModal}
           product={product}
           webAppUrl={webAppUrl}
-          profile={profile}
+          user={user}
         />
       )}
     </>
