@@ -1,3 +1,4 @@
+import { expect } from "@playwright/test";
 import { Page } from "playwright";
 
 export const signUpAndLogin = async (
@@ -21,4 +22,23 @@ export const signUpAndLogin = async (
   await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
   await page.getByRole("button", { name: "Login with Email" }).click();
+};
+
+export const login = async (page: Page, email: string, password: string): Promise<void> => {
+  await page.goto("/auth/login");
+  await page.getByRole("button", { name: "Login with Email" }).click();
+  await page.getByPlaceholder("work@email.com").fill(email);
+  await page.getByPlaceholder("*******").click();
+  await page.getByPlaceholder("*******").fill(password);
+  await page.getByRole("button", { name: "Login with Email" }).click();
+};
+
+export const skipOnboarding = async (page: Page): Promise<void> => {
+  await page.waitForURL("/onboarding");
+  await expect(page).toHaveURL("/onboarding");
+  await page.getByRole("button", { name: "I'll do it later" }).click();
+  await page.getByRole("button", { name: "I'll do it later" }).click();
+  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
+  await expect(page.getByText("My Product")).toBeVisible();
 };

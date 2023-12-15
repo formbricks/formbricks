@@ -1,6 +1,7 @@
-import { teams, users } from "./utils/mock";
+import { expect, test } from "@playwright/test";
+
 import { signUpAndLogin } from "./utils/helper";
-import { test, expect } from "@playwright/test";
+import { teams, users } from "./utils/mock";
 
 const { role, productName, useCase } = teams.onboarding[0];
 
@@ -22,7 +23,7 @@ test.describe("Onboarding Flow Test", async () => {
     await expect(page.getByPlaceholder("e.g. Formbricks")).toBeVisible();
     await page.getByPlaceholder("e.g. Formbricks").fill(productName);
 
-    await page.locator(".h-6").click();
+    await page.locator("#color-picker").click();
     await page.getByLabel("Hue").click();
 
     await page.locator("div").filter({ hasText: "Create your team's product." }).nth(1).click();
