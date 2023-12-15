@@ -1,8 +1,8 @@
 import formbricks from "@formbricks/js";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import fbsetup from "../../public/fb-setup.png";
-import { useRouter } from "next/router";
 
 declare const window: any;
 
@@ -22,11 +22,11 @@ export default function AppPage({}) {
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const isUserId = window.location.href.includes("userId=true");
       const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
-      const attributes = isUserId ? { "Init Attribute 1": "eight", "Init Attribute 2": "two" } : undefined;
+      const attributes = isUserId ? { Company: "Amazon", Role: "Executive" } : undefined;
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-        userId,
+        userId: "USER-ID",
         debug: true,
         attributes,
       });
@@ -214,7 +214,7 @@ export default function AppPage({}) {
             <div>
               <button
                 onClick={() => {
-                  formbricks.setEmail("test@web.com");
+                  formbricks.setEmail("mary@amazon.com");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
                 Set Email
