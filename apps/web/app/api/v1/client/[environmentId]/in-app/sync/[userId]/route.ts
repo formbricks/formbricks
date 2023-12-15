@@ -4,12 +4,20 @@ import { NextResponse } from "next/server";
 
 import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { IS_FORMBRICKS_CLOUD, PRICING_USERTARGETING_FREE_MTU } from "@formbricks/lib/constants";
+import {
+  IS_FORMBRICKS_CLOUD,
+  PRICING_APPSURVEYS_FREE_RESPONSES,
+  PRICING_USERTARGETING_FREE_MTU,
+} from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
-import { getMonthlyActiveTeamPeopleCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import {
+  getMonthlyActiveTeamPeopleCount,
+  getMonthlyTeamResponseCount,
+  getTeamByEnvironmentId,
+} from "@formbricks/lib/team/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 
@@ -58,6 +66,7 @@ export async function GET(
 
     // check if MAU limit is reached
     let isMauLimitReached = false;
+    let isInAppSurveyLimitReached = false;
     if (IS_FORMBRICKS_CLOUD) {
       // check team subscriptons
       const team = await getTeamByEnvironmentId(environmentId);
@@ -65,11 +74,21 @@ export async function GET(
       if (!team) {
         throw new Error("Team does not exist");
       }
+      // check userTargeting subscription
       const hasUserTargetingSubscription =
-        team?.billing?.features.userTargeting.status &&
-        team?.billing?.features.userTargeting.status in ["active", "canceled"];
+        (team?.billing?.features.userTargeting.status &&
+          team?.billing?.features.userTargeting.status in ["active", "canceled"]) ||
+        team?.billing?.features.userTargeting.unlimited;
       const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
       isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
+      // check inAppSurvey subscription
+      const hasInAppSurveySubscription =
+        (team?.billing?.features.inAppSurvey.status &&
+          team?.billing?.features.inAppSurvey.status in ["active", "canceled"]) ||
+        team?.billing?.features.inAppSurvey.unlimited;
+      const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
+      isInAppSurveyLimitReached =
+        !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
     }
 
     let person = await getPersonByUserId(environmentId, userId);
@@ -104,7 +123,7 @@ export async function GET(
     // return state
     const state: TJsStateSync = {
       person: { id: person.id, userId: person.userId },
-      surveys,
+      surveys: !isInAppSurveyLimitReached ? surveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
     };
