@@ -76,14 +76,14 @@ export async function GET(
       }
       // check userTargeting subscription
       const hasUserTargetingSubscription =
-        team.billing?.features.userTargeting.status &&
-        team.billing?.features.userTargeting.status in ["active", "canceled"];
+        team.billing.features.userTargeting.status &&
+        ["active", "canceled"].includes(team.billing.features.userTargeting.status);
       const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
       isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
       // check inAppSurvey subscription
       const hasInAppSurveySubscription =
-        team.billing?.features.inAppSurvey.status &&
-        team.billing?.features.inAppSurvey.status in ["active", "canceled"];
+        team.billing.features.inAppSurvey.status &&
+        ["active", "canceled"].includes(team.billing.features.inAppSurvey.status);
       const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
       isInAppSurveyLimitReached =
         !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
