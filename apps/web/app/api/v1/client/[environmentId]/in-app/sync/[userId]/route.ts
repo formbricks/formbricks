@@ -67,7 +67,7 @@ export async function GET(
       }
       const hasUserTargetingSubscription =
         team?.billing?.features.userTargeting.status &&
-        team?.billing?.features.userTargeting.status in ["active", "canceled"];
+        ["active", "canceled"].includes(team?.billing?.features.userTargeting.status);
       const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
       isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
     }
