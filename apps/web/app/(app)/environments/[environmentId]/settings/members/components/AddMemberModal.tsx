@@ -1,12 +1,13 @@
 "use client";
 
-import { Modal } from "@formbricks/ui/Modal";
+import { useForm } from "react-hook-form";
+
+import { AddMemberRole } from "@formbricks/ee/RoleManagement/components/AddMemberRole";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { Modal } from "@formbricks/ui/Modal";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
-import { useForm } from "react-hook-form";
-import { AddMemberRole } from "@formbricks/ee/RoleManagement/components/AddMemberRole";
 
 enum MembershipRole {
   Admin = "admin",

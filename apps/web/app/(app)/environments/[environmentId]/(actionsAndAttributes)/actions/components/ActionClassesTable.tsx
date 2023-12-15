@@ -1,14 +1,16 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import AddNoCodeActionModal from "./AddActionModal";
-import ActionDetailModal from "./ActionDetailModal";
-import { TActionClass } from "@formbricks/types/actionClasses";
+
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { Button } from "@formbricks/ui/Button";
 import { LoadingWrapper } from "@formbricks/ui/LoadingWrapper";
+
+import ActionDetailModal from "./ActionDetailModal";
+import AddNoCodeActionModal from "./AddActionModal";
 
 export default function ActionClassesTable({
   environmentId,

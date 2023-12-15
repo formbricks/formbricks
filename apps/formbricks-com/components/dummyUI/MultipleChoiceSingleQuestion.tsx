@@ -1,6 +1,8 @@
+import { useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
-import { useState } from "react";
+
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 

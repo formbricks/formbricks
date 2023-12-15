@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
+import toast from "react-hot-toast";
+
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { useState } from "react";
-import toast from "react-hot-toast";
 
 interface UpdateQuestionIdProps {
   localSurvey: TSurvey;

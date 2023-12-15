@@ -1,14 +1,15 @@
 "use client";
 
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { FC, useState } from "react";
+import toast from "react-hot-toast";
+
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyHiddenFields, TSurveyQuestions } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 import { Tag } from "@formbricks/ui/Tag";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { FC, useState } from "react";
-import toast from "react-hot-toast";
 
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;

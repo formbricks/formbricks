@@ -1,5 +1,12 @@
 "use server";
 
+import { sendLinkSurveyToVerifiedEmail } from "@/app/lib/email";
+import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
+
+import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { TSurvey } from "@formbricks/types/surveys";
+
 interface LinkSurveyEmailData {
   surveyId: string;
   email: string;
@@ -13,12 +20,6 @@ interface TSurveyPinValidationResponse {
   error?: TSurveyPinValidationResponseError;
   survey?: TSurvey;
 }
-
-import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
-import { sendLinkSurveyToVerifiedEmail } from "@/app/lib/email";
-import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { TSurvey } from "@formbricks/types/surveys";
 
 export async function sendLinkSurveyEmailAction(data: LinkSurveyEmailData) {
   if (!data.surveyData) {

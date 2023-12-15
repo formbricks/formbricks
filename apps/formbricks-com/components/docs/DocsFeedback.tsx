@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
 import { Button } from "@formbricks/ui/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
-import { useState } from "react";
 
 export const DocsFeedback: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);

@@ -1,9 +1,11 @@
-import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
+import WidgetStatusIndicator from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
+
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
+import EnvironmentNotice from "@formbricks/ui/EnvironmentNotice";
+
 import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
 import SetupInstructions from "./components/SetupInstructions";
-import WidgetStatusIndicator from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 
 export default async function ProfileSettingsPage({ params }) {
   return (

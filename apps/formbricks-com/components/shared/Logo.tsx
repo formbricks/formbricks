@@ -1,9 +1,9 @@
-import Image from "next/image";
-import logomark from "@/images/logo/logomark.svg";
+import footerLogoDark from "@/images/logo/footerlogo-dark.svg";
+import footerLogo from "@/images/logo/footerlogo.svg";
 import logo from "@/images/logo/logo.svg";
 import logoDark from "@/images/logo/logo_dark.svg";
-import footerLogo from "@/images/logo/footerlogo.svg";
-import footerLogoDark from "@/images/logo/footerlogo-dark.svg";
+import logomark from "@/images/logo/logomark.svg";
+import Image from "next/image";
 
 export function Logomark(props: any) {
   return <Image src={logomark} {...props} alt="Formbricks Open source Forms & Surveys Logomark" />;

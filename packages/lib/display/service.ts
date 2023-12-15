@@ -1,3 +1,8 @@
+import "server-only";
+
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import {
@@ -14,14 +19,13 @@ import {
 } from "@formbricks/types/displays";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+import { TPerson } from "@formbricks/types/people";
+
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
-import { TPerson } from "@formbricks/types/people";
-import { formatDateFields } from "../utils/datetime";
 
 const selectDisplay = {
   id: true,
@@ -327,10 +331,6 @@ export const deleteDisplayByResponseId = async (
       },
       select: selectDisplay,
     });
-
-    if (!display) {
-      return null;
-    }
 
     displayCache.revalidate({
       id: display.id,

@@ -1,10 +1,4 @@
-import { cn } from "@formbricks/lib/cn";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
-
 import { isLight } from "@/app/lib/utils";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import {
   Column,
   Container,
@@ -18,6 +12,12 @@ import {
 } from "@react-email/components";
 import { render } from "@react-email/render";
 import { CalendarDaysIcon } from "lucide-react";
+
+import { cn } from "@formbricks/lib/cn";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 interface EmailTemplateProps {
   survey: TSurvey;

@@ -1,18 +1,20 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
-import { timeSince } from "@formbricks/lib/time";
-import { TUser } from "@formbricks/types/user";
-import { TResponseNote } from "@formbricks/types/responses";
 import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+
+import { cn } from "@formbricks/lib/cn";
+import { timeSince } from "@formbricks/lib/time";
+import { TResponseNote } from "@formbricks/types/responses";
+import { TUser } from "@formbricks/types/user";
+
 import { Button } from "../../Button";
-import { resolveResponseNoteAction, updateResponseNoteAction, createResponseNoteAction } from "../actions";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
 
 interface ResponseNotesProps {
   user: TUser;
@@ -97,8 +99,8 @@ export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOp
         isOpen
           ? "-right-5 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
           : unresolvedNotes.length
-          ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
-          : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
+            ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
+            : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
       )}
       onClick={() => {
         if (!isOpen) setIsOpen(true);

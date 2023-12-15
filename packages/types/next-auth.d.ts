@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+
 import { TUser } from "./user";
 
 declare module "next-auth" {

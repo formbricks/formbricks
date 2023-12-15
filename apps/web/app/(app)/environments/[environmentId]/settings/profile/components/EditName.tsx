@@ -1,12 +1,14 @@
 "use client";
 
+import { SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+
+import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { useForm, SubmitHandler } from "react-hook-form";
-import toast from "react-hot-toast";
+
 import { updateUserAction } from "../actions";
-import { TUser } from "@formbricks/types/user";
 
 type FormData = {
   name: string;

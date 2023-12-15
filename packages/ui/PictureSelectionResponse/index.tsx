@@ -1,4 +1,5 @@
 "use client";
+
 import Image from "next/image";
 
 interface PictureSelectionResponseProps {
@@ -9,10 +10,13 @@ interface PictureSelectionResponseProps {
 export const PictureSelectionResponse = ({ choices, selected }: PictureSelectionResponseProps) => {
   if (typeof selected !== "object") return null;
 
-  const choiceImageMapping = choices.reduce((acc, choice) => {
-    acc[choice.id] = choice.imageUrl;
-    return acc;
-  }, {} as Record<string, string>);
+  const choiceImageMapping = choices.reduce(
+    (acc, choice) => {
+      acc[choice.id] = choice.imageUrl;
+      return acc;
+    },
+    {} as Record<string, string>
+  );
 
   return (
     <div className="my-1 flex flex-wrap gap-x-5 gap-y-4">

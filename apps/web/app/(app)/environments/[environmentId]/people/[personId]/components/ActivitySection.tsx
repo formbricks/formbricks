@@ -1,4 +1,5 @@
 import ActivityTimeline from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivityTimeline";
+
 import { getActionsByPersonId } from "@formbricks/lib/action/service";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 

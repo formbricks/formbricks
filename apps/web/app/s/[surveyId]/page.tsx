@@ -1,5 +1,3 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
@@ -7,18 +5,19 @@ import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
 import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
-import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { TResponse } from "@formbricks/types/responses";
-import type { Metadata } from "next";
-
-import { notFound } from "next/navigation";
-import { getEmailVerificationStatus } from "./lib/helpers";
-import { ZId } from "@formbricks/types/environment";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { ZId } from "@formbricks/types/environment";
+import { TResponse } from "@formbricks/types/responses";
+
+import { getEmailVerificationStatus } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
   params: {

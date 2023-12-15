@@ -1,7 +1,3 @@
-import { prismaMock } from "@formbricks/database/src/jestClient";
-import { selectPerson, transformPrismaPerson } from "../../person/service";
-import { TTag } from "@formbricks/types/tags";
-import { TResponse, TResponseInput } from "@formbricks/types/responses";
 import {
   getMockUpdateResponseInput,
   mockEnvironmentId,
@@ -15,8 +11,13 @@ import {
   mockTags,
   mockUserId,
 } from "./__mocks__/data.mock";
-import { createResponse, updateResponse } from "../service";
 
+import { prismaMock } from "@formbricks/database/src/jestClient";
+import { TResponse, TResponseInput } from "@formbricks/types/responses";
+import { TTag } from "@formbricks/types/tags";
+
+import { selectPerson, transformPrismaPerson } from "../../person/service";
+import { createResponse, updateResponse } from "../service";
 import { constantsForTests } from "./constants";
 
 const expectedResponseWithoutPerson: TResponse = {

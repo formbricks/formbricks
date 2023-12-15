@@ -1,9 +1,9 @@
-import Image from "next/image";
-
 import logoHtml from "@/images/logos/html5.svg";
 import logoNextjs from "@/images/logos/nextjs.svg";
 import logoReactJs from "@/images/logos/reactjs.svg";
 import logoVueJs from "@/images/logos/vuejs.svg";
+import Image from "next/image";
+
 import { Button } from "./Button";
 
 const libraries = [

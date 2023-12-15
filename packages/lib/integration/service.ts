@@ -1,5 +1,8 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
@@ -10,8 +13,7 @@ import {
   ZIntegration,
   ZIntegrationType,
 } from "@formbricks/types/integration";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -43,6 +45,7 @@ export async function createOrUpdateIntegration(
 
     integrationCache.revalidate({
       environmentId,
+      type: integrationData.type,
     });
     return integration;
   } catch (error) {

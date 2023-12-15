@@ -1,13 +1,15 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import { updateAvatarAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
 import { Session } from "next-auth";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
-import Image from "next/image";
-import { updateAvatarAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
-import { useRouter } from "next/navigation";
+
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import { Button } from "@formbricks/ui/Button";
+
 import { handleFileUpload } from "../lib";
 
 export function EditAvatar({ session, environmentId }: { session: Session | null; environmentId: string }) {

@@ -1,7 +1,8 @@
 "use client";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 import { ArchiveBoxIcon, CheckIcon, PauseIcon } from "@heroicons/react/24/solid";
+
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 
 interface SurveyStatusIndicatorProps {
   status: string;

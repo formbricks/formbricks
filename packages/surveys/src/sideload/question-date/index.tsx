@@ -1,8 +1,9 @@
 import { render } from "preact";
-import Question from "./Question.tsx";
-import globalCss from "./styles/globals.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
+
+import Question from "./Question.tsx";
+import globalCss from "./styles/globals.css?inline";
 
 declare global {
   interface Window {

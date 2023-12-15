@@ -1,12 +1,14 @@
 "use client";
 
 import HiddenFieldsCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/HiddenFieldsCard";
-import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestion, TSurvey } from "@formbricks/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
+
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+
 import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import EditWelcomeCard from "./EditWelcomeCard";

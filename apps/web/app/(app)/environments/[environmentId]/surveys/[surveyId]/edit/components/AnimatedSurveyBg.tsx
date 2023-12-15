@@ -1,5 +1,6 @@
-import { TSurvey } from "@formbricks/types/surveys";
 import { useState } from "react";
+
+import { TSurvey } from "@formbricks/types/surveys";
 
 interface AnimatedSurveyBgProps {
   localSurvey?: TSurvey;

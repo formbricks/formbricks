@@ -1,17 +1,18 @@
 "use server";
 
+import { getServerSession } from "next-auth";
+
+import { hasTeamAccess, hasTeamAuthority, isOwner } from "@formbricks/lib/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { updateInvite } from "@formbricks/lib/invite/service";
 import {
   getMembershipByUserIdTeamId,
   transferOwnership,
   updateMembership,
 } from "@formbricks/lib/membership/service";
-import { updateInvite } from "@formbricks/lib/invite/service";
+import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
 import { TInviteUpdateInput } from "@formbricks/types/invites";
 import { TMembershipUpdateInput } from "@formbricks/types/memberships";
-import { hasTeamAccess, hasTeamAuthority, isOwner } from "@formbricks/lib/auth";
-import { getServerSession } from "next-auth";
-import { AuthenticationError, AuthorizationError, ValidationError } from "@formbricks/types/errors";
 import { TUser } from "@formbricks/types/user";
 
 export const transferOwnershipAction = async (teamId: string, newOwnerId: string) => {

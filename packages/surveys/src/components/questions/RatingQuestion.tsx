@@ -2,11 +2,13 @@ import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
+import { useState } from "preact/hooks";
+
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
-import { useState } from "preact/hooks";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+
 import {
   ConfusedFace,
   FrowningFace,

@@ -1,14 +1,16 @@
 "use client";
 
 import { updateUserAction } from "@/app/(app)/onboarding/actions";
-import { TProduct } from "@formbricks/types/product";
-import { TUser } from "@formbricks/types/user";
-import { Logo } from "@formbricks/ui/Logo";
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+
+import { TProduct } from "@formbricks/types/product";
+import { TUser } from "@formbricks/types/user";
+import { Logo } from "@formbricks/ui/Logo";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
+
 import Greeting from "./Greeting";
 import Objective from "./Objective";
 import Product from "./Product";

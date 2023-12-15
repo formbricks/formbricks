@@ -1,4 +1,5 @@
 import { CodeFileIcon, EyeIcon, HandPuzzleIcon } from "@formbricks/ui/icons";
+
 import HeadingCentered from "../shared/HeadingCentered";
 
 const features = [

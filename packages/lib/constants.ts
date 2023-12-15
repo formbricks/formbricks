@@ -1,5 +1,7 @@
 import "server-only";
+
 import { env } from "./env.mjs";
+
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
@@ -13,7 +15,7 @@ export const SHORT_URL_BASE = env.SHORT_URL_BASE ? env.SHORT_URL_BASE : WEBAPP_U
 
 // encryption keys
 export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
-export const ENCRYPTION_KEY = env.ENCRYPTION_KEY!;
+export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 
 // Other
 export const INTERNAL_SECRET = process.env.INTERNAL_SECRET || "";
@@ -41,6 +43,11 @@ export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = env.GOOGLE_SHEETS_CLIENT_SECRET;
 export const GOOGLE_SHEETS_REDIRECT_URL = env.GOOGLE_SHEETS_REDIRECT_URL;
+
+export const NOTION_OAUTH_CLIENT_ID = env.NOTION_OAUTH_CLIENT_ID;
+export const NOTION_OAUTH_CLIENT_SECRET = env.NOTION_OAUTH_CLIENT_SECRET;
+export const NOTION_REDIRECT_URI = `${WEBAPP_URL}/api/v1/integrations/notion/callback`;
+export const NOTION_AUTH_URL = `https://api.notion.com/v1/oauth/authorize?client_id=${env.NOTION_OAUTH_CLIENT_ID}&response_type=code&owner=user&redirect_uri=${NOTION_REDIRECT_URI}`;
 
 export const AIRTABLE_CLIENT_ID = env.AIRTABLE_CLIENT_ID;
 

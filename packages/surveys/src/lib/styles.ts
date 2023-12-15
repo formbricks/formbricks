@@ -1,7 +1,8 @@
+import { isLight } from "@/lib/utils";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
+
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
-import { isLight } from "@/lib/utils";
 
 export const addStylesToDom = () => {
   if (document.getElementById("formbricks__css") === null) {

@@ -1,19 +1,18 @@
 "use client";
 
-import { forwardRef, Fragment, Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
-import Highlighter from "react-highlight-words";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { navigation } from "@/components/docs/Navigation";
+import { type Result } from "@/mdx/search.mjs";
 import {
   type AutocompleteApi,
-  createAutocomplete,
-  type AutocompleteState,
   type AutocompleteCollection,
+  type AutocompleteState,
+  createAutocomplete,
 } from "@algolia/autocomplete-core";
 import { Dialog, Transition } from "@headlessui/react";
 import clsx from "clsx";
-
-import { type Result } from "@/mdx/search.mjs";
-import { navigation } from "@/components/docs/Navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Fragment, Suspense, forwardRef, useCallback, useEffect, useId, useRef, useState } from "react";
+import Highlighter from "react-highlight-words";
 
 type EmptyObject = Record<string, never>;
 

@@ -1,5 +1,6 @@
-import { cn } from "@formbricks/lib/cn";
 import { XCircleIcon } from "@heroicons/react/24/solid";
+
+import { cn } from "@formbricks/lib/cn";
 
 interface Tag {
   tagId: string;
