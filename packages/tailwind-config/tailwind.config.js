@@ -17,6 +17,12 @@ module.exports = {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
       },
+      boxShadow: {
+        "brand-shadow-sm": "3px 3px #0381782A",
+        "brand-shadow-base": "4px 4px #0381782A",
+        "brand-shadow-lg": "6px 6px #0381782A",
+        "focus-shadow": "0px 0px 10px 0px red",
+      },
       colors: {
         brand: {
           DEFAULT: "#00E6CA",

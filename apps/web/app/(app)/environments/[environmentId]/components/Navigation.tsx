@@ -18,7 +18,7 @@ import {
   UsersIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
-import { MenuIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, MenuIcon } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -54,6 +54,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { CustomersIcon, DashboardIcon, FilterIcon, FormIcon, SettingsIcon } from "@formbricks/ui/icons";
+import { ButtonV2 } from "@formbricks/ui/v2/Button";
 
 import AddProductModal from "./AddProductModal";
 import UrlShortenerModal from "./UrlShortenerModal";
@@ -244,6 +245,20 @@ export default function Navigation({
               You&apos;re in development mode. Use it to test surveys, actions and attributes.
             </div>
           )}
+
+          <div className="m-16">
+            <ButtonV2 size="sm" className="mr-4" StartIcon={ArrowLeftIcon} EndIcon={ArrowRightIcon}>
+              Hello World
+            </ButtonV2>
+
+            <ButtonV2 size="base" className="mr-4" StartIcon={ArrowLeftIcon} EndIcon={ArrowRightIcon}>
+              Hello World
+            </ButtonV2>
+
+            <ButtonV2 size="lg" StartIcon={ArrowLeftIcon} EndIcon={ArrowRightIcon} noShadow>
+              Hello World
+            </ButtonV2>
+          </div>
 
           <div className="w-full px-4 sm:px-6">
             <div className="flex h-14 justify-between">

@@ -17,6 +17,7 @@ export type ButtonBaseProps = {
   EndIcon?: SVGComponent | React.ComponentType<React.ComponentProps<"svg">>;
   endIconClassName?: string;
   shallow?: boolean;
+  noShadow?: boolean;
 };
 type ButtonBasePropsWithTarget = ButtonBaseProps & { target?: string };
 
@@ -26,7 +27,7 @@ export type ButtonProps = ButtonBasePropsWithTarget &
     | (Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "target"> & { href?: never })
   );
 
-export const Button: React.ForwardRefExoticComponent<
+export const ButtonV2: React.ForwardRefExoticComponent<
   React.PropsWithoutRef<ButtonProps> & React.RefAttributes<HTMLAnchorElement | HTMLButtonElement>
 > = forwardRef<HTMLAnchorElement | HTMLButtonElement, ButtonProps>(function Button(
   props: ButtonProps,
@@ -41,6 +42,7 @@ export const Button: React.ForwardRefExoticComponent<
     endIconClassName,
     EndIcon,
     shallow,
+    noShadow,
     // attributes propagated from `HTMLAnchorProps` or `HTMLButtonProps`
     ...passThroughProps
   } = props;
@@ -61,9 +63,15 @@ export const Button: React.ForwardRefExoticComponent<
         // base styles independent what type of button it is
         "inline-flex items-center appearance-none",
         // different styles depending on size
-        size === "sm" && "px-3 py-2 text-sm leading-4 font-medium rounded-md",
-        size === "base" && "px-6 py-3 text-sm font-medium rounded-md",
-        size === "lg" && "px-4 py-2 text-base font-medium rounded-md",
+        size === "sm" &&
+          cn(
+            "px-4 py-3 text-base leading-4 font-medium rounded-lg shadow-brand-shadow-sm",
+            noShadow && "shadow-none"
+          ),
+        size === "base" &&
+          cn("px-8 py-4 text-lg font-medium rounded-xl shadow-brand-shadow-base", noShadow && "shadow-none"),
+        size === "lg" &&
+          cn("px-12 py-6 text-xl font-medium rounded-xl shadow-brand-shadow-lg", noShadow && "shadow-none"),
         size === "icon" &&
           "w-10 h-10 justify-center group p-2 border rounded-lg border-transparent text-neutral-400 hover:border-slate-200 transition",
         // turn button into a floating action button (fab)
@@ -78,7 +86,7 @@ export const Button: React.ForwardRefExoticComponent<
         variant === "primary" &&
           (disabled
             ? "border border-transparent bg-slate-400 text-white"
-            : "text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900"),
+            : "text-white bg-brandnew hover:bg-gradient-to-b hover:from-black/20 hover:to-black/20 hover:shadow-none focus:outline-none focus:ring focus:ring-offset-4 focus:ring-focus active:bg-gradient-to-b active:from-white/20 active:to-white/20 active:shadow-none"),
 
         variant === "minimal" &&
           (disabled
@@ -117,7 +125,10 @@ export const Button: React.ForwardRefExoticComponent<
         <StartIcon
           className={cn(
             "flex",
-            size === "icon" ? "h-4 w-4 " : "-ml-1 mr-1 h-3 w-3",
+            // size === "icon" ? "h-4 w-4 " : "h-3 w-3",
+            size === "sm" && "mr-1 h-4 w-4",
+            size === "base" && "mr-3 h-6 w-6",
+            size === "lg" && "mr-4 h-8 w-8",
             startIconClassName || ""
           )}
         />
@@ -142,7 +153,17 @@ export const Button: React.ForwardRefExoticComponent<
           </svg>
         </div>
       )}
-      {EndIcon && <EndIcon className={cn("-mr-1 ml-2 inline h-5 w-5 rtl:mr-2", endIconClassName || "")} />}
+      {EndIcon && (
+        <EndIcon
+          className={cn(
+            // "inline h-5 w-5",
+            size === "sm" && "ml-1 h-4 w-4",
+            size === "base" && "ml-3 h-6 w-6",
+            size === "lg" && "ml-4 h-8 w-8",
+            endIconClassName || ""
+          )}
+        />
+      )}
     </>
   );
   return props.href ? (
