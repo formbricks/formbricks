@@ -1,6 +1,8 @@
 import React from "react";
+
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
+
 export default function FallbackInput({
   filteredRecallQuestions,
   fallbacks,
