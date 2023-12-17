@@ -1,5 +1,6 @@
 import CTAQuestion from "@/components/questions/CTAQuestion";
 import ConsentQuestion from "@/components/questions/ConsentQuestion";
+import DateQuestion from "@/components/questions/DateQuestion";
 import FileUploadQuestion from "@/components/questions/FileUploadQuestion";
 import MultipleChoiceMultiQuestion from "@/components/questions/MultipleChoiceMultiQuestion";
 import MultipleChoiceSingleQuestion from "@/components/questions/MultipleChoiceSingleQuestion";
@@ -7,7 +8,7 @@ import NPSQuestion from "@/components/questions/NPSQuestion";
 import OpenTextQuestion from "@/components/questions/OpenTextQuestion";
 import PictureSelectionQuestion from "@/components/questions/PictureSelectionQuestion";
 import RatingQuestion from "@/components/questions/RatingQuestion";
-import DateQuestion from "@/components/questions/DateQuestion";
+
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";

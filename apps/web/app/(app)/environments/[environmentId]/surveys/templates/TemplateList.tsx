@@ -1,25 +1,27 @@
 "use client";
 
 import { replacePresetPlaceholders } from "@/app/lib/templates";
-import { cn } from "@formbricks/lib/cn";
-import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct } from "@formbricks/types/product";
-import { TProfile } from "@formbricks/types/profile";
-import { TSurveyInput } from "@formbricks/types/surveys";
-import { TTemplate } from "@formbricks/types/templates";
-import { Button } from "@formbricks/ui/Button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+import { cn } from "@formbricks/lib/cn";
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TSurveyInput } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
+import { TUser } from "@formbricks/types/user";
+import { Button } from "@formbricks/ui/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+
 import { createSurveyAction } from "../actions";
 import { customSurvey, templates, testTemplate } from "./templates";
 
 type TemplateList = {
   environmentId: string;
-  profile: TProfile;
+  user: TUser;
   onTemplateClick: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
@@ -30,7 +32,7 @@ const ALL_CATEGORY_NAME = "All";
 const RECOMMENDED_CATEGORY_NAME = "For you";
 export default function TemplateList({
   environmentId,
-  profile,
+  user,
   onTemplateClick,
   product,
   environment,
@@ -50,7 +52,7 @@ export default function TemplateList({
     ];
 
     const fullCategories =
-      !!profile?.objective && profile.objective !== "other"
+      !!user?.objective && user.objective !== "other"
         ? [RECOMMENDED_CATEGORY_NAME, ALL_CATEGORY_NAME, ...defaultCategories]
         : [ALL_CATEGORY_NAME, ...defaultCategories];
 
@@ -58,11 +60,11 @@ export default function TemplateList({
 
     const activeFilter = templateSearch
       ? ALL_CATEGORY_NAME
-      : !!profile?.objective && profile.objective !== "other"
-      ? RECOMMENDED_CATEGORY_NAME
-      : ALL_CATEGORY_NAME;
+      : !!user?.objective && user.objective !== "other"
+        ? RECOMMENDED_CATEGORY_NAME
+        : ALL_CATEGORY_NAME;
     setSelectedFilter(activeFilter);
-  }, [profile, templateSearch]);
+  }, [user, templateSearch]);
 
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
@@ -81,9 +83,9 @@ export default function TemplateList({
     const matchesCategory =
       selectedFilter === ALL_CATEGORY_NAME ||
       template.category === selectedFilter ||
-      (profile.objective &&
+      (user.objective &&
         selectedFilter === RECOMMENDED_CATEGORY_NAME &&
-        template.objectives?.includes(profile.objective));
+        template.objectives?.includes(user.objective));
 
     const templateName = template.name?.toLowerCase();
     const templateDescription = template.description?.toLowerCase();
@@ -168,14 +170,14 @@ export default function TemplateList({
                   template.category === "Product Experience"
                     ? "border-blue-300 bg-blue-50 text-blue-500"
                     : template.category === "Exploration"
-                    ? "border-pink-300 bg-pink-50 text-pink-500"
-                    : template.category === "Growth"
-                    ? "border-orange-300 bg-orange-50 text-orange-500"
-                    : template.category === "Increase Revenue"
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-500"
-                    : template.category === "Customer Success"
-                    ? "border-violet-300 bg-violet-50 text-violet-500"
-                    : "border-slate-300 bg-slate-50 text-slate-500" // default color
+                      ? "border-pink-300 bg-pink-50 text-pink-500"
+                      : template.category === "Growth"
+                        ? "border-orange-300 bg-orange-50 text-orange-500"
+                        : template.category === "Increase Revenue"
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-500"
+                          : template.category === "Customer Success"
+                            ? "border-violet-300 bg-violet-50 text-violet-500"
+                            : "border-slate-300 bg-slate-50 text-slate-500" // default color
                 }`}>
                 {template.category}
               </div>

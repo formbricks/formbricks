@@ -1,6 +1,9 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { NextResponse } from "next/server";
+import { UAParser } from "ua-parser-js";
+
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createResponseLegacy } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -8,8 +11,6 @@ import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseLegacyInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { NextResponse } from "next/server";
-import { UAParser } from "ua-parser-js";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);

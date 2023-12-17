@@ -1,3 +1,6 @@
+import clsx from "clsx";
+import Link from "next/link";
+
 import {
   BaseballIcon,
   CancelSubscriptionIcon,
@@ -8,8 +11,6 @@ import {
   OnboardingIcon,
   PMFIcon,
 } from "@formbricks/ui/icons";
-import clsx from "clsx";
-import Link from "next/link";
 
 export default function BestPracticeNavigation() {
   const BestPractices = [

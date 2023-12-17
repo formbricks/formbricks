@@ -1,5 +1,6 @@
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { Metadata } from "next";
+
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
 export const metadata: Metadata = {
   title: "People",

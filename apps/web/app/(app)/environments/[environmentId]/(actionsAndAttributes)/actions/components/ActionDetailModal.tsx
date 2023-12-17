@@ -1,9 +1,11 @@
-import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
-import EventActivityTab from "./ActionActivityTab";
-import ActionSettingsTab from "./ActionSettingsTab";
+
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
+
+import EventActivityTab from "./ActionActivityTab";
+import ActionSettingsTab from "./ActionSettingsTab";
 
 interface ActionDetailModalProps {
   environmentId: string;

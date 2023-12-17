@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FaDiscord, FaGithub, FaXTwitter } from "react-icons/fa6";
+
 import { FooterLogo } from "./Logo";
 
 const navigation = {

@@ -1,13 +1,15 @@
 "use client";
 
-import { updateProductAction } from "../actions";
-import { TProduct } from "@formbricks/types/product";
 import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+
+import { TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+
+import { updateProductAction } from "../actions";
 
 type TEditProductName = {
   name: string;

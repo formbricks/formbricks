@@ -1,6 +1,8 @@
 import React, { useMemo } from "react";
-import { Input } from "../Input";
+
 import { cn } from "@formbricks/lib/cn";
+
+import { Input } from "../Input";
 
 export type OTPInputProps = {
   value: string;

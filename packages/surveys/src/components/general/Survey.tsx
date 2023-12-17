@@ -4,13 +4,15 @@ import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
-import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
+
+import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
+import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
+
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
-import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 
 export function Survey({
   survey,

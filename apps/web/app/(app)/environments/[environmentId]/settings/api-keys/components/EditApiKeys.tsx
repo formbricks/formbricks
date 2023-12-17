@@ -1,16 +1,18 @@
 "use client";
 
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import { FilesIcon } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
+
 import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { timeSince } from "@formbricks/lib/time";
 import { TApiKey } from "@formbricks/types/apiKeys";
 import { Button } from "@formbricks/ui/Button";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import AddAPIKeyModal from "./AddApiKeyModal";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
-import { FilesIcon } from "lucide-react";
+import AddAPIKeyModal from "./AddApiKeyModal";
 
 export default function EditAPIKeys({
   environmentTypeId,

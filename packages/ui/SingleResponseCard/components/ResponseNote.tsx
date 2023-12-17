@@ -1,28 +1,30 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
-import { timeSince } from "@formbricks/lib/time";
-import { TProfile } from "@formbricks/types/profile";
-import { TResponseNote } from "@formbricks/types/responses";
 import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+
+import { cn } from "@formbricks/lib/cn";
+import { timeSince } from "@formbricks/lib/time";
+import { TResponseNote } from "@formbricks/types/responses";
+import { TUser } from "@formbricks/types/user";
+
 import { Button } from "../../Button";
-import { resolveResponseNoteAction, updateResponseNoteAction, createResponseNoteAction } from "../actions";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
+import { createResponseNoteAction, resolveResponseNoteAction, updateResponseNoteAction } from "../actions";
 
 interface ResponseNotesProps {
-  profile: TProfile;
+  user: TUser;
   responseId: string;
   notes: TResponseNote[];
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function ResponseNotes({ profile, responseId, notes, isOpen, setIsOpen }: ResponseNotesProps) {
+export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOpen }: ResponseNotesProps) {
   const router = useRouter();
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
@@ -35,7 +37,7 @@ export default function ResponseNotes({ profile, responseId, notes, isOpen, setI
     e.preventDefault();
     setIsCreatingNote(true);
     try {
-      await createResponseNoteAction(responseId, profile.id, noteText);
+      await createResponseNoteAction(responseId, user.id, noteText);
       router.refresh();
       setIsCreatingNote(false);
       setNoteText("");
@@ -97,8 +99,8 @@ export default function ResponseNotes({ profile, responseId, notes, isOpen, setI
         isOpen
           ? "-right-5 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
           : unresolvedNotes.length
-          ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
-          : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
+            ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
+            : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
       )}
       onClick={() => {
         if (!isOpen) setIsOpen(true);
@@ -162,7 +164,7 @@ export default function ResponseNotes({ profile, responseId, notes, isOpen, setI
                 </span>
                 <div className="flex items-center">
                   <span className="block text-slate-700">{note.text}</span>
-                  {profile.id === note.user.id && (
+                  {user.id === note.user.id && (
                     <button
                       className="ml-auto hidden group-hover/notetext:block"
                       onClick={() => {

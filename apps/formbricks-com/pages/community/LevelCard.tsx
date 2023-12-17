@@ -1,7 +1,6 @@
 import Image from "next/image";
-import React from "react";
-
 import { StaticImageData } from "next/image";
+import React from "react";
 
 type Task = {
   title: string;

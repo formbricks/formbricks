@@ -1,5 +1,5 @@
 import { CheckIcon } from "@heroicons/react/24/solid";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 interface Validation {
   label: string;

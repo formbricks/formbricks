@@ -1,21 +1,23 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError, DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { DatabaseError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
 import {
   TMember,
   TMembership,
-  ZMembership,
   TMembershipUpdateInput,
+  ZMembership,
   ZMembershipUpdateInput,
 } from "@formbricks/types/memberships";
-import { Prisma } from "@prisma/client";
-import { validateInputs } from "../utils/validate";
-import { ZString, ZOptionalNumber } from "@formbricks/types/common";
+
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { unstable_cache } from "next/cache";
-import { membershipCache } from "./cache";
 import { teamCache } from "../team/cache";
+import { validateInputs } from "../utils/validate";
+import { membershipCache } from "./cache";
 
 export const getMembersByTeamId = async (teamId: string, page?: number): Promise<TMember[]> =>
   unstable_cache(
@@ -114,6 +116,7 @@ export const createMembership = async (
   data: Partial<TMembership>
 ): Promise<TMembership> => {
   validateInputs([teamId, ZString], [userId, ZString], [data, ZMembership.partial()]);
+  console.log("createMembership", teamId, userId, data);
 
   try {
     const membership = await prisma.membership.create({

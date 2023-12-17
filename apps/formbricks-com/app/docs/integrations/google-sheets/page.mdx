@@ -10,8 +10,9 @@ import DeleteConnection from "./delete-connection.webp";
 import Image from "next/image";
 
 export const metadata = {
-  title: "n8n Setup",
-  description: "Wire up Formbricks with n8n and 350+ other apps",
+  title: "Google Sheets",
+  description:
+    "The Google Sheets integration allows you to automatically send responses to a Google Sheet of your choice.",
 };
 
 #### Integrations
@@ -62,7 +63,7 @@ Before the next step, make sure that you have a Formbricks Survey with at least 
 
 </Note>
 
-6. Now click on the "Link New Sheet" button to link a new Google Sheet with Formbricks and a modal will open up.
+5. Now click on the "Link New Sheet" button to link a new Google Sheet with Formbricks and a modal will open up.
 
 <Image
   src={LinkSurveyWithSheet}
@@ -71,17 +72,16 @@ Before the next step, make sure that you have a Formbricks Survey with at least 
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-7. Select the Google Sheet you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to feed in the Google Sheet. Select the questions and click on the "Link Sheet" button.
+6. Select the Google Sheet you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to feed in the Google Sheet. Select the questions and click on the "Link Sheet" button.
 
 <Image
   src={LinkWithQuestions}
   alt="Select question to link with Google Sheet"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
-
 />
 
-8. On submitting, the modal will close and you will see the linked Google Sheet in the list of linked Google Sheets.
+7. On submitting, the modal will close and you will see the linked Google Sheet in the list of linked Google Sheets.
 
 <Image
   src={ListLinkedSurveys}

@@ -1,19 +1,22 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { TActionClassType } from "@formbricks/types/actionClasses";
-import { TAction, TActionInput, ZActionInput } from "@formbricks/types/actions";
+import { TAction, TActionInput, ZAction, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+
 import { actionClassCache } from "../actionClass/cache";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { createPerson, getPersonByUserId } from "../person/service";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
-import { createPerson, getPersonByUserId } from "../person/service";
 
 export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
   const action = await unstable_cache(
@@ -62,12 +65,7 @@ export const getLatestActionByEnvironmentId = async (environmentId: string): Pro
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return action
-    ? {
-        ...action,
-        createdAt: new Date(action.createdAt),
-      }
-    : action;
+  return action ? formatDateFields(action, ZAction) : null;
 };
 
 export const getLatestActionByPersonId = async (personId: string): Promise<TAction | null> => {
@@ -116,12 +114,7 @@ export const getLatestActionByPersonId = async (personId: string): Promise<TActi
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return action
-    ? {
-        ...action,
-        createdAt: new Date(action.createdAt),
-      }
-    : action;
+  return action ? formatDateFields(action, ZAction) : null;
 };
 
 export const getActionsByPersonId = async (personId: string, page?: number): Promise<TAction[]> => {
@@ -167,10 +160,7 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
   )();
 
   // Deserialize dates if caching does not support deserialization
-  return actions.map((action) => ({
-    ...action,
-    createdAt: new Date(action.createdAt),
-  }));
+  return actions.map((action) => formatDateFields(action, ZAction));
 };
 
 export const getActionsByEnvironmentId = async (environmentId: string, page?: number): Promise<TAction[]> => {
@@ -224,10 +214,8 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return actions.map((action) => ({
-    ...action,
-    createdAt: new Date(action.createdAt),
-  }));
+
+  return actions.map((action) => formatDateFields(action, ZAction));
 };
 
 export const createAction = async (data: TActionInput): Promise<TAction> => {

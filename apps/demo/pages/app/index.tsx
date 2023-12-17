@@ -1,8 +1,10 @@
-import formbricks from "@formbricks/js";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import fbsetup from "../../public/fb-setup.png";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+
+import formbricks from "@formbricks/js";
+
+import fbsetup from "../../public/fb-setup.png";
 
 declare const window: any;
 

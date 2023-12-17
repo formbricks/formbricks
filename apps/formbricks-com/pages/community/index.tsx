@@ -7,11 +7,13 @@ import PrimeBadge from "@/images/formtribe/prime-batch.png";
 import RookieBadge from "@/images/formtribe/rookie-batch.png";
 import HallOfFame from "@/pages/community/HallOfFame";
 import Roadmap from "@/pages/community/Roadmap";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
+
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+
 import ContributorGrid from "./ContributorGrid";
 import LayoutTribe from "./LayoutTribe";
 import LevelCard from "./LevelCard";

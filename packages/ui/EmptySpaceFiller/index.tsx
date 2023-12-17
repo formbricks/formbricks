@@ -1,8 +1,9 @@
 "use client";
 
-import { TEnvironment } from "@formbricks/types/environment";
 import Link from "next/link";
 import React from "react";
+
+import { TEnvironment } from "@formbricks/types/environment";
 
 type EmptySpaceFillerProps = {
   type: "table" | "response" | "event" | "linkResponse" | "tag";

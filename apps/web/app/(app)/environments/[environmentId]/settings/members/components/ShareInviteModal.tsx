@@ -1,12 +1,12 @@
 "use client";
 
-import { Modal } from "@formbricks/ui/Modal";
-
-import { Button } from "@formbricks/ui/Button";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
 import { useRef } from "react";
 import toast from "react-hot-toast";
+
+import { Button } from "@formbricks/ui/Button";
+import { Modal } from "@formbricks/ui/Modal";
 
 interface ShareInviteModalProps {
   inviteToken: string;

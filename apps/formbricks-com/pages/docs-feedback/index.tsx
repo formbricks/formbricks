@@ -1,8 +1,8 @@
-import Layout from "@/components/shared/Layout";
-import UseCaseHeader from "@/components/shared/UseCaseHeader";
-import UseCaseCTA from "@/components/shared/UseCaseCTA";
 import DocsFeedback from "@/components/docs/DocsFeedback";
 import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
+import Layout from "@/components/shared/Layout";
+import UseCaseCTA from "@/components/shared/UseCaseCTA";
+import UseCaseHeader from "@/components/shared/UseCaseHeader";
 
 export default function DocsFeedbackPage() {
   return (

@@ -1,14 +1,16 @@
 "use client";
+
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { KeyboardEventHandler, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { KeyboardEventHandler, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 interface ResponseOptionsCardProps {
   localSurvey: TSurvey;
