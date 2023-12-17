@@ -1,15 +1,16 @@
 "use client";
 
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
-import FileInput from "@formbricks/ui/FileInput";
-import { Label } from "@formbricks/ui/Label";
+import FallbackInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FallbackInput";
+import RecallQuestionSelect from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/RecallQuestionSelect";
 import { PencilIcon } from "@heroicons/react/24/solid";
 import { ImagePlusIcon } from "lucide-react";
-import { RefObject, useState, useEffect, useRef, useMemo } from "react";
+import { RefObject, useEffect, useMemo, useRef, useState } from "react";
+
+import { extractId, extractIds, extractRecallInfo, findRecallInfoById } from "@formbricks/lib/utils/recall";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
-import { extractId, extractRecallInfo, extractIds, findRecallInfoById } from "@formbricks/lib/utils/recall";
-import RecallQuestionSelect from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/RecallQuestionSelect";
-import FallbackInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FallbackInput";
+import { Label } from "@formbricks/ui/Label";
 
 interface QuestionFormInputProps {
   localSurvey: TSurvey;
@@ -206,7 +207,6 @@ const QuestionFormInput = ({
     const modifiedHeadlineWithName = recallToHeadline(modifiedHeadlineWithId);
     setheadline(modifiedHeadlineWithName);
     setShowFallbackInput(true);
-    console.log(localSurvey);
   };
 
   const filterRecallQuestions = (text) => {

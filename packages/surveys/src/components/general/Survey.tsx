@@ -92,7 +92,6 @@ export function Survey({
 
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
-    console.log(updatedResponseData);
     setResponseData(updatedResponseData);
   };
 

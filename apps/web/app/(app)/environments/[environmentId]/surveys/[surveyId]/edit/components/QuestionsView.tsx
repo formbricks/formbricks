@@ -56,7 +56,6 @@ export default function QuestionsView({
         }
       });
     });
-    console.log(survey);
     return survey;
   };
 
@@ -78,7 +77,6 @@ export default function QuestionsView({
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = { ...localSurvey };
-    console.log({ localSurvey });
     if ("id" in updatedAttributes) {
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
@@ -107,7 +105,6 @@ export default function QuestionsView({
       });
       setbackButtonLabel(updatedAttributes.backButtonLabel);
     }
-    console.log({ updatedSurvey });
     setLocalSurvey(updatedSurvey);
     validateSurvey(updatedSurvey.questions[questionIdx]);
   };
