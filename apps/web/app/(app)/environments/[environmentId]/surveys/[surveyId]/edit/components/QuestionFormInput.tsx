@@ -3,29 +3,13 @@
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
-import {
-  ArrowUpTrayIcon,
-  ChatBubbleBottomCenterTextIcon,
-  CheckIcon,
-  CursorArrowRippleIcon,
-  ListBulletIcon,
-  PhotoIcon,
-  PresentationChartBarIcon,
-  QueueListIcon,
-  StarIcon,
-  PencilIcon,
-} from "@heroicons/react/24/solid";
+import { PencilIcon } from "@heroicons/react/24/solid";
 import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useState, useEffect, useRef, useMemo } from "react";
 import { Input } from "@formbricks/ui/Input";
-import { Button } from "@formbricks/ui/Button";
-import {
-  extractId,
-  checkForRecall,
-  extractRecallInfo,
-  extractIds,
-  findRecallInfoById,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/utils";
+import { extractId, extractRecallInfo, extractIds, findRecallInfoById } from "@formbricks/lib/utils/recall";
+import RecallQuestionSelect from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/RecallQuestionSelect";
+import FallbackInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FallbackInput";
 
 interface QuestionFormInputProps {
   localSurvey: TSurvey;
@@ -45,39 +29,25 @@ const QuestionFormInput = ({
   isInValid,
   environmentId,
 }: QuestionFormInputProps) => {
-  const questionIconMapping = {
-    openText: ChatBubbleBottomCenterTextIcon,
-    multipleChoiceSingle: QueueListIcon,
-    multipleChoiceMulti: ListBulletIcon,
-    pictureSelection: PhotoIcon,
-    rating: StarIcon,
-    nps: PresentationChartBarIcon,
-    cta: CursorArrowRippleIcon,
-    consent: CheckIcon,
-    fileUpload: ArrowUpTrayIcon,
-  };
-
-  const recallToHeadline = (text): string => {
-    while (text.includes("recall:")) {
-      const recallInfo = extractRecallInfo(text);
-      const recallQuestionId = extractId(recallInfo);
-
-      text = text.replace(
-        recallInfo,
-        `@${localSurvey.questions.find((question) => question.id === recallQuestionId)?.headline}`
-      );
-    }
-
-    return text;
-  };
-
-  const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
   const currentQuestionIdx = useMemo(
     () => localSurvey.questions.findIndex((e) => e.id === question.id),
     [localSurvey, question]
   );
-  const [showQuestionSelect, setShowQuestionSelect] = useState(false);
-  const [showFallbackInput, setShowFallbackInput] = useState(false);
+
+  const recallToHeadline = (text): string => {
+    while (text.includes("recall:")) {
+      const recallInfo = extractRecallInfo(text);
+      if (recallInfo) {
+        const recallQuestionId = extractId(recallInfo);
+        text = text.replace(
+          recallInfo,
+          `@${localSurvey.questions.find((question) => question.id === recallQuestionId)?.headline}`
+        );
+      }
+    }
+    return text;
+  };
+
   function getFallbackValues() {
     const headline = question.headline; // Assuming question.headline is the text string
     const pattern = /recall:([A-Za-z0-9]+)\/fallback:([^ ]+)/g;
@@ -89,12 +59,8 @@ const QuestionFormInput = ({
       const fallbackValue = match[2];
       fallbacks[id] = fallbackValue;
     }
-
     return fallbacks;
   }
-  const [fallbacks, setFallbacks] = useState(
-    question.headline.includes("fallback:") ? getFallbackValues() : {}
-  );
 
   const getRecallQuestions = () => {
     const ids = extractIds(question.headline); // Extract IDs from the headline
@@ -109,40 +75,91 @@ const QuestionFormInput = ({
     });
     return recallQuestionArray;
   };
-  const [recallQuestions, setrecallQuestions] = useState<TSurveyQuestion[]>(
-    question.headline.includes("recall:") ? getRecallQuestions() : []
-  );
+
   const [headline, setheadline] = useState(question.headline);
   const [renderedText, setRenderedText] = useState<JSX.Element[]>();
   const highlightContainerRef = useRef<HTMLInputElement>(null);
   const fallbackInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
+  const [showImageUploader, setShowImageUploader] = useState<boolean>(!!question.imageUrl);
+  const [showQuestionSelect, setShowQuestionSelect] = useState(false);
+  const [showFallbackInput, setShowFallbackInput] = useState(false);
+  const [recallQuestions, setrecallQuestions] = useState<TSurveyQuestion[]>(
+    question.headline.includes("recall:") ? getRecallQuestions() : []
+  );
   const filteredRecallQuestions = Array.from(new Set(recallQuestions.map((q) => q.id))).map((id) => {
     return recallQuestions.find((q) => q.id === id);
   });
+  const [fallbacks, setFallbacks] = useState(
+    question.headline.includes("fallback:") ? getFallbackValues() : {}
+  );
 
   useEffect(() => {
-    // Function to synchronize scroll positions
     const syncScrollPosition = () => {
       if (highlightContainerRef.current && inputRef.current) {
         highlightContainerRef.current.scrollLeft = inputRef.current.scrollLeft;
       }
     };
-
-    // Attach the event listener
     const inputElement = inputRef.current;
     if (inputElement) {
       inputElement.addEventListener("scroll", syncScrollPosition);
     }
-
-    // Clean up the event listener
     return () => {
       if (inputElement) {
         inputElement.removeEventListener("scroll", syncScrollPosition);
       }
     };
-  }, [headline]); // Add dependencies as required
+  }, [headline]);
+
+  useEffect(() => {
+    const recallQuestionHeadlines = recallQuestions.map((recallQuestion) => {
+      if (!recallQuestion.headline.includes("recall:")) {
+        return recallQuestion.headline;
+      }
+      const recallInfo = extractRecallInfo(recallQuestion.headline);
+      if (recallInfo) {
+        const questionId = extractId(recallInfo);
+
+        return recallQuestion.headline.replace(
+          recallInfo,
+          `@${localSurvey.questions.find((question) => question.id === questionId)?.headline}`
+        );
+      }
+    });
+    const processInput = (): JSX.Element[] => {
+      const parts: JSX.Element[] = [];
+      let remainingText = question.headline;
+      remainingText = recallToHeadline(remainingText);
+      filterRecallQuestions(remainingText);
+      recallQuestionHeadlines.forEach((headline) => {
+        const index = remainingText.indexOf("@" + headline);
+        if (index !== -1) {
+          if (index > 0) {
+            parts.push(<span key={parts.length}>{remainingText.substring(0, index)}</span>);
+          }
+          parts.push(
+            <span className="z-30 cursor-pointer rounded-md bg-slate-100" key={parts.length}>
+              {"@" + headline}
+            </span>
+          );
+          remainingText = remainingText.substring(index + headline!.length + 1);
+        }
+      });
+      if (remainingText.length) {
+        parts.push(<span key={parts.length}>{remainingText}</span>);
+      }
+
+      return parts;
+    };
+
+    setRenderedText(processInput());
+  }, [headline, question.headline]);
+
+  useEffect(() => {
+    if (fallbackInputRef.current) {
+      fallbackInputRef.current.focus();
+    }
+  }, [showFallbackInput]);
 
   const checkForRecallSymbol = (value: string) => {
     const pattern = /(^|\s)@(\s|$)/;
@@ -156,14 +173,15 @@ const QuestionFormInput = ({
 
   const addRecallQuestion = (recallQuestion: TSurveyQuestion) => {
     const recallQuestionTemp = { ...recallQuestion };
-
     while (recallQuestionTemp.headline.includes("recall:")) {
       const recallInfo = extractRecallInfo(recallQuestionTemp.headline);
-      const questionId = extractId(recallQuestionTemp.headline);
-      recallQuestionTemp.headline = recallQuestionTemp.headline.replace(
-        recallInfo,
-        `@${localSurvey.questions.find((question) => question.id === questionId)?.headline}`
-      );
+      if (recallInfo) {
+        const questionId = extractId(recallQuestionTemp.headline);
+        recallQuestionTemp.headline = recallQuestionTemp.headline.replace(
+          recallInfo,
+          `@${localSurvey.questions.find((question) => question.id === questionId)?.headline}`
+        );
+      }
     }
 
     setrecallQuestions((prevQuestions) => {
@@ -198,97 +216,19 @@ const QuestionFormInput = ({
     setrecallQuestions(filteredQuestions);
   };
 
-  useEffect(() => {
-    const recallQuestionHeadlines = recallQuestions.map((recallQuestion) => {
-      if (!recallQuestion.headline.includes("recall:")) {
-        return recallQuestion.headline;
-      }
-      const recallInfo = extractRecallInfo(recallQuestion.headline);
-      const questionId = extractId(recallInfo);
-
-      return recallQuestion.headline.replace(
-        recallInfo,
-        `@${localSurvey.questions.find((question) => question.id === questionId)?.headline}`
-      );
-    });
-    const processInput = (): JSX.Element[] => {
-      const parts: JSX.Element[] = [];
-      let remainingText = question.headline;
-      remainingText = recallToHeadline(remainingText);
-      filterRecallQuestions(remainingText);
-      recallQuestionHeadlines.forEach((headline) => {
-        const index = remainingText.indexOf("@" + headline);
-        if (index !== -1) {
-          // Add text before the '@headline'
-          if (index > 0) {
-            parts.push(<span key={parts.length}>{remainingText.substring(0, index)}</span>);
-          }
-
-          // Add '@headline' in the specific span
-          parts.push(
-            <span className="z-30 cursor-pointer rounded-md bg-slate-100" key={parts.length}>
-              {"@" + headline}
-            </span>
-          );
-
-          // Update remainingText to process the rest of the string
-          remainingText = remainingText.substring(index + headline.length + 1);
-        }
-      });
-
-      // Add any final remaining text
-      if (remainingText.length) {
-        parts.push(<span key={parts.length}>{remainingText}</span>);
-      }
-
-      return parts;
-    };
-
-    setRenderedText(processInput());
-  }, [headline, question.headline]); // Dependency array, useEffect runs when 'inputValue' changes
-
-  useEffect(() => {
-    // Function to handle key presses
-    const handleKeyPress = (event) => {
-      if (showQuestionSelect) {
-        if (event.key === "ArrowDown") {
-          event.preventDefault();
-          setFocusedQuestionIdx((prevIdx) => (prevIdx + 1) % localSurvey.questions.length);
-        } else if (event.key === "ArrowUp") {
-          event.preventDefault();
-          setFocusedQuestionIdx((prevIdx) =>
-            prevIdx === 0 ? localSurvey.questions.length - 1 : prevIdx - 1
-          );
-        } else if (event.key === "Enter") {
-          const selectedQuestion = localSurvey.questions[focusedQuestionIdx];
-
-          addRecallQuestion(selectedQuestion);
-          setShowQuestionSelect(false);
-        }
-      }
-    };
-
-    const inputElement = inputRef.current;
-    inputElement?.addEventListener("keydown", handleKeyPress);
-
-    return () => {
-      inputElement?.removeEventListener("keydown", handleKeyPress);
-    };
-  }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
-
   const addFallback = () => {
     let headlineWithFallback = question.headline;
     filteredRecallQuestions.forEach((recallQuestion) => {
       const recallInfo = findRecallInfoById(question.headline, recallQuestion!.id);
-      console.log(recallInfo);
-      headlineWithFallback = headlineWithFallback.replaceAll(
-        recallInfo,
-        `recall:${recallQuestion?.id}/fallback:${fallbacks[recallQuestion!.id].replace(/ /g, "nbsp")}`
-      );
-      console.log(headlineWithFallback);
-      updateQuestion(questionIdx, {
-        headline: headlineWithFallback,
-      });
+      if (recallInfo) {
+        headlineWithFallback = headlineWithFallback.replaceAll(
+          recallInfo,
+          `recall:${recallQuestion?.id}/fallback:${fallbacks[recallQuestion!.id].replace(/ /g, "nbsp")}`
+        );
+        updateQuestion(questionIdx, {
+          headline: headlineWithFallback,
+        });
+      }
     });
     setShowFallbackInput(false);
     inputRef.current?.focus();
@@ -301,14 +241,6 @@ const QuestionFormInput = ({
     });
     return text;
   };
-
-  useEffect(() => {
-    if (fallbackInputRef.current) {
-      // Perform actions that depend on fallbackInputRef
-      console.log(fallbackInputRef.current); // Now it should not be null
-      fallbackInputRef.current.focus(); // Example action
-    }
-  }, [showFallbackInput]);
 
   return (
     <div className="mt-3">
@@ -363,71 +295,26 @@ const QuestionFormInput = ({
               />
             )}
             {showQuestionSelect && (
-              <div className="fixed z-30 flex flex-col border bg-white p-1 text-xs">
-                {currentQuestionIdx === 0 ? (
-                  <p className="p-2 font-medium">There is no information to recall yet</p>
-                ) : (
-                  <p className="p-2 font-medium">Recall Information from...</p>
-                )}
-                <div>
-                  {localSurvey.questions.map((q, idx) => {
-                    if (q.id === question.id) return;
-                    if (idx > currentQuestionIdx) return;
-                    const isFocused = idx === focusedQuestionIdx;
-                    const IconComponent = questionIconMapping[q.type]; // Accessing the icon component
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex cursor-pointer items-center p-2 ${isFocused ? "bg-slate-100" : ""}`}
-                        onClick={() => {
-                          addRecallQuestion(q);
-                          setShowQuestionSelect(false);
-                        }}>
-                        {IconComponent && <IconComponent className="mr-2 h-4 w-4" />}{" "}
-                        {checkForRecall(q.headline, localSurvey)}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <RecallQuestionSelect
+                currentQuestionIdx={currentQuestionIdx}
+                localSurvey={localSurvey}
+                question={question}
+                addRecallQuestion={addRecallQuestion}
+                setShowQuestionSelect={setShowQuestionSelect}
+                showQuestionSelect={showQuestionSelect}
+                inputRef={inputRef}
+              />
             )}
             {!showQuestionSelect && showFallbackInput && recallQuestions.length > 0 && (
-              <div className="fixed z-30 border bg-white p-4 text-xs">
-                <p className="font-medium">Add a fallback, if the data is missing</p>
-                {filteredRecallQuestions.map((recallQuestion) => (
-                  <div className="mt-4 flex flex-col">
-                    <p className="mb-2 text-xs">{recallQuestion!.headline}</p>
-                    <div className="flex items-center">
-                      <Input
-                        className="h-full"
-                        ref={fallbackInputRef}
-                        id="fallback"
-                        value={fallbacks[recallQuestion!.id].replaceAll("nbsp", " ")}
-                        onChange={(e) => {
-                          const newFallbacks = { ...fallbacks };
-                          newFallbacks[recallQuestion!.id] = e.target.value;
-                          setFallbacks(newFallbacks);
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-                <div className="flex w-full justify-end">
-                  <Button
-                    className=" mt-2 h-full py-2"
-                    disabled={Object.values(fallbacks).includes("") || Object.entries(fallbacks).length === 0}
-                    variant="darkCTA"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      addFallback();
-                    }}>
-                    Add
-                  </Button>
-                </div>
-              </div>
+              <FallbackInput
+                filteredRecallQuestions={filteredRecallQuestions}
+                fallbacks={fallbacks}
+                setFallbacks={setFallbacks}
+                fallbackInputRef={fallbackInputRef}
+                addFallback={addFallback}
+              />
             )}
           </div>
-
           <ImagePlusIcon
             aria-label="Toggle image uploader"
             className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

@@ -37,7 +37,7 @@ import RatingQuestionForm from "./RatingQuestionForm";
 import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
 import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 import { TProduct } from "@formbricks/types/product";
-import { checkForRecall } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/utils";
+import { formatText } from "@formbricks/lib/utils/recall";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -95,6 +95,24 @@ export default function QuestionCard({
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
+
+  const formatTextWithSlashes = (text) => {
+    const regex = /\/(.*?)\\/g;
+    const parts = text.split(regex);
+
+    return parts.map((part, index) => {
+      // Check if the part was inside slashes
+      if (index % 2 !== 0) {
+        return (
+          <span key={index} className="mx-1 rounded-md bg-slate-100 p-1 px-2 text-xs">
+            {part}
+          </span>
+        );
+      } else {
+        return part;
+      }
+    });
+  };
 
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
@@ -155,8 +173,9 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {checkForRecall(question.headline, localSurvey) ||
-                        getTSurveyQuestionTypeName(question.type)}
+                      {formatText(question.headline, localSurvey)
+                        ? formatTextWithSlashes(formatText(question.headline, localSurvey))
+                        : getTSurveyQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-slate-500">

@@ -10,13 +10,7 @@ import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
-import {
-  extractFallbackValue,
-  extractId,
-  extractIds,
-  extractRecallInfo,
-  findRecallInfoById,
-} from "@formbricks/lib/utils/recall";
+import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 
 export function Survey({
   survey,
@@ -121,15 +115,15 @@ export function Survey({
     const modifiedQuestion = { ...question };
     while (modifiedQuestion.headline.includes("recall:")) {
       const recallInfo = extractRecallInfo(modifiedQuestion.headline);
-      const questionId = extractId(recallInfo);
-      const fallback = extractFallbackValue(recallInfo);
-      console.log(fallback);
-      modifiedQuestion.headline = modifiedQuestion.headline.replace(
-        recallInfo,
-        responseData[questionId] ? responseData[questionId] : fallback.replaceAll("nbsp", " ")
-      );
+      if (recallInfo) {
+        const questionId = extractId(recallInfo);
+        const fallback = extractFallbackValue(recallInfo);
+        const value = responseData[questionId!]
+          ? (responseData[questionId!] as string)
+          : fallback.replaceAll("nbsp", " ");
+        modifiedQuestion.headline = modifiedQuestion.headline.replace(recallInfo, value);
+      }
     }
-    console.log(modifiedQuestion);
     return modifiedQuestion;
   };
 
