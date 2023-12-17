@@ -44,6 +44,9 @@ export default function QuestionsView({
 
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
+      if (question.headline.includes(`recall:${compareId}`)) {
+        question.headline = question.headline.replaceAll(`recall:${compareId}`, `recall:${updatedId}`);
+      }
       if (!question.logic) return;
       question.logic.forEach((rule) => {
         if (rule.destination === compareId) {
@@ -51,6 +54,7 @@ export default function QuestionsView({
         }
       });
     });
+    console.log(survey);
     return survey;
   };
 
@@ -72,7 +76,7 @@ export default function QuestionsView({
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = { ...localSurvey };
-
+    console.log({ localSurvey });
     if ("id" in updatedAttributes) {
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
@@ -101,6 +105,7 @@ export default function QuestionsView({
       });
       setbackButtonLabel(updatedAttributes.backButtonLabel);
     }
+    console.log({ updatedSurvey });
     setLocalSurvey(updatedSurvey);
     validateSurvey(updatedSurvey.questions[questionIdx]);
   };
