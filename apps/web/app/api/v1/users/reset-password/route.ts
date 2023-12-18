@@ -1,7 +1,7 @@
-import { sendPasswordResetNotifyEmail } from "@/app/lib/email";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
+import { sendPasswordResetNotifyEmail } from "@formbricks/lib/emails/emails";
 import { verifyToken } from "@formbricks/lib/jwt";
 
 export async function POST(request: Request) {
