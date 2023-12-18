@@ -17,7 +17,7 @@ import { TResponse, TResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 
 import { selectPerson, transformPrismaPerson } from "../../person/service";
-import { createResponse, updateResponse } from "../service";
+import { createResponse, getResponse, getResponses, updateResponse } from "../service";
 import { constantsForTests } from "./constants";
 
 const expectedResponseWithoutPerson: TResponse = {
@@ -81,9 +81,21 @@ beforeEach(() => {
       data: mockResponseData,
     };
   });
+
+  prismaMock.response.findMany.mockResolvedValue([mockResponse]);
 });
 
 describe("Tests for Response Service", () => {
+  it("gets all responses", async () => {
+    const response = await getResponses(mockSurveyId);
+    expect(response).toEqual([expectedResponseWithoutPerson]);
+  });
+
+  it("gets a single response by id", async () => {
+    const response = await getResponse(mockResponse.id);
+    expect(response).toEqual(expectedResponseWithoutPerson);
+  });
+
   it("creates a response with an existing user", async () => {
     const response = await createResponse(mockResponseInputWithUserId);
     expect(response).toEqual(expectedResponseWithPerson);
