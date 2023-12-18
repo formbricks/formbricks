@@ -50,8 +50,8 @@ const QuestionFormInput = ({
   };
 
   function getFallbackValues() {
-    const headline = question.headline; // Assuming question.headline is the text string
-    const pattern = /recall:([A-Za-z0-9]+)\/fallback:([^ ]+)/g;
+    const headline = question.headline;
+    const pattern = /recall:([A-Za-z0-9]+)\/fallback:([\S*]+)/g;
     let match;
     const fallbacks = {};
 
