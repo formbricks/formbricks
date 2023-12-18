@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
     return responses.notFoundResponse("TeamByEnvironmentId", environmentId);
   }
 
-  const plan = team.billing.features.linkSurvey.status in ["active", "canceled"] ? "pro" : "free";
+  const plan = ["active", "canceled"].includes(team.billing.features.linkSurvey.status) ? "pro" : "free";
 
   return await uploadPrivateFile(fileName, environmentId, fileType, plan);
 }

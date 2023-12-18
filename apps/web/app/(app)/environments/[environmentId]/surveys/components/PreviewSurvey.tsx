@@ -232,7 +232,7 @@ export default function PreviewSurvey({
                   />
                 </Modal>
               ) : (
-                <div className="relative z-10 w-full max-w-md  px-4">
+                <div className="absolute inset-0 z-10 w-full max-w-md  px-4">
                   <SurveyInline
                     survey={survey}
                     brandColor={brandColor}

@@ -106,7 +106,7 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
   }
 
   try {
-    const plan = team.billing.features.linkSurvey.status in ["active", "canceled"] ? "pro" : "free";
+    const plan = ["active", "canceled"].includes(team.billing.features.linkSurvey.status) ? "pro" : "free";
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 
