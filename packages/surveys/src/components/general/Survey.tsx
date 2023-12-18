@@ -1,5 +1,6 @@
 import FormbricksBranding from "@/components/general/FormbricksBranding";
 import ProgressBar from "@/components/general/ProgressBar";
+import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
@@ -23,10 +24,11 @@ export function Survey({
   onFinished = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
-  showErrorComponent,
-  errorComponent = <></>,
+  isError,
   onFileUpload,
   responseCount,
+  supportEmail,
+  brandColor,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -38,8 +40,6 @@ export function Survey({
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
-
-  const ErrorComponent = () => errorComponent;
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
   useEffect(() => {
@@ -132,8 +132,15 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
   function getCardContent() {
-    if (showErrorComponent) {
-      return <ErrorComponent />;
+    if (isError) {
+      return (
+        <ResponseErrorComponent
+          responseData={responseData}
+          brandColor={brandColor}
+          questions={survey.questions}
+          supportEmail={supportEmail}
+        />
+      );
     }
     if (questionId === "start" && survey.welcomeCard.enabled) {
       return (

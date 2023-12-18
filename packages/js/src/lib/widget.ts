@@ -16,6 +16,7 @@ const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
+let isError = false;
 
 export const renderWidget = (survey: TSurvey) => {
   if (surveyRunning) {
@@ -37,6 +38,9 @@ export const renderWidget = (survey: TSurvey) => {
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
       retryAttempts: 2,
+      onResponseSendingFailed: (response) => {
+        alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
+      },
     },
     surveyState
   );
@@ -49,9 +53,6 @@ export const renderWidget = (survey: TSurvey) => {
   const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;
 
-  const hasFailedResponses = () => surveyState.hasFailedResponses();
-  const getResponseAccumulator = () => surveyState.getResponseAccumulator();
-
   setTimeout(() => {
     renderSurveyModal({
       survey: survey,
@@ -61,6 +62,7 @@ export const renderWidget = (survey: TSurvey) => {
       darkOverlay,
       highlightBorderColor,
       placement,
+      isError,
       onDisplay: async () => {
         const { userId } = config.get();
         // if config does not have a person, we store the displays in local storage
@@ -134,8 +136,6 @@ export const renderWidget = (survey: TSurvey) => {
         });
       },
       onClose: closeSurvey,
-      getHasFailedResponses: hasFailedResponses,
-      getResponseAccumulator: getResponseAccumulator,
       onFileUpload: async (file: File, params) => {
         const api = new FormbricksAPI({
           apiHost: config.get().apiHost,

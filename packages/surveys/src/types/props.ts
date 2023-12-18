@@ -6,6 +6,7 @@ export interface SurveyBaseProps {
   survey: TSurvey;
   isBrandingEnabled: boolean;
   activeQuestionId?: string;
+  isError?: boolean;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
@@ -14,17 +15,14 @@ export interface SurveyBaseProps {
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
-  showErrorComponent?: boolean;
-  errorComponent?: JSX.Element;
   brandColor: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
+  supportEmail?: string;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {
   containerId: string;
-  getHasFailedResponses?: () => boolean;
-  getResponseAccumulator?: () => TResponseUpdate;
 }
 
 export interface SurveyModalProps extends SurveyBaseProps {
@@ -32,6 +30,4 @@ export interface SurveyModalProps extends SurveyBaseProps {
   darkOverlay: boolean;
   highlightBorderColor: string | null;
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
-  getHasFailedResponses?: () => boolean;
-  getResponseAccumulator?: () => TResponseUpdate;
 }

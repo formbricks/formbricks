@@ -2,7 +2,6 @@ import Modal from "@/components/wrappers/Modal";
 import { SurveyModalProps } from "@/types/props";
 import { useState } from "preact/hooks";
 
-import { ResponseErrorComponent } from "./ResponseErrorComponent";
 import { Survey } from "./Survey";
 
 export function SurveyModal({
@@ -14,39 +13,21 @@ export function SurveyModal({
   clickOutside,
   darkOverlay,
   highlightBorderColor,
-  onDisplay = () => {},
-  onActiveQuestionChange = () => {},
-  onResponse = () => {},
-  onClose = () => {},
+  onDisplay,
+  onActiveQuestionChange,
+  onResponse,
+  onClose,
   onFinished = () => {},
   onFileUpload,
   isRedirectDisabled = false,
-  getHasFailedResponses = () => false,
-  getResponseAccumulator,
   responseCount,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const [showResponseErrorComponent, setShowResponseErrorComponent] = useState(false);
-
-  const responseAccumulator = getResponseAccumulator?.();
-
-  const ErrorComponent = responseAccumulator ? (
-    <ResponseErrorComponent
-      responses={responseAccumulator.data}
-      questions={survey.questions}
-      brandColor={brandColor}
-      supportEmail={survey.supportEmail}
-    />
-  ) : undefined;
 
   const close = () => {
     setIsOpen(false);
     setTimeout(() => {
-      const hasFailedResponses = getHasFailedResponses();
-      if (hasFailedResponses && !showResponseErrorComponent) {
-        setShowResponseErrorComponent(true);
-        setIsOpen(true);
-      } else {
+      if (onClose) {
         onClose();
       }
     }, 1000); // wait for animation to finish}
@@ -80,8 +61,6 @@ export function SurveyModal({
           }}
           onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
-          showErrorComponent={showResponseErrorComponent}
-          errorComponent={ErrorComponent}
           responseCount={responseCount}
         />
       </Modal>

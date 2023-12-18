@@ -44,11 +44,14 @@ export default function LinkSurvey({
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
+
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
+  const [isError, setIsError] = useState(false);
+
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
@@ -62,6 +65,9 @@ export default function LinkSurvey({
           apiHost: webAppUrl,
           environmentId: survey.environmentId,
           retryAttempts: 2,
+          onResponseSendingFailed: () => {
+            setIsError(true);
+          },
           setSurveyState: setSurveyState,
         },
         surveyState
@@ -76,9 +82,6 @@ export default function LinkSurvey({
     return false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const hasFailedResponses = () => surveyState.hasFailedResponses();
-  const getResponseAccumulator = () => surveyState.getResponseAccumulator();
 
   // Not in an iframe, enable autofocus on input fields.
   useEffect(() => {
@@ -190,9 +193,8 @@ export default function LinkSurvey({
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
-          getHasFailedResponses={hasFailedResponses}
-          getResponseAccumulator={getResponseAccumulator}
           responseCount={responseCount}
+          isError={isError}
         />
       </ContentWrapper>
     </>

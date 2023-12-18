@@ -7,6 +7,7 @@ interface QueueConfig {
   apiHost: string;
   environmentId: string;
   retryAttempts: number;
+  onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
   setSurveyState?: (state: SurveyState) => void;
 }
 
@@ -44,13 +45,11 @@ export class ResponseQueue {
     this.isRequestInProgress = true;
 
     const responseUpdate = this.queue[0];
-    const responseQuestionId = Object.keys(responseUpdate.data)[0];
     let attempts = 0;
 
     while (attempts < this.config.retryAttempts) {
       const success = await this.sendResponse(responseUpdate);
       if (success) {
-        this.surveyState.removeFailedResponse(responseQuestionId); // remove the response from the failed response list
         this.queue.shift(); // remove the successfully sent response from the queue
         break; // exit the retry loop
       }
@@ -61,10 +60,10 @@ export class ResponseQueue {
     if (attempts >= this.config.retryAttempts) {
       // Inform the user after 2 failed attempts
       console.error("Failed to send response after 2 attempts.");
-
-      // Add the failed response to the failed response list
-      this.surveyState.accumulateFailedResponses(responseQuestionId);
-
+      // If the response is finished and thus fails finally, inform the user
+      if (this.surveyState.responseAcc.finished && this.config.onResponseSendingFailed) {
+        this.config.onResponseSendingFailed(this.surveyState.responseAcc);
+      }
       this.queue.shift(); // remove the failed response from the queue
     }
 

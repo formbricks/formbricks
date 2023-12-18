@@ -1,62 +1,11 @@
 import { SurveyInlineProps } from "@/types/props";
-import { useState } from "preact/hooks";
 
-import { ResponseErrorComponent } from "./ResponseErrorComponent";
 import { Survey } from "./Survey";
 
-export function SurveyInline({
-  survey,
-  brandColor,
-  isBrandingEnabled,
-  activeQuestionId,
-  onDisplay = () => {},
-  onActiveQuestionChange = () => {},
-  onResponse = () => {},
-  onClose = () => {},
-  prefillResponseData,
-  isRedirectDisabled = false,
-  onFileUpload,
-  responseCount,
-  getHasFailedResponses,
-  getResponseAccumulator,
-}: SurveyInlineProps) {
-  const [showResponseErrorComponent, setShowResponseErrorComponent] = useState(false);
-
-  const responseAccumulator = getResponseAccumulator?.();
-  const ErrorComponent = responseAccumulator ? (
-    <ResponseErrorComponent
-      responses={responseAccumulator.data}
-      brandColor={brandColor}
-      questions={survey.questions}
-      supportEmail={survey.supportEmail}
-    />
-  ) : undefined;
-
-  const onFinished = () => {
-    const hasFailedResponses = getHasFailedResponses?.();
-    setTimeout(() => {
-      setShowResponseErrorComponent(hasFailedResponses ?? false);
-    }, 3000);
-  };
+export function SurveyInline(props: SurveyInlineProps) {
   return (
     <div id="fbjs" className="formbricks-form h-full w-full">
-      <Survey
-        survey={survey}
-        isBrandingEnabled={isBrandingEnabled}
-        brandColor={brandColor}
-        activeQuestionId={activeQuestionId}
-        onDisplay={onDisplay}
-        onActiveQuestionChange={onActiveQuestionChange}
-        onResponse={onResponse}
-        onClose={onClose}
-        onFinished={onFinished}
-        prefillResponseData={prefillResponseData}
-        isRedirectDisabled={isRedirectDisabled}
-        showErrorComponent={showResponseErrorComponent}
-        errorComponent={ErrorComponent}
-        onFileUpload={onFileUpload}
-        responseCount={responseCount}
-      />
+      <Survey {...props} />
     </div>
   );
 }

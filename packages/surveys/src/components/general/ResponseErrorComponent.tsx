@@ -5,21 +5,21 @@ import { cn, isLight } from "../../lib/utils";
 
 type ResponseErrorComponentProps = {
   questions: TSurveyQuestion[];
-  responses: TResponseData;
+  responseData: TResponseData;
   brandColor: string;
-  supportEmail: string | null;
+  supportEmail?: string;
 };
 
 export const ResponseErrorComponent = ({
   questions,
-  responses,
+  responseData,
   brandColor,
   supportEmail,
 }: ResponseErrorComponentProps) => {
   const transformResponses = (isEmail = false) => {
     const questionIdToHeadline = new Map(questions.map((q) => [q.id, q.headline]));
 
-    return Object.entries(responses).reduce((acc, [key, value]) => {
+    return Object.entries(responseData).reduce((acc, [key, value]) => {
       const question = questionIdToHeadline.get(key) || "Question not found";
       const line = isEmail
         ? `${encodeURIComponent(question)}%0D%0A${encodeURIComponent(value as string)}`
@@ -35,14 +35,14 @@ export const ResponseErrorComponent = ({
         {"Your feedback is stuck :("}
       </span>
       <p className={"max-w-md text-sm font-normal leading-6 text-slate-600"}>
-        Our servers are not responding.
+        The servers cannot be reached at the moment.
         <br />
         Please forward your feedback via email &#128591;
       </p>
       <div className={"mt-4 rounded-lg border border-slate-200 bg-slate-100 px-4 py-5"}>
         <div className={"flex max-h-36 flex-1 flex-col space-y-3 overflow-y-scroll"}>
           {questions.map((question, index) => {
-            const response = responses[question.id];
+            const response = responseData[question.id];
             if (!response) return;
             return (
               <div className={"flex flex-col"}>

@@ -5,7 +5,6 @@ export class SurveyState {
   displayId: string | null = null;
   userId: string | null = null;
   surveyId: string;
-  failedResponses: Record<string, boolean> = {};
   responseAcc: TResponseUpdate = { finished: false, data: {}, ttc: {} };
   singleUseId: string | null;
 
@@ -41,7 +40,6 @@ export class SurveyState {
     );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
-    copyInstance.failedResponses = this.failedResponses;
     return copyInstance;
   }
 
@@ -89,38 +87,10 @@ export class SurveyState {
   }
 
   /**
-   * Adds questionId to the failed response accumulator object
-   */
-  accumulateFailedResponses(questionId: string) {
-    this.failedResponses[questionId] = true;
-  }
-  /**
-   * Remove a questionId from the failed response accumulator object
-   */
-  removeFailedResponse(questionId: string) {
-    delete this.failedResponses[questionId];
-  }
-
-  /**
-   * Check if there are any failed responses
-   */
-  hasFailedResponses() {
-    return Object.keys(this.failedResponses).length > 0;
-  }
-
-  /**
-   * Get the Response Accumulator
-   */
-  getResponseAccumulator() {
-    return this.responseAcc;
-  }
-
-  /**
    * Clear the current state
    */
   clear() {
     this.responseId = null;
-    this.failedResponses = {};
     this.responseAcc = { finished: false, data: {}, ttc: {} };
   }
 }
