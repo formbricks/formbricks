@@ -2,7 +2,6 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 import {
-  IS_SMTP_CONFIGURED,
   MAIL_FROM,
   SMTP_HOST,
   SMTP_PASSWORD,
@@ -16,6 +15,9 @@ import { getQuestionResponseMapping } from "../responses";
 import { withEmailTemplate } from "./email-template";
 
 const nodemailer = require("nodemailer");
+
+export const IS_SMTP_CONFIGURED: boolean =
+  SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD ? true : false;
 
 interface sendEmailData {
   to: string;

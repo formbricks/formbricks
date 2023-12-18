@@ -58,9 +58,6 @@ export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
 export const MAIL_FROM = env.MAIL_FROM;
 
-export const IS_SMTP_CONFIGURED: boolean =
-  SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD ? true : false;
-
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const NEXTAUTH_URL = env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
