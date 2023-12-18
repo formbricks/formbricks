@@ -22,5 +22,6 @@
     "strict": true,
     "target": "esnext",
     "verbatimModuleSyntax": true
-  }
+  },
+  "extends": "expo/tsconfig.base"
 }

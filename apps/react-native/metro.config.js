@@ -1,43 +1,23 @@
+const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
-const escape = require('escape-string-regexp');
-const { getDefaultConfig } = require('@expo/metro-config');
-const exclusionList = require('metro-config/src/defaults/exclusionList');
-const pak = require('./package.json');
 
-const root = path.resolve(__dirname, '..');
-const modules = Object.keys({ ...pak.peerDependencies });
+// Find the project and workspace directories
+const projectRoot = __dirname;
+// This can be replaced with `find-yarn-workspace-root`
+const workspaceRoot = path.resolve(projectRoot, '../..');
 
-const defaultConfig = getDefaultConfig(__dirname);
+const config = getDefaultConfig(projectRoot);
 
-/**
- * Metro configuration
- * https://facebook.github.io/metro/docs/configuration
- *
- * @type {import('metro-config').MetroConfig}
- */
-const config = {
-  ...defaultConfig,
+// 1. Watch all files within the monorepo
+config.watchFolders = [workspaceRoot];
+// 2. Let Metro know where to resolve packages and in what order
+config.resolver.nodeModulesPaths = [
+  path.resolve(projectRoot, 'node_modules'),
+  path.resolve(workspaceRoot, 'node_modules'),
+];
 
-  projectRoot: __dirname,
-  watchFolders: [root],
+// 3. Force Metro to resolve (sub)dependencies only from the `nodeModulesPaths`
+// config.resolver.disableHierarchicalLookup = true;
 
-  // We need to make sure that only one version is loaded for peerDependencies
-  // So we block them at the root, and alias them to the versions in example's node_modules
-  resolver: {
-    ...defaultConfig.resolver,
-
-    blacklistRE: exclusionList(
-      modules.map(
-        (m) =>
-          new RegExp(`^${escape(path.join(root, 'node_modules', m))}\\/.*$`)
-      )
-    ),
-
-    extraNodeModules: modules.reduce((acc, name) => {
-      acc[name] = path.join(__dirname, 'node_modules', name);
-      return acc;
-    }, {}),
-  },
-};
 
 module.exports = config;
