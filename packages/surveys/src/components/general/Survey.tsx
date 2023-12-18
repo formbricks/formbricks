@@ -25,6 +25,7 @@ export function Survey({
   prefillResponseData,
   onFileUpload,
   responseCount,
+  isMobileApp
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -145,6 +146,8 @@ export function Survey({
           subheader={survey.thankYouCard.subheader}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
+          isMobileApp={isMobileApp}
+          mobileOnFinish={onFinished}
         />
       );
     } else {

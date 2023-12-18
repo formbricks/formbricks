@@ -29,6 +29,12 @@ interface LinkSurveyProps {
   responseCount?: number;
 }
 
+declare global {
+  interface Window {
+    ReactNativeWebView: Window;
+  }
+}
+
 export default function LinkSurvey({
   survey,
   product,
@@ -44,6 +50,7 @@ export default function LinkSurvey({
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
+  const isMobileApp = searchParams?.get("mobileapp") === "true";
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
@@ -54,6 +61,10 @@ export default function LinkSurvey({
     : undefined;
 
   const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
+
+  const onFinishedMobile = () => {
+    window.ReactNativeWebView.postMessage(JSON.stringify({ closeModal: true }));
+  };
 
   const responseQueue = useMemo(
     () =>
@@ -186,6 +197,8 @@ export default function LinkSurvey({
               return "";
             }
           }}
+          onFinished={isMobileApp ? onFinishedMobile : () => {}}
+          isMobileApp={isMobileApp}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}

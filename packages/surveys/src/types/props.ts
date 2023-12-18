@@ -13,6 +13,7 @@ export interface SurveyBaseProps {
   onActiveQuestionChange?: (questionId: string) => void;
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
+  isMobileApp?: boolean;
   prefillResponseData?: TResponseData;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;

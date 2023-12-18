@@ -7,6 +7,8 @@ interface ThankYouCardProps {
   subheader?: string;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
+  isMobileApp?: boolean;
+  mobileOnFinish?: () => void;
 }
 
 export default function ThankYouCard({
@@ -14,6 +16,8 @@ export default function ThankYouCard({
   subheader,
   redirectUrl,
   isRedirectDisabled,
+  isMobileApp = false,
+  mobileOnFinish,
 }: ThankYouCardProps) {
   return (
     <div className="text-center">
@@ -39,6 +43,17 @@ export default function ThankYouCard({
         <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
+        {isMobileApp ? (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={mobileOnFinish}
+              className={
+                "bg-brand border-submit-button-border text-on-brand focus:ring-focus flex items-center rounded-md border px-3 py-3 text-base font-medium leading-4 shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
+              }>
+              Close Survey
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

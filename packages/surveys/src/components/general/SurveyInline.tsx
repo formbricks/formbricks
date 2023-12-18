@@ -10,16 +10,20 @@ export function SurveyInline({
   onActiveQuestionChange = () => {},
   onResponse = () => {},
   onClose = () => {},
+  onFinished = () => {},
   prefillResponseData,
   isRedirectDisabled = false,
   onFileUpload,
   responseCount,
+  isMobileApp
 }: SurveyBaseProps) {
   return (
     <div id="fbjs" className="formbricks-form h-full w-full">
       <Survey
         survey={survey}
+        onFinished={onFinished}
         isBrandingEnabled={isBrandingEnabled}
+        isMobileApp={isMobileApp}
         activeQuestionId={activeQuestionId}
         onDisplay={onDisplay}
         onActiveQuestionChange={onActiveQuestionChange}

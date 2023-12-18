@@ -2,6 +2,7 @@
 
 import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 import { CodeBracketIcon, EnvelopeIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { DevicePhoneMobileIcon } from "@heroicons/react/24/solid";
 import { useMemo, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -13,6 +14,7 @@ import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
 
 import EmailTab from "./shareEmbedTabs/EmailTab";
 import LinkTab from "./shareEmbedTabs/LinkTab";
+import ReactNativeTab from "./shareEmbedTabs/ReactNativeTab";
 import WebpageTab from "./shareEmbedTabs/WebpageTab";
 
 interface ShareEmbedSurveyProps {
@@ -41,6 +43,7 @@ export default function ShareEmbedSurvey({
     { id: "link", label: `${isSingleUseLinkSurvey ? "Single Use Links" : "Share the Link"}`, icon: LinkIcon },
     { id: "email", label: "Embed in an Email", icon: EnvelopeIcon },
     { id: "webpage", label: "Embed in a Web Page", icon: CodeBracketIcon },
+    { id: "reactnative", label: "Embed in a Mobile App", icon: DevicePhoneMobileIcon },
   ];
 
   const [activeId, setActiveId] = useState(tabs[0].id);
@@ -87,6 +90,8 @@ export default function ShareEmbedSurvey({
                 <EmailTab surveyId={survey.id} email={email} />
               ) : activeId === "webpage" ? (
                 <WebpageTab surveyUrl={surveyUrl} />
+              ) : activeId === "reactnative" ? (
+                <ReactNativeTab surveyId={survey.id} />
               ) : null}
             </div>
             <div className="mx-auto flex max-w-max rounded-md bg-slate-100 p-1 lg:hidden">

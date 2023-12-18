@@ -21,6 +21,7 @@ interface SurveyProps {
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
+  isMobileApp?: boolean;
   responseCount?: number;
 }
 
@@ -44,7 +45,9 @@ export const SurveyInline = ({
   prefillResponseData,
   isRedirectDisabled,
   onFileUpload,
+  onFinished,
   responseCount,
+  isMobileApp
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -63,6 +66,8 @@ export const SurveyInline = ({
       isRedirectDisabled,
       onFileUpload,
       responseCount,
+      isMobileApp,
+      onFinished
     });
   }, [
     activeQuestionId,
