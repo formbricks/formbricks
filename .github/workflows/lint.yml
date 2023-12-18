@@ -25,7 +25,7 @@ jobs:
       - name: create .env
         run: cp .env.example .env
 
-      - name: Generate Random NEXTAUTH_SECRET
+      - name: Generate Random ENCRYPTION_KEY
         run: |
           SECRET=$(openssl rand -hex 32)
           echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV

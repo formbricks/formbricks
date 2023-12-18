@@ -1,20 +1,11 @@
 "use server";
 
-import { sendLinkSurveyToVerifiedEmail } from "@/app/lib/email";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 
+import { LinkSurveyEmailData, sendLinkSurveyToVerifiedEmail } from "@formbricks/lib/emails/emails";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { TSurvey } from "@formbricks/types/surveys";
-
-interface LinkSurveyEmailData {
-  surveyId: string;
-  email: string;
-  surveyData?: {
-    name?: string;
-    subheading?: string;
-  } | null;
-}
 
 interface TSurveyPinValidationResponse {
   error?: TSurveyPinValidationResponseError;

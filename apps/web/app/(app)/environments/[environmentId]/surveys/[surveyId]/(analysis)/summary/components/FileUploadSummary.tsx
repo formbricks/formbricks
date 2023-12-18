@@ -21,7 +21,7 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
+        <Headline headline={questionSummary.question.headline} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
@@ -32,6 +32,9 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
             <InboxStackIcon className="mr-2 h-4 w-4" />
             {questionSummary.responses.length} Responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
       <div className="rounded-b-lg bg-white ">
