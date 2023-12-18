@@ -1,8 +1,8 @@
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/app/lib/email";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INVITE_DISABLED, SIGNUP_ENABLED } from "@formbricks/lib/constants";
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/emails/emails";
 import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
