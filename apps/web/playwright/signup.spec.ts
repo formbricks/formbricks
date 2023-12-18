@@ -1,5 +1,6 @@
+import { expect, test } from "@playwright/test";
+
 import { users } from "./utils/mock";
-import { test, expect } from "@playwright/test";
 
 const { name, email, password } = users.signup[0];
 

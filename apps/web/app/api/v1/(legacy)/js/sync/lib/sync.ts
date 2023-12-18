@@ -51,7 +51,7 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
   if (IS_FORMBRICKS_CLOUD) {
     const hasUserTargetingSubscription =
       team?.billing?.features.userTargeting.status &&
-      team?.billing?.features.userTargeting.status in ["active", "canceled"];
+      ["active", "canceled"].includes(team?.billing?.features.userTargeting.status);
     const currentMau = await getMonthlyActiveTeamPeopleCount(team.id);
     const isMauLimitReached = !hasUserTargetingSubscription && currentMau >= PRICING_USERTARGETING_FREE_MTU;
     if (isMauLimitReached) {
@@ -80,7 +80,7 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
   if (IS_FORMBRICKS_CLOUD) {
     const hasAppSurveySubscription =
       team?.billing?.features.inAppSurvey.status &&
-      team?.billing?.features.inAppSurvey.status in ["active", "canceled"];
+      ["active", "canceled"].includes(team?.billing?.features.inAppSurvey.status);
     const monthlyResponsesCount = await getMonthlyTeamResponseCount(team.id);
     isAppSurveyLimitReached =
       IS_FORMBRICKS_CLOUD &&
