@@ -55,13 +55,13 @@ export default function Modal({
         : "";
 
   return (
-    <div aria-live="assertive" className="relative h-full w-full overflow-visible">
+    <div aria-live="assertive" className="relative h-full w-full overflow-visible bg-slate-300">
       <div
         ref={modalRef}
         style={highlightBorderColorStyle}
         className={cn(
-          "pointer-events-auto absolute h-auto max-h-[90%] w-full max-w-sm overflow-y-auto rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out ",
-          previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full ",
+          "no-scrollbar pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm overflow-y-auto rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out ",
+          previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full",
           slidingAnimationClass
         )}>
         {children}
