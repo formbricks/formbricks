@@ -142,9 +142,9 @@ export default function MultipleChoiceSummary({
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {totalResponses} responses
           </div>
-          <div className="flex items-center  rounded-lg bg-slate-100 p-2">
-            {questionSummary.question.required ? "" : "Optional"}
-          </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
           {/*           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <ArrowTrendingUpIcon className="mr-2 h-4 w-4" />
             2.8 average

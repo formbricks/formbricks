@@ -88,9 +88,9 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             {isMulti ? "Multi" : "Single"} Select
           </div>
-          <div className="flex items-center  rounded-lg bg-slate-100 p-2">
-            {questionSummary.question.required ? "" : "Optional"}
-          </div>{" "}
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
       <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">

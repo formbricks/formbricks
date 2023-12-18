@@ -32,9 +32,9 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
             <InboxStackIcon className="mr-2 h-4 w-4" />
             {questionSummary.responses.length} Responses
           </div>
-          <div className="flex items-center  rounded-lg bg-slate-100 p-2">
-            {questionSummary.question.required ? "" : "Optional"}
-          </div>{" "}
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
       <div className="rounded-b-lg bg-white ">
