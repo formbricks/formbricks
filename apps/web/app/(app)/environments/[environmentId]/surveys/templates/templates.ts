@@ -1,3 +1,5 @@
+import { createId } from "@paralleldrive/cuid2";
+
 import {
   TSurvey,
   TSurveyHiddenFields,
@@ -5,7 +7,6 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
-import { createId } from "@paralleldrive/cuid2";
 
 const thankYouCardDefault = {
   enabled: true,

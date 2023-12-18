@@ -1,6 +1,7 @@
 import { type TResponseData } from "@formbricks/types/responses";
-import { cn, isLight } from "../../lib/utils";
 import { type TSurveyQuestion } from "@formbricks/types/surveys";
+
+import { cn, isLight } from "../../lib/utils";
 
 type ResponseErrorComponentProps = {
   questions: TSurveyQuestion[];

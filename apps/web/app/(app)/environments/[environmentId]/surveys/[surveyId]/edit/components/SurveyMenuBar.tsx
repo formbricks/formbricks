@@ -1,22 +1,24 @@
 "use client";
 
-import AlertDialog from "@formbricks/ui/AlertDialog";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
+import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { validateQuestion } from "./Validation";
-import { deleteSurveyAction, updateSurveyAction } from "../actions";
-import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
+import AlertDialog from "@formbricks/ui/AlertDialog";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+
+import { deleteSurveyAction, updateSurveyAction } from "../actions";
+import { validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
@@ -88,7 +90,8 @@ export default function SurveyMenuBar({
       setDeleteDialogOpen(false);
       router.back();
     } catch (error) {
-      console.log("An error occurred deleting the survey");
+      console.error("An error occurred deleting the survey");
+      toast.error("An error occurred deleting the survey");
     }
   };
 

@@ -1,5 +1,6 @@
 import SlideInBanner from "@/components/shared/SlideInBanner";
 import { useEffect } from "react";
+
 import Footer from "./Footer";
 import Header from "./Header";
 import MetaInformation from "./MetaInformation";

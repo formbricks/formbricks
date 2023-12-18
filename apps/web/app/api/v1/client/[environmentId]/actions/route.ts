@@ -1,8 +1,9 @@
-import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
 import { createAction } from "@formbricks/lib/action/service";
 import { ZActionInput } from "@formbricks/types/actions";
-import { NextResponse } from "next/server";
 
 interface Context {
   params: {

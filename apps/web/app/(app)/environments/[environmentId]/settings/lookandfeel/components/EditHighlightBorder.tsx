@@ -1,13 +1,15 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
-import { TProduct } from "@formbricks/types/product";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { Button } from "@formbricks/ui/Button";
-import { Switch } from "@formbricks/ui/Switch";
-import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 import toast from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { TProduct } from "@formbricks/types/product";
+import { Button } from "@formbricks/ui/Button";
+import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
+
 import { updateProductAction } from "../actions";
 
 interface EditHighlightBorderProps {

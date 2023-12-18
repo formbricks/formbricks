@@ -1,13 +1,14 @@
 "use client";
 
 import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/settings/product/actions";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { truncate } from "@formbricks/lib/strings";
-import { TProduct } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+
+import { truncate } from "@formbricks/lib/strings";
+import { TProduct } from "@formbricks/types/product";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 
 type DeleteProductRenderProps = {
   environmentId: string;

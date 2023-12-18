@@ -1,13 +1,12 @@
-export const revalidate = REVALIDATION_INTERVAL;
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { getServerSession } from "next-auth";
+
 import Onboarding from "./components/Onboarding";
-import { redirect } from "next/navigation";
 
 export default async function OnboardingPage() {
   const session = await getServerSession(authOptions);

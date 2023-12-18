@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import type { TTemplate } from "@formbricks/types/templates";
-import { useEffect } from "react";
 import { replacePresetPlaceholders } from "@/app/lib/templates";
-import { minimalSurvey, templates } from "./templates";
+import { useState } from "react";
+import { useEffect } from "react";
+
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TTeam } from "@formbricks/types/teams";
+import type { TTemplate } from "@formbricks/types/templates";
+import { TUser } from "@formbricks/types/user";
+import { SearchBox } from "@formbricks/ui/SearchBox";
+
 import PreviewSurvey from "../components/PreviewSurvey";
 import TemplateList from "./TemplateList";
-import type { TProduct } from "@formbricks/types/product";
-import type { TEnvironment } from "@formbricks/types/environment";
-import { SearchBox } from "@formbricks/ui/SearchBox";
-import { TTeam } from "@formbricks/types/teams";
-import { TUser } from "@formbricks/types/user";
+import { minimalSurvey, templates } from "./templates";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;
@@ -73,7 +75,7 @@ export default function TemplateContainerWithPreview({
         </div>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
           {activeTemplate && (
-            <div className="my-6 flex h-5/6 w-full flex-col items-center justify-center">
+            <div className="my-6 flex h-[90%] w-full flex-col items-center justify-center">
               <PreviewSurvey
                 survey={{ ...minimalSurvey, ...activeTemplate.preset }}
                 activeQuestionId={activeQuestionId}

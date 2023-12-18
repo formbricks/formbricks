@@ -1,6 +1,7 @@
-import { Button } from "@formbricks/ui/Button";
-import { useRouter } from "next/router";
 import clsx from "clsx";
+import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
 
 interface Props {
   featureTitle: string;

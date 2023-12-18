@@ -1,14 +1,15 @@
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/app/lib/email";
+import { NextResponse } from "next/server";
+
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INVITE_DISABLED, SIGNUP_ENABLED } from "@formbricks/lib/constants";
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/emails/emails";
 import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createProduct } from "@formbricks/lib/product/service";
-import { createUser } from "@formbricks/lib/user/service";
 import { createTeam, getTeam } from "@formbricks/lib/team/service";
-import { NextResponse } from "next/server";
+import { createUser } from "@formbricks/lib/user/service";
 
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();

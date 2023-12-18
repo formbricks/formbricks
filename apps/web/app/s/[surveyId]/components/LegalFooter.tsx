@@ -1,5 +1,6 @@
-import { IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 import Link from "next/link";
+
+import { IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
 interface LegalFooterProps {
   bgColor?: string | null;

@@ -1,12 +1,15 @@
+import Stripe from "stripe";
+
 import {
   getMonthlyActiveTeamPeopleCount,
   getMonthlyTeamResponseCount,
   getTeam,
   updateTeam,
 } from "@formbricks/lib/team/service";
-import Stripe from "stripe";
-import { StripePriceLookupKeys, ProductFeatureKeys, StripeProductNames } from "../lib/constants";
+
+import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
 import { reportUsage } from "../lib/reportUsage";
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",

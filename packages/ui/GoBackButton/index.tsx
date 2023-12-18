@@ -1,7 +1,8 @@
 "use client";
 
-import { BackIcon } from "../icons";
 import { useRouter } from "next/navigation";
+
+import { BackIcon } from "../icons";
 
 export default function GoBackButton({ url }: { url?: string }) {
   const router = useRouter();

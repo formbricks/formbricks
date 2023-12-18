@@ -1,8 +1,9 @@
-import { useState } from "preact/hooks";
-import { SurveyModalProps } from "@/types/props";
 import Modal from "@/components/wrappers/Modal";
-import { Survey } from "./Survey";
+import { SurveyModalProps } from "@/types/props";
+import { useState } from "preact/hooks";
+
 import { ResponseErrorComponent } from "./ResponseErrorComponent";
+import { Survey } from "./Survey";
 
 export function SurveyModal({
   survey,
@@ -68,7 +69,7 @@ export function SurveyModal({
           onDisplay={onDisplay}
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
-          onClose={onClose}
+          onClose={close}
           onFinished={() => {
             onFinished();
             setTimeout(() => {

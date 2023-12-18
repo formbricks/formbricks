@@ -1,10 +1,12 @@
-import { prisma } from "@formbricks/database";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
 import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+
+import { prisma } from "@formbricks/database";
+
 import { createAccount } from "./account/service";
 import { verifyPassword } from "./auth/util";
 import { EMAIL_VERIFICATION_DISABLED } from "./constants";
@@ -12,8 +14,8 @@ import { env } from "./env.mjs";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
 import { createProduct } from "./product/service";
-import { createUser, getUserByEmail, updateUser } from "./user/service";
 import { createTeam, getTeam } from "./team/service";
+import { createUser, getUserByEmail, updateUser } from "./user/service";
 
 export const authOptions: NextAuthOptions = {
   providers: [

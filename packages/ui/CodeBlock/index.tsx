@@ -1,11 +1,12 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
 
 interface CodeBlockProps {
   children: React.ReactNode;

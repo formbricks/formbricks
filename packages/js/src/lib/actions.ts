@@ -1,10 +1,12 @@
+import { FormbricksAPI } from "@formbricks/api";
 import { TJsActionInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys";
+
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { renderWidget } from "./widget";
-import { FormbricksAPI } from "@formbricks/api";
+
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 

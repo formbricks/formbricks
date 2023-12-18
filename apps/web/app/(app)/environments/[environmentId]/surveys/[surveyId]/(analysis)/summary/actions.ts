@@ -2,11 +2,12 @@
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
 import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import { getServerSession } from "next-auth";
+
 import { authOptions } from "@formbricks/lib/authOptions";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/emails/emails";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
-import { getServerSession } from "next-auth";
 
 type TSendEmailActionArgs = {
   to: string;

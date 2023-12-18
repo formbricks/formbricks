@@ -1,5 +1,6 @@
-import { Button } from "@formbricks/ui/Button";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+
+import { Button } from "@formbricks/ui/Button";
 
 export default function Loading() {
   return (

@@ -1,11 +1,12 @@
 "use server";
 
-import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
 import { getServerSession } from "next-auth";
+
+import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { updateUser, deleteUser } from "@formbricks/lib/user/service";
-import { TUserUpdateInput } from "@formbricks/types/user";
+import { deleteUser, updateUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { TUserUpdateInput } from "@formbricks/types/user";
 
 export async function updateUserAction(data: Partial<TUserUpdateInput>) {
   const session = await getServerSession(authOptions);

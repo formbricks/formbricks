@@ -1,21 +1,23 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+import { z } from "zod";
+
 import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-import { z } from "zod";
-import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE, IS_S3_CONFIGURED } from "../constants";
-import { validateInputs } from "../utils/validate";
-import { createEnvironment } from "../environment/service";
+
+import { IS_S3_CONFIGURED, ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { environmentCache } from "../environment/cache";
-import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { createEnvironment } from "../environment/service";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
-import { productCache } from "./cache";
 import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
+import { productCache } from "./cache";
 
 const selectProduct = {
   id: true,

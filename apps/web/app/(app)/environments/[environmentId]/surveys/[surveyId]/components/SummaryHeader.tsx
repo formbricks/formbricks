@@ -1,6 +1,20 @@
 "use client";
 
+import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
+import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
+import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { EllipsisHorizontalIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
+import { TUser } from "@formbricks/types/user";
+import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,20 +27,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Button } from "@formbricks/ui/Button";
-import { PencilSquareIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
-import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
-import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
-import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { TUser } from "@formbricks/types/user";
-import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -126,10 +127,10 @@ const SummaryHeader = ({
                                 value === "inProgress"
                                   ? "Survey live"
                                   : value === "paused"
-                                  ? "Survey paused"
-                                  : value === "completed"
-                                  ? "Survey completed"
-                                  : ""
+                                    ? "Survey paused"
+                                    : value === "completed"
+                                      ? "Survey completed"
+                                      : ""
                               );
                               router.refresh();
                             })

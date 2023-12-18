@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { ZSurveyWelcomeCard, ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard } from "./surveys";
+
+import { ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard, ZSurveyWelcomeCard } from "./surveys";
 import { ZUserObjective } from "./user";
 
 export const ZTemplate = z.object({

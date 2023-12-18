@@ -1,5 +1,7 @@
-import { TSurvey } from "@formbricks/types/surveys";
 import { useState } from "react";
+
+import { TSurvey } from "@formbricks/types/surveys";
+
 import AnimatedSurveyBg from "./AnimatedSurveyBg";
 import ColorSurveyBg from "./ColorSurveyBg";
 import ImageSurveyBg from "./ImageSurveyBg";

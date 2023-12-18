@@ -1,7 +1,8 @@
-import { useState } from "preact/hooks";
 import { SurveyInlineProps } from "@/types/props";
-import { Survey } from "./Survey";
+import { useState } from "preact/hooks";
+
 import { ResponseErrorComponent } from "./ResponseErrorComponent";
+import { Survey } from "./Survey";
 
 export function SurveyInline({
   survey,

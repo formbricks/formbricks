@@ -2,6 +2,7 @@ import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import { OpenSourceInfo } from "@/components/shared/OpenSourceInfo";
 import { GetStartedWithPricing } from "@/components/shared/PricingGetStarted";
+
 import { PricingTable } from "../components/shared/PricingTable";
 
 const inProductSurveys = {

@@ -1,16 +1,17 @@
 "use client";
 
 import { updateProductAction } from "@/app/(app)/onboarding/actions";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-import { TProduct } from "@formbricks/types/product";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { isLight } from "@/app/lib/utils";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { isLight } from "@/app/lib/utils";
+
+import { TProduct } from "@formbricks/types/product";
+import { Button } from "@formbricks/ui/Button";
+import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
 type Product = {
   done: () => void;

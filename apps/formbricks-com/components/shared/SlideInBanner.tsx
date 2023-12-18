@@ -1,8 +1,9 @@
 import LFGLuigi from "@/images/blog/lfg-luigi-200px.webp";
-import { Button } from "@formbricks/ui/Button";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
+
+import { Button } from "@formbricks/ui/Button";
 
 interface Props {
   delay?: number;
@@ -46,8 +47,8 @@ const SlideInBanner: React.FC<Props> = ({ delay = 5000, scrollPercentage = 10, U
         showBanner && !isExiting
           ? "visible translate-y-0 opacity-100"
           : isExiting
-          ? "visible translate-y-full opacity-0"
-          : "invisible translate-y-full opacity-0"
+            ? "visible translate-y-full opacity-0"
+            : "invisible translate-y-full opacity-0"
       }`}>
       <div className="relative col-span-1 hidden lg:block">
         <Image src={LFGLuigi} height={150} className="absolute -bottom-16 left-8" alt="LFG Luigi" />

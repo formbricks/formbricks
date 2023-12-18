@@ -1,16 +1,18 @@
 "use client";
 
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { formbricksLogout } from "@/app/lib/formbricks";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import AvatarPlaceholder from "@/images/avatar-placeholder.png";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
+
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Input } from "@formbricks/ui/Input";
+
 import { deleteUserAction } from "../actions";
 
 export function EditAvatar({ session }) {

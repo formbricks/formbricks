@@ -1,5 +1,7 @@
-import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
+
 import HeadingCentered from "./HeadingCentered";
 
 export default function CTA() {

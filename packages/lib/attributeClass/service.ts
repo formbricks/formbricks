@@ -1,23 +1,26 @@
 "use server";
+
 import "server-only";
+
+import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import {
   TAttributeClass,
-  TAttributeClassUpdateInput,
-  ZAttributeClassUpdateInput,
   TAttributeClassType,
-  ZAttributeClassType,
+  TAttributeClassUpdateInput,
   ZAttributeClass,
+  ZAttributeClassType,
+  ZAttributeClassUpdateInput,
 } from "@formbricks/types/attributeClasses";
-import { ZId } from "@formbricks/types/environment";
-import { validateInputs } from "../utils/validate";
-import { DatabaseError } from "@formbricks/types/errors";
-import { unstable_cache } from "next/cache";
-import { SERVICES_REVALIDATION_INTERVAL, ITEMS_PER_PAGE } from "../constants";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { attributeClassCache } from "./cache";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError } from "@formbricks/types/errors";
+
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
+import { attributeClassCache } from "./cache";
 
 export const getAttributeClass = async (attributeClassId: string): Promise<TAttributeClass | null> => {
   const attributeClass = await unstable_cache(

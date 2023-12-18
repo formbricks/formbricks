@@ -1,9 +1,12 @@
 "use server";
+
 import "server-only";
 
-import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { authOptions } from "../../authOptions";
 import { getServerSession } from "next-auth";
+
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
+
+import { authOptions } from "../../authOptions";
 import { getTeam, getTeamBillingInfo } from "../service";
 
 export const getTeamBillingInfoAction = async (teamId: string) => {

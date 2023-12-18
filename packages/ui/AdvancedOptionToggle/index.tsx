@@ -1,4 +1,5 @@
 import { cn } from "@formbricks/lib/cn";
+
 import { Label } from "../Label";
 import { Switch } from "../Switch";
 

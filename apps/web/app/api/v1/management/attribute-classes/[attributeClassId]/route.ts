@@ -1,14 +1,15 @@
-import { responses } from "@/app/lib/api/response";
 import { handleErrorResponse } from "@/app/api/v1/auth";
+import { authenticateRequest } from "@/app/api/v1/auth";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextResponse } from "next/server";
+
 import {
   deleteAttributeClass,
   getAttributeClass,
   updateAttributeClass,
 } from "@formbricks/lib/attributeClass/service";
 import { TAttributeClass, ZAttributeClassUpdateInput } from "@formbricks/types/attributeClasses";
-import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { authenticateRequest } from "@/app/api/v1/auth";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
 async function fetchAndAuthorizeAttributeClass(

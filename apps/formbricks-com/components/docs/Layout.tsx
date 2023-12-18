@@ -1,14 +1,14 @@
 "use client";
 
+import { Navigation } from "@/components/docs/Navigation";
+import { FooterLogo } from "@/components/shared/Logo";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
 
 import { Footer } from "./Footer";
 import { Header } from "./Header";
 import { type Section, SectionProvider } from "./SectionProvider";
-import { FooterLogo } from "@/components/shared/Logo";
-import { Navigation } from "@/components/docs/Navigation";
 
 export function Layout({
   children,

@@ -1,7 +1,8 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/surveys";
 import React from "react";
+
+import { TSurvey } from "@formbricks/types/surveys";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;
@@ -60,7 +61,9 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   };
 
   const renderContent = () => (
-    <div className="absolute flex h-full w-full items-center justify-center overflow-y-auto">{children}</div>
+    <div className="no-scrollbar absolute flex h-full w-full items-center justify-center overflow-y-auto">
+      {children}
+    </div>
   );
 
   if (isMobilePreview) {
@@ -68,6 +71,8 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
       <div
         ref={ContentRef}
         className={`relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-3xl border-8 border-slate-500 ${getFilterStyle()}`}>
+        {/* below element is use to create notch for the mobile device mockup   */}
+        <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
         {renderBackground()}
         {renderContent()}
       </div>
