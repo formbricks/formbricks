@@ -40,7 +40,7 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
+        <Headline headline={questionSummary.question.headline} />
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
@@ -49,6 +49,9 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {ctr.count} responses
+          </div>
+          <div className="flex items-center  rounded-lg bg-slate-100 p-2">
+            {questionSummary.question.required ? "" : "Optional"}
           </div>
         </div>
       </div>
