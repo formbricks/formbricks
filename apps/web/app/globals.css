@@ -14,6 +14,7 @@
   /* Label Colors */
   --formbricks-label-primary: #0f172a;
   --formbricks-label-secondary: #384258;
+  --formbricks-label-tertiary: #f2f2f2;
   --formbricks-label-disabled: #bdbdbd;
 
   /* Border Colors */
@@ -28,7 +29,7 @@
 
 .dark {
   /* Brand Colors */
-  --formbricks-brand: #038178; 
+  --formbricks-brand: #038178;
 
   /* Fill Colors */
   --formbricks-fill-primary: #0f172a;
@@ -49,7 +50,6 @@
   --formbricks-focus: #1982fc;
   --formbricks-error: #d13a3a;
 }
-
 
 @layer base {
   [data-nextjs-scroll-focus-boundary] {

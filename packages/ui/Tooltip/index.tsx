@@ -14,6 +14,8 @@ Tooltip.displayName = TooltipPrimitive.Tooltip.displayName;
 
 const TooltipTrigger: React.ComponentType<TooltipPrimitive.TooltipTriggerProps> = TooltipPrimitive.Trigger;
 
+const TooltipArrow: React.ComponentType<TooltipPrimitive.TooltipArrowProps> = TooltipPrimitive.Arrow;
+
 const TooltipContent: React.ComponentType<TooltipPrimitive.TooltipContentProps> = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
@@ -30,4 +32,4 @@ const TooltipContent: React.ComponentType<TooltipPrimitive.TooltipContentProps> 
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, TooltipArrow };

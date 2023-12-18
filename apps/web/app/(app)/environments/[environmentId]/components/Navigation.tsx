@@ -18,7 +18,7 @@ import {
   UsersIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
-import { ArrowLeftIcon, ArrowRightIcon, MenuIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, EditIcon, MenuIcon, PenIcon } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -257,6 +257,30 @@ export default function Navigation({
 
             <ButtonV2 size="lg" StartIcon={ArrowLeftIcon} EndIcon={ArrowRightIcon} noShadow>
               Hello World
+            </ButtonV2>
+          </div>
+
+          <div className="m-16">
+            <ButtonV2
+              variant="secondary"
+              size="sm"
+              className="mr-4"
+              StartIcon={ArrowLeftIcon}
+              EndIcon={ArrowRightIcon}>
+              Hello World
+            </ButtonV2>
+
+            <ButtonV2
+              variant="secondary"
+              size="base"
+              className="mr-4"
+              StartIcon={ArrowLeftIcon}
+              EndIcon={ArrowRightIcon}>
+              Hello World
+            </ButtonV2>
+
+            <ButtonV2 variant="icon" label="Edit">
+              <PenIcon />
             </ButtonV2>
           </div>
 

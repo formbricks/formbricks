@@ -41,6 +41,7 @@ module.exports = {
         labelColor: {
           primary: "var(--formbricks-label-primary, #0f172a)",
           secondary: "var(--formbricks-label-secondary, #384258)",
+          tertiary: "var(--formbricks-label-tertiary, #f2f2f2)",
           disabled: "var(--formbricks-label-disabled, #bdbdbd)",
           error: "var(--formbricks-error, #d13a3a)",
         },
