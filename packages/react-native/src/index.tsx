@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { WebView } from 'react-native-webview';
 
-const BASE_URL = __DEV__ ?  'http://localhost:3000' : 'https://formbricks.com';
+const BASE_URL = __DEV__ ?  'http://192.168.1.169:3000' : 'https://formbricks.com';
 
 interface RefObject {
   current: FormBricksEmbedRef | null;

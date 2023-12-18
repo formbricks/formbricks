@@ -1,7 +1,7 @@
 {
   "name": "react-native-example",
   "version": "1.0.0",
-  "main": "./App.js",
+  "main": "./index.js",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -9,13 +9,15 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@formbricks/react-native-sdk": "workspace:*",
     "expo": "~49.0.15",
     "expo-status-bar": "~1.6.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.72.6",
+    "react-native-get-random-values": "^1.10.0",
     "react-native-web": "~0.19.6",
-    "@formbricks/react-native-sdk": "workspace:*"
+    "react-native-webview": "^13.6.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

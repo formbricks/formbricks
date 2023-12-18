@@ -114,6 +114,7 @@ export default function SurveyEditor({
               activeQuestionId={activeQuestionId}
               product={product}
               environment={environment}
+              isMobileApp={localSurvey.type === "mobile"}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
               onFileUpload={async (file) => file.name}
             />

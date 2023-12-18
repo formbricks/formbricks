@@ -1,22 +1,12 @@
-const path = require('path');
-const pak = require('../package.json');
 
 module.exports = function (api) {
   api.cache(true);
+  process.env.EXPO_ROUTER_APP_ROOT = '../../apps/react-native/src/'
 
   return {
-    presets: ['babel-preset-expo'],
     plugins: [
-      [
-        'module-resolver',
-        {
-          extensions: ['.tsx', '.ts', '.js', '.json'],
-          alias: {
-            // For development, we want to alias the library to the source
-            [pak.name]: path.join(__dirname, '..', pak.source),
-          },
-        },
-      ],
+      // require.resolve('expo-router/babel')
     ],
-  };
+    presets: ['babel-preset-expo']
+  }
 };

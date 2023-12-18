@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
@@ -8,7 +9,7 @@ export default function App() {
   return (
     <>
     <View style={styles.container}>
-      <Text onTap={() => {
+      <Text onPress={() => {
         showSurvey('clq76qtq2000ov7j6pwns40wn');
       } }>SHOW SURVEY</Text>
     </View><FormBricks />

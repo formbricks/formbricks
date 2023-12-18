@@ -29,6 +29,7 @@ interface PreviewSurveyProps {
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
+  isMobileApp?: boolean
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
@@ -68,6 +69,7 @@ export default function PreviewSurvey({
   product,
   environment,
   onFileUpload,
+  isMobileApp = false
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -319,18 +321,20 @@ export default function PreviewSurvey({
       </motion.div>
 
       {/* for toggling between mobile and desktop mode  */}
-      <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
-        <TabOption
-          active={previewMode === "mobile"}
-          icon={<DevicePhoneMobileIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
-          onClick={() => setPreviewMode("mobile")}
-        />
-        <TabOption
-          active={previewMode === "desktop"}
-          icon={<ComputerDesktopIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
-          onClick={() => setPreviewMode("desktop")}
-        />
-      </div>
+      {!isMobileApp ? (
+        <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
+          <TabOption
+            active={previewMode === "mobile"}
+            icon={<DevicePhoneMobileIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+            onClick={() => setPreviewMode("mobile")}
+          />
+          <TabOption
+            active={previewMode === "desktop"}
+            icon={<ComputerDesktopIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+            onClick={() => setPreviewMode("desktop")}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
