@@ -1,12 +1,13 @@
 "use client";
 
-import CodeBlock from "@formbricks/ui/CodeBlock";
-import { TabBar } from "@formbricks/ui/TabBar";
+import packageJson from "@/package.json";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
-import packageJson from "@/package.json";
+
+import CodeBlock from "@formbricks/ui/CodeBlock";
+import { TabBar } from "@formbricks/ui/TabBar";
 
 const tabs = [
   { id: "npm", label: "NPM", icon: <IoLogoNpm /> },

@@ -1,6 +1,9 @@
 import { responses } from "@/app/lib/api/response";
-import { reportUsageToStripe } from "@formbricks/ee/billing/lib/reportUsage";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
+
 import { ProductFeatureKeys } from "@formbricks/ee/billing/lib/constants";
+import { reportUsageToStripe } from "@formbricks/ee/billing/lib/reportUsage";
 import { CRON_SECRET, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import {
   getMonthlyActiveTeamPeopleCount,
@@ -8,8 +11,6 @@ import {
   getTeamsWithPaidPlan,
 } from "@formbricks/lib/team/service";
 import { TTeam } from "@formbricks/types/teams";
-import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 
 async function reportTeamUsage(team: TTeam) {
   const stripeCustomerId = team.billing.stripeCustomerId;

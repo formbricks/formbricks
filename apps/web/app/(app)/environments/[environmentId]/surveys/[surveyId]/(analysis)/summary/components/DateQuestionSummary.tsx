@@ -1,13 +1,14 @@
-import React, { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import { timeSince } from "@formbricks/lib/time";
-import type { TSurveyDateQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { questionTypes } from "@/app/lib/questions";
+import React, { useState } from "react";
+
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
+import type { TSurveyDateQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
 
 interface DateQuestionSummary {
   questionSummary: TSurveyQuestionSummary<TSurveyDateQuestion>;
@@ -26,7 +27,7 @@ export default function DateQuestionSummary({
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
+        <Headline headline={questionSummary.question.headline} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
@@ -37,6 +38,9 @@ export default function DateQuestionSummary({
             <InboxStackIcon className="mr-2 h-4 w-4" />
             {questionSummary.responses.length} Responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
       <div className="rounded-b-lg bg-white ">
@@ -80,15 +84,15 @@ export default function DateQuestionSummary({
           );
         })}
 
-        <div className="my-1 flex justify-center">
-          {displayCount < questionSummary.responses.length && (
+        {displayCount < questionSummary.responses.length && (
+          <div className="my-1 flex justify-center">
             <button
               onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
               className="my-2 flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700">
               Show more
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

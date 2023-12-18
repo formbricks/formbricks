@@ -1,12 +1,5 @@
 "use client";
 
-import { timeSince } from "@formbricks/lib/time";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TProfile } from "@formbricks/types/profile";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
@@ -14,8 +7,24 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
+
+import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { timeSince } from "@formbricks/lib/time";
+import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
+import { TUser } from "@formbricks/types/user";
+
 import { PersonAvatar } from "../Avatars";
 import { DeleteDialog } from "../DeleteDialog";
+import { FileUploadResponse } from "../FileUploadResponse";
+import { LoadingWrapper } from "../LoadingWrapper";
+import { PictureSelectionResponse } from "../PictureSelectionResponse";
 import { RatingResponse } from "../RatingResponse";
 import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
@@ -23,18 +32,11 @@ import { deleteResponseAction } from "./actions";
 import QuestionSkip from "./components/QuestionSkip";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
-import { PictureSelectionResponse } from "../PictureSelectionResponse";
-import { FileUploadResponse } from "../FileUploadResponse";
-import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { LoadingWrapper } from "../LoadingWrapper";
-import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
-  profile: TProfile;
+  user: TUser;
   pageType: string;
   environmentTags: TTag[];
   environment: TEnvironment;
@@ -72,7 +74,7 @@ function DateResponse({ date }: { date?: string }) {
 export default function SingleResponseCard({
   survey,
   response,
-  profile,
+  user,
   pageType,
   environmentTags,
   environment,
@@ -397,7 +399,7 @@ export default function SingleResponseCard({
       </div>
       {pageType === "response" && (
         <ResponseNotes
-          profile={profile}
+          user={user}
           responseId={response.id}
           notes={response.notes}
           isOpen={isOpen}

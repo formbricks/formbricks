@@ -1,17 +1,20 @@
 "use server";
+
 import "server-only";
 
 import { getServerSession } from "next-auth";
+
+import { AuthenticationError } from "@formbricks/types/errors";
+import { TUser } from "@formbricks/types/user";
+
 import { authOptions } from "../../authOptions";
 import { getTeamByEnvironmentId } from "../../team/service";
-import { AuthenticationError } from "@formbricks/types/errors";
 import { getMembershipByUserIdTeamId } from "../service";
-import { TProfile } from "@formbricks/types/profile";
 
 export const getMembershipByUserIdTeamIdAction = async (environmentId: string) => {
   const session = await getServerSession(authOptions);
   const team = await getTeamByEnvironmentId(environmentId);
-  const user = session?.user as TProfile;
+  const user = session?.user as TUser;
 
   if (!session) {
     throw new AuthenticationError("Not authenticated");

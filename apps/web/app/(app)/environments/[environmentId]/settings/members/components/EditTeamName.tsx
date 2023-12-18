@@ -1,16 +1,17 @@
 "use client";
 
 import { updateTeamNameAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { SubmitHandler, useForm, useWatch } from "react-hook-form";
+import toast from "react-hot-toast";
+
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { SubmitHandler, useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
 
 type TEditTeamNameForm = {
   name: string;

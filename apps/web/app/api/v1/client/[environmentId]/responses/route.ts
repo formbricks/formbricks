@@ -1,6 +1,9 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { NextResponse } from "next/server";
+import { UAParser } from "ua-parser-js";
+
 import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
@@ -9,8 +12,6 @@ import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { ZId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
-import { NextResponse } from "next/server";
-import { UAParser } from "ua-parser-js";
 
 interface Context {
   params: {

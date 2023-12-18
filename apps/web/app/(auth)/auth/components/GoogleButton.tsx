@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
 import { signIn } from "next-auth/react";
 import { FaGoogle } from "react-icons/fa";
+
+import { Button } from "@formbricks/ui/Button";
 
 export const GoogleButton = ({
   text = "Continue with Google",

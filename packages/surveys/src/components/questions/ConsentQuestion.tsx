@@ -3,10 +3,11 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
 import QuestionImage from "@/components/general/QuestionImage";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { useState } from "preact/hooks";
+
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
-import { useState } from "preact/hooks";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;

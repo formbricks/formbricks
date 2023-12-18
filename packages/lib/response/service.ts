@@ -1,5 +1,8 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
@@ -17,8 +20,7 @@ import {
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
@@ -30,7 +32,7 @@ import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 
-const responseSelection = {
+export const responseSelection = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -115,13 +117,17 @@ export const getResponsesByPersonId = async (
 
         let responses: Array<TResponse> = [];
 
-        responsePrisma.forEach((response) => {
-          responses.push({
-            ...response,
-            person: response.person ? transformPrismaPerson(response.person) : null,
-            tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-          });
-        });
+        await Promise.all(
+          responsePrisma.map(async (response) => {
+            const responseNotes = await getResponseNotes(response.id);
+            responses.push({
+              ...response,
+              notes: responseNotes,
+              person: response.person ? transformPrismaPerson(response.person) : null,
+              tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            });
+          })
+        );
 
         return responses;
       } catch (error) {

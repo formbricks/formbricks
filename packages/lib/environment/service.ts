@@ -1,5 +1,9 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+import { z } from "zod";
+
 import { prisma } from "@formbricks/database";
 import type {
   TEnvironment,
@@ -13,14 +17,13 @@ import {
   ZId,
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-import "server-only";
-import { z } from "zod";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getProducts } from "../product/service";
+import { getTeamsByUserId } from "../team/service";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
-import { formatDateFields } from "../utils/datetime";
 
 export const getEnvironment = async (environmentId: string): Promise<TEnvironment | null> => {
   const environment = await unstable_cache(
@@ -131,41 +134,25 @@ export const updateEnvironment = async (
 };
 
 export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
-  const environment = await unstable_cache(
-    async () => {
-      validateInputs([userId, ZId]);
-      try {
-        const environment = await prisma.environment.findFirst({
-          where: {
-            type: "production",
-            product: {
-              team: {
-                memberships: {
-                  some: {
-                    userId,
-                  },
-                },
-              },
-            },
-          },
-        });
-        return environment;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getFirstEnvironmentByUserId-${userId}`],
-    {
-      tags: [environmentCache.tag.byUserId(userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-  return environment ? formatDateFields(environment, ZEnvironment) : null;
+  const teams = await getTeamsByUserId(userId);
+  if (teams.length === 0) {
+    throw new Error(`Unable to get first environment: User ${userId} has no teams`);
+  }
+  const firstTeam = teams[0];
+  const products = await getProducts(firstTeam.id);
+  if (products.length === 0) {
+    throw new Error(`Unable to get first environment: Team ${firstTeam.id} has no products`);
+  }
+  const firstProduct = products[0];
+  const productionEnvironment = firstProduct.environments.find(
+    (environment) => environment.type === "production"
+  );
+  if (!productionEnvironment) {
+    throw new Error(
+      `Unable to get first environment: Product ${firstProduct.id} has no production environment`
+    );
+  }
+  return productionEnvironment;
 };
 
 export const createEnvironment = async (

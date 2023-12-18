@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import {
@@ -14,7 +13,14 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
 import { $isAtNodeEnd, $wrapNodes } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
-import type { EditorState, GridSelection, LexicalEditor, NodeSelection, RangeSelection } from "lexical";
+import type {
+  BaseSelection,
+  EditorState,
+  GridSelection,
+  LexicalEditor,
+  NodeSelection,
+  RangeSelection,
+} from "lexical";
 import {
   $createParagraphNode,
   $getRoot,
@@ -24,14 +30,17 @@ import {
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
+import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Input } from "../../Input";
-import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
+
+import { cn } from "@formbricks/lib/cn";
+
 import { Button } from "../../Button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
-import type { TextEditorProps } from "./Editor";
+import { Input } from "../../Input";
 import { AddVariablesDropdown } from "./AddVariablesDropdown";
+import type { TextEditorProps } from "./Editor";
 
 const LowPriority = 1;
 
@@ -67,9 +76,9 @@ function FloatingLinkEditor({ editor }: { editor: LexicalEditor }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [linkUrl, setLinkUrl] = useState("");
   const [isEditMode, setEditMode] = useState(false);
-  const [lastSelection, setLastSelection] = useState<RangeSelection | NodeSelection | GridSelection | null>(
-    null
-  );
+  const [lastSelection, setLastSelection] = useState<
+    RangeSelection | NodeSelection | GridSelection | BaseSelection | null
+  >(null);
 
   const updateLinkEditor = useCallback(() => {
     const selection = $getSelection();

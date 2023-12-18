@@ -1,23 +1,24 @@
 "use client";
 
 import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponsesFeed";
+import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
+
+import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TEnvironment } from "@formbricks/types/environment";
-import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
-import { useState, useEffect } from "react";
 import { TTag } from "@formbricks/types/tags";
-import { TProfile } from "@formbricks/types/profile";
+import { TUser } from "@formbricks/types/user";
 
 export default function ResponseTimeline({
   surveys,
-  profile,
+  user,
   environment,
   responses,
   environmentTags,
 }: {
   surveys: TSurvey[];
-  profile: TProfile;
+  user: TUser;
   responses: TResponse[];
   environment: TEnvironment;
   environmentTags: TTag[];
@@ -48,7 +49,7 @@ export default function ResponseTimeline({
         responses={sortedResponses}
         environment={environment}
         surveys={surveys}
-        profile={profile}
+        user={user}
         environmentTags={environmentTags}
       />
     </div>

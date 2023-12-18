@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 
 export default function Modal({

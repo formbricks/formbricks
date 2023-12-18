@@ -1,6 +1,7 @@
 import { Result } from "@formbricks/types/errorHandlers";
 import { NetworkError } from "@formbricks/types/errors";
 import { TResponseInput, TResponseUpdateInput } from "@formbricks/types/responses";
+
 import { makeRequest } from "../../utils/makeRequest";
 
 type TResponseUpdateInputWithResponseId = TResponseUpdateInput & { responseId: string };

@@ -1,12 +1,13 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
 import { createDisplayLegacy } from "@formbricks/lib/display/service";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { TDisplay, ZDisplayLegacyCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);

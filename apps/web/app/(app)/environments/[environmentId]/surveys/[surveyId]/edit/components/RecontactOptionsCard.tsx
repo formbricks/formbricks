@@ -1,5 +1,10 @@
 "use client";
 
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
@@ -7,10 +12,6 @@ import { Badge } from "@formbricks/ui/Badge";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import Link from "next/link";
-import { useEffect, useState } from "react";
 
 interface DisplayOption {
   id: "displayOnce" | "displayMultiple" | "respondMultiple";

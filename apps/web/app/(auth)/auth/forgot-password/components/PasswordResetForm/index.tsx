@@ -1,10 +1,11 @@
 "use client";
 
 import { forgotPassword } from "@/app/lib/users/users";
-import { Button } from "@formbricks/ui/Button";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { Button } from "@formbricks/ui/Button";
 
 export const PasswordResetForm = ({}) => {
   const router = useRouter();

@@ -1,20 +1,21 @@
 import "server-only";
 
-import { prisma } from "@formbricks/database";
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 
+import { prisma } from "@formbricks/database";
+import { ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseNote, ZResponseNote } from "@formbricks/types/responses";
-import { Prisma } from "@prisma/client";
-import { responseCache } from "../response/cache";
-import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/environment";
-import { ZString } from "@formbricks/types/common";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { unstable_cache } from "next/cache";
-import { responseNoteCache } from "./cache";
-import { formatDateFields } from "../utils/datetime";
 
-const select = {
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { responseCache } from "../response/cache";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
+import { responseNoteCache } from "./cache";
+
+export const responseNoteSelect = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -49,7 +50,7 @@ export const createResponseNote = async (
         userId: userId,
         text: text,
       },
-      select,
+      select: responseNoteSelect,
     });
 
     responseCache.revalidate({
@@ -80,7 +81,7 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
           where: {
             id: responseNoteId,
           },
-          select,
+          select: responseNoteSelect,
         });
         return responseNote;
       } catch (error) {
@@ -108,7 +109,7 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
           where: {
             responseId,
           },
-          select,
+          select: responseNoteSelect,
         });
         if (!responseNotes) {
           throw new ResourceNotFoundError("Response Notes by ResponseId", responseId);
@@ -142,7 +143,7 @@ export const updateResponseNote = async (responseNoteId: string, text: string): 
         updatedAt: new Date(),
         isEdited: true,
       },
-      select,
+      select: responseNoteSelect,
     });
 
     responseCache.revalidate({
@@ -178,7 +179,7 @@ export const resolveResponseNote = async (responseNoteId: string): Promise<TResp
         updatedAt: new Date(),
         isResolved: true,
       },
-      select,
+      select: responseNoteSelect,
     });
 
     responseCache.revalidate({

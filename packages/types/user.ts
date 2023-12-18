@@ -2,7 +2,7 @@ import z from "zod";
 
 const ZRole = z.enum(["project_manager", "engineer", "founder", "marketing_specialist", "other"]);
 
-export const ZProfileObjective = z.enum([
+export const ZUserObjective = z.enum([
   "increase_conversion",
   "improve_user_retention",
   "increase_user_adoption",
@@ -11,9 +11,9 @@ export const ZProfileObjective = z.enum([
   "other",
 ]);
 
-export type TProfileObjective = z.infer<typeof ZProfileObjective>;
+export type TUserObjective = z.infer<typeof ZUserObjective>;
 
-export const ZProfile = z.object({
+export const ZUser = z.object({
   id: z.string(),
   name: z.string().nullable(),
   email: z.string(),
@@ -24,32 +24,39 @@ export const ZProfile = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   onboardingCompleted: z.boolean(),
-  objective: ZProfileObjective.nullable(),
+  objective: ZUserObjective.nullable(),
 });
 
-export type TProfile = z.infer<typeof ZProfile>;
+export type TUser = z.infer<typeof ZUser>;
 
-export const ZProfileUpdateInput = z.object({
+export const ZUserUpdateInput = z.object({
   name: z.string().nullish(),
   email: z.string().optional(),
   emailVerified: z.date().nullish(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
-  objective: ZProfileObjective.nullish(),
+  objective: ZUserObjective.nullish(),
   imageUrl: z.string().url().nullish(),
 });
 
-export type TProfileUpdateInput = z.infer<typeof ZProfileUpdateInput>;
+export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
 
-export const ZProfileCreateInput = z.object({
+export const ZUserCreateInput = z.object({
   name: z.string().optional(),
   email: z.string(),
   emailVerified: z.date().optional(),
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
-  objective: ZProfileObjective.nullish(),
+  objective: ZUserObjective.nullish(),
   identityProvider: z.enum(["email", "google", "github", "azuread"]).optional(),
   identityProviderAccountId: z.string().optional(),
 });
 
-export type TProfileCreateInput = z.infer<typeof ZProfileCreateInput>;
+export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
+
+export const ZUserNotificationSettings = z.object({
+  alert: z.record(z.boolean()),
+  weeklySummary: z.record(z.boolean()),
+});
+
+export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings>;

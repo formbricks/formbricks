@@ -5,13 +5,13 @@ interface RevalidateProps {
   email?: string;
 }
 
-export const profileCache = {
+export const userCache = {
   tag: {
     byId(id: string) {
-      return `profiles-${id}`;
+      return `users-${id}`;
     },
     byEmail(email: string) {
-      return `profiles-${email}`;
+      return `users-${email}`;
     },
   },
   revalidate({ id, email }: RevalidateProps): void {

@@ -1,5 +1,7 @@
-import { TSurvey } from "@formbricks/types/surveys";
 import { useEffect, useRef, useState } from "preact/hooks";
+
+import { TSurvey } from "@formbricks/types/surveys";
+
 import Progress from "../general/Progress";
 
 interface AutoCloseProps {

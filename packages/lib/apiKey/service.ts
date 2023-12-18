@@ -1,18 +1,20 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { createHash, randomBytes } from "crypto";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { TApiKey, TApiKeyCreateInput, ZApiKey, ZApiKeyCreateInput } from "@formbricks/types/apiKeys";
-import { Prisma } from "@prisma/client";
-import { getHash } from "../crypto";
-import { createHash, randomBytes } from "crypto";
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
-import { validateInputs } from "../utils/validate";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { ZString, ZOptionalNumber } from "@formbricks/types/common";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { unstable_cache } from "next/cache";
-import { apiKeyCache } from "./cache";
+import { getHash } from "../crypto";
 import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
+import { apiKeyCache } from "./cache";
 
 export const getApiKey = async (apiKeyId: string): Promise<TApiKey | null> => {
   const apiKey = await unstable_cache(

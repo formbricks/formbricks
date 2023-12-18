@@ -1,5 +1,6 @@
-import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
+
+import { prisma } from "@formbricks/database";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const surveyId = req.query.surveyId?.toString();

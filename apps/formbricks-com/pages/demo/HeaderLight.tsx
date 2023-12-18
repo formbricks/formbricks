@@ -1,8 +1,10 @@
-import { Button } from "@formbricks/ui/Button";
 import { Popover } from "@headlessui/react";
 import { usePlausible } from "next-plausible";
 import Link from "next/link";
 import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
+
 import { FooterLogo } from "../../components/shared/Logo";
 
 export default function HeaderLight() {

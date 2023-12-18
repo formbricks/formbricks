@@ -1,17 +1,18 @@
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import CalSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+
+import { TEnvironment } from "@formbricks/types/environment";
+import { TResponse } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import type {
+  TSurveyCalQuestion,
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
-  TSurveyCalQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestionSummary,
 } from "@formbricks/types/surveys";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -23,15 +24,16 @@ import {
   TSurveyQuestion,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+
 import CTASummary from "./CTASummary";
+import DateQuestionSummary from "./DateQuestionSummary";
+import FileUploadSummary from "./FileUploadSummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
-import RatingSummary from "./RatingSummary";
-import DateQuestionSummary from "./DateQuestionSummary";
-import FileUploadSummary from "./FileUploadSummary";
 import PictureChoiceSummary from "./PictureChoiceSummary";
-import CalSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
+import RatingSummary from "./RatingSummary";
 
 interface SummaryListProps {
   environment: TEnvironment;

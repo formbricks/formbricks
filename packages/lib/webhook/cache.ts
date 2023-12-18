@@ -1,4 +1,5 @@
 import { revalidateTag } from "next/cache";
+
 import { TWebhookInput } from "@formbricks/types/webhooks";
 
 interface RevalidateProps {

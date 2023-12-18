@@ -1,9 +1,10 @@
 import { evaluateCondition } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/evaluateLogic";
+import { TimerIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { TimerIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface SummaryDropOffsProps {
   survey: TSurvey;
@@ -125,11 +126,21 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
         responseCounts[questionId] > 0 ? totalTtc[questionId] / responseCounts[questionId] : 0;
     });
 
-    // Calculate drop-off percentages
-    dropoffPercentageArr[0] = (dropoffArr[0] / displayCount) * 100 || 0;
+    if (!survey.welcomeCard.enabled) {
+      dropoffArr[0] = displayCount - viewsArr[0];
+      if (viewsArr[0] > displayCount) dropoffPercentageArr[0] = 0;
+
+      dropoffPercentageArr[0] =
+        viewsArr[0] - displayCount >= 0 ? 0 : ((displayCount - viewsArr[0]) / displayCount) * 100 || 0;
+
+      viewsArr[0] = displayCount;
+    } else {
+      dropoffPercentageArr[0] = (dropoffArr[0] / viewsArr[0]) * 100;
+    }
+
     for (let i = 1; i < survey.questions.length; i++) {
-      if (viewsArr[i - 1] !== 0) {
-        dropoffPercentageArr[i] = (dropoffArr[i] / viewsArr[i - 1]) * 100;
+      if (viewsArr[i] !== 0) {
+        dropoffPercentageArr[i] = (dropoffArr[i] / viewsArr[i]) * 100;
       }
     }
 

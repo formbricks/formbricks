@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { ZResponse } from "./responses";
 
 export const ZPipelineTrigger = z.enum(["responseFinished", "responseCreated", "responseUpdated"]);
