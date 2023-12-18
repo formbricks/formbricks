@@ -10,6 +10,7 @@ import {
   CodeBracketIcon,
   CreditCardIcon,
   DocumentCheckIcon,
+  EnvelopeIcon,
   HeartIcon,
   LinkIcon,
   PaintBrushIcon,
@@ -479,17 +480,27 @@ export default function Navigation({
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                       {isFormbricksCloud && (
-                        <DropdownMenuItem>
-                          <button
-                            onClick={() => {
-                              formbricks.track("Top Menu: Product Feedback");
-                            }}>
-                            <div className="flex items-center">
-                              <ChatBubbleBottomCenterTextIcon className="mr-2 h-4 w-4" />
-                              <span>Product Feedback</span>
-                            </div>
-                          </button>
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem>
+                            <a href="mailto:johannes@formbricks.com">
+                              <div className="flex items-center">
+                                <EnvelopeIcon className="mr-2 h-4 w-4" />
+                                <span>Email us!</span>
+                              </div>
+                            </a>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <button
+                              onClick={() => {
+                                formbricks.track("Top Menu: Product Feedback");
+                              }}>
+                              <div className="flex items-center">
+                                <ChatBubbleBottomCenterTextIcon className="mr-2 h-4 w-4" />
+                                <span>Product Feedback</span>
+                              </div>
+                            </button>
+                          </DropdownMenuItem>
+                        </>
                       )}
                       <DropdownMenuItem
                         onClick={async () => {
