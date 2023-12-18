@@ -140,7 +140,7 @@ const QuestionFormInput = ({
           }
           parts.push(
             <span className="z-30 cursor-pointer rounded-md bg-slate-100" key={parts.length}>
-              {"@" + headline}
+              {"@" + headline}{" "}
             </span>
           );
           remainingText = remainingText.substring(index + headline!.length + 1);
@@ -199,7 +199,7 @@ const QuestionFormInput = ({
 
     setShowQuestionSelect(false);
 
-    const modifiedHeadlineWithId = question.headline.replace("@", `recall:${recallQuestion.id}/fallback:`);
+    const modifiedHeadlineWithId = question.headline.replace("@", `recall:${recallQuestion.id}/fallback: `);
     updateQuestion(questionIdx, {
       headline: modifiedHeadlineWithId,
     });
