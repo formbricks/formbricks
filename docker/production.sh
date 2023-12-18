@@ -58,14 +58,15 @@ install_formbricks() {
 
   echo "🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!"
 
-  # Installing Traefik
-  echo "🚗 Installing Traefik..."
   mkdir -p formbricks && cd formbricks
   echo "📁 Created Formbricks Quickstart directory at ./formbricks."
 
   # Ask the user for their email address
   echo "💡 Please enter your email address for the SSL certificate:"
   read email_address
+
+  # Installing Traefik
+  echo "🚗 Configuring Traefik..."
 
   cat <<EOT >traefik.yaml
 entryPoints:
