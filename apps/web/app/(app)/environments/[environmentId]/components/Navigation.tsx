@@ -480,7 +480,7 @@ export default function Navigation({
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                       {isFormbricksCloud && (
-                        <div>
+                        <>
                           <DropdownMenuItem>
                             <a href="mailto:johannes@formbricks.com">
                               <div className="flex items-center">
@@ -500,7 +500,7 @@ export default function Navigation({
                               </div>
                             </button>
                           </DropdownMenuItem>
-                        </div>
+                        </>
                       )}
                       <DropdownMenuItem
                         onClick={async () => {
