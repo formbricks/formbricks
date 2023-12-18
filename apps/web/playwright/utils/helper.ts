@@ -1,4 +1,5 @@
 import { expect } from "@playwright/test";
+import { readFileSync, writeFileSync } from "fs";
 import { Page } from "playwright";
 
 export const signUpAndLogin = async (
@@ -41,4 +42,12 @@ export const skipOnboarding = async (page: Page): Promise<void> => {
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
   await expect(page.getByText("My Product")).toBeVisible();
+};
+
+export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
+  let htmlContent = readFileSync(filePath, "utf-8");
+  htmlContent = htmlContent.replace(/environmentId: ".*?"/, `environmentId: "${environmentId}"`);
+
+  writeFileSync(filePath, htmlContent);
+  return "file:///" + filePath;
 };
