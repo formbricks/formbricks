@@ -1,4 +1,5 @@
 import CTAQuestion from "@/components/questions/CTAQuestion";
+import CalQuestion from "@/components/questions/CalQuestion";
 import ConsentQuestion from "@/components/questions/ConsentQuestion";
 import DateQuestion from "@/components/questions/DateQuestion";
 import FileUploadQuestion from "@/components/questions/FileUploadQuestion";
@@ -162,6 +163,18 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       onFileUpload={onFileUpload}
+      ttc={ttc}
+      setTtc={setTtc}
+    />
+  ) : question.type === TSurveyQuestionType.Cal ? (
+    <CalQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       ttc={ttc}
       setTtc={setTtc}
     />

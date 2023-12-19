@@ -49,6 +49,7 @@
     "vite-plugin-dts": "^3.6.4",
     "vite-tsconfig-paths": "^4.2.2",
     "serve": "14.2.1",
-    "concurrently": "8.2.2"
+    "concurrently": "8.2.2",
+    "@calcom/embed-snippet": "1.1.2"
   }
 }
