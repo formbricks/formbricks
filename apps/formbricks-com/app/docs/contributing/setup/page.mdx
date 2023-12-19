@@ -30,22 +30,23 @@ not overuse the machines as Formbricks will not be responsible for any charges i
 </Note>
 
 ### [GitPod](#gitpod)
-This will open a fully configured workspace in your browser with all the necessary dependencies already installed. Click the button below to open this project in Gitpod:
+This will open a fully configured workspace in your browser with all the necessary dependencies already installed. Click the button below to open this project in Gitpod. For a detailed guide, visit the [Gitpod Setup Guide](#gitpod-guide) section below.
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://Github.com/formbricks/formbricks)
 
-For a detailed guide, visit the [Gitpod Setup Guide](#gitpod-guide) section below.
 
 ### [Github Codespaces](#Github-codespaces)
-This will open a Github VSCode Interface on the cloud for you. This setup will have the Formbricks codebase and all the dependencies installed. Click the button below to configure your instance and open the project in Github Codespaces:
+This will open a Github VSCode Interface on the cloud for you. This setup will have the Formbricks codebase and all the dependencies installed. Click the button below to configure your instance and open the project in Github Codespaces. For a detailed guide, visit the [Github Codespaces Setup Guide](#github-codespaces-guide) section below.
 
 [![Open in Github Codespaces](https://img.shields.io/badge/Open%20in-Github%20Codespaces-blue?logo=Github)](https://Github.com/codespaces/new?machine=standardLinux32gb&repo=500289888&ref=main&devcontainer_path=.devcontainer%2Fdevcontainer.json&location=EastUs2)
 
 
-For a detailed guide, visit the [Github Codespaces Setup Guide](#github-codespaces-guide) section below.
+
+### [Local Machine](#local-machine-setup)
+This will install the Formbricks codebase and all the dependencies on your local machine. Note that this method is recommended **only for advanced users**. If you're an advanced user, access the steps for [Local Machine Setup here](#local-machine-setup).
 
 <Note>
-For a smooth experience, we suggest the above recommended methods.
+For a smooth experience, we suggest the above cloue IDE methods.
 Assistance with setup issues on your local machine may be limited due to varying factors like OS and permissions.
 </Note>
 
@@ -222,6 +223,109 @@ pnpm dev
 <Image src={GithubCodespacePorts} alt="Github Codespace Ports" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
 
 Now make the changes you want to and see them live in action!
+
+---
+
+## Local Machine Setup
+
+<Note>
+The below only works for **Mac**, **Linux** & **WSL2** on Windows (not on pure Windows)!
+
+This method is recommended **only for advanced users** & we won't be able to provide official support for this.
+</Note>
+
+To get the project running locally on your machine you need to have the following development tools installed:
+
+- Node.JS (we recommend v20)
+- [pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) (to run PostgreSQL / MailHog)
+
+1. Clone the project & move into the directory:
+
+<Col>
+   <CodeGroup title="Git clone Formbricks monorepo">
+
+   ```bash
+   git clone https://github.com/formbricks/formbricks && cd formbricks
+   ```
+
+   </CodeGroup>
+</Col>
+
+2. Install Node.JS packages via pnpm. Don't have pnpm? Get it [here](https://pnpm.io/installation)
+
+<Col>
+   <CodeGroup title="Install dependencies via pnpm">
+
+   ```bash
+   pnpm install
+   ```
+
+   </CodeGroup>
+</Col>
+
+3. Create a `.env` file based on `.env.example`. It's already preset to work with the docker-compose setup but you can also change values if needed.
+
+<Col>
+   <CodeGroup title="Define environment variables">
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   </CodeGroup>
+</Col>
+
+4. Generate & set some secret values mandatory for the ENCRYPTION_KEY & NEXTAUTH_SECRET in the .env file. You can use the following command to generate the random string of required length:
+
+<Col>
+   <CodeGroup title="Set value of ENCRYPTION_KEY">
+
+   ```bash
+   sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
+   sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
+   ```
+
+   </CodeGroup>
+</Col>
+
+1. Make sure you have [`Docker`](https://docs.docker.com/compose/) & [`docker-compose`](https://docs.docker.com/compose/) installed and running on your machine. Then run the following command to start the formbricks dev setup:
+
+<Col>
+   <CodeGroup title="Start Formbricks Dev Setup">
+
+   ```bash
+   pnpm go
+   ```
+
+   </CodeGroup>
+</Col>
+   This starts the Formbricks main app (plus all its dependencies) as well as the following services using Docker:
+
+   - a `postgres` container for hosting your database,
+   - a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
+   - Demo App at [http://localhost:3002](http://localhost:3002)
+   - Landing Page at [http://localhost:3001](http://localhost:3001)
+
+   **You can now access the Formbricks app on [http://localhost:3000](http://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
+
+   <Note>A fresh setup does not have a default account. Please create a new account and proceed accordingly.</Note>
+
+   For viewing the confirmation email and other emails the system sends you, you can access mailhog at [http://localhost:8025](http://localhost:8025)
+
+### Build
+
+To build all apps and packages and check for build errors, run the following command:
+
+<Col>
+<CodeGroup title="Build Formbricks stack">
+
+```bash
+pnpm build
+```
+
+</CodeGroup>
+</Col>
 
 ---
 
