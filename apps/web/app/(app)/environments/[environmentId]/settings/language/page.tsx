@@ -15,7 +15,7 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
       <SettingsTitle title="Languages" />
       <SettingsCard
         title="Multi-language surveys"
-        description="Add languages to activate field level transaltions in your surveys.">
+        description="Add languages to create multi-language surveys.">
         <EditLanguage product={product} />
       </SettingsCard>
     </div>
