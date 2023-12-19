@@ -29,7 +29,7 @@ interface PreviewSurveyProps {
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
-  isMobileApp?: boolean
+  isPreviewForMobileApp?: boolean
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
@@ -69,7 +69,7 @@ export default function PreviewSurvey({
   product,
   environment,
   onFileUpload,
-  isMobileApp = false
+  isPreviewForMobileApp = false
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -319,7 +319,7 @@ export default function PreviewSurvey({
       </motion.div>
 
       {/* for toggling between mobile and desktop mode  */}
-      {!isMobileApp ? (
+      {!isPreviewForMobileApp ? (
         <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
           <TabOption
             active={previewMode === "mobile"}

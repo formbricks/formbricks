@@ -11,7 +11,7 @@ const config = getDefaultConfig(projectRoot);
 // #1 - Watch all files in the monorepo
 config.watchFolders = [workspaceRoot];
 // #3 - Force resolving nested modules to the folders below
-config.resolver.disableHierarchicalLookup = true;
+config.resolver.disableHierarchicalLookup = false;
 // #2 - Try resolving with project modules first, then workspace modules
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
@@ -22,5 +22,5 @@ config.resolver.nodeModulesPaths = [
 config.cacheStores = [
   new FileStore({ root: path.join(projectRoot, 'node_modules', '.cache', 'metro') }),
 ];
-config.resolver.disableHierarchicalLookup = false
+
 module.exports = config;

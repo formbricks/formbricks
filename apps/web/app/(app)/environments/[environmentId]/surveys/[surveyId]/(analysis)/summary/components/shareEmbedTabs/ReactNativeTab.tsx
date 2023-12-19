@@ -8,17 +8,33 @@ import CodeBlock from "@formbricks/ui/CodeBlock";
 
 export default function ReactNativeTab({ surveyId }) {
   const javascriptCode = `
-  import {FormBricks, FormBrickContainer} from "@formbricks/reactnative"
+  import * as React from 'react';
 
-  const showSurvey = () => {
-    FormBricks.showSurvey("${surveyId}")
+  import { StyleSheet, View, Text } from 'react-native';
+  import { FormBricks, showSurvey  } from '@formbricks/react-native-sdk';
+  
+  export default function App() {
+    const handleShowSurvey = () => {
+      showSurvey('${surveyId}');
+    };
+  
+    return (
+      <>
+        <View style={styles.container}>
+          <Text onPress={handleShowSurvey}>Show Survey</Text>
+        </View>
+        <FormBricks />
+      </>
+    );
   }
-
-  const Demo() {
-    retun (
-      <FormBrickContainer/>
-    )
-  }
+  
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }
+  });
   `;
 
   return (
