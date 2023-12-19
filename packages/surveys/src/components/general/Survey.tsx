@@ -192,7 +192,7 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        <div className="no-scrollbar flex h-full w-full flex-col justify-between overflow-y-scroll rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
+        <div className="no-scrollbar flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled

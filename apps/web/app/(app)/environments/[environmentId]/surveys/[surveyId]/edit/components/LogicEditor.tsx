@@ -83,6 +83,7 @@ export default function LogicEditor({
     consent: ["skipped", "accepted"],
     pictureSelection: ["submitted", "skipped"],
     fileUpload: ["uploaded", "notUploaded"],
+    cal: ["skipped", "booked"],
   };
 
   const logicConditions: LogicConditions = {
@@ -98,16 +99,6 @@ export default function LogicEditor({
     },
     accepted: {
       label: "is accepted",
-      values: null,
-      unique: true,
-    },
-    uploaded: {
-      label: "has uploaded file",
-      values: null,
-      unique: true,
-    },
-    notUploaded: {
-      label: "has not uploaded file",
       values: null,
       unique: true,
     },
@@ -149,6 +140,21 @@ export default function LogicEditor({
       label: "includes one of",
       values: questionValues,
       multiSelect: true,
+    },
+    uploaded: {
+      label: "has uploaded file",
+      values: null,
+      unique: true,
+    },
+    notUploaded: {
+      label: "has not uploaded file",
+      values: null,
+      unique: true,
+    },
+    booked: {
+      label: "has a call booked",
+      values: null,
+      unique: true,
     },
   };
 
