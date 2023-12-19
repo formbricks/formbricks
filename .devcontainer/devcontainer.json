@@ -21,7 +21,7 @@
   "forwardPorts": [3000, 5432, 8025],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "pnpm install",
+  "postCreateCommand": "cp.env.example .env && pnpm install",
 
   // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
   "remoteUser": "node"
