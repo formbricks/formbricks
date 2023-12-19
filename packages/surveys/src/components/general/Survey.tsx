@@ -100,7 +100,7 @@ export function Survey({
     const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
-    if (finished) {
+    if (finished && !isMobileApp) {
       onFinished();
     }
     setQuestionId(nextQuestionId);

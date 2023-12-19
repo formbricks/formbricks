@@ -22,5 +22,5 @@ config.resolver.nodeModulesPaths = [
 config.cacheStores = [
   new FileStore({ root: path.join(projectRoot, 'node_modules', '.cache', 'metro') }),
 ];
-
+config.resolver.disableHierarchicalLookup = false
 module.exports = config;

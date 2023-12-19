@@ -1,4 +1,3 @@
-import 'react-native-get-random-values';
 import * as React from 'react';
 
 import { StyleSheet, View, Text } from 'react-native';
@@ -8,11 +7,12 @@ export default function App() {
 
   return (
     <>
-    <View style={styles.container}>
-      <Text onPress={() => {
-        showSurvey('clq76qtq2000ov7j6pwns40wn');
-      } }>SHOW SURVEY</Text>
-    </View><FormBricks />
+      <View style={styles.container}>
+        <Text onPress={() => {
+          showSurvey('clq76qtq2000ov7j6pwns40wn');
+        }}>SHOW SURVEY</Text>
+      </View>
+      <FormBricks />
     </>
   );
 }
@@ -22,10 +22,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  box: {
-    width: 60,
-    height: 60,
-    marginVertical: 20,
-  },
+  }
 });

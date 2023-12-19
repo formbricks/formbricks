@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { WebView } from 'react-native-webview';
 
-const BASE_URL = __DEV__ ?  'http://192.168.1.169:3000' : 'https://formbricks.com';
+const BASE_URL = __DEV__ ? 'http://192.168.1.169:3000' : 'https://formbricks.com';
 
 interface RefObject {
   current: FormBricksEmbedRef | null;
@@ -55,8 +55,15 @@ const FormBricksEmbed = forwardRef<FormBricksEmbedRef, {}>((_props, ref) => {
     <WebView
       ref={webViewRef}
       source={{ uri: `${BASE_URL}/s/${surveyId}?mobileapp=true` }}
-      containerStyle={{ flex: 1 }}
-      onMessage={(event)=> {
+      containerStyle={{
+        height: "100%",
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999
+      }}
+      onMessage={(event) => {
         try {
           const data = JSON.parse(event.nativeEvent.data) as {
             closeModal: boolean
