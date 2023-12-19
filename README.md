@@ -8,7 +8,7 @@
 
 </a>
 
-<h2  align="center">Formbricks</h2>
+<h3  align="center">Formbricks</h3>
 
 <p  align="center">
 Harvest user-insights, build irresistible experiences.
