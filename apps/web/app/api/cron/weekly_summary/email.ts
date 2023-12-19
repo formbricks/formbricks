@@ -1,7 +1,6 @@
-import { sendEmail } from "@/app/lib/email";
-import { withEmailTemplate } from "@/app/lib/email-template";
-
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { withEmailTemplate } from "@formbricks/lib/emails/email-template";
+import { sendEmail } from "@formbricks/lib/emails/emails";
 
 import { Insights, NotificationResponse, Survey, SurveyResponse } from "./types";
 

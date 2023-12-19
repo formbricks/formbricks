@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "1.2.7",
+  "version": "1.2.9",
   "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
   "homepage": "https://formbricks.com",
   "repository": {
@@ -34,8 +34,8 @@
     "build": "tsc && vite build",
     "go": "vite build --watch",
     "lint": "eslint ./src --fix",
-    "clean": "rimraf .turbo node_modules dist coverage",
-    "test": "jest"
+    "test": "jest --coverage --no-cache",
+    "clean": "rimraf .turbo node_modules dist coverage"
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {

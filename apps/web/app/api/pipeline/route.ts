@@ -1,11 +1,11 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { sendResponseFinishedEmail } from "@/app/lib/email";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
+import { sendResponseFinishedEmail } from "@formbricks/lib/emails/emails";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";

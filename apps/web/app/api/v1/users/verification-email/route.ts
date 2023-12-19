@@ -1,7 +1,7 @@
-import { sendVerificationEmail } from "@/app/lib/email";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
+import { sendVerificationEmail } from "@formbricks/lib/emails/emails";
 
 export async function POST(request: Request) {
   const { email } = await request.json();
