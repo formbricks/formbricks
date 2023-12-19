@@ -1,10 +1,11 @@
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { useMemo, useState } from "react";
+
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
-import { useMemo, useState } from "react";
 
 interface SummaryMetadataProps {
   responses: TResponse[];

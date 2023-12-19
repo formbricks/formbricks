@@ -1,25 +1,28 @@
 import "server-only";
 
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import {
-  TInvite,
-  TInvitee,
-  ZInvitee,
-  TInviteUpdateInput,
-  ZInviteUpdateInput,
-  ZCurrentUser,
-  TCurrentUser,
-} from "@formbricks/types/invites";
-import { ResourceNotFoundError, ValidationError, DatabaseError } from "@formbricks/types/errors";
-import { ZString, ZOptionalNumber } from "@formbricks/types/common";
-import { sendInviteMemberEmail } from "../emails/emails";
-import { validateInputs } from "../utils/validate";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { unstable_cache } from "next/cache";
-import { inviteCache } from "./cache";
-import { formatInviteDateFields } from "./util";
+
+import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  TCurrentUser,
+  TInvite,
+  TInviteUpdateInput,
+  TInvitee,
+  ZCurrentUser,
+  ZInvite,
+  ZInviteUpdateInput,
+  ZInvitee,
+} from "@formbricks/types/invites";
+
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { sendInviteMemberEmail } from "../emails/emails";
 import { getMembershipByUserIdTeamId } from "../membership/service";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
+import { inviteCache } from "./cache";
 
 const inviteSelect = {
   id: true,
@@ -33,8 +36,13 @@ const inviteSelect = {
   expiresAt: true,
   role: true,
 };
-
-export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[] | null> => {
+interface InviteWithCreator extends TInvite {
+  creator: {
+    name: string | null;
+    email: string;
+  };
+}
+export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[]> => {
   const invites = await unstable_cache(
     async () => {
       validateInputs([teamId, ZString], [page, ZOptionalNumber]);
@@ -52,8 +60,7 @@ export const getInvitesByTeamId = async (teamId: string, page?: number): Promise
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return invites.map(formatInviteDateFields);
+  return invites.map((invite: TInvite) => formatDateFields(invite, ZInvite));
 };
 
 export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite | null> => {
@@ -114,10 +121,8 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   }
 };
 
-export const getInvite = async (
-  inviteId: string
-): Promise<TInvite & { creator: { name: string | null; email: string } }> =>
-  unstable_cache(
+export const getInvite = async (inviteId: string): Promise<InviteWithCreator> => {
+  const invite = await unstable_cache(
     async () => {
       validateInputs([inviteId, ZString]);
 
@@ -138,12 +143,16 @@ export const getInvite = async (
       if (!invite) {
         throw new ResourceNotFoundError("Invite", inviteId);
       }
-
       return invite;
     },
     [`getInvite-${inviteId}`],
     { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
+  return {
+    ...formatDateFields(invite, ZInvite),
+    creator: invite.creator,
+  };
+};
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {
   validateInputs([inviteId, ZString]);

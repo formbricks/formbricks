@@ -1,12 +1,13 @@
 "use client";
 
 import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
-import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { EnvelopeIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
+
+import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
 
 export default function VerifyEmail({
   survey,

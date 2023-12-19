@@ -1,19 +1,20 @@
 "use server";
 
+import { getServerSession } from "next-auth";
+
 import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessProduct, verifyUserRoleAccess } from "@formbricks/lib/product/auth";
 import { getProduct, updateProduct } from "@formbricks/lib/product/service";
-import { updateProfile } from "@formbricks/lib/profile/service";
+import { updateUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TProductUpdateInput } from "@formbricks/types/product";
-import { TProfileUpdateInput } from "@formbricks/types/profile";
-import { getServerSession } from "next-auth";
+import { TUserUpdateInput } from "@formbricks/types/user";
 
-export async function updateProfileAction(updatedProfile: TProfileUpdateInput) {
+export async function updateUserAction(updatedUser: TUserUpdateInput) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  return await updateProfile(session.user.id, updatedProfile);
+  return await updateUser(session.user.id, updatedUser);
 }
 
 export async function updateProductAction(productId: string, updatedProduct: Partial<TProductUpdateInput>) {

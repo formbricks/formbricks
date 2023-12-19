@@ -1,11 +1,12 @@
 "use client";
 
+import { ImagePlusIcon } from "lucide-react";
+import { RefObject, useState } from "react";
+
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { ImagePlusIcon } from "lucide-react";
-import { RefObject, useState } from "react";
 
 interface QuestionFormInputProps {
   question: TSurveyQuestion;

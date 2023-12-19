@@ -10,7 +10,7 @@
     "schema": "packages/database/schema.prisma"
   },
   "scripts": {
-    "clean": "turbo run clean && rimraf node_modules",
+    "clean": "turbo run clean && rimraf node_modules .turbo coverage",
     "build": "turbo run build",
     "post-install": "turbo run post-install",
     "db:migrate:dev": "turbo run db:migrate:dev",
@@ -25,17 +25,18 @@
     "generate": "turbo run generate",
     "lint": "turbo run lint",
     "release": "turbo run build --filter=js... && turbo run build --filter=n8n-node... && changeset publish",
-    "test": "turbo run test",
+    "test": "turbo run test --no-cache",
+    "test:e2e": "playwright test",
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.26.2",
+    "@playwright/test": "^1.40.1",
     "eslint-config-formbricks": "workspace:*",
     "husky": "^8.0.3",
-    "lint-staged": "^15.1.0",
+    "lint-staged": "^15.2.0",
     "rimraf": "^5.0.5",
-    "tsx": "^4.2.0",
-    "turbo": "^1.10.16"
+    "tsx": "^4.6.2",
+    "turbo": "^1.11.2"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -58,5 +59,8 @@
     "budgetPercentIncreaseRed": 20,
     "minimumChangeThreshold": 0,
     "showDetails": true
+  },
+  "dependencies": {
+    "playwright": "^1.40.1"
   }
 }

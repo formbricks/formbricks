@@ -1,4 +1,7 @@
-import type { TJsConfigInput } from "@formbricks/types/js";
+import type { TJsConfig, TJsConfigInput } from "@formbricks/types/js";
+import { TPersonAttributes } from "@formbricks/types/people";
+
+import { trackAction } from "./actions";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -13,9 +16,9 @@ import {
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
+import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
 import { addWidgetContainer, closeSurvey } from "./widget";
-import { trackAction } from "./actions";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -63,19 +66,44 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
-  const localConfigResult = config.loadFromLocalStorage();
+  if (!c.userId && c.attributes) {
+    logger.error("No userId provided but attributes. Cannot update attributes without userId.");
+    return err({
+      code: "missing_field",
+      field: "userId",
+    });
+  }
+
+  // if userId and attributes are available, set them in backend
+  let updatedAttributes: TPersonAttributes | null = null;
+  if (c.userId && c.attributes) {
+    const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+
+    if (res.ok !== true) {
+      return err(res.error);
+    }
+    updatedAttributes = res.value;
+  }
+
+  let existingConfig: TJsConfig | undefined;
+  try {
+    existingConfig = config.get();
+  } catch (e) {
+    logger.debug("No existing configuration found.");
+  }
 
   if (
-    localConfigResult.ok &&
-    localConfigResult.value.state &&
-    localConfigResult.value.environmentId === c.environmentId &&
-    localConfigResult.value.apiHost === c.apiHost &&
-    localConfigResult.value.userId === c.userId &&
-    localConfigResult.value.expiresAt // only accept config when they follow new config version with expiresAt
+    existingConfig &&
+    existingConfig.state &&
+    existingConfig.environmentId === c.environmentId &&
+    existingConfig.apiHost === c.apiHost &&
+    existingConfig.userId === c.userId &&
+    existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
   ) {
     logger.debug("Found existing configuration.");
-    if (localConfigResult.value.expiresAt < new Date()) {
+    if (existingConfig.expiresAt < new Date()) {
       logger.debug("Configuration expired.");
+
       await sync({
         apiHost: c.apiHost,
         environmentId: c.environmentId,
@@ -83,13 +111,11 @@ export const initialize = async (
       });
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
-      config.update(localConfigResult.value);
+      config.update(existingConfig);
     }
   } else {
     logger.debug("No valid configuration found or it has been expired. Creating new config.");
     logger.debug("Syncing.");
-
-    // when the local storage is expired / empty, we sync to get the latest config
 
     await sync({
       apiHost: c.apiHost,
@@ -98,7 +124,20 @@ export const initialize = async (
     });
 
     // and track the new session event
-    trackAction("New Session");
+    await trackAction("New Session");
+  }
+
+  // update attributes in config
+  if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
+    config.update({
+      environmentId: config.get().environmentId,
+      apiHost: config.get().apiHost,
+      userId: config.get().userId,
+      state: {
+        ...config.get().state,
+        attributes: { ...config.get().state.attributes, ...c.attributes },
+      },
+    });
   }
 
   logger.debug("Adding event listeners");

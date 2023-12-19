@@ -2,18 +2,18 @@ import { TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TIntegrationConfig } from "@formbricks/types/integration";
 import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/responses";
 import {
-  TSurveyWelcomeCard,
   TSurveyClosedMessage,
   TSurveyHiddenFields,
   TSurveyProductOverwrites,
-  TSurveyStyling,
   TSurveyQuestions,
   TSurveySingleUse,
+  TSurveyStyling,
   TSurveyThankYouCard,
   TSurveyVerifyEmail,
+  TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 import { TTeamBilling } from "@formbricks/types/teams";
-import { TUserNotificationSettings } from "@formbricks/types/users";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 
 declare global {
   namespace PrismaJson {

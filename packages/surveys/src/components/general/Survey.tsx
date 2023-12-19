@@ -4,8 +4,10 @@ import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
-import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { useEffect, useRef, useState } from "preact/hooks";
+
+import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
 import WelcomeCard from "./WelcomeCard";
@@ -174,7 +176,7 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        <div className="flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
+        <div className="no-scrollbar flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled

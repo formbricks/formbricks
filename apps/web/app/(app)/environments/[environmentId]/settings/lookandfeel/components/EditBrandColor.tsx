@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import toast from "react-hot-toast";
+
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
-import { useState } from "react";
-import toast from "react-hot-toast";
+
 import { updateProductAction } from "../actions";
 
 interface EditBrandColorProps {

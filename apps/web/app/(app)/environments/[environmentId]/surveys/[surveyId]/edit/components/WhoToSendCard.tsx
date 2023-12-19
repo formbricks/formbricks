@@ -1,5 +1,10 @@
 "use client";
 
+import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { Info } from "lucide-react";
+import { useEffect, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -8,10 +13,8 @@ import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { CheckCircleIcon, FunnelIcon, PlusIcon, TrashIcon, UserGroupIcon } from "@heroicons/react/24/solid";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { Info } from "lucide-react";
-import { useEffect, useState } from "react"; /*  */
+
+/*  */
 
 const filterConditions = [
   { id: "equals", name: "equals" },

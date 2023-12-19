@@ -1,5 +1,7 @@
-import { Button } from "@formbricks/ui/Button";
 import Link from "next/link";
+
+import { Button } from "@formbricks/ui/Button";
+
 export default function NotFound() {
   return (
     <>

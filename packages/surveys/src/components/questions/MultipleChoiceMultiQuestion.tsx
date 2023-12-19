@@ -1,14 +1,16 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
-import { cn, shuffleQuestions } from "@/lib/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { TResponseTtc } from "@formbricks/types/responses";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { cn, shuffleQuestions } from "@/lib/utils";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+
+import { TResponseData } from "@formbricks/types/responses";
+import { TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
+
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   value: string | number | string[];

@@ -1,15 +1,16 @@
 "use client";
 
 import { disableTwoFactorAuthAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
-import { PasswordInput } from "@formbricks/ui/PasswordInput";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { OTPInput } from "@formbricks/ui/OTPInput";
-import { useRouter } from "next/navigation";
 import { Modal } from "@formbricks/ui/Modal";
-import React, { useEffect, useState } from "react";
-import { useForm, Controller, SubmitHandler } from "react-hook-form";
-import toast from "react-hot-toast";
+import { OTPInput } from "@formbricks/ui/OTPInput";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
 
 type TDisableTwoFactorFormState = {
   password: string;

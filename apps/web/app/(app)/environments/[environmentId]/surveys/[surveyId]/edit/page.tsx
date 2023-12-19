@@ -1,8 +1,9 @@
-export const revalidate = REVALIDATION_INTERVAL;
+import { getServerSession } from "next-auth";
+
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { colours } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -11,8 +12,7 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { getServerSession } from "next-auth";
-import { colours } from "@formbricks/lib/constants";
+
 import SurveyEditor from "./components/SurveyEditor";
 
 export const generateMetadata = async ({ params }) => {
@@ -59,17 +59,15 @@ export default async function SurveysEditPage({ params }) {
   }
 
   return (
-    <>
-      <SurveyEditor
-        survey={survey}
-        product={product}
-        environment={environment}
-        actionClasses={actionClasses}
-        attributeClasses={attributeClasses}
-        responseCount={responseCount}
-        membershipRole={currentUserMembership?.role}
-        colours={colours}
-      />
-    </>
+    <SurveyEditor
+      survey={survey}
+      product={product}
+      environment={environment}
+      actionClasses={actionClasses}
+      attributeClasses={attributeClasses}
+      responseCount={responseCount}
+      membershipRole={currentUserMembership?.role}
+      colours={colours}
+    />
   );
 }

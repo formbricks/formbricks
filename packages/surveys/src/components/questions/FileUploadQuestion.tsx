@@ -1,13 +1,15 @@
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { useState } from "preact/hooks";
+
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
+
 import { BackButton } from "../buttons/BackButton";
 import SubmitButton from "../buttons/SubmitButton";
 import FileInput from "../general/FileInput";
 import Headline from "../general/Headline";
 import Subheader from "../general/Subheader";
-import { TUploadFileConfig } from "@formbricks/types/storage";
-import { useState } from "preact/hooks";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;

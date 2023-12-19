@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { ZSurveyWelcomeCard, ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard } from "./surveys";
-import { ZProfileObjective } from "./profile";
+
+import { ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard, ZSurveyWelcomeCard } from "./surveys";
+import { ZUserObjective } from "./user";
 
 export const ZTemplate = z.object({
   name: z.string(),
@@ -9,7 +10,7 @@ export const ZTemplate = z.object({
   category: z
     .enum(["Product Experience", "Exploration", "Growth", "Increase Revenue", "Customer Success"])
     .optional(),
-  objectives: z.array(ZProfileObjective).optional(),
+  objectives: z.array(ZUserObjective).optional(),
   preset: z.object({
     name: z.string(),
     welcomeCard: ZSurveyWelcomeCard,

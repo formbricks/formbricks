@@ -1,19 +1,21 @@
 "use client";
 
+import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import React from "react";
 import { useEffect, useState } from "react";
+
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
+
 import PreviewSurvey from "../../../components/PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys";
-import { TProduct } from "@formbricks/types/product";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 
 interface SurveyEditorProps {
   survey: TSurvey;

@@ -1,10 +1,11 @@
-import { responses } from "@/app/lib/api/response";
-import { DatabaseError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
-import { NextResponse } from "next/server";
+import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { TAttributeClass, ZAttributeClassInput } from "@formbricks/types/attributeClasses";
+import { NextResponse } from "next/server";
+
 import { createAttributeClass, getAttributeClasses } from "@formbricks/lib/attributeClass/service";
+import { TAttributeClass, ZAttributeClassInput } from "@formbricks/types/attributeClasses";
+import { DatabaseError } from "@formbricks/types/errors";
 
 export async function GET(request: Request) {
   try {

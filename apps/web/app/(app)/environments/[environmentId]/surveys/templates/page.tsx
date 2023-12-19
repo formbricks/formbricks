@@ -1,7 +1,9 @@
+import { getServerSession } from "next-auth";
+
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getServerSession } from "next-auth";
+
 import TemplateContainerWithPreview from "./TemplateContainer";
 
 export default async function SurveyTemplatesPage({ params }) {
@@ -28,7 +30,7 @@ export default async function SurveyTemplatesPage({ params }) {
   return (
     <TemplateContainerWithPreview
       environmentId={environmentId}
-      profile={session.user}
+      user={session.user}
       environment={environment}
       product={product}
     />

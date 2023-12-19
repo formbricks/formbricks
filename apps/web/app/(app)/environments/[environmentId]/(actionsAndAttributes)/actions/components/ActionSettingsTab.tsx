@@ -7,19 +7,21 @@ import {
 import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
-import { TActionClassInput, TActionClassNoCodeConfig, TNoCodeConfig } from "@formbricks/types/actionClasses";
-import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { testURLmatch } from "../lib/testURLmatch";
-import { TMembershipRole } from "@formbricks/types/memberships";
+
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TActionClassInput, TActionClassNoCodeConfig, TNoCodeConfig } from "@formbricks/types/actionClasses";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+
+import { testURLmatch } from "../lib/testURLmatch";
 
 interface ActionSettingsTabProps {
   environmentId: string;

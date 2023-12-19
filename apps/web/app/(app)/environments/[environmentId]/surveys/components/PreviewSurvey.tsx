@@ -3,12 +3,6 @@
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
-import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProduct } from "@formbricks/types/product";
-import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
-import { SurveyInline } from "@formbricks/ui/Survey";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {
   ArrowsPointingInIcon,
@@ -18,6 +12,13 @@ import {
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { SurveyInline } from "@formbricks/ui/Survey";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
 
@@ -205,12 +206,13 @@ export default function PreviewSurvey({
         className="relative flex h-[95] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
+            <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
+              Preview
+            </p>
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
             <MediaBackground survey={survey} ContentRef={ContentRef} isMobilePreview>
-              {/* below element is use to create notch for the mobile device mockup   */}
-              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
@@ -228,7 +230,7 @@ export default function PreviewSurvey({
                   />
                 </Modal>
               ) : (
-                <div className="relative z-10 w-full max-w-md  px-4">
+                <div className="absolute inset-0 z-10 w-full max-w-md  px-4">
                   <SurveyInline
                     survey={survey}
                     brandColor={brandColor}

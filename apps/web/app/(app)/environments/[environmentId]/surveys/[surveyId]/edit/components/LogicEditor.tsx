@@ -1,9 +1,15 @@
+import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { ChevronDown, SplitIcon } from "lucide-react";
+import { useMemo } from "react";
+import { toast } from "react-hot-toast";
+import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
+
 import {
   TSurvey,
   TSurveyLogic,
+  TSurveyLogicCondition,
   TSurveyQuestion,
   TSurveyQuestionType,
-  TSurveyLogicCondition,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import {
@@ -15,11 +21,6 @@ import {
 import { Label } from "@formbricks/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
-import { ChevronDown, SplitIcon } from "lucide-react";
-import { useMemo } from "react";
-import { toast } from "react-hot-toast";
-import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
 interface LogicEditorProps {
   localSurvey: TSurvey;
@@ -82,6 +83,7 @@ export default function LogicEditor({
     consent: ["skipped", "accepted"],
     pictureSelection: ["submitted", "skipped"],
     fileUpload: ["uploaded", "notUploaded"],
+    cal: ["skipped", "booked"],
   };
 
   const logicConditions: LogicConditions = {
@@ -97,16 +99,6 @@ export default function LogicEditor({
     },
     accepted: {
       label: "is accepted",
-      values: null,
-      unique: true,
-    },
-    uploaded: {
-      label: "has uploaded file",
-      values: null,
-      unique: true,
-    },
-    notUploaded: {
-      label: "has not uploaded file",
       values: null,
       unique: true,
     },
@@ -148,6 +140,21 @@ export default function LogicEditor({
       label: "includes one of",
       values: questionValues,
       multiSelect: true,
+    },
+    uploaded: {
+      label: "has uploaded file",
+      values: null,
+      unique: true,
+    },
+    notUploaded: {
+      label: "has not uploaded file",
+      values: null,
+      unique: true,
+    },
+    booked: {
+      label: "has a call booked",
+      values: null,
+      unique: true,
     },
   };
 
@@ -267,16 +274,18 @@ export default function LogicEditor({
               </Select>
 
               {logic.condition && logicConditions[logic.condition].values != null && (
-                <div className="flex-1 basis-1/5">
+                <div className="flex-1 basis-1/4">
                   {!logicConditions[logic.condition].multiSelect ? (
                     <Select value={logic.value} onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
-                      <SelectTrigger className="overflow-hidden">
+                      <SelectTrigger className="w-full overflow-hidden">
                         <SelectValue placeholder="Select match type" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="w-full bg-slate-50 text-slate-700 2xl:w-96">
                         {logicConditions[logic.condition].values?.map((value) => (
                           <SelectItem key={value} value={value} title={value}>
-                            {value}
+                            <div className="w-full">
+                              <p className="line-clamp-1 w-40 text-left 2xl:w-80">{value}</p>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -284,17 +293,17 @@ export default function LogicEditor({
                   ) : (
                     <DropdownMenu>
                       <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-                        <div className="flex h-10 w-40 items-center justify-between rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ">
+                        <div className="flex h-10 w-full items-center justify-between overflow-hidden rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                           {logic.value?.length === 0 ? (
-                            <p className="truncate text-slate-400" title="Select match type">
+                            <p className="line-clamp-1 text-slate-400" title="Select match type">
                               Select match type
                             </p>
                           ) : (
-                            <p className="truncate" title={logic.value.join(", ")}>
+                            <p className="line-clamp-1" title={logic.value.join(", ")}>
                               {logic.value.join(", ")}
                             </p>
                           )}
-                          <ChevronDown className="h-4 w-4 opacity-50" />
+                          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                         </div>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -330,10 +339,8 @@ export default function LogicEditor({
                     (question, idx) =>
                       idx !== questionIdx && (
                         <SelectItem key={question.id} value={question.id} title={question.headline}>
-                          <div className="w-40">
-                            <p className="truncate">
-                              {idx + 1} - {question.headline}
-                            </p>
+                          <div className="w-32">
+                            <p className="truncate text-left">{question.headline}</p>
                           </div>
                         </SelectItem>
                       )
@@ -343,7 +350,7 @@ export default function LogicEditor({
               </Select>
 
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
+                className="h-4 w-4 cursor-pointer text-slate-400"
                 onClick={() => deleteLogic(logicIdx)}
               />
             </div>

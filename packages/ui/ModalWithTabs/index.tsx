@@ -1,5 +1,6 @@
-import { Modal } from "../Modal";
 import { useEffect, useState } from "react";
+
+import { Modal } from "../Modal";
 
 interface ModalWithTabsProps {
   open: boolean;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { ZPerson, ZPersonAttributes } from "./people";
 import { ZSurvey } from "./surveys";
 import { ZTag } from "./tags";
@@ -22,7 +23,7 @@ export const ZResponseNoteUser = z.object({
 
 export type TResponseNoteUser = z.infer<typeof ZResponseNoteUser>;
 
-const ZResponseNote = z.object({
+export const ZResponseNote = z.object({
   updatedAt: z.date(),
   createdAt: z.date(),
   id: z.string(),

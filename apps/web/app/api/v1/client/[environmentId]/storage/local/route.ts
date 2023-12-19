@@ -2,14 +2,15 @@
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
-import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
+import { NextRequest, NextResponse } from "next/server";
+
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
+import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { env } from "@formbricks/lib/env.mjs";
+import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 
 interface Context {
   params: {
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
   }
 
   try {
-    const plan = team.billing.features.linkSurvey.status in ["active", "canceled"] ? "pro" : "free";
+    const plan = ["active", "canceled"].includes(team.billing.features.linkSurvey.status) ? "pro" : "free";
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 

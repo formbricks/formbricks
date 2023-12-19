@@ -1,9 +1,10 @@
 import { getUpdatedState } from "@/app/api/v1/(legacy)/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
 import { ZJsSyncLegacyInput } from "@formbricks/types/js";
 import { TPersonClient } from "@formbricks/types/people";
-import { NextResponse } from "next/server";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);

@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useState } from "react";
 import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
+
 import CodeBlock from "../shared/CodeBlock";
 
 interface SecondNavbarProps {

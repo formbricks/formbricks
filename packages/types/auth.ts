@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { ZProfile } from "./profile";
+
+import { ZUser } from "./user";
 
 const ZAuthSession = z.object({
-  user: ZProfile,
+  user: ZUser,
 });
 
 const ZAuthenticationApiKey = z.object({

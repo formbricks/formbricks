@@ -1,5 +1,7 @@
 import CTAQuestion from "@/components/questions/CTAQuestion";
+import CalQuestion from "@/components/questions/CalQuestion";
 import ConsentQuestion from "@/components/questions/ConsentQuestion";
+import DateQuestion from "@/components/questions/DateQuestion";
 import FileUploadQuestion from "@/components/questions/FileUploadQuestion";
 import MultipleChoiceMultiQuestion from "@/components/questions/MultipleChoiceMultiQuestion";
 import MultipleChoiceSingleQuestion from "@/components/questions/MultipleChoiceSingleQuestion";
@@ -7,6 +9,7 @@ import NPSQuestion from "@/components/questions/NPSQuestion";
 import OpenTextQuestion from "@/components/questions/OpenTextQuestion";
 import PictureSelectionQuestion from "@/components/questions/PictureSelectionQuestion";
 import RatingQuestion from "@/components/questions/RatingQuestion";
+
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
@@ -125,6 +128,18 @@ export default function QuestionConditional({
       ttc={ttc}
       setTtc={setTtc}
     />
+  ) : question.type === TSurveyQuestionType.Date ? (
+    <DateQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      ttc={ttc}
+      setTtc={setTtc}
+    />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion
       question={question}
@@ -148,6 +163,18 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       onFileUpload={onFileUpload}
+      ttc={ttc}
+      setTtc={setTtc}
+    />
+  ) : question.type === TSurveyQuestionType.Cal ? (
+    <CalQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
       ttc={ttc}
       setTtc={setTtc}
     />

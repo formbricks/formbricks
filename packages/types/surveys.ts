@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 
@@ -18,6 +19,8 @@ export enum TSurveyQuestionType {
   Rating = "rating",
   Consent = "consent",
   PictureSelection = "pictureSelection",
+  Cal = "cal",
+  Date = "date",
 }
 
 export const ZSurveyWelcomeCard = z.object({
@@ -127,6 +130,7 @@ export const ZSurveyLogicCondition = z.enum([
   "includesOne",
   "uploaded",
   "notUploaded",
+  "booked",
 ]);
 
 export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
@@ -205,6 +209,11 @@ const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+const ZSurveyCalLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["booked", "skipped"]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyLogic = z.union([
   ZSurveyOpenTextLogic,
   ZSurveyConsentLogic,
@@ -215,6 +224,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyRatingLogic,
   ZSurveyPictureSelectionLogic,
   ZSurveyFileUploadLogic,
+  ZSurveyCalLogic,
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
@@ -233,16 +243,6 @@ const ZSurveyQuestionBase = z.object({
   logic: z.array(ZSurveyLogic).optional(),
   isDraft: z.boolean().optional(),
 });
-
-export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.FileUpload),
-  allowMultipleFiles: z.boolean(),
-  maxSizeInMB: z.number().optional(),
-  allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
-  logic: z.array(ZSurveyFileUploadLogic).optional(),
-});
-
-export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
 
 export const ZSurveyOpenTextQuestionInputType = z.enum(["text", "email", "url", "number", "phone"]);
 export type TSurveyOpenTextQuestionInputType = z.infer<typeof ZSurveyOpenTextQuestionInputType>;
@@ -326,6 +326,14 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
+export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.Date),
+  html: z.string().optional(),
+  format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
+});
+
+export type TSurveyDateQuestion = z.infer<typeof ZSurveyDateQuestion>;
+
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
 export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
@@ -337,6 +345,24 @@ export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelectionQuestion>;
 
+export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.FileUpload),
+  allowMultipleFiles: z.boolean(),
+  maxSizeInMB: z.number().optional(),
+  allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
+  logic: z.array(ZSurveyFileUploadLogic).optional(),
+});
+
+export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
+
+export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.Cal),
+  calUserName: z.string(),
+  logic: z.array(ZSurveyCalLogic).optional(),
+});
+
+export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
+
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
@@ -346,7 +372,9 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
   ZSurveyPictureSelectionQuestion,
+  ZSurveyDateQuestion,
   ZSurveyFileUploadQuestion,
+  ZSurveyCalQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -443,6 +471,8 @@ export const ZSurveyTSurveyQuestionType = z.union([
   z.literal("rating"),
   z.literal("consent"),
   z.literal("pictureSelection"),
+  z.literal("cal"),
+  z.literal("date"),
 ]);
 
 export type TSurveyTSurveyQuestionType = z.infer<typeof ZSurveyTSurveyQuestionType>;

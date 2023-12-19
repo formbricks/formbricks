@@ -2,11 +2,12 @@
 
 import DisableTwoFactorModal from "@/app/(app)/environments/[environmentId]/settings/profile/components/DisableTwoFactorModal";
 import EnableTwoFactorModal from "@/app/(app)/environments/[environmentId]/settings/profile/components/EnableTwoFactorModal";
-import { TProfile } from "@formbricks/types/profile";
-import { Switch } from "@formbricks/ui/Switch";
 import React, { useState } from "react";
 
-const AccountSecurity = ({ profile }: { profile: TProfile }) => {
+import { TUser } from "@formbricks/types/user";
+import { Switch } from "@formbricks/ui/Switch";
+
+const AccountSecurity = ({ user }: { user: TUser }) => {
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [disableTwoFactorModalOpen, setDisableTwoFactorModalOpen] = useState(false);
 
@@ -14,7 +15,7 @@ const AccountSecurity = ({ profile }: { profile: TProfile }) => {
     <div>
       <div className="flex items-center space-x-4">
         <Switch
-          checked={profile.twoFactorEnabled}
+          checked={user.twoFactorEnabled}
           onCheckedChange={(checked) => {
             if (checked) {
               setTwoFactorModalOpen(true);

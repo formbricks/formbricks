@@ -4,6 +4,12 @@ import { createActionClassAction } from "@/app/(app)/environments/[environmentId
 import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
 import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
 import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
+import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { Terminal } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+
 import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
@@ -11,11 +17,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
 import { TabBar } from "@formbricks/ui/TabBar";
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
-import { Terminal } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+
 import { testURLmatch } from "../lib/testURLmatch";
 
 interface AddNoCodeActionModalProps {
