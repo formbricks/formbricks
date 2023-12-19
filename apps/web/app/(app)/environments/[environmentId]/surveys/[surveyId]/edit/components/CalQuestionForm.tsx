@@ -1,10 +1,10 @@
-import { TSurveyCalQuestion } from "@formbricks/types/surveys";
-import { Label } from "@formbricks/ui/Label";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { useState } from "react";
 
+import { TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { useState } from "react";
+import { Label } from "@formbricks/ui/Label";
 
 interface CalQuestionFormProps {
   question: TSurveyCalQuestion;

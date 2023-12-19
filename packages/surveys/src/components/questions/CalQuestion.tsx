@@ -1,16 +1,14 @@
-import { useCallback, useState } from "preact/hooks";
-
-import { TSurveyCalQuestion } from "@formbricks/types/surveys";
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
-
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import Headline from "@/components/general/Headline";
 import CalEmbed from "@/components/general/CalEmbed";
+import Headline from "@/components/general/Headline";
 import Subheader from "@/components/general/Subheader";
-
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { useCallback, useState } from "preact/hooks";
+
+import { TResponseData } from "@formbricks/types/responses";
+import { TResponseTtc } from "@formbricks/types/responses";
+import { TSurveyCalQuestion } from "@formbricks/types/surveys";
 
 interface CalQuestionProps {
   question: TSurveyCalQuestion;

@@ -1,7 +1,8 @@
+import { cn } from "@/lib/utils";
 import snippet from "@calcom/embed-snippet";
 import { useEffect, useMemo } from "preact/hooks";
+
 import { TSurveyCalQuestion } from "@formbricks/types/surveys";
-import { cn } from "@/lib/utils";
 
 interface CalEmbedProps {
   question: TSurveyCalQuestion;
