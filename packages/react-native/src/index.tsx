@@ -1,60 +1,32 @@
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useImperativeHandle } from 'react';
 import { Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-// In development mode, use localhost for iOS and 10.0.2.2 for Android (special address to access host machine from Android emulator).
 const BASE_URL = __DEV__
   ? Platform.OS === 'ios' ? 'http://localhost:3000' : 'http://10.0.2.2:3000'
   : 'https://formbricks.com';
 
-interface RefObject {
-  current: FormBricksEmbedRef | null;
-}
-
 interface FormBricksEmbedRef {
-  show: (surveyId: string) => void;
+  show: (surveyId: string) => Promise<void>;
 }
 
-let refs: RefObject[] = [];
+const formBricksRef = React.createRef<FormBricksEmbedRef>();
 
-function addNewRef(newRef: FormBricksEmbedRef) {
-  refs.push({
-    current: newRef
-  });
-}
-
-function removeOldRef(oldRef: FormBricksEmbedRef | null) {
-  refs = refs.filter((r) => r.current !== oldRef);
-}
-
-function getRef(): FormBricksEmbedRef | null {
-  const reversePriority = [...refs].reverse();
-  const activeRef = reversePriority.find((ref) => ref?.current !== null);
-  if (!activeRef) {
-    return null;
-  }
-  return activeRef.current;
-}
-
-const FormBricksEmbed = React.forwardRef<FormBricksEmbedRef, {}>((_props, ref) => {
+const FormBricksEmbed = () => {
   const [surveyId, setSurveyId] = useState<string | null>(null);
   const webViewRef = useRef<WebView | null>(null);
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      show: setSurveyId,
-    }),
-  );
+  const hide = useCallback(async () => {
+    setSurveyId(null);
+  }, []);
 
-  useEffect(() => {
-    if (surveyId && webViewRef.current) {
-      webViewRef.current.reload();
-    }
-  }, [surveyId]);
+  useImperativeHandle(formBricksRef, () => ({
+    show: async (newSurveyId: string) => {
+      setSurveyId(newSurveyId);
+    },
+  }));
 
   return surveyId ? (
-    // @ts-ignore
     <WebView
       ref={webViewRef}
       source={{ uri: `${BASE_URL}/s/${surveyId}?mobileapp=true` }}
@@ -73,32 +45,17 @@ const FormBricksEmbed = React.forwardRef<FormBricksEmbedRef, {}>((_props, ref) =
           }
 
           if (data.closeModal) {
-            setSurveyId(null);
+            hide();
           }
         } catch (error) {
         }
       }}
     />
   ) : null;
-});
-
-FormBricksEmbed.displayName = 'FormBricksEmbed'
-
-export const FormBricks = (props: {}) => {
-  const formBricksRef = useRef<FormBricksEmbedRef | null>(null);
-
-  const setRef = (ref: FormBricksEmbedRef | null) => {
-    if (ref) {
-      formBricksRef.current = ref;
-      addNewRef(ref);
-    } else {
-      removeOldRef(formBricksRef.current);
-    }
-  };
-  // @ts-ignore
-  return <FormBricksEmbed ref={setRef} {...props} />;
 };
 
+export const FormBricks = FormBricksEmbed;
+
 export const showSurvey = (surveyId: string) => {
-  getRef()?.show(surveyId);
+  formBricksRef.current?.show(surveyId);
 };
