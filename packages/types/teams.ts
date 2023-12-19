@@ -23,7 +23,6 @@ export const ZTeam = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),
-  supportEmail: z.string().email().nullable(),
   billing: ZTeamBilling,
 });
 
@@ -37,7 +36,6 @@ export type TTeamCreateInput = z.infer<typeof ZTeamCreateInput>;
 
 export const ZTeamUpdateInput = z.object({
   name: z.string(),
-  supportEmail: z.string().email().nullish(),
   billing: ZTeamBilling.optional(),
 });
 

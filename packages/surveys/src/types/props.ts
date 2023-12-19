@@ -18,7 +18,7 @@ export interface SurveyBaseProps {
   brandColor: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
-  supportEmail?: string;
+  supportEmail?: string | null;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

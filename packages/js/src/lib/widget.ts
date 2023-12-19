@@ -63,6 +63,7 @@ export const renderWidget = (survey: TSurvey) => {
       highlightBorderColor,
       placement,
       isError,
+      supportEmail: product.supportEmail,
       onDisplay: async () => {
         const { userId } = config.get();
         // if config does not have a person, we store the displays in local storage

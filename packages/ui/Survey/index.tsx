@@ -23,6 +23,7 @@ interface SurveyProps {
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
   responseCount?: number;
+  supportEmail?: string | null;
 }
 
 interface SurveyModalProps extends SurveyProps {

@@ -1,5 +1,4 @@
 import TeamActions from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/TeamActions";
-import EditTeamSupportEmail from "@/app/(app)/environments/[environmentId]/settings/members/components/EditTeamSupportEmail";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
 
@@ -98,11 +97,6 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
           environmentId={params.environmentId}
           membershipRole={currentUserMembership?.role}
         />
-      </SettingsCard>
-      <SettingsCard
-        title="Support Email"
-        description="Add an email we share with respondents who couldn't submit feedback.">
-        <EditTeamSupportEmail team={team} environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
         title="Delete Team"

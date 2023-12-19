@@ -140,6 +140,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
+          supportEmail={product.supportEmail}
           isBrandingEnabled={product.linkSurveyBranding}
           onDisplay={async () => {
             if (!isPreview) {

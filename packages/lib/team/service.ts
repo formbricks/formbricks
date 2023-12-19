@@ -28,7 +28,6 @@ export const select = {
   createdAt: true,
   updatedAt: true,
   name: true,
-  supportEmail: true,
   billing: true,
 };
 

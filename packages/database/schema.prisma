@@ -298,7 +298,6 @@ model Survey {
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
-  supportEmail      String?
   pin               String?
 
   @@index([environmentId])
@@ -412,23 +411,23 @@ model Product {
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
+  supportEmail         String?
 
   @@unique([teamId, name])
   @@index([teamId])
 }
 
 model Team {
-  id           String       @id @default(cuid())
-  createdAt    DateTime     @default(now()) @map(name: "created_at")
-  updatedAt    DateTime     @updatedAt @map(name: "updated_at")
-  name         String
-  memberships  Membership[]
-  products     Product[]
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now()) @map(name: "created_at")
+  updatedAt   DateTime     @updatedAt @map(name: "updated_at")
+  name        String
+  memberships Membership[]
+  products    Product[]
   /// @zod.custom(imports.ZTeamBilling)
   /// [TeamBilling]
-  billing      Json         @default("{\"stripeCustomerId\": null, \"features\": {\"inAppSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"linkSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"userTargeting\": {\"status\": \"inactive\", \"unlimited\": false}}}")
-  invites      Invite[]
-  supportEmail String?
+  billing     Json         @default("{\"stripeCustomerId\": null, \"features\": {\"inAppSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"linkSurvey\": {\"status\": \"inactive\", \"unlimited\": false}, \"userTargeting\": {\"status\": \"inactive\", \"unlimited\": false}}}")
+  invites     Invite[]
 }
 
 enum MembershipRole {

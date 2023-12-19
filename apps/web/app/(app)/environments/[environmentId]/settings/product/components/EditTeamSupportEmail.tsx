@@ -1,42 +1,42 @@
 "use client";
 
-import { updateTeamSupportEmailAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
+import { updateProductAction } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 
-import { TTeam } from "@formbricks/types/teams";
+import { TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
 const ZEmail = z.string().email("Please enter a valid email address.");
 
-type TTeamSupportEmailForm = {
+type TProductSupportEmailForm = {
   supportEmail: string;
 };
 
-type EditTeamSupportEmailProps = {
+type EditProductSupportEmailProps = {
   environmentId: string;
-  team: TTeam;
+  product: TProduct;
 };
 
-export default function EditTeamSupportEmail({ team }: EditTeamSupportEmailProps) {
+export default function EditProductSupportEmail({ product }: EditProductSupportEmailProps) {
   const router = useRouter();
   const {
     register,
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<TTeamSupportEmailForm>({
+  } = useForm<TProductSupportEmailForm>({
     defaultValues: {
-      supportEmail: team.supportEmail ?? "",
+      supportEmail: product.supportEmail ?? "",
     },
     mode: "onSubmit",
   });
-  const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
+  const [isUpdatingProduct, setIsUpdatingProduct] = useState(false);
 
   const supportEmail = useWatch({
     control,
@@ -44,32 +44,32 @@ export default function EditTeamSupportEmail({ team }: EditTeamSupportEmailProps
   });
 
   const currentSupportEmail = supportEmail?.trim().toLowerCase() ?? "";
-  const previousTeamName = team?.supportEmail?.trim().toLowerCase() ?? "";
+  const previousProductName = product?.supportEmail?.trim().toLowerCase() ?? "";
 
-  const handleUpdateTeamName: SubmitHandler<TTeamSupportEmailForm> = async (data) => {
+  const handleUpdateProduct: SubmitHandler<TProductSupportEmailForm> = async (data) => {
     try {
-      setIsUpdatingTeam(true);
-      await updateTeamSupportEmailAction(team.id, data.supportEmail);
+      setIsUpdatingProduct(true);
+      await updateProductAction(product.id, data);
 
-      setIsUpdatingTeam(false);
+      setIsUpdatingProduct(false);
       toast.success(
         data.supportEmail ? "Support email updated successfully." : "Support email removed successfully."
       );
 
       router.refresh();
     } catch (err) {
-      setIsUpdatingTeam(false);
+      setIsUpdatingProduct(false);
       toast.error(`Error: ${err.message}`);
     }
   };
 
   return (
-    <form className="w-full max-w-sm items-center" onSubmit={handleSubmit(handleUpdateTeamName)}>
+    <form className="w-full max-w-sm items-center" onSubmit={handleSubmit(handleUpdateProduct)}>
       <Label htmlFor="supportEmail">Public Support Email</Label>
       <Input
         type="text"
         id="supportEmail"
-        defaultValue={team?.supportEmail ?? ""}
+        defaultValue={product?.supportEmail ?? ""}
         {...register("supportEmail", {
           validate: (value) => {
             // allow user to unset support email
@@ -90,8 +90,8 @@ export default function EditTeamSupportEmail({ team }: EditTeamSupportEmailProps
         type="submit"
         className="mt-4"
         variant="darkCTA"
-        loading={isUpdatingTeam}
-        disabled={currentSupportEmail === previousTeamName}>
+        loading={isUpdatingProduct}
+        disabled={currentSupportEmail === previousProductName}>
         Update
       </Button>
     </form>

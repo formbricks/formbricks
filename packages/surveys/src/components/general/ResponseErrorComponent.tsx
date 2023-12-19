@@ -7,7 +7,7 @@ type ResponseErrorComponentProps = {
   questions: TSurveyQuestion[];
   responseData: TResponseData;
   brandColor: string;
-  supportEmail?: string;
+  supportEmail?: string | null;
 };
 
 export const ResponseErrorComponent = ({

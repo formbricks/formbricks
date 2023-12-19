@@ -18,6 +18,7 @@ export const ZProduct = z.object({
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
   environments: z.array(ZEnvironment),
+  supportEmail: z.string().email().nullable(),
 });
 
 export type TProduct = z.infer<typeof ZProduct>;
