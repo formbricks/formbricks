@@ -318,7 +318,10 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
   return displays.map((display) => formatDateFields(display, ZDisplay));
 };
 
-export const deleteDisplayByResponseId = async (responseId: string, surveyId: string): Promise<TDisplay> => {
+export const deleteDisplayByResponseId = async (
+  responseId: string,
+  surveyId: string
+): Promise<TDisplay | null> => {
   validateInputs([responseId, ZId], [surveyId, ZId]);
 
   try {

@@ -215,8 +215,6 @@ export default function PreviewSurvey({
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
             <MediaBackground survey={survey} ContentRef={ContentRef} isMobilePreview>
-              {/* below element is use to create notch for the mobile device mockup   */}
-              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
