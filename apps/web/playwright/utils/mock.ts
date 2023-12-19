@@ -25,6 +25,13 @@ export const users = {
       password: "Y1I*EpURUSb32j5XijP",
     },
   ],
+  js: [
+    {
+      name: "JS User 1",
+      email: "js1@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+  ],
 };
 
 export const teams = {
