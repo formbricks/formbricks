@@ -1,12 +1,10 @@
 "use client";
 
 import { replacePresetPlaceholders } from "@/app/lib/templates";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
-import { TTeam } from "@formbricks/types/teams";
 import type { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { SearchBox } from "@formbricks/ui/SearchBox";
@@ -19,7 +17,6 @@ type TemplateContainerWithPreviewProps = {
   environmentId: string;
   product: TProduct;
   environment: TEnvironment;
-  team: TTeam;
   user: TUser;
 };
 
@@ -27,7 +24,6 @@ export default function TemplateContainerWithPreview({
   environmentId,
   product,
   environment,
-  team,
   user,
 }: TemplateContainerWithPreviewProps) {
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
@@ -64,7 +60,6 @@ export default function TemplateContainerWithPreview({
             environmentId={environmentId}
             environment={environment}
             product={product}
-            team={team}
             user={user}
             templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {

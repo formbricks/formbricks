@@ -11,7 +11,6 @@ import { cn } from "@formbricks/lib/cn";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurveyInput } from "@formbricks/types/surveys";
-import { TTeam } from "@formbricks/types/teams";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
@@ -26,7 +25,6 @@ type TemplateList = {
   onTemplateClick: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
-  team: TTeam;
   templateSearch?: string;
 };
 
@@ -38,7 +36,6 @@ export default function TemplateList({
   onTemplateClick,
   product,
   environment,
-  team,
   templateSearch,
 }: TemplateList) {
   const router = useRouter();
@@ -77,7 +74,6 @@ export default function TemplateList({
       ...activeTemplate.preset,
       type: surveyType,
       autoComplete,
-      supportEmail: team.supportEmail,
     } as TSurveyInput;
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);

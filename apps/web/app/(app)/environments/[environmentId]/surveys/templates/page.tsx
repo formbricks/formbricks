@@ -39,7 +39,6 @@ export default async function SurveyTemplatesPage({ params }) {
       user={session.user}
       environment={environment}
       product={product}
-      team={team}
     />
   );
 }

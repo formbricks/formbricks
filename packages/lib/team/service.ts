@@ -93,7 +93,7 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
               },
             },
           },
-          select: { ...select, memberships: true }, // include memberships and support email
+          select: { ...select, memberships: true }, // include memberships
         });
 
         return team;

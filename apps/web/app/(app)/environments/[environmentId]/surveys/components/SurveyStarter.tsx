@@ -8,7 +8,6 @@ import { toast } from "react-hot-toast";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurveyInput } from "@formbricks/types/surveys";
-import { TTeam } from "@formbricks/types/teams";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
@@ -19,13 +18,11 @@ export default function SurveyStarter({
   environmentId,
   environment,
   product,
-  team,
   user,
 }: {
   environmentId: string;
   environment: TEnvironment;
   product: TProduct;
-  team: TTeam;
   user: TUser;
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
@@ -65,7 +62,6 @@ export default function SurveyStarter({
             }}
             environment={environment}
             product={product}
-            team={team}
             user={user}
           />
         </>
