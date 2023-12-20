@@ -325,7 +325,7 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            disabled={isSurveyPublishing || containsEmptyTriggers()}
+            disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
