@@ -14,17 +14,17 @@ export async function POST() {
     return responses.notAuthenticatedResponse();
   }
 
-  const [numberOfSurveys, numberOfResponses, numberOfUsers] = await Promise.all([
+  const [surveyCount, responseCount, userCount] = await Promise.all([
     prisma.survey.count(),
     prisma.response.count(),
     prisma.user.count(),
   ]);
 
   captureTelemetry("ping", {
-    appVersion: packageJson.version,
-    surveys: numberOfSurveys,
-    responses: numberOfResponses,
-    users: numberOfUsers,
+    version: packageJson.version,
+    surveyCount,
+    responseCount,
+    userCount,
   });
 
   return responses.successResponse({}, true);
