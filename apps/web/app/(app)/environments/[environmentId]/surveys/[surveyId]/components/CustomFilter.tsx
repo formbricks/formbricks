@@ -5,11 +5,7 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { fetchFile } from "@/app/lib/fetchFile";
-import {
-  generateQuestionAndFilterOptions,
-  generateQuestionsAndAttributes,
-  getTodayDate,
-} from "@/app/lib/surveys/surveys";
+import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { differenceInDays, format, subDays } from "date-fns";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
@@ -91,7 +87,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
-  const getMatchQandA = (responses: any, survey: any) => {
+  const getMatchQandA = (responses: TResponse[], survey: TSurvey) => {
     if (survey && responses) {
       // Create a mapping of question IDs to their headlines
       const questionIdToHeadline = {};
@@ -148,17 +144,31 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
   const downloadResponses = useCallback(
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
       const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
-      const { attributeMap, questionNames } = generateQuestionsAndAttributes(survey, downloadResponse);
+      const questionNames = survey.questions?.map((question) => question.headline);
+      const hiddenFieldIds = survey.hiddenFields.fieldIds;
+      const hiddenFieldResponse = {};
+      const userAttributes = ["Init Attribute 1", "Init Attribute 2"];
       const matchQandA = getMatchQandA(downloadResponse, survey);
       const jsonData = matchQandA.map((response) => {
-        const fileResponse = {
+        const basicInfo = {
           "Response ID": response.id,
           Timestamp: response.createdAt,
           Finished: response.finished,
           "Survey ID": response.surveyId,
           "Formbricks User ID": response.person?.id ?? "",
         };
-
+        const metaData = {
+          OS: response.meta?.userAgent?.os ?? "",
+          Browser: response.meta?.userAgent?.browser ?? "",
+          Device: response.meta?.userAgent?.device ?? "",
+        };
+        const personAttributes = response.personAttributes;
+        if (hiddenFieldIds && hiddenFieldIds.length > 0) {
+          hiddenFieldIds.forEach((hiddenFieldId) => {
+            hiddenFieldResponse[hiddenFieldId] = response.data[hiddenFieldId] ?? "";
+          });
+        }
+        const fileResponse = { ...basicInfo, ...metaData, ...personAttributes, ...hiddenFieldResponse };
         // Map each question name to its corresponding answer
         questionNames.forEach((questionName: string) => {
           const matchingQuestion = response.responses.find((question) => question.question === questionName);
@@ -177,18 +187,6 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
         return fileResponse;
       });
 
-      // Add attribute columns to the file
-      Object.keys(attributeMap).forEach((attributeName) => {
-        const attributeValues = attributeMap[attributeName];
-        Object.keys(attributeValues).forEach((personId) => {
-          const value = attributeValues[personId];
-          const matchingResponse = jsonData.find((response) => response["Formbricks User ID"] === personId);
-          if (matchingResponse) {
-            matchingResponse[attributeName] = value;
-          }
-        });
-      });
-
       // Fields which will be used as column headers in the file
       const fields = [
         "Response ID",
@@ -196,8 +194,12 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
         "Finished",
         "Survey ID",
         "Formbricks User ID",
-        ...Object.keys(attributeMap),
+        "OS",
+        "Browser",
+        "Device",
         ...questionNames,
+        ...(hiddenFieldIds ?? []),
+        ...(survey.type === "web" ? userAttributes : []),
       ];
 
       let response;

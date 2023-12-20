@@ -14,35 +14,6 @@ import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
-export const generateQuestionsAndAttributes = (survey: TSurvey, responses: TResponse[]) => {
-  let questionNames: string[] = [];
-
-  if (survey?.questions) {
-    questionNames = survey.questions.map((question) => question.headline);
-  }
-
-  const attributeMap: Record<string, Record<string, string | number>> = {};
-
-  if (responses) {
-    responses.forEach((response) => {
-      const { person } = response;
-      if (person !== null) {
-        const { id, attributes } = person;
-        Object.keys(attributes).forEach((attributeName) => {
-          if (!attributeMap.hasOwnProperty(attributeName)) {
-            attributeMap[attributeName] = {};
-          }
-          attributeMap[attributeName][id] = attributes[attributeName];
-        });
-      }
-    });
-  }
-  return {
-    questionNames,
-    attributeMap,
-  };
-};
-
 const conditionOptions = {
   openText: ["is"],
   multipleChoiceSingle: ["Includes either"],
