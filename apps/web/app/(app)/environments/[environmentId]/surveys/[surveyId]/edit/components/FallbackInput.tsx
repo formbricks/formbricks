@@ -1,5 +1,3 @@
-import React from "react";
-
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
@@ -11,14 +9,14 @@ export default function FallbackInput({
   addFallback,
 }) {
   return (
-    <div className="fixed z-30 border bg-white p-4 text-xs">
-      <p className="font-medium">Add a fallback, if the data is missing</p>
+    <div className="fixed z-30 mt-1 rounded-md border border-slate-300 bg-slate-50 p-3 text-xs">
+      <p className="font-medium">Add a placeholder to show if the question gets skipped:</p>
       {filteredRecallQuestions.map((recallQuestion) => (
-        <div className="mt-4 flex flex-col">
-          <p className="mb-2 text-xs">{recallQuestion!.headline}</p>
+        <div className="mt-2 flex flex-col">
           <div className="flex items-center">
             <Input
-              className="h-full"
+              className="placeholder:text-md h-full bg-white"
+              /*    placeholder={`Placeholder for "${recallQuestion!.headline}"`} */
               ref={fallbackInputRef}
               id="fallback"
               value={fallbacks[recallQuestion!.id].replaceAll("nbsp", " ")}
@@ -33,7 +31,7 @@ export default function FallbackInput({
       ))}
       <div className="flex w-full justify-end">
         <Button
-          className=" mt-2 h-full py-2"
+          className="mt-2 h-full py-2"
           disabled={Object.values(fallbacks).includes("") || Object.entries(fallbacks).length === 0}
           variant="darkCTA"
           onClick={(e) => {

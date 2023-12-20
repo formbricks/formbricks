@@ -9,7 +9,6 @@ import {
   QueueListIcon,
   StarIcon,
 } from "@heroicons/react/24/solid";
-import React from "react";
 import { useEffect, useState } from "react";
 
 import { checkForRecall } from "@formbricks/lib/utils/recall";
@@ -65,11 +64,11 @@ export default function RecallQuestionSelect({
     };
   }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
   return (
-    <div className="h-inherit fixed z-30 flex flex-col border bg-white p-1 text-xs">
+    <div className="fixed z-30 mt-1 flex flex-col rounded-md border border-slate-300 bg-slate-50 p-3 text-xs">
       {currentQuestionIdx === 0 ? (
-        <p className="p-2 font-medium">There is no information to recall yet</p>
+        <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (
-        <p className="p-2 font-medium">Recall Information from...</p>
+        <p className="mb-2 font-medium">Recall Information from...</p>
       )}
       <div>
         {localSurvey.questions.map((q, idx) => {
@@ -80,7 +79,9 @@ export default function RecallQuestionSelect({
           return (
             <div
               key={idx}
-              className={`flex cursor-pointer items-center p-2 ${isFocused ? "bg-slate-100" : ""}`}
+              className={`flex cursor-pointer items-center rounded-md px-3 py-2 ${
+                isFocused ? "bg-slate-200" : ""
+              }`}
               onClick={() => {
                 addRecallQuestion(q);
                 setShowQuestionSelect(false);
