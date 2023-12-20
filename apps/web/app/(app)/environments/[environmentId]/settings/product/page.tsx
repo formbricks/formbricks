@@ -54,7 +54,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
       </SettingsCard>
       <SettingsCard
         title="Support Email"
-        description="Add an email we share with respondents who couldn't submit feedback.">
+        description="Add an email we share with respondents when response submissions fail.">
         <EditTeamSupportEmail product={product} environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard

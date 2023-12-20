@@ -27,7 +27,7 @@ export default function Loading() {
     },
     {
       title: "Public Support Email",
-      description: "Add an email we share with respondents who couldn't submit feedback.",
+      description: "Add an email we share with respondents when response submissions fail.",
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {

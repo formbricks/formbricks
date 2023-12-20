@@ -49,7 +49,6 @@ export const selectSurvey = {
   styling: true,
   surveyClosedMessage: true,
   singleUse: true,
-  supportEmail: true,
   pin: true,
   triggers: {
     select: {

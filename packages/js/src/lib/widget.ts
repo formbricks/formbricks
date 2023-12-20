@@ -38,8 +38,8 @@ export const renderWidget = (survey: TSurvey) => {
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
       retryAttempts: 2,
-      onResponseSendingFailed: (response) => {
-        alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
+      onResponseSendingFailed: () => {
+        isError = true;
       },
     },
     surveyState

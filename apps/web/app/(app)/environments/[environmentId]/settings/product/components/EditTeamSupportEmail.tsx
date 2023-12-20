@@ -49,7 +49,8 @@ export default function EditProductSupportEmail({ product }: EditProductSupportE
   const handleUpdateProduct: SubmitHandler<TProductSupportEmailForm> = async (data) => {
     try {
       setIsUpdatingProduct(true);
-      await updateProductAction(product.id, data);
+      const supportEmail = data.supportEmail ? data.supportEmail.trim() : null;
+      await updateProductAction(product.id, { supportEmail });
 
       setIsUpdatingProduct(false);
       toast.success(
