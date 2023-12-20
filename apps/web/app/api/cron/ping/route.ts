@@ -1,6 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 
+import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 
@@ -12,7 +13,17 @@ export async function POST() {
     return responses.notAuthenticatedResponse();
   }
 
-  captureTelemetry("ping");
+  const [numberOfSurveys, numberOfResponses, numberOfUsers] = await Promise.all([
+    prisma.survey.count(),
+    prisma.response.count(),
+    prisma.user.count(),
+  ]);
+
+  captureTelemetry("ping", {
+    surveys: numberOfSurveys,
+    responses: numberOfResponses,
+    users: numberOfUsers,
+  });
 
   return responses.successResponse({}, true);
 }
