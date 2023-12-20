@@ -1,4 +1,5 @@
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import CalSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 
@@ -6,6 +7,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import type {
+  TSurveyCalQuestion,
   TSurveyDateQuestion,
   TSurveyFileUploadQuestion,
   TSurveyPictureSelectionQuestion,
@@ -154,6 +156,16 @@ export default function SummaryList({ environment, survey, responses, responsesP
                 <FileUploadSummary
                   key={questionSummary.question.id}
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyFileUploadQuestion>}
+                  environmentId={environment.id}
+                />
+              );
+            }
+
+            if (questionSummary.question.type === TSurveyQuestionType.Cal) {
+              return (
+                <CalSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCalQuestion>}
                   environmentId={environment.id}
                 />
               );

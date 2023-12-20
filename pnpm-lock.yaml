@@ -712,6 +712,9 @@ importers:
 
   packages/surveys:
     devDependencies:
+      '@calcom/embed-snippet':
+        specifier: 1.1.2
+        version: 1.1.2
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../lib
@@ -3031,7 +3034,6 @@ packages:
 
   /@calcom/embed-core@1.3.2:
     resolution: {integrity: sha512-qxVfWpmPcYN5hTnwoKTP9QAlhEAHy4TFh+Xu+IoCnJma/uI2BjqsUWJ0BXsmm0m8sTFthaBkGiFomS1LeMYO+Q==}
-    dev: false
 
   /@calcom/embed-react@1.3.0(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-NbqkLd6J+VUy8jILY4GI1HEXRv3pZk1wnmL3CRrouB2y7pU5sV1qPjkgy+hwCRlYJJGiAIrspXkI/czMsfHxRQ==}
@@ -3049,7 +3051,6 @@ packages:
     resolution: {integrity: sha512-UKz4BRyxWLPfCIr7FfZP2Aa8w3ZMXcfwc3frCjNfWphJvJjaCLi0nAUBXFx6ooIPhVkbzvelnkllbqigZRZPiA==}
     dependencies:
       '@calcom/embed-core': 1.3.2
-    dev: false
 
   /@commander-js/extra-typings@9.4.1(commander@9.4.1):
     resolution: {integrity: sha512-v0BqORYamk1koxDon6femDGLWSL7P78vYTyOU5nFaALnmNALL+ktgdHvWbxzzBBJIKS7kv3XvM/DqNwiLcgFTA==}
