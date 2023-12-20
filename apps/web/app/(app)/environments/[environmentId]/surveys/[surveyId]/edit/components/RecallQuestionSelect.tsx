@@ -65,7 +65,7 @@ export default function RecallQuestionSelect({
     };
   }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
   return (
-    <div className="fixed z-30 flex flex-col border bg-white p-1 text-xs">
+    <div className="h-inherit fixed z-30 flex flex-col border bg-white p-1 text-xs">
       {currentQuestionIdx === 0 ? (
         <p className="p-2 font-medium">There is no information to recall yet</p>
       ) : (

@@ -112,7 +112,7 @@ export function Survey({
   };
 
   const parseRecallInformation = (question: TSurveyQuestion) => {
-    if (!question.headline.includes("recall:")) return question;
+    if (!question.headline.includes("recall:") && !question.subheader?.includes("recall:")) return question;
     const modifiedQuestion = { ...question };
     while (modifiedQuestion.headline.includes("recall:")) {
       const recallInfo = extractRecallInfo(modifiedQuestion.headline);
@@ -123,6 +123,17 @@ export function Survey({
           ? (responseData[questionId!] as string)
           : fallback.replaceAll("nbsp", " ");
         modifiedQuestion.headline = modifiedQuestion.headline.replace(recallInfo, value);
+      }
+    }
+    while (modifiedQuestion.subheader?.includes("recall:")) {
+      const recallInfo = extractRecallInfo(modifiedQuestion.subheader);
+      if (recallInfo) {
+        const questionId = extractId(recallInfo);
+        const fallback = extractFallbackValue(recallInfo);
+        const value = responseData[questionId!]
+          ? (responseData[questionId!] as string)
+          : fallback.replaceAll("nbsp", " ");
+        modifiedQuestion.subheader = modifiedQuestion.subheader.replace(recallInfo, value);
       }
     }
     return modifiedQuestion;

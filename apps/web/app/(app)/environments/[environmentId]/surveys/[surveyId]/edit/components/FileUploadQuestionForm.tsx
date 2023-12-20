@@ -1,5 +1,6 @@
 "use client";
 
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -11,7 +12,6 @@ import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
@@ -24,6 +24,7 @@ interface FileUploadFormProps {
 }
 
 export default function FileUploadQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
@@ -102,31 +103,31 @@ export default function FileUploadQuestionForm({
     return 10;
   }, [billingInfo, billingInfoError, billingInfoLoading]);
 
+  const environmentId = localSurvey.environmentId;
+
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            autoFocus
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
-        </div>
-      </div>
+      <QuestionFormInput
+        localSurvey={localSurvey}
+        environmentId={environmentId}
+        isInValid={isInValid}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+        type="headline"
+      />
       <div className="mt-3">
         {showSubheader && (
           <>
-            <Label htmlFor="subheader">Description</Label>
             <div className="mt-2 inline-flex w-full items-center">
-              <Input
-                id="subheader"
-                name="subheader"
-                value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+              <QuestionFormInput
+                localSurvey={localSurvey}
+                environmentId={environmentId}
+                isInValid={isInValid}
+                question={question}
+                questionIdx={questionIdx}
+                updateQuestion={updateQuestion}
+                type="subheader"
               />
               <TrashIcon
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

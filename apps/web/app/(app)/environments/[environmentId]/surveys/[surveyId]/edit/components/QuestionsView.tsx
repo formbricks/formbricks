@@ -76,6 +76,7 @@ export default function QuestionsView({
   };
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
+    console.log(updatedAttributes);
     let updatedSurvey = { ...localSurvey };
     if ("id" in updatedAttributes) {
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it

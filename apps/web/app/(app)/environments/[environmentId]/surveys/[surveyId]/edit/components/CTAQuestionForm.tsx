@@ -40,6 +40,7 @@ export default function CTAQuestionForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        type="headline"
       />
 
       <div className="mt-3">
