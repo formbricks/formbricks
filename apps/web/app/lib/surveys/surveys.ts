@@ -273,9 +273,9 @@ export const getFilterResponses = (
                 const responseValue = response.data[question.id];
                 const filterValue = filter?.filterType?.filterComboBoxValue;
                 if (Array.isArray(responseValue) && Array.isArray(filterValue) && filterValue.length > 0) {
-                  //@ts-ignore
+                  //@ts-expect-error
                   const updatedResponseValue = question?.choices
-                    ? //@ts-ignore
+                    ? //@ts-expect-error
                       matchAndUpdateArray([...question?.choices], [...responseValue])
                     : responseValue;
                   if (filter?.filterType?.filterValue === "Includes all") {
@@ -427,7 +427,6 @@ export const getFilterResponses = (
 
   // filtering the data according to the dates
   if (dateRange?.from !== undefined && dateRange?.to !== undefined) {
-    // @ts-ignore
     toBeFilterResponses = toBeFilterResponses.filter((r) =>
       isWithinInterval(r.createdAt, { start: dateRange.from!, end: dateRange.to! })
     );

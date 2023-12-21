@@ -58,8 +58,7 @@ export default function DateQuestion({
 
       script.onload = () => {
         // Initialize the DatePicker once the script is loaded
-        // @ts-expect-error
-        window.initDatePicker(document.getElementById("date-picker-root"), defaultDate, question.format);
+        window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
         setLoading(false);
       };
 
@@ -75,8 +74,7 @@ export default function DateQuestion({
         datePickerContainer.remove();
       }
 
-      // @ts-ignore
-      window.initDatePicker(document.getElementById("date-picker-root"), defaultDate, question.format);
+      window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
     }
 
     return () => {};

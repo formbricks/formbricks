@@ -7,7 +7,7 @@ import globalCss from "./styles/globals.css?inline";
 
 declare global {
   interface Window {
-    initDatePicker: (element: HTMLElement, selectedDate?: Date) => void;
+    initDatePicker: (element: HTMLElement, selectedDate?: Date, format?: string) => void;
     selectedDate: Date;
   }
 }

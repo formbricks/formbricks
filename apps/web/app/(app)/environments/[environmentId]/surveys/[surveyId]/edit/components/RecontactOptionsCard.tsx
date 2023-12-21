@@ -122,8 +122,7 @@ export default function RecontactOptionsCard({
             className="flex flex-col space-y-3"
             onValueChange={(v) => {
               if (v === "displayOnce" || v === "displayMultiple" || v === "respondMultiple") {
-                const updatedSurvey = { ...localSurvey, displayOption: v };
-                // @ts-ignore
+                const updatedSurvey: TSurvey = { ...localSurvey, displayOption: v };
                 setLocalSurvey(updatedSurvey);
               }
             }}>
