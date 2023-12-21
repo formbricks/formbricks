@@ -50,7 +50,7 @@ export default function DateQuestion({
       script.src =
         process.env.SURVEYS_PACKAGE_MODE === "development"
           ? "http://localhost:3003/question-date.umd.js"
-          : "https://unpkg.com/@formbricks/surveys@^1.0.1/dist/question-date.umd.js";
+          : "https://unpkg.com/@formbricks/surveys@^1.4.0/dist/question-date.umd.js";
 
       script.async = true;
 
@@ -58,8 +58,7 @@ export default function DateQuestion({
 
       script.onload = () => {
         // Initialize the DatePicker once the script is loaded
-        // @ts-expect-error
-        window.initDatePicker(document.getElementById("date-picker-root"), defaultDate, question.format);
+        window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
         setLoading(false);
       };
 
@@ -75,8 +74,7 @@ export default function DateQuestion({
         datePickerContainer.remove();
       }
 
-      // @ts-ignore
-      window.initDatePicker(document.getElementById("date-picker-root"), defaultDate, question.format);
+      window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
     }
 
     return () => {};

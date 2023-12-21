@@ -146,9 +146,9 @@ export const authOptions: NextAuthOptions = {
       };
     },
     async session({ session, token }) {
-      // @ts-ignore
+      // @ts-expect-error
       session.user.id = token?.id;
-      // @ts-ignore
+      // @ts-expect-error
       session.user = token.profile;
 
       return session;

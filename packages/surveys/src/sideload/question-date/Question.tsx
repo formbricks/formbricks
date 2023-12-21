@@ -91,7 +91,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
           setDatePickerOpen(false);
           setSelectedDate(selectedDate);
         }}
-        // @ts-ignore
+        // @ts-expect-error
         calendarIcon={<CalendarIcon />}
         tileClassName={({ date }) => {
           const baseClass =

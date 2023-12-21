@@ -230,16 +230,18 @@ export default function PreviewSurvey({
                   />
                 </Modal>
               ) : (
-                <div className="absolute inset-0 z-10 w-full max-w-md  px-4">
-                  <SurveyInline
-                    survey={survey}
-                    brandColor={brandColor}
-                    activeQuestionId={activeQuestionId || undefined}
-                    isBrandingEnabled={product.linkSurveyBranding}
-                    onActiveQuestionChange={setActiveQuestionId}
-                    onFileUpload={onFileUpload}
-                    responseCount={42}
-                  />
+                <div className="px-4">
+                  <div className="no-scrollbar z-10 max-h-[500px] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                    <SurveyInline
+                      survey={survey}
+                      brandColor={brandColor}
+                      activeQuestionId={activeQuestionId || undefined}
+                      isBrandingEnabled={product.linkSurveyBranding}
+                      onActiveQuestionChange={setActiveQuestionId}
+                      onFileUpload={onFileUpload}
+                      responseCount={42}
+                    />
+                  </div>
                 </div>
               )}
             </MediaBackground>
