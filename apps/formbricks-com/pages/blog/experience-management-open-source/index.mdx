@@ -2,7 +2,7 @@ import Image from "next/image";
 import LayoutMdx from "@/components/shared/LayoutMdx";
 import { Callout } from "@/components/shared/Callout";
 import AuthorBox from "@/components/shared/AuthorBox";
-
+import AuthorJohannes from "@/images/blog/johannes-co-founder-formbricks-small.jpg";
 import TweetPeer from "./peer-tweet-typeform-open-source.png";
 import SnoopForms from "./snoopforms-open-source-typeform-alternative.png";
 import TwitterResult from "./twitter-results-PMF-cal.png";
@@ -22,7 +22,7 @@ export const meta = {
   tags: ["Open Source", "Experience Management", "Formbricks"],
 };
 
-<AuthorBox name="Johannes" title="Co-Founder" date="April 7th, 2023" duration="4" />
+<AuthorBox name="Johannes" title="Co-Founder" date="April 7th, 2023" duration="4" src={AuthorJohannes}/>
 
 _A lot has happened since Matti and I had a chat about open-source surveys in May last year. The release of Formbricks v1.0 is a perfect opportunity to look back on how it all started._
 

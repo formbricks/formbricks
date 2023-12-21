@@ -1,7 +1,7 @@
 import Image from "next/image";
 import LayoutMdx from "@/components/shared/LayoutMdx";
 import AuthorBox from "@/components/shared/AuthorBox";
-
+import AuthorJohannes from "@/images/blog/johannes-co-founder-formbricks-small.jpg";
 import EmailGIF from "./email-embed.gif";
 import FigmaMock from "./figma-mock.webp";
 import PiyushPR from "./pr-merged.webp";
@@ -17,7 +17,7 @@ export const meta = {
   tags: ["Open Source Surveys", "Open Source Design", "Design", "Community Design"],
 };
 
-<AuthorBox name="Johannes" title="Co-Founder" date="October 11th, 2023" duration="4" />
+<AuthorBox name="Johannes" title="Co-Founder" date="October 11th, 2023" duration="4" src={AuthorJohannes} />
 
 <p className="text-lg font-semibold">We are super excited to share the first end-to-end feature built by the community: From request, over design to code implementation ✅</p>
 

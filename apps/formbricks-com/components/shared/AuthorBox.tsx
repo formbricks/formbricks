@@ -6,14 +6,15 @@ interface AuthorBoxProps {
   title: string;
   date: string;
   duration: string;
+  src: string;
 }
 
-export default function AuthorBox({ name, title, date, duration }: AuthorBoxProps) {
+export default function AuthorBox({ name, title, date, duration, src }: AuthorBoxProps) {
   return (
     <div className="mb-8 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 px-6 py-3 dark:border-slate-700 dark:bg-slate-800">
       <Image
         className="m-0 rounded-full"
-        src={AuthorJohannes}
+        src={src}
         alt={name}
         width={45}
         height={45}
