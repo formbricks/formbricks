@@ -20,7 +20,7 @@ export const GitHubSponsorship: React.FC = () => {
         /> */}
 
         <div className="col-span-2">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 lg:text-2xl">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-800 lg:text-2xl dark:text-slate-200">
             We are live on ProductHunt today 🚀
           </h2>
           <p className="lg:text-md mt-2 max-w-3xl  text-slate-500 dark:text-slate-400">
