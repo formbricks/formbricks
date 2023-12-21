@@ -4,6 +4,7 @@ import {
   mockEnvironmentId,
   mockMeta,
   mockPerson,
+  mockPersonId,
   mockResponse,
   mockResponseData,
   mockResponseNote,
@@ -18,12 +19,13 @@ import { Prisma } from "@prisma/client";
 
 import { prismaMock } from "@formbricks/database/src/jestClient";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { TResponse, TResponseInput } from "@formbricks/types/responses";
+import { TResponse, TResponseInput, TResponseLegacyInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 
 import { selectPerson, transformPrismaPerson } from "../../person/service";
 import {
   createResponse,
+  createResponseLegacy,
   deleteResponse,
   getResponse,
   getResponseBySingleUseId,
@@ -60,6 +62,16 @@ const mockResponseInputWithUserId: TResponseInput = {
   ...mockResponseInputWithoutUserId,
   userId: mockUserId,
 };
+
+const createMockResponseLegacyInput = (personId?: string): TResponseLegacyInput => ({
+  finished: constantsForTests.boolean,
+  personId: personId ?? null,
+  surveyId: mockSurveyId,
+  meta: mockMeta,
+  singleUseId: mockSingleUseId,
+  ttc: {},
+  data: {},
+});
 
 beforeEach(() => {
   // @ts-expect-error
@@ -99,7 +111,8 @@ beforeEach(() => {
 
   prismaMock.response.findMany.mockResolvedValue([mockResponse]);
   prismaMock.response.delete.mockResolvedValue(mockResponse);
-  prismaMock.display.delete.mockResolvedValue(mockDisplay as any);
+
+  prismaMock.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" });
 
   prismaMock.response.count.mockResolvedValue(1);
 });
@@ -113,14 +126,14 @@ const testInputValidation = async (service: Function, ...args: any[]): Promise<v
 
 describe("Tests for getResponsesByPersonId", () => {
   describe("Success Cases", () => {
-    it("should get all responses by a person id", async () => {
+    it("Returns all responses associated with a given person ID", async () => {
       prismaMock.response.findMany.mockResolvedValue([mockResponseWithMockPerson]);
 
       const responses = await getResponsesByPersonId(mockPerson.id);
       expect(responses).toEqual([expectedResponseWithPerson]);
     });
 
-    it("should get resolve to an empty array if no responses are found", async () => {
+    it("Returns an empty array when no responses are found for the given person ID", async () => {
       prismaMock.response.findMany.mockResolvedValue([]);
 
       const responses = await getResponsesByPersonId(mockPerson.id);
@@ -131,7 +144,7 @@ describe("Tests for getResponsesByPersonId", () => {
   describe("Error Cases", () => {
     testInputValidation(getResponsesByPersonId, "123", 1);
 
-    it("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
+    it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: "P2002",
@@ -143,7 +156,7 @@ describe("Tests for getResponsesByPersonId", () => {
       await expect(getResponsesByPersonId(mockPerson.id)).rejects.toThrow(DatabaseError);
     });
 
-    it("should throw an error if there is an unknown error", async () => {
+    it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
@@ -154,7 +167,7 @@ describe("Tests for getResponsesByPersonId", () => {
 
 describe("Tests for getResponsesBySingleUseId", () => {
   describe("Success Cases", () => {
-    it("should get all responses by a single use id", async () => {
+    it("Retrieves responses linked to a specific single-use ID", async () => {
       const responses = await getResponseBySingleUseId(mockSurveyId, mockSingleUseId);
       expect(responses).toEqual(expectedResponseWithoutPerson);
     });
@@ -163,17 +176,17 @@ describe("Tests for getResponsesBySingleUseId", () => {
 
 describe("Tests for createResponse service", () => {
   describe("Success Cases", () => {
-    it("creates a response with an existing user", async () => {
+    it("Creates a response linked to an existing user", async () => {
       const response = await createResponse(mockResponseInputWithUserId);
       expect(response).toEqual(expectedResponseWithPerson);
     });
 
-    it("creates a response without an existing user", async () => {
+    it("Creates a response without an associated user ID", async () => {
       const response = await createResponse(mockResponseInputWithoutUserId);
       expect(response).toEqual(expectedResponseWithoutPerson);
     });
 
-    it("creates a new person if the person does not exists and then creates a response", async () => {
+    it("Creates a new person and response when the person does not exist", async () => {
       prismaMock.person.findFirst.mockResolvedValue(null);
       prismaMock.person.create.mockResolvedValue(mockPerson);
       const response = await createResponse(mockResponseInputWithUserId);
@@ -196,7 +209,7 @@ describe("Tests for createResponse service", () => {
       data: [],
     });
 
-    it("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
+    it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: "P2002",
@@ -208,7 +221,7 @@ describe("Tests for createResponse service", () => {
       await expect(createResponse(mockResponseInputWithUserId)).rejects.toThrow(DatabaseError);
     });
 
-    it("should throw an error if there is an unknown error", async () => {
+    it("Throws a generic Error for other exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.response.create.mockRejectedValue(new Error(mockErrorMessage));
 
@@ -217,9 +230,23 @@ describe("Tests for createResponse service", () => {
   });
 });
 
+describe("Tests for createResponseLegacy service", () => {
+  describe("Success Cases", () => {
+    it("Creates a response linked to an existing user", async () => {
+      const response = await createResponseLegacy(createMockResponseLegacyInput(mockPersonId));
+      expect(response).toEqual(expectedResponseWithPerson);
+    });
+
+    it("Creates a legacy response without an associated user ID", async () => {
+      const response = await createResponseLegacy(createMockResponseLegacyInput());
+      expect(response).toEqual(expectedResponseWithoutPerson);
+    });
+  });
+});
+
 describe("Tests for getResponse service", () => {
   describe("Success Cases", () => {
-    it("gets a single response by id", async () => {
+    it("Retrieves a specific response by its ID", async () => {
       const response = await getResponse(mockResponse.id);
       expect(response).toEqual(expectedResponseWithoutPerson);
     });
@@ -228,12 +255,12 @@ describe("Tests for getResponse service", () => {
   describe("Error Cases", () => {
     testInputValidation(getResponse, "123");
 
-    it("should throw a ResourceNotFoundError if the response is not found", async () => {
+    it("Throws ResourceNotFoundError if no response is found", async () => {
       prismaMock.response.findUnique.mockResolvedValue(null);
       await expect(getResponse(mockResponse.id)).rejects.toThrow(ResourceNotFoundError);
     });
 
-    it("should throw an error if there is a PrismaClientKnownRequestError", async () => {
+    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: "P2002",
@@ -245,7 +272,7 @@ describe("Tests for getResponse service", () => {
       await expect(getResponse(mockResponse.id)).rejects.toThrow(DatabaseError);
     });
 
-    it("should throw an error if there is an unknown error", async () => {
+    it("Throws a generic Error for other unexpected issues", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.response.findUnique.mockRejectedValue(new Error(mockErrorMessage));
 
@@ -256,7 +283,7 @@ describe("Tests for getResponse service", () => {
 
 describe("Tests for getResponses service", () => {
   describe("Success Cases", () => {
-    it("gets all responses", async () => {
+    it("Fetches all responses for a given survey ID", async () => {
       const response = await getResponses(mockSurveyId);
       expect(response).toEqual([expectedResponseWithoutPerson]);
     });
@@ -265,7 +292,7 @@ describe("Tests for getResponses service", () => {
   describe("Error Cases", () => {
     testInputValidation(getResponses, mockSurveyId, "1");
 
-    it("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
+    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: "P2002",
@@ -277,7 +304,7 @@ describe("Tests for getResponses service", () => {
       await expect(getResponses(mockSurveyId)).rejects.toThrow(DatabaseError);
     });
 
-    it("should throw an error if there is an unknown error", async () => {
+    it("Throws a generic Error for unexpected problems", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
@@ -288,7 +315,7 @@ describe("Tests for getResponses service", () => {
 
 describe("Tests for getResponsesByEnvironmentId", () => {
   describe("Success Cases", () => {
-    it("gets all responses by an environment id", async () => {
+    it("Obtains all responses associated with a specific environment ID", async () => {
       const responses = await getResponsesByEnvironmentId(mockEnvironmentId);
       expect(responses).toEqual([expectedResponseWithoutPerson]);
     });
@@ -297,7 +324,7 @@ describe("Tests for getResponsesByEnvironmentId", () => {
   describe("Error Cases", () => {
     testInputValidation(getResponsesByEnvironmentId, "123");
 
-    it("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
+    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: "P2002",
@@ -309,7 +336,7 @@ describe("Tests for getResponsesByEnvironmentId", () => {
       await expect(getResponsesByEnvironmentId(mockEnvironmentId)).rejects.toThrow(DatabaseError);
     });
 
-    it("should throw an error if there is an unknown error", async () => {
+    it("Throws a generic Error for any other unhandled exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
@@ -320,7 +347,7 @@ describe("Tests for getResponsesByEnvironmentId", () => {
 
 describe("Tests for updateResponse Service", () => {
   describe("Success Cases", () => {
-    it("updates a response (finished = true)", async () => {
+    it("Updates a response (finished = true)", async () => {
       const response = await updateResponse(mockResponse.id, getMockUpdateResponseInput(true));
       expect(response).toEqual({
         ...expectedResponseWithoutPerson,
@@ -328,7 +355,7 @@ describe("Tests for updateResponse Service", () => {
       });
     });
 
-    it("updates a response (finished = false)", async () => {
+    it("Updates a response (finished = false)", async () => {
       const response = await updateResponse(mockResponse.id, getMockUpdateResponseInput(false));
       expect(response).toEqual({
         ...expectedResponseWithoutPerson,
@@ -337,11 +364,43 @@ describe("Tests for updateResponse Service", () => {
       });
     });
   });
+
+  describe("Error Cases", () => {
+    testInputValidation(updateResponse, "123", {});
+
+    it("Throws ResourceNotFoundError if no response is found", async () => {
+      prismaMock.response.findUnique.mockResolvedValue(null);
+      await expect(updateResponse(mockResponse.id, getMockUpdateResponseInput())).rejects.toThrow(
+        ResourceNotFoundError
+      );
+    });
+
+    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
+      const mockErrorMessage = "Mock error message";
+      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+
+      prismaMock.response.update.mockRejectedValue(errToThrow);
+
+      await expect(updateResponse(mockResponse.id, getMockUpdateResponseInput())).rejects.toThrow(
+        DatabaseError
+      );
+    });
+
+    it("Throws a generic Error for other unexpected issues", async () => {
+      const mockErrorMessage = "Mock error message";
+      prismaMock.response.update.mockRejectedValue(new Error(mockErrorMessage));
+
+      await expect(updateResponse(mockResponse.id, getMockUpdateResponseInput())).rejects.toThrow(Error);
+    });
+  });
 });
 
 describe("Tests for deleteResponse service", () => {
   describe("Success Cases", () => {
-    it("deletes a response", async () => {
+    it("Successfully deletes a response based on its ID", async () => {
       const response = await deleteResponse(mockResponse.id);
       expect(response).toEqual(expectedResponseWithoutPerson);
     });
@@ -350,7 +409,7 @@ describe("Tests for deleteResponse service", () => {
   describe("Error Cases", () => {
     testInputValidation(deleteResponse, "123");
 
-    it("should throw an error if there is a PrismaClientKnownRequestError", async () => {
+    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: "P2002",
@@ -362,7 +421,7 @@ describe("Tests for deleteResponse service", () => {
       await expect(deleteResponse(mockResponse.id)).rejects.toThrow(DatabaseError);
     });
 
-    it("should throw an error if there is an unknown error", async () => {
+    it("Throws a generic Error for any unhandled exception during deletion", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.response.delete.mockRejectedValue(new Error(mockErrorMessage));
 
@@ -373,12 +432,12 @@ describe("Tests for deleteResponse service", () => {
 
 describe("Tests for getResponseCountBySurveyId service", () => {
   describe("Success Cases", () => {
-    it("gets the count of responses by survey id", async () => {
+    it("Counts the total number of responses for a given survey ID", async () => {
       const count = await getResponseCountBySurveyId(mockSurveyId);
       expect(count).toEqual(1);
     });
 
-    it("gets the count of responses by survey id (no responses)", async () => {
+    it("Returns zero count when there are no responses for a given survey ID", async () => {
       prismaMock.response.count.mockResolvedValue(0);
       const count = await getResponseCountBySurveyId(mockSurveyId);
       expect(count).toEqual(0);
@@ -388,7 +447,7 @@ describe("Tests for getResponseCountBySurveyId service", () => {
   describe("Error Cases", () => {
     testInputValidation(getResponseCountBySurveyId, "123");
 
-    it("should throw an error if there is an unknown error", async () => {
+    it("Throws a generic Error for other unexpected issues", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.response.count.mockRejectedValue(new Error(mockErrorMessage));
 
