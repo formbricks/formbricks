@@ -18,7 +18,7 @@
   "dependencies": {
     "@formbricks/surveys": "workspace:*",
     "@formbricks/lib": "workspace:*",
-    "@heroicons/react": "^2.0.18",
+    "@heroicons/react": "^2.1.1",
     "@lexical/code": "^0.12.5",
     "@lexical/link": "^0.12.5",
     "@lexical/list": "^0.12.5",
@@ -41,13 +41,13 @@
     "clsx": "^2.0.0",
     "cmdk": "^0.2.0",
     "lexical": "^0.12.5",
-    "lucide-react": "^0.295.0",
+    "lucide-react": "^0.299.0",
     "react-colorful": "^5.6.1",
     "react-confetti": "^6.1.0",
     "react-day-picker": "^8.9.1",
     "react-hot-toast": "^2.4.1",
     "react-radio-group": "^3.0.3",
     "react-use": "^17.4.2",
-    "mime": "^4.0.0"
+    "mime": "^4.0.1"
   }
 }

@@ -131,7 +131,7 @@ export default function PictureSelectionQuestion({
                     id={`${choice.id}-checked`}
                     name={`${choice.id}-checkbox`}
                     type="checkbox"
-                    tabindex={-1}
+                    tabIndex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded border",
@@ -146,7 +146,7 @@ export default function PictureSelectionQuestion({
                     id={`${choice.id}-radio`}
                     name={`${choice.id}-radio`}
                     type="radio"
-                    tabindex={-1}
+                    tabIndex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded-full border",

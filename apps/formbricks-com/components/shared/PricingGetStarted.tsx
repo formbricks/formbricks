@@ -9,7 +9,7 @@ export const GetStartedWithPricing = ({ showDetailed }: { showDetailed: boolean 
           <p className="text-base font-semibold">Free</p>
 
           {showDetailed && (
-            <p className="leading text-xs text-slate-500 dark:text-slate-400 md:text-base">
+            <p className="leading text-xs text-slate-500 md:text-base dark:text-slate-400">
               General free usage on every product. Best for early stage startups and hobbyists
             </p>
           )}
@@ -26,7 +26,7 @@ export const GetStartedWithPricing = ({ showDetailed }: { showDetailed: boolean 
         <div className="w-1/3 text-left text-sm text-slate-800 dark:text-slate-100">
           <p className="text-base font-semibold"> Paid</p>
           {showDetailed && (
-            <p className="leading text-xs text-slate-500 dark:text-slate-400 md:text-base">
+            <p className="leading text-xs text-slate-500 md:text-base dark:text-slate-400">
               Formbricks with the next-generation features, Pay only for the tracked users.
             </p>
           )}
