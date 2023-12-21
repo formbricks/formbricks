@@ -130,7 +130,7 @@ export default function PreviewSurvey({
       if (activeQuestionId === "end") {
         setIsModalOpen(false);
         setTimeout(() => {
-          setActiveQuestionId(survey.questions[0].id);
+          setActiveQuestionId(survey.questions[0]?.id);
           setIsModalOpen(true);
         }, 500);
       }
