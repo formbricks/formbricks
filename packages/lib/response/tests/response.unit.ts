@@ -125,7 +125,7 @@ const testInputValidation = async (service: Function, ...args: any[]): Promise<v
 };
 
 describe("Tests for getResponsesByPersonId", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Returns all responses associated with a given person ID", async () => {
       prismaMock.response.findMany.mockResolvedValue([mockResponseWithMockPerson]);
 
@@ -141,7 +141,7 @@ describe("Tests for getResponsesByPersonId", () => {
     });
   });
 
-  describe("Error Cases", () => {
+  describe("Sad Path", () => {
     testInputValidation(getResponsesByPersonId, "123", 1);
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
@@ -166,16 +166,39 @@ describe("Tests for getResponsesByPersonId", () => {
 });
 
 describe("Tests for getResponsesBySingleUseId", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Retrieves responses linked to a specific single-use ID", async () => {
       const responses = await getResponseBySingleUseId(mockSurveyId, mockSingleUseId);
       expect(responses).toEqual(expectedResponseWithoutPerson);
     });
   });
+
+  describe("Sad Path", () => {
+    testInputValidation(getResponseBySingleUseId, "123", "123");
+
+    it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
+      const mockErrorMessage = "Mock error message";
+      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+
+      prismaMock.response.findUnique.mockRejectedValue(errToThrow);
+
+      await expect(getResponseBySingleUseId(mockSurveyId, mockSingleUseId)).rejects.toThrow(DatabaseError);
+    });
+
+    it("Throws a generic Error for other exceptions", async () => {
+      const mockErrorMessage = "Mock error message";
+      prismaMock.response.findUnique.mockRejectedValue(new Error(mockErrorMessage));
+
+      await expect(getResponseBySingleUseId(mockSurveyId, mockSingleUseId)).rejects.toThrow(Error);
+    });
+  });
 });
 
 describe("Tests for createResponse service", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Creates a response linked to an existing user", async () => {
       const response = await createResponse(mockResponseInputWithUserId);
       expect(response).toEqual(expectedResponseWithPerson);
@@ -203,7 +226,7 @@ describe("Tests for createResponse service", () => {
     });
   });
 
-  describe("Error Cases", () => {
+  describe("Sad Path", () => {
     testInputValidation(createResponse, {
       ...mockResponseInputWithUserId,
       data: [],
@@ -231,7 +254,7 @@ describe("Tests for createResponse service", () => {
 });
 
 describe("Tests for createResponseLegacy service", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Creates a response linked to an existing user", async () => {
       const response = await createResponseLegacy(createMockResponseLegacyInput(mockPersonId));
       expect(response).toEqual(expectedResponseWithPerson);
@@ -245,14 +268,14 @@ describe("Tests for createResponseLegacy service", () => {
 });
 
 describe("Tests for getResponse service", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Retrieves a specific response by its ID", async () => {
       const response = await getResponse(mockResponse.id);
       expect(response).toEqual(expectedResponseWithoutPerson);
     });
   });
 
-  describe("Error Cases", () => {
+  describe("Sad Path", () => {
     testInputValidation(getResponse, "123");
 
     it("Throws ResourceNotFoundError if no response is found", async () => {
@@ -282,14 +305,14 @@ describe("Tests for getResponse service", () => {
 });
 
 describe("Tests for getResponses service", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Fetches all responses for a given survey ID", async () => {
       const response = await getResponses(mockSurveyId);
       expect(response).toEqual([expectedResponseWithoutPerson]);
     });
   });
 
-  describe("Error Cases", () => {
+  describe("Sad Path", () => {
     testInputValidation(getResponses, mockSurveyId, "1");
 
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
@@ -314,14 +337,14 @@ describe("Tests for getResponses service", () => {
 });
 
 describe("Tests for getResponsesByEnvironmentId", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Obtains all responses associated with a specific environment ID", async () => {
       const responses = await getResponsesByEnvironmentId(mockEnvironmentId);
       expect(responses).toEqual([expectedResponseWithoutPerson]);
     });
   });
 
-  describe("Error Cases", () => {
+  describe("Sad Path", () => {
     testInputValidation(getResponsesByEnvironmentId, "123");
 
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
@@ -346,7 +369,7 @@ describe("Tests for getResponsesByEnvironmentId", () => {
 });
 
 describe("Tests for updateResponse Service", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Updates a response (finished = true)", async () => {
       const response = await updateResponse(mockResponse.id, getMockUpdateResponseInput(true));
       expect(response).toEqual({
@@ -365,7 +388,7 @@ describe("Tests for updateResponse Service", () => {
     });
   });
 
-  describe("Error Cases", () => {
+  describe("Sad Path", () => {
     testInputValidation(updateResponse, "123", {});
 
     it("Throws ResourceNotFoundError if no response is found", async () => {
@@ -399,14 +422,14 @@ describe("Tests for updateResponse Service", () => {
 });
 
 describe("Tests for deleteResponse service", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Successfully deletes a response based on its ID", async () => {
       const response = await deleteResponse(mockResponse.id);
       expect(response).toEqual(expectedResponseWithoutPerson);
     });
   });
 
-  describe("Error Cases", () => {
+  describe("Sad Path", () => {
     testInputValidation(deleteResponse, "123");
 
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
@@ -431,7 +454,7 @@ describe("Tests for deleteResponse service", () => {
 });
 
 describe("Tests for getResponseCountBySurveyId service", () => {
-  describe("Success Cases", () => {
+  describe("Happy Path", () => {
     it("Counts the total number of responses for a given survey ID", async () => {
       const count = await getResponseCountBySurveyId(mockSurveyId);
       expect(count).toEqual(1);
@@ -444,7 +467,7 @@ describe("Tests for getResponseCountBySurveyId service", () => {
     });
   });
 
-  describe("Error Cases", () => {
+  describe("Sad Path", () => {
     testInputValidation(getResponseCountBySurveyId, "123");
 
     it("Throws a generic Error for other unexpected issues", async () => {
