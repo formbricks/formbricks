@@ -30,12 +30,12 @@ export default function DocsFeedbackPage() {
           </p>
           <UseCaseCTA href="/docs/best-practices/docs-feedback" />
         </div>
-        <div className="mx-6 my-6 flex flex-col items-center justify-center rounded-xl border-2 border-slate-300 bg-slate-200 p-4 pb-36 transition-transform duration-150 dark:border-slate-500 dark:bg-slate-700 md:mx-0">
+        <div className="mx-6 my-6 flex flex-col items-center justify-center rounded-xl border-2 border-slate-300 bg-slate-200 p-4 pb-36 transition-transform duration-150 md:mx-0 dark:border-slate-500 dark:bg-slate-700">
           <p className="my-3 text-sm text-slate-500">Preview</p>
           <DocsFeedback />
         </div>
       </div>
-      <h2 className="mb-6 ml-4 mt-12 text-2xl font-semibold text-slate-700 dark:text-slate-400 md:mt-0">
+      <h2 className="mb-6 ml-4 mt-12 text-2xl font-semibold text-slate-700 md:mt-0 dark:text-slate-400">
         Other Best Practices
       </h2>
       <BestPracticeNavigation />
