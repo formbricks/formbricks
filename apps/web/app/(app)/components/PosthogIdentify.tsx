@@ -13,7 +13,7 @@ export default function PosthogIdentify({ session }: { session: Session }) {
 
   useEffect(() => {
     if (posthogEnabled && session.user && posthog) {
-      posthog.identify(session.user.id);
+      posthog.identify(session.user.id, { name: session.user.name, email: session.user.email });
     }
   }, [session, posthog]);
 
