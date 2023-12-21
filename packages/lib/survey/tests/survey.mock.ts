@@ -3,10 +3,10 @@ import { Prisma } from "@prisma/client";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TPerson } from "@formbricks/types/people";
-// import { TDisplay } from "@formbricks/types/displays";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
+  TSurveyAttributeFilter,
   TSurveyInput,
   TSurveyQuestion,
   TSurveyQuestionType,
@@ -15,170 +15,27 @@ import {
 
 import { selectSurvey } from "../service";
 
-export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo8";
-export const mockSurveyId = "ars2tjk8hsi8oqk1uac00mo7";
-export const mockAttributeClassId = "ars2tjk8hsi8oqk1uac00mo6";
+const currentDate = new Date();
+const fourDaysAgo = new Date();
+fourDaysAgo.setDate(currentDate.getDate() - 4);
+
+export const mockId = "ars2tjk8hsi8oqk1uac00mo8";
+const commonMockProperties = {
+  createdAt: currentDate,
+  updatedAt: currentDate,
+  environmentId: mockId,
+};
 
 type SurveyMock = Prisma.SurveyGetPayload<{
   include: typeof selectSurvey;
 }>;
 
-export const mockActionClass: TActionClass = {
-  id: mockSurveyId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  name: "test",
-  type: "code",
-  environmentId: mockEnvironmentId,
-  description: "never",
-  noCodeConfig: null,
-};
-
-export const mockAttributeClass: TAttributeClass = {
-  id: mockSurveyId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  name: "test",
-  type: "code",
-  environmentId: mockEnvironmentId,
-  description: "never",
-  archived: false,
-};
-
-// export const mockAttributeFilter: TSurveyAttributeFilter = {
-//   attributeClassId: mockAttributeClassId,
-//   value: "test",
-//   condition: "equals",
-// };
-
-// export const mockAttributeFilterFromDb = {
-//   id: mockAttributeClassId,
-//   attributeClassId: mockAttributeClassId,
-//   value: "test",
-//   condition: "equals",
-// };
-
-const mockQuestion: TSurveyQuestion = {
-  id: "my-question-id",
-  type: TSurveyQuestionType.OpenText,
-  headline: "Question Text",
-  required: false,
-  inputType: "text",
-};
-
-const mockwelcomeCard: TSurveyWelcomeCard = {
-  enabled: false,
-  headline: "My welcome card",
-  timeToFinish: false,
-  showResponseCount: false,
-};
-
-export const mockCreateSurveyInput: TSurveyInput = {
-  name: "test",
-  type: "web",
-  status: "inProgress",
-  displayOption: "displayOnce",
-  autoClose: undefined,
-  redirectUrl: undefined,
-  recontactDays: undefined,
-  welcomeCard: mockwelcomeCard,
-  questions: [mockQuestion],
-  thankYouCard: {
-    enabled: false,
-  },
-  hiddenFields: {
-    enabled: false,
-  },
-  delay: 0,
-  autoComplete: undefined,
-  closeOnDate: undefined,
-  surveyClosedMessage: {
-    enabled: false,
-  },
-  verifyEmail: undefined,
-  attributeFilters: [],
-  triggers: [mockActionClass.name],
-};
-
-export const surveyMockOutput: SurveyMock = {
-  id: mockSurveyId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  environmentId: mockEnvironmentId,
-  attributeFilters: [],
-  name: "test",
-  type: "web",
-  status: "inProgress",
-  displayOption: "displayOnce",
-  autoClose: null,
-  delay: 0,
-  autoComplete: null,
-  closeOnDate: null,
-  redirectUrl: null,
-  recontactDays: null,
-  welcomeCard: mockwelcomeCard,
-  questions: [mockQuestion],
-  thankYouCard: {
-    enabled: false,
-  },
-  hiddenFields: {
-    enabled: false,
-  },
-  triggers: [{ actionClass: mockActionClass }],
-  surveyClosedMessage: {
-    enabled: false,
-  },
-  productOverwrites: null,
-  singleUse: null,
-  styling: null,
-  verifyEmail: null,
-  pin: null,
-};
-
-export const mockSurveyToBeUpdated: TSurvey = {
-  id: mockSurveyId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  name: "test",
-  type: "web",
-  environmentId: mockEnvironmentId,
-  status: "inProgress",
-  attributeFilters: [],
-  displayOption: "displayOnce",
-  autoClose: null,
-  triggers: [mockActionClass.name],
-  redirectUrl: null,
-  recontactDays: null,
-  welcomeCard: mockwelcomeCard,
-  questions: [mockQuestion],
-  thankYouCard: {
-    enabled: false,
-  },
-  hiddenFields: {
-    enabled: false,
-  },
-  delay: 0,
-  autoComplete: null,
-  closeOnDate: null,
-  productOverwrites: null,
-  styling: null,
-  surveyClosedMessage: null,
-  singleUse: null,
-  verifyEmail: null,
-  pin: null,
-};
-
-export const surveyMockOutputTransformed = {
-  ...surveyMockOutput,
-  triggers: surveyMockOutput.triggers.map((trigger) => trigger.actionClass.name),
-};
-
 export const mockProduct: TProduct = {
-  id: "ars2tjk8hsi8oqk1uac00mo8",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  name: "test",
-  teamId: "ars2tjk8hsi8oqk1uac00mo8",
+  id: mockId,
+  createdAt: currentDate,
+  updatedAt: currentDate,
+  name: "mock Product",
+  teamId: mockId,
   brandColor: "#000000",
   highlightBorderColor: "#000000",
   recontactDays: 0,
@@ -190,21 +47,147 @@ export const mockProduct: TProduct = {
   environments: [],
 };
 
-export const mockCreateDisplay = {
-  id: "ars2tjk8hsi8oqk1uac00mo8",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  surveyId: "ars2tjk8hsi8oqk1uac00mo8",
+export const mockDisplay = {
+  id: mockId,
+  createdAt: fourDaysAgo,
+  updatedAt: fourDaysAgo,
+  surveyId: mockId,
   personId: null,
   responseId: null,
   status: null,
 };
 
 export const mockPerson: TPerson = {
-  id: "ars2tjk8hsi8oqk1uac00mo8",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  environmentId: mockEnvironmentId,
-  userId: "ars2tjk8hsi8oqk1uac00mo8",
+  id: mockId,
+  userId: mockId,
   attributes: { test: "value" },
+  ...commonMockProperties,
+};
+
+export const mockActionClass: TActionClass = {
+  id: mockId,
+  name: "mock action class",
+  type: "code",
+  description: "mock desc",
+  noCodeConfig: null,
+  ...commonMockProperties,
+};
+
+export const mockAttributeClass: TAttributeClass = {
+  id: mockId,
+  name: "mock attribute class",
+  type: "code",
+  description: "mock action class",
+  archived: false,
+  ...commonMockProperties,
+};
+
+export const mockAttributeFilter: TSurveyAttributeFilter = {
+  attributeClassId: mockId,
+  value: "test",
+  condition: "equals",
+};
+
+const mockQuestion: TSurveyQuestion = {
+  id: mockId,
+  type: TSurveyQuestionType.OpenText,
+  headline: "Question Text",
+  required: false,
+  inputType: "text",
+};
+
+const mockWelcomeCard: TSurveyWelcomeCard = {
+  enabled: false,
+  headline: "My welcome card",
+  timeToFinish: false,
+  showResponseCount: false,
+};
+
+const baseSurveyProperties = {
+  id: mockId,
+  name: "Mock Survey",
+  autoClose: 10,
+  delay: 0,
+  autoComplete: 7,
+  closeOnDate: currentDate,
+  redirectUrl: "http://github.com/formbricks/formbricks",
+  recontactDays: 3,
+  welcomeCard: mockWelcomeCard,
+  questions: [mockQuestion],
+  thankYouCard: { enabled: false },
+  hiddenFields: { enabled: false },
+  surveyClosedMessage: {
+    enabled: false,
+  },
+  verifyEmail: {
+    name: "verifyEmail",
+    subheading: "please verify your email",
+  },
+  attributeFilters: [],
+  ...commonMockProperties,
+};
+
+export const mockSurveyOutput: SurveyMock = {
+  type: "web",
+  status: "inProgress",
+  displayOption: "respondMultiple",
+  triggers: [{ actionClass: mockActionClass }],
+  productOverwrites: null,
+  singleUse: null,
+  styling: null,
+  pin: null,
+  ...baseSurveyProperties,
+};
+
+export const createSurveyInput: TSurveyInput = {
+  type: "web",
+  status: "inProgress",
+  displayOption: "respondMultiple",
+  triggers: [mockActionClass.name],
+  ...baseSurveyProperties,
+  attributeFilters: [mockAttributeFilter],
+};
+
+export const updateSurveyInput: TSurvey = {
+  type: "web",
+  status: "inProgress",
+  displayOption: "respondMultiple",
+  triggers: [mockActionClass.name],
+  productOverwrites: null,
+  styling: null,
+  singleUse: null,
+  pin: null,
+  ...commonMockProperties,
+  ...baseSurveyProperties,
+  attributeFilters: [mockAttributeFilter],
+};
+
+export const mockSurveyWithAttributesOutput: SurveyMock = {
+  ...mockSurveyOutput,
+  attributeFilters: [
+    {
+      id: mockId,
+      ...mockAttributeFilter,
+    },
+  ],
+};
+
+export const mockTransformedSurveyOutput = {
+  ...mockSurveyOutput,
+  triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
+};
+
+export const mockTransformedSurveyWithAttributesOutput = {
+  ...mockTransformedSurveyOutput,
+  attributeFilters: [mockAttributeFilter],
+};
+
+export const mockTransformedSurveyWithAttributesIdOutput = {
+  ...mockTransformedSurveyOutput,
+  attributeFilters: [
+    {
+      id: mockId,
+      ...mockAttributeFilter,
+    },
+  ],
 };
