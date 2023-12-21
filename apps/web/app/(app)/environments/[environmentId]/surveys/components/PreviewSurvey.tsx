@@ -231,7 +231,7 @@ export default function PreviewSurvey({
                 </Modal>
               ) : (
                 <div className="px-4">
-                  <div className="no-scrollbar z-10 max-h-[575px] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                  <div className="no-scrollbar z-10 max-h-[500px] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
                       brandColor={brandColor}
