@@ -141,12 +141,27 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     return "my_survey_responses";
   }, [survey]);
 
+  function extracMetadataKeys(obj, parentKey = "") {
+    let keys: string[] = [];
+
+    for (let key in obj) {
+      if (typeof obj[key] === "object" && obj[key] !== null) {
+        keys = keys.concat(extracMetadataKeys(obj[key], parentKey + key + " - "));
+      } else {
+        keys.push(parentKey + key);
+      }
+    }
+
+    return keys;
+  }
+
   const downloadResponses = useCallback(
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
       const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
       const questionNames = survey.questions?.map((question) => question.headline);
       const hiddenFieldIds = survey.hiddenFields.fieldIds;
       const hiddenFieldResponse = {};
+      let metaDataFields = extracMetadataKeys(downloadResponse[0].meta);
       const userAttributes = ["Init Attribute 1", "Init Attribute 2"];
       const matchQandA = getMatchQandA(downloadResponse, survey);
       const jsonData = matchQandA.map((response) => {
@@ -157,11 +172,20 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
           "Survey ID": response.surveyId,
           "Formbricks User ID": response.person?.id ?? "",
         };
-        const metaData = {
-          OS: response.meta?.userAgent?.os ?? "",
-          Browser: response.meta?.userAgent?.browser ?? "",
-          Device: response.meta?.userAgent?.device ?? "",
-        };
+        const metaDataKeys = extracMetadataKeys(response.meta);
+        let metaData = {};
+        metaDataKeys.forEach((key) => {
+          if (!metaDataFields.includes(key)) metaDataFields.push(key);
+          if (response.meta) {
+            if (key.includes("-")) {
+              const nestedKeyArray = key.split("-");
+              metaData[key] = response.meta[nestedKeyArray[0].trim()][nestedKeyArray[1].trim()] ?? "";
+            } else {
+              metaData[key] = response.meta[key] ?? "";
+            }
+          }
+        });
+
         const personAttributes = response.personAttributes;
         if (hiddenFieldIds && hiddenFieldIds.length > 0) {
           hiddenFieldIds.forEach((hiddenFieldId) => {
@@ -194,9 +218,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
         "Finished",
         "Survey ID",
         "Formbricks User ID",
-        "OS",
-        "Browser",
-        "Device",
+        ...metaDataFields,
         ...questionNames,
         ...(hiddenFieldIds ?? []),
         ...(survey.type === "web" ? userAttributes : []),
