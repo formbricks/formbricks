@@ -8,7 +8,7 @@ import {
 import { PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
-import mime from "mime";
+import { lookup } from "mime-types";
 import { unstable_cache } from "next/cache";
 import { join } from "path";
 import path from "path";
@@ -147,7 +147,7 @@ export const getLocalFile = async (filePath: string): Promise<TGetFileResponse> 
     let contentType = "";
 
     try {
-      contentType = mime.getType(filePath) ?? "";
+      contentType = lookup(filePath) || "";
     } catch (err) {
       throw err;
     }

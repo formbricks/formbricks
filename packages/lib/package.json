@@ -14,19 +14,19 @@
     "test": "jest -ci --coverage --no-cache"
   },
   "dependencies": {
-    "@aws-sdk/s3-presigned-post": "3.473.0",
     "@aws-sdk/client-s3": "3.473.0",
+    "@aws-sdk/s3-presigned-post": "3.473.0",
     "@aws-sdk/s3-request-presigner": "3.473.0",
-    "@t3-oss/env-nextjs": "^0.7.1",
-    "mime": "4.0.0",
     "@formbricks/api": "*",
     "@formbricks/database": "*",
     "@formbricks/types": "*",
     "@paralleldrive/cuid2": "^2.2.2",
+    "@t3-oss/env-nextjs": "^0.7.1",
     "aws-crt": "^1.20.0",
     "date-fns": "^2.30.0",
     "jsonwebtoken": "^9.0.2",
     "markdown-it": "^14.0.0",
+    "mime-types": "^2.1.35",
     "nanoid": "^5.0.4",
     "next-auth": "^4.24.5",
     "nodemailer": "^6.9.7",
@@ -37,11 +37,11 @@
   "devDependencies": {
     "@formbricks/tsconfig": "*",
     "@types/jsonwebtoken": "^9.0.5",
-    "@types/mime": "3.0.4",
-    "eslint-config-formbricks": "workspace:*",
+    "@types/mime-types": "^2.1.4",
     "babel-jest": "^29.7.0",
-    "jest-mock-extended": "^3.0.5",
+    "eslint-config-formbricks": "workspace:*",
     "jest": "^29.7.0",
+    "jest-mock-extended": "^3.0.5",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.2"
   }

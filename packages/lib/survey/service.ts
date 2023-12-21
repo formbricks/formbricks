@@ -20,7 +20,6 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
-import { captureTelemetry } from "../telemetry";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -112,7 +111,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
+          // console.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -512,8 +511,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     ...survey,
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
-
-  captureTelemetry("survey created");
 
   surveyCache.revalidate({
     id: survey.id,
