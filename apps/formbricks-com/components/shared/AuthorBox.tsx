@@ -1,4 +1,3 @@
-import AuthorJohannes from "@/images/blog/johannes-co-founder-formbricks-small.jpg";
 import Image from "next/image";
 
 interface AuthorBoxProps {
