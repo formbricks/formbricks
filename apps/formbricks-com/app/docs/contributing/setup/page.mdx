@@ -1,21 +1,22 @@
 import Image from "next/image";
-import GitpodPorts from "./gitpod/ports.webp";
+
 import GitpodAuth from "./gitpod/auth.webp";
 import GitpodNewWorkspace from "./gitpod/new-workspace.webp";
+import GitpodPorts from "./gitpod/ports.webp";
 import GitpodPreparing from "./gitpod/preparing.webp";
 import GitpodRunning from "./gitpod/running.webp";
 
-import GithubCodespaceNew from "./github-codespaces/new.webp";
-import GithubCodespaceLoading from "./github-codespaces/loading.webp";
 import GithubCodespaceEnvFile from "./github-codespaces/env.webp";
-import GithubCodespaceTerminal from "./github-codespaces/terminal.webp";
-import GithubCodespaceRun from "./github-codespaces/run.webp";
+import GithubCodespaceLoading from "./github-codespaces/loading.webp";
+import GithubCodespaceNew from "./github-codespaces/new.webp";
 import GithubCodespacePorts from "./github-codespaces/ports.webp";
+import GithubCodespaceRun from "./github-codespaces/run.webp";
+import GithubCodespaceTerminal from "./github-codespaces/terminal.webp";
 
 export const metadata = {
   title: "Formbricks Development Setup: Complete Guide to Local Environment Configuration for Dev",
   description:
-    "Step-by-step guide to setting up a development environment for Formbricks. We officially support Gitpod and Github Codespaces for quick setup. Our advanced users can also setup Formbricks locally on their machine",
+    "Step-by-step guide to setting up a development environment for Formbricks. We officially support Gitpod and Github Codespaces for quick setup. Our advanced users can also setup Formbricks locally on their machine.",
 };
 
 #### Contributing
@@ -25,29 +26,29 @@ export const metadata = {
 We currently officially support the below methods to set up your development environment for Formbricks.
 
 <Note>
-Both the below cloud IDEs have a **generous free tier** to explore and develop! But make sure to
-not overuse the machines as Formbricks will not be responsible for any charges incurred.
+  Both the below cloud IDEs have a **generous free tier** to explore and develop! But make sure to not overuse
+  the machines as Formbricks will not be responsible for any charges incurred.
 </Note>
 
 ### [GitPod](#gitpod)
+
 This will open a fully configured workspace in your browser with all the necessary dependencies already installed. Click the button below to open this project in Gitpod. For a detailed guide, visit the [Gitpod Setup Guide](#gitpod-guide) section below.
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://Github.com/formbricks/formbricks)
 
-
 ### [Github Codespaces](#Github-codespaces)
+
 This will open a Github VSCode Interface on the cloud for you. This setup will have the Formbricks codebase and all the dependencies installed. Click the button below to configure your instance and open the project in Github Codespaces. For a detailed guide, visit the [Github Codespaces Setup Guide](#github-codespaces-guide) section below.
 
 [![Open in Github Codespaces](https://img.shields.io/badge/Open%20in-Github%20Codespaces-blue?logo=Github)](https://Github.com/codespaces/new?machine=standardLinux32gb&repo=500289888&ref=main&devcontainer_path=.devcontainer%2Fdevcontainer.json&location=EastUs2)
 
-
-
 ### [Local Machine](#local-machine-setup)
+
 This will install the Formbricks codebase and all the dependencies on your local machine. Note that this method is recommended **only for advanced users**. If you're an advanced user, access the steps for [Local Machine Setup here](#local-machine-setup).
 
 <Note>
-For a smooth experience, we suggest the above cloue IDE methods.
-Assistance with setup issues on your local machine may be limited due to varying factors like OS and permissions.
+  For a smooth experience, we suggest the above cloud IDE methods. Assistance with setup issues on your local
+  machine may be limited due to varying factors like OS and permissions.
 </Note>
 
 ## Gitpod Guide
@@ -55,16 +56,16 @@ Assistance with setup issues on your local machine may be limited due to varying
     **Building custom image for the workspace:**
     - This includes : Installing `yq` and `turbo` globally before the workspace starts. This is accomplished within the `.gitpod.Dockerfile` along with starting upon a base custom image building on [workspace-full](https://hub.docker.com/r/gitpod/workspace-full/dockerfile).
 
-    **Initialization of Formbricks:** 
+    **Initialization of Formbricks:**
      - During the prebuilds phase, we initialize Formbricks by performing the following tasks:
         1. Setting up environment variables.
         2. Installing monorepo dependencies.
         3. Installing Docker images by extracting them from the `packages/database/docker-compose.yml` file.
         4. Building the @formbricks/js component.
      - When the workspace starts:
-        1. Wait for the web and demo apps to launch on Gitpod. This automatically opens the `apps/demo/.env` file. Utilize dynamic localhost URLs (e.g., `localhost:3000` for signup and `localhost:8025` for email confirmation) to configure `NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID`. After creating your account and finding the `ID` in the URL at `localhost:3000`, replace `YOUR_ENVIRONMENT_ID` in the `.env` file located in `app/demo`. 
+        1. Wait for the web and demo apps to launch on Gitpod. This automatically opens the `apps/demo/.env` file. Utilize dynamic localhost URLs (e.g., `localhost:3000` for signup and `localhost:8025` for email confirmation) to configure `NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID`. After creating your account and finding the `ID` in the URL at `localhost:3000`, replace `YOUR_ENVIRONMENT_ID` in the `.env` file located in `app/demo`.
 
-    **Web Component Initialization:** 
+    **Web Component Initialization:**
      - we initialize the @formbricks/web component during prebuilds. This involves:
         1. Installing build dependencies for the `@formbricks/web#go` task from turbo.json in prebuilds to save time.
         2. Starting PostgreSQL and Mailhog containers for running migrations in prebuilds.
@@ -74,95 +75,131 @@ Assistance with setup issues on your local machine may be limited due to varying
         2. Replacing `NEXT_PUBLIC_WEBAPP_URL` and `NEXTAUTH_URL` to take in Gitpod URL's ports when running on VSCode browser.
         3. Starting the `@formbricks/web` dev environment.
 
-    **Demo Component Initialization:** 
+    **Demo Component Initialization:**
      - Similar to the web component, the demo component is also initialized during prebuilds. This includes:
         1. Installing build dependencies for the `formbricks/demo#go` task from turbo.json in prebuilds to save time.
         2. Caching hits and replaying builds from the `@formbricks/js` component.
-     - When the workspace starts: 
+     - When the workspace starts:
         1. Initializing environment variables.
         2. Replaces `NEXT_PUBLIC_FORMBRICKS_API_HOST` to take in Gitpod URL's ports when running on VSCode browser.
         3. Starting the `@formbricks/demo` dev environment.
 
-    **Github Prebuilds Configuration:** 
+    **Github Prebuilds Configuration:**
      - This configures Github Prebuilds for the master branch, pull requests, and adding comments. This helps automate the prebuild process for the specified branches and actions.
 
-    **VSCode Extensions:** 
+    **VSCode Extensions:**
      - This includes a list of VSCode extensions that are added to the configuration when using Gitpod. These extensions can enhance the development experience within Gitpod.
-
-
 
 ### 1. Browser Redirection
 
 After clicking the one-click setup button, Gitpod will open a new tab or window. Please ensure that your browser allows redirection to successfully access the services:
 
 ### 2. Authorizing in Gitpod
-<Image src={GitpodAuth} alt="Gitpod Auth Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
-- This is the Gitpod Authentication Page. It appears when you click the "Open in GitPod" button and Gitpod needs to authenticate your access to the workspace. Click on 'Continue With Github' to authorize your GitPod session.
+
+<Image src={GitpodAuth} alt="Gitpod Auth Page" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />-
+This is the Gitpod Authentication Page. It appears when you click the "Open in GitPod" button and Gitpod needs
+to authenticate your access to the workspace. Click on 'Continue With Github' to authorize your GitPod session.
 
 ### 3. Creating a New Workspace
-<Image src={GitpodNewWorkspace} alt="Gitpod New workspace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
-- After authentication, Gitpod asks to create a new workspace for you. This page displays the configurations of your workspace. 
-- You can use either choose either VS Code Browser or  VS Code Desktop editor with the 'Standard Class' for your workspace class.
-- If you opt for the VS Code Desktop, follow the following steps
-   1. Gitpod will prompt you to grant access to the VSCode app. Once approved, install the GitPod extension from the VSCode Marketplace and follow the prompts to authorize the integration.
-   2. Change the `WEBAPP_URL` and the `NEXTAUTH_URL` to `https://localhost:3000`
 
+<Image
+  src={GitpodNewWorkspace}
+  alt="Gitpod New workspace Page"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+- After authentication, Gitpod asks to create a new workspace for you. This page displays the configurations of
+your workspace. - You can use either choose either VS Code Browser or VS Code Desktop editor with the 'Standard
+Class' for your workspace class. - If you opt for the VS Code Desktop, follow the following steps 1. Gitpod will
+prompt you to grant access to the VSCode app. Once approved, install the GitPod extension from the VSCode Marketplace
+and follow the prompts to authorize the integration. 2. Change the `WEBAPP_URL` and the `NEXTAUTH_URL` to `https://localhost:3000`
 
 ### 4. Gitpod preparing the created Workspace
-<Image src={GitpodPreparing} alt="Gitpod Preparing workspace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
-- Gitpod is preparing your workspace with all the necessary dependencies and configurations. You will see this page while Gitpod sets up your development environment.
+
+<Image
+  src={GitpodPreparing}
+  alt="Gitpod Preparing workspace Page"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+- Gitpod is preparing your workspace with all the necessary dependencies and configurations. You will see this
+page while Gitpod sets up your development environment.
 
 ### 5. Gitpod running the Workspace
-<Image src={GitpodRunning} alt="Gitpod Running Workspace Page" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
-- Once the workspace is fully prepared, voila, it enters the running state. You can start working on your project in this environment.
+
+<Image
+  src={GitpodRunning}
+  alt="Gitpod Running Workspace Page"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+- Once the workspace is fully prepared, voila, it enters the running state. You can start working on your project
+in this environment.
 
 ### Ports and Services
 
 Here are the ports and corresponding URLs for the services within your Gitpod environment:
 
 - **Port 3000**:
-   - **Service**: Demo App
-   - **Description**: This port hosts the demo application of your project. You can access and interact with your application's demo by navigating to this port.
+
+  - **Service**: Demo App
+  - **Description**: This port hosts the demo application of your project. You can access and interact with your application's demo by navigating to this port.
 
 - **Port 3001**:
-   - **Service**: Formbricks website
-   - **Description**: This port hosts the [Formbricks](https://formbricks.com) website, which contains documents, pricing, blogs, best practices, and concierge service.
+
+  - **Service**: Formbricks website
+  - **Description**: This port hosts the [Formbricks](https://formbricks.com) website, which contains documents, pricing, blogs, best practices, and concierge service.
 
 - **Port 3002**:
-   - **Service**: Formbricks In-product Survey Demo App
-   - **Description**: This app helps you test your in-app surveys. You can create and test user actions, create and update user attributes, etc.
+
+  - **Service**: Formbricks In-product Survey Demo App
+  - **Description**: This app helps you test your in-app surveys. You can create and test user actions, create and update user attributes, etc.
 
 - **Port 5432**:
-   - **Service**: PostgreSQL Database Server
-   - **Description**: The PostgreSQL DB is hosted on this port.
+
+  - **Service**: PostgreSQL Database Server
+  - **Description**: The PostgreSQL DB is hosted on this port.
 
 - **Port 1025**:
-   - **Service**: SMPT server
-   - **Description**: SMTP Server for sending and receiving email messages. This server is responsible for handling email communication.
+
+  - **Service**: SMPT server
+  - **Description**: SMTP Server for sending and receiving email messages. This server is responsible for handling email communication.
 
 - **Port 8025**:
-   - **Service**: Mailhog
+  - **Service**: Mailhog
 
 ### Accessing port URLs
-  1. **Direct URL Composition**:
-   - You can access the dedicated port URL by pre-pending the port number to the workspace URL.
-   - For example, if you want to access port 3000, you can use the URL format: `3000-yourworkspace.ws-eu45.gitpod.io`.
 
-  2. **Using [gp CLI](https://www.gitpod.io/docs/references/gitpod-cli)**:
-   - Gitpod provides a convenient command, `gp url`, to quickly retrieve the URL for a specific port.
-   - Simply use the command followed by the desired port number. For example, to get the URL for port 3000, run: `gp url 3000`.
+1. **Direct URL Composition**:
 
-  3. **Listing All Open Port URLs**:
-   - If you prefer to see a list of all open port URLs at once, you can use the `gp ports list` command.
-   - Running this command will display a list of ports along with their corresponding URLs.
+- You can access the dedicated port URL by pre-pending the port number to the workspace URL.
+- For example, if you want to access port 3000, you can use the URL format: `3000-yourworkspace.ws-eu45.gitpod.io`.
 
-  4. **Viewing All Ports in Panel**:
-   - Gitpod also offers a user-friendly 'Ports' tab in the Gitpod panel.
-   - Click on the 'Ports' tab to view a list of all open ports and their respective URLs.
+2. **Using [gp CLI](https://www.gitpod.io/docs/references/gitpod-cli)**:
 
-  <Image src={GitpodPorts} alt="Gitpod Ports tab" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+- Gitpod provides a convenient command, `gp url`, to quickly retrieve the URL for a specific port.
+- Simply use the command followed by the desired port number. For example, to get the URL for port 3000, run: `gp url 3000`.
 
-  These URLs and port numbers represent various services and endpoints within your Gitpod environment. You can access and interact with these services by the Port URL for the respective service.
+3. **Listing All Open Port URLs**:
+
+- If you prefer to see a list of all open port URLs at once, you can use the `gp ports list` command.
+- Running this command will display a list of ports along with their corresponding URLs.
+
+4. **Viewing All Ports in Panel**:
+
+- Gitpod also offers a user-friendly 'Ports' tab in the Gitpod panel.
+- Click on the 'Ports' tab to view a list of all open ports and their respective URLs.
+
+{" "}
+
+<Image
+  src={GitpodPorts}
+  alt="Gitpod Ports tab"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+These URLs and port numbers represent various services and endpoints within your Gitpod environment. You can access and interact with these services by the Port URL for the respective service.
 
 ---
 
@@ -170,21 +207,41 @@ Here are the ports and corresponding URLs for the services within your Gitpod en
 
 1. After clicking the one-click setup button, you will be redirected to the Github Codespaces page. Review the configuration and click on the 'Create Codespace' button to create a new Codespace.
 
-<Image src={GithubCodespaceNew} alt="New Github Codespace" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image
+  src={GithubCodespaceNew}
+  alt="New Github Codespace"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
 2. This will start loading the Codespace. Keep in mind this might take a few minutes to complete depending on your internet connection and the instance availability.
 
-<Image src={GithubCodespaceLoading} alt="Loading Github Codespace" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image
+  src={GithubCodespaceLoading}
+  alt="Loading Github Codespace"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
 3. Once the Codespace is loaded, you will be redirected to the VSCode editor. You can start working on your project in this environment.
 
 4. Make the changes you want to, and now, to run the app, we first need to configure the .env file. Copy the .env.example and edit the variables as mentioned in the file itself.
 
-<Image src={GithubCodespaceEnvFile} alt="Github Codespace Env File" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image
+  src={GithubCodespaceEnvFile}
+  alt="Github Codespace Env File"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
 5. Once you have configured the .env, it's now time to run the app and see the changes. Lets open the terminal first
 
-<Image src={GithubCodespaceTerminal} alt="Github Codespace Open Terminal" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image
+  src={GithubCodespaceTerminal}
+  alt="Github Codespace Open Terminal"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
 6. Now, run the following command to run the app
 
@@ -198,7 +255,12 @@ pnpm dev
 </CodeGroup>
 </Col>
 
-<Image src={GithubCodespaceRun} alt="Run on Github Codespace" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image
+  src={GithubCodespaceRun}
+  alt="Run on Github Codespace"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
 7. Monitor the logs in the terminal and once you see the following, you are good to go!
 
@@ -211,7 +273,7 @@ pnpm dev
 @formbricks/web:dev:   - Environments: .env
 @formbricks/web:dev:   - Experiments (use at your own risk):
 @formbricks/web:dev:      · serverActions
-@formbricks/web:dev: 
+@formbricks/web:dev:
 @formbricks/web:dev:  ✓ Ready in 9.4s
 ```
 
@@ -220,7 +282,12 @@ pnpm dev
 
 8. Right next to the Terminal, you will see a **Ports** tab, click on it to see the ports and their respective URLs. Now access the Forwarded Address for port 3000 and you should be able to visit your Formbricks App!
 
-<Image src={GithubCodespacePorts} alt="Github Codespace Ports" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image
+  src={GithubCodespacePorts}
+  alt="Github Codespace Ports"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 
 Now make the changes you want to and see them live in action!
 
@@ -232,6 +299,7 @@ Now make the changes you want to and see them live in action!
 The below only works for **Mac**, **Linux** & **WSL2** on Windows (not on pure Windows)!
 
 This method is recommended **only for advanced users** & we won't be able to provide official support for this.
+
 </Note>
 
 To get the project running locally on your machine you need to have the following development tools installed:
@@ -245,9 +313,9 @@ To get the project running locally on your machine you need to have the followin
 <Col>
    <CodeGroup title="Git clone Formbricks monorepo">
 
-   ```bash
-   git clone https://github.com/formbricks/formbricks && cd formbricks
-   ```
+```bash
+git clone https://github.com/formbricks/formbricks && cd formbricks
+```
 
    </CodeGroup>
 </Col>
@@ -257,21 +325,21 @@ To get the project running locally on your machine you need to have the followin
 <Col>
    <CodeGroup title="Install dependencies via pnpm">
 
-   ```bash
-   pnpm install
-   ```
+```bash
+pnpm install
+```
 
    </CodeGroup>
 </Col>
 
-3. Create a `.env` file based on `.env.example`. It's already preset to work with the docker-compose setup but you can also change values if needed.
+3. Create a `.env` file based on `.env.example`. It's already preset to work with the local development setup but you can also change values if needed.
 
 <Col>
    <CodeGroup title="Define environment variables">
 
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+cp .env.example .env
+```
 
    </CodeGroup>
 </Col>
@@ -281,37 +349,41 @@ To get the project running locally on your machine you need to have the followin
 <Col>
    <CodeGroup title="Set value of ENCRYPTION_KEY">
 
-   ```bash
-   sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
-   sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
-   ```
+```bash
+sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
+sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
+```
 
    </CodeGroup>
 </Col>
 
-1. Make sure you have [`Docker`](https://docs.docker.com/compose/) & [`docker-compose`](https://docs.docker.com/compose/) installed and running on your machine. Then run the following command to start the formbricks dev setup:
+5. Make sure you have [`Docker`](https://docs.docker.com/compose/) & [`docker-compose`](https://docs.docker.com/compose/) installed and running on your machine. Then run the following command to start the Formbricks dev setup:
 
 <Col>
    <CodeGroup title="Start Formbricks Dev Setup">
 
-   ```bash
-   pnpm go
-   ```
+```bash
+pnpm go
+```
 
    </CodeGroup>
 </Col>
    This starts the Formbricks main app (plus all its dependencies) as well as the following services using Docker:
 
-   - a `postgres` container for hosting your database,
-   - a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
-   - Demo App at [http://localhost:3002](http://localhost:3002)
-   - Landing Page at [http://localhost:3001](http://localhost:3001)
+- a `postgres` container for hosting your database,
+- a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
+- Demo App at [http://localhost:3002](http://localhost:3002)
+- Landing Page at [http://localhost:3001](http://localhost:3001)
 
-   **You can now access the Formbricks app on [http://localhost:3000](http://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
+**You can now access the Formbricks app on [http://localhost:3000](http://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
 
-   <Note>A fresh setup does not have a default account. Please create a new account and proceed accordingly.</Note>
+{" "}
 
-   For viewing the confirmation email and other emails the system sends you, you can access mailhog at [http://localhost:8025](http://localhost:8025)
+<Note>
+  A fresh setup does not have a default account. Please create a new account and proceed accordingly.
+</Note>
+
+For viewing the emails sent by the system, you can access mailhog at [http://localhost:8025](http://localhost:8025)
 
 ### Build
 
