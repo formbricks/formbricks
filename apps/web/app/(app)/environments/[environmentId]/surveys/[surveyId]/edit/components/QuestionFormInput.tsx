@@ -314,6 +314,7 @@ const QuestionFormInput = ({
                 setShowQuestionSelect={setShowQuestionSelect}
                 showQuestionSelect={showQuestionSelect}
                 inputRef={inputRef}
+                recallQuestions={recallQuestions}
               />
             )}
             {!showQuestionSelect && showFallbackInput && recallQuestions.length > 0 && (

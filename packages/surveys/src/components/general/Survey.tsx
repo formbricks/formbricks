@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
 import { useEffect, useRef, useState } from "preact/hooks";
 
+import { formatDateWithOrdinal, isValidDate } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
@@ -119,9 +120,15 @@ export function Survey({
       if (recallInfo) {
         const questionId = extractId(recallInfo);
         const fallback = extractFallbackValue(recallInfo);
-        const value = responseData[questionId!]
+        let value = responseData[questionId!]
           ? (responseData[questionId!] as string)
           : fallback.replaceAll("nbsp", " ");
+        if (isValidDate(value)) {
+          value = formatDateWithOrdinal(new Date(value as string));
+        }
+        if (Array.isArray(value)) {
+          value = value.toString().replaceAll(",", ", ");
+        }
         modifiedQuestion.headline = modifiedQuestion.headline.replace(recallInfo, value);
       }
     }
@@ -130,9 +137,15 @@ export function Survey({
       if (recallInfo) {
         const questionId = extractId(recallInfo);
         const fallback = extractFallbackValue(recallInfo);
-        const value = responseData[questionId!]
+        let value = responseData[questionId!]
           ? (responseData[questionId!] as string)
           : fallback.replaceAll("nbsp", " ");
+        if (isValidDate(value)) {
+          value = formatDateWithOrdinal(new Date(value as string));
+        }
+        if (Array.isArray(value)) {
+          value = value.toString().replaceAll(",", ", ");
+        }
         modifiedQuestion.subheader = modifiedQuestion.subheader.replace(recallInfo, value);
       }
     }

@@ -152,7 +152,7 @@ export default function QuestionCard({
               className={cn(open ? "" : "  ", "flex cursor-pointer justify-between p-4 hover:bg-slate-50")}>
               <div>
                 <div className="inline-flex">
-                  <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
+                  <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
                     {question.type === TSurveyQuestionType.FileUpload ? (
                       <ArrowUpTrayIcon />
                     ) : question.type === TSurveyQuestionType.OpenText ? (

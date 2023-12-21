@@ -1,14 +1,11 @@
 import {
-  ArrowUpTrayIcon,
   ChatBubbleBottomCenterTextIcon,
-  CheckIcon,
-  CursorArrowRippleIcon,
   ListBulletIcon,
-  PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
 } from "@heroicons/react/24/solid";
+import { CalendarDaysIcon, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { checkForRecall } from "@formbricks/lib/utils/recall";
@@ -17,12 +14,10 @@ const questionIconMapping = {
   openText: ChatBubbleBottomCenterTextIcon,
   multipleChoiceSingle: QueueListIcon,
   multipleChoiceMulti: ListBulletIcon,
-  pictureSelection: PhotoIcon,
   rating: StarIcon,
   nps: PresentationChartBarIcon,
-  cta: CursorArrowRippleIcon,
-  consent: CheckIcon,
-  fileUpload: ArrowUpTrayIcon,
+  date: CalendarDaysIcon,
+  cal: Phone,
 };
 
 export default function RecallQuestionSelect({
@@ -33,8 +28,10 @@ export default function RecallQuestionSelect({
   setShowQuestionSelect,
   showQuestionSelect,
   inputRef,
+  recallQuestions,
 }) {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
+  const recallQuestionIds = recallQuestions.map((recallQuestion) => recallQuestion.id);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -64,7 +61,7 @@ export default function RecallQuestionSelect({
     };
   }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
   return (
-    <div className="fixed z-30 mt-1 flex flex-col rounded-md border border-slate-300 bg-slate-50 p-3 text-xs">
+    <div className="fixed z-30 mt-1 flex max-h-[50%] flex-col overflow-auto rounded-md border border-slate-300 bg-slate-50 p-3 text-xs">
       {currentQuestionIdx === 0 ? (
         <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (
@@ -74,6 +71,14 @@ export default function RecallQuestionSelect({
         {localSurvey.questions.map((q, idx) => {
           if (q.id === question.id) return;
           if (idx > currentQuestionIdx) return;
+          if (recallQuestionIds.includes(q.id)) return;
+          if (
+            q.type === "fileUpload" ||
+            q.type === "cta" ||
+            q.type === "consent" ||
+            q.type === "pictureSelection"
+          )
+            return;
           const isFocused = idx === focusedQuestionIdx;
           const IconComponent = questionIconMapping[q.type]; // Accessing the icon component
           return (
@@ -86,8 +91,8 @@ export default function RecallQuestionSelect({
                 addRecallQuestion(q);
                 setShowQuestionSelect(false);
               }}>
-              {IconComponent && <IconComponent className="mr-2 h-4 w-4" />}
-              {checkForRecall(q.headline, localSurvey)}
+              <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
+              <div>{checkForRecall(q.headline, localSurvey)}</div>
             </div>
           );
         })}

@@ -83,3 +83,24 @@ export const formatText = (headline: string, survey: TSurvey) => {
   }
   return newHeadline;
 };
+
+export const formatRecallText = (headline: string, survey: TSurvey) => {
+  let newHeadline = headline;
+  if (!headline.includes("recall:")) return headline;
+
+  while (newHeadline.includes("recall:")) {
+    const recallInfo = extractRecallInfo(newHeadline);
+    if (recallInfo) {
+      const questionId = extractId(recallInfo);
+      let questionHeadline = survey.questions.find((question) => question.id === questionId)?.headline;
+      while (questionHeadline?.includes("recall:")) {
+        const recallInfo = extractRecallInfo(questionHeadline);
+        if (recallInfo) {
+          questionHeadline = questionHeadline.replaceAll(recallInfo, "___");
+        }
+      }
+      newHeadline = newHeadline.replace(recallInfo, `  @${questionHeadline}  `);
+    }
+  }
+  return newHeadline;
+};
