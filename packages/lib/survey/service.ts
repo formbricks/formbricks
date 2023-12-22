@@ -111,7 +111,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          // console.error(error);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 
