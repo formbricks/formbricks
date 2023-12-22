@@ -31,7 +31,7 @@ export function GettingStarted() {
       <Heading level={2} id="getting-started">
         Quick Resources
       </Heading>
-      <div className="not-prose mt-4 grid grid-cols-1 gap-8 border-t border-slate-900/5 pt-10 dark:border-white/5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="not-prose mt-4 grid grid-cols-1 gap-8 border-t border-slate-900/5 pt-10 sm:grid-cols-2 xl:grid-cols-4 dark:border-white/5">
         {gettingStarted.map((guide) => (
           <div key={guide.href}>
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{guide.name}</h3>

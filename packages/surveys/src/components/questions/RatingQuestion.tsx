@@ -98,7 +98,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="bg-survey-bg max-w-10 relative max-h-10 flex-1 cursor-pointer text-center text-sm leading-10">
+                className="bg-survey-bg relative max-h-10 max-w-10 flex-1 cursor-pointer text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
