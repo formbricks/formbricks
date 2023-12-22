@@ -1,3 +1,5 @@
+import AuthorJohannes from "@/images/blog/johannes-co-founder-formbricks-small.jpg";
+import AuthorOla from "@/images/blog/ola-content-writer.png";
 import Image from "next/image";
 
 interface AuthorBoxProps {
@@ -5,20 +7,20 @@ interface AuthorBoxProps {
   title: string;
   date: string;
   duration: string;
-  imageSrc: string;
+  author: string;
 }
 
-export default function AuthorBox({ name, title, date, duration, imageSrc }: AuthorBoxProps) {
+export default function AuthorBox({ name, title, date, duration, author }: AuthorBoxProps) {
   return (
     <div className="mb-8 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 px-6 py-3 dark:border-slate-700 dark:bg-slate-800">
       <Image
         className="m-0 rounded-full"
-        src={imageSrc}
+        src={author === "Johannes" ? AuthorJohannes : AuthorOla}
         alt={name}
         width={45}
         height={45}
         quality={100}
-        placeholder="blur"
+        // placeholder="blur"
         style={{ objectFit: "contain" }}
       />
       <div className="flex w-full items-end justify-between">
