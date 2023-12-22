@@ -94,6 +94,10 @@ export default function PricingTableComponent({
 
   const coreAndWebAppSurveyFeatures = [
     {
+      title: "Remove Formbricks Branding",
+      comingSoon: false,
+    },
+    {
       title: "Team Roles",
       comingSoon: false,
     },
