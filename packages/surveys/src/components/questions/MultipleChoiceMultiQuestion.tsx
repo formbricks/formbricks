@@ -42,17 +42,20 @@ export default function MultipleChoiceMultiQuestion({
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
     [question]
   );
+  const [otherSelected, setOtherSelected] = useState<boolean>(false);
 
-  const [otherSelected, setOtherSelected] = useState(
-    !!value &&
-      ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
-        return getChoicesWithoutOtherLabels().includes(item) === false;
-      })
-  ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
-
-  const [otherValue, setOtherValue] = useState(
-    (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
-  ); // initially set to the first value that is not in choices
+  const [otherValue, setOtherValue] = useState("");
+  useEffect(() => {
+    setOtherSelected(
+      !!value &&
+        ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
+          return getChoicesWithoutOtherLabels().includes(item) === false;
+        })
+    );
+    setOtherValue(
+      (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
+    );
+  }, [question.id]);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
@@ -64,6 +67,10 @@ export default function MultipleChoiceMultiQuestion({
     }
     return choicesWithoutOther;
   }, [question.choices, question.shuffleOption]);
+
+  const questionChoiceLabels = questionChoices.map((questionChoice) => {
+    return questionChoice.label;
+  });
 
   const otherOption = useMemo(
     () => question.choices.find((choice) => choice.id === "other"),
@@ -79,8 +86,16 @@ export default function MultipleChoiceMultiQuestion({
   }, [otherSelected]);
 
   const addItem = (item: string) => {
+    const isOtherValue = !questionChoiceLabels.includes(item);
     if (Array.isArray(value)) {
-      return onChange({ [question.id]: [...value, item] });
+      if (isOtherValue) {
+        const newValue = value.filter((v) => {
+          return questionChoiceLabels.includes(v);
+        });
+        return onChange({ [question.id]: [...newValue, item] });
+      } else {
+        return onChange({ [question.id]: [...value, item] });
+      }
     }
     return onChange({ [question.id]: [item] }); // if not array, make it an array
   };

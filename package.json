@@ -10,7 +10,7 @@
     "schema": "packages/database/schema.prisma"
   },
   "scripts": {
-    "clean": "turbo run clean && rimraf node_modules .turbo coverage",
+    "clean": "turbo run clean && rimraf node_modules .turbo coverage out",
     "build": "turbo run build",
     "post-install": "turbo run post-install",
     "db:migrate:dev": "turbo run db:migrate:dev",
@@ -61,6 +61,7 @@
     "showDetails": true
   },
   "dependencies": {
+    "@changesets/cli": "^2.27.1",
     "playwright": "^1.40.1"
   }
 }

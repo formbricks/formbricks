@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 
+import { TDisplay } from "@formbricks/types/displays";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
 
 import { responseNoteSelect } from "../../../responseNote/service";
@@ -22,6 +23,7 @@ export const mockResponseId = "z32bqib0nlcw8vqymlj6m8x7";
 export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
 export const mockSurveyId = "nlg30c8btxljivh6dfcoxve2";
 export const mockUserId = "qwywazmugeezyfr3zcg9jk8a";
+export const mockDisplayId = "sxmaf9hp9yv25txpohogckfx";
 
 export const mockMeta = {
   source: constantsForTests.url,
@@ -80,6 +82,15 @@ export const mockTags = [
   },
 ];
 
+export const mockDisplay: TDisplay = {
+  id: mockDisplayId,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  surveyId: mockSurveyId,
+  personId: mockPersonId,
+  responseId: mockResponseId,
+};
+
 export const mockResponse: ResponseMock = {
   id: mockResponseId,
   surveyId: mockSurveyId,
@@ -95,6 +106,11 @@ export const mockResponse: ResponseMock = {
   personId: mockPersonId,
   updatedAt: new Date(),
   ttc: {},
+};
+
+export const mockResponseWithMockPerson: ResponseMock = {
+  ...mockResponse,
+  person: mockPerson,
 };
 
 export const mockResponseData: TResponseUpdateInput["data"] = {

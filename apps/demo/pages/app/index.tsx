@@ -74,7 +74,7 @@ export default function AppPage({}) {
             </p>
             <Image src={fbsetup} alt="fb setup" className="mt-4 rounded" priority />
 
-            <div className="mt-4 flex-col items-start text-sm text-slate-700 dark:text-slate-300 sm:flex sm:items-center sm:text-base">
+            <div className="mt-4 flex-col items-start text-sm text-slate-700 sm:flex sm:items-center sm:text-base dark:text-slate-300">
               <p className="mb-1 sm:mb-0 sm:mr-2">You&apos;re connected with env:</p>
               <div className="flex items-center">
                 <strong className="w-32 truncate sm:w-auto">

@@ -28,17 +28,17 @@ export const Hero: React.FC = ({}) => {
           We&apos;re Open Source - Star us on GitHub
           <ChevronRightIcon className="mb-1 ml-1 inline h-4 w-4 text-slate-300" />
         </a>
-        <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-4xl md:text-5xl">
+        <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 sm:text-4xl md:text-5xl dark:text-slate-200">
           <span className="xl:inline">Privacy-first Experience Management</span>
         </h1>
 
-        <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 dark:text-slate-400 sm:text-lg md:mt-5 md:text-xl">
+        <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 sm:text-lg md:mt-5 md:text-xl dark:text-slate-400">
           Turn customer insights into irresistible experiences —{" "}
           <span className="decoration-brand-dark underline underline-offset-4">all privacy-first.</span>
         </p>
 
         <div className="mx-auto mt-5 max-w-2xl items-center px-4 sm:flex sm:justify-center md:mt-6 md:space-x-8 md:px-0">
-          <p className="hidden whitespace-nowrap pt-3 text-xs text-slate-400 dark:text-slate-500 md:block">
+          <p className="hidden whitespace-nowrap pt-3 text-xs text-slate-400 md:block dark:text-slate-500">
             Trusted by
           </p>
           <div className="grid grid-cols-4 items-center gap-6 pt-2 md:gap-8">
@@ -51,37 +51,37 @@ export const Hero: React.FC = ({}) => {
             <Image
               src={CalLogoLight}
               alt="Cal Logo"
-              className="block rounded-lg hover:opacity-100 dark:hidden md:opacity-50"
+              className="block rounded-lg hover:opacity-100 md:opacity-50 dark:hidden"
               width={170}
             />
             <Image
               src={CalLogoDark}
               alt="Cal Logo"
-              className="hidden rounded-lg hover:opacity-100 dark:block md:opacity-50"
+              className="hidden rounded-lg hover:opacity-100 md:opacity-50 dark:block"
               width={170}
             />
             <Image
               src={CrowdLogoLight}
               alt="Crowd.dev Logo"
-              className="block rounded-lg pb-1 hover:opacity-100 dark:hidden md:opacity-50"
+              className="block rounded-lg pb-1 hover:opacity-100 md:opacity-50 dark:hidden"
               width={200}
             />
             <Image
               src={CrowdLogoDark}
               alt="Crowd.dev Logo"
-              className="hidden rounded-lg pb-1 hover:opacity-100 dark:block md:opacity-50"
+              className="hidden rounded-lg pb-1 hover:opacity-100 md:opacity-50 dark:block"
               width={200}
             />
             <Image
               src={NILogoDark}
               alt="Neverinstall Logo"
-              className="block pb-1 hover:opacity-100 dark:hidden md:opacity-50"
+              className="block pb-1 hover:opacity-100 md:opacity-50 dark:hidden"
               width={200}
             />
             <Image
               src={NILogoLight}
               alt="Neverinstall Logo"
-              className="hidden  pb-1 hover:opacity-100 dark:block md:opacity-50"
+              className="hidden  pb-1 hover:opacity-100 md:opacity-50 dark:block"
               width={200}
             />
           </div>
