@@ -20,7 +20,7 @@ export default function AuthorBox({ name, title, date, duration, author }: Autho
         width={45}
         height={45}
         quality={100}
-        // placeholder="blur"
+        placeholder="blur"
         style={{ objectFit: "contain" }}
       />
       <div className="flex w-full items-end justify-between">
