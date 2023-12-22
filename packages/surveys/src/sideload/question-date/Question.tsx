@@ -61,7 +61,8 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
           </div>
         </div>
       )}
-      {/* @ts-ignore */}
+
+      {/* @ts-expect-error */}
       <DatePicker
         key={datePickerOpen}
         value={selectedDate}
