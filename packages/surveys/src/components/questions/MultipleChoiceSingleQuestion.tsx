@@ -38,9 +38,7 @@ export default function MultipleChoiceSingleQuestion({
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
-  const [otherSelected, setOtherSelected] = useState(
-    !!value && !question.choices.find((c) => c.label === value)
-  ); // initially set to true if value is not in choices
+  const [otherSelected, setOtherSelected] = useState(false);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
@@ -57,6 +55,10 @@ export default function MultipleChoiceSingleQuestion({
     () => question.choices.find((choice) => choice.id === "other"),
     [question.choices]
   );
+
+  useEffect(() => {
+    setOtherSelected(!!value && !question.choices.find((c) => c.label === value));
+  }, [question.id]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
 
