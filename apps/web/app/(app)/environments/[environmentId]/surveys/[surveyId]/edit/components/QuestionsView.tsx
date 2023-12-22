@@ -111,21 +111,18 @@ export default function QuestionsView({
 
   const deleteQuestion = (questionIdx: number) => {
     const questionId = localSurvey.questions[questionIdx].id;
+    const activeQuestionIdTemp = activeQuestionId ?? localSurvey.questions[0].id;
     let updatedSurvey: TSurvey = { ...localSurvey };
     updatedSurvey.questions.splice(questionIdx, 1);
-
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
 
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
-
-    if (questionId === activeQuestionId) {
-      if (questionIdx < localSurvey.questions.length - 1) {
-        setActiveQuestionId(localSurvey.questions[questionIdx + 1].id);
+    if (questionId === activeQuestionIdTemp) {
+      if (questionIdx <= localSurvey.questions.length && localSurvey.questions.length > 0) {
+        setActiveQuestionId(localSurvey.questions[questionIdx % localSurvey.questions.length].id);
       } else if (localSurvey.thankYouCard.enabled) {
-        setActiveQuestionId("thank-you-card");
-      } else {
-        setActiveQuestionId(localSurvey.questions[questionIdx - 1].id);
+        setActiveQuestionId("end");
       }
     }
     toast.success("Question deleted.");

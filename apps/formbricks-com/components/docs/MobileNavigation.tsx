@@ -90,7 +90,7 @@ function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () 
             leaveTo="-translate-x-full">
             <motion.div
               layoutScroll
-              className="ring-slate-900/7.5 fixed bottom-0 left-0 top-14 w-full overflow-y-auto bg-white px-4 pb-4 pt-6 shadow-lg shadow-slate-900/10 ring-1 dark:bg-slate-900 dark:ring-slate-800 min-[416px]:max-w-sm sm:px-6 sm:pb-10">
+              className="ring-slate-900/7.5 fixed bottom-0 left-0 top-14 w-full overflow-y-auto bg-white px-4 pb-4 pt-6 shadow-lg shadow-slate-900/10 ring-1 min-[416px]:max-w-sm sm:px-6 sm:pb-10 dark:bg-slate-900 dark:ring-slate-800">
               <Navigation />
             </motion.div>
           </Transition.Child>

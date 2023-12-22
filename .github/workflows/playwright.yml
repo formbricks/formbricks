@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies
         run: npm install -g pnpm && pnpm install
 
+      - name: Build Formricks JS package
+        run: pnpm build --filter=js
+
       - name: Build Formbricks Image & Run
         run: docker-compose up -d
 

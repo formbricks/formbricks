@@ -13,6 +13,7 @@ import {
   ChevronRightIcon,
   CursorArrowRippleIcon,
   ListBulletIcon,
+  PhoneIcon,
   PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
@@ -32,6 +33,7 @@ import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 
 import CTAQuestionForm from "./CTAQuestionForm";
+import CalQuestionForm from "./CalQuestionForm";
 import ConsentQuestionForm from "./ConsentQuestionForm";
 import FileUploadQuestionForm from "./FileUploadQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
@@ -171,6 +173,8 @@ export default function QuestionCard({
                       <PhotoIcon />
                     ) : question.type === TSurveyQuestionType.Date ? (
                       <CalendarDaysIcon />
+                    ) : question.type === TSurveyQuestionType.Cal ? (
+                      <PhoneIcon />
                     ) : null}
                   </div>
                   <div>
@@ -283,6 +287,14 @@ export default function QuestionCard({
                 <FileUploadQuestionForm
                   localSurvey={localSurvey}
                   product={product}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === TSurveyQuestionType.Cal ? (
+                <CalQuestionForm
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

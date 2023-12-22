@@ -5,6 +5,7 @@ import {
   CheckIcon,
   CursorArrowRippleIcon,
   ListBulletIcon,
+  PhoneIcon,
   PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
@@ -154,6 +155,17 @@ export const questionTypes: TSurveyQuestionType[] = [
     preset: {
       headline: "File Upload",
       allowMultipleFiles: false,
+    },
+  },
+  {
+    id: QuestionId.Cal,
+    label: "Schedule a meeting",
+    description: "Allow respondents to schedule a meet",
+    icon: PhoneIcon,
+    preset: {
+      headline: "Schedule a call with me",
+      buttonLabel: "Skip",
+      calUserName: "rick/get-rick-rolled",
     },
   },
 ];
