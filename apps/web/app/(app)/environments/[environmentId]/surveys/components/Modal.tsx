@@ -28,7 +28,7 @@ export default function Modal({
       return "0.7";
     })();
 
-    const placements = (() => {
+    const getPlacementClass = (() => {
       if (placement === "bottomLeft") return "bottom left";
       else if (placement === "bottomRight") return "bottom right";
       else if (placement === "topLeft") return "top left";
@@ -37,7 +37,7 @@ export default function Modal({
 
     return {
       transform: `scale(${scaleValue})`,
-      "transform-origin": placements,
+      "transform-origin": getPlacementClass,
     };
   };
   const scalingClasses = calculateScaling();
