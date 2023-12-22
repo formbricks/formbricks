@@ -42,9 +42,9 @@ export default function MultipleChoiceMultiQuestion({
     () => question.choices.filter((choice) => choice.id !== "other").map((item) => item.label),
     [question]
   );
-  const [otherSelected, setOtherSelected] = useState<boolean>(false); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
+  const [otherSelected, setOtherSelected] = useState<boolean>(false);
 
-  const [otherValue, setOtherValue] = useState(""); // initially set to the first value that is not in choices
+  const [otherValue, setOtherValue] = useState("");
   useEffect(() => {
     setOtherSelected(
       !!value &&
@@ -120,7 +120,6 @@ export default function MultipleChoiceMultiQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {console.log(value)}
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
@@ -212,7 +211,6 @@ export default function MultipleChoiceMultiQuestion({
                     {otherOption.label}
                   </span>
                 </span>
-                {console.log({ otherSelected })}
                 {otherSelected && (
                   <input
                     ref={otherSpecify}
