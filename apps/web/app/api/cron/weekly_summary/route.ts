@@ -8,7 +8,7 @@ import { CRON_SECRET } from "@formbricks/lib/constants";
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
 import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
 
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 500;
 
 export async function POST(): Promise<NextResponse> {
   // Check authentication
