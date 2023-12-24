@@ -135,14 +135,14 @@ const QuestionFormInput = ({
       console.log(recallQuestionHeadlines);
       filterRecallQuestions(remainingText);
       recallQuestionHeadlines.forEach((headline) => {
-        const index = remainingText.indexOf("@" + headline);
+        const index = addBlankSpaces(remainingText).indexOf("   " + "@" + headline + "   ");
         if (index !== -1) {
           if (index > 0) {
             parts.push(<span key={parts.length}>{remainingText.substring(0, index)}</span>);
           }
           parts.push(
-            <span className="z-30 cursor-pointer rounded-md bg-slate-100" key={parts.length}>
-              {"@" + headline}
+            <span className="z-30 cursor-pointer whitespace-pre rounded-md bg-slate-100" key={parts.length}>
+              {"   " + "@" + headline + "   "}
             </span>
           );
           remainingText = remainingText.substring(index + headline.length + 1);
@@ -248,7 +248,16 @@ const QuestionFormInput = ({
   const headlineToRecall = (text): string => {
     recallQuestions.forEach((recallQuestion) => {
       const recallInfo = `recall:${recallQuestion.id}/fallback:${fallbacks[recallQuestion.id]}`;
-      text = text.replace(`@${recallQuestion[type]}`, recallInfo);
+      text = text.replace(`   @${recallQuestion[type]}   `, recallInfo);
+    });
+    return text;
+  };
+
+  const addBlankSpaces = (text) => {
+    recallQuestions.forEach((recallquestion) => {
+      if (!text.includes(`   @${recallquestion[type]}   `)) {
+        text = text.replace(`@${recallquestion.headline}`, `   @${recallquestion.headline}   `);
+      }
     });
     return text;
   };
@@ -273,7 +282,7 @@ const QuestionFormInput = ({
               id={type}
               name={type}
               autoComplete={showQuestionSelect ? "off" : "on"}
-              value={recallToHeadline(text ?? "")}
+              value={addBlankSpaces(recallToHeadline(text ?? ""))}
               onChange={(e) => {
                 checkForRecallSymbol(e.target.value);
                 setText(recallToHeadline(e.target.value ?? ""));
