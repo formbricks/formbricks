@@ -29,10 +29,18 @@ export default function Modal({
     })();
 
     const getPlacementClass = (() => {
-      if (placement === "bottomLeft") return "bottom left";
-      else if (placement === "bottomRight") return "bottom right";
-      else if (placement === "topLeft") return "top left";
-      else if (placement === "topRight") return "top right";
+      switch (placement) {
+        case "bottomLeft":
+          return "bottom left";
+        case "bottomRight":
+          return "bottom right";
+        case "topLeft":
+          return "top left";
+        case "topRight":
+          return "top right";
+        default:
+          return "";
+      }
     })();
 
     return {
