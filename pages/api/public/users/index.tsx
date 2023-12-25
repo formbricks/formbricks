@@ -2,9 +2,12 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
 import { prisma } from "../../../../lib/prisma";
 import { UserRole } from "@prisma/client";
-import { sendVerificationEmail } from "../../../../lib/email";
+// Not important now
+// import { sendVerificationEmail } from "../../../../lib/email";
 import getConfig from "next/config";
 import { capturePosthogEvent } from "../../../../lib/posthog";
+import { hashPassword } from "../../../../lib/auth";
+import { createToken } from "../../../../lib/jwt";
 
 const { publicRuntimeConfig } = getConfig();
 
@@ -17,10 +20,24 @@ export default async function handle(
   // Required fields in body: email, password (hashed)
   // Optional fields in body: firstname, lastname
   if (req.method === "POST") {
-    let { user, callbackUrl} = req.body;
-    user = { ...user, ...{ email: user.email.toLowerCase() } };
+    let { user, trainingSession } = req.body;
+    const password = await hashPassword(`${publicRuntimeConfig.nextauthSecret}`);
+    user = { ...user, ...{ email: user.email.toLowerCase(), password } };
 
-    const { emailVerificationDisabled } = publicRuntimeConfig;
+    // Not important now
+    // const { emailVerificationDisabled } = publicRuntimeConfig;
+
+    // get related training session
+    const form = await prisma.form.findFirst({
+      where: {
+        airtableTrainingSessionId: {
+          equals: `${trainingSession}`,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
 
     // create user in database
     try {
@@ -29,14 +46,41 @@ export default async function handle(
           ...user,
         },
       });
-      if (!emailVerificationDisabled) await sendVerificationEmail(userData, callbackUrl);
+
+      // Not importat now
+      // if (!emailVerificationDisabled) await sendVerificationEmail(userData, callbackUrl);
       capturePosthogEvent(user.email, "user created");
-      res.json(userData);
+      const token = createToken(userData.id, userData.email);
+      res.status(200).json({
+        message: "Compte créé avec succès",
+        formId: form.id,
+        id: userData.id,
+        email: user.email,
+        code: res.statusCode,
+        token: encodeURIComponent(token),
+      });
     } catch (e) {
       if (e.code === "P2002") {
+        let foundUser = await prisma.user.findUnique({
+          where: {
+            email: user.email
+          }, select: {
+            id: true,
+            email: true
+          }
+        })
         return res.status(409).json({
-          error: `un utilisateur avec ${e.meta.target[0]==="email"? "cette adresse e-mail": "ce numéro de téléphone"} existe déjà`,
+          error: `un utilisateur avec ${e.meta.target[0] === "email"
+            ? "cette adresse e-mail"
+            : "ce numéro de téléphone"
+            } existe déjà`,
+          message: "Compte existant",
           errorCode: e.code,
+          code: res.statusCode,
+          formId: form.id,
+          id: foundUser.id,
+          email: foundUser.email,
+          token: encodeURIComponent(""),
         });
       } else {
         return res.status(500).json({
