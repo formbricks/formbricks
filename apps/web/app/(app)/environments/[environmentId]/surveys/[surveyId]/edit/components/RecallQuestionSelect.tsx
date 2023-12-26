@@ -22,7 +22,6 @@ const questionIconMapping = {
 };
 
 interface RecallQuestionSelectProps {
-  currentQuestionIdx: number;
   localSurvey: TSurvey;
   question: TSurveyQuestion;
   addRecallQuestion: (question: TSurveyQuestion) => void;

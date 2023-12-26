@@ -4,7 +4,7 @@ import FallbackInput from "@/app/(app)/environments/[environmentId]/surveys/[sur
 import RecallQuestionSelect from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/RecallQuestionSelect";
 import { PencilIcon } from "@heroicons/react/24/solid";
 import { ImagePlusIcon } from "lucide-react";
-import { RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 import { extractId, extractIds, extractRecallInfo, findRecallInfoById } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
@@ -32,11 +32,6 @@ const QuestionFormInput = ({
   environmentId,
   type,
 }: QuestionFormInputProps) => {
-  const currentQuestionIdx = useMemo(
-    () => localSurvey.questions.findIndex((e) => e.id === question.id),
-    [localSurvey, question]
-  );
-
   const recallToHeadline = (text): string => {
     while (text.includes("recall:")) {
       const recallInfo = extractRecallInfo(text);
@@ -71,7 +66,7 @@ const QuestionFormInput = ({
       let recallQuestion = localSurvey.questions.find((question) => question.id === questionId);
       if (recallQuestion) {
         let recallQuestionTemp = { ...recallQuestion };
-        recallQuestionTemp[type] = recallToHeadline(recallQuestionTemp[type] ?? "");
+        recallQuestionTemp.headline = recallToHeadline(recallQuestionTemp.headline ?? "");
         recallQuestionArray.push(recallQuestionTemp);
       }
     });
@@ -92,7 +87,7 @@ const QuestionFormInput = ({
   const filteredRecallQuestions = Array.from(new Set(recallQuestions.map((q) => q.id))).map((id) => {
     return recallQuestions.find((q) => q.id === id);
   });
-  const [fallbacks, setFallbacks] = useState(
+  const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(
     question[type]?.includes("fallback:") ? getFallbackValues() : {}
   );
 
@@ -134,6 +129,7 @@ const QuestionFormInput = ({
       remainingText = recallToHeadline(remainingText);
       filterRecallQuestions(remainingText);
       recallQuestionHeadlines.forEach((headline) => {
+        console.log(addBlankSpaces(remainingText));
         const index = addBlankSpaces(remainingText).indexOf("   " + "@" + headline + "   ");
         if (index !== -1) {
           if (index > 0) {
@@ -184,12 +180,12 @@ const QuestionFormInput = ({
   const addRecallQuestion = (recallQuestion: TSurveyQuestion) => {
     const recallQuestionTemp = { ...recallQuestion };
     while (recallQuestionTemp.headline.includes("recall:")) {
-      const recallInfo = extractRecallInfo(recallQuestionTemp[type]);
+      const recallInfo = extractRecallInfo(recallQuestionTemp.headline);
       if (recallInfo) {
-        const recallQuestionId = extractId(recallQuestionTemp[type]);
+        const recallQuestionId = extractId(recallQuestionTemp.headline);
         const recallQuestion = localSurvey.questions.find((question) => question.id === recallQuestionId);
         const recallText = recallQuestion ? recallQuestion.headline : ""; // Using type dynamically
-        recallQuestionTemp[type] = recallQuestionTemp[type].replace(recallInfo, `@${recallText}`);
+        recallQuestionTemp.headline = recallQuestionTemp.headline.replace(recallInfo, `@${recallText}`);
       }
     }
 
@@ -333,7 +329,6 @@ const QuestionFormInput = ({
             )}
             {showQuestionSelect && (
               <RecallQuestionSelect
-                currentQuestionIdx={currentQuestionIdx}
                 localSurvey={localSurvey}
                 question={question}
                 addRecallQuestion={addRecallQuestion}
