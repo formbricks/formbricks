@@ -623,7 +623,7 @@ importers:
         version: 3.478.0
       '@formbricks/api':
         specifier: '*'
-        version: link:../api
+        version: 1.4.0
       '@formbricks/database':
         specifier: '*'
         version: link:../database
@@ -3785,6 +3785,10 @@ packages:
 
   /@floating-ui/utils@0.1.6:
     resolution: {integrity: sha512-OfX7E2oUDYxtBvsuS4e/jSn4Q9Qb6DzgeYtsAdkPZ47znpoNsMgZw0+tVijiv3uGNR6dgNlty6r9rzIzHjtd/A==}
+
+  /@formbricks/api@1.4.0:
+    resolution: {integrity: sha512-Qn7agNUvewT4iTIXeSR919n/MaTszFI0+YI7DO0JCQ6BwBI2NHtOI8X7yI1QhoVSnbgGZZ+05zUXGihZeeh/kA==}
+    dev: false
 
   /@headlessui/react@1.7.17(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-4am+tzvkqDSSgiwrsEpGWqgGo9dz8qU5M3znCkC4PgkpY4HcCZzEDEvozltGGGHIKl9jbXbZPSH5TWn4sWJdow==}

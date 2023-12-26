@@ -97,3 +97,21 @@ export const surveys = {
     },
   },
 };
+
+export const actions = {
+  create: {
+    name: "Clicked Download",
+    description: "User clicked Download Button",
+  },
+  selectBy: {
+    cssSelector: ".my-custom-class",
+    pageURL: {
+      matcher: {
+        label: "Contains",
+        value: "custom-url",
+      },
+      testURL: "http://localhost:3000/custom-url",
+    },
+    innerText: "Download",
+  },
+};
