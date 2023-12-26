@@ -130,8 +130,9 @@ export default function ActionSettingsTab({
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="grid w-full grid-cols-2 gap-x-4">
           <div className="col-span-1">
-            <Label>What did your user do?</Label>
+            <Label htmlFor="actionNameSettingsInput">What did your user do?</Label>
             <Input
+              id="actionNameSettingsInput"
               placeholder="E.g. Clicked Download"
               {...register("name", {
                 value: actionClass.name,
@@ -141,8 +142,9 @@ export default function ActionSettingsTab({
           </div>
           {!isViewer && (
             <div className="col-span-1">
-              <Label>Description</Label>
+              <Label htmlFor="actionDescriptionSettingsInput">Description</Label>
               <Input
+                id="actionDescriptionSettingsInput"
                 placeholder="User clicked Download Button "
                 {...register("description", {
                   value: actionClass.description,

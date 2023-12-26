@@ -100,18 +100,57 @@ export const surveys = {
 
 export const actions = {
   create: {
-    name: "Clicked Download",
-    description: "User clicked Download Button",
-  },
-  selectBy: {
-    cssSelector: ".my-custom-class",
-    pageURL: {
-      matcher: {
-        label: "Contains",
-        value: "custom-url",
+    noCode: {
+      cssSelector: {
+        name: "Create Action (CSS Selector)",
+        description: "This is my Create Action (CSS Selector)",
+        selector: ".my-custom-class",
       },
-      testURL: "http://localhost:3000/custom-url",
+      pageURL: {
+        name: "Create Action (Page URL)",
+        description: "This is my Create Action (Page URL)",
+        matcher: {
+          label: "Starts with",
+          value: "custom-url",
+        },
+        testURL: "http://localhost:3000/custom-url",
+      },
+      innerText: {
+        name: "Create Action (Inner Text)",
+        description: "This is my Create Action (Inner Text)",
+        innerText: "Download",
+      },
     },
-    innerText: "Download",
+    code: {
+      name: "Create Action (Code)",
+      description: "This is my Create Action (Code)",
+    },
+  },
+  edit: {
+    noCode: {
+      cssSelector: {
+        name: "Edit Action (CSS Selector)",
+        description: "This is my Edit Action (CSS Selector)",
+        selector: ".my-custom-class-edited",
+      },
+      pageURL: {
+        name: "Edit Action (Page URL)",
+        description: "This is my Edit Action (Page URL)",
+        matcher: {
+          label: "Starts with",
+          value: "custom-url0-edited",
+        },
+        testURL: "http://localhost:3000/custom-url",
+      },
+      innerText: {
+        name: "Edit Action (Inner Text)",
+        description: "This is my Edit Action (Inner Text)",
+        innerText: "Download Edited",
+      },
+    },
+    code: {
+      name: "Edit Action (Code)",
+      description: "This is my Edit Action (Code)",
+    },
   },
 };
