@@ -1,8 +1,5 @@
 version: "3.3"
 
-# If you already have a local .env then please run this using
-# docker compose --env-file /dev/null up
-
 # This should be the same as below if you are running via docker compose up
 x-webapp-url: &webapp_url http://localhost:3000
 

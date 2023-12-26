@@ -234,12 +234,11 @@ export const inviteUser = async ({
     },
   });
 
-  await sendInviteMemberEmail(invite.id, email, currentUserName, name);
-
   inviteCache.revalidate({
     id: invite.id,
     teamId: invite.teamId,
   });
 
+  await sendInviteMemberEmail(invite.id, email, currentUserName, name);
   return invite;
 };
