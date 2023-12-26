@@ -18,6 +18,12 @@ export default async function handle(
       const user = await prisma.user.findUnique({
         where: {
           id: id,
+         
+        },
+        select: {
+          id: true,
+          email: true,
+          emailVerified: true
         },
       });
       if (!user) {
@@ -25,12 +31,14 @@ export default async function handle(
           error: "Jeton invalide fourni ou qui n'est plus valide",
         });
       }
-      await prisma.user.update({
+      const emailVerified =  user.emailVerified || new Date().toISOString();
+      const  updatedUser = await prisma.user.update({
         where: { id: user.id },
-        data: { password: hashedPassword }
+        data: { password: hashedPassword, emailVerified }
       })
-      await sendPasswordResetNotifyEmail(user)
-      res.json({});
+      // Not important now
+      //await sendPasswordResetNotifyEmail(user)
+      res.json({ updatedUser });
     } catch (e) {
       return res.status(500).json({
         error: "Jeton invalide fourni ou qui n'est plus valide",

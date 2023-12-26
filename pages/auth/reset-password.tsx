@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import BaseLayoutUnauthorized from "../../components/layout/BaseLayoutUnauthorized";
 import { resetPassword } from "../../lib/users";
+import { signIn } from "next-auth/react";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -13,9 +14,13 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await resetPassword(token, e.target.elements.password.value);
+      const resetedPassword = await resetPassword(token, e.target.elements.password.value);
 
-      router.push("/auth/reset-password-success");
+      await signIn("credentials", {
+        callbackUrl: router.query.callbackUrl?.toString() || "/forms",
+        email: resetedPassword.updatedUser.email,
+        password: e.target.elements.password.value,
+      });
     } catch (e) {
       setError(e.message);
     }
