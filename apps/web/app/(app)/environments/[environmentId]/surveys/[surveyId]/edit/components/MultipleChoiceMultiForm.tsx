@@ -178,7 +178,7 @@ export default function MultipleChoiceMultiForm({
       <div className="mt-3">
         {showSubheader && (
           <>
-            <div className="mt-2 inline-flex w-full items-center">
+            <div className="mt-2 flex w-full items-center">
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={environmentId}
@@ -189,7 +189,7 @@ export default function MultipleChoiceMultiForm({
                 type="subheader"
               />
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
                   updateQuestion(questionIdx, { subheader: "" });

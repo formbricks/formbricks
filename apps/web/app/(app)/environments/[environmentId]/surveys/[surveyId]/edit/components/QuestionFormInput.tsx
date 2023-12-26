@@ -47,7 +47,6 @@ const QuestionFormInput = ({
         text = text.replace(recallInfo, `@${recallText}`);
       }
     }
-    console.log(text);
     return text;
   };
 
@@ -66,7 +65,7 @@ const QuestionFormInput = ({
   }
 
   const getRecallQuestions = () => {
-    const ids = extractIds(question[type]); // Extract IDs from the headline
+    const ids = extractIds(question[type]);
     let recallQuestionArray: TSurveyQuestion[] = [];
     ids.forEach((questionId) => {
       let recallQuestion = localSurvey.questions.find((question) => question.id === questionId);
@@ -131,27 +130,33 @@ const QuestionFormInput = ({
     });
     const processInput = (): JSX.Element[] => {
       const parts: JSX.Element[] = [];
-      let remainingText = question[type] ?? "";
+      let remainingText: string = question[type] ?? "";
       remainingText = recallToHeadline(remainingText);
-      console.log(remainingText);
-      console.log(recallQuestionHeadlines);
       filterRecallQuestions(remainingText);
       recallQuestionHeadlines.forEach((headline) => {
         const index = addBlankSpaces(remainingText).indexOf("   " + "@" + headline + "   ");
         if (index !== -1) {
           if (index > 0) {
-            parts.push(<span key={parts.length}>{remainingText.substring(0, index)}</span>);
+            parts.push(
+              <span key={parts.length} className="whitespace-pre">
+                {remainingText.substring(0, index)}
+              </span>
+            );
           }
           parts.push(
             <span className="z-30 cursor-pointer whitespace-pre rounded-md bg-slate-100" key={parts.length}>
-              {"   " + "@" + headline + "   "}
+              {"  " + "@" + headline + "  "}
             </span>
           );
           remainingText = remainingText.substring(index + headline.length + 1);
         }
       });
       if (remainingText.length) {
-        parts.push(<span key={parts.length}>{remainingText}</span>);
+        parts.push(
+          <span className="whitespace-pre" key={parts.length}>
+            {remainingText}
+          </span>
+        );
       }
 
       return parts;
@@ -212,17 +217,20 @@ const QuestionFormInput = ({
 
   const filterRecallQuestions = (text) => {
     let includedQuestions: TSurveyQuestion[] = [];
-
+    text = addBlankSpaces(text);
     recallQuestions.forEach((recallQuestion) => {
-      if (text.includes(`@${recallQuestion.headline}`)) {
+      if (text.includes(`   @${recallQuestion.headline}    `)) {
         includedQuestions.push(recallQuestion);
       } else {
-        const questionToRemove = recallQuestion.headline.slice(0, -1);
-        const newText = text.replace(`@${questionToRemove}`, "");
+        const questionToRemove = recallQuestion.headline;
+        const newText = text.replace(`   @${questionToRemove}   `, "");
         setText(newText);
         updateQuestion(questionIdx, {
           [type]: newText,
         });
+        let updatedFallback = { ...fallbacks };
+        delete updatedFallback[recallQuestion.id];
+        setFallbacks(updatedFallback);
       }
     });
 
@@ -232,15 +240,22 @@ const QuestionFormInput = ({
   const addFallback = () => {
     let headlineWithFallback = question[type];
     filteredRecallQuestions.forEach((recallQuestion) => {
-      const recallInfo = findRecallInfoById(question[type], recallQuestion!.id);
-      if (recallInfo) {
-        headlineWithFallback = headlineWithFallback.replaceAll(
-          recallInfo,
-          `recall:${recallQuestion?.id}/fallback:${fallbacks[recallQuestion!.id].replace(/ /g, "nbsp")}`
-        );
-        updateQuestion(questionIdx, {
-          [type]: headlineWithFallback,
-        });
+      if (recallQuestion) {
+        const recallInfo = findRecallInfoById(question[type], recallQuestion!.id);
+        if (recallInfo) {
+          let fallBackValue = fallbacks[recallQuestion.id].trim();
+          fallBackValue = fallBackValue.replace(/ /g, "nbsp");
+          let updatedFallback = { ...fallbacks };
+          updatedFallback[recallQuestion.id] = fallBackValue;
+          setFallbacks(updatedFallback);
+          headlineWithFallback = headlineWithFallback.replaceAll(
+            recallInfo,
+            `recall:${recallQuestion?.id}/fallback:${fallBackValue}`
+          );
+          updateQuestion(questionIdx, {
+            [type]: headlineWithFallback,
+          });
+        }
       }
     });
     setShowFallbackInput(false);
@@ -250,14 +265,14 @@ const QuestionFormInput = ({
   const headlineToRecall = (text): string => {
     recallQuestions.forEach((recallQuestion) => {
       const recallInfo = `recall:${recallQuestion.id}/fallback:${fallbacks[recallQuestion.id]}`;
-      text = text.replace(`   @${recallQuestion[type]}   `, recallInfo);
+      text = text.replace(`   @${recallQuestion.headline}   `, recallInfo);
     });
     return text;
   };
 
   const addBlankSpaces = (text) => {
     recallQuestions.forEach((recallquestion) => {
-      if (!text.includes(`   @${recallquestion[type]}   `)) {
+      if (!text.includes(`   @${recallquestion.headline}   `)) {
         text = text.replace(`@${recallquestion.headline}`, `   @${recallquestion.headline}   `);
       }
     });

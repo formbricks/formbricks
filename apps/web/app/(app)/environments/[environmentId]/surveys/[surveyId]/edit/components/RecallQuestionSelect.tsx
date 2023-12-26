@@ -6,9 +6,10 @@ import {
   StarIcon,
 } from "@heroicons/react/24/solid";
 import { CalendarDaysIcon, Phone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 
 import { checkForRecall } from "@formbricks/lib/utils/recall";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 const questionIconMapping = {
   openText: ChatBubbleBottomCenterTextIcon,
@@ -20,8 +21,18 @@ const questionIconMapping = {
   cal: Phone,
 };
 
+interface RecallQuestionSelectProps {
+  currentQuestionIdx: number;
+  localSurvey: TSurvey;
+  question: TSurveyQuestion;
+  addRecallQuestion: (question: TSurveyQuestion) => void;
+  setShowQuestionSelect: (show: boolean) => void;
+  showQuestionSelect: boolean;
+  inputRef: RefObject<HTMLInputElement>;
+  recallQuestions: TSurveyQuestion[];
+}
+
 export default function RecallQuestionSelect({
-  currentQuestionIdx,
   localSurvey,
   question,
   addRecallQuestion,
@@ -29,23 +40,29 @@ export default function RecallQuestionSelect({
   showQuestionSelect,
   inputRef,
   recallQuestions,
-}) {
+}: RecallQuestionSelectProps) {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
   const recallQuestionIds = recallQuestions.map((recallQuestion) => recallQuestion.id);
+  const filteredRecallQuestions = localSurvey.questions.filter(
+    (question) => !recallQuestionIds.includes(question.id)
+  );
+  const currentQuestionIdx = filteredRecallQuestions.findIndex(
+    (recallQuestion) => recallQuestion.id === question.id
+  );
 
   useEffect(() => {
     const handleKeyPress = (event) => {
       if (showQuestionSelect) {
         if (event.key === "ArrowDown") {
           event.preventDefault();
-          setFocusedQuestionIdx((prevIdx) => (prevIdx + 1) % localSurvey.questions.length);
+          setFocusedQuestionIdx((prevIdx) => (prevIdx + 1) % filteredRecallQuestions.length);
         } else if (event.key === "ArrowUp") {
           event.preventDefault();
           setFocusedQuestionIdx((prevIdx) =>
-            prevIdx === 0 ? localSurvey.questions.length - 1 : prevIdx - 1
+            prevIdx === 0 ? filteredRecallQuestions.length - 1 : prevIdx - 1
           );
         } else if (event.key === "Enter") {
-          const selectedQuestion = localSurvey.questions[focusedQuestionIdx];
+          const selectedQuestion = filteredRecallQuestions[focusedQuestionIdx];
 
           addRecallQuestion(selectedQuestion);
           setShowQuestionSelect(false);
@@ -68,7 +85,7 @@ export default function RecallQuestionSelect({
         <p className="mb-2 font-medium">Recall Information from...</p>
       )}
       <div>
-        {localSurvey.questions.map((q, idx) => {
+        {filteredRecallQuestions.map((q, idx) => {
           if (q.id === question.id) return;
           if (idx > currentQuestionIdx) return;
           if (recallQuestionIds.includes(q.id)) return;
