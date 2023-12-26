@@ -88,12 +88,14 @@ const QuestionFormInput = ({
   const [showQuestionSelect, setShowQuestionSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallQuestions, setrecallQuestions] = useState<TSurveyQuestion[]>(
-    question[type].includes("recall:") ? getRecallQuestions() : []
+    question[type]?.includes("recall:") ? getRecallQuestions() : []
   );
   const filteredRecallQuestions = Array.from(new Set(recallQuestions.map((q) => q.id))).map((id) => {
     return recallQuestions.find((q) => q.id === id);
   });
-  const [fallbacks, setFallbacks] = useState(question[type].includes("fallback:") ? getFallbackValues() : {});
+  const [fallbacks, setFallbacks] = useState(
+    question[type]?.includes("fallback:") ? getFallbackValues() : {}
+  );
 
   useEffect(() => {
     const syncScrollPosition = () => {
@@ -292,7 +294,7 @@ const QuestionFormInput = ({
               }}
               isInvalid={isInValid && question[type].trim() === ""}
             />
-            {question[type].includes("recall:") && (
+            {question[type]?.includes("recall:") && (
               <div
                 className="fixed right-10 hidden items-center rounded-lg border bg-white p-2 py-3 text-sm text-slate-800 group-hover:flex"
                 onClick={() => {
