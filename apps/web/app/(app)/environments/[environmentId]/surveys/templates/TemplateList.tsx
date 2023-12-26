@@ -111,8 +111,8 @@ export default function TemplateList({
             className={cn(
               selectedFilter === category
                 ? " bg-slate-800 font-semibold text-white"
-                : " bg-white text-slate-700 hover:bg-slate-100",
-              "mt-2 rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150 "
+                : " bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
+              "mt-2 rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
             )}>
             {category}
             {category === RECOMMENDED_CATEGORY_NAME && <SparklesIcon className="ml-1 inline h-5 w-5" />}
@@ -153,7 +153,7 @@ export default function TemplateList({
           ? [...filteredTemplates, testTemplate]
           : filteredTemplates
         ).map((template: TTemplate) => (
-          <div
+          <button
             onClick={() => {
               const newTemplate = replacePresetPlaceholders(template, product);
               onTemplateClick(newTemplate);
@@ -184,9 +184,9 @@ export default function TemplateList({
               {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
                 <TooltipProvider delayDuration={80}>
                   <Tooltip>
-                    <TooltipTrigger>
+                    <TooltipTrigger tabIndex={-1}>
                       <div>
-                        <SplitIcon className="ml-1.5 h-5 w-5  rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+                        <SplitIcon className="ml-1.5 h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>This survey uses branching logic.</TooltipContent>
@@ -197,16 +197,18 @@ export default function TemplateList({
             <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
             <p className="text-left text-xs text-slate-600">{template.description}</p>
             {activeTemplate?.name === template.name && (
-              <Button
-                variant="darkCTA"
-                className="mt-6 px-6 py-3"
-                disabled={activeTemplate === null}
-                loading={loading}
-                onClick={() => addSurvey(activeTemplate)}>
-                Use this template
-              </Button>
+              <div className="flex justify-start">
+                <Button
+                  variant="darkCTA"
+                  className="mt-6 px-6 py-3"
+                  disabled={activeTemplate === null}
+                  loading={loading}
+                  onClick={() => addSurvey(activeTemplate)}>
+                  Use this template
+                </Button>
+              </div>
             )}
-          </div>
+          </button>
         ))}
       </div>
     </main>
