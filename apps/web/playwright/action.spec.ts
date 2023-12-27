@@ -1,19 +1,19 @@
 import { actions, users } from "@/playwright/utils/mock";
 import { Page, expect, test } from "@playwright/test";
 
-import { login } from "./utils/helper";
+import { signUpAndLogin, skipOnboarding } from "./utils/helper";
 
 const createNoCodeActionByCSSSelector = async (
   page: Page,
+  username: string,
   email: string,
   password: string,
-  name: string,
+  actionName: string,
   description: string,
   selector: string
 ) => {
-  // await signUpAndLogin(page, name, email, password);
-  await login(page, email, password);
-  // await skipOnboarding(page);
+  await signUpAndLogin(page, username, email, password);
+  await skipOnboarding(page);
 
   await page.getByRole("link", { name: "Actions & Attributes" }).click();
 
@@ -22,7 +22,7 @@ const createNoCodeActionByCSSSelector = async (
 
   // User fills the action name and description
   await expect(page.getByLabel("What did your user do?")).toBeVisible();
-  await page.getByLabel("What did your user do?").fill(name);
+  await page.getByLabel("What did your user do?").fill(actionName);
 
   await expect(page.getByLabel("Description")).toBeVisible();
   await page.getByLabel("Description").fill(description);
@@ -40,9 +40,10 @@ const createNoCodeActionByCSSSelector = async (
 
 const createNoCodeActionByPageURL = async (
   page: Page,
+  username: string,
   email: string,
   password: string,
-  name: string,
+  actionName: string,
   description: string,
   matcher: {
     label: string;
@@ -50,9 +51,8 @@ const createNoCodeActionByPageURL = async (
   },
   testURL: string
 ) => {
-  // await signUpAndLogin(page, name, email, password);
-  await login(page, email, password);
-  // await skipOnboarding(page);
+  await signUpAndLogin(page, username, email, password);
+  await skipOnboarding(page);
 
   await page.getByRole("link", { name: "Actions & Attributes" }).click();
 
@@ -61,7 +61,7 @@ const createNoCodeActionByPageURL = async (
 
   // User fills the action name and description
   await expect(page.getByLabel("What did your user do?")).toBeVisible();
-  await page.getByLabel("What did your user do?").fill(name);
+  await page.getByLabel("What did your user do?").fill(actionName);
 
   await expect(page.getByLabel("Description")).toBeVisible();
   await page.getByLabel("Description").fill(description);
@@ -90,15 +90,15 @@ const createNoCodeActionByPageURL = async (
 
 const createNoCodeActionByInnerText = async (
   page: Page,
+  username: string,
   email: string,
   password: string,
-  name: string,
+  actionName: string,
   description: string,
   innerText: string
 ) => {
-  // await signUpAndLogin(page, name, email, password);
-  await login(page, email, password);
-  // await skipOnboarding(page);
+  await signUpAndLogin(page, username, email, password);
+  await skipOnboarding(page);
 
   await page.getByRole("link", { name: "Actions & Attributes" }).click();
 
@@ -107,7 +107,7 @@ const createNoCodeActionByInnerText = async (
 
   // User fills the action name and description
   await expect(page.getByLabel("What did your user do?")).toBeVisible();
-  await page.getByLabel("What did your user do?").fill(name);
+  await page.getByLabel("What did your user do?").fill(actionName);
 
   await expect(page.getByLabel("Description")).toBeVisible();
   await page.getByLabel("Description").fill(description);
@@ -125,11 +125,12 @@ const createNoCodeActionByInnerText = async (
 
 test.describe("Create No Code Action and Edit", async () => {
   test.describe.configure({ mode: "serial" });
-  const { email, password } = users.survey[0];
+  const { email, password, name: username } = users.action[0];
 
   test("Create No Code Action by CSS Selector and Edit", async ({ page }) => {
     await createNoCodeActionByCSSSelector(
       page,
+      username,
       email,
       password,
       actions.create.noCode.cssSelector.name,
@@ -165,6 +166,7 @@ test.describe("Create No Code Action and Edit", async () => {
   test("Create No Code Action by Page URL and Edit", async ({ page }) => {
     await createNoCodeActionByPageURL(
       page,
+      username,
       email,
       password,
       actions.create.noCode.pageURL.name,
@@ -207,6 +209,7 @@ test.describe("Create No Code Action and Edit", async () => {
   test("Create No Code Action by Inner Text and Edit", async ({ page }) => {
     await createNoCodeActionByInnerText(
       page,
+      username,
       email,
       password,
       actions.create.noCode.innerText.name,
@@ -240,12 +243,11 @@ test.describe("Create No Code Action and Edit", async () => {
 
 test.describe("Create Code Action and Edit", async () => {
   test.describe.configure({ mode: "serial" });
-  const { email, password } = users.survey[0];
+  const { email, password, name: username } = users.action[1];
 
   test("Create Code Action", async ({ page }) => {
-    // await signUpAndLogin(page, name, email, password);
-    await login(page, email, password);
-    // await skipOnboarding(page);
+    await signUpAndLogin(page, username, email, password);
+    await skipOnboarding(page);
 
     await page.getByRole("link", { name: "Actions & Attributes" }).click();
 
@@ -288,11 +290,12 @@ test.describe("Create Code Action and Edit", async () => {
 
 test.describe("Delete Action", async () => {
   test.describe.configure({ mode: "serial" });
-  const { email, password } = users.survey[0];
+  const { email, password, name: username } = users.action[2];
 
   test("Delete Action", async ({ page }) => {
     await createNoCodeActionByCSSSelector(
       page,
+      username,
       email,
       password,
       actions.delete.noCode.name,

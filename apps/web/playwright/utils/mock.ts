@@ -32,6 +32,23 @@ export const users = {
       password: "XpP%X9UU3efj8vJa",
     },
   ],
+  action: [
+    {
+      name: "Action User 1",
+      email: "action1@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+    {
+      name: "Action User 2",
+      email: "action2@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+    {
+      name: "Action User 3",
+      email: "action3@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+  ],
 };
 
 export const teams = {
