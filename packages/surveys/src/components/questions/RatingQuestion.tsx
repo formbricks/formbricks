@@ -92,13 +92,13 @@ export default function RatingQuestion({
       <div className="mb-4 mt-8 flex items-center justify-center">
         <fieldset className="w-full ">
           <legend className="sr-only">Choices</legend>
-          <div className="flex">
+          <div className="flex justify-around">
             {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
               <span
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="bg-survey-bg max-w-10 relative max-h-10 flex-1 cursor-pointer text-center text-sm leading-10">
+                className="bg-survey-bg relative max-h-10 flex-1 cursor-pointer text-center text-sm leading-10">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
