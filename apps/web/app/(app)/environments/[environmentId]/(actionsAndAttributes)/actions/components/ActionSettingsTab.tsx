@@ -198,7 +198,8 @@ export default function ActionSettingsTab({
                 variant="warn"
                 onClick={() => setOpenDeleteDialog(true)}
                 StartIcon={TrashIcon}
-                className="mr-3">
+                className="mr-3"
+                id="deleteActionModalTrigger">
                 Delete
               </Button>
             )}

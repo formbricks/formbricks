@@ -153,4 +153,15 @@ export const actions = {
       description: "This is my Edit Action (Code)",
     },
   },
+  delete: {
+    noCode: {
+      name: "Delete Action (CSS Selector)",
+      description: "This is my Delete Action (CSS Selector)",
+      selector: ".my-custom-class-deleted",
+    },
+    code: {
+      name: "Delete Action (Code)",
+      description: "This is my Delete Action (Code)",
+    },
+  },
 };
