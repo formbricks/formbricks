@@ -42,7 +42,7 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
       validateInputs([displayId, ZId]);
 
       try {
-        const display = await prisma.response.findUnique({
+        const display = await prisma.display.findUnique({
           where: {
             id: displayId,
           },
@@ -64,7 +64,7 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return display ? formatDateFields(display, ZDisplay) : null;
+  return display ? formatDateFields({ ...display, status: null }, ZDisplay) : null;
 };
 
 export const updateDisplay = async (
@@ -94,13 +94,15 @@ export const updateDisplay = async (
         responseId: displayInput.responseId,
       }),
     };
-    const display = await prisma.display.update({
+    const displayPrisma = await prisma.display.update({
       where: {
         id: displayId,
       },
       data,
       select: selectDisplay,
     });
+
+    const display = { ...displayPrisma, status: null };
 
     displayCache.revalidate({
       id: display.id,
@@ -136,14 +138,14 @@ export const updateDisplayLegacy = async (
         responseId: displayInput.responseId,
       }),
     };
-    const display = await prisma.display.update({
+    const displayPrisma = await prisma.display.update({
       where: {
         id: displayId,
       },
       data,
       select: selectDisplay,
     });
-
+    const display = { ...displayPrisma, status: null };
     displayCache.revalidate({
       id: display.id,
       surveyId: display.surveyId,
@@ -164,7 +166,6 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
   validateInputs([displayInput, ZDisplayCreateInput]);
 
   const { environmentId, userId, surveyId } = displayInput;
-
   try {
     let person;
     if (userId) {
@@ -173,7 +174,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
         person = await createPerson(environmentId, userId);
       }
     }
-    const display = await prisma.display.create({
+    const displayPrisma = await prisma.display.create({
       data: {
         survey: {
           connect: {
@@ -191,13 +192,12 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
       },
       select: selectDisplay,
     });
-
+    const display = { ...displayPrisma, status: null };
     displayCache.revalidate({
       id: display.id,
       personId: display.personId,
       surveyId: display.surveyId,
     });
-
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -211,7 +211,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
 export const createDisplayLegacy = async (displayInput: TDisplayLegacyCreateInput): Promise<TDisplay> => {
   validateInputs([displayInput, ZDisplayLegacyCreateInput]);
   try {
-    const display = await prisma.display.create({
+    const displayPrisma = await prisma.display.create({
       data: {
         survey: {
           connect: {
@@ -229,6 +229,7 @@ export const createDisplayLegacy = async (displayInput: TDisplayLegacyCreateInpu
       },
       select: selectDisplay,
     });
+    const display = { ...displayPrisma, status: null };
 
     displayCache.revalidate({
       id: display.id,
@@ -259,7 +260,7 @@ export const markDisplayRespondedLegacy = async (displayId: string): Promise<TDi
       data: {
         status: "responded",
       },
-      select: selectDisplay,
+      select: { ...selectDisplay, status: true },
     });
 
     if (!display) {
@@ -315,7 +316,7 @@ export const getDisplaysByPersonId = async (personId: string, page?: number): Pr
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return displays.map((display) => formatDateFields(display, ZDisplay));
+  return displays.map((display) => formatDateFields({ ...display, status: null }, ZDisplay));
 };
 
 export const deleteDisplayByResponseId = async (
@@ -325,19 +326,19 @@ export const deleteDisplayByResponseId = async (
   validateInputs([responseId, ZId], [surveyId, ZId]);
 
   try {
-    const display = await prisma.display.delete({
+    const displayPrisma = await prisma.display.delete({
       where: {
         responseId,
       },
       select: selectDisplay,
     });
+    const display = { ...displayPrisma, status: null };
 
     displayCache.revalidate({
       id: display.id,
       personId: display.personId,
       surveyId,
     });
-
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
