@@ -48,6 +48,16 @@ export const users = {
       email: "action3@formbricks.com",
       password: "XpP%X9UU3efj8vJa",
     },
+    {
+      name: "Action User 4",
+      email: "action4@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+    {
+      name: "Action User 4",
+      email: "action4@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
   ],
 };
 

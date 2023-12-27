@@ -125,9 +125,9 @@ const createNoCodeActionByInnerText = async (
 
 test.describe("Create No Code Action and Edit", async () => {
   test.describe.configure({ mode: "serial" });
-  const { email, password, name: username } = users.action[0];
 
   test("Create No Code Action by CSS Selector and Edit", async ({ page }) => {
+    const { email, password, name: username } = users.action[0];
     await createNoCodeActionByCSSSelector(
       page,
       username,
@@ -164,6 +164,7 @@ test.describe("Create No Code Action and Edit", async () => {
   });
 
   test("Create No Code Action by Page URL and Edit", async ({ page }) => {
+    const { email, password, name: username } = users.action[1];
     await createNoCodeActionByPageURL(
       page,
       username,
@@ -207,6 +208,7 @@ test.describe("Create No Code Action and Edit", async () => {
   });
 
   test("Create No Code Action by Inner Text and Edit", async ({ page }) => {
+    const { email, password, name: username } = users.action[2];
     await createNoCodeActionByInnerText(
       page,
       username,
@@ -243,7 +245,7 @@ test.describe("Create No Code Action and Edit", async () => {
 
 test.describe("Create Code Action and Edit", async () => {
   test.describe.configure({ mode: "serial" });
-  const { email, password, name: username } = users.action[1];
+  const { email, password, name: username } = users.action[3];
 
   test("Create Code Action", async ({ page }) => {
     await signUpAndLogin(page, username, email, password);
@@ -290,7 +292,7 @@ test.describe("Create Code Action and Edit", async () => {
 
 test.describe("Delete Action", async () => {
   test.describe.configure({ mode: "serial" });
-  const { email, password, name: username } = users.action[2];
+  const { email, password, name: username } = users.action[4];
 
   test("Delete Action", async ({ page }) => {
     await createNoCodeActionByCSSSelector(
