@@ -288,6 +288,16 @@ const QuestionFormInput = ({
               className="no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full space-x-1 overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ">
               {renderedText}
             </div>
+            {question[type]?.includes("recall:") && (
+              <div
+                className="fixed right-14 hidden items-center rounded-b-lg bg-slate-100 px-2.5 py-1 text-xs hover:bg-slate-200 group-hover:flex"
+                onClick={() => {
+                  setShowFallbackInput(true);
+                }}>
+                Edit Recall
+                <PencilIcon className="ml-2 h-3 w-3" />
+              </div>
+            )}
             <Input
               className="absolute top-0"
               autoFocus
@@ -305,17 +315,6 @@ const QuestionFormInput = ({
               }}
               isInvalid={isInValid && question[type].trim() === ""}
             />
-            {question[type]?.includes("recall:") && (
-              <div
-                className="fixed right-10 hidden items-center rounded-lg border bg-white p-2 py-3 text-sm text-slate-800 group-hover:flex"
-                onClick={() => {
-                  setShowFallbackInput(true);
-                }}>
-                Edit Fallback
-                <PencilIcon className="ml-2 h-3 w-3 text-slate-800" />
-              </div>
-            )}
-
             {showImageUploader && (
               <FileInput
                 id="question-image"
