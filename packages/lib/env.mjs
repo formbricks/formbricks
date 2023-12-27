@@ -1,7 +1,5 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
-import { config } from 'dotenv';
-config({ path: '../../.env' });
 
 export const env = createEnv({
   /*
@@ -63,9 +61,14 @@ export const env = createEnv({
     S3_SECRET_KEY: z.string().optional(),
     S3_REGION: z.string().optional(),
     S3_BUCKET_NAME: z.string().optional(),
+    NOTION_OAUTH_CLIENT_ID: z.string().optional(),
+    NOTION_OAUTH_CLIENT_SECRET: z.string().optional(),
     AZUREAD_CLIENT_SECRET: z.string().optional(),
     AZUREAD_TENANT_ID: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
+    DEFAULT_TEAM_ID: z.string().optional(),
+    DEFAULT_TEAM_ROLE: z.enum(["owner", "admin", "editor", "developer", "viewer"]).optional(),
+    ONBOARDING_DISABLED: z.string().optional(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
   },
 
@@ -127,6 +130,8 @@ export const env = createEnv({
     S3_SECRET_KEY: process.env.S3_SECRET_KEY,
     S3_REGION: process.env.S3_REGION,
     S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
+    NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
+    NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,
@@ -141,7 +146,10 @@ export const env = createEnv({
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
-    AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
+    AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
+    DEFAULT_TEAM_ID: process.env.DEFAULT_TEAM_ID,
+    DEFAULT_TEAM_ROLE: process.env.DEFAULT_TEAM_ROLE,
+    ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
   },
 });

@@ -1,5 +1,9 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+import { z } from "zod";
+
 import { prisma } from "@formbricks/database";
 import type {
   TEnvironment,
@@ -13,27 +17,26 @@ import {
   ZId,
 } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-import "server-only";
-import { z } from "zod";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { getProducts } from "../product/service";
+import { getTeamsByUserId } from "../team/service";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
-import { formatEnvironmentDateFields } from "./util";
 
-export const getEnvironment = (environmentId: string) =>
-  unstable_cache(
-    async (): Promise<TEnvironment> => {
+export const getEnvironment = async (environmentId: string): Promise<TEnvironment | null> => {
+  const environment = await unstable_cache(
+    async () => {
       validateInputs([environmentId, ZId]);
-      let environmentPrisma;
 
       try {
-        environmentPrisma = await prisma.environment.findUnique({
+        const environment = await prisma.environment.findUnique({
           where: {
             id: environmentId,
           },
         });
+        return environment;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
@@ -42,16 +45,6 @@ export const getEnvironment = (environmentId: string) =>
 
         throw error;
       }
-
-      try {
-        const environment = ZEnvironment.parse(environmentPrisma);
-        return environment;
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          console.error(JSON.stringify(error.errors, null, 2));
-        }
-        throw new ValidationError("Data validation of environment failed");
-      }
     },
     [`getEnvironment-${environmentId}`],
     {
@@ -59,9 +52,11 @@ export const getEnvironment = (environmentId: string) =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return environment ? formatDateFields(environment, ZEnvironment) : null;
+};
 
-export const getEnvironments = async (productId: string): Promise<TEnvironment[]> =>
-  unstable_cache(
+export const getEnvironments = async (productId: string): Promise<TEnvironment[]> => {
+  const environments = await unstable_cache(
     async (): Promise<TEnvironment[]> => {
       validateInputs([productId, ZId]);
       let productPrisma;
@@ -106,6 +101,8 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return environments.map((environment) => formatDateFields(environment, ZEnvironment));
+};
 
 export const updateEnvironment = async (
   environmentId: string,
@@ -137,40 +134,25 @@ export const updateEnvironment = async (
 };
 
 export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
-  const environment = await unstable_cache(
-    async () => {
-      validateInputs([userId, ZId]);
-      try {
-        return await prisma.environment.findFirst({
-          where: {
-            type: "production",
-            product: {
-              team: {
-                memberships: {
-                  some: {
-                    userId,
-                  },
-                },
-              },
-            },
-          },
-        });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getFirstEnvironmentByUserId-${userId}`],
-    {
-      tags: [environmentCache.tag.byUserId(userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-  return environment ? formatEnvironmentDateFields(environment) : environment;
+  const teams = await getTeamsByUserId(userId);
+  if (teams.length === 0) {
+    throw new Error(`Unable to get first environment: User ${userId} has no teams`);
+  }
+  const firstTeam = teams[0];
+  const products = await getProducts(firstTeam.id);
+  if (products.length === 0) {
+    throw new Error(`Unable to get first environment: Team ${firstTeam.id} has no products`);
+  }
+  const firstProduct = products[0];
+  const productionEnvironment = firstProduct.environments.find(
+    (environment) => environment.type === "production"
+  );
+  if (!productionEnvironment) {
+    throw new Error(
+      `Unable to get first environment: Product ${firstProduct.id} has no production environment`
+    );
+  }
+  return productionEnvironment;
 };
 
 export const createEnvironment = async (

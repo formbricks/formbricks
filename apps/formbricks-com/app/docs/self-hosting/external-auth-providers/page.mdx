@@ -1,8 +1,12 @@
 export const metadata = {
-  title: "External auth providers",
+  title: "Configure Formbricks with External auth providers",
   description:
     "Set up and integrate multiple external authentication providers with Formbricks. Our step-by-step guide covers Google OAuth and more, ensuring a seamless login experience for your users.",
 };
+
+#### Self-Hosting
+
+# Configure
 
 ## Google OAuth Authentication
 
@@ -35,17 +39,24 @@ Integrating Google OAuth with your Formbricks instance allows users to log in us
    - Select the application type **Web application** for your project and enter any additional information required.
    - Ensure to specify authorized JavaScript origins and authorized redirect URIs.
 
-```
+<Col>
+<CodeGroup title="Configuration URLs">
+``` {{ title: 'Redirect & Origin URLs' }}
 Authorized JavaScript origins: {WEBAPP_URL}
 Authorized redirect URIs: {WEBAPP_URL}/api/auth/callback/google
 ```
+</CodeGroup>
+</Col>
 
 5. **Update Environment Variables in Docker**:
    - To integrate the Google OAuth, you have two options: either update the environment variables in the docker-compose file or directly add them to the running container.
    - In your Docker setup directory, open the `.env` file, and add or update the following lines with the `Client ID` and `Client Secret` obtained from Google Cloud Platform:
    - Alternatively, you can add the environment variables directly to the running container using the following commands (replace `container_id` with your actual Docker container ID):
 
-```
+<Col>
+<CodeGroup title="Set env vars">
+
+```sh {{ title: 'Shell commands' }}
 docker exec -it container_id /bin/bash
 export GOOGLE_AUTH_ENABLED=1
 export GOOGLE_CLIENT_ID=your-client-id-here
@@ -53,11 +64,14 @@ export GOOGLE_CLIENT_SECRET=your-client-secret-here
 exit
 ```
 
-```
+```sh {{ title: 'env file' }}
 GOOGLE_AUTH_ENABLED=1
 GOOGLE_CLIENT_ID=your-client-id-here
 GOOGLE_CLIENT_SECRET=your-client-secret-here
 ```
+
+</CodeGroup>
+</Col>
 
 6. **Restart Your Formbricks Instance**:
    - **Note:** Restarting your Docker containers may cause a brief period of downtime. Plan accordingly.

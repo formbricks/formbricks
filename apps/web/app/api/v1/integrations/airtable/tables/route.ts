@@ -1,12 +1,13 @@
-import { authOptions } from "@formbricks/lib/authOptions";
+import { responses } from "@/app/lib/api/response";
+import { getServerSession } from "next-auth";
+import { NextRequest } from "next/server";
+import * as z from "zod";
+
 import { getTables } from "@formbricks/lib/airtable/service";
+import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
-import { getServerSession } from "next-auth";
-import { NextRequest } from "next/server";
-import { responses } from "@/app/lib/api/response";
-import * as z from "zod";
 
 export async function GET(req: NextRequest) {
   const url = req.url;

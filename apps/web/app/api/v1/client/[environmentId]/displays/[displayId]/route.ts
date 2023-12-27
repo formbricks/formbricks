@@ -1,8 +1,9 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
 import { updateDisplay } from "@formbricks/lib/display/service";
 import { ZDisplayUpdateInput } from "@formbricks/types/displays";
-import { NextResponse } from "next/server";
 
 interface Context {
   params: {
@@ -16,10 +17,11 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function PUT(request: Request, context: Context): Promise<NextResponse> {
-  const { displayId } = context.params;
+  const { displayId, environmentId } = context.params;
   const jsonInput = await request.json();
   const inputValidation = ZDisplayUpdateInput.safeParse({
     ...jsonInput,
+    environmentId,
   });
 
   if (!inputValidation.success) {
@@ -31,8 +33,8 @@ export async function PUT(request: Request, context: Context): Promise<NextRespo
   }
 
   try {
-    const display = await updateDisplay(displayId, inputValidation.data);
-    return responses.successResponse(display, true);
+    await updateDisplay(displayId, inputValidation.data);
+    return responses.successResponse({}, true);
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse(error.message, true);

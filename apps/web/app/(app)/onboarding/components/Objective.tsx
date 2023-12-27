@@ -1,29 +1,30 @@
 "use client";
 
-import { updateProfileAction } from "@/app/(app)/onboarding/actions";
-import { env } from "@formbricks/lib/env.mjs";
+import { updateUserAction } from "@/app/(app)/onboarding/actions";
 import { formbricksEnabled, updateResponse } from "@/app/lib/formbricks";
-import { cn } from "@formbricks/lib/cn";
-import { TProfileObjective } from "@formbricks/types/profile";
-import { TProfile } from "@formbricks/types/profile";
-import { Button } from "@formbricks/ui/Button";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { env } from "@formbricks/lib/env.mjs";
+import { TUser, TUserObjective } from "@formbricks/types/user";
+import { Button } from "@formbricks/ui/Button";
+
 import { handleTabNavigation } from "../utils";
 
 type ObjectiveProps = {
   next: () => void;
   skip: () => void;
   formbricksResponseId?: string;
-  profile: TProfile;
+  user: TUser;
 };
 
 type ObjectiveChoice = {
   label: string;
-  id: TProfileObjective;
+  id: TUserObjective;
 };
 
-const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId, profile }) => {
+const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId, user }) => {
   const objectives: Array<ObjectiveChoice> = [
     { label: "Increase conversion", id: "increase_conversion" },
     { label: "Improve user retention", id: "improve_user_retention" },
@@ -52,9 +53,9 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
       if (selectedObjective) {
         try {
           setIsProfileUpdating(true);
-          await updateProfileAction({
+          await updateUserAction({
             objective: selectedObjective.id,
-            name: profile.name ?? undefined,
+            name: user.name ?? undefined,
           });
           setIsProfileUpdating(false);
         } catch (e) {
@@ -129,7 +130,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
         </div>
       </div>
       <div className="mb-24 flex justify-between">
-        <Button size="lg" className="text-slate-400" variant="minimal" onClick={skip} id="objective-skip">
+        <Button size="lg" className="text-slate-500" variant="minimal" onClick={skip} id="objective-skip">
           Skip
         </Button>
         <Button

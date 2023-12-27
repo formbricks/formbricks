@@ -2,6 +2,7 @@ import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import { OpenSourceInfo } from "@/components/shared/OpenSourceInfo";
 import { GetStartedWithPricing } from "@/components/shared/PricingGetStarted";
+
 import { PricingTable } from "../components/shared/PricingTable";
 
 const inProductSurveys = {
@@ -97,7 +98,7 @@ const linkSurveys = {
     { name: "Custom Styling", free: true, paid: true, comingSoon: true },
     { name: "Recall Information", free: true, paid: true, comingSoon: true },
     { name: "Collect Payments, Signatures and Appointments", free: true, paid: true, comingSoon: true },
-    { name: "Custom URL", free: false, paid: true },
+    { name: "Custom URL", free: false, paid: true, comingSoon: true },
     { name: "Remove Formbricks Branding", free: false, paid: true },
   ],
 

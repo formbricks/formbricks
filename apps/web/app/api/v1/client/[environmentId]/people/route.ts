@@ -1,6 +1,13 @@
 import { responses } from "@/app/lib/api/response";
-import { createPerson } from "@formbricks/lib/person/service";
 import { NextRequest } from "next/server";
+
+import { createPerson } from "@formbricks/lib/person/service";
+
+interface Context {
+  params: {
+    environmentId: string;
+  };
+}
 
 export async function OPTIONS() {
   // cors headers
@@ -8,11 +15,11 @@ export async function OPTIONS() {
   return responses.successResponse({}, true);
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest, context: Context) {
   // we need to create a new person
   // call the createPerson service from here
-
-  const { environmentId, userId } = await req.json();
+  const environmentId = context.params.environmentId;
+  const { userId } = await req.json();
 
   if (!environmentId) {
     return responses.badRequestResponse("environmentId is required", { environmentId }, true);
@@ -23,9 +30,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const person = await createPerson(environmentId, userId);
+    await createPerson(environmentId, userId);
 
-    return responses.successResponse({ status: "success", person }, true);
+    return responses.successResponse({ userId }, true);
   } catch (err) {
     return responses.internalServerErrorResponse("Something went wrong", true);
   }

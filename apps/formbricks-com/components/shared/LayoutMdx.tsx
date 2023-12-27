@@ -1,5 +1,6 @@
 import SlideInBanner from "@/components/shared/SlideInBanner";
 import { useEffect } from "react";
+
 import Footer from "./Footer";
 import Header from "./Header";
 import MetaInformation from "./MetaInformation";
@@ -59,7 +60,7 @@ export default function LayoutMdx({ meta, children }: Props) {
               )}
             </header>
           )}
-          <Prose className="prose-h2:text-2xl prose-h2:mt-4 prose-p:text-base prose-p:mb-4 prose-h3:text-xl prose-a:text-slate-900 prose-a:hover:text-slate-900 prose-a:text-decoration-brand prose-a:not-italic ">
+          <Prose className="prose-h2:text-2xl prose-li:text-base prose-h2:mt-4 prose-p:text-base  prose-p:mb-4 prose-h3:text-xl prose-a:text-slate-900 prose-a:hover:text-slate-900 prose-a:text-decoration-brand prose-a:not-italic ">
             {children}
           </Prose>
         </article>

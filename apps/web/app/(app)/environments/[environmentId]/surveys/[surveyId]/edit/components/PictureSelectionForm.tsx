@@ -1,15 +1,15 @@
-import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
-import FileInput from "@formbricks/ui/FileInput";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
-
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import { cn } from "@formbricks/lib/cn";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useState } from "react";
+
+import { cn } from "@formbricks/lib/cn";
+import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import FileInput from "@formbricks/ui/FileInput";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;

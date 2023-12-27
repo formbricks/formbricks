@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
 import { resendVerificationEmail } from "@/app/lib/users/users";
 import toast from "react-hot-toast";
+
+import { Button } from "@formbricks/ui/Button";
 
 interface RequestEmailVerificationProps {
   email: string | null;

@@ -1,7 +1,8 @@
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { ArrowDownIcon, CheckIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
+
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 interface WidgetStatusIndicatorProps {
   environmentId: string;
@@ -9,7 +10,11 @@ interface WidgetStatusIndicatorProps {
 }
 
 export default async function WidgetStatusIndicator({ environmentId, type }: WidgetStatusIndicatorProps) {
-  const [environment] = await Promise.all([getEnvironment(environmentId)]);
+  const environment = await getEnvironment(environmentId);
+
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
 
   const stati = {
     notImplemented: {

@@ -2,19 +2,34 @@
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
-import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
+import { NextRequest, NextResponse } from "next/server";
+
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
+import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { env } from "@formbricks/lib/env.mjs";
+import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 
 interface Context {
   params: {
     environmentId: string;
   };
+}
+
+export async function OPTIONS(): Promise<NextResponse> {
+  return NextResponse.json(
+    {},
+    {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, X-File-Name, X-File-Type, X-Survey-ID, X-Signature, X-Timestamp, X-UUID",
+      },
+    }
+  );
 }
 
 export async function POST(req: NextRequest, context: Context): Promise<NextResponse> {
@@ -23,19 +38,19 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
   const accessType = "private"; // private files are accessible only by authorized users
   const headersList = headers();
 
-  const fileType = headersList.get("fileType");
-  const fileName = headersList.get("fileName");
-  const surveyId = headersList.get("surveyId");
+  const fileType = headersList.get("X-File-Type");
+  const encodedFileName = headersList.get("X-File-Name");
+  const surveyId = headersList.get("X-Survey-ID");
 
-  const signedSignature = headersList.get("signature");
-  const signedUuid = headersList.get("uuid");
-  const signedTimestamp = headersList.get("timestamp");
+  const signedSignature = headersList.get("X-Signature");
+  const signedUuid = headersList.get("X-UUID");
+  const signedTimestamp = headersList.get("X-Timestamp");
 
   if (!fileType) {
     return responses.badRequestResponse("contentType is required");
   }
 
-  if (!fileName) {
+  if (!encodedFileName) {
     return responses.badRequestResponse("fileName is required");
   }
 
@@ -65,6 +80,8 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
     return responses.notFoundResponse("TeamByEnvironmentId", environmentId);
   }
 
+  const fileName = decodeURIComponent(encodedFileName);
+
   // validate signature
 
   const validated = validateLocalSignedUrl(
@@ -89,7 +106,7 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
   }
 
   try {
-    const plan = team.billing.features.linkSurvey.status in ["active", "canceled"] ? "pro" : "free";
+    const plan = ["active", "canceled"].includes(team.billing.features.linkSurvey.status) ? "pro" : "free";
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 

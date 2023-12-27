@@ -1,21 +1,22 @@
 "use client";
-import { cn } from "@formbricks/lib/cn";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
-import { Badge } from "@formbricks/ui/Badge";
-import { Label } from "@formbricks/ui/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+
 import {
   CheckCircleIcon,
   ComputerDesktopIcon,
   DevicePhoneMobileIcon,
-  EnvelopeIcon,
   ExclamationCircleIcon,
   LinkIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { cn } from "@formbricks/lib/cn";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
+import { Badge } from "@formbricks/ui/Badge";
+import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;
@@ -59,7 +60,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
       id: "link",
       name: "Link survey",
       icon: LinkIcon,
-      description: "Share a link to a survey page.",
+      description: "Share a link to a survey page or embed it in a web page or email.",
       comingSoon: false,
       alert: false,
     },
@@ -68,14 +69,6 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
       name: "Mobile App Survey",
       icon: DevicePhoneMobileIcon,
       description: "Survey users inside a mobile app (iOS & Android).",
-      comingSoon: true,
-      alert: false,
-    },
-    {
-      id: "email",
-      name: "Email",
-      icon: EnvelopeIcon,
-      description: "Send email surveys to your user base with your current email provider.",
       comingSoon: true,
       alert: false,
     },
@@ -117,8 +110,8 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                   option.comingSoon
                     ? "border-slate-200 bg-slate-50/50"
                     : option.id === localSurvey.type
-                    ? "border-brand-dark cursor-pointer bg-slate-50"
-                    : "cursor-pointer bg-slate-50"
+                      ? "border-brand-dark cursor-pointer bg-slate-50"
+                      : "cursor-pointer bg-slate-50"
                 )}>
                 <RadioGroupItem
                   value={option.id}

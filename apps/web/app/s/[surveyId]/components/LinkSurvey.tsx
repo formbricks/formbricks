@@ -1,49 +1,51 @@
 "use client";
 
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
-import { SurveyInline } from "@formbricks/ui/Survey";
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { FormbricksAPI } from "@formbricks/api";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
-  personId?: string;
+  userId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
+  responseCount?: number;
 }
 
 export default function LinkSurvey({
   survey,
   product,
-  personId,
+  userId,
   emailVerificationStatus,
   prefillAnswer,
   singleUseId,
   singleUseResponse,
   webAppUrl,
+  responseCount,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
-  const [surveyState, setSurveyState] = useState(
-    new SurveyState(survey.id, singleUseId, responseId, personId)
-  );
+  const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
@@ -85,21 +87,20 @@ export default function LinkSurvey({
     }
   }, []);
 
-  const [hiddenFieldsRecord, setHiddenFieldsRecord] = useState<Record<string, string | number | string[]>>();
+  const hiddenFieldsRecord = useMemo<Record<string, string | number | string[]> | null>(() => {
+    const fieldsRecord: Record<string, string | number | string[]> = {};
+    let fieldsSet = false;
 
-  useEffect(() => {
     survey.hiddenFields?.fieldIds?.forEach((field) => {
-      // set the question and answer to the survey state
       const answer = searchParams?.get(field);
       if (answer) {
-        setHiddenFieldsRecord((prev) => {
-          return {
-            ...prev,
-            [field]: answer,
-          };
-        });
+        fieldsRecord[field] = answer;
+        fieldsSet = true;
       }
     });
+
+    // Only return the record if at least one field was set.
+    return fieldsSet ? fieldsRecord : null;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
   useEffect(() => {
@@ -119,7 +120,7 @@ export default function LinkSurvey({
 
   return (
     <>
-      <ContentWrapper className="h-full w-full p-0 md:max-w-lg">
+      <ContentWrapper className="h-full w-full p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
@@ -136,7 +137,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
-          formbricksSignature={product.formbricksSignature}
+          isBrandingEnabled={product.linkSurveyBranding}
           onDisplay={async () => {
             if (!isPreview) {
               const api = new FormbricksAPI({
@@ -163,6 +164,7 @@ export default function LinkSurvey({
                   ...responseUpdate.data,
                   ...hiddenFieldsRecord,
                 },
+                ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
                 meta: {
                   url: window.location.href,
@@ -170,10 +172,25 @@ export default function LinkSurvey({
                 },
               });
           }}
+          onFileUpload={async (file: File, params: TUploadFileConfig) => {
+            const api = new FormbricksAPI({
+              apiHost: webAppUrl,
+              environmentId: survey.environmentId,
+            });
+
+            try {
+              const uploadedUrl = await api.client.storage.uploadFile(file, params);
+              return uploadedUrl;
+            } catch (err) {
+              console.error(err);
+              return "";
+            }
+          }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
+          responseCount={responseCount}
         />
       </ContentWrapper>
     </>

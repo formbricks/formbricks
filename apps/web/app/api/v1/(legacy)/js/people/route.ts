@@ -1,6 +1,7 @@
 import { responses } from "@/app/lib/api/response";
-import { createPerson } from "@formbricks/lib/person/service";
 import { NextRequest } from "next/server";
+
+import { createPerson } from "@formbricks/lib/person/service";
 
 export async function OPTIONS() {
   // cors headers
@@ -23,9 +24,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const person = await createPerson(environmentId, userId);
+    await createPerson(environmentId, userId);
 
-    return responses.successResponse({ status: "success", person }, true);
+    return responses.successResponse({}, true);
   } catch (err) {
     return responses.internalServerErrorResponse("Something went wrong", true);
   }

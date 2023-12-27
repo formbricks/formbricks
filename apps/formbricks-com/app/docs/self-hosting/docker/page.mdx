@@ -6,7 +6,7 @@ export const metadata = {
 
 #### Self-Hosting
 
-# Running Formbricks with Docker
+# Advanced Setup
 
 Quickly set up and start using Formbricks without getting into the technicalities of the build process. You'll be using an image that we've already built for you. The pre-built image is ready-to-run, and it only requires minimal configuration on your part. This approach is perfect for getting a functional instance of Formbricks up and running with minimal hassle. It's as easy as downloading the Docker image and firing up the container.
 
@@ -242,8 +242,10 @@ These variables can be provided at the runtime i.e. in your docker-compose file.
 | TELEMETRY_DISABLED          | Disables telemetry if set to `1`.                                                       | optional                                                |                                                                         |
 | INSTANCE_ID                 | Instance ID for Formbricks Cloud to be sent to Telemetry.                               | optional                                                |                                                                         |
 | INTERNAL_SECRET             | Internal Secret (Currently we overwrite the value with a random value).                 | optional                                                |                                                                         |
-| IS_FORMBRICKS_CLOUD         | Uses Formbricks Cloud if set to `1`                                                     | optional                                                |                                                                         |
 | DEFAULT_BRAND_COLOR         | Default brand color for your app (Can be overwritten from the UI as well).              | optional                                                | `#64748b`                                                               |
+| DEFAULT_TEAM_ID             | Automatically assign new users to a specific team when joining                          | optional                                                |                                                                         |
+| DEFAULT_TEAM_ROLE           | Role of the user in the default team.                                                   | optional                                                | `admin`                                                                 |
+| ONBOARDING_DISABLED         | Disables onboarding for new users if set to `1`                                         | optional                                                |                                                                         |
 
 ## Build-time Variables
 

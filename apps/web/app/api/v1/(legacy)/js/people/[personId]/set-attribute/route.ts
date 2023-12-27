@@ -1,12 +1,14 @@
-import { getUpdatedState } from "@/app/api/v1/(legacy)/js/lib/sync";
+import { getUpdatedState } from "@/app/api/v1/(legacy)/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
 import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { ZJsPeopleLegacyAttributeInput } from "@formbricks/types/js";
-import { NextResponse } from "next/server";
+import { TPersonClient } from "@formbricks/types/people";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -66,7 +68,15 @@ export async function POST(req: Request, { params }): Promise<NextResponse> {
 
     const state = await getUpdatedState(environmentId, personId);
 
-    return responses.successResponse({ ...state }, true);
+    let person: TPersonClient | null = null;
+    if (state.person && "id" in state.person && "userId" in state.person) {
+      person = {
+        id: state.person.id,
+        userId: state.person.userId,
+      };
+    }
+
+    return responses.successResponse({ ...state, person }, true);
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);

@@ -1,9 +1,9 @@
-import Image from "next/image";
-
 import logoHtml from "@/images/logos/html5.svg";
 import logoNextjs from "@/images/logos/nextjs.svg";
 import logoReactJs from "@/images/logos/reactjs.svg";
 import logoVueJs from "@/images/logos/vuejs.svg";
+import Image from "next/image";
+
 import { Button } from "./Button";
 
 const libraries = [
@@ -37,7 +37,7 @@ const libraries = [
 export function Libraries() {
   return (
     <div className="my-16 xl:max-w-none">
-      <div className="not-prose mt-4 grid grid-cols-1 gap-x-6 gap-y-10 border-slate-900/5 dark:border-white/5 sm:grid-cols-2 xl:max-w-none xl:grid-cols-3">
+      <div className="not-prose mt-4 grid grid-cols-1 gap-x-6 gap-y-10 border-slate-900/5 sm:grid-cols-2 xl:max-w-none xl:grid-cols-3 dark:border-white/5">
         {libraries.map((library) => (
           <a
             key={library.name}

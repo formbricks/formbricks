@@ -1,18 +1,26 @@
-export const revalidate = REVALIDATION_INTERVAL;
+import { getServerSession } from "next-auth";
+
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { colours } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import SurveyEditor from "./components/SurveyEditor";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+
+import SurveyEditor from "./components/SurveyEditor";
+
+export const generateMetadata = async ({ params }) => {
+  const survey = await getSurvey(params.surveyId);
+  return {
+    title: survey?.name ? `${survey?.name} | Editor` : "Editor",
+  };
+};
 
 export default async function SurveysEditPage({ params }) {
   const [survey, product, environment, actionClasses, attributeClasses, responseCount, team, session] =
@@ -51,16 +59,15 @@ export default async function SurveysEditPage({ params }) {
   }
 
   return (
-    <>
-      <SurveyEditor
-        survey={survey}
-        product={product}
-        environment={environment}
-        actionClasses={actionClasses}
-        attributeClasses={attributeClasses}
-        responseCount={responseCount}
-        membershipRole={currentUserMembership?.role}
-      />
-    </>
+    <SurveyEditor
+      survey={survey}
+      product={product}
+      environment={environment}
+      actionClasses={actionClasses}
+      attributeClasses={attributeClasses}
+      responseCount={responseCount}
+      membershipRole={currentUserMembership?.role}
+      colours={colours}
+    />
   );
 }

@@ -4,15 +4,16 @@ import {
   enableTwoFactorAuthAction,
   setupTwoFactorAuthAction,
 } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
-import { PasswordInput } from "@formbricks/ui/PasswordInput";
-import { Button } from "@formbricks/ui/Button";
-import { OTPInput } from "@formbricks/ui/OTPInput";
-import { Modal } from "@formbricks/ui/Modal";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import { SubmitHandler, useForm, Controller } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+
+import { Button } from "@formbricks/ui/Button";
+import { Modal } from "@formbricks/ui/Modal";
+import { OTPInput } from "@formbricks/ui/OTPInput";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
 
 type TConfirmPasswordFormState = {
   password: string;

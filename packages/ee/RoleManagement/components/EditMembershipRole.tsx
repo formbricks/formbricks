@@ -1,9 +1,14 @@
 "use client";
 
-import TransferOwnershipModal from "./TransferOwnershipModal";
-import { transferOwnershipAction, updateInviteAction, updateMembershipAction } from "../lib/actions";
+import { ChevronDownIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+
 import { capitalizeFirstLetter } from "@formbricks/lib/strings";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { Badge } from "@formbricks/ui/Badge";
+import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,12 +16,9 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Button } from "@formbricks/ui/Button";
-import { Badge } from "@formbricks/ui/Badge";
-import { ChevronDownIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
+
+import { transferOwnershipAction, updateInviteAction, updateMembershipAction } from "../lib/actions";
+import TransferOwnershipModal from "./TransferOwnershipModal";
 
 interface Role {
   isAdminOrOwner: boolean;

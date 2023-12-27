@@ -7,40 +7,12 @@ import {
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { isWithinInterval } from "date-fns";
 
-export const generateQuestionsAndAttributes = (survey: TSurvey, responses: TResponse[]) => {
-  let questionNames: string[] = [];
-
-  if (survey?.questions) {
-    questionNames = survey.questions.map((question) => question.headline);
-  }
-
-  const attributeMap: Record<string, Record<string, string | number>> = {};
-
-  if (responses) {
-    responses.forEach((response) => {
-      const { person } = response;
-      if (person !== null) {
-        const { id, attributes } = person;
-        Object.keys(attributes).forEach((attributeName) => {
-          if (!attributeMap.hasOwnProperty(attributeName)) {
-            attributeMap[attributeName] = {};
-          }
-          attributeMap[attributeName][id] = attributes[attributeName];
-        });
-      }
-    });
-  }
-  return {
-    questionNames,
-    attributeMap,
-  };
-};
+import { TResponse } from "@formbricks/types/responses";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 
 const conditionOptions = {
   openText: ["is"],
@@ -272,9 +244,9 @@ export const getFilterResponses = (
                 const responseValue = response.data[question.id];
                 const filterValue = filter?.filterType?.filterComboBoxValue;
                 if (Array.isArray(responseValue) && Array.isArray(filterValue) && filterValue.length > 0) {
-                  //@ts-ignore
+                  //@ts-expect-error
                   const updatedResponseValue = question?.choices
-                    ? //@ts-ignore
+                    ? //@ts-expect-error
                       matchAndUpdateArray([...question?.choices], [...responseValue])
                     : responseValue;
                   if (filter?.filterType?.filterValue === "Includes all") {
@@ -426,7 +398,6 @@ export const getFilterResponses = (
 
   // filtering the data according to the dates
   if (dateRange?.from !== undefined && dateRange?.to !== undefined) {
-    // @ts-ignore
     toBeFilterResponses = toBeFilterResponses.filter((r) =>
       isWithinInterval(r.createdAt, { start: dateRange.from!, end: dateRange.to! })
     );

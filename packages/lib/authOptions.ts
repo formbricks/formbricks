@@ -1,15 +1,21 @@
-import { env } from "./env.mjs";
-import { verifyPassword } from "@/app/lib/auth";
-import { prisma } from "@formbricks/database";
-import { EMAIL_VERIFICATION_DISABLED } from "./constants";
-import { verifyToken } from "./jwt";
-import { getProfileByEmail, updateProfile } from "./profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
+import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import AzureAD from "next-auth/providers/azure-ad";
+
+import { prisma } from "@formbricks/database";
+
+import { createAccount } from "./account/service";
+import { verifyPassword } from "./auth/util";
+import { EMAIL_VERIFICATION_DISABLED } from "./constants";
+import { env } from "./env.mjs";
+import { verifyToken } from "./jwt";
+import { createMembership } from "./membership/service";
+import { createProduct } from "./product/service";
+import { createTeam, getTeam } from "./team/service";
+import { createUser, getUserByEmail, updateUser } from "./user/service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -106,7 +112,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email already verified");
         }
 
-        user = await updateProfile(user.id, { emailVerified: new Date() });
+        user = await updateUser(user.id, { emailVerified: new Date() });
 
         return user;
       },
@@ -128,7 +134,7 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token }) {
-      const existingUser = await getProfileByEmail(token?.email!);
+      const existingUser = await getUserByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
@@ -140,9 +146,9 @@ export const authOptions: NextAuthOptions = {
       };
     },
     async session({ session, token }) {
-      // @ts-ignore
+      // @ts-expect-error
       session.user.id = token?.id;
-      // @ts-ignore
+      // @ts-expect-error
       session.user = token.profile;
 
       return session;
@@ -150,7 +156,7 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
-          return `/auth/verification-requested?email=${encodeURIComponent(user.email)}`;
+          throw new Error("Email Verification is Pending");
         }
         return true;
       }
@@ -187,139 +193,63 @@ export const authOptions: NextAuthOptions = {
           // check if user with this email already exist
           // if not found just update user with new email address
           // if found throw an error (TODO find better solution)
-          const otherUserWithEmail = await getProfileByEmail(user.email);
+          const otherUserWithEmail = await getUserByEmail(user.email);
 
           if (!otherUserWithEmail) {
-            await updateProfile(existingUserWithAccount.id, { email: user.email });
+            await updateUser(existingUserWithAccount.id, { email: user.email });
             return true;
           }
-          return "/auth/login?error=Looks%20like%20you%20updated%20your%20email%20somewhere%20else.%0AA%20user%20with%20this%20new%20email%20exists%20already.";
+          throw new Error(
+            "Looks like you updated your email somewhere else. A user with this new email exists already."
+          );
         }
 
         // There is no existing account for this identity provider / account id
         // check if user account with this email already exists
         // if user already exists throw error and request password login
-        const existingUserWithEmail = await getProfileByEmail(user.email);
+        const existingUserWithEmail = await getUserByEmail(user.email);
 
         if (existingUserWithEmail) {
-          return "/auth/login?error=A%20user%20with%20this%20email%20exists%20already.";
+          throw new Error("A user with this email exists already.");
         }
 
-        await prisma.user.create({
-          data: {
-            name: user.name,
-            email: user.email,
-            emailVerified: new Date(Date.now()),
-            onboardingCompleted: false,
-            identityProvider: provider,
-            identityProviderAccountId: user.id as string,
-            accounts: {
-              create: [{ ...account }],
-            },
-            memberships: {
-              create: [
-                {
-                  accepted: true,
-                  role: "owner",
-                  // @ts-ignore
-                  team: {
-                    create: {
-                      name: `${user.name}'s Team`,
-                      products: {
-                        create: [
-                          {
-                            name: "My Product",
-                            environments: {
-                              create: [
-                                {
-                                  type: "production",
-                                  actionClasses: {
-                                    create: [
-                                      {
-                                        name: "New Session",
-                                        description: "Gets fired when a new session is created",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "Exit Intent (Desktop)",
-                                        description: "A user on Desktop leaves the website with the cursor.",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "50% Scroll",
-                                        description: "A user scrolled 50% of the current page",
-                                        type: "automatic",
-                                      },
-                                    ],
-                                  },
-                                  attributeClasses: {
-                                    create: [
-                                      {
-                                        name: "userId",
-                                        description: "The internal ID of the person",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "email",
-                                        description: "The email of the person",
-                                        type: "automatic",
-                                      },
-                                    ],
-                                  },
-                                },
-                                {
-                                  type: "development",
-                                  actionClasses: {
-                                    create: [
-                                      {
-                                        name: "New Session",
-                                        description: "Gets fired when a new session is created",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "Exit Intent (Desktop)",
-                                        description: "A user on Desktop leaves the website with the cursor.",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "50% Scroll",
-                                        description: "A user scrolled 50% of the current page",
-                                        type: "automatic",
-                                      },
-                                    ],
-                                  },
-                                  attributeClasses: {
-                                    create: [
-                                      {
-                                        name: "userId",
-                                        description: "The internal ID of the person",
-                                        type: "automatic",
-                                      },
-                                      {
-                                        name: "email",
-                                        description: "The email of the person",
-                                        type: "automatic",
-                                      },
-                                    ],
-                                  },
-                                },
-                              ],
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-          },
-          include: {
-            memberships: true,
-          },
+        const userProfile = await createUser({
+          name: user.name,
+          email: user.email,
+          emailVerified: new Date(Date.now()),
+          onboardingCompleted: false,
+          identityProvider: provider,
+          identityProviderAccountId: account.providerAccountId,
         });
-
-        return true;
+        // Default team assignment if env variable is set
+        if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
+          // check if team exists
+          let team = await getTeam(env.DEFAULT_TEAM_ID);
+          let isNewTeam = false;
+          if (!team) {
+            // create team with id from env
+            team = await createTeam({ id: env.DEFAULT_TEAM_ID, name: userProfile.name + "'s Team" });
+            isNewTeam = true;
+          }
+          const role = isNewTeam ? "owner" : env.DEFAULT_TEAM_ROLE || "admin";
+          await createMembership(team.id, userProfile.id, { role, accepted: true });
+          await createAccount({
+            ...account,
+            userId: userProfile.id,
+          });
+          return true;
+        }
+        // Without default team assignment
+        else {
+          const team = await createTeam({ name: userProfile.name + "'s Team" });
+          await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
+          await createAccount({
+            ...account,
+            userId: userProfile.id,
+          });
+          await createProduct(team.id, { name: "My Product" });
+          return true;
+        }
       }
 
       return true;

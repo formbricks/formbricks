@@ -25,6 +25,11 @@ const nextConfig = {
         hostname: "seo-strapi-aws-s3.s3.eu-central-1.amazonaws.com",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+        port: "",
+      },
     ],
   },
   async redirects() {
@@ -153,6 +158,16 @@ const nextConfig = {
       {
         source: "/cla",
         destination: "https://formbricks.com/clmyhzfrymr4ko00hycsg1tvx",
+        permanent: true,
+      },
+      {
+        source: "/docs/contributing/gitpod",
+        destination: "/docs/contributing/setup#gitpod",
+        permanent: true,
+      },
+      {
+        source: "/formtribe",
+        destination: "/community",
         permanent: true,
       },
     ];

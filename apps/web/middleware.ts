@@ -1,9 +1,7 @@
-import rateLimit from "@/app/(auth)/auth/rate-limit";
+import { clientSideApiEndpointsLimiter, loginLimiter, signUpLimiter } from "@/app/middleware/bucket";
+import { clientSideApiRoute, loginRoute, signupRoute } from "@/app/middleware/endpointValidator";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const signUpLimiter = rateLimit({ interval: 60 * 60 * 1000 }); // 60 minutes
-const loginLimiter = rateLimit({ interval: 15 * 60 * 1000 }); // 15 minutes
 
 export async function middleware(request: NextRequest) {
   if (process.env.NODE_ENV !== "production") {
@@ -19,10 +17,12 @@ export async function middleware(request: NextRequest) {
 
   if (ip) {
     try {
-      if (request.nextUrl.pathname === "/api/auth/callback/credentials") {
+      if (loginRoute(request.nextUrl.pathname)) {
         await loginLimiter.check(ip);
-      } else if (request.nextUrl.pathname === "/api/v1/users") {
+      } else if (signupRoute(request.nextUrl.pathname)) {
         await signUpLimiter.check(ip);
+      } else if (clientSideApiRoute(request.nextUrl.pathname)) {
+        await clientSideApiEndpointsLimiter.check(ip);
       }
       return res;
     } catch (_e) {
@@ -35,5 +35,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/auth/callback/credentials", "/api/v1/users"],
+  matcher: [
+    "/api/auth/callback/credentials",
+    "/api/v1/users",
+    "/api/(.*)/client/:path*",
+    "/api/v1/js/actions",
+    "/api/v1/client/storage",
+  ],
 };

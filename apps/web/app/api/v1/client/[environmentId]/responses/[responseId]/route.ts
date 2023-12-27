@@ -1,11 +1,13 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { updateResponse } from "@formbricks/lib/response/service";
-import { ZResponseUpdateInput } from "@formbricks/types/responses";
 import { NextResponse } from "next/server";
+
+import { getPerson } from "@formbricks/lib/person/service";
+import { updateResponse } from "@formbricks/lib/response/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZResponseUpdateInput } from "@formbricks/types/responses";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
@@ -22,6 +24,13 @@ export async function PUT(
   }
 
   const responseUpdate = await request.json();
+
+  // legacy workaround for formbricks-js 1.2.0 & 1.2.1
+  if (responseUpdate.personId && typeof responseUpdate.personId === "string") {
+    const person = await getPerson(responseUpdate.personId);
+    responseUpdate.userId = person?.userId;
+    delete responseUpdate.personId;
+  }
 
   const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
 
@@ -83,5 +92,5 @@ export async function PUT(
       response: response,
     });
   }
-  return responses.successResponse(response, true);
+  return responses.successResponse({}, true);
 }

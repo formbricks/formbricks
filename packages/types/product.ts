@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { ZEnvironment } from "./environment";
+
 import { ZColor, ZPlacement } from "./common";
+import { ZEnvironment } from "./environment";
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
@@ -11,7 +12,8 @@ export const ZProduct = z.object({
   brandColor: ZColor,
   highlightBorderColor: ZColor.nullable(),
   recontactDays: z.number().int(),
-  formbricksSignature: z.boolean(),
+  inAppSurveyBranding: z.boolean(),
+  linkSurveyBranding: z.boolean(),
   placement: ZPlacement,
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),

@@ -1,6 +1,7 @@
 import { TAction } from "@formbricks/types/actions";
 import { TEnvironment } from "@formbricks/types/environment";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+
 import { ActivityItemContent, ActivityItemIcon, ActivityItemPopover } from "./ActivityItemComponents";
 
 export default function ActivityTimeline({

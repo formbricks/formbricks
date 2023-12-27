@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaGithub, FaXTwitter, FaDiscord } from "react-icons/fa6";
+import { FaDiscord, FaGithub, FaXTwitter } from "react-icons/fa6";
+
 import { Button } from "./Button";
 import { navigation } from "./Navigation";
 
@@ -88,7 +89,7 @@ function SmallPrint() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="flex flex-col items-center justify-between gap-5 border-t border-slate-900/5 pt-8 dark:border-white/5 sm:flex-row">
+    <div className="flex flex-col items-center justify-between gap-5 border-t border-slate-900/5 pt-8 sm:flex-row dark:border-white/5">
       <p className="text-xs text-slate-600 dark:text-slate-400">
         Formbricks GmbH &copy; {currentYear}. All rights reserved.
       </p>

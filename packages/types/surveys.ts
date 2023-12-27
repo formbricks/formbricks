@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { ZColor, ZPlacement } from "./common";
+
+import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 
 export const ZSurveyThankYouCard = z.object({
@@ -9,6 +10,7 @@ export const ZSurveyThankYouCard = z.object({
 });
 
 export enum TSurveyQuestionType {
+  FileUpload = "fileUpload",
   OpenText = "openText",
   MultipleChoiceSingle = "multipleChoiceSingle",
   MultipleChoiceMulti = "multipleChoiceMulti",
@@ -17,6 +19,8 @@ export enum TSurveyQuestionType {
   Rating = "rating",
   Consent = "consent",
   PictureSelection = "pictureSelection",
+  Cal = "cal",
+  Date = "date",
 }
 
 export const ZSurveyWelcomeCard = z.object({
@@ -26,6 +30,7 @@ export const ZSurveyWelcomeCard = z.object({
   fileUrl: z.string().optional(),
   buttonLabel: z.string().optional(),
   timeToFinish: z.boolean().default(true),
+  showResponseCount: z.boolean().default(false),
 });
 
 export const ZSurveyHiddenFields = z.object({
@@ -37,11 +42,29 @@ export const ZSurveyProductOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
-  clickOutside: z.boolean().nullish(),
+  clickOutsideClose: z.boolean().nullish(),
   darkOverlay: z.boolean().nullish(),
 });
 
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
+
+export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
+
+export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
+
+export const ZSurveyStylingBackground = z.object({
+  bg: z.string().nullish(),
+  bgType: z.enum(["animation", "color", "image"]).nullish(),
+  brightness: z.number().nullish(),
+});
+
+export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
+
+export const ZSurveyStyling = z.object({
+  background: ZSurveyStylingBackground.nullish(),
+});
+
+export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;
 
 export const ZSurveyClosedMessage = z
   .object({
@@ -105,6 +128,9 @@ export const ZSurveyLogicCondition = z.enum([
   "greaterEqual",
   "includesAll",
   "includesOne",
+  "uploaded",
+  "notUploaded",
+  "booked",
 ]);
 
 export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
@@ -113,6 +139,11 @@ export const ZSurveyLogicBase = z.object({
   condition: ZSurveyLogicCondition.optional(),
   value: z.union([z.string(), z.array(z.string())]).optional(),
   destination: z.union([z.string(), z.literal("end")]).optional(),
+});
+
+export const ZSurveyFileUploadLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["uploaded", "notUploaded"]).optional(),
+  value: z.undefined(),
 });
 
 export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
@@ -178,6 +209,11 @@ const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+const ZSurveyCalLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["booked", "skipped"]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyLogic = z.union([
   ZSurveyOpenTextLogic,
   ZSurveyConsentLogic,
@@ -187,6 +223,8 @@ export const ZSurveyLogic = z.union([
   ZSurveyCTALogic,
   ZSurveyRatingLogic,
   ZSurveyPictureSelectionLogic,
+  ZSurveyFileUploadLogic,
+  ZSurveyCalLogic,
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
@@ -288,6 +326,14 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
+export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.Date),
+  html: z.string().optional(),
+  format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
+});
+
+export type TSurveyDateQuestion = z.infer<typeof ZSurveyDateQuestion>;
+
 export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 
 export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
@@ -299,8 +345,25 @@ export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelectionQuestion>;
 
+export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.FileUpload),
+  allowMultipleFiles: z.boolean(),
+  maxSizeInMB: z.number().optional(),
+  allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
+  logic: z.array(ZSurveyFileUploadLogic).optional(),
+});
+
+export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
+
+export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.Cal),
+  calUserName: z.string(),
+  logic: z.array(ZSurveyCalLogic).optional(),
+});
+
+export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
+
 export const ZSurveyQuestion = z.union([
-  // ZSurveyWelcomeQuestion,
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
   ZSurveyMultipleChoiceSingleQuestion,
@@ -309,6 +372,9 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCTAQuestion,
   ZSurveyRatingQuestion,
   ZSurveyPictureSelectionQuestion,
+  ZSurveyDateQuestion,
+  ZSurveyFileUploadQuestion,
+  ZSurveyCalQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -359,6 +425,7 @@ export const ZSurvey = z.object({
   autoComplete: z.number().nullable(),
   closeOnDate: z.date().nullable(),
   productOverwrites: ZSurveyProductOverwrites.nullable(),
+  styling: ZSurveyStyling.nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
@@ -395,6 +462,7 @@ export type TSurveyDates = {
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
 
 export const ZSurveyTSurveyQuestionType = z.union([
+  z.literal("fileUpload"),
   z.literal("openText"),
   z.literal("multipleChoiceSingle"),
   z.literal("multipleChoiceMulti"),
@@ -403,6 +471,8 @@ export const ZSurveyTSurveyQuestionType = z.union([
   z.literal("rating"),
   z.literal("consent"),
   z.literal("pictureSelection"),
+  z.literal("cal"),
+  z.literal("date"),
 ]);
 
 export type TSurveyTSurveyQuestionType = z.infer<typeof ZSurveyTSurveyQuestionType>;

@@ -1,28 +1,28 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
-import { getActionClasses } from "../actionClass/service";
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { responseCache } from "../response/cache";
-import { captureTelemetry } from "../telemetry";
-import { validateInputs } from "../utils/validate";
-import { formatSurveyDateFields } from "./util";
-import { surveyCache } from "./cache";
-import { displayCache } from "../display/cache";
-import { productCache } from "../product/cache";
 import { TPerson } from "@formbricks/types/people";
-import { TSurveyWithTriggers } from "@formbricks/types/js";
+import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
+
+import { getActionClasses } from "../actionClass/service";
 import { getAttributeClasses } from "../attributeClass/service";
-import { getProductByEnvironmentId } from "../product/service";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
-import { diffInDays } from "../utils/datetime";
+import { personCache } from "../person/cache";
+import { productCache } from "../product/cache";
+import { getProductByEnvironmentId } from "../product/service";
+import { responseCache } from "../response/cache";
+import { diffInDays, formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
+import { surveyCache } from "./cache";
 
 export const selectSurvey = {
   id: true,
@@ -45,6 +45,7 @@ export const selectSurvey = {
   verifyEmail: true,
   redirectUrl: true,
   productOverwrites: true,
+  styling: true,
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
@@ -125,7 +126,6 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         ...surveyPrisma,
         triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
       };
-
       return transformedSurvey;
     },
     [`getSurvey-${surveyId}`],
@@ -135,16 +135,9 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     }
   )();
 
-  if (!survey) {
-    return null;
-  }
-
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return {
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  };
+  return survey ? formatDateFields(survey, ZSurvey) : null;
 };
 
 export const getSurveysByAttributeClassId = async (
@@ -186,11 +179,7 @@ export const getSurveysByAttributeClassId = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
 export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
@@ -231,11 +220,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
 export const getSurveys = async (environmentId: string, page?: number): Promise<TSurvey[]> => {
@@ -281,10 +266,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
@@ -530,8 +512,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
 
-  captureTelemetry("survey created");
-
   surveyCache.revalidate({
     id: survey.id,
     environmentId: survey.environmentId,
@@ -541,6 +521,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 };
 
 export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
+  validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
 
   if (!existingSurvey) {
@@ -586,6 +567,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       productOverwrites: existingSurvey.productOverwrites
         ? JSON.parse(JSON.stringify(existingSurvey.productOverwrites))
         : Prisma.JsonNull,
+      styling: existingSurvey.styling ? JSON.parse(JSON.stringify(existingSurvey.styling)) : Prisma.JsonNull,
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : Prisma.JsonNull,
@@ -606,14 +588,95 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
   return newSurvey;
 };
 
-export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>
-  unstable_cache(
+export const getSyncSurveys = async (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
+  validateInputs([environmentId, ZId]);
+
+  const surveys = await unstable_cache(
     async () => {
-      return await getSyncSurveys(environmentId, person);
+      const product = await getProductByEnvironmentId(environmentId);
+
+      if (!product) {
+        throw new Error("Product not found");
+      }
+
+      let surveys = await getSurveys(environmentId);
+
+      // filtered surveys for running and web
+      surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
+
+      const displays = await getDisplaysByPersonId(person.id);
+
+      // filter surveys that meet the displayOption criteria
+      surveys = surveys.filter((survey) => {
+        if (survey.displayOption === "respondMultiple") {
+          return true;
+        } else if (survey.displayOption === "displayOnce") {
+          return displays.filter((display) => display.surveyId === survey.id).length === 0;
+        } else if (survey.displayOption === "displayMultiple") {
+          return (
+            displays.filter((display) => display.surveyId === survey.id && display.responseId !== null)
+              .length === 0
+          );
+        } else {
+          throw Error("Invalid displayOption");
+        }
+      });
+
+      const attributeClasses = await getAttributeClasses(environmentId);
+
+      // filter surveys that meet the attributeFilters criteria
+      const potentialSurveysWithAttributes = surveys.filter((survey) => {
+        const attributeFilters = survey.attributeFilters;
+        if (attributeFilters.length === 0) {
+          return true;
+        }
+        // check if meets all attribute filters criterias
+        return attributeFilters.every((attributeFilter) => {
+          const attributeClassName = attributeClasses.find(
+            (attributeClass) => attributeClass.id === attributeFilter.attributeClassId
+          )?.name;
+          if (!attributeClassName) {
+            throw Error("Invalid attribute filter class");
+          }
+          const personAttributeValue = person.attributes[attributeClassName];
+          if (attributeFilter.condition === "equals") {
+            return personAttributeValue === attributeFilter.value;
+          } else if (attributeFilter.condition === "notEquals") {
+            return personAttributeValue !== attributeFilter.value;
+          } else {
+            throw Error("Invalid attribute filter condition");
+          }
+        });
+      });
+
+      const latestDisplay = displays[0];
+
+      // filter surveys that meet the recontactDays criteria
+      surveys = potentialSurveysWithAttributes.filter((survey) => {
+        if (!latestDisplay) {
+          return true;
+        } else if (survey.recontactDays !== null) {
+          const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
+          if (!lastDisplaySurvey) {
+            return true;
+          }
+          return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
+        } else if (product.recontactDays !== null) {
+          return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
+        } else {
+          return true;
+        }
+      });
+
+      if (!surveys) {
+        throw new ResourceNotFoundError("Survey", environmentId);
+      }
+      return surveys;
     },
-    [`getSyncSurveysCached-${environmentId}`],
+    [`getSyncSurveys-${environmentId}-${person.userId}`],
     {
       tags: [
+        personCache.tag.byEnvironmentIdAndUserId(environmentId, person.userId),
         displayCache.tag.byPersonId(person.id),
         surveyCache.tag.byEnvironmentId(environmentId),
         productCache.tag.byEnvironmentId(environmentId),
@@ -621,86 +684,5 @@ export const getSyncSurveysCached = (environmentId: string, person: TPerson) =>
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-export const getSyncSurveys = async (
-  environmentId: string,
-  person: TPerson
-): Promise<TSurveyWithTriggers[]> => {
-  // get recontactDays from product
-  const product = await getProductByEnvironmentId(environmentId);
-
-  if (!product) {
-    throw new Error("Product not found");
-  }
-
-  let surveys = await getSurveys(environmentId);
-
-  // filtered surveys for running and web
-  surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
-
-  const displays = await getDisplaysByPersonId(person.id);
-
-  // filter surveys that meet the displayOption criteria
-  surveys = surveys.filter((survey) => {
-    if (survey.displayOption === "respondMultiple") {
-      return true;
-    } else if (survey.displayOption === "displayOnce") {
-      return displays.filter((display) => display.surveyId === survey.id).length === 0;
-    } else if (survey.displayOption === "displayMultiple") {
-      return (
-        displays.filter((display) => display.surveyId === survey.id && display.responseId !== null).length ===
-        0
-      );
-    } else {
-      throw Error("Invalid displayOption");
-    }
-  });
-
-  const attributeClasses = await getAttributeClasses(environmentId);
-
-  // filter surveys that meet the attributeFilters criteria
-  const potentialSurveysWithAttributes = surveys.filter((survey) => {
-    const attributeFilters = survey.attributeFilters;
-    if (attributeFilters.length === 0) {
-      return true;
-    }
-    // check if meets all attribute filters criterias
-    return attributeFilters.every((attributeFilter) => {
-      const attributeClassName = attributeClasses.find(
-        (attributeClass) => attributeClass.id === attributeFilter.attributeClassId
-      )?.name;
-      if (!attributeClassName) {
-        throw Error("Invalid attribute filter class");
-      }
-      const personAttributeValue = person.attributes[attributeClassName];
-      if (attributeFilter.condition === "equals") {
-        return personAttributeValue === attributeFilter.value;
-      } else if (attributeFilter.condition === "notEquals") {
-        return personAttributeValue !== attributeFilter.value;
-      } else {
-        throw Error("Invalid attribute filter condition");
-      }
-    });
-  });
-
-  const latestDisplay = displays[0];
-
-  // filter surveys that meet the recontactDays criteria
-  surveys = potentialSurveysWithAttributes.filter((survey) => {
-    if (!latestDisplay) {
-      return true;
-    } else if (survey.recontactDays !== null) {
-      const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
-      if (!lastDisplaySurvey) {
-        return true;
-      }
-      return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
-    } else if (product.recontactDays !== null) {
-      return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
-    } else {
-      return true;
-    }
-  });
-
-  return surveys;
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };

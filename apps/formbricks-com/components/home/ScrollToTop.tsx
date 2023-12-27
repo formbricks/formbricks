@@ -1,7 +1,8 @@
-import { Button } from "@formbricks/ui/Button";
 import { ArrowUpIcon } from "@heroicons/react/24/solid";
 import throttle from "lodash/throttle";
 import { useCallback, useEffect, useState } from "react";
+
+import { Button } from "@formbricks/ui/Button";
 
 const ScrollToTopButton = () => {
   const [visible, setVisible] = useState(false);

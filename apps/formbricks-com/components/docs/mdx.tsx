@@ -1,7 +1,7 @@
-import Link from "next/link";
-import clsx from "clsx";
-
 import { Feedback } from "@/components/docs/Feedback";
+import clsx from "clsx";
+import Link from "next/link";
+
 import { Heading } from "./Heading";
 import { Prose } from "./Prose";
 

@@ -1,34 +1,51 @@
-import AirtableLogo from "./airtable/images/airtable.svg";
-import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 import JsLogo from "@/images/jslogo.png";
 import MakeLogo from "@/images/make-small.png";
 import n8nLogo from "@/images/n8n.png";
+import notionLogo from "@/images/notion.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
-import { Card } from "@formbricks/ui/Card";
+import { getServerSession } from "next-auth";
 import Image from "next/image";
-import { getCountOfWebhooksBasedOnSource } from "@formbricks/lib/webhook/service";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getServerSession } from "next-auth";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
+import { TIntegrationType } from "@formbricks/types/integration";
+import { Card } from "@formbricks/ui/Card";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+
+import AirtableLogo from "./airtable/images/airtable.svg";
+import GoogleSheetsLogo from "./google-sheets/images/google-sheets-small.png";
 
 export default async function IntegrationsPage({ params }) {
   const environmentId = params.environmentId;
 
-  const [environment, integrations, userWebhooks, zapierWebhooks, team, session] = await Promise.all([
+  const [
+    environment,
+    integrations,
+    team,
+    session,
+    userWebhookCount,
+    zapierWebhookCount,
+    makeWebhookCount,
+    n8nwebhookCount,
+  ] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
-    getCountOfWebhooksBasedOnSource(environmentId, "user"),
-    getCountOfWebhooksBasedOnSource(environmentId, "zapier"),
     getTeamByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
+    getWebhookCountBySource(environmentId, "user"),
+    getWebhookCountBySource(environmentId, "zapier"),
+    getWebhookCountBySource(environmentId, "make"),
+    getWebhookCountBySource(environmentId, "n8n"),
   ]);
 
+  const isIntegrationConnected = (type: TIntegrationType) =>
+    integrations.some((integration) => integration.type === type);
   if (!session) {
     throw new Error("Session not found");
   }
@@ -40,11 +57,10 @@ export default async function IntegrationsPage({ params }) {
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
-  const containsGoogleSheetIntegration = integrations.some(
-    (integration) => integration.type === "googleSheets"
-  );
-
-  const containsAirtableIntegration = integrations.some((integration) => integration.type === "airtable");
+  const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
+  const isNotionIntegrationConnected = isIntegrationConnected("notion");
+  const isAirtableIntegrationConnected = isIntegrationConnected("airtable");
+  const isN8nIntegrationConnected = isIntegrationConnected("n8n");
 
   const integrationCards = [
     {
@@ -67,9 +83,13 @@ export default async function IntegrationsPage({ params }) {
       label: "Zapier",
       description: "Integrate Formbricks with 5000+ apps via Zapier",
       icon: <Image src={ZapierLogo} alt="Zapier Logo" />,
-      connected: zapierWebhooks > 0,
+      connected: zapierWebhookCount > 0,
       statusText:
-        zapierWebhooks === 1 ? "1 zap" : zapierWebhooks === 0 ? "Not Connected" : `${zapierWebhooks} zaps`,
+        zapierWebhookCount === 1
+          ? "1 zap"
+          : zapierWebhookCount === 0
+            ? "Not Connected"
+            : `${zapierWebhookCount} zaps`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
@@ -81,13 +101,17 @@ export default async function IntegrationsPage({ params }) {
       label: "Webhooks",
       description: "Trigger Webhooks based on actions in your surveys",
       icon: <Image src={WebhookLogo} alt="Webhook Logo" />,
-      connected: userWebhooks > 0,
+      connected: userWebhookCount > 0,
       statusText:
-        userWebhooks === 1 ? "1 webhook" : userWebhooks === 0 ? "Not Connected" : `${userWebhooks} webhooks`,
+        userWebhookCount === 1
+          ? "1 webhook"
+          : userWebhookCount === 0
+            ? "Not Connected"
+            : `${userWebhookCount} webhooks`,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
-      connectText: `${containsGoogleSheetIntegration ? "Manage Sheets" : "Connect"}`,
+      connectText: `${isGoogleSheetsIntegrationConnected ? "Manage Sheets" : "Connect"}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/integrations/google-sheets",
       docsText: "Docs",
@@ -95,12 +119,12 @@ export default async function IntegrationsPage({ params }) {
       label: "Google Sheets",
       description: "Instantly populate your spreadsheets with survey data",
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
-      connected: containsGoogleSheetIntegration ? true : false,
-      statusText: containsGoogleSheetIntegration ? "Connected" : "Not Connected",
+      connected: isGoogleSheetsIntegrationConnected,
+      statusText: isGoogleSheetsIntegrationConnected ? "Connected" : "Not Connected",
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/airtable`,
-      connectText: `${containsAirtableIntegration ? "Manage Table" : "Connect"}`,
+      connectText: `${isAirtableIntegrationConnected ? "Manage Table" : "Connect"}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/integrations/airtable",
       docsText: "Docs",
@@ -108,19 +132,26 @@ export default async function IntegrationsPage({ params }) {
       label: "Airtable",
       description: "Instantly populate your airtable table with survey data",
       icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
-      connected: containsAirtableIntegration ? true : false,
-      statusText: containsAirtableIntegration ? "Connected" : "Not Connected",
+      connected: isAirtableIntegrationConnected,
+      statusText: isAirtableIntegrationConnected ? "Connected" : "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",
+      connectText: `${isN8nIntegrationConnected ? "Manage" : "Connect"}`,
       docsText: "Docs",
       docsNewTab: true,
       connectHref: "https://n8n.io",
-      connectText: "Connect",
       connectNewTab: true,
       label: "n8n",
       description: "Integrate Formbricks with 350+ apps via n8n",
       icon: <Image src={n8nLogo} alt="n8n Logo" />,
+      connected: n8nwebhookCount > 0,
+      statusText:
+        n8nwebhookCount === 1
+          ? "1 integration"
+          : n8nwebhookCount === 0
+            ? "Not Connected"
+            : `${n8nwebhookCount} integrations`,
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/make",
@@ -132,6 +163,26 @@ export default async function IntegrationsPage({ params }) {
       label: "Make.com",
       description: "Integrate Formbricks with 1000+ apps via Make",
       icon: <Image src={MakeLogo} alt="Make Logo" />,
+      connected: makeWebhookCount > 0,
+      statusText:
+        makeWebhookCount === 1
+          ? "1 integration"
+          : makeWebhookCount === 0
+            ? "Not Connected"
+            : `${makeWebhookCount} integration`,
+    },
+    {
+      connectHref: `/environments/${params.environmentId}/integrations/notion`,
+      connectText: `${isNotionIntegrationConnected ? "Manage" : "Connect"}`,
+      connectNewTab: false,
+      docsHref: "https://formbricks.com/docs/integrations/notion",
+      docsText: "Docs",
+      docsNewTab: true,
+      label: "Notion",
+      description: "Send data to your Notion database",
+      icon: <Image src={notionLogo} alt="Notion Logo" />,
+      connected: isNotionIntegrationConnected,
+      statusText: isNotionIntegrationConnected ? "Connected" : "Not Connected",
     },
   ];
 

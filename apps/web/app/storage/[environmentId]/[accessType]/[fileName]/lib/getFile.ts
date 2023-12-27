@@ -1,9 +1,10 @@
-import { env } from "@formbricks/lib/env.mjs";
 import { responses } from "@/app/lib/api/response";
-import { UPLOADS_DIR } from "@formbricks/lib/constants";
-import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";
 import { notFound } from "next/navigation";
 import path from "path";
+
+import { UPLOADS_DIR } from "@formbricks/lib/constants";
+import { env } from "@formbricks/lib/env.mjs";
+import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";
 
 const getFile = async (environmentId: string, accessType: string, fileName: string) => {
   if (!env.S3_ACCESS_KEY || !env.S3_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
@@ -15,7 +16,7 @@ const getFile = async (environmentId: string, accessType: string, fileName: stri
       return new Response(fileBuffer, {
         headers: {
           "Content-Type": metaData.contentType,
-          "Content-Disposition": "inline",
+          "Content-Disposition": "attachment",
         },
       });
     } catch (err) {

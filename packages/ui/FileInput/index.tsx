@@ -1,21 +1,24 @@
 "use client";
-import { cn } from "@formbricks/lib/cn";
-import { TAllowedFileExtensions } from "@formbricks/types/common";
+
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { FileIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { TAllowedFileExtension } from "@formbricks/types/common";
+
 import { uploadFile } from "./lib/fileUpload";
 
 const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
 const isImage = (name: string) => {
-  return allowedFileTypesForPreview.includes(name.split(".").pop() as TAllowedFileExtensions);
+  return allowedFileTypesForPreview.includes(name.split(".").pop() as TAllowedFileExtension);
 };
 interface FileInputProps {
   id: string;
-  allowedFileExtensions: TAllowedFileExtensions[];
+  allowedFileExtensions: TAllowedFileExtension[];
   environmentId: string | undefined;
   onFileUpload: (uploadedUrl: string[] | undefined) => void;
   fileUrl?: string | string[];
@@ -48,7 +51,7 @@ const FileInput: React.FC<FileInputProps> = ({
       (file) =>
         file &&
         file.type &&
-        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtensions)
+        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtension)
     );
 
     if (allowedFiles.length < files.length) {
@@ -127,7 +130,7 @@ const FileInput: React.FC<FileInputProps> = ({
       (file) =>
         file &&
         file.type &&
-        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtensions)
+        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtension)
     );
 
     if (allowedFiles.length < filesToUpload.length) {
@@ -316,7 +319,7 @@ const Uploader = ({
   handleDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
   uploaderClassName: string;
   handleDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
-  allowedFileExtensions: TAllowedFileExtensions[];
+  allowedFileExtensions: TAllowedFileExtension[];
   multiple: boolean;
   handleUpload: (files: File[]) => void;
   uploadMore?: boolean;

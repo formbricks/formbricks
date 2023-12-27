@@ -1,13 +1,17 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/people";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+import { TPerson, TPersonUpdateInput, ZPerson, ZPersonUpdateInput } from "@formbricks/types/people";
+
+import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
 
@@ -50,10 +54,13 @@ type TransformPersonInput = {
 };
 
 export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
-  const attributes = person.attributes.reduce((acc, attr) => {
-    acc[attr.attributeClass.name] = attr.value;
-    return acc;
-  }, {} as Record<string, string | number>);
+  const attributes = person.attributes.reduce(
+    (acc, attr) => {
+      acc[attr.attributeClass.name] = attr.value;
+      return acc;
+    },
+    {} as Record<string, string | number>
+  );
 
   return {
     id: person.id,
@@ -89,11 +96,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
     { tags: [personCache.tag.byId(personId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
 
-  if (!prismaPerson) {
-    return null;
-  }
-
-  return transformPrismaPerson(prismaPerson);
+  return prismaPerson ? formatDateFields(transformPrismaPerson(prismaPerson), ZPerson) : null;
 };
 
 export const getPeople = async (environmentId: string, page?: number): Promise<TPerson[]> => {
@@ -125,12 +128,8 @@ export const getPeople = async (environmentId: string, page?: number): Promise<T
     }
   )();
 
-  if (!peoplePrisma || peoplePrisma.length === 0) {
-    return [];
-  }
-
   return peoplePrisma
-    .map(transformPrismaPerson)
+    .map((prismaPerson) => formatDateFields(transformPrismaPerson(prismaPerson), ZPerson))
     .filter((person: TPerson | null): person is TPerson => person !== null);
 };
 
@@ -180,12 +179,29 @@ export const createPerson = async (environmentId: string, userId: string): Promi
 
     personCache.revalidate({
       id: transformedPerson.id,
-      environmentId: transformedPerson.environmentId,
+      environmentId,
+      userId,
     });
 
     return transformedPerson;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // If the person already exists, return it
+      if (error.code === "P2002") {
+        // HOTFIX to handle formbricks-js failing because of caching issue
+        // Handle the case where the person record already exists
+        const existingPerson = await prisma.person.findFirst({
+          where: {
+            environmentId,
+            userId,
+          },
+          select: selectPerson,
+        });
+
+        if (existingPerson) {
+          return transformPrismaPerson(existingPerson);
+        }
+      }
       throw new DatabaseError(error.message);
     }
 
@@ -207,6 +223,7 @@ export const deletePerson = async (personId: string): Promise<TPerson | null> =>
 
     personCache.revalidate({
       id: transformedPerson.id,
+      userId: transformedPerson.userId,
       environmentId: transformedPerson.environmentId,
     });
 
@@ -224,20 +241,63 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
   validateInputs([personId, ZId], [personInput, ZPersonUpdateInput]);
 
   try {
-    const person = await prisma.person.update({
-      where: {
-        id: personId,
-      },
-      data: personInput,
-      select: selectPerson,
+    const person = await getPerson(personId);
+    if (!person) {
+      throw new Error(`Person ${personId} not found`);
+    }
+
+    // Process each attribute
+    const attributeUpdates = Object.entries(personInput.attributes).map(async ([attributeName, value]) => {
+      let attributeClass = await getAttributeClassByName(person.environmentId, attributeName);
+
+      // Create new attribute class if not found
+      if (attributeClass === null) {
+        attributeClass = await createAttributeClass(person.environmentId, attributeName, "code");
+      }
+
+      // Now perform the upsert for the attribute with the found or created attributeClassId
+      await prisma.attribute.upsert({
+        where: {
+          attributeClassId_personId: {
+            attributeClassId: attributeClass!.id,
+            personId,
+          },
+        },
+        update: {
+          value: value.toString(),
+        },
+        create: {
+          attributeClass: {
+            connect: {
+              id: attributeClass!.id,
+            },
+          },
+          person: {
+            connect: {
+              id: personId,
+            },
+          },
+          value: value.toString(),
+        },
+      });
     });
+
+    // Execute all attribute updates
+    await Promise.all(attributeUpdates);
 
     personCache.revalidate({
       id: personId,
+      userId: person.userId,
       environmentId: person.environmentId,
     });
 
-    return transformPrismaPerson(person);
+    const updatedPerson = await getPerson(personId);
+
+    if (!updatedPerson) {
+      throw new Error(`Person ${personId} not found`);
+    }
+
+    return updatedPerson;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -247,10 +307,10 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
   }
 };
 
-export const getPersonByUserId = async (userId: string, environmentId: string): Promise<TPerson | null> => {
-  const personPrisma = await unstable_cache(
+export const getPersonByUserId = async (environmentId: string, userId: string): Promise<TPerson | null> => {
+  const person = await unstable_cache(
     async () => {
-      validateInputs([userId, ZString], [environmentId, ZId]);
+      validateInputs([environmentId, ZId], [userId, ZString]);
 
       // check if userId exists as a column
       const personWithUserId = await prisma.person.findFirst({
@@ -262,7 +322,7 @@ export const getPersonByUserId = async (userId: string, environmentId: string): 
       });
 
       if (personWithUserId) {
-        return personWithUserId;
+        return transformPrismaPerson(personWithUserId);
       }
 
       // Check if a person with the userId attribute exists
@@ -304,63 +364,24 @@ export const getPersonByUserId = async (userId: string, environmentId: string): 
 
       personCache.revalidate({
         id: personWithUserIdAttribute.id,
-        environmentId: personWithUserIdAttribute.environmentId,
+        environmentId,
         userId,
       });
 
-      return personWithUserIdAttribute;
+      return transformPrismaPerson(personWithUserIdAttribute);
     },
-    [`getPersonByUserId-${userId}-${environmentId}`],
+    [`getPersonByUserId-${environmentId}-${userId}`],
     {
       tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  if (!personPrisma) {
-    return null;
-  }
-  return transformPrismaPerson(personPrisma);
+  return person ? formatDateFields(person, ZPerson) : null;
 };
 
-export const getOrCreatePersonByUserId = async (userId: string, environmentId: string): Promise<TPerson> =>
-  await unstable_cache(
-    async () => {
-      validateInputs([userId, ZString], [environmentId, ZId]);
-
-      let person = await getPersonByUserId(userId, environmentId);
-
-      if (person) {
-        return person;
-      }
-
-      // create a new person
-      const personPrisma = await prisma.person.create({
-        data: {
-          environment: {
-            connect: {
-              id: environmentId,
-            },
-          },
-          userId,
-        },
-        select: selectPerson,
-      });
-
-      personCache.revalidate({
-        id: personPrisma.id,
-        environmentId: personPrisma.environmentId,
-        userId,
-      });
-
-      return transformPrismaPerson(personPrisma);
-    },
-    [`getOrCreatePersonByUserId-${userId}-${environmentId}`],
-    {
-      tags: [personCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
+/**
+ * @deprecated This function is deprecated and only used in legacy endpoints. Use updatePerson instead.
+ */
 export const updatePersonAttribute = async (
   personId: string,
   attributeClassId: string,

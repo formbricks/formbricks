@@ -1,22 +1,24 @@
 import {
-  S3Client,
-  GetObjectCommand,
   DeleteObjectCommand,
-  ListObjectsCommand,
   DeleteObjectsCommand,
+  GetObjectCommand,
+  ListObjectsCommand,
+  S3Client,
 } from "@aws-sdk/client-s3";
+import { PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { createPresignedPost, PresignedPostOptions } from "@aws-sdk/s3-presigned-post";
-import { access, mkdir, writeFile, readFile, unlink, rmdir } from "fs/promises";
-import { join } from "path";
+import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import mime from "mime";
-import { env } from "../env.mjs";
-import { IS_S3_CONFIGURED, LOCAL_UPLOAD_URL, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
 import { unstable_cache } from "next/cache";
-import { storageCache } from "./cache";
-import { TAccessType } from "@formbricks/types/storage";
-import { generateLocalSignedUrl } from "../crypto";
+import { join } from "path";
 import path from "path";
+
+import { TAccessType } from "@formbricks/types/storage";
+
+import { IS_S3_CONFIGURED, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
+import { generateLocalSignedUrl } from "../crypto";
+import { env } from "../env.mjs";
+import { storageCache } from "./cache";
 
 // global variables
 
@@ -175,7 +177,10 @@ export const getUploadSignedUrl = async (
       const { signature, timestamp, uuid } = generateLocalSignedUrl(fileName, environmentId, fileType);
 
       return {
-        signedUrl: LOCAL_UPLOAD_URL[accessType],
+        signedUrl:
+          accessType === "private"
+            ? new URL(`${WEBAPP_URL}/api/v1/client/${environmentId}/storage/local`).href
+            : new URL(`${WEBAPP_URL}/api/v1/management/storage/local`).href,
         signingData: {
           signature,
           timestamp,
