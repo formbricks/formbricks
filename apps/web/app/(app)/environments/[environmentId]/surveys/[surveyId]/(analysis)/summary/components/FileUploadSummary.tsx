@@ -83,7 +83,12 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
                   (response.value.length > 0 ? (
                     response.value.map((fileUrl, index) => (
                       <div className="relative m-2 rounded-lg bg-slate-200" key={fileUrl}>
-                        <a href={fileUrl as string} key={index} download target="_blank">
+                        <a
+                          href={fileUrl as string}
+                          key={index}
+                          download
+                          target="_blank"
+                          rel="noopener noreferrer">
                           <div className="absolute right-0 top-0 m-2">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 hover:bg-white">
                               <DownloadIcon className="h-6 text-slate-500" />
