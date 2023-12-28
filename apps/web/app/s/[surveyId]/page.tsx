@@ -8,6 +8,7 @@ import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -181,6 +182,8 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
         singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
         webAppUrl={WEBAPP_URL}
+        IMPRINT_URL={IMPRINT_URL}
+        PRIVACY_URL={PRIVACY_URL}
       />
     );
   }
@@ -200,7 +203,11 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
         />
       </MediaBackground>
-      <LegalFooter bgColor={survey.styling?.background?.bg || "#ffff"} />
+      <LegalFooter
+        bgColor={survey.styling?.background?.bg || "#ffff"}
+        IMPRINT_URL={IMPRINT_URL}
+        PRIVACY_URL={PRIVACY_URL}
+      />
     </div>
   ) : null;
 }
