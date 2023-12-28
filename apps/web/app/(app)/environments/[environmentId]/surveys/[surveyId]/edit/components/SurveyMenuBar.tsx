@@ -241,6 +241,7 @@ export default function SurveyMenuBar({
 
     try {
       await updateSurveyAction({ ...strippedSurvey });
+      router.refresh();
       setIsSurveySaving(false);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
@@ -251,6 +252,7 @@ export default function SurveyMenuBar({
         } else {
           router.push(`/environments/${environment.id}/surveys`);
         }
+        router.refresh();
       }
     } catch (e) {
       console.error(e);
