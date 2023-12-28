@@ -68,6 +68,7 @@ export default function ActionClassesTable({
                 handleOpenActionDetailModalClick(e, actionClass);
               }}
               className="w-full"
+              title={actionClass.name}
               key={actionClass.id}>
               {actionRows[index]}
             </button>

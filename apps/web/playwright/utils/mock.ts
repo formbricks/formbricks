@@ -176,7 +176,6 @@ export const actions = {
       },
     },
     code: {
-      name: "Edit Action (Code)",
       description: "This is my Edit Action (Code)",
     },
   },

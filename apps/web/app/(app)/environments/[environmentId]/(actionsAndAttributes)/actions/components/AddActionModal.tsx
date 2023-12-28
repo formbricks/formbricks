@@ -236,7 +236,7 @@ export default function AddNoCodeActionModal({
               <div className="w-full space-y-4">
                 <div className="grid w-full grid-cols-2 gap-x-4">
                   <div className="col-span-1">
-                    <Label>Identifier</Label>
+                    <Label htmlFor="codeActionNameInput">Identifier</Label>
                     <Input
                       id="codeActionNameInput"
                       placeholder="E.g. clicked-download"
@@ -244,10 +244,10 @@ export default function AddNoCodeActionModal({
                     />
                   </div>
                   <div className="col-span-1">
-                    <Label>Description</Label>
+                    <Label htmlFor="codeActionDescriptionInput">Description</Label>
                     <Input
                       id="codeActionDescriptionInput"
-                      placeholder="User clicked Download Button "
+                      placeholder="User clicked Download Button"
                       {...register("description")}
                     />
                   </div>
