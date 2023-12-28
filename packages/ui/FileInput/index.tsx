@@ -23,6 +23,7 @@ interface FileInputProps {
   onFileUpload: (uploadedUrl: string[] | undefined) => void;
   fileUrl?: string | string[];
   multiple?: boolean;
+  imageFit?: "cover" | "contain";
 }
 
 interface SelectedFile {
@@ -38,6 +39,7 @@ const FileInput: React.FC<FileInputProps> = ({
   onFileUpload,
   fileUrl,
   multiple = false,
+  imageFit = "cover",
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
 
@@ -252,7 +254,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   src={selectedFiles[0].url}
                   alt={selectedFiles[0].name}
                   fill
-                  style={{ objectFit: "cover" }}
+                  style={{ objectFit: imageFit }}
                   quality={100}
                   className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
                 />
