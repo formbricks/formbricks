@@ -1,7 +1,9 @@
 "use client";
 
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
+import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
+import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import type { NextPage } from "next";
 import { useCallback, useEffect, useState } from "react";
@@ -21,6 +23,8 @@ interface LinkSurveyPinScreenProps {
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
+  IMPRINT_URL?: string;
+  PRIVACY_URL?: string;
 }
 
 const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
@@ -33,6 +37,8 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     prefillAnswer,
     singleUseId,
     singleUseResponse,
+    IMPRINT_URL,
+    PRIVACY_URL,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -101,16 +107,25 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
   }
 
   return (
-    <LinkSurvey
-      survey={survey}
-      product={product}
-      userId={userId}
-      emailVerificationStatus={emailVerificationStatus}
-      prefillAnswer={prefillAnswer}
-      singleUseId={singleUseId}
-      singleUseResponse={singleUseResponse}
-      webAppUrl={webAppUrl}
-    />
+    <div>
+      <MediaBackground survey={survey}>
+        <LinkSurvey
+          survey={survey}
+          product={product}
+          userId={userId}
+          emailVerificationStatus={emailVerificationStatus}
+          prefillAnswer={prefillAnswer}
+          singleUseId={singleUseId}
+          singleUseResponse={singleUseResponse}
+          webAppUrl={webAppUrl}
+        />
+      </MediaBackground>
+      <LegalFooter
+        bgColor={survey.styling?.background?.bg || "#ffff"}
+        IMPRINT_URL={IMPRINT_URL}
+        PRIVACY_URL={PRIVACY_URL}
+      />
+    </div>
   );
 };
 
