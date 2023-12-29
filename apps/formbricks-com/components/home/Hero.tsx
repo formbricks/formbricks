@@ -38,9 +38,11 @@ export const Hero: React.FC = ({}) => {
           </span>
         </h1>
         <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-balance text-base text-slate-500 sm:text-lg md:mt-5 md:text-xl dark:text-slate-400">
-          Formbricks is an Experience Management Suite built on the largest open source survey infrastructure
-          worldwide. Harvest feedback at every point of the customer journey to understand how to keep{" "}
-          <span className="decoration-brand-dark underline underline-offset-4">happy customers happy.</span>
+          Formbricks is an Experience Management Suite built on the largest open source survey stack
+          worldwide. Gracefully harvest feedback at every point of the customer journey to{" "}
+          <span className="decoration-brand-dark underline underline-offset-4">
+            know what your customers need.
+          </span>
         </p>
 
         <div className="mx-auto mt-5 max-w-2xl items-center px-4 sm:flex sm:justify-center md:mt-6 md:space-x-8 md:px-0">
