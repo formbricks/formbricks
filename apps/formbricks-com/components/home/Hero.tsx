@@ -6,7 +6,7 @@ import FlixbusLogo from "@/images/clients/flixbus-white.svg";
 import NILogoDark from "@/images/clients/niLogoDark.svg";
 import NILogoLight from "@/images/clients/niLogoWhite.svg";
 import AnimationFallback from "@/public/animations/opensource-xm-platform-formbricks-fallback.png";
-import { ChevronRightIcon } from "@heroicons/react/24/outline";
+import { ShieldCheckIcon, StarIcon } from "@heroicons/react/24/outline";
 import { usePlausible } from "next-plausible";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -21,26 +21,29 @@ export const Hero: React.FC = ({}) => {
   return (
     <div className="relative">
       <div className="px-4 pb-20 pt-16 text-center sm:px-6 lg:px-8 lg:pb-32 lg:pt-20">
-        <a
-          href="https://formbricks.com/github"
-          target="_blank"
-          className="border-brand-dark xs:text-sm animate-bounce rounded-full border px-4 py-1.5 text-xs text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
-          We&apos;re Open Source - Star us on GitHub
-          <ChevronRightIcon className="mb-1 ml-1 inline h-4 w-4 text-slate-300" />
-        </a>
+        <div className="xs:text-sm flex items-center justify-center space-x-4 divide-x-2 text-xs text-slate-600">
+          <p>
+            <ShieldCheckIcon className="mb-1 inline h-4 w-4" /> Privacy-first
+          </p>
+          <a href="https://formbricks.com/github" target="_blank" className="hover:text-slate-800">
+            <StarIcon className="mb-1 ml-3 mr-1 inline h-4 w-4" />
+            Star us on GitHub
+          </a>
+        </div>
         <h1 className="mt-10 text-3xl font-bold tracking-tight text-slate-800 sm:text-4xl md:text-5xl dark:text-slate-200">
-          <span className="xl:inline">Privacy-first Experience Management</span>
+          <span className="xl:inline">
+            Turn customer insights
+            <br />
+            into irresistible experiences
+          </span>
         </h1>
-
-        <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-base text-slate-500 sm:text-lg md:mt-5 md:text-xl dark:text-slate-400">
-          Turn customer insights into irresistible experiences —{" "}
-          <span className="decoration-brand-dark underline underline-offset-4">all privacy-first.</span>
+        <p className="xs:max-w-none mx-auto mt-3 max-w-xs text-balance text-base text-slate-500 sm:text-lg md:mt-5 md:text-xl dark:text-slate-400">
+          Formbricks is an Experience Management Suite built on the largest open source survey infrastructure
+          worldwide. Harvest feedback at every point of the customer journey to understand how to keep{" "}
+          <span className="decoration-brand-dark underline underline-offset-4">happy customers happy.</span>
         </p>
 
         <div className="mx-auto mt-5 max-w-2xl items-center px-4 sm:flex sm:justify-center md:mt-6 md:space-x-8 md:px-0">
-          <p className="hidden whitespace-nowrap pt-3 text-xs text-slate-400 md:block dark:text-slate-500">
-            Trusted by
-          </p>
           <div className="grid grid-cols-4 items-center gap-6 pt-2 md:gap-8">
             <Image
               src={FlixbusLogo}
@@ -86,7 +89,7 @@ export const Hero: React.FC = ({}) => {
             />
           </div>
         </div>
-        <div className="hidden pt-10 md:block">
+        <div className="hidden pt-14 md:block">
           <Button
             variant="highlight"
             className="mr-3 px-6"
@@ -94,7 +97,7 @@ export const Hero: React.FC = ({}) => {
               router.push("https://app.formbricks.com/auth/signup");
               plausible("Hero_CTA_CreateSurvey");
             }}>
-            Get started
+            Get started free
           </Button>
           <Button
             variant="secondary"
