@@ -281,13 +281,16 @@ export default function LogicEditor({
                         <SelectValue placeholder="Select match type" />
                       </SelectTrigger>
                       <SelectContent className="w-full bg-slate-50 text-slate-700 2xl:w-96">
-                        {logicConditions[logic.condition].values?.map((value) => (
-                          <SelectItem key={value} value={value} title={value}>
-                            <div className="w-full">
-                              <p className="line-clamp-1 w-40 text-left 2xl:w-80">{value}</p>
-                            </div>
-                          </SelectItem>
-                        ))}
+                        {logicConditions[logic.condition].values?.map((value) => {
+                          if (!value) return;
+                          return (
+                            <SelectItem key={value} value={value} title={value}>
+                              <div className="w-full">
+                                <p className="line-clamp-1 w-40 text-left 2xl:w-80">{value}</p>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   ) : (
@@ -339,7 +342,7 @@ export default function LogicEditor({
                     (question, idx) =>
                       idx !== questionIdx && (
                         <SelectItem key={question.id} value={question.id} title={question.headline}>
-                          <div className="w-32">
+                          <div className="max-w-[6rem]">
                             <p className="truncate text-left">{question.headline}</p>
                           </div>
                         </SelectItem>
