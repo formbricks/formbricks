@@ -1,5 +1,5 @@
 import AuthorJohannes from "@/images/blog/johannes-co-founder-formbricks-small.jpg";
-import AuthorOla from "@/images/blog/ola-content-writer.png";
+import AuthorOla from "@/images/blog/ola-content-writer.jpg";
 import Image from "next/image";
 
 interface AuthorBoxProps {
