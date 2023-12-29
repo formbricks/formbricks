@@ -97,16 +97,16 @@ export const Hero: React.FC = ({}) => {
             className="mr-3 px-6"
             onClick={() => {
               router.push("https://app.formbricks.com/auth/signup");
-              plausible("Hero_CTA_CreateSurvey");
+              plausible("Hero_CTA_GetStartedItsFree");
             }}>
-            Get started free
+            Get Started, it&apos;s Free
           </Button>
           <Button
             variant="secondary"
             className="px-6"
             onClick={() => {
               router.push("https://formbricks.com/github");
-              /*  plausible("Hero_CTA_LaunchDemo"); */
+              plausible("Hero_CTA_ViewGitHub");
             }}>
             View Code on GitHub
           </Button>
