@@ -1,5 +1,7 @@
 import "server-only";
+
 import { env } from "./env.mjs";
+
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
 export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
@@ -42,6 +44,11 @@ export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
 export const GOOGLE_SHEETS_CLIENT_SECRET = env.GOOGLE_SHEETS_CLIENT_SECRET;
 export const GOOGLE_SHEETS_REDIRECT_URL = env.GOOGLE_SHEETS_REDIRECT_URL;
 
+export const NOTION_OAUTH_CLIENT_ID = env.NOTION_OAUTH_CLIENT_ID;
+export const NOTION_OAUTH_CLIENT_SECRET = env.NOTION_OAUTH_CLIENT_SECRET;
+export const NOTION_REDIRECT_URI = `${WEBAPP_URL}/api/v1/integrations/notion/callback`;
+export const NOTION_AUTH_URL = `https://api.notion.com/v1/oauth/authorize?client_id=${env.NOTION_OAUTH_CLIENT_ID}&response_type=code&owner=user&redirect_uri=${NOTION_REDIRECT_URI}`;
+
 export const AIRTABLE_CLIENT_ID = env.AIRTABLE_CLIENT_ID;
 
 export const SMTP_HOST = env.SMTP_HOST;
@@ -56,6 +63,10 @@ export const NEXTAUTH_URL = env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
 export const RESPONSES_PER_PAGE = 10;
 export const TEXT_RESPONSES_PER_PAGE = 5;
+
+export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
+export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE || "";
+export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
 
 // Storage constants
 export const UPLOADS_DIR = "./uploads";

@@ -1,10 +1,11 @@
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
+
 import { cn } from "@formbricks/lib/cn";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import { Button } from "@formbricks/ui/Button";
-import { Switch } from "@formbricks/ui/Switch";
 import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Switch } from "@formbricks/ui/Switch";
 
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },

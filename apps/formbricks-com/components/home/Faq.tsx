@@ -1,6 +1,6 @@
+import HeadingCentered from "@/components/shared/HeadingCentered";
 import { FAQPageJsonLd } from "next-seo";
 
-import HeadingCentered from "@/components/shared/HeadingCentered";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@formbricks/ui/Accordion";
 
 const FAQ_DATA = [

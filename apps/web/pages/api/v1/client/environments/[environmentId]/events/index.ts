@@ -1,6 +1,7 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { prisma } from "@formbricks/database";
 import { TActionClassType } from "@formbricks/types/actionClasses";
-import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();

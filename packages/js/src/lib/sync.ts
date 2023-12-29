@@ -1,4 +1,6 @@
+import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
+
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";
@@ -7,11 +9,6 @@ const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
-
-const diffInDays = (date1: Date, date2: Date) => {
-  const diffTime = Math.abs(date2.getTime() - date1.getTime());
-  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-};
 
 const syncWithBackend = async ({
   apiHost,

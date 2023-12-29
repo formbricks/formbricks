@@ -1,6 +1,7 @@
 import { Result } from "@formbricks/types/errorHandlers";
 import { NetworkError } from "@formbricks/types/errors";
 import { TPersonUpdateInput } from "@formbricks/types/people";
+
 import { makeRequest } from "../../utils/makeRequest";
 
 export class PeopleAPI {

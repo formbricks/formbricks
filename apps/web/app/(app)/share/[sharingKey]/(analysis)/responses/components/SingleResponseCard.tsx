@@ -1,27 +1,29 @@
 "use client";
 
-import { timeSince } from "@formbricks/lib/time";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
+
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { timeSince } from "@formbricks/lib/time";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { RatingResponse } from "@formbricks/ui/RatingResponse";
-import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { deleteResponseAction } from "@formbricks/ui/SingleResponseCard/actions";
 import QuestionSkip from "@formbricks/ui/SingleResponseCard/components/QuestionSkip";
-import ResponseNotes from "./ResponseNote";
 import ResponseTagsWrapper from "@formbricks/ui/SingleResponseCard/components/ResponseTagsWrapper";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+
+import ResponseNotes from "./ResponseNote";
 
 export interface SingleResponseCardProps {
   survey: TSurvey;
@@ -66,7 +68,7 @@ export default function SingleResponseCard({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const isSubmissionFresh = isSubmissionTimeLessThan5Minutes(response.updatedAt);
+
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
 
@@ -138,13 +140,6 @@ export default function SingleResponseCard({
     (response.personAttributes && Object.keys(response.personAttributes).length > 0) ||
       (response.meta?.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
-
-  function isSubmissionTimeLessThan5Minutes(submissionTimeISOString: Date) {
-    const submissionTime: Date = new Date(submissionTimeISOString);
-    const currentTime: Date = new Date();
-    const timeDifference: number = (currentTime.getTime() - submissionTime.getTime()) / (1000 * 60); // Convert milliseconds to minutes
-    return timeDifference < 5;
-  }
 
   const tooltipContent = (
     <>

@@ -1,11 +1,12 @@
-import { IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 import Link from "next/link";
 
 interface LegalFooterProps {
   bgColor?: string | null;
+  IMPRINT_URL?: string;
+  PRIVACY_URL?: string;
 }
 
-export default function LegalFooter({ bgColor }: LegalFooterProps) {
+export default function LegalFooter({ bgColor, IMPRINT_URL, PRIVACY_URL }: LegalFooterProps) {
   if (!IMPRINT_URL && !PRIVACY_URL) return null;
 
   return (

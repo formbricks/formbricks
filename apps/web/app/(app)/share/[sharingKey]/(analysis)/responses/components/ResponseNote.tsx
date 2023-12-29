@@ -1,12 +1,13 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
-import { timeSince } from "@formbricks/lib/time";
-import { TResponseNote } from "@formbricks/types/responses";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
+
+import { cn } from "@formbricks/lib/cn";
+import { timeSince } from "@formbricks/lib/time";
+import { TResponseNote } from "@formbricks/types/responses";
 
 interface ResponseNotesProps {
   responseId: string;
@@ -15,7 +16,7 @@ interface ResponseNotesProps {
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export default function ResponseNotes({ responseId, notes, isOpen, setIsOpen }: ResponseNotesProps) {
+export default function ResponseNotes({ notes, isOpen, setIsOpen }: ResponseNotesProps) {
   const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,8 +36,8 @@ export default function ResponseNotes({ responseId, notes, isOpen, setIsOpen }: 
         isOpen
           ? "-right-5 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
           : unresolvedNotes.length
-          ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
-          : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
+            ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
+            : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
       )}
       onClick={() => {
         if (!isOpen) setIsOpen(true);

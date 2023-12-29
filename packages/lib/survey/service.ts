@@ -1,5 +1,8 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
@@ -7,8 +10,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+
 import { getActionClasses } from "../actionClass/service";
 import { getAttributeClasses } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
@@ -18,11 +20,9 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
-import { captureTelemetry } from "../telemetry";
-import { diffInDays } from "../utils/datetime";
+import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { formatSurveyDateFields } from "./util";
 
 export const selectSurvey = {
   id: true,
@@ -126,7 +126,6 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         ...surveyPrisma,
         triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
       };
-
       return transformedSurvey;
     },
     [`getSurvey-${surveyId}`],
@@ -136,16 +135,9 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
     }
   )();
 
-  if (!survey) {
-    return null;
-  }
-
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return {
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  };
+  return survey ? formatDateFields(survey, ZSurvey) : null;
 };
 
 export const getSurveysByAttributeClassId = async (
@@ -187,11 +179,7 @@ export const getSurveysByAttributeClassId = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
 export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
@@ -232,11 +220,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
-  return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
 export const getSurveys = async (environmentId: string, page?: number): Promise<TSurvey[]> => {
@@ -282,10 +266,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return surveys.map((survey) => ({
-    ...survey,
-    ...formatSurveyDateFields(survey),
-  }));
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
@@ -531,8 +512,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
 
-  captureTelemetry("survey created");
-
   surveyCache.revalidate({
     id: survey.id,
     environmentId: survey.environmentId,
@@ -609,10 +588,10 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
   return newSurvey;
 };
 
-export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
+export const getSyncSurveys = async (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
   validateInputs([environmentId, ZId]);
 
-  return unstable_cache(
+  const surveys = await unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
 
@@ -689,6 +668,9 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
         }
       });
 
+      if (!surveys) {
+        throw new ResourceNotFoundError("Survey", environmentId);
+      }
       return surveys;
     },
     [`getSyncSurveys-${environmentId}-${person.userId}`],
@@ -702,4 +684,5 @@ export const getSyncSurveys = (environmentId: string, person: TPerson): Promise<
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };

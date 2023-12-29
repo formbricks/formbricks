@@ -1,10 +1,11 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
-import { Input } from "@formbricks/ui/Input";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface EventDetailModalProps {
   open: boolean;
@@ -54,7 +55,7 @@ export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open
                     Inner Text
                   </Label>
                 </div>
-                <div className="hidden items-center space-x-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-600 md:flex">
+                <div className="hidden items-center space-x-2 rounded-lg bg-slate-50 p-3 md:flex dark:bg-slate-600">
                   <RadioGroupItem disabled value="cssSelector" id="cssSelector" className="bg-slate-50" />
                   <Label
                     htmlFor="cssSelector"
@@ -79,7 +80,7 @@ export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open
                 <Label>URL</Label>
                 <Select defaultValue="endsWith">
                   <SelectTrigger
-                    className="w-[110px] dark:text-slate-200 md:w-[180px]"
+                    className="w-[110px] md:w-[180px] dark:text-slate-200"
                     onClick={(e) => e.preventDefault()}
                     disabled>
                     <SelectValue placeholder="Select match type" />

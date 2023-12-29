@@ -2,8 +2,9 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { Fragment } from "react";
 import clsx from "clsx";
+import { Fragment } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 
 type Modal = {
@@ -14,6 +15,7 @@ type Modal = {
   noPadding?: boolean;
   blur?: boolean;
   closeOnOutsideClick?: boolean;
+  size?: "md" | "lg";
 };
 
 export const Modal: React.FC<Modal> = ({
@@ -24,7 +26,13 @@ export const Modal: React.FC<Modal> = ({
   noPadding,
   blur = true,
   closeOnOutsideClick = true,
+  size = "md",
 }) => {
+  const sizeClassName = {
+    md: "sm:w-full sm:max-w-xl",
+    lg: "sm:w-[820px] sm:max-w-full",
+  };
+
   return (
     <>
       <Transition.Root show={open} as={Fragment}>
@@ -57,8 +65,9 @@ export const Modal: React.FC<Modal> = ({
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                 <Dialog.Panel
                   className={clsx(
-                    "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl ",
-                    `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`
+                    "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8",
+                    `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`,
+                    sizeClassName[size]
                   )}>
                   <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                     <button

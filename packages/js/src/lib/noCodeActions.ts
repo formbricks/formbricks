@@ -1,8 +1,9 @@
 import type { TActionClass } from "@formbricks/types/actionClasses";
 import type { TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
+
+import { trackAction } from "./actions";
 import { Config } from "./config";
 import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
-import { trackAction } from "./actions";
 import { Logger } from "./logger";
 
 const config = Config.getInstance();

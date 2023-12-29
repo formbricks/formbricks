@@ -3,7 +3,7 @@ import { FunctionComponent } from "preact";
 
 export const TiredFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -64,7 +64,7 @@ export const TiredFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> 
 
 export const WearyFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -125,7 +125,7 @@ export const WearyFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> 
 
 export const PerseveringFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -195,7 +195,7 @@ export const PerseveringFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElem
 
 export const FrowningFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -225,7 +225,7 @@ export const FrowningFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement
 
 export const ConfusedFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -254,7 +254,7 @@ export const ConfusedFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement
 
 export const NeutralFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -287,7 +287,7 @@ export const NeutralFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>
 
 export const SlightlySmilingFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -319,7 +319,7 @@ export const SmilingFaceWithSmilingEyes: FunctionComponent<JSX.HTMLAttributes<SV
   props
 ) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -365,7 +365,7 @@ export const GrinningFaceWithSmilingEyes: FunctionComponent<JSX.HTMLAttributes<S
   props
 ) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -417,7 +417,7 @@ export const GrinningFaceWithSmilingEyes: FunctionComponent<JSX.HTMLAttributes<S
 
 export const GrinningSquintingFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
-    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}>
+    <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}>
       <g id="line">
         <circle
           cx="36"
@@ -469,5 +469,5 @@ export const GrinningSquintingFace: FunctionComponent<JSX.HTMLAttributes<SVGCirc
 };
 
 export let icons = [
-  <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={36} height={36}></svg>,
+  <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width={48} height={48}></svg>,
 ];

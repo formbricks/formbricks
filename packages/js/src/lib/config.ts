@@ -1,4 +1,5 @@
 import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
+
 import { Result, err, ok, wrapThrows } from "./errors";
 
 export const LOCAL_STORAGE_KEY = "formbricks-js";
@@ -6,6 +7,13 @@ export const LOCAL_STORAGE_KEY = "formbricks-js";
 export class Config {
   private static instance: Config | undefined;
   private config: TJsConfig | null = null;
+
+  private constructor() {
+    const localConfig = this.loadFromLocalStorage();
+    if (localConfig.ok) {
+      this.config = localConfig.value;
+    }
+  }
 
   static getInstance(): Config {
     if (!Config.instance) {

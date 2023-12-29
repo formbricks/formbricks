@@ -1,19 +1,21 @@
-import { env } from "./env.mjs";
-import { verifyPassword } from "@/app/lib/auth";
-import { prisma } from "@formbricks/database";
-import { EMAIL_VERIFICATION_DISABLED } from "./constants";
-import { verifyToken } from "./jwt";
-import { createProfile, getProfileByEmail, updateProfile } from "./profile/service";
 import type { IdentityProvider } from "@prisma/client";
 import type { NextAuthOptions } from "next-auth";
+import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import AzureAD from "next-auth/providers/azure-ad";
-import { createTeam } from "./team/service";
-import { createProduct } from "./product/service";
+
+import { prisma } from "@formbricks/database";
+
 import { createAccount } from "./account/service";
+import { verifyPassword } from "./auth/util";
+import { EMAIL_VERIFICATION_DISABLED } from "./constants";
+import { env } from "./env.mjs";
+import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
+import { createProduct } from "./product/service";
+import { createTeam, getTeam } from "./team/service";
+import { createUser, getUserByEmail, updateUser } from "./user/service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -110,7 +112,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email already verified");
         }
 
-        user = await updateProfile(user.id, { emailVerified: new Date() });
+        user = await updateUser(user.id, { emailVerified: new Date() });
 
         return user;
       },
@@ -132,7 +134,7 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token }) {
-      const existingUser = await getProfileByEmail(token?.email!);
+      const existingUser = await getUserByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
@@ -144,9 +146,9 @@ export const authOptions: NextAuthOptions = {
       };
     },
     async session({ session, token }) {
-      // @ts-ignore
+      // @ts-expect-error
       session.user.id = token?.id;
-      // @ts-ignore
+      // @ts-expect-error
       session.user = token.profile;
 
       return session;
@@ -191,10 +193,10 @@ export const authOptions: NextAuthOptions = {
           // check if user with this email already exist
           // if not found just update user with new email address
           // if found throw an error (TODO find better solution)
-          const otherUserWithEmail = await getProfileByEmail(user.email);
+          const otherUserWithEmail = await getUserByEmail(user.email);
 
           if (!otherUserWithEmail) {
-            await updateProfile(existingUserWithAccount.id, { email: user.email });
+            await updateUser(existingUserWithAccount.id, { email: user.email });
             return true;
           }
           throw new Error(
@@ -205,13 +207,13 @@ export const authOptions: NextAuthOptions = {
         // There is no existing account for this identity provider / account id
         // check if user account with this email already exists
         // if user already exists throw error and request password login
-        const existingUserWithEmail = await getProfileByEmail(user.email);
+        const existingUserWithEmail = await getUserByEmail(user.email);
 
         if (existingUserWithEmail) {
           throw new Error("A user with this email exists already.");
         }
 
-        const userProfile = await createProfile({
+        const userProfile = await createUser({
           name: user.name,
           email: user.email,
           emailVerified: new Date(Date.now()),
@@ -219,14 +221,35 @@ export const authOptions: NextAuthOptions = {
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
-        const team = await createTeam({ name: userProfile.name + "'s Team" });
-        await createAccount({
-          ...account,
-          userId: userProfile.id,
-        });
-        await createProduct(team.id, { name: "My Product" });
-        await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
-        return true;
+        // Default team assignment if env variable is set
+        if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
+          // check if team exists
+          let team = await getTeam(env.DEFAULT_TEAM_ID);
+          let isNewTeam = false;
+          if (!team) {
+            // create team with id from env
+            team = await createTeam({ id: env.DEFAULT_TEAM_ID, name: userProfile.name + "'s Team" });
+            isNewTeam = true;
+          }
+          const role = isNewTeam ? "owner" : env.DEFAULT_TEAM_ROLE || "admin";
+          await createMembership(team.id, userProfile.id, { role, accepted: true });
+          await createAccount({
+            ...account,
+            userId: userProfile.id,
+          });
+          return true;
+        }
+        // Without default team assignment
+        else {
+          const team = await createTeam({ name: userProfile.name + "'s Team" });
+          await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
+          await createAccount({
+            ...account,
+            userId: userProfile.id,
+          });
+          await createProduct(team.id, { name: "My Product" });
+          return true;
+        }
       }
 
       return true;

@@ -1,41 +1,42 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/surveys";
+import {
+  deleteResultShareUrlAction,
+  generateResultShareUrlAction,
+  getResultShareUrlAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { LinkIcon } from "@heroicons/react/24/outline";
+import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
+
 import { TProduct } from "@formbricks/types/product";
-import ShareEmbedSurvey from "./ShareEmbedSurvey";
-import ShareSurveyResults from "./ShareSurveyResults";
-import { TProfile } from "@formbricks/types/profile";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TUser } from "@formbricks/types/user";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { DownloadIcon } from "lucide-react";
-import {
-  generateResultShareUrlAction,
-  getResultShareUrlAction,
-  deleteResultShareUrlAction,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { useEffect } from "react";
-import toast from "react-hot-toast";
+
+import ShareEmbedSurvey from "./ShareEmbedSurvey";
+import ShareSurveyResults from "./ShareSurveyResults";
 
 interface LinkSurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
   webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
 }
 
 export default function LinkSurveyShareButton({
   survey,
-  className,
   webAppUrl,
   product,
-  profile,
+  user,
 }: LinkSurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
@@ -110,7 +111,7 @@ export default function LinkSurveyShareButton({
           setOpen={setShowLinkModal}
           product={product}
           webAppUrl={webAppUrl}
-          profile={profile}
+          user={user}
         />
       )}
       {showResultsLinkModal && (

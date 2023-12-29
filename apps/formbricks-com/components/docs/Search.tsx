@@ -1,19 +1,18 @@
 "use client";
 
-import { forwardRef, Fragment, Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
-import Highlighter from "react-highlight-words";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { navigation } from "@/components/docs/Navigation";
+import { type Result } from "@/mdx/search.mjs";
 import {
   type AutocompleteApi,
-  createAutocomplete,
-  type AutocompleteState,
   type AutocompleteCollection,
+  type AutocompleteState,
+  createAutocomplete,
 } from "@algolia/autocomplete-core";
 import { Dialog, Transition } from "@headlessui/react";
 import clsx from "clsx";
-
-import { type Result } from "@/mdx/search.mjs";
-import { navigation } from "@/components/docs/Navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Fragment, Suspense, forwardRef, useCallback, useEffect, useId, useRef, useState } from "react";
+import Highlighter from "react-highlight-words";
 
 type EmptyObject = Record<string, never>;
 
@@ -244,7 +243,7 @@ const SearchInput = forwardRef<
       <input
         ref={inputRef}
         className={clsx(
-          "flex-auto appearance-none bg-transparent pl-10 text-slate-900 outline-none placeholder:text-slate-500 focus:w-full focus:flex-none dark:text-white sm:text-sm [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden [&::-webkit-search-results-button]:hidden [&::-webkit-search-results-decoration]:hidden",
+          "flex-auto appearance-none bg-transparent pl-10 text-slate-900 outline-none placeholder:text-slate-500 focus:w-full focus:flex-none sm:text-sm dark:text-white [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden [&::-webkit-search-results-button]:hidden [&::-webkit-search-results-decoration]:hidden",
           autocompleteState.status === "stalled" ? "pr-11" : "pr-4"
         )}
         {...inputProps}
@@ -337,7 +336,7 @@ function SearchDialog({
             leave="ease-in duration-200"
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95">
-            <Dialog.Panel className="ring-slate-900/7.5 mx-auto transform-gpu overflow-hidden rounded-lg bg-slate-50 shadow-xl ring-1 dark:bg-slate-900 dark:ring-slate-800 sm:max-w-xl">
+            <Dialog.Panel className="ring-slate-900/7.5 mx-auto transform-gpu overflow-hidden rounded-lg bg-slate-50 shadow-xl ring-1 sm:max-w-xl dark:bg-slate-900 dark:ring-slate-800">
               <div {...autocomplete.getRootProps({})}>
                 <form
                   ref={formRef}
@@ -410,7 +409,7 @@ export function Search() {
     <div className="hidden lg:block lg:max-w-md lg:flex-auto">
       <button
         type="button"
-        className="ui-not-focus-visible:outline-none hidden h-8 w-full items-center gap-2 rounded-full bg-white pl-2 pr-3 text-sm text-slate-500 ring-1 ring-slate-900/10 transition hover:ring-slate-900/20 dark:bg-white/5 dark:text-slate-400 dark:ring-inset dark:ring-white/10 dark:hover:ring-white/20 lg:flex"
+        className="ui-not-focus-visible:outline-none hidden h-8 w-full items-center gap-2 rounded-full bg-white pl-2 pr-3 text-sm text-slate-500 ring-1 ring-slate-900/10 transition hover:ring-slate-900/20 lg:flex dark:bg-white/5 dark:text-slate-400 dark:ring-inset dark:ring-white/10 dark:hover:ring-white/20"
         {...buttonProps}>
         <SearchIcon className="h-5 w-5 stroke-current" />
         Find something...
@@ -433,7 +432,7 @@ export function MobileSearch() {
     <div className="contents lg:hidden">
       <button
         type="button"
-        className="ui-not-focus-visible:outline-none flex h-6 w-6 items-center justify-center rounded-md transition hover:bg-slate-900/5 dark:hover:bg-white/5 lg:hidden"
+        className="ui-not-focus-visible:outline-none flex h-6 w-6 items-center justify-center rounded-md transition hover:bg-slate-900/5 lg:hidden dark:hover:bg-white/5"
         aria-label="Find something..."
         {...buttonProps}>
         <SearchIcon className="h-5 w-5 stroke-slate-900 dark:stroke-white" />

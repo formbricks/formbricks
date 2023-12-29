@@ -1,13 +1,14 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { useEffect, useRef, useState } from "react";
+
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProfile } from "@formbricks/types/profile";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
-import SingleResponseCard from "./SingleResponseCard";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
 
 interface ResponseTimelineProps {
   environment: TEnvironment;
@@ -77,6 +78,7 @@ export default function ResponseTimeline({
                   environmentTags={environmentTags}
                   pageType="response"
                   environment={environment}
+                  user={undefined}
                 />
               </div>
             );

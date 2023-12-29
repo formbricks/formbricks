@@ -1,4 +1,5 @@
 import z from "zod";
+
 import { ZActionClass } from "./actionClasses";
 import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
 import { ZProduct } from "./product";
@@ -96,6 +97,7 @@ export const ZJsConfigInput = z.object({
   debug: z.boolean().optional(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string().optional(),
+  attributes: ZPersonAttributes.optional(),
 });
 
 export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;

@@ -1,17 +1,19 @@
-import { sendInviteAcceptedEmail } from "@/app/lib/email";
-import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
-import {
-  NotLoggedInContent,
-  WrongAccountContent,
-  ExpiredContent,
-  UsedContent,
-  RightAccountContent,
-} from "./components/InviteContentComponents";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { sendInviteAcceptedEmail } from "@formbricks/lib/emails/emails";
 import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
+
+import {
+  ExpiredContent,
+  NotLoggedInContent,
+  RightAccountContent,
+  UsedContent,
+  WrongAccountContent,
+} from "./components/InviteContentComponents";
 
 export default async function JoinTeam({ searchParams }) {
   const currentUser = await getServerSession(authOptions);
@@ -36,7 +38,7 @@ export default async function JoinTeam({ searchParams }) {
       await createMembership(invite.teamId, currentUser.user.id, { accepted: true, role: invite.role });
       await deleteInvite(inviteId);
 
-      sendInviteAcceptedEmail(invite.creator.name ?? "", currentUser.user?.name, invite.creator.email);
+      sendInviteAcceptedEmail(invite.creator.name ?? "", currentUser.user?.name ?? "", invite.creator.email);
 
       return <RightAccountContent />;
     }

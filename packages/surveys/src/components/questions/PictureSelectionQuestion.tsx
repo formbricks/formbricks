@@ -3,11 +3,13 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "preact/hooks";
+
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
-import { useEffect, useState } from "preact/hooks";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
   value: string | number | string[];
@@ -129,7 +131,7 @@ export default function PictureSelectionQuestion({
                     id={`${choice.id}-checked`}
                     name={`${choice.id}-checkbox`}
                     type="checkbox"
-                    tabindex={-1}
+                    tabIndex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded border",
@@ -144,7 +146,7 @@ export default function PictureSelectionQuestion({
                     id={`${choice.id}-radio`}
                     name={`${choice.id}-radio`}
                     type="radio"
-                    tabindex={-1}
+                    tabIndex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded-full border",

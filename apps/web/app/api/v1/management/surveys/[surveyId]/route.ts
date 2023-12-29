@@ -1,10 +1,11 @@
-import { responses } from "@/app/lib/api/response";
-import { NextResponse } from "next/server";
-import { getSurvey, updateSurvey, deleteSurvey } from "@formbricks/lib/survey/service";
-import { TSurvey, ZSurvey } from "@formbricks/types/surveys";
-import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { NextResponse } from "next/server";
+
+import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { TSurvey, ZSurvey } from "@formbricks/types/surveys";
 
 async function fetchAndAuthorizeSurvey(authentication: any, surveyId: string): Promise<TSurvey | null> {
   const survey = await getSurvey(surveyId);

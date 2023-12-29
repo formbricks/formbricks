@@ -1,18 +1,19 @@
+import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
+import { InboxStackIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useMemo } from "react";
+import { useState } from "react";
+
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
-import { useMemo } from "react";
-import Link from "next/link";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
-import { useState } from "react";
 import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
 } from "@formbricks/types/surveys";
-import { questionTypes } from "@/app/lib/questions";
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 interface MultipleChoiceSummaryProps {
   questionSummary: TSurveyQuestionSummary<
@@ -130,7 +131,7 @@ export default function MultipleChoiceSummary({
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
+        <Headline headline={questionSummary.question.headline} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
@@ -141,6 +142,9 @@ export default function MultipleChoiceSummary({
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {totalResponses} responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
           {/*           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <ArrowTrendingUpIcon className="mr-2 h-4 w-4" />
             2.8 average

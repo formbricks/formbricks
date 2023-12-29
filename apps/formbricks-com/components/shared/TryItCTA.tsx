@@ -1,6 +1,7 @@
-import { Button } from "@formbricks/ui/Button";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
 
 export default function HeadingCentered() {
   const router = useRouter();
@@ -10,10 +11,10 @@ export default function HeadingCentered() {
         <p className="text-md text-brand-dark dark:text-brand-light mb-3 font-semibold uppercase">
           What are you waiting for?
         </p>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-4xl">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-800 sm:text-4xl dark:text-slate-100">
           Try it right now!
         </h2>
-        <p className="my-3 text-slate-500 dark:text-slate-300 sm:mb-6 sm:mt-4 md:text-lg">
+        <p className="my-3 text-slate-500 sm:mb-6 sm:mt-4 md:text-lg dark:text-slate-300">
           Dive right in or browse docs for examples.
           <br />
           Questions? Join our Discord, we’re happy to help!

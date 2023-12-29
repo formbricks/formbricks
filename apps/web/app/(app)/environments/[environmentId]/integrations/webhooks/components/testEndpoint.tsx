@@ -1,4 +1,5 @@
 "use server";
+
 import "server-only";
 
 export const testEndpoint = async (url: string) => {

@@ -1,12 +1,13 @@
 "use client";
 
-import CodeBlock from "@formbricks/ui/CodeBlock";
-import { TabBar } from "@formbricks/ui/TabBar";
+import packageJson from "@/package.json";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
-import packageJson from "@/package.json";
+
+import CodeBlock from "@formbricks/ui/CodeBlock";
+import { TabBar } from "@formbricks/ui/TabBar";
 
 const tabs = [
   { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
@@ -108,7 +109,7 @@ if (typeof window !== "undefined") {
             </p>
             <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.2.0/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^1.4.0/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
 </script>
 <!-- END Formbricks Surveys -->`}</CodeBlock>
             <p className="text-lg font-semibold text-slate-800">You&apos;re done 🎉</p>

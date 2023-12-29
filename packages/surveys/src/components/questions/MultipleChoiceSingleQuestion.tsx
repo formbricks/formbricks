@@ -1,14 +1,16 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
-import { cn, shuffleQuestions } from "@/lib/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { TResponseTtc } from "@formbricks/types/responses";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { cn, shuffleQuestions } from "@/lib/utils";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+
+import { TResponseData } from "@formbricks/types/responses";
+import { TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
+
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
   value: string | number | string[];
@@ -36,9 +38,7 @@ export default function MultipleChoiceSingleQuestion({
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
-  const [otherSelected, setOtherSelected] = useState(
-    !!value && !question.choices.find((c) => c.label === value)
-  ); // initially set to true if value is not in choices
+  const [otherSelected, setOtherSelected] = useState(false);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
@@ -55,6 +55,10 @@ export default function MultipleChoiceSingleQuestion({
     () => question.choices.find((choice) => choice.id === "other"),
     [question.choices]
   );
+
+  useEffect(() => {
+    setOtherSelected(!!value && !question.choices.find((c) => c.label === value));
+  }, [question.id]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
 

@@ -1,6 +1,7 @@
-import { Button } from "@formbricks/ui/Button";
-import { useRouter } from "next/router";
 import clsx from "clsx";
+import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
 
 interface Props {
   featureTitle: string;
@@ -28,7 +29,7 @@ export default function FeatureHighlights({
       <div className="mx-auto max-w-md px-4 sm:max-w-3xl sm:px-6 lg:max-w-7xl lg:px-8">
         <div className="md:grid-cols-2 lg:grid lg:items-center lg:gap-24">
           <div className={clsx(isImgLeft ? "order-last" : "")}>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl dark:text-slate-200">
               {featureTitle}
             </h2>
             <div className="text-md mt-6 whitespace-pre-line leading-7 text-slate-500 dark:text-slate-400">

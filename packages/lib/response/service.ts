@@ -1,5 +1,8 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
@@ -10,24 +13,26 @@ import {
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
+  ZResponse,
   ZResponseInput,
   ZResponseLegacyInput,
+  ZResponseNote,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
-import { calculateTtcTotal, formatResponseDateFields } from "../response/util";
+import { calculateTtcTotal } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { captureTelemetry } from "../telemetry";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 
-const responseSelection = {
+export const responseSelection = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -112,13 +117,17 @@ export const getResponsesByPersonId = async (
 
         let responses: Array<TResponse> = [];
 
-        responsePrisma.forEach((response) => {
-          responses.push({
-            ...response,
-            person: response.person ? transformPrismaPerson(response.person) : null,
-            tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-          });
-        });
+        await Promise.all(
+          responsePrisma.map(async (response) => {
+            const responseNotes = await getResponseNotes(response.id);
+            responses.push({
+              ...response,
+              notes: responseNotes,
+              person: response.person ? transformPrismaPerson(response.person) : null,
+              tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+            });
+          })
+        );
 
         return responses;
       } catch (error) {
@@ -137,8 +146,8 @@ export const getResponsesByPersonId = async (
   )();
 
   return responses.map((response) => ({
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
 };
 
@@ -184,14 +193,12 @@ export const getResponseBySingleUseId = async (
     }
   )();
 
-  if (!response) {
-    return null;
-  }
-
-  return {
-    ...response,
-    ...formatResponseDateFields(response),
-  };
+  return response
+    ? {
+        ...formatDateFields(response, ZResponse),
+        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
+      }
+    : null;
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
@@ -369,13 +376,9 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     }
   )();
 
-  if (!response) {
-    return null;
-  }
-
   return {
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   } as TResponse;
 };
 
@@ -426,8 +429,8 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
   )();
 
   return responses.map((response) => ({
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
 };
 
@@ -483,8 +486,8 @@ export const getResponsesByEnvironmentId = async (
   )();
 
   return responses.map((response) => ({
-    ...response,
-    ...formatResponseDateFields(response),
+    ...formatDateFields(response, ZResponse),
+    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
 };
 

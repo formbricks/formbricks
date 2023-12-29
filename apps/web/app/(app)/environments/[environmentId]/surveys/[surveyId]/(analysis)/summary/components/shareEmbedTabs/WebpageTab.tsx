@@ -1,9 +1,10 @@
 "use client";
 
-import toast from "react-hot-toast";
-import CodeBlock from "@formbricks/ui/CodeBlock";
-import { Button } from "@formbricks/ui/Button";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
+import toast from "react-hot-toast";
+
+import { Button } from "@formbricks/ui/Button";
+import CodeBlock from "@formbricks/ui/CodeBlock";
 
 export default function WebpageTab({ surveyUrl }) {
   const iframeCode = `<div style="position: relative; height:100vh; max-height:100vh; overflow:auto;"> 

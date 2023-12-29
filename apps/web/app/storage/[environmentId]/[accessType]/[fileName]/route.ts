@@ -1,12 +1,14 @@
-import { authOptions } from "@formbricks/lib/authOptions";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { ZStorageRetrievalParams } from "@formbricks/types/storage";
+import { handleDeleteFile } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/deleteFile";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { ZStorageRetrievalParams } from "@formbricks/types/storage";
+
 import getFile from "./lib/getFile";
-import { handleDeleteFile } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/deleteFile";
 
 export async function GET(
   _: NextRequest,

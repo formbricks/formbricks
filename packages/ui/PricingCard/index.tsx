@@ -1,8 +1,10 @@
-import { TTeam } from "@formbricks/types/teams";
 import { CheckIcon } from "@heroicons/react/24/outline";
+
+import { TTeam } from "@formbricks/types/teams";
+
 import { Badge } from "../Badge";
-import { Button } from "../Button";
 import { BillingSlider } from "../BillingSlider";
+import { Button } from "../Button";
 
 export const PricingCard = ({
   title,

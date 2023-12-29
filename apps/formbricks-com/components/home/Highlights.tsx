@@ -21,7 +21,7 @@ export const Highlights: React.FC = ({}) => {
                 significantly higher conversion rate.
               </p>
             </div>
-            <div className="rounded-lg bg-slate-100 py-6 pr-4 dark:bg-slate-800 sm:py-16 sm:pr-8">
+            <div className="rounded-lg bg-slate-100 py-6 pr-4 sm:py-16 sm:pr-8 dark:bg-slate-800">
               <Image
                 src={ImageEventTriggerLight}
                 alt="react library"
@@ -39,7 +39,7 @@ export const Highlights: React.FC = ({}) => {
       <div className="mx-auto mb-12 mt-8 max-w-lg md:mb-0 md:mt-32  md:max-w-none">
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
-            <div className="order-last rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8 md:order-first">
+            <div className="order-last rounded-lg bg-slate-100 p-4 sm:p-8 md:order-first dark:bg-slate-800">
               <Image
                 src={ImageAttributesLight}
                 alt="react library"
@@ -48,7 +48,7 @@ export const Highlights: React.FC = ({}) => {
               <Image src={ImageAttributesDark} alt="react library" className="hidden rounded-lg dark:block" />
             </div>
             <div className="pb-8 md:pb-0">
-              <h2 className="xs:text-3xl text-2xl font-bold leading-7 tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+              <h2 className="xs:text-3xl text-2xl font-bold leading-7 tracking-tight text-slate-800 sm:text-3xl dark:text-slate-100">
                 Don&apos;t ‘Spray and pray’.
                 <br />
                 <span className="font-light">Pre-segment granularly.</span>

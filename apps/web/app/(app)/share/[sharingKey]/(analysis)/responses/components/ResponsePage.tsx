@@ -1,18 +1,20 @@
 "use client";
+
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
-import SummaryHeader from "@/app/(app)/share/[sharingKey]/components/SummaryHeader";
 import SurveyResultsTabs from "@/app/(app)/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/share/[sharingKey]/(analysis)/responses/components/ResponseTimeline";
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import SummaryHeader from "@/app/(app)/share/[sharingKey]/components/SummaryHeader";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
-import { TResponse } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
+
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
 interface ResponsePageProps {
   environment: TEnvironment;
@@ -31,7 +33,6 @@ const ResponsePage = ({
   survey,
   surveyId,
   responses,
-  webAppUrl,
   product,
   sharingKey,
   environmentTags,

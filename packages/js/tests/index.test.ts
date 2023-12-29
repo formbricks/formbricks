@@ -1,18 +1,20 @@
 /**
  * @jest-environment jsdom
  */
-import { TPersonAttributes } from "@formbricks/types/people";
-import formbricks from "../src/index";
 import {
   mockEventTrackResponse,
   mockInitResponse,
-  mockResetResponse,
   mockRegisterRouteChangeResponse,
+  mockResetResponse,
   mockSetCustomAttributeResponse,
   mockSetEmailIdResponse,
   mockSetUserIdResponse,
   mockUpdateEmailResponse,
 } from "./__mocks__/apiMock";
+
+import { TPersonAttributes } from "@formbricks/types/people";
+
+import formbricks from "../src/index";
 import { constants } from "./constants";
 
 const consoleLogMock = jest.spyOn(console, "log").mockImplementation();
@@ -35,7 +37,8 @@ beforeEach(() => {
   fetchMock.resetMocks();
 });
 
-/* test("Formbricks should Initialise", async () => {
+/*
+test("Formbricks should Initialise", async () => {
   mockInitResponse();
 
   await formbricks.init({
@@ -117,7 +120,7 @@ test("Formbricks should track event", async () => {
   expect(consoleLogMock).toHaveBeenCalledWith(
     expect.stringMatching(/Formbricks: Event "Button Clicked" tracked/)
   );
-}); 
+});
 
 test("Formbricks should register for route change", async () => {
   mockRegisterRouteChangeResponse();
@@ -133,4 +136,5 @@ test("Formbricks should reset", async () => {
 
   expect(Object.keys(currentStatePersonAttributes).length).toBe(0);
 });
- */
+
+*/

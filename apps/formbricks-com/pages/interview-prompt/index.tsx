@@ -1,8 +1,8 @@
-import Layout from "@/components/shared/Layout";
-import UseCaseHeader from "@/components/shared/UseCaseHeader";
-import UseCaseCTA from "@/components/shared/UseCaseCTA";
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
+import Layout from "@/components/shared/Layout";
+import UseCaseCTA from "@/components/shared/UseCaseCTA";
+import UseCaseHeader from "@/components/shared/UseCaseHeader";
 
 export default function InterviewPromptPage() {
   return (
@@ -32,7 +32,7 @@ export default function InterviewPromptPage() {
         </div>
         <DemoPreview template="Interview Prompt" />
       </div>
-      <h2 className="mb-6 ml-4 mt-12 text-2xl font-semibold text-slate-700 dark:text-slate-400 md:mt-0">
+      <h2 className="mb-6 ml-4 mt-12 text-2xl font-semibold text-slate-700 md:mt-0 dark:text-slate-400">
         Other Best Practices
       </h2>
       <BestPracticeNavigation />
