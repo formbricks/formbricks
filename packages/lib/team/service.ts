@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TTeam, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/teams";
+import { TTeam, TTeamBilling, TTeamUpdateInput, ZTeamUpdateInput } from "@formbricks/types/teams";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
@@ -359,5 +359,23 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
     {
       tags: [],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getTeamBillingInfo = async (teamId: string): Promise<TTeamBilling | null> =>
+  await unstable_cache(
+    async () => {
+      const billingInfo = await prisma.team.findUnique({
+        where: {
+          id: teamId,
+        },
+      });
+
+      return billingInfo?.billing ?? null;
+    },
+    [`getTeamBillingInfo-${teamId}`],
+    {
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      tags: [teamCache.tag.byId(teamId)],
     }
   )();

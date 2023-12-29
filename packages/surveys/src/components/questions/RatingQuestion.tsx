@@ -1,10 +1,12 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import { cn } from "@/lib/utils";
-import { TResponseData } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "preact/hooks";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import {
   ConfusedFace,
   FrowningFace,
@@ -23,10 +25,12 @@ interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function RatingQuestion({
@@ -37,15 +41,25 @@ export default function RatingQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttc,
+  setTtc,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });
     if (question.required) {
-      onSubmit({
-        [question.id]: number,
-      });
+      const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+      setTtc(updatedTtcObj);
+      onSubmit(
+        {
+          [question.id]: number,
+        },
+        updatedTtcObj
+      );
     }
   };
 
@@ -65,18 +79,15 @@ export default function RatingQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {question.imageUrl && (
-        <div className="my-4 rounded-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
-        </div>
-      )}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-      <div className="my-4">
+      <div className="mb-4 mt-8">
         <fieldset>
           <legend className="sr-only">Choices</legend>
           <div className="flex">
@@ -124,7 +135,7 @@ export default function RatingQuestion({
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"
                           fill="currentColor"
-                          className="h-6 max-h-full w-6 ">
+                          className="h-8 max-h-full w-8 ">
                           <path
                             fillRule="evenodd"
                             d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
@@ -139,7 +150,7 @@ export default function RatingQuestion({
                         viewBox="0 0 24 24"
                         stroke-width="1.5"
                         stroke="currentColor"
-                        className="h-6 max-h-full w-6">
+                        className="h-8 max-h-full w-8">
                         <path
                           stroke-linecap="round"
                           stroke-linejoin="round"
@@ -188,6 +199,8 @@ export default function RatingQuestion({
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
               onBack();
             }}
           />

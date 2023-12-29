@@ -1,5 +1,6 @@
 import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
 import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
 import { useEffect, useMemo } from "react";
 
@@ -15,9 +16,11 @@ interface SurveyProps {
   onFinished?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
   onClose?: () => void;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   autoFocus?: boolean;
   prefillResponseData?: TResponseData;
   isRedirectDisabled?: boolean;
+  responseCount?: number;
 }
 
 interface SurveyModalProps extends SurveyProps {
@@ -39,6 +42,8 @@ export const SurveyInline = ({
   autoFocus,
   prefillResponseData,
   isRedirectDisabled,
+  onFileUpload,
+  responseCount,
 }: SurveyProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
@@ -55,6 +60,8 @@ export const SurveyInline = ({
       autoFocus,
       prefillResponseData,
       isRedirectDisabled,
+      onFileUpload,
+      responseCount,
     });
   }, [
     activeQuestionId,
@@ -69,6 +76,8 @@ export const SurveyInline = ({
     autoFocus,
     prefillResponseData,
     isRedirectDisabled,
+    onFileUpload,
+    responseCount,
   ]);
   return <div id={containerId} className="h-full w-full" />;
 };
@@ -88,6 +97,8 @@ export const SurveyModal = ({
   onClose = () => {},
   autoFocus,
   isRedirectDisabled,
+  onFileUpload,
+  responseCount,
 }: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal({
@@ -105,6 +116,8 @@ export const SurveyModal = ({
       onActiveQuestionChange,
       autoFocus,
       isRedirectDisabled,
+      onFileUpload,
+      responseCount,
     });
   }, [
     activeQuestionId,
@@ -121,6 +134,8 @@ export const SurveyModal = ({
     survey,
     autoFocus,
     isRedirectDisabled,
+    onFileUpload,
+    responseCount,
   ]);
   return <div id="formbricks-survey"></div>;
 };

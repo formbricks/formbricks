@@ -1,18 +1,23 @@
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
+import QuestionImage from "@/components/general/QuestionImage";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
+import { useState } from "preact/hooks";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function ConsentQuestion({
@@ -23,22 +28,25 @@ export default function ConsentQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  ttc,
+  setTtc,
 }: ConsentQuestionProps) {
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+
   return (
     <div>
-      {question.imageUrl && (
-        <div className="my-4 rounded-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={question.imageUrl} alt="question-image" className={"my-4 rounded-md"} />
-        </div>
-      )}
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
 
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit({ [question.id]: value });
+          const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+          setTtc(updatedTtcObj);
+          onSubmit({ [question.id]: value }, updatedTtcObj);
         }}>
         <label
           tabIndex={1}
@@ -72,7 +80,16 @@ export default function ConsentQuestion({
 
         <div className="mt-4 flex w-full justify-between">
           {!isFirstQuestion && (
-            <BackButton tabIndex={3} backButtonLabel={question.backButtonLabel} onClick={() => onBack()} />
+            <BackButton
+              tabIndex={3}
+              backButtonLabel={question.backButtonLabel}
+              onClick={() => {
+                const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                setTtc(updatedTtcObj);
+                onSubmit({ [question.id]: value }, updatedTtcObj);
+                onBack();
+              }}
+            />
           )}
           <div />
           <SubmitButton

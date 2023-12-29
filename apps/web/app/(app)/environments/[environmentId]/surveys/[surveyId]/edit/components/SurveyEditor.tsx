@@ -12,8 +12,8 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TProduct } from "@formbricks/types/product";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TActionClass } from "@formbricks/types/actionClasses";
-import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -23,6 +23,7 @@ interface SurveyEditorProps {
   attributeClasses: TAttributeClass[];
   responseCount: number;
   membershipRole?: TMembershipRole;
+  colours: string[];
 }
 
 export default function SurveyEditor({
@@ -33,6 +34,7 @@ export default function SurveyEditor({
   attributeClasses,
   responseCount,
   membershipRole,
+  colours,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
+      if (localSurvey) return;
       setLocalSurvey(JSON.parse(JSON.stringify(survey)));
 
       if (survey.questions.length > 0) {
@@ -59,7 +62,7 @@ export default function SurveyEditor({
   }, [localSurvey?.type]);
 
   if (!localSurvey) {
-    return <ErrorComponent />;
+    return <Loading />;
   }
 
   return (
@@ -98,6 +101,7 @@ export default function SurveyEditor({
                 attributeClasses={attributeClasses}
                 responseCount={responseCount}
                 membershipRole={membershipRole}
+                colours={colours}
               />
             )}
           </main>
@@ -109,6 +113,7 @@ export default function SurveyEditor({
               product={product}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
+              onFileUpload={async (file) => file.name}
             />
           </aside>
         </div>

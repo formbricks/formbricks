@@ -1,5 +1,9 @@
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey, TSurveyHiddenFields, TSurveyWelcomeCard } from "@formbricks/types/surveys";
+import {
+  TSurvey,
+  TSurveyHiddenFields,
+  TSurveyQuestionType,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -19,6 +23,310 @@ const welcomeCardDefault: TSurveyWelcomeCard = {
   headline: "Welcome!",
   html: "Thanks for providing your feedback - let's go!",
   timeToFinish: true,
+  showResponseCount: false,
+};
+
+export const testTemplate: TTemplate = {
+  name: "Test template",
+  description: "Test template consisting of all questions",
+  preset: {
+    name: "Test template",
+    questions: [
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter some text:",
+        required: true,
+        inputType: "text",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter some text:",
+        required: false,
+        inputType: "text",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter an email",
+        required: true,
+        inputType: "email",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter an email",
+        required: false,
+        inputType: "email",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter a number",
+        required: true,
+        inputType: "number",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter a number",
+        required: false,
+        inputType: "number",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter a phone number",
+        required: true,
+        inputType: "phone",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter a phone number",
+        required: false,
+        inputType: "phone",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter a url",
+        required: true,
+        inputType: "url",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.OpenText,
+        headline: "This is an open text question",
+        subheader: "Please enter a url",
+        required: false,
+        inputType: "url",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.MultipleChoiceSingle,
+        headline: "This ia a Multiple choice Single question",
+        subheader: "Please select one of the following",
+        required: true,
+        shuffleOption: "none",
+        choices: [
+          {
+            id: createId(),
+            label: "Option1",
+          },
+          {
+            id: createId(),
+            label: "Option2",
+          },
+        ],
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.MultipleChoiceSingle,
+        headline: "This ia a Multiple choice Single question",
+        subheader: "Please select one of the following",
+        required: false,
+        shuffleOption: "none",
+        choices: [
+          {
+            id: createId(),
+            label: "Option 1",
+          },
+          {
+            id: createId(),
+            label: "Option 2",
+          },
+        ],
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.MultipleChoiceMulti,
+        headline: "This ia a Multiple choice Multiple question",
+        subheader: "Please select some from the following",
+        required: true,
+        shuffleOption: "none",
+        choices: [
+          {
+            id: createId(),
+            label: "Option1",
+          },
+          {
+            id: createId(),
+            label: "Option2",
+          },
+        ],
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.MultipleChoiceMulti,
+        headline: "This ia a Multiple choice Multiple question",
+        subheader: "Please select some from the following",
+        required: false,
+        shuffleOption: "none",
+        choices: [
+          {
+            id: createId(),
+            label: "Option1",
+          },
+          {
+            id: createId(),
+            label: "Option2",
+          },
+        ],
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.Rating,
+        headline: "This is a rating question",
+        required: true,
+        lowerLabel: "Low",
+        upperLabel: "High",
+        range: 5,
+        scale: "number",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.Rating,
+        headline: "This is a rating question",
+        required: false,
+        lowerLabel: "Low",
+        upperLabel: "High",
+        range: 5,
+        scale: "number",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.Rating,
+        headline: "This is a rating question",
+        required: true,
+        lowerLabel: "Low",
+        upperLabel: "High",
+        range: 5,
+        scale: "smiley",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.Rating,
+        headline: "This is a rating question",
+        required: false,
+        lowerLabel: "Low",
+        upperLabel: "High",
+        range: 5,
+        scale: "smiley",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.Rating,
+        headline: "This is a rating question",
+        required: true,
+        lowerLabel: "Low",
+        upperLabel: "High",
+        range: 5,
+        scale: "star",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.Rating,
+        headline: "This is a rating question",
+        required: false,
+        lowerLabel: "Low",
+        upperLabel: "High",
+        range: 5,
+        scale: "star",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.CTA,
+        headline: "This is a CTA question",
+        html: "This is a test CTA",
+        buttonLabel: "Click",
+        buttonUrl: "https://formbricks.com",
+        buttonExternal: true,
+        required: true,
+        dismissButtonLabel: "Maybe later",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.CTA,
+        headline: "This is a CTA question",
+        html: "This is a test CTA",
+        buttonLabel: "Click",
+        buttonUrl: "https://formbricks.com",
+        buttonExternal: true,
+        required: false,
+        dismissButtonLabel: "Maybe later",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.PictureSelection,
+        headline: "This is a Picture select",
+        allowMulti: true,
+        required: true,
+        choices: [
+          {
+            id: createId(),
+            imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
+          },
+          {
+            id: createId(),
+            imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
+          },
+        ],
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.PictureSelection,
+        headline: "This is a Picture select",
+        allowMulti: true,
+        required: false,
+        choices: [
+          {
+            id: createId(),
+            imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
+          },
+          {
+            id: createId(),
+            imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
+          },
+        ],
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.Consent,
+        headline: "This is a Consent question",
+        required: true,
+        label: "I agree to the terms and conditions",
+        dismissButtonLabel: "Skip",
+      },
+      {
+        id: createId(),
+        type: TSurveyQuestionType.Consent,
+        headline: "This is a Consent question",
+        required: false,
+        label: "I agree to the terms and conditions",
+        dismissButtonLabel: "Skip",
+      },
+    ],
+    thankYouCard: thankYouCardDefault,
+    welcomeCard: {
+      enabled: false,
+      timeToFinish: false,
+      showResponseCount: false,
+    },
+    hiddenFields: {
+      enabled: false,
+    },
+  },
 };
 
 export const templates: TTemplate[] = [
@@ -104,7 +412,7 @@ export const templates: TTemplate[] = [
         {
           id: createId(),
           type: TSurveyQuestionType.OpenText,
-          headline: "What is the main benefit your receive from {{productName}}?",
+          headline: "What is the main benefit you receive from {{productName}}?",
           required: true,
           inputType: "text",
         },
@@ -2176,7 +2484,7 @@ export const customSurvey: TTemplate = {
       {
         id: createId(),
         type: TSurveyQuestionType.OpenText,
-        headline: "Custom Survey",
+        headline: "What would you like to know?",
         subheader: "This is an example survey.",
         placeholder: "Type your answer here...",
         required: true,
@@ -2218,4 +2526,5 @@ export const minimalSurvey: TSurvey = {
   },
   productOverwrites: null,
   singleUse: null,
+  styling: null,
 };
