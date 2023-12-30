@@ -1,7 +1,7 @@
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import SummaryPage from "@/app/(app)/share/[sharingKey]/(analysis)/summary/components/SummaryPage";
 import { getResultShareUrlSurveyAction } from "@/app/(app)/share/[sharingKey]/action";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { REVALIDATION_INTERVAL, TEXT_RESPONSES_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -15,7 +15,7 @@ export default async function Page({ params }) {
   const surveyId = await getResultShareUrlSurveyAction(params.sharingKey);
 
   if (!surveyId) {
-    return redirect(`/`);
+    return notFound();
   }
 
   const survey = await getSurvey(surveyId);

@@ -1,20 +1,21 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import ResponsePage from "@/app/(app)/share/[sharingKey]/(analysis)/responses/components/ResponsePage";
+import { getResultShareUrlSurveyAction } from "@/app/(app)/share/[sharingKey]/action";
+import { notFound } from "next/navigation";
+
 import { RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getResultShareUrlSurveyAction } from "@/app/(app)/share/[sharingKey]/action";
-import { redirect } from "next/navigation";
+import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
+
+export const revalidate = REVALIDATION_INTERVAL;
 
 export default async function Page({ params }) {
   const surveyId = await getResultShareUrlSurveyAction(params.sharingKey);
 
   if (!surveyId) {
-    return redirect(`/`);
+    return notFound();
   }
 
   const survey = await getSurvey(surveyId);
