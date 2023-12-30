@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
@@ -221,7 +222,11 @@ export default function SingleResponseCard({
         className={clsx(
           "relative z-10 my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-all",
           pageType === "response" &&
-            (isOpen ? "w-3/4" : response.notes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]")
+            (isOpen
+              ? "w-3/4"
+              : response.notes.length
+                ? "w-[96.5%]"
+                : cn("w-full", user ? "group-hover:w-[96.5%]" : ""))
         )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
@@ -266,7 +271,7 @@ export default function SingleResponseCard({
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
-              {!isViewer && (
+              {user && !isViewer && (
                 <TooltipRenderer shouldRender={isSubmissionFresh} tooltipContent={deleteSubmissionToolTip}>
                   <TrashIcon
                     onClick={() => {
@@ -378,16 +383,18 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        <LoadingWrapper isLoading={isLoading} error={error}>
-          {!isViewer && (
-            <ResponseTagsWrapper
-              environmentId={environmentId}
-              responseId={response.id}
-              tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-              environmentTags={environmentTags}
-            />
-          )}
-        </LoadingWrapper>
+        {user && (
+          <LoadingWrapper isLoading={isLoading} error={error}>
+            {!isViewer && (
+              <ResponseTagsWrapper
+                environmentId={environmentId}
+                responseId={response.id}
+                tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+                environmentTags={environmentTags}
+              />
+            )}
+          </LoadingWrapper>
+        )}
 
         <DeleteDialog
           open={deleteDialogOpen}
