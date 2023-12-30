@@ -1,14 +1,13 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/surveys";
 import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 
 interface SummaryHeaderProps {
-  surveyId: string;
   survey: TSurvey;
   product: TProduct;
 }
-const SummaryHeader = ({ surveyId, survey, product }: SummaryHeaderProps) => {
+const SummaryHeader = ({ survey, product }: SummaryHeaderProps) => {
   return (
     <div className="mb-11 mt-6 flex flex-wrap items-center justify-between">
       <div>

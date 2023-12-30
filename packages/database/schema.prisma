@@ -294,13 +294,14 @@ model Survey {
   styling           Json?
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
-  singleUse         Json?            @default("{\"enabled\": false, \"isEncrypted\": true}")
+  singleUse         Json?   @default("{\"enabled\": false, \"isEncrypted\": true}")
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
   pin               String?
-  resultShareUrls   ResultShareUrl[]
+  resultShareKey    String?
 
+  @@unique([id, resultShareKey])
   @@index([environmentId])
 }
 
@@ -572,11 +573,4 @@ model ShortUrl {
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @updatedAt @map(name: "updated_at")
   url       String   @unique
-}
-
-model ResultShareUrl {
-  id        String   @id @unique // generate nanoId in service
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  surveyId  String
-  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
 }

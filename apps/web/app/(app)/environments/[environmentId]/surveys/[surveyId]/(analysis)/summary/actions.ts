@@ -7,7 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/emails/emails";
 import {
-  createResultShareUrl,
+  createResultShareKey,
   deleteResultShareUrlBySurveyId,
   getResultShareUrlsBySurveyId,
 } from "@formbricks/lib/resultShareUrl/service";
@@ -47,7 +47,7 @@ export async function generateResultShareUrlAction(surveyId: string): Promise<st
   const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
   if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
 
-  return createResultShareUrl(surveyId);
+  return createResultShareKey(surveyId);
 }
 
 export async function getResultShareUrlAction(surveyId: string): Promise<string | null> {

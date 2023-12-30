@@ -1,32 +1,43 @@
-import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/types/errors";
 import { Prisma } from "@prisma/client";
 import { customAlphabet } from "nanoid";
-import z from "zod";
+
+import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+
 import { validateInputs } from "../utils/validate";
 
 // Create the short url and return it
-export const createResultShareUrl = async (surveyId: string): Promise<string> => {
-  validateInputs([surveyId, z.string().cuid2()]);
+export const createResultShareKey = async (surveyId: string): Promise<string> => {
+  validateInputs([surveyId, ZId]);
 
   try {
-    // Check if an entry with the provided survey id already exists.
-    const existingKey = await getResponseKeyBySurveyId(surveyId);
-
-    if (existingKey) {
-      return existingKey;
-    }
-
-    // If an entry with the provided fullUrl does not exist, create a new one.
-    const id = customAlphabet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10)();
-
-    const key = await prisma.resultShareUrl.create({
-      data: {
-        id,
-        surveyId,
+    const survey = await prisma.survey.findFirst({
+      where: {
+        id: surveyId,
       },
     });
-    return key.id;
+
+    if (!survey) {
+      throw new ResourceNotFoundError("survey", surveyId);
+    }
+
+    if (survey.resultShareKey) {
+      return survey.resultShareKey;
+    }
+
+    const id = customAlphabet("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 10)();
+
+    await prisma.survey.update({
+      where: {
+        id: surveyId,
+      },
+      data: {
+        resultShareKey: id,
+      },
+    });
+
+    return id;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -37,19 +48,19 @@ export const createResultShareUrl = async (surveyId: string): Promise<string> =>
 };
 
 export const getResultShareUrlsBySurveyId = async (surveyId: string): Promise<string | null> => {
-  validateInputs([surveyId, z.string().cuid2()]);
+  validateInputs([surveyId, ZId]);
   try {
-    const key = await prisma.resultShareUrl.findFirst({
+    const survey = await prisma.survey.findFirst({
       where: {
-        surveyId,
+        id: surveyId,
       },
     });
 
-    if (!key) {
-      return null;
+    if (!survey) {
+      throw new ResourceNotFoundError("survey", surveyId);
     }
 
-    return key.id;
+    return survey.resultShareKey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -61,17 +72,17 @@ export const getResultShareUrlsBySurveyId = async (surveyId: string): Promise<st
 
 export const getResponseKeySurvey = async (key: string): Promise<string | null> => {
   try {
-    const responseKey = await prisma.resultShareUrl.findFirst({
+    const survey = await prisma.survey.findFirst({
       where: {
-        id: key,
+        resultShareKey: key,
       },
     });
 
-    if (responseKey) {
-      return responseKey.surveyId;
+    if (!survey) {
+      throw new ResourceNotFoundError("survey", key);
     }
 
-    return null; // Return null if no matching key is found
+    return survey.id;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -83,21 +94,24 @@ export const getResponseKeySurvey = async (key: string): Promise<string | null> 
 
 export const deleteResultShareUrlBySurveyId = async (surveyId: string): Promise<boolean> => {
   try {
-    validateInputs([surveyId, z.string().cuid2()]);
+    validateInputs([surveyId, ZId]);
 
-    const existingKey = await prisma.resultShareUrl.findFirst({
+    const survey = await prisma.survey.findFirst({
       where: {
-        surveyId,
+        id: surveyId,
       },
     });
 
-    if (!existingKey) {
-      throw new Error("Key not found");
+    if (!survey) {
+      throw new ResourceNotFoundError("survey", surveyId);
     }
 
-    await prisma.resultShareUrl.delete({
+    await prisma.survey.update({
       where: {
-        id: existingKey.id,
+        id: surveyId,
+      },
+      data: {
+        resultShareKey: null,
       },
     });
 

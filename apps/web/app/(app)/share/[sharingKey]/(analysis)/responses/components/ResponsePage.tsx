@@ -54,7 +54,7 @@ const ResponsePage = ({
   }, [selectedFilter, responses, survey, dateRange]);
   return (
     <ContentWrapper>
-      <SummaryHeader survey={survey} surveyId={surveyId} product={product} />
+      <SummaryHeader survey={survey} product={product} />
       <CustomFilter
         environmentTags={environmentTags}
         responses={filterResponses}
