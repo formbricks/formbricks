@@ -9,10 +9,12 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
+  TFilterCriteria,
   TResponse,
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
+  ZFilterCriteria,
   ZResponse,
   ZResponseInput,
   ZResponseLegacyInput,
@@ -382,15 +384,22 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
   } as TResponse;
 };
 
-export const getResponses = async (surveyId: string, page?: number): Promise<TResponse[]> => {
+export const getResponses = async (
+  surveyId: string,
+  page?: number,
+  filterCriteria?: TFilterCriteria
+): Promise<TResponse[]> => {
+  console.log({ surveyId, page, filterCriteria });
   const responses = await unstable_cache(
     async () => {
-      validateInputs([surveyId, ZId], [page, ZOptionalNumber]);
+      validateInputs([surveyId, ZId], [page, ZOptionalNumber], [filterCriteria, ZFilterCriteria.optional()]);
 
       try {
         const responses = await prisma.response.findMany({
           where: {
             surveyId,
+            ...buildWhereClause(filterCriteria),
+            // AND: [],
           },
           select: responseSelection,
           orderBy: [
@@ -403,7 +412,7 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
         });
 
         const transformedResponses: TResponse[] = await Promise.all(
-          responses.map(async (responsePrisma) => {
+          responses.map((responsePrisma) => {
             return {
               ...responsePrisma,
               person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
@@ -421,13 +430,12 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
         throw error;
       }
     },
-    [`getResponses-${surveyId}`],
+    [`getResponses-${surveyId}`, JSON.stringify(filterCriteria), (page || 0)?.toString()],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
   return responses.map((response) => ({
     ...formatDateFields(response, ZResponse),
     notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
@@ -622,3 +630,214 @@ export const getResponseCountBySurveyId = async (surveyId: string): Promise<numb
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
+const buildWhereClause = (filterCriteria?: TFilterCriteria) => {
+  const whereClause: any = [];
+
+  // For finished
+  if (filterCriteria?.finished !== undefined) {
+    whereClause.push({
+      finished: filterCriteria?.finished,
+    });
+  }
+
+  // For Date range
+  if (filterCriteria?.createdAt) {
+    const createdAt: { lte?: Date; gte?: Date } = {};
+    if (filterCriteria?.createdAt?.max) {
+      createdAt.lte = filterCriteria?.createdAt?.max;
+    }
+    if (filterCriteria?.createdAt?.min) {
+      createdAt.gte = filterCriteria?.createdAt?.min;
+    }
+
+    whereClause.push({
+      createdAt,
+    });
+  }
+
+  // For Tags
+  if (filterCriteria?.tags) {
+    const tags = [];
+
+    if (filterCriteria?.tags?.applied) {
+      const appliedTags = filterCriteria.tags.applied.map((tagId) => ({
+        tags: {
+          some: {
+            tagId,
+          },
+        },
+      }));
+      tags.push(appliedTags);
+    }
+
+    if (filterCriteria?.tags?.notApplied) {
+      const notAppliedTags = filterCriteria.tags.notApplied.map((tagId) => ({
+        tags: {
+          none: {
+            tagId,
+          },
+        },
+      }));
+      tags.push(notAppliedTags);
+    }
+
+    whereClause.push({
+      AND: tags.flat(),
+    });
+  }
+
+  if (filterCriteria?.data) {
+    const data: any[] = [];
+
+    Object.entries(filterCriteria.data).forEach(([key, val]) => {
+      switch (val.op) {
+        case "submitted":
+          data.push({
+            data: {
+              path: [key],
+              not: Prisma.DbNull,
+            },
+          });
+          break;
+        case "skipped": // need to handle dismissed case for CTA type question, that would hinder other ques(eg open text)
+          data.push({
+            data: {
+              path: [key],
+              equals: Prisma.DbNull,
+            },
+          });
+          break;
+        case "equals":
+          data.push({
+            data: {
+              path: [key],
+              equals: val.value,
+            },
+          });
+          break;
+        case "notEquals":
+          data.push({
+            data: {
+              path: [key],
+              not: val.value,
+            },
+          });
+          break;
+        case "lessThan":
+          data.push({
+            data: {
+              path: [key],
+              lt: val.value,
+            },
+          });
+          break;
+        case "lessEqual":
+          data.push({
+            data: {
+              path: [key],
+              lte: val.value,
+            },
+          });
+          break;
+        case "greaterThan":
+          data.push({
+            data: {
+              path: [key],
+              gt: val.value,
+            },
+          });
+          break;
+        case "greaterEqual":
+          data.push({
+            data: {
+              path: [key],
+              gte: val.value,
+            },
+          });
+          break;
+        case "clicked":
+          data.push({
+            data: {
+              path: [key],
+              equals: "clicked",
+            },
+          });
+          break;
+        case "accepted":
+          data.push({
+            data: {
+              path: [key],
+              equals: "accepted",
+            },
+          });
+          break;
+        case "includesAll":
+          data.push({
+            data: {
+              path: [key],
+              array_contains: val.value,
+            },
+          });
+          break;
+        case "includesOne":
+          data.push({
+            OR:
+              Array.isArray(val.value) &&
+              val.value.map((value: string) => ({
+                data: {
+                  path: [key],
+                  array_contains: [value],
+                },
+              })),
+          });
+
+          break;
+        case "uploaded":
+          data.push({
+            data: {
+              path: [key],
+              not: "skipped",
+            },
+          });
+          break;
+        case "notUploaded":
+          data.push({
+            OR: [
+              {
+                // for skipped
+                data: {
+                  path: [key],
+                  equals: "skipped",
+                },
+              },
+              {
+                // for not answered
+                data: {
+                  path: [key],
+                  equals: Prisma.DbNull,
+                },
+              },
+            ],
+          });
+          break;
+        case "booked":
+          data.push({
+            data: {
+              path: [key],
+              equals: "booked",
+            },
+          });
+          break;
+      }
+    });
+
+    whereClause.push({
+      AND: data,
+    });
+  }
+
+  console.log({ whereClause: JSON.stringify(whereClause, null, 2) });
+
+  return { AND: whereClause };
+};

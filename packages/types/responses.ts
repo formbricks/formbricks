@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ZId } from "./environment";
 import { ZPerson, ZPersonAttributes } from "./people";
 import { ZSurvey } from "./surveys";
 import { ZTag } from "./tags";
@@ -15,6 +16,56 @@ export type TResponseTtc = z.infer<typeof ZResponseTtc>;
 export const ZResponsePersonAttributes = ZPersonAttributes.nullable();
 
 export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
+
+export const ZFilterCriteria = z.object({
+  finished: z.boolean().optional(),
+  createdAt: z
+    .object({
+      min: z.date().optional(),
+      max: z.date().optional(),
+    })
+    .optional(),
+  data: z
+    .record(
+      z.object({
+        op: z.enum([
+          "submitted",
+          "skipped",
+          "equals",
+          "notEquals",
+          "lessThan",
+          "lessEqual",
+          "greaterThan",
+          "greaterEqual",
+          "clicked",
+          "accepted",
+          "includesAll",
+          "includesOne",
+          "uploaded",
+          "notUploaded",
+          "booked",
+        ]),
+        value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
+      })
+    )
+    .optional(),
+
+  tags: z
+    .object({
+      values: z.array(ZId).optional(),
+      applied: z.array(ZId).optional(),
+      notApplied: z.array(ZId).optional(),
+    })
+    .optional(),
+  personAttributes: z
+    .object({
+      equals: z.record(z.string()).optional(),
+      notEquals: z.record(z.string()).optional(),
+    })
+    .optional(),
+});
+
+export type TFilterCriteria = z.infer<typeof ZFilterCriteria>;
 
 export const ZResponseNoteUser = z.object({
   id: z.string().cuid2(),
