@@ -79,7 +79,7 @@ export const getResponseKeySurvey = async (key: string): Promise<string | null> 
     });
 
     if (!survey) {
-      throw new ResourceNotFoundError("survey", key);
+      return null;
     }
 
     return survey.id;
