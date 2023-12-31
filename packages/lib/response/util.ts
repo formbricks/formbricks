@@ -12,7 +12,7 @@ export function calculateTtcTotal(ttc: TResponseTtc) {
 }
 
 export const buildWhereClause = (filterCriteria?: TFilterCriteria) => {
-  const whereClause = [];
+  const whereClause: Record<string, any>[] = [];
 
   // For finished
   if (filterCriteria?.finished !== undefined) {
@@ -38,7 +38,7 @@ export const buildWhereClause = (filterCriteria?: TFilterCriteria) => {
 
   // For Tags
   if (filterCriteria?.tags) {
-    const tags = [];
+    const tags: Record<string, any>[] = [];
 
     if (filterCriteria?.tags?.applied) {
       const appliedTags = filterCriteria.tags.applied.map((tagId) => ({
