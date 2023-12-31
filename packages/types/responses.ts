@@ -48,19 +48,55 @@ export const ZFilterCriteria = z.object({
         value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
       })
     )
+    .superRefine((arg, ctx) => {
+      const quesIds = Object.keys(arg);
+      quesIds.forEach((quesId) => {
+        switch (arg[quesId].op) {
+          case "equals":
+          case "booked":
+          case "clicked":
+          case "skipped":
+          case "uploaded":
+          case "accepted":
+          case "submitted":
+          case "notEquals":
+          case "notUploaded":
+            break;
+          case "lessThan":
+          case "lessEqual":
+          case "greaterThan":
+          case "greaterEqual":
+            if (typeof arg[quesId].value !== "number") {
+              ctx.addIssue({
+                code: z.ZodIssueCode.invalid_type,
+                expected: "number",
+                received: typeof arg[quesId].value,
+                path: [quesId, "value"],
+                message: `Expected number for ${arg[quesId].op}`,
+              });
+            }
+            break;
+          case "includesOne":
+          case "includesAll":
+            if (!Array.isArray(arg[quesId].value)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.invalid_type,
+                expected: "array",
+                received: typeof arg[quesId].value,
+                path: [quesId, "value"],
+                message: `Expected array for ${arg[quesId].op}`,
+              });
+            }
+            break;
+        }
+      });
+    })
     .optional(),
 
   tags: z
     .object({
-      values: z.array(ZId).optional(),
       applied: z.array(ZId).optional(),
       notApplied: z.array(ZId).optional(),
-    })
-    .optional(),
-  personAttributes: z
-    .object({
-      equals: z.record(z.string()).optional(),
-      notEquals: z.record(z.string()).optional(),
     })
     .optional(),
 });
