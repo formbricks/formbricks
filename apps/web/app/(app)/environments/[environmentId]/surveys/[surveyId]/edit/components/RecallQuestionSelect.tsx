@@ -8,7 +8,7 @@ import {
 import { CalendarDaysIcon, Phone } from "lucide-react";
 import { RefObject, useEffect, useState } from "react";
 
-import { checkForRecall } from "@formbricks/lib/utils/recall";
+import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 const questionIconMapping = {
@@ -23,7 +23,7 @@ const questionIconMapping = {
 
 interface RecallQuestionSelectProps {
   localSurvey: TSurvey;
-  question: TSurveyQuestion;
+  questionId: string;
   addRecallQuestion: (question: TSurveyQuestion) => void;
   setShowQuestionSelect: (show: boolean) => void;
   showQuestionSelect: boolean;
@@ -33,7 +33,7 @@ interface RecallQuestionSelectProps {
 
 export default function RecallQuestionSelect({
   localSurvey,
-  question,
+  questionId,
   addRecallQuestion,
   setShowQuestionSelect,
   showQuestionSelect,
@@ -41,14 +41,30 @@ export default function RecallQuestionSelect({
   recallQuestions,
 }: RecallQuestionSelectProps) {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
-  const recallQuestionIds = recallQuestions.map((recallQuestion) => recallQuestion.id);
-  const filteredRecallQuestions = localSurvey.questions.filter(
-    (question) => !recallQuestionIds.includes(question.id)
-  );
-  const currentQuestionIdx = filteredRecallQuestions.findIndex(
-    (recallQuestion) => recallQuestion.id === question.id
-  );
+  const isNotAllowedQuestionType = (question) => {
+    return (
+      question.type === "fileUpload" ||
+      question.type === "cta" ||
+      question.type === "consent" ||
+      question.type === "pictureSelection"
+    );
+  };
 
+  const recallQuestionIds = recallQuestions.map((recallQuestion) => recallQuestion.id);
+  const filteredRecallQuestions = localSurvey.questions.filter((question) => {
+    const notAllowed = isNotAllowedQuestionType(question);
+    return question.id === questionId || (!recallQuestionIds.includes(question.id) && !notAllowed);
+  });
+  const currentQuestionIdx =
+    questionId === "end"
+      ? filteredRecallQuestions.length
+      : filteredRecallQuestions.findIndex((recallQuestion) => recallQuestion.id === questionId);
+
+  const getRecallHeadline = (question: TSurveyQuestion): TSurveyQuestion => {
+    let questionTemp = { ...question };
+    questionTemp = replaceRecallInfoWithUnderline(questionTemp);
+    return questionTemp;
+  };
   useEffect(() => {
     const handleKeyPress = (event) => {
       if (showQuestionSelect) {
@@ -77,7 +93,7 @@ export default function RecallQuestionSelect({
     };
   }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
   return (
-    <div className="fixed z-30 mt-1 flex max-h-[50%] flex-col overflow-auto rounded-md border border-slate-300 bg-slate-50 p-3 text-xs">
+    <div className="absolute z-30 mt-1 flex max-h-[50%] max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
       {currentQuestionIdx === 0 ? (
         <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (
@@ -85,30 +101,24 @@ export default function RecallQuestionSelect({
       )}
       <div>
         {filteredRecallQuestions.map((q, idx) => {
-          if (q.id === question.id) return;
+          if (q.id === questionId) return;
           if (idx > currentQuestionIdx) return;
-          if (recallQuestionIds.includes(q.id)) return;
-          if (
-            q.type === "fileUpload" ||
-            q.type === "cta" ||
-            q.type === "consent" ||
-            q.type === "pictureSelection"
-          )
-            return;
           const isFocused = idx === focusedQuestionIdx;
           const IconComponent = questionIconMapping[q.type]; // Accessing the icon component
           return (
             <div
               key={idx}
-              className={`flex cursor-pointer items-center rounded-md px-3 py-2 ${
-                isFocused ? "bg-slate-200" : ""
+              className={`flex max-w-full cursor-pointer items-center rounded-md px-3 py-2 ${
+                isFocused ? "bg-slate-200" : "hover:bg-slate-200 "
               }`}
               onClick={() => {
                 addRecallQuestion(q);
                 setShowQuestionSelect(false);
               }}>
               <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
-              <div>{checkForRecall(q.headline, localSurvey)}</div>
+              <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                {getRecallHeadline(q).headline}
+              </div>
             </div>
           );
         })}

@@ -1,10 +1,10 @@
 "use client";
 
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import * as Collapsible from "@radix-ui/react-collapsible";
 
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -91,30 +91,26 @@ export default function EditThankYouCard({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <form>
-            <div className="mt-3">
-              <Label htmlFor="headline">Headline</Label>
-              <div className="mt-2">
-                <Input
-                  id="headline"
-                  name="headline"
-                  defaultValue={localSurvey?.thankYouCard?.headline}
-                  onChange={(e) => {
-                    updateSurvey({ headline: e.target.value });
-                  }}
-                />
-              </div>
-            </div>
+            <QuestionFormInput
+              localSurvey={localSurvey}
+              environmentId={localSurvey.environmentId}
+              isInValid={false}
+              questionId="end"
+              questionIdx={localSurvey.questions.length}
+              updateQuestion={updateSurvey}
+              type="headline"
+            />
 
-            <div className="mt-3">
-              <Label htmlFor="subheader">Description</Label>
-              <div className="mt-2">
-                <Input
-                  id="subheader"
-                  name="subheader"
-                  defaultValue={localSurvey?.thankYouCard?.subheader}
-                  onChange={(e) => {
-                    updateSurvey({ subheader: e.target.value });
-                  }}
+            <div>
+              <div className="flex w-full items-center">
+                <QuestionFormInput
+                  localSurvey={localSurvey}
+                  environmentId={localSurvey.environmentId}
+                  isInValid={false}
+                  questionId="end"
+                  questionIdx={localSurvey.questions.length}
+                  updateQuestion={updateSurvey}
+                  type="subheader"
                 />
               </div>
             </div>

@@ -26,10 +26,9 @@ export default function FallbackInput({
           <div className="flex items-center">
             <Input
               className="placeholder:text-md h-full bg-white"
-              /*    placeholder={`Placeholder for "${recallQuestion!.headline}"`} */
               ref={fallbackInputRef}
               id="fallback"
-              value={fallbacks[recallQuestion!.id].replaceAll("nbsp", " ")}
+              value={fallbacks[recallQuestion!.id]?.replaceAll("nbsp", " ")}
               onChange={(e) => {
                 const newFallbacks = { ...fallbacks };
                 newFallbacks[recallQuestion!.id] = e.target.value;

@@ -24,7 +24,7 @@ import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
 import { cn } from "@formbricks/lib/cn";
-import { formatText } from "@formbricks/lib/utils/recall";
+import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -179,8 +179,8 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {formatText(question.headline, localSurvey)
-                        ? formatTextWithSlashes(formatText(question.headline, localSurvey))
+                      {recallToHeadline(question.headline, localSurvey, true)
+                        ? formatTextWithSlashes(recallToHeadline(question.headline, localSurvey, true))
                         : getTSurveyQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
@@ -295,6 +295,7 @@ export default function QuestionCard({
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}

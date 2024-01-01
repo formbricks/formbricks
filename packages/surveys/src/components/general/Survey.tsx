@@ -112,42 +112,33 @@ export function Survey({
     onActiveQuestionChange(nextQuestionId);
   };
 
-  const parseRecallInformation = (question: TSurveyQuestion) => {
-    if (!question.headline.includes("recall:") && !question.subheader?.includes("recall:")) return question;
-    const modifiedQuestion = { ...question };
-    while (modifiedQuestion.headline.includes("recall:")) {
-      const recallInfo = extractRecallInfo(modifiedQuestion.headline);
+  const replaceRecallInfo = (text: string) => {
+    while (text.includes("recall:")) {
+      const recallInfo = extractRecallInfo(text);
       if (recallInfo) {
         const questionId = extractId(recallInfo);
-        const fallback = extractFallbackValue(recallInfo);
-        let value = responseData[questionId!]
-          ? (responseData[questionId!] as string)
-          : fallback.replaceAll("nbsp", " ");
+        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+        let value = questionId && responseData[questionId] ? (responseData[questionId] as string) : fallback;
+
         if (isValidDate(value)) {
-          value = formatDateWithOrdinal(new Date(value as string));
+          value = formatDateWithOrdinal(new Date(value));
         }
         if (Array.isArray(value)) {
-          value = value.toString().replaceAll(",", ", ");
+          value = value.join(", ");
         }
-        modifiedQuestion.headline = modifiedQuestion.headline.replace(recallInfo, value);
+        text = text.replace(recallInfo, value);
       }
     }
-    while (modifiedQuestion.subheader?.includes("recall:")) {
-      const recallInfo = extractRecallInfo(modifiedQuestion.subheader);
-      if (recallInfo) {
-        const questionId = extractId(recallInfo);
-        const fallback = extractFallbackValue(recallInfo);
-        let value = responseData[questionId!]
-          ? (responseData[questionId!] as string)
-          : fallback.replaceAll("nbsp", " ");
-        if (isValidDate(value)) {
-          value = formatDateWithOrdinal(new Date(value as string));
-        }
-        if (Array.isArray(value)) {
-          value = value.toString().replaceAll(",", ", ");
-        }
-        modifiedQuestion.subheader = modifiedQuestion.subheader.replace(recallInfo, value);
-      }
+    return text;
+  };
+
+  const parseRecallInformation = (question: TSurveyQuestion) => {
+    const modifiedQuestion = { ...question };
+    if (question.headline.includes("recall:")) {
+      modifiedQuestion.headline = replaceRecallInfo(modifiedQuestion.headline);
+    }
+    if (question.subheader && question.subheader.includes("recall:")) {
+      modifiedQuestion.subheader = replaceRecallInfo(modifiedQuestion.subheader as string);
     }
     return modifiedQuestion;
   };
@@ -184,8 +175,16 @@ export function Survey({
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
       return (
         <ThankYouCard
-          headline={survey.thankYouCard.headline}
-          subheader={survey.thankYouCard.subheader}
+          headline={
+            typeof survey.thankYouCard.headline === "string"
+              ? replaceRecallInfo(survey.thankYouCard.headline)
+              : ""
+          }
+          subheader={
+            typeof survey.thankYouCard.subheader === "string"
+              ? replaceRecallInfo(survey.thankYouCard.subheader)
+              : ""
+          }
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
         />

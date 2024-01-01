@@ -169,21 +169,21 @@ export default function MultipleChoiceMultiForm({
         environmentId={environmentId}
         isInValid={isInValid}
         ref={questionRef}
-        question={question}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         type="headline"
       />
 
-      <div className="mt-3">
+      <div>
         {showSubheader && (
           <>
-            <div className="mt-2 flex w-full items-center">
+            <div className="flex w-full items-center">
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={environmentId}
                 isInValid={isInValid}
-                question={question}
+                questionId={question.id}
                 questionIdx={questionIdx}
                 updateQuestion={updateQuestion}
                 type="subheader"
@@ -199,7 +199,12 @@ export default function MultipleChoiceMultiForm({
           </>
         )}
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            variant="minimal"
+            className="mt-3"
+            type="button"
+            onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

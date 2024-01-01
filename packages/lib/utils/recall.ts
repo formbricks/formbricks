@@ -1,4 +1,4 @@
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 export function extractId(text: string) {
   const pattern = /recall:([A-Za-z0-9]+)/;
@@ -63,7 +63,7 @@ export function findRecallInfoById(text: string, id: string): string | null {
   return match ? match[0] : null;
 }
 
-export const formatText = (headline: string, survey: TSurvey) => {
+export const recallToHeadline = (headline: string, survey: TSurvey, withSlash: boolean) => {
   let newHeadline = headline;
   if (!headline.includes("recall:")) return headline;
 
@@ -78,7 +78,11 @@ export const formatText = (headline: string, survey: TSurvey) => {
           questionHeadline = questionHeadline.replaceAll(recallInfo, "___");
         }
       }
-      newHeadline = newHeadline.replace(recallInfo, `/${questionHeadline}\\`);
+      if (withSlash) {
+        newHeadline = newHeadline.replace(recallInfo, `/${questionHeadline}\\`);
+      } else {
+        newHeadline = newHeadline.replace(recallInfo, `@${questionHeadline}`);
+      }
     }
   }
   return newHeadline;
@@ -104,3 +108,13 @@ export const formatRecallText = (headline: string, survey: TSurvey) => {
   }
   return newHeadline;
 };
+
+export function replaceRecallInfoWithUnderline(recallQuestion: TSurveyQuestion): TSurveyQuestion {
+  while (recallQuestion.headline.includes("recall:")) {
+    const recallInfo = extractRecallInfo(recallQuestion.headline);
+    if (recallInfo) {
+      recallQuestion.headline = recallQuestion.headline.replace(recallInfo, "___");
+    }
+  }
+  return recallQuestion;
+}
