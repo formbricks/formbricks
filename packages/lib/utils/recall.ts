@@ -41,22 +41,6 @@ export function extractRecallInfo(headline: string): string | null {
   return match ? match[0] : null;
 }
 
-export const checkForRecall = (headline: string, survey: TSurvey) => {
-  let newHeadline = headline;
-  if (!headline.includes("recall:")) return headline;
-  while (newHeadline.includes("recall:")) {
-    const recallInfo = extractRecallInfo(newHeadline);
-    if (recallInfo) {
-      const questionId = extractId(recallInfo);
-      newHeadline = newHeadline.replace(
-        recallInfo,
-        `@${survey.questions.find((question) => question.id === questionId)?.headline}`
-      );
-    }
-  }
-  return newHeadline;
-};
-
 export function findRecallInfoById(text: string, id: string): string | null {
   const pattern = new RegExp(`recall:${id}\\/fallback:(\\S*)`, "g");
   const match = text.match(pattern);
@@ -83,27 +67,6 @@ export const recallToHeadline = (headline: string, survey: TSurvey, withSlash: b
       } else {
         newHeadline = newHeadline.replace(recallInfo, `@${questionHeadline}`);
       }
-    }
-  }
-  return newHeadline;
-};
-
-export const formatRecallText = (headline: string, survey: TSurvey) => {
-  let newHeadline = headline;
-  if (!headline.includes("recall:")) return headline;
-
-  while (newHeadline.includes("recall:")) {
-    const recallInfo = extractRecallInfo(newHeadline);
-    if (recallInfo) {
-      const questionId = extractId(recallInfo);
-      let questionHeadline = survey.questions.find((question) => question.id === questionId)?.headline;
-      while (questionHeadline?.includes("recall:")) {
-        const recallInfo = extractRecallInfo(questionHeadline);
-        if (recallInfo) {
-          questionHeadline = questionHeadline.replaceAll(recallInfo, "___");
-        }
-      }
-      newHeadline = newHeadline.replace(recallInfo, `  @${questionHeadline}  `);
     }
   }
   return newHeadline;
