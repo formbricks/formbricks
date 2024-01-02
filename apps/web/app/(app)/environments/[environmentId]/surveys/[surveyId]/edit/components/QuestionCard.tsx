@@ -20,7 +20,7 @@ import {
   StarIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
 import { cn } from "@formbricks/lib/cn";
@@ -98,6 +98,23 @@ export default function QuestionCard({
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
+  const [questionsWithEmptyLabel, setquestionsWithEmptyLabel] = useState<string[]>([]);
+
+  const editNextButtonLabel = (labelValue: string) => {
+    localSurvey.questions.forEach((q, index) => {
+      if (!q.buttonLabel || q.buttonLabel?.trim() === "" || questionsWithEmptyLabel.includes(q.id)) {
+        if (!questionsWithEmptyLabel.includes(q.id)) {
+          setquestionsWithEmptyLabel((prevArray) => [...prevArray, q.id]);
+        }
+        updateQuestion(index, { buttonLabel: labelValue });
+      } else {
+        updateQuestion(questionIdx, { buttonLabel: labelValue });
+      }
+    });
+  };
+  useEffect(() => {
+    setquestionsWithEmptyLabel([]);
+  }, [open]);
 
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
@@ -298,7 +315,7 @@ export default function QuestionCard({
                     question.type !== TSurveyQuestionType.CTA ? (
                       <div className="mt-4 flex space-x-2">
                         <div className="w-full">
-                          <Label htmlFor="buttonLabel">Button Label</Label>
+                          <Label htmlFor="buttonLabel">&quot;Next&quot; Button Label</Label>
                           <div className="mt-2">
                             <Input
                               id="buttonLabel"
@@ -307,8 +324,7 @@ export default function QuestionCard({
                               maxLength={48}
                               placeholder={lastQuestion ? "Finish" : "Next"}
                               onChange={(e) => {
-                                if (e.target.value.trim() == "") e.target.value = "";
-                                updateQuestion(questionIdx, { buttonLabel: e.target.value });
+                                editNextButtonLabel(e.target.value);
                               }}
                             />
                           </div>
