@@ -5,6 +5,7 @@ import { resetPassword } from "@/app/lib/users/users";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 import { Button } from "@formbricks/ui/Button";
 import { PasswordInput } from "@formbricks/ui/PasswordInput";
@@ -14,11 +15,16 @@ export const ResetPasswordForm = () => {
   const router = useRouter();
   const [error, setError] = useState<string>("");
   const [password, setPassword] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState<string | null>(null);
   const [isValid, setIsValid] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
     setLoading(true);
     const token = searchParams?.get("token");
     try {
@@ -51,23 +57,39 @@ export const ResetPasswordForm = () => {
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-800">
-            New password
-          </label>
-          <div className="mt-1">
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-slate-800">
+              New password
+            </label>
             <PasswordInput
               id="password"
               name="password"
-              value={password ? password : ""}
+              value={password ?? ""}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               placeholder="*******"
               required
-              className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+              className="focus:border-brand focus:ring-brand mt-2 block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
             />
-            <IsPasswordValid password={password} setIsValid={setIsValid} />
           </div>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-slate-800">
+              Confirm password
+            </label>
+            <PasswordInput
+              id="confirmPassword"
+              name="confirmPassword"
+              value={confirmPassword ?? ""}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="current-password"
+              placeholder="*******"
+              required
+              className="focus:border-brand focus:ring-brand mt-2 block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+            />
+          </div>
+
+          <IsPasswordValid password={password} setIsValid={setIsValid} />
         </div>
 
         <div>
