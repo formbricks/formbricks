@@ -106,6 +106,7 @@ export default function QuestionCard({
       }
     });
   };
+
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
