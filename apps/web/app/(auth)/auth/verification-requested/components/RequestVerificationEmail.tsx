@@ -13,7 +13,9 @@ interface RequestEmailVerificationProps {
 export const RequestVerificationEmail = ({ email }: RequestEmailVerificationProps) => {
   useEffect(() => {
     document.addEventListener("visibilitychange", () => {
-      location.reload();
+      if (document.visibilityState === "visible") {
+        location.reload();
+      }
     });
   }, []);
   const requestVerificationEmail = async () => {
