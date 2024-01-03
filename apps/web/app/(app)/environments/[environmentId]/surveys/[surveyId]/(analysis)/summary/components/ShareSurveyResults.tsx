@@ -36,6 +36,12 @@ export default function ShareSurveyResults({
             <div className="mt-6 px-4 py-3 text-lg font-medium text-slate-600 lg:px-6 lg:py-3">
               Your survey results are public on the web.
             </div>
+            <div className="text-md px-4  py-3 text-slate-500 lg:px-6 lg:py-0">
+              Your survey results are shared with anyone who has the link.
+            </div>
+            <div className="text-md mb-6 px-4 py-3 text-slate-500 lg:px-6 lg:py-0">
+              The results will not be indexed by search engines.
+            </div>
 
             <div className="flex gap-2">
               <div className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800">
@@ -81,10 +87,10 @@ export default function ShareSurveyResults({
             <div className=" mt-6 px-4 py-3 text-lg font-medium text-slate-600 lg:px-6 lg:py-3">
               Publish Results to web
             </div>
-            <div className="text-md px-4  py-3 text-slate-500 lg:px-6 lg:py-0 ">
+            <div className="text-md px-4 py-3 text-slate-500 lg:px-6 lg:py-0">
               Your survey results are shared with anyone who has the link.
             </div>
-            <div className=" text-md px-4  py-3 text-slate-500  lg:px-6 lg:py-0 ">
+            <div className=" text-md px-4 py-3 text-slate-500  lg:px-6 lg:py-0">
               The results will not be indexed by search engines.
             </div>
             <Button
