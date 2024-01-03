@@ -30,7 +30,7 @@ export default function ShareSurveyResults({
         setOpen(open);
       }}>
       {showPublishModal && surveyUrl ? (
-        <DialogContent className="bottom-0 flex h-[95%] w-full flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[40%]">
+        <DialogContent className="bottom-0 flex h-[95%] w-full cursor-pointer flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[40%]">
           <div className="no-scrollbar mt-4 flex grow flex-col items-center justify-center overflow-x-hidden overflow-y-scroll">
             <CheckCircleIcon className="mt-4 h-20 w-20 text-slate-300" />
             <div className="mt-6 px-4 py-3 text-lg font-medium text-slate-600 lg:px-6 lg:py-3">
