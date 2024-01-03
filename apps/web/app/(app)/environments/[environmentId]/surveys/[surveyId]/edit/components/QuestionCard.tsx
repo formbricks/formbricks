@@ -20,7 +20,7 @@ import {
   StarIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
 import { cn } from "@formbricks/lib/cn";
@@ -98,24 +98,14 @@ export default function QuestionCard({
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
-  const [questionsWithEmptyLabel, setquestionsWithEmptyLabel] = useState<string[]>([]);
 
   const editNextButtonLabel = (labelValue: string) => {
     localSurvey.questions.forEach((q, index) => {
-      if (!q.buttonLabel || q.buttonLabel?.trim() === "" || questionsWithEmptyLabel.includes(q.id)) {
-        if (!questionsWithEmptyLabel.includes(q.id)) {
-          setquestionsWithEmptyLabel((prevArray) => [...prevArray, q.id]);
-        }
+      if (!q.buttonLabel || q.buttonLabel?.trim() === "") {
         updateQuestion(index, { buttonLabel: labelValue });
-      } else {
-        updateQuestion(questionIdx, { buttonLabel: labelValue });
       }
     });
   };
-  useEffect(() => {
-    setquestionsWithEmptyLabel([]);
-  }, [open]);
-
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -324,6 +314,9 @@ export default function QuestionCard({
                               maxLength={48}
                               placeholder={lastQuestion ? "Finish" : "Next"}
                               onChange={(e) => {
+                                updateQuestion(questionIdx, { buttonLabel: e.target.value });
+                              }}
+                              onBlur={(e) => {
                                 editNextButtonLabel(e.target.value);
                               }}
                             />
