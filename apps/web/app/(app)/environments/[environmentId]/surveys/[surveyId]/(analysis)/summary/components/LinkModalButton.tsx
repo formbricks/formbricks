@@ -50,6 +50,7 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
       .then(() => {
         toast.success("Survey Unpublished successfully");
         setShowPublishModal(false);
+        setShowLinkModal(false);
       })
       .catch((error) => {
         toast.error(`Error: ${error.message}`);
@@ -67,6 +68,12 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
 
     fetchSharingKey();
   }, [survey.id, webAppUrl]);
+
+  useEffect(() => {
+    if (showResultsLinkModal) {
+      setShowLinkModal(false);
+    }
+  }, [showResultsLinkModal]);
 
   return (
     <>
@@ -101,6 +108,7 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
       {showLinkModal && (
         <ShareEmbedSurvey
           survey={survey}

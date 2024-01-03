@@ -82,7 +82,7 @@ export default function ShareSurveyResults({
               Publish Results to web
             </div>
             <div className="text-md px-4  py-3 text-slate-500 lg:px-6 lg:py-0 ">
-              Share survey results with anyone who has the link.
+              Your survey results are shared with anyone who has the link.
             </div>
             <div className=" text-md px-4  py-3 text-slate-500  lg:px-6 lg:py-0 ">
               The results will not be indexed by search engines.
