@@ -249,7 +249,7 @@ export default function SingleResponseCard({
                       <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
                         <PersonAvatar personId={response.person.id} />
                       </TooltipRenderer>
-                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
                         {displayIdentifier}
                       </h3>
                     </div>
