@@ -84,25 +84,25 @@ export default function SummaryMetadata({
             label="Displays"
             percentage={null}
             value={displayCount === 0 ? <span>-</span> : displayCount}
-            tooltipText="People who have opened the survey."
+            tooltipText="Number of times the survey has been viewed."
           />
           <StatCard
             label="Starts"
             percentage={`${Math.round((totalResponses / displayCount) * 100)}%`}
             value={totalResponses === 0 ? <span>-</span> : totalResponses}
-            tooltipText="People who have started the survey."
+            tooltipText="Number of times the survey has been started."
           />
           <StatCard
             label="Responses"
             percentage={`${Math.round((completedResponsesCount / displayCount) * 100)}%`}
             value={responses.length === 0 ? <span>-</span> : completedResponsesCount}
-            tooltipText="People who have completed the survey."
+            tooltipText="Number of times the survey has been completed."
           />
           <StatCard
             label="Drop Offs"
             percentage={`${Math.round(((totalResponses - completedResponsesCount) / totalResponses) * 100)}%`}
             value={responses.length === 0 ? <span>-</span> : totalResponses - completedResponsesCount}
-            tooltipText="People who have started the survey but did not complete it."
+            tooltipText="Number of times the survey has been started but not completed."
           />
           <StatCard
             label="Time to Complete"
