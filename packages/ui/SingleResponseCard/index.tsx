@@ -233,16 +233,27 @@ export default function SingleResponseCard({
             {pageType === "response" && (
               <div>
                 {response.person?.id ? (
-                  <Link
-                    className="group flex items-center"
-                    href={`/environments/${environmentId}/people/${response.person.id}`}>
-                    <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                      <PersonAvatar personId={response.person.id} />
-                    </TooltipRenderer>
-                    <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
-                      {displayIdentifier}
-                    </h3>
-                  </Link>
+                  user ? (
+                    <Link
+                      className="group flex items-center"
+                      href={`/environments/${environmentId}/people/${response.person.id}`}>
+                      <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                        <PersonAvatar personId={response.person.id} />
+                      </TooltipRenderer>
+                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                        {displayIdentifier}
+                      </h3>
+                    </Link>
+                  ) : (
+                    <div className="group flex items-center">
+                      <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                        <PersonAvatar personId={response.person.id} />
+                      </TooltipRenderer>
+                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                        {displayIdentifier}
+                      </h3>
+                    </div>
+                  )
                 ) : (
                   <div className="group flex items-center">
                     <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>

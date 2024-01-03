@@ -1,8 +1,11 @@
 "use client";
 
+import { CheckCircleIcon, GlobeEuropeAfricaIcon } from "@heroicons/react/24/solid";
+import { Clipboard } from "lucide-react";
+import { toast } from "react-hot-toast";
+
 import { Button } from "@formbricks/ui/Button";
 import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
-import { CheckCircleIcon, GlobeEuropeAfricaIcon } from "@heroicons/react/24/solid";
 
 interface ShareEmbedSurveyProps {
   open: boolean;
@@ -30,22 +33,32 @@ export default function ShareSurveyResults({
         <DialogContent className="bottom-0 flex h-[95%] w-full flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[40%]">
           <div className="no-scrollbar mt-4 flex grow flex-col items-center justify-center overflow-x-hidden overflow-y-scroll">
             <CheckCircleIcon className="mt-4 h-20 w-20 text-slate-300" />
-            <div className=" mt-6 px-4 py-3 text-lg font-medium text-slate-600 lg:px-6 lg:py-3">
-              Page is live on the web.
+            <div className="mt-6 px-4 py-3 text-lg font-medium text-slate-600 lg:px-6 lg:py-3">
+              Your survey results are public on the web.
             </div>
 
-            <div
-              // ref={linkTextRef}
-              className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
-              // onClick={() => handleTextSelection()}
-            >
-              <span
-                style={{
-                  wordBreak: "break-all",
+            <div className="flex gap-2">
+              <div className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800">
+                <span
+                  style={{
+                    wordBreak: "break-all",
+                  }}>
+                  {surveyUrl}
+                </span>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                title="Copy survey link to clipboard"
+                aria-label="Copy survey link to clipboard"
+                onClick={() => {
+                  navigator.clipboard.writeText(surveyUrl);
+                  toast.success("URL copied to clipboard!");
                 }}>
-                {surveyUrl}
-              </span>
+                <Clipboard />
+              </Button>
             </div>
+
             <div className="my-6 flex gap-2">
               <Button
                 type="submit"

@@ -1,7 +1,7 @@
 "use server";
 
-import { getResponseKeySurvey } from "@formbricks/lib/resultShareUrl/service";
+import { getSurveyByResultShareKey } from "@formbricks/lib/survey/service";
 
 export async function getResultShareUrlSurveyAction(key: string): Promise<string | null> {
-  return getResponseKeySurvey(key);
+  return getSurveyByResultShareKey(key);
 }

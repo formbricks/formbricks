@@ -1,6 +1,6 @@
 "use client";
 
-import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
+import SurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
@@ -14,6 +14,7 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
+import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
@@ -53,16 +54,18 @@ const SummaryHeader = ({
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled = (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date()) ?? false;
   const { isViewer } = getAccessFlags(membershipRole);
+
   return (
     <div className="mb-11 mt-6 flex flex-wrap items-center justify-between">
       <div>
-        <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
+        <div className="flex gap-4">
+          <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
+          {survey.resultShareKey && <Badge text="Public Results" type="success" size="tiny"></Badge>}
+        </div>
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        {survey.type === "link" && (
-          <LinkSurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
-        )}
+        <SurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
         {!isViewer &&
         (environment?.widgetSetupCompleted || survey.type === "link") &&
         survey?.status !== "draft" ? (
@@ -88,7 +91,7 @@ const SummaryHeader = ({
           <DropdownMenuContent align="end" className="p-2">
             {survey.type === "link" && (
               <>
-                <LinkSurveyShareButton
+                <SurveyShareButton
                   className="flex w-full justify-center p-1"
                   survey={survey}
                   webAppUrl={webAppUrl}

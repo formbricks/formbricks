@@ -24,7 +24,7 @@ import {
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
 import ShareSurveyResults from "./ShareSurveyResults";
 
-interface LinkSurveyShareButtonProps {
+interface SurveyShareButtonProps {
   survey: TSurvey;
   className?: string;
   webAppUrl: string;
@@ -32,12 +32,7 @@ interface LinkSurveyShareButtonProps {
   user: TUser;
 }
 
-export default function LinkSurveyShareButton({
-  survey,
-  webAppUrl,
-  product,
-  user,
-}: LinkSurveyShareButtonProps) {
+export default function SurveyShareButton({ survey, webAppUrl, product, user }: SurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
@@ -88,13 +83,15 @@ export default function LinkSurveyShareButton({
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem
-            className="hover:ring-0"
-            onClick={() => {
-              setShowLinkModal(true);
-            }}>
-            <p className="text-slate-700">Share Survey</p>
-          </DropdownMenuItem>
+          {survey.type === "link" && (
+            <DropdownMenuItem
+              className="hover:ring-0"
+              onClick={() => {
+                setShowLinkModal(true);
+              }}>
+              <p className="text-slate-700">Share Survey</p>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             className="hover:ring-0"
             onClick={() => {
