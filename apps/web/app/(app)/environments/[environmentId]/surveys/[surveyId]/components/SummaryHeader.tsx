@@ -60,7 +60,7 @@ const SummaryHeader = ({
       <div>
         <div className="flex gap-4">
           <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
-          {survey.resultShareKey && <Badge text="Public Results" type="success" size="tiny"></Badge>}
+          {survey.resultShareKey && <Badge text="Public Results" type="success" size="normal"></Badge>}
         </div>
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
