@@ -80,29 +80,29 @@ export default function SummaryMetadata({
     <div className="mb-4">
       <div className="flex flex-col-reverse gap-y-2 lg:grid lg:grid-cols-3 lg:gap-x-2">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-x-2 lg:col-span-2">
-          <div className="flex flex-col justify-between space-y-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm text-slate-600">Displays</p>
-            <p className="text-2xl font-bold text-slate-800">
-              {displayCount === 0 ? <span>-</span> : displayCount}
-            </p>
-          </div>
+          <StatCard
+            label="Displays"
+            percentage={null}
+            value={displayCount === 0 ? <span>-</span> : displayCount}
+            tooltipText="People who have opened the survey."
+          />
           <StatCard
             label="Starts"
             percentage={`${Math.round((totalResponses / displayCount) * 100)}%`}
             value={totalResponses === 0 ? <span>-</span> : totalResponses}
-            tooltipText="People who started the survey."
+            tooltipText="People who have started the survey."
           />
           <StatCard
             label="Responses"
             percentage={`${Math.round((completedResponsesCount / displayCount) * 100)}%`}
             value={responses.length === 0 ? <span>-</span> : completedResponsesCount}
-            tooltipText="People who completed the survey."
+            tooltipText="People who have completed the survey."
           />
           <StatCard
             label="Drop Offs"
             percentage={`${Math.round(((totalResponses - completedResponsesCount) / totalResponses) * 100)}%`}
             value={responses.length === 0 ? <span>-</span> : totalResponses - completedResponsesCount}
-            tooltipText="People who started but not completed the survey."
+            tooltipText="People who have started the survey but did not complete it."
           />
           <StatCard
             label="Time to Complete"
