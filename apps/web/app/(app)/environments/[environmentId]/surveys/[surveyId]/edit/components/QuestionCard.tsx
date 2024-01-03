@@ -99,7 +99,7 @@ export default function QuestionCard({
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
 
-  const editEmptyNextButtonLabels = (labelValue: string) => {
+  const updateEmptyNextButtonLabels = (labelValue: string) => {
     localSurvey.questions.forEach((q, index) => {
       if (!q.buttonLabel || q.buttonLabel?.trim() === "") {
         updateQuestion(index, { buttonLabel: labelValue });
@@ -318,7 +318,7 @@ export default function QuestionCard({
                                 updateQuestion(questionIdx, { buttonLabel: e.target.value });
                               }}
                               onBlur={(e) => {
-                                editEmptyNextButtonLabels(e.target.value);
+                                updateEmptyNextButtonLabels(e.target.value);
                               }}
                             />
                           </div>
