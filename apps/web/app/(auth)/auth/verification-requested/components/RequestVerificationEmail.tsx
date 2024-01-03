@@ -12,12 +12,19 @@ interface RequestEmailVerificationProps {
 
 export const RequestVerificationEmail = ({ email }: RequestEmailVerificationProps) => {
   useEffect(() => {
-    document.addEventListener("visibilitychange", () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         location.reload();
       }
-    });
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
+
   const requestVerificationEmail = async () => {
     try {
       if (!email) throw new Error("No email provided");
@@ -27,6 +34,7 @@ export const RequestVerificationEmail = ({ email }: RequestEmailVerificationProp
       toast.error(`Error: ${e.message}`);
     }
   };
+
   return (
     <>
       <Button variant="secondary" onClick={requestVerificationEmail} className="w-full justify-center">
