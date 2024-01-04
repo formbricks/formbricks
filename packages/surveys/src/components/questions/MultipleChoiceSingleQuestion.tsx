@@ -58,6 +58,7 @@ export default function MultipleChoiceSingleQuestion({
 
   useEffect(() => {
     setOtherSelected(!!value && !question.choices.find((c) => c.label === value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.id]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
