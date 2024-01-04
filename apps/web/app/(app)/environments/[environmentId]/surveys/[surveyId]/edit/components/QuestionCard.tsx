@@ -118,6 +118,14 @@ export default function QuestionCard({
     });
   };
 
+  const updateEmptyNextButtonLabels = (labelValue: string) => {
+    localSurvey.questions.forEach((q, index) => {
+      if (!q.buttonLabel || q.buttonLabel?.trim() === "") {
+        updateQuestion(index, { buttonLabel: labelValue });
+      }
+    });
+  };
+
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -320,7 +328,7 @@ export default function QuestionCard({
                     question.type !== TSurveyQuestionType.CTA ? (
                       <div className="mt-4 flex space-x-2">
                         <div className="w-full">
-                          <Label htmlFor="buttonLabel">Button Label</Label>
+                          <Label htmlFor="buttonLabel">&quot;Next&quot; Button Label</Label>
                           <div className="mt-2">
                             <Input
                               id="buttonLabel"
@@ -329,8 +337,10 @@ export default function QuestionCard({
                               maxLength={48}
                               placeholder={lastQuestion ? "Finish" : "Next"}
                               onChange={(e) => {
-                                if (e.target.value.trim() == "") e.target.value = "";
                                 updateQuestion(questionIdx, { buttonLabel: e.target.value });
+                              }}
+                              onBlur={(e) => {
+                                updateEmptyNextButtonLabels(e.target.value);
                               }}
                             />
                           </div>
