@@ -7,6 +7,7 @@ export interface SurveyBaseProps {
   isBrandingEnabled: boolean;
   activeQuestionId?: string;
   isError?: boolean;
+  triggerErrorFunction?: (triggerErrorFunction: () => void) => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;

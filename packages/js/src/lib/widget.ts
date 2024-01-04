@@ -17,6 +17,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 let isError = false;
+let triggerError = () => {};
 
 export const renderWidget = (survey: TSurvey) => {
   if (surveyRunning) {
@@ -64,6 +65,9 @@ export const renderWidget = (survey: TSurvey) => {
       placement,
       isError,
       supportEmail: product.supportEmail,
+      triggerErrorFunc: (setIsError: () => void) => {
+        triggerError = setIsError;
+      },
       onDisplay: async () => {
         const { userId } = config.get();
         // if config does not have a person, we store the displays in local storage

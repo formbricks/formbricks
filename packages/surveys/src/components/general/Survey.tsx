@@ -25,6 +25,7 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
   isError,
+  triggerErrorFunction,
   onFileUpload,
   responseCount,
   supportEmail,
@@ -33,6 +34,7 @@ export function Survey({
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
+  const [showError, setShowError] = useState(isError);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
@@ -42,6 +44,13 @@ export function Survey({
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
+
+  useEffect(() => {
+    if (isError) {
+      setShowError(true);
+    }
+  }, [isError]);
+
   useEffect(() => {
     if (activeQuestionId === "hidden") return;
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
@@ -66,8 +75,18 @@ export function Survey({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (triggerErrorFunction) {
+      triggerErrorFunction(() => {
+        setShowError(true);
+      });
+    }
+  });
+
   let currIdx = currentQuestionIndex;
   let currQues = currentQuestion;
+
   function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
     const questions = survey.questions;
     const responseValue = data[questionId];
@@ -81,7 +100,6 @@ export function Survey({
       }
     }
     if (currIdx === -1) throw new Error("Question not found");
-
     if (currQues?.logic && currQues?.logic.length > 0) {
       for (let logic of currQues.logic) {
         if (!logic.destination) continue;
@@ -132,7 +150,7 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
   function getCardContent() {
-    if (isError) {
+    if (showError) {
       return (
         <ResponseErrorComponent
           responseData={responseData}

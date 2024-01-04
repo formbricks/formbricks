@@ -9,6 +9,8 @@ export function SurveyModal({
   isBrandingEnabled,
   activeQuestionId,
   brandColor,
+  isError,
+  triggerErrorFunction,
   placement,
   clickOutside,
   darkOverlay,
@@ -59,6 +61,8 @@ export function SurveyModal({
               }
             }, 3000); // close modal automatically after 3 seconds
           }}
+          triggerErrorFunction={triggerErrorFunction}
+          isError={isError}
           onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
           responseCount={responseCount}
