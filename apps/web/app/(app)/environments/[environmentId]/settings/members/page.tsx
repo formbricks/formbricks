@@ -2,9 +2,9 @@ import TeamActions from "@/app/(app)/environments/[environmentId]/settings/membe
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
 
-import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
+import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { INVITE_DISABLED } from "@formbricks/lib/constants";
+import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId, getMembershipsByUserId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -43,9 +43,6 @@ const MembersLoading = () => (
 
 export default async function MembersSettingsPage({ params }: { params: { environmentId: string } }) {
   const session = await getServerSession(authOptions);
-
-  const isEnterpriseEdition = await getIsEnterpriseEdition();
-
   if (!session) {
     throw new Error("Unauthenticated");
   }
@@ -54,6 +51,7 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
   if (!team) {
     throw new Error("Team not found");
   }
+  const canDoRoleManagement = getRoleManagementPermission(team);
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
@@ -76,7 +74,9 @@ export default async function MembersSettingsPage({ params }: { params: { enviro
             role={currentUserRole}
             isLeaveTeamDisabled={isLeaveTeamDisabled}
             isInviteDisabled={INVITE_DISABLED}
-            isEnterpriseEdition={isEnterpriseEdition}
+            canDoRoleManagement={canDoRoleManagement}
+            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+            environmentId={params.environmentId}
           />
         )}
 

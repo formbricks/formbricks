@@ -20,7 +20,6 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
-import { captureTelemetry } from "../telemetry";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -50,6 +49,7 @@ export const selectSurvey = {
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
+  resultShareKey: true,
   triggers: {
     select: {
       actionClass: {
@@ -513,8 +513,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
 
-  captureTelemetry("survey created");
-
   surveyCache.revalidate({
     id: survey.id,
     environmentId: survey.environmentId,
@@ -688,4 +686,26 @@ export const getSyncSurveys = async (environmentId: string, person: TPerson): Pr
     }
   )();
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+};
+
+export const getSurveyByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
+  try {
+    const survey = await prisma.survey.findFirst({
+      where: {
+        resultShareKey,
+      },
+    });
+
+    if (!survey) {
+      return null;
+    }
+
+    return survey.id;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };

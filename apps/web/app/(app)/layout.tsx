@@ -1,6 +1,6 @@
 import FormbricksClient from "@/app/(app)/components/FormbricksClient";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+// import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -11,9 +11,9 @@ import PosthogIdentify from "./components/PosthogIdentify";
 
 export default async function AppLayout({ children }) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return redirect(`/auth/login`);
-  }
+  // if (!session) {
+  //   return redirect(`/auth/login`);
+  // }
 
   return (
     <>
@@ -23,8 +23,13 @@ export default async function AppLayout({ children }) {
       </Suspense>
       <PHProvider>
         <>
-          <PosthogIdentify session={session} />
-          <FormbricksClient session={session} />
+          {session ? (
+            <>
+              <PosthogIdentify session={session} />
+              <FormbricksClient session={session} />
+            </>
+          ) : null}
+
           {children}
         </>
       </PHProvider>

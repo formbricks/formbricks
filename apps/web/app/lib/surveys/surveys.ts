@@ -14,35 +14,6 @@ import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
-export const generateQuestionsAndAttributes = (survey: TSurvey, responses: TResponse[]) => {
-  let questionNames: string[] = [];
-
-  if (survey?.questions) {
-    questionNames = survey.questions.map((question) => question.headline);
-  }
-
-  const attributeMap: Record<string, Record<string, string | number>> = {};
-
-  if (responses) {
-    responses.forEach((response) => {
-      const { person } = response;
-      if (person !== null) {
-        const { id, attributes } = person;
-        Object.keys(attributes).forEach((attributeName) => {
-          if (!attributeMap.hasOwnProperty(attributeName)) {
-            attributeMap[attributeName] = {};
-          }
-          attributeMap[attributeName][id] = attributes[attributeName];
-        });
-      }
-    });
-  }
-  return {
-    questionNames,
-    attributeMap,
-  };
-};
-
 const conditionOptions = {
   openText: ["is"],
   multipleChoiceSingle: ["Includes either"],
@@ -177,6 +148,76 @@ export const generateQuestionAndFilterOptions = (
   return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
 };
 
+export const generateQuestionAndFilterOptionsForResponseSharing = (
+  survey: TSurvey,
+  responses: TResponse[]
+): {
+  questionOptions: QuestionOptions[];
+  questionFilterOptions: QuestionFilterOptions[];
+} => {
+  let questionOptions: any = [];
+  let questionFilterOptions: any = [];
+
+  let questionsOptions: any = [];
+
+  survey.questions.forEach((q) => {
+    if (Object.keys(conditionOptions).includes(q.type)) {
+      questionsOptions.push({
+        label: q.headline,
+        questionType: q.type,
+        type: OptionsType.QUESTIONS,
+        id: q.id,
+      });
+    }
+  });
+  questionOptions = [...questionOptions, { header: OptionsType.QUESTIONS, option: questionsOptions }];
+  survey.questions.forEach((q) => {
+    if (Object.keys(conditionOptions).includes(q.type)) {
+      if (
+        q.type === TSurveyQuestionType.MultipleChoiceMulti ||
+        q.type === TSurveyQuestionType.MultipleChoiceSingle
+      ) {
+        questionFilterOptions.push({
+          type: q.type,
+          filterOptions: conditionOptions[q.type],
+          filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
+          id: q.id,
+        });
+      } else {
+        questionFilterOptions.push({
+          type: q.type,
+          filterOptions: conditionOptions[q.type],
+          filterComboBoxOptions: filterOptions[q.type],
+          id: q.id,
+        });
+      }
+    }
+  });
+
+  const attributes = getPersonAttributes(responses);
+  if (attributes) {
+    questionOptions = [
+      ...questionOptions,
+      {
+        header: OptionsType.ATTRIBUTES,
+        option: Object.keys(attributes).map((a) => {
+          return { label: a, type: OptionsType.ATTRIBUTES, id: a };
+        }),
+      },
+    ];
+    Object.keys(attributes).forEach((a) => {
+      questionFilterOptions.push({
+        type: "Attributes",
+        filterOptions: conditionOptions.userAttributes,
+        filterComboBoxOptions: attributes[a],
+        id: a,
+      });
+    });
+  }
+
+  return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
+};
+
 // get the filtered responses
 export const getFilterResponses = (
   responses: TResponse[],
@@ -273,9 +314,9 @@ export const getFilterResponses = (
                 const responseValue = response.data[question.id];
                 const filterValue = filter?.filterType?.filterComboBoxValue;
                 if (Array.isArray(responseValue) && Array.isArray(filterValue) && filterValue.length > 0) {
-                  //@ts-ignore
+                  //@ts-expect-error
                   const updatedResponseValue = question?.choices
-                    ? //@ts-ignore
+                    ? //@ts-expect-error
                       matchAndUpdateArray([...question?.choices], [...responseValue])
                     : responseValue;
                   if (filter?.filterType?.filterValue === "Includes all") {
@@ -427,7 +468,6 @@ export const getFilterResponses = (
 
   // filtering the data according to the dates
   if (dateRange?.from !== undefined && dateRange?.to !== undefined) {
-    // @ts-ignore
     toBeFilterResponses = toBeFilterResponses.filter((r) =>
       isWithinInterval(r.createdAt, { start: dateRange.from!, end: dateRange.to! })
     );

@@ -241,7 +241,6 @@ export default function SurveyMenuBar({
 
     try {
       await updateSurveyAction({ ...strippedSurvey });
-      router.refresh();
       setIsSurveySaving(false);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
@@ -252,7 +251,6 @@ export default function SurveyMenuBar({
         } else {
           router.push(`/environments/${environment.id}/surveys`);
         }
-        router.refresh();
       }
     } catch (e) {
       console.error(e);
@@ -325,7 +323,7 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            disabled={isSurveyPublishing || containsEmptyTriggers()}
+            disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}

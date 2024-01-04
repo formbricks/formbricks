@@ -170,7 +170,7 @@ export default function Header() {
                   leaveTo="opacity-0 translate-y-1">
                   <Popover.Panel className="absolute z-10 -ml-4 mt-3 w-screen max-w-lg transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
                     <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                      <div className="relative grid gap-6 bg-white px-5 py-6 dark:bg-slate-700 sm:gap-6 sm:p-8 lg:grid-cols-3">
+                      <div className="relative grid gap-6 bg-white px-5 py-6 sm:gap-6 sm:p-8 lg:grid-cols-3 dark:bg-slate-700">
                         <div>
                           <h4 className="mb-6 ml-16 text-sm text-slate-400 dark:text-slate-300">
                             Understand Users
@@ -276,22 +276,22 @@ export default function Header() {
  */}
           <Link
             href="/pricing"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
             Pricing
           </Link>
           <Link
-            href="/concierge"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
-            Concierge
+            href="/community"
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
+            Community
           </Link>
           <Link
             href="/docs"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
             Docs
           </Link>
           <Link
             href="/blog"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
             Blog {/* <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
           </Link>
           {/*           <Link
@@ -331,7 +331,7 @@ export default function Header() {
               router.push("https://app.formbricks.com");
               plausible("NavBar_CTA_Login");
             }}>
-            Go to app
+            Get started
           </Button>
         </div>
       </div>
@@ -391,7 +391,7 @@ export default function Header() {
                     <hr className="mx-20 my-6 opacity-25" />
                   </div>
                 )}
-                <Link href="/concierge">Concierge</Link>
+                <Link href="/community">Community</Link>
                 <Link href="/pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>
