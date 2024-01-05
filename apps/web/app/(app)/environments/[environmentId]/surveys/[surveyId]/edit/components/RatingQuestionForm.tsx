@@ -1,14 +1,16 @@
-import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
-import Dropdown from "./RatingTypeDropdown";
+
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+
+import Dropdown from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;

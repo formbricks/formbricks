@@ -1,16 +1,19 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TPerson, TPersonUpdateInput, ZPersonUpdateInput } from "@formbricks/types/people";
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
+import { TPerson, TPersonUpdateInput, ZPerson, ZPersonUpdateInput } from "@formbricks/types/people";
+
+import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { personCache } from "./cache";
-import { createAttributeClass, getAttributeClassByName } from "../attributeClass/service";
 
 export const selectPerson = {
   id: true,
@@ -51,10 +54,13 @@ type TransformPersonInput = {
 };
 
 export const transformPrismaPerson = (person: TransformPersonInput): TPerson => {
-  const attributes = person.attributes.reduce((acc, attr) => {
-    acc[attr.attributeClass.name] = attr.value;
-    return acc;
-  }, {} as Record<string, string | number>);
+  const attributes = person.attributes.reduce(
+    (acc, attr) => {
+      acc[attr.attributeClass.name] = attr.value;
+      return acc;
+    },
+    {} as Record<string, string | number>
+  );
 
   return {
     id: person.id,
@@ -90,11 +96,7 @@ export const getPerson = async (personId: string): Promise<TPerson | null> => {
     { tags: [personCache.tag.byId(personId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
 
-  if (!prismaPerson) {
-    return null;
-  }
-
-  return transformPrismaPerson(prismaPerson);
+  return prismaPerson ? formatDateFields(transformPrismaPerson(prismaPerson), ZPerson) : null;
 };
 
 export const getPeople = async (environmentId: string, page?: number): Promise<TPerson[]> => {
@@ -126,12 +128,8 @@ export const getPeople = async (environmentId: string, page?: number): Promise<T
     }
   )();
 
-  if (!peoplePrisma || peoplePrisma.length === 0) {
-    return [];
-  }
-
   return peoplePrisma
-    .map(transformPrismaPerson)
+    .map((prismaPerson) => formatDateFields(transformPrismaPerson(prismaPerson), ZPerson))
     .filter((person: TPerson | null): person is TPerson => person !== null);
 };
 
@@ -309,8 +307,8 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
   }
 };
 
-export const getPersonByUserId = async (environmentId: string, userId: string): Promise<TPerson | null> =>
-  await unstable_cache(
+export const getPersonByUserId = async (environmentId: string, userId: string): Promise<TPerson | null> => {
+  const person = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [userId, ZString]);
 
@@ -378,6 +376,8 @@ export const getPersonByUserId = async (environmentId: string, userId: string): 
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return person ? formatDateFields(person, ZPerson) : null;
+};
 
 /**
  * @deprecated This function is deprecated and only used in legacy endpoints. Use updatePerson instead.

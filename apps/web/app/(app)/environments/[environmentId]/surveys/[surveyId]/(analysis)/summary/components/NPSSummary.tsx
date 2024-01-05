@@ -1,11 +1,13 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { TSurveyNPSQuestion } from "@formbricks/types/surveys";
-import { ProgressBar, HalfCircle } from "@formbricks/ui/ProgressBar";
+import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { questionTypes } from "@/app/lib/questions";
+
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveyNPSQuestion } from "@formbricks/types/surveys";
+import { HalfCircle, ProgressBar } from "@formbricks/ui/ProgressBar";
+
 interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyNPSQuestion>;
 }
@@ -93,6 +95,9 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {result.total} responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
       <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">

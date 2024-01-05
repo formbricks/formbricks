@@ -1,22 +1,26 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getLocalizedValue } from "@/lib/utils";
-import { TResponseData } from "@formbricks/types/responses";
+import { useEffect, useState } from "preact/hooks";
+
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
-import { useEffect } from "preact/hooks";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   language: string;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function PictureSelectionQuestion({
@@ -28,7 +32,13 @@ export default function PictureSelectionQuestion({
   isFirstQuestion,
   isLastQuestion,
   language,
+  ttc,
+  setTtc,
 }: PictureSelectionProps) {
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+
   const addItem = (item: string) => {
     let values: string[] = [];
 
@@ -82,7 +92,9 @@ export default function PictureSelectionQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
@@ -128,7 +140,7 @@ export default function PictureSelectionQuestion({
                     id={`${choice.id}-checked`}
                     name={`${choice.id}-checkbox`}
                     type="checkbox"
-                    tabindex={-1}
+                    tabIndex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded border",
@@ -143,7 +155,7 @@ export default function PictureSelectionQuestion({
                     id={`${choice.id}-radio`}
                     name={`${choice.id}-radio`}
                     type="radio"
-                    tabindex={-1}
+                    tabIndex={-1}
                     checked={Array.isArray(value) && value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded-full border",
@@ -164,7 +176,11 @@ export default function PictureSelectionQuestion({
           <BackButton
             tabIndex={questionChoices.length + 3}
             backButtonLabel={question.backButtonLabel}
-            onClick={onBack}
+            onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
+              onBack();
+            }}
           />
         )}
         <div></div>

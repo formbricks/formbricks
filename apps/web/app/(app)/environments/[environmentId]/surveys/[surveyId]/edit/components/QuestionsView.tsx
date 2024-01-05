@@ -1,19 +1,21 @@
 "use client";
 
 import HiddenFieldsCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/HiddenFieldsCard";
-import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestion, TSurvey } from "@formbricks/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
+
+import { extractLanguageSymbols, translateQuestion } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+
 import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import { validateQuestion } from "./Validation";
-import { extractLanguageSymbols, translateQuestion } from "@formbricks/ee/multiLanguage/utils/i18n";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
@@ -113,21 +115,18 @@ export default function QuestionsView({
 
   const deleteQuestion = (questionIdx: number) => {
     const questionId = localSurvey.questions[questionIdx].id;
+    const activeQuestionIdTemp = activeQuestionId ?? localSurvey.questions[0].id;
     let updatedSurvey: TSurvey = { ...localSurvey };
     updatedSurvey.questions.splice(questionIdx, 1);
-
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
 
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
-
-    if (questionId === activeQuestionId) {
-      if (questionIdx < localSurvey.questions.length - 1) {
-        setActiveQuestionId(localSurvey.questions[questionIdx + 1].id);
+    if (questionId === activeQuestionIdTemp) {
+      if (questionIdx <= localSurvey.questions.length && localSurvey.questions.length > 0) {
+        setActiveQuestionId(localSurvey.questions[questionIdx % localSurvey.questions.length].id);
       } else if (localSurvey.thankYouCard.enabled) {
-        setActiveQuestionId("thank-you-card");
-      } else {
-        setActiveQuestionId(localSurvey.questions[questionIdx - 1].id);
+        setActiveQuestionId("end");
       }
     }
     toast.success("Question deleted.");

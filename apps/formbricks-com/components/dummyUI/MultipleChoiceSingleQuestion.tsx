@@ -1,9 +1,11 @@
-import { cn } from "@formbricks/lib/cn";
-import { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { useState } from "react";
+
+import { cn } from "@formbricks/lib/cn";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
+
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;

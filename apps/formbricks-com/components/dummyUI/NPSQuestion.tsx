@@ -1,9 +1,12 @@
 import { useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TSurveyNPSQuestion } from "@formbricks/types/surveys";
+
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
   onSubmit: (data: { [x: string]: any }) => void;

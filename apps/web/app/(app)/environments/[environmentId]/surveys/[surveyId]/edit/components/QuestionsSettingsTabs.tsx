@@ -1,5 +1,6 @@
-import { cn } from "@formbricks/lib/cn";
 import { Cog8ToothIcon, QueueListIcon } from "@heroicons/react/24/solid";
+
+import { cn } from "@formbricks/lib/cn";
 
 interface Tab {
   id: "questions" | "settings";

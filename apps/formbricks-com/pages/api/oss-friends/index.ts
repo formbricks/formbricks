@@ -11,6 +11,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.appsmith.com",
         },
         {
+          name: "Argos",
+          description: "Argos provides the developer tools to debug tests and detect visual regressions..",
+          href: "https://argos-ci.com",
+        },
+        {
           name: "BoxyHQ",
           description:
             "BoxyHQ’s suite of APIs for security and privacy helps engineering teams build and ship compliant cloud applications faster.",
@@ -27,6 +32,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Centralize community, product, and customer data to understand which companies are engaging with your open source project.",
           href: "https://www.crowd.dev",
+        },
+        {
+          name: "DevHunt",
+          description: "Find the best Dev Tools upvoted by the community every week.",
+          href: "https://devhunt.org/",
         },
         {
           name: "Documenso",
@@ -86,6 +96,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "HTMX is a dependency-free JavaScript library that allows you to access AJAX, CSS Transitions, WebSockets, and Server Sent Events directly in HTML.",
           href: "https://htmx.org",
+        },
+        {
+          name: "Inbox Zero",
+          description:
+            "Inbox Zero makes it easy to clean up your inbox and reach inbox zero fast. It provides bulk newsletter unsubscribe, cold email blocking, email analytics, and AI automations.",
+          href: "https://getinboxzero.com",
         },
         {
           name: "Infisical",

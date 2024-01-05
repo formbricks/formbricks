@@ -1,19 +1,21 @@
 "use client";
 
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
+import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import { useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
+import { TI18nString } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
-import { useMemo, useState } from "react";
-import { toast } from "react-hot-toast";
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { TI18nString } from "@formbricks/types/surveys";
+
 interface FileUploadFormProps {
   localSurvey: TSurvey;
   product?: TProduct;

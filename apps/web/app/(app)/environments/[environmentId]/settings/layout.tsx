@@ -1,12 +1,14 @@
 import { Metadata } from "next";
-import SettingsNavbar from "./components/SettingsNavbar";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+
 import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+
+import SettingsNavbar from "./components/SettingsNavbar";
 
 export const metadata: Metadata = {
   title: "Settings",

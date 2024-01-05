@@ -1,5 +1,15 @@
-import { signUpLimiter, loginLimiter, clientSideApiEndpointsLimiter } from "@/app/middleware/bucket";
-import { clientSideApiRoute, loginRoute, signupRoute } from "@/app/middleware/endpointValidator";
+import {
+  clientSideApiEndpointsLimiter,
+  loginLimiter,
+  shareUrlLimiter,
+  signUpLimiter,
+} from "@/app/middleware/bucket";
+import {
+  clientSideApiRoute,
+  loginRoute,
+  shareUrlRoute,
+  signupRoute,
+} from "@/app/middleware/endpointValidator";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -23,6 +33,8 @@ export async function middleware(request: NextRequest) {
         await signUpLimiter.check(ip);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
         await clientSideApiEndpointsLimiter.check(ip);
+      } else if (shareUrlRoute(request.nextUrl.pathname)) {
+        await shareUrlLimiter.check(ip);
       }
       return res;
     } catch (_e) {
@@ -41,5 +53,6 @@ export const config = {
     "/api/(.*)/client/:path*",
     "/api/v1/js/actions",
     "/api/v1/client/storage",
+    "/share/(.*)/:path",
   ],
 };

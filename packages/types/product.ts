@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { ZEnvironment } from "./environment";
+
 import { ZColor, ZPlacement } from "./common";
+import { ZEnvironment } from "./environment";
 
 export const ZLanguages = z.record(z.string());
 

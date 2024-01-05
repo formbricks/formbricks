@@ -1,12 +1,13 @@
 "use client";
 
-import { Modal } from "@formbricks/ui/Modal";
+import { useForm } from "react-hook-form";
+
+import { AddMemberRole } from "@formbricks/ee/RoleManagement/components/AddMemberRole";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { Modal } from "@formbricks/ui/Modal";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
-import { useForm } from "react-hook-form";
-import { AddMemberRole } from "@formbricks/ee/RoleManagement/components/AddMemberRole";
 
 enum MembershipRole {
   Admin = "admin",
@@ -18,10 +19,19 @@ interface MemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: MembershipRole }) => void;
-  isEnterpriseEdition: boolean;
+  canDoRoleManagement: boolean;
+  isFormbricksCloud: boolean;
+  environmentId: string;
 }
 
-export default function AddMemberModal({ open, setOpen, onSubmit, isEnterpriseEdition }: MemberModalProps) {
+export default function AddMemberModal({
+  open,
+  setOpen,
+  onSubmit,
+  canDoRoleManagement,
+  isFormbricksCloud,
+  environmentId,
+}: MemberModalProps) {
   const { register, getValues, handleSubmit, reset, control } = useForm<{
     name: string;
     email: string;
@@ -46,11 +56,25 @@ export default function AddMemberModal({ open, setOpen, onSubmit, isEnterpriseEd
             </div>
           </div>
         </div>
-        {!isEnterpriseEdition && (
-          <div className="mx-6 mt-2">
-            <UpgradePlanNotice message="Upgrade to an Enterprise License to manage access roles for your team" />
-          </div>
-        )}
+        {!canDoRoleManagement &&
+          (isFormbricksCloud ? (
+            <div className="mx-6 mt-2">
+              <UpgradePlanNotice
+                message="To manage access roles for your team"
+                url={`/environments/${environmentId}/settings/billing`}
+                textForUrl="Upgrade to the App Surveys plan."
+              />
+            </div>
+          ) : (
+            <div className="mx-6 mt-2">
+              <UpgradePlanNotice
+                message="To manage access roles for your team,"
+                url="mailto:hola@formbricks.com"
+                textForUrl="get a self-hosted license (free to get started)."
+              />
+            </div>
+          ))}
+
         <form onSubmit={handleSubmit(submitEventClass)}>
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
@@ -65,7 +89,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit, isEnterpriseEd
                 <Label>Email Adress</Label>
                 <Input type="email" placeholder="hans@wurst.com" {...register("email", { required: true })} />
               </div>
-              {isEnterpriseEdition && <AddMemberRole control={control} />}
+              {canDoRoleManagement && <AddMemberRole control={control} />}
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">

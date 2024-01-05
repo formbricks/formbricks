@@ -1,4 +1,5 @@
 import { SurveyBaseProps } from "@/types/props";
+
 import { Survey } from "./Survey";
 
 export function SurveyInline({
@@ -13,6 +14,7 @@ export function SurveyInline({
   isRedirectDisabled = false,
   language,
   onFileUpload,
+  responseCount,
 }: SurveyBaseProps) {
   return (
     <div id="fbjs" className="formbricks-form h-full w-full">
@@ -28,6 +30,7 @@ export function SurveyInline({
         isRedirectDisabled={isRedirectDisabled}
         language={language}
         onFileUpload={onFileUpload}
+        responseCount={responseCount}
       />
     </div>
   );

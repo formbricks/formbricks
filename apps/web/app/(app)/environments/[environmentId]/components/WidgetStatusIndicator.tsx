@@ -1,7 +1,8 @@
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { ArrowDownIcon, CheckIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
+
+import { getEnvironment } from "@formbricks/lib/environment/service";
 
 interface WidgetStatusIndicatorProps {
   environmentId: string;

@@ -1,19 +1,20 @@
 "use client";
 
+import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
+import clsx from "clsx";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import * as React from "react";
+
+import useClickOutside from "@formbricks/lib/useClickOutside";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { Command, CommandEmpty, CommandGroup, CommandItem } from "@formbricks/ui/Command";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Command, CommandGroup, CommandItem, CommandEmpty } from "@formbricks/ui/Command";
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
-import clsx from "clsx";
-import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 
 type QuestionFilterComboBoxProps = {
   filterOptions: string[] | undefined;

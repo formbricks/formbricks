@@ -1,6 +1,6 @@
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion, TSurveyStatus } from "@formbricks/types/surveys";
-import { TUserNotificationSettings } from "@formbricks/types/users";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 
 export interface Insights {
   totalCompletedResponses: number;

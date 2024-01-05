@@ -1,23 +1,24 @@
 "use client";
 
-import * as React from "react";
-import { Command, CommandGroup, CommandItem, CommandInput, CommandEmpty } from "@formbricks/ui/Command";
-import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import {
-  StarIcon,
-  HashtagIcon,
-  CursorArrowRippleIcon,
-  QuestionMarkCircleIcon,
-  ListBulletIcon,
-  QueueListIcon,
   CheckIcon,
+  CursorArrowRippleIcon,
+  HashtagIcon,
   LanguageIcon,
+  ListBulletIcon,
+  QuestionMarkCircleIcon,
+  QueueListIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import * as React from "react";
+
+import useClickOutside from "@formbricks/lib/useClickOutside";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@formbricks/ui/Command";
+import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 
 export enum OptionsType {
   QUESTIONS = "Questions",

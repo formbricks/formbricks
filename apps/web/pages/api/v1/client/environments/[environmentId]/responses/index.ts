@@ -1,11 +1,12 @@
 import { sendToPipeline } from "@/app/lib/pipelines";
+import type { NextApiRequest, NextApiResponse } from "next";
+
 import { prisma } from "@formbricks/database";
 import { transformPrismaPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
-import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -107,6 +108,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         surveyId: true,
         finished: true,
         data: true,
+        ttc: true,
         meta: true,
         language: true,
         personAttributes: true,

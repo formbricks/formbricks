@@ -1,5 +1,5 @@
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TResponseData } from "@formbricks/types/responses";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 export function getPrefillResponseData(

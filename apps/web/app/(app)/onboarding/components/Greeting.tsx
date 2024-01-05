@@ -1,9 +1,10 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
 import type { Session } from "next-auth";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+
+import { Button } from "@formbricks/ui/Button";
 
 type Greeting = {
   next: () => void;

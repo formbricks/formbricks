@@ -1,16 +1,20 @@
-import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 import {
   ArrowUpTrayIcon,
+  CalendarDaysIcon,
   ChatBubbleBottomCenterTextIcon,
   CheckIcon,
   CursorArrowRippleIcon,
   ListBulletIcon,
+  PhoneIcon,
   PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+
+import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
+
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
 export type TSurveyQuestionType = {
@@ -134,6 +138,16 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
+    id: QuestionId.Date,
+    label: "Date",
+    description: "Ask your users to select a date",
+    icon: CalendarDaysIcon,
+    preset: {
+      headline: "When is your birthday?",
+      format: "M-d-y",
+    },
+  },
+  {
     id: QuestionId.FileUpload,
     label: "File Upload",
     description: "Allow respondents to upload a file",
@@ -141,6 +155,17 @@ export const questionTypes: TSurveyQuestionType[] = [
     preset: {
       headline: "File Upload",
       allowMultipleFiles: false,
+    },
+  },
+  {
+    id: QuestionId.Cal,
+    label: "Schedule a meeting",
+    description: "Allow respondents to schedule a meet",
+    icon: PhoneIcon,
+    preset: {
+      headline: "Schedule a call with me",
+      buttonLabel: "Skip",
+      calUserName: "rick/get-rick-rolled",
     },
   },
 ];

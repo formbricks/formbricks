@@ -1,18 +1,23 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
+import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
+import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
 import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
-import { REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+
 import { getEmailVerificationStatus } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
@@ -27,6 +32,11 @@ interface LinkSurveyPageProps {
 }
 
 export async function generateMetadata({ params }: LinkSurveyPageProps): Promise<Metadata> {
+  const validId = ZId.safeParse(params.surveyId);
+  if (!validId.success) {
+    notFound();
+  }
+
   const survey = await getSurvey(params.surveyId);
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
@@ -74,6 +84,10 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
 }
 
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
+  const validId = ZId.safeParse(params.surveyId);
+  if (!validId.success) {
+    notFound();
+  }
   const survey = await getSurvey(params.surveyId);
 
   const suId = searchParams.suId;
@@ -156,7 +170,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
-
+  const responseCount = await getResponseCountBySurveyId(survey.id);
   if (isSurveyPinProtected) {
     return (
       <PinScreen
@@ -168,21 +182,33 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
         singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
         webAppUrl={WEBAPP_URL}
+        IMPRINT_URL={IMPRINT_URL}
+        PRIVACY_URL={PRIVACY_URL}
       />
     );
   }
 
-  return (
-    <LinkSurvey
-      survey={survey}
-      product={product}
-      userId={userId}
-      emailVerificationStatus={emailVerificationStatus}
-      prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
-      singleUseId={isSingleUseSurvey ? singleUseId : undefined}
-      singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-      webAppUrl={WEBAPP_URL}
-      languages={product.languages}
-    />
-  );
+  return survey ? (
+    <div>
+      <MediaBackground survey={survey}>
+        <LinkSurvey
+          survey={survey}
+          product={product}
+          userId={userId}
+          emailVerificationStatus={emailVerificationStatus}
+          prefillAnswer={isPrefilledAnswerValid ? prefillAnswer : null}
+          singleUseId={isSingleUseSurvey ? singleUseId : undefined}
+          singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+          webAppUrl={WEBAPP_URL}
+          languages={product.languages}
+          responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
+        />
+      </MediaBackground>
+      <LegalFooter
+        bgColor={survey.styling?.background?.bg || "#ffff"}
+        IMPRINT_URL={IMPRINT_URL}
+        PRIVACY_URL={PRIVACY_URL}
+      />
+    </div>
+  ) : null;
 }

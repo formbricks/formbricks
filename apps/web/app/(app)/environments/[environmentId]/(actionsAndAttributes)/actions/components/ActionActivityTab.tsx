@@ -1,19 +1,22 @@
 "use client";
 
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import { useEffect, useState } from "react";
+
+import { capitalizeFirstLetter } from "@formbricks/lib/strings";
+import { convertDateTimeStringShort } from "@formbricks/lib/time";
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 import { Label } from "@formbricks/ui/Label";
-import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@formbricks/lib/strings";
-import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import { useEffect, useState } from "react";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+
 import {
-  getActionCountInLastHourAction,
-  getActionCountInLast24HoursAction,
-  getActionCountInLast7DaysAction,
   GetActiveInactiveSurveysAction,
+  getActionCountInLast7DaysAction,
+  getActionCountInLast24HoursAction,
+  getActionCountInLastHourAction,
 } from "../actions";
+
 interface ActivityTabProps {
   actionClass: TActionClass;
   environmentId: string;

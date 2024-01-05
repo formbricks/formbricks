@@ -1,23 +1,29 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getLocalizedValue } from "@/lib/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
+import { useState } from "preact/hooks";
 import { useCallback } from "react";
+
+import { TResponseData } from "@formbricks/types/responses";
+import { TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
   language: string;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function OpenTextQuestion({
@@ -30,7 +36,13 @@ export default function OpenTextQuestion({
   isLastQuestion,
   language,
   autoFocus = true,
+  ttc,
+  setTtc,
 }: OpenTextQuestionProps) {
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+
   const handleInputChange = (inputValue: string) => {
     // const isValidInput = validateInput(inputValue, question.inputType, question.required);
     // setIsValid(isValidInput);
@@ -53,7 +65,9 @@ export default function OpenTextQuestion({
       onSubmit={(e) => {
         e.preventDefault();
         //  if ( validateInput(value as string, question.inputType, question.required)) {
-        onSubmit({ [question.id]: value, inputType: question.inputType });
+        const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedttc);
+        onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
         // }
       }}
       className="w-full">
@@ -85,7 +99,9 @@ export default function OpenTextQuestion({
               if (e.key === "Enter" && isInputEmpty(value as string)) {
                 e.preventDefault(); // Prevent form submission
               } else if (e.key === "Enter") {
-                onSubmit({ [question.id]: value });
+                const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                setTtc(updatedttc);
+                onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
               }
             }}
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
@@ -115,6 +131,8 @@ export default function OpenTextQuestion({
           <BackButton
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
+              const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedttc);
               onBack();
             }}
           />

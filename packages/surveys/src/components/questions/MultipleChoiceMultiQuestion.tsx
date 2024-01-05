@@ -1,22 +1,27 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
-import { cn, shuffleQuestions, getLocalizedValue } from "@/lib/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { cn, getLocalizedValue, shuffleQuestions } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+
+import { TResponseData } from "@formbricks/types/responses";
+import { TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   language: string;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -28,7 +33,13 @@ export default function MultipleChoiceMultiQuestion({
   isFirstQuestion,
   isLastQuestion,
   language,
+  ttc,
+  setTtc,
 }: MultipleChoiceMultiProps) {
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+
   const getChoicesWithoutOtherLabels = useCallback(
     () =>
       question.choices
@@ -36,17 +47,20 @@ export default function MultipleChoiceMultiQuestion({
         .map((item) => getLocalizedValue(item.label, language)),
     [question]
   );
+  const [otherSelected, setOtherSelected] = useState<boolean>(false);
 
-  const [otherSelected, setOtherSelected] = useState(
-    !!value &&
-      ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
-        return getChoicesWithoutOtherLabels().includes(item) === false;
-      })
-  ); // check if the value contains any string which is not in `choicesWithoutOther`, if it is there, it must be other value which make the initial value true
-
-  const [otherValue, setOtherValue] = useState(
-    (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
-  ); // initially set to the first value that is not in choices
+  const [otherValue, setOtherValue] = useState("");
+  useEffect(() => {
+    setOtherSelected(
+      !!value &&
+        ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
+          return getChoicesWithoutOtherLabels().includes(item) === false;
+        })
+    );
+    setOtherValue(
+      (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
+    );
+  }, [question.id]);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
@@ -58,6 +72,10 @@ export default function MultipleChoiceMultiQuestion({
     }
     return choicesWithoutOther;
   }, [question.choices, question.shuffleOption]);
+
+  const questionChoiceLabels = questionChoices.map((questionChoice) => {
+    return questionChoice.label;
+  });
 
   const otherOption = useMemo(
     () => question.choices.find((choice) => choice.id === "other"),
@@ -73,8 +91,16 @@ export default function MultipleChoiceMultiQuestion({
   }, [otherSelected]);
 
   const addItem = (item: string) => {
+    const isOtherValue = !questionChoiceLabels.includes(item);
     if (Array.isArray(value)) {
-      return onChange({ [question.id]: [...value, item] });
+      if (isOtherValue) {
+        const newValue = value.filter((v) => {
+          return questionChoiceLabels.includes(v);
+        });
+        return onChange({ [question.id]: [...newValue, item] });
+      } else {
+        return onChange({ [question.id]: [...value, item] });
+      }
     }
     return onChange({ [question.id]: [item] }); // if not array, make it an array
   };
@@ -94,7 +120,9 @@ export default function MultipleChoiceMultiQuestion({
           return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
         }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
         onChange({ [question.id]: newValue });
-        onSubmit({ [question.id]: newValue });
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
@@ -210,8 +238,10 @@ export default function MultipleChoiceMultiQuestion({
                     }}
                     onKeyDown={(e) => {
                       if (e.key == "Enter") {
+                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                        setTtc(updatedTtcObj);
                         setTimeout(() => {
-                          onSubmit({ [question.id]: value });
+                          onSubmit({ [question.id]: value }, updatedTtcObj);
                         }, 100);
                       }
                     }}
@@ -231,7 +261,11 @@ export default function MultipleChoiceMultiQuestion({
           <BackButton
             tabIndex={questionChoices.length + 3}
             backButtonLabel={question.backButtonLabel}
-            onClick={onBack}
+            onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
+              onBack();
+            }}
           />
         )}
         <div></div>

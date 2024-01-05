@@ -1,12 +1,14 @@
 import crypto from "crypto";
 import { authenticator } from "otplib";
 import qrcode from "qrcode";
+
 import { prisma } from "@formbricks/database";
-import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
+
 import { verifyPassword } from "../auth";
-import { totpAuthenticatorCheck } from "../totp";
-import { profileCache } from "../profile/cache";
 import { ENCRYPTION_KEY } from "../constants";
+import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
+import { totpAuthenticatorCheck } from "../totp";
+import { userCache } from "../user/cache";
 
 export const setupTwoFactorAuth = async (
   userId: string,
@@ -120,7 +122,7 @@ export const enableTwoFactorAuth = async (id: string, code: string) => {
     },
   });
 
-  profileCache.revalidate({
+  userCache.revalidate({
     id,
   });
 
@@ -221,7 +223,7 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
     },
   });
 
-  profileCache.revalidate({
+  userCache.revalidate({
     id,
   });
 

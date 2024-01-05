@@ -1,11 +1,14 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
-import QuestionImage from "@/components/general/QuestionImage";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getLocalizedValue } from "@/lib/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "preact/hooks";
+
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
+
 import {
   ConfusedFace,
   FrowningFace,
@@ -24,11 +27,13 @@ interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
   value: string | number | string[];
   onChange: (responseData: TResponseData) => void;
-  onSubmit: (data: TResponseData) => void;
+  onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   language: string;
+  ttc: TResponseTtc;
+  setTtc: (ttc: TResponseTtc) => void;
 }
 
 export default function RatingQuestion({
@@ -40,15 +45,25 @@ export default function RatingQuestion({
   isFirstQuestion,
   isLastQuestion,
   language,
+  ttc,
+  setTtc,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
+  const [startTime, setStartTime] = useState(performance.now());
+
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });
     if (question.required) {
-      onSubmit({
-        [question.id]: number,
-      });
+      const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+      setTtc(updatedTtcObj);
+      onSubmit(
+        {
+          [question.id]: number,
+        },
+        updatedTtcObj
+      );
     }
   };
 
@@ -68,7 +83,9 @@ export default function RatingQuestion({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ [question.id]: value });
+        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+        setTtc(updatedTtcObj);
+        onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
@@ -81,16 +98,16 @@ export default function RatingQuestion({
         subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
         questionId={question.id}
       />
-      <div className="mb-4 mt-8">
-        <fieldset>
+      <div className="mb-4 mt-6 flex items-center justify-center">
+        <fieldset className="w-full ">
           <legend className="sr-only">Choices</legend>
-          <div className="flex">
+          <div className="flex pb-2">
             {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
               <span
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="max-w-10 bg-survey-bg relative max-h-10 flex-1 cursor-pointer text-center text-sm leading-10">
+                className="bg-survey-bg relative flex-1 cursor-pointer text-center text-sm leading-[2.8rem]">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
@@ -117,41 +134,23 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      number <= hoveredNumber ? "text-rating-focus" : "text-heading",
-                      "focus:text-rating-focus flex h-full w-full justify-center focus:outline-none"
+                      "flex h-full w-full justify-center focus:outline-none",
+                      number <= hoveredNumber ? "text-amber-400" : "text-slate-300",
+                      "hover:text-amber-400"
                     )}
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
-                    {typeof value === "number" && value >= number ? (
-                      <span className="text-rating-fill">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="h-8 max-h-full w-8 ">
-                          <path
-                            fillRule="evenodd"
-                            d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </span>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        className="h-8 max-h-full w-8">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                        />
-                      </svg>
-                    )}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="h-14 max-h-full w-14">
+                      <path
+                        fillRule="evenodd"
+                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                      />
+                    </svg>
                   </label>
                 ) : (
                   <label
@@ -193,6 +192,8 @@ export default function RatingQuestion({
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
             backButtonLabel={question.backButtonLabel}
             onClick={() => {
+              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+              setTtc(updatedTtcObj);
               onBack();
             }}
           />

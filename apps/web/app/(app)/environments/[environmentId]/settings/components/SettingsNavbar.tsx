@@ -1,11 +1,6 @@
 "use client";
 
-import { truncate } from "@formbricks/lib/strings";
-import { TProduct } from "@formbricks/types/product";
-import { TTeam } from "@formbricks/types/teams";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
-import { FaDiscord } from "react-icons/fa6";
 import {
   AdjustmentsVerticalIcon,
   BellAlertIcon,
@@ -24,8 +19,14 @@ import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
+import { FaDiscord } from "react-icons/fa6";
+
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { truncate } from "@formbricks/lib/strings";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProduct } from "@formbricks/types/product";
+import { TTeam } from "@formbricks/types/teams";
+import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 
 export default function SettingsNavbar({
   environmentId,

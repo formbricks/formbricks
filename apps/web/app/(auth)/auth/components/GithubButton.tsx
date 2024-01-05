@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
 import { signIn } from "next-auth/react";
 import { FaGithub } from "react-icons/fa";
+
+import { Button } from "@formbricks/ui/Button";
 
 export const GithubButton = ({
   text = "Continue with Github",

@@ -1,8 +1,10 @@
-import formbricks from "@formbricks/js";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import fbsetup from "../../public/fb-setup.png";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+
+import formbricks from "@formbricks/js";
+
+import fbsetup from "../../public/fb-setup.png";
 
 declare const window: any;
 
@@ -22,11 +24,13 @@ export default function AppPage({}) {
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const isUserId = window.location.href.includes("userId=true");
       const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
+      const attributes = isUserId ? { "Init Attribute 1": "eight", "Init Attribute 2": "two" } : undefined;
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
         debug: true,
+        attributes,
       });
       window.formbricks = formbricks;
     }
@@ -70,7 +74,7 @@ export default function AppPage({}) {
             </p>
             <Image src={fbsetup} alt="fb setup" className="mt-4 rounded" priority />
 
-            <div className="mt-4 flex-col items-start text-sm text-slate-700 dark:text-slate-300 sm:flex sm:items-center sm:text-base">
+            <div className="mt-4 flex-col items-start text-sm text-slate-700 sm:flex sm:items-center sm:text-base dark:text-slate-300">
               <p className="mb-1 sm:mb-0 sm:mr-2">You&apos;re connected with env:</p>
               <div className="flex items-center">
                 <strong className="w-32 truncate sm:w-auto">

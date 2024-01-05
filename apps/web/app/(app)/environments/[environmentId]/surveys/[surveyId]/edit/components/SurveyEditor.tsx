@@ -1,21 +1,24 @@
 "use client";
 
+import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import React from "react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
+import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TLanguages, TProduct } from "@formbricks/types/product";
+import { TI18nString, TSurvey } from "@formbricks/types/surveys";
+
 import PreviewSurvey from "../../../components/PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
 import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TI18nString, TSurvey } from "@formbricks/types/surveys";
-import { TLanguages, TProduct } from "@formbricks/types/product";
-import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TActionClass } from "@formbricks/types/actionClasses";
-import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
-import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
+
 interface SurveyEditorProps {
   survey: TSurvey;
   product: TProduct;
@@ -25,6 +28,7 @@ interface SurveyEditorProps {
   responseCount: number;
   membershipRole?: TMembershipRole;
   isEnterpriseEdition: boolean;
+  colours: string[];
 }
 
 export default function SurveyEditor({
@@ -36,6 +40,7 @@ export default function SurveyEditor({
   responseCount,
   membershipRole,
   isEnterpriseEdition,
+  colours,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -146,6 +151,7 @@ export default function SurveyEditor({
                 attributeClasses={attributeClasses}
                 responseCount={responseCount}
                 membershipRole={membershipRole}
+                colours={colours}
               />
             )}
           </main>

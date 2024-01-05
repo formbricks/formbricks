@@ -1,12 +1,13 @@
 "use client";
 
 import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
-import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { EnvelopeIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
+
+import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
 
 export default function VerifyEmail({
   survey,
@@ -71,7 +72,7 @@ export default function VerifyEmail({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50 text-center">
+    <div className="flex h-full w-full flex-col items-center justify-center text-center">
       <Toaster />
       {!emailSent && !showPreviewQuestions && (
         <div className="flex flex-col items-center justify-center px-4">
@@ -83,8 +84,8 @@ export default function VerifyEmail({
           <div className="mt-6 flex w-full space-x-2">
             <Input
               type="string"
-              className="h-full"
               placeholder="user@gmail.com"
+              className="h-12"
               value={email || ""}
               onChange={(e) => setEmail(e.target.value)}
               onKeyPress={handleKeyPress}

@@ -1,14 +1,16 @@
-import React, { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
+import { InboxStackIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import React, { useState } from "react";
+
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { questionTypes } from "@/app/lib/questions";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+
 interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;
   environmentId: string;
@@ -40,6 +42,9 @@ export default function OpenTextSummary({
             <InboxStackIcon className="mr-2 h-4 w-4" />
             {questionSummary.responses.length} Responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
       <div className="rounded-b-lg bg-white ">
@@ -83,15 +88,15 @@ export default function OpenTextSummary({
           );
         })}
 
-        <div className="my-1 flex justify-center">
-          {displayCount < questionSummary.responses.length && (
+        {displayCount < questionSummary.responses.length && (
+          <div className="flex justify-center py-1">
             <button
               onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
               className="my-2 flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700">
               Show more
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

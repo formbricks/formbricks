@@ -1,5 +1,7 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
+
 import { prisma } from "@formbricks/database";
+
 import { env } from "./env.mjs";
 
 export function createToken(userId: string, userEmail: string, options = {}): string {
@@ -48,14 +50,16 @@ export async function verifyToken(token: string, userEmail: string = ""): Promis
   return jwt.verify(token, env.NEXTAUTH_SECRET + userEmail) as JwtPayload;
 }
 
-export const verifyInviteToken = (token: string): JwtPayload => {
+export const verifyInviteToken = (token: string): { inviteId: string; email: string } => {
   try {
     const decoded = jwt.decode(token);
     const payload: JwtPayload = decoded as JwtPayload;
 
+    const { inviteId, email } = payload;
+
     return {
-      inviteId: payload.inviteId,
-      email: payload.email,
+      inviteId,
+      email,
     };
   } catch (error) {
     console.error("Error verifying invite token:", error);

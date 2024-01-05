@@ -1,13 +1,15 @@
 import { responses } from "@/app/lib/api/response";
-import { prisma } from "@formbricks/database";
-import { CRON_SECRET } from "@formbricks/lib/constants";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
-import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
+
+import { prisma } from "@formbricks/database";
+import { CRON_SECRET } from "@formbricks/lib/constants";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
-const BATCH_SIZE = 10;
+import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
+import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
+
+const BATCH_SIZE = 500;
 
 export async function POST(): Promise<NextResponse> {
   // Check authentication

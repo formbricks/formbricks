@@ -1,7 +1,7 @@
 "use client";
 
-import { useWindowSize } from "react-use";
 import ReactConfetti from "react-confetti";
+import { useWindowSize } from "react-use";
 
 type ConfettiProps = {
   colors?: string[];

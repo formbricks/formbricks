@@ -1,8 +1,11 @@
-import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 import { useState } from "react";
+
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
+
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
@@ -40,7 +43,7 @@ export default function OpenTextQuestion({
           onChange={(e) => setValue(e.target.value)}
           placeholder={question.placeholder}
           required={question.required}
-          className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 dark:border-slate-500 dark:bg-slate-700 dark:text-white sm:text-sm"></textarea>
+          className="block w-full rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm dark:border-slate-500 dark:bg-slate-700 dark:text-white"></textarea>
       </div>
       <div className="mt-4 flex w-full justify-between">
         <div></div>

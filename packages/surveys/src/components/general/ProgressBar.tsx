@@ -1,51 +1,46 @@
-import { TSurvey } from "@formbricks/types/surveys";
-import { useEffect, useState } from "preact/hooks";
-import Progress from "./Progress";
 import { calculateElementIdx } from "@/lib/utils";
+import { useCallback, useMemo } from "preact/hooks";
+
+import { TSurvey } from "@formbricks/types/surveys";
+
+import Progress from "./Progress";
 
 interface ProgressBarProps {
   survey: TSurvey;
   questionId: string;
 }
 
-const PROGRESS_INCREMENT = 0.1;
-
 export default function ProgressBar({ survey, questionId }: ProgressBarProps) {
-  const [progress, setProgress] = useState(0); // [0, 1]
-  const [prevQuestionIdx, setPrevQuestionIdx] = useState(0); // [0, survey.questions.length
-  const [prevQuestionId, setPrevQuestionId] = useState(""); // [0, survey.questions.length
+  const currentQuestionIdx = useMemo(
+    () => survey.questions.findIndex((e) => e.id === questionId),
+    [survey, questionId]
+  );
 
-  useEffect(() => {
-    // calculate progress
-    setProgress(calculateProgress(questionId, survey, progress));
-    function calculateProgress(questionId: string, survey: TSurvey, progress: number) {
-      if (survey.questions.length === 0) return 0;
-      if (questionId === "end") return 1;
-      let currentQustionIdx = survey.questions.findIndex((e) => e.id === questionId);
-      if (progress > 0 && questionId === prevQuestionId) return progress;
-      if (currentQustionIdx === -1) currentQustionIdx = 0;
-      const elementIdx = calculateElementIdx(survey, currentQustionIdx);
+  const calculateProgress = useCallback((questionId: string, survey: TSurvey, progress: number) => {
+    if (survey.questions.length === 0) return 0;
+    let currentQustionIdx = survey.questions.findIndex((e) => e.id === questionId);
+    if (currentQustionIdx === -1) currentQustionIdx = 0;
+    const elementIdx = calculateElementIdx(survey, currentQustionIdx);
 
-      const newProgress = elementIdx / survey.questions.length;
-
-      // Determine if user went backwards in the survey
-      const didUserGoBackwards = currentQustionIdx < prevQuestionIdx;
-
-      // Update the progress array based on user's navigation
-      let updatedProgress = progress;
-      if (didUserGoBackwards) {
-        updatedProgress = progress - (prevQuestionIdx - currentQustionIdx) * PROGRESS_INCREMENT;
-      } else if (newProgress > progress) {
-        updatedProgress = newProgress;
-      } else if (newProgress <= progress && progress + PROGRESS_INCREMENT <= 1) {
-        updatedProgress = progress + PROGRESS_INCREMENT;
-      }
-      setPrevQuestionId(questionId);
-      setPrevQuestionIdx(currentQustionIdx);
-      return updatedProgress;
+    const newProgress = elementIdx / survey.questions.length;
+    let updatedProgress = progress;
+    if (newProgress > progress) {
+      updatedProgress = newProgress;
+    } else if (newProgress <= progress && progress + 0.1 <= 1) {
+      updatedProgress = progress + 0.1;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionId, survey, setPrevQuestionIdx]);
+    return updatedProgress;
+  }, []);
 
-  return <Progress progress={progress} />;
+  const progressArray = useMemo(() => {
+    let progress = 0;
+    let progressArrayTemp: number[] = [];
+    survey.questions.forEach((question) => {
+      progress = calculateProgress(question.id, survey, progress);
+      progressArrayTemp.push(progress);
+    });
+    return progressArrayTemp;
+  }, [calculateProgress, survey]);
+
+  return <Progress progress={questionId === "end" ? 1 : progressArray[currentQuestionIdx]} />;
 }

@@ -118,6 +118,9 @@ model Response {
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
   data             Json              @default("{}")
+  /// @zod.custom(imports.ZResponseTtc)
+  /// [ResponseTtc]
+  ttc              Json              @default("{}")
   /// @zod.custom(imports.ZResponseMeta)
   /// [ResponseMeta]
   meta             Json              @default("{}")
@@ -287,6 +290,9 @@ model Survey {
   /// @zod.custom(imports.ZSurveyProductOverwrites)
   /// [SurveyProductOverwrites]
   productOverwrites Json?
+  /// @zod.custom(imports.ZSurveyStyling)
+  /// [SurveyStyling]
+  styling           Json?
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
   singleUse         Json?   @default("{\"enabled\": false, \"isEncrypted\": true}")
@@ -294,6 +300,7 @@ model Survey {
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
   pin               String?
+  resultShareKey    String? @unique
 
   @@index([environmentId])
 }
@@ -345,6 +352,7 @@ enum EnvironmentType {
 
 enum IntegrationType {
   googleSheets
+  notion
   airtable
 }
 

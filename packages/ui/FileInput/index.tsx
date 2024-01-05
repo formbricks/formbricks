@@ -1,13 +1,15 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
-import { TAllowedFileExtension } from "@formbricks/types/common";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
 import { FileIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { TAllowedFileExtension } from "@formbricks/types/common";
+
 import { uploadFile } from "./lib/fileUpload";
 
 const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
@@ -21,6 +23,7 @@ interface FileInputProps {
   onFileUpload: (uploadedUrl: string[] | undefined) => void;
   fileUrl?: string | string[];
   multiple?: boolean;
+  imageFit?: "cover" | "contain";
 }
 
 interface SelectedFile {
@@ -36,6 +39,7 @@ const FileInput: React.FC<FileInputProps> = ({
   onFileUpload,
   fileUrl,
   multiple = false,
+  imageFit = "cover",
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
 
@@ -250,7 +254,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   src={selectedFiles[0].url}
                   alt={selectedFiles[0].name}
                   fill
-                  style={{ objectFit: "cover" }}
+                  style={{ objectFit: imageFit }}
                   quality={100}
                   className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
                 />

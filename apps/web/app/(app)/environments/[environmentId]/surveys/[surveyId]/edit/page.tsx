@@ -1,18 +1,19 @@
-export const revalidate = REVALIDATION_INTERVAL;
+import { getServerSession } from "next-auth";
+
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { colours } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
+
 import SurveyEditor from "./components/SurveyEditor";
 
 export const generateMetadata = async ({ params }) => {
@@ -81,6 +82,7 @@ export default async function SurveysEditPage({ params }) {
         responseCount={responseCount}
         membershipRole={currentUserMembership?.role}
         isEnterpriseEdition={isEnterpriseEdition}
+        colours={colours}
       />
     </>
   );

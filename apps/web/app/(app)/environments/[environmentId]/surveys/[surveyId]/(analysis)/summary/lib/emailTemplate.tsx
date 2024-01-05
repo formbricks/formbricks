@@ -1,10 +1,4 @@
-import { cn } from "@formbricks/lib/cn";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
-
 import { isLight } from "@/app/lib/utils";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import {
   Column,
   Container,
@@ -16,8 +10,15 @@ import {
   Tailwind,
   Text,
 } from "@react-email/components";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { render } from "@react-email/render";
+import { CalendarDaysIcon } from "lucide-react";
+
+import { cn } from "@formbricks/lib/cn";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 interface EmailTemplateProps {
   survey: TSurvey;
@@ -280,6 +281,34 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
                 </Link>
               )
             )}
+          </Section>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case TSurveyQuestionType.Cal:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+            {firstQuestion.subheader}
+          </Text>
+          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+            You have been invited to schedule a meet via cal.com Open Survey to continue{" "}
+          </Text>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case TSurveyQuestionType.Date:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+            {firstQuestion.headline}
+          </Text>
+          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
+            {firstQuestion.subheader}
+          </Text>
+          <Section className="mt-4 flex h-12 w-full items-center justify-center rounded-lg border border-solid border-gray-200 bg-white">
+            <CalendarDaysIcon className="mb-1 inline h-4 w-4" />
+            <Text className="inline text-sm font-medium">Select a date</Text>
           </Section>
           <EmailFooter />
         </EmailTemplateWrapper>

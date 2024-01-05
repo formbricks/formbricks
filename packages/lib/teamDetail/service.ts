@@ -1,13 +1,15 @@
 import "server-only";
 
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { validateInputs } from "../utils/validate";
+import { unstable_cache } from "next/cache";
+
+import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { unstable_cache } from "next/cache";
 import { teamCache } from "../team/cache";
+import { validateInputs } from "../utils/validate";
 
 export const getTeamDetails = async (
   environmentId: string

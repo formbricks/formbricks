@@ -1,12 +1,14 @@
 "use client";
 
-import GoogleSheetLogo from "../images/google-sheets-small.png";
 import FormbricksLogo from "@/images/logo.svg";
-import { authorize } from "../lib/google";
-import { Button } from "@formbricks/ui/Button";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+
+import { Button } from "@formbricks/ui/Button";
+
+import GoogleSheetLogo from "../images/google-sheets-small.png";
+import { authorize } from "../lib/google";
 
 interface ConnectProps {
   enabled: boolean;

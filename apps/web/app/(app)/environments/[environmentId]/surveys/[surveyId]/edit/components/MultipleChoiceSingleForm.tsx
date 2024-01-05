@@ -1,15 +1,16 @@
 "use client";
 
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { createId } from "@paralleldrive/cuid2";
+import { useEffect, useRef, useState } from "react";
+
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
-import { createId } from "@paralleldrive/cuid2";
-import { useEffect, useRef, useState } from "react";
-import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;

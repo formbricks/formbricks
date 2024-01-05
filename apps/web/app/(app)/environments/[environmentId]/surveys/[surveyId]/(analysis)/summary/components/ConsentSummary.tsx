@@ -1,11 +1,12 @@
-import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { ProgressBar } from "@formbricks/ui/ProgressBar";
+import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { TSurveyConsentQuestion } from "@formbricks/types/surveys";
-import { questionTypes } from "@/app/lib/questions";
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveyConsentQuestion } from "@formbricks/types/surveys";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 interface ConsentSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyConsentQuestion>;
@@ -53,6 +54,9 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {ctr.count} responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
       <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">

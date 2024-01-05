@@ -1,13 +1,15 @@
 "use client";
 
-import { updateProfileAction } from "@/app/(app)/onboarding/actions";
+import { updateUserAction } from "@/app/(app)/onboarding/actions";
 import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
-import { cn } from "@formbricks/lib/cn";
-import { env } from "@formbricks/lib/env.mjs";
-import { Button } from "@formbricks/ui/Button";
 import { Session } from "next-auth";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { env } from "@formbricks/lib/env.mjs";
+import { Button } from "@formbricks/ui/Button";
+
 import { handleTabNavigation } from "../utils";
 
 type RoleProps = {
@@ -49,7 +51,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, sessio
       if (selectedRole) {
         try {
           setIsUpdating(true);
-          await updateProfileAction({ role: selectedRole.id });
+          await updateUserAction({ role: selectedRole.id });
           setIsUpdating(false);
         } catch (e) {
           setIsUpdating(false);

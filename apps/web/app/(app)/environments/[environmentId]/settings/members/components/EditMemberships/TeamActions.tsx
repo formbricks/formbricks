@@ -1,18 +1,19 @@
 "use client";
 
-import AddMemberModal from "@/app/(app)/environments/[environmentId]/settings/members/components/AddMemberModal";
 import {
   inviteUserAction,
   leaveTeamAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import CustomDialog from "@formbricks/ui/CustomDialog";
-import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import { TTeam } from "@formbricks/types/teams";
-import { Button } from "@formbricks/ui/Button";
+import AddMemberModal from "@/app/(app)/environments/[environmentId]/settings/members/components/AddMemberModal";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TTeam } from "@formbricks/types/teams";
+import { Button } from "@formbricks/ui/Button";
+import CreateTeamModal from "@formbricks/ui/CreateTeamModal";
+import CustomDialog from "@formbricks/ui/CustomDialog";
 
 type TeamActionsProps = {
   role: string;
@@ -20,7 +21,9 @@ type TeamActionsProps = {
   isLeaveTeamDisabled: boolean;
   team: TTeam;
   isInviteDisabled: boolean;
-  isEnterpriseEdition: boolean;
+  canDoRoleManagement: boolean;
+  isFormbricksCloud: boolean;
+  environmentId: string;
 };
 
 export default function TeamActions({
@@ -29,7 +32,9 @@ export default function TeamActions({
   team,
   isLeaveTeamDisabled,
   isInviteDisabled,
-  isEnterpriseEdition,
+  canDoRoleManagement,
+  isFormbricksCloud,
+  environmentId,
 }: TeamActionsProps) {
   const router = useRouter();
   const [isLeaveTeamModalOpen, setLeaveTeamModalOpen] = useState(false);
@@ -93,7 +98,9 @@ export default function TeamActions({
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}
         onSubmit={handleAddMember}
-        isEnterpriseEdition={isEnterpriseEdition}
+        canDoRoleManagement={canDoRoleManagement}
+        isFormbricksCloud={isFormbricksCloud}
+        environmentId={environmentId}
       />
 
       <CustomDialog

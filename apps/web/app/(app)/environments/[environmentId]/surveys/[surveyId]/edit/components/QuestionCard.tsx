@@ -1,40 +1,46 @@
 "use client";
 
 import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
+import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
+import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
-import { cn } from "@formbricks/lib/cn";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
 import {
+  ArrowUpTrayIcon,
+  CalendarDaysIcon,
   ChatBubbleBottomCenterTextIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   CursorArrowRippleIcon,
   ListBulletIcon,
+  PhoneIcon,
+  PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
-  ArrowUpTrayIcon,
-  PhotoIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
-import FileUploadQuestionForm from "./FileUploadQuestionForm";
+
+import { cn } from "@formbricks/lib/cn";
+import { TProduct } from "@formbricks/types/product";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
+
 import CTAQuestionForm from "./CTAQuestionForm";
+import CalQuestionForm from "./CalQuestionForm";
 import ConsentQuestionForm from "./ConsentQuestionForm";
+import FileUploadQuestionForm from "./FileUploadQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
 import NPSQuestionForm from "./NPSQuestionForm";
 import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
 import RatingQuestionForm from "./RatingQuestionForm";
-import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
-import { TProduct } from "@formbricks/types/product";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -99,6 +105,14 @@ export default function QuestionCard({
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
 
+  const updateEmptyNextButtonLabels = (labelValue: string) => {
+    localSurvey.questions.forEach((q, index) => {
+      if (!q.buttonLabel || q.buttonLabel?.trim() === "") {
+        updateQuestion(index, { buttonLabel: labelValue });
+      }
+    });
+  };
+
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -152,6 +166,10 @@ export default function QuestionCard({
                       <CheckIcon />
                     ) : question.type === TSurveyQuestionType.PictureSelection ? (
                       <PhotoIcon />
+                    ) : question.type === TSurveyQuestionType.Date ? (
+                      <CalendarDaysIcon />
+                    ) : question.type === TSurveyQuestionType.Cal ? (
+                      <PhoneIcon />
                     ) : null}
                   </div>
                   <div>
@@ -261,6 +279,15 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   languages={languages}
                 />
+              ) : question.type === TSurveyQuestionType.Date ? (
+                <DateQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
                   localSurvey={localSurvey}
@@ -286,10 +313,18 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   languages={languages}
                 />
+              ) : question.type === TSurveyQuestionType.Cal ? (
+                <CalQuestionForm
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
               ) : null}
               <div className="mt-4">
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
-                  <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700">
+                  <Collapsible.CollapsibleTrigger className="flex items-center text-sm text-slate-700">
                     {openAdvanced ? (
                       <ChevronDownIcon className="mr-1 h-4 w-3" />
                     ) : (
@@ -304,7 +339,7 @@ export default function QuestionCard({
                     question.type !== TSurveyQuestionType.CTA ? (
                       <div className="mt-4 flex space-x-2">
                         <div className="w-full">
-                          <Label htmlFor="buttonLabel">Button Label</Label>
+                          <Label htmlFor="buttonLabel">&quot;Next&quot; Button Label</Label>
                           <div className="mt-2">
                             <Input
                               id="buttonLabel"
@@ -313,8 +348,10 @@ export default function QuestionCard({
                               maxLength={48}
                               placeholder={lastQuestion ? "Finish" : "Next"}
                               onChange={(e) => {
-                                if (e.target.value.trim() == "") e.target.value = "";
                                 updateQuestion(questionIdx, { buttonLabel: e.target.value });
+                              }}
+                              onBlur={(e) => {
+                                updateEmptyNextButtonLabels(e.target.value);
                               }}
                             />
                           </div>

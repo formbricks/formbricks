@@ -1,9 +1,12 @@
-import { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TSurveyRatingQuestion } from "@formbricks/types/surveys";
+
 import Headline from "./Headline";
 import Subheader from "./Subheader";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
   onSubmit: (data: { [x: string]: any }) => void;

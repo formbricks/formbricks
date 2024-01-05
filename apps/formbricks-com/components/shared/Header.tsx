@@ -1,5 +1,14 @@
 import GitHubMarkWhite from "@/images/github-mark-white.svg";
 import GitHubMarkDark from "@/images/github-mark.svg";
+import { Popover, Transition } from "@headlessui/react";
+import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
+import { usePlausible } from "next-plausible";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { Fragment, useEffect, useState } from "react";
+
 import { Button } from "@formbricks/ui/Button";
 import {
   BaseballIcon,
@@ -11,16 +20,8 @@ import {
   OnboardingIcon,
   PMFIcon,
 } from "@formbricks/ui/icons";
-import { Popover, Transition } from "@headlessui/react";
-import { Bars3Icon, ChevronDownIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
-import { usePlausible } from "next-plausible";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { Fragment, useEffect, useState } from "react";
+
 import { FooterLogo } from "./Logo";
-import { ThemeSelector } from "./ThemeSelector";
 
 function GitHubIcon(props: any) {
   return (
@@ -169,7 +170,7 @@ export default function Header() {
                   leaveTo="opacity-0 translate-y-1">
                   <Popover.Panel className="absolute z-10 -ml-4 mt-3 w-screen max-w-lg transform lg:left-1/2 lg:ml-0 lg:max-w-4xl lg:-translate-x-1/2">
                     <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                      <div className="relative grid gap-6 bg-white px-5 py-6 dark:bg-slate-700 sm:gap-6 sm:p-8 lg:grid-cols-3">
+                      <div className="relative grid gap-6 bg-white px-5 py-6 sm:gap-6 sm:p-8 lg:grid-cols-3 dark:bg-slate-700">
                         <div>
                           <h4 className="mb-6 ml-16 text-sm text-slate-400 dark:text-slate-300">
                             Understand Users
@@ -275,17 +276,22 @@ export default function Header() {
  */}
           <Link
             href="/pricing"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
             Pricing
           </Link>
           <Link
+            href="/community"
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
+            Community
+          </Link>
+          <Link
             href="/docs"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
             Docs
           </Link>
           <Link
             href="/blog"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
+            className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
             Blog {/* <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
           </Link>
           {/*           <Link
@@ -293,15 +299,8 @@ export default function Header() {
             className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
             Careers <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
           </Link> */}
-
-          <Link
-            href="/concierge"
-            className="text-sm font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300  lg:text-base">
-            Concierge
-          </Link>
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
-          <ThemeSelector className="relative z-10 mr-2 lg:mr-5" />
           <Button
             variant="secondary"
             className="group hidden px-2 lg:block"
@@ -332,7 +331,7 @@ export default function Header() {
               router.push("https://app.formbricks.com");
               plausible("NavBar_CTA_Login");
             }}>
-            Go to app
+            Get started
           </Button>
         </div>
       </div>
@@ -392,7 +391,7 @@ export default function Header() {
                     <hr className="mx-20 my-6 opacity-25" />
                   </div>
                 )}
-                <Link href="/concierge">Concierge</Link>
+                <Link href="/community">Community</Link>
                 <Link href="/pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>

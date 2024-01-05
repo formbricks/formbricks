@@ -1,9 +1,10 @@
 "use server";
 
-import { deleteTag, getTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
-import { canUserAccessTag, verifyUserRoleAccess } from "@formbricks/lib/tag/auth";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getServerSession } from "next-auth";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { canUserAccessTag, verifyUserRoleAccess } from "@formbricks/lib/tag/auth";
+import { deleteTag, getTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 export const deleteTagAction = async (tagId: string) => {

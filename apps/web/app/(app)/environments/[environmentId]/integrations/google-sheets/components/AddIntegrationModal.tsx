@@ -1,4 +1,13 @@
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -9,15 +18,8 @@ import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
+
 import GoogleSheetLogo from "../images/google-sheets-small.png";
-import { TIntegrationItem } from "@formbricks/types/integration";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface AddWebhookModalProps {
   environmentId: string;

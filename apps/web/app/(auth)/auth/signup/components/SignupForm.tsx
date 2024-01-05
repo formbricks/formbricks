@@ -5,12 +5,13 @@ import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
 import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
 import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
 import { createUser } from "@/app/lib/users/users";
-import { Button } from "@formbricks/ui/Button";
-import { PasswordInput } from "@formbricks/ui/PasswordInput";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
+
+import { Button } from "@formbricks/ui/Button";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
 
 export const SignupForm = ({
   webAppUrl,

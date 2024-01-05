@@ -5,6 +5,7 @@ import { renderSurveyModal } from "@formbricks/surveys";
 import { TJSStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
+
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
 import { Logger } from "./logger";
@@ -130,6 +131,7 @@ export const renderWidget = (survey: TSurvey) => {
         responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
           data: responseUpdate.data,
+          ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
         });
       },

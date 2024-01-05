@@ -1,7 +1,8 @@
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TSurveyCTAQuestion } from "@formbricks/types/surveys";
+
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;

@@ -1,21 +1,23 @@
 "use client";
 
-import AlertDialog from "@formbricks/ui/AlertDialog";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
+import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { isLabelValidForAllLanguages, validateQuestion } from "./Validation";
+
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import AlertDialog from "@formbricks/ui/AlertDialog";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Input } from "@formbricks/ui/Input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+
 import { deleteSurveyAction, updateSurveyAction } from "../actions";
-import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { isLabelValidForAllLanguages, validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
@@ -52,6 +54,7 @@ export default function SurveyMenuBar({
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const cautionText = "This survey received responses, make changes with caution.";
 
   let faultyQuestions: String[] = [];
 
@@ -90,7 +93,8 @@ export default function SurveyMenuBar({
       setDeleteDialogOpen(false);
       router.back();
     } catch (error) {
-      console.log("An error occurred deleting the survey");
+      console.error("An error occurred deleting the survey");
+      toast.error("An error occurred deleting the survey");
     }
   };
 
@@ -187,19 +191,21 @@ export default function SurveyMenuBar({
 
         if (validFields < 2) {
           setInvalidQuestions([question.id]);
-          toast.error("Incomplete logic jumps detected: Please fill or delete them.");
+          toast.error("Incomplete logic jumps detected: Fill or remove them in the Questions tab.");
           return false;
         }
 
         if (question.required && logic.condition === "skipped") {
-          toast.error("You have a missing logic condition. Please update or delete it.");
+          toast.error("A logic condition is missing: Please update or delete it in the Questions tab.");
           return false;
         }
 
         const thisLogic = `${logic.condition}-${logic.value}`;
         if (existingLogicConditions.has(thisLogic)) {
           setInvalidQuestions([question.id]);
-          toast.error("You have 2 competing logic conditons. Please update or delete one.");
+          toast.error(
+            "There are two competing logic conditons: Please update or delete one in the Questions tab."
+          );
           return false;
         }
         existingLogicConditions.add(thisLogic);
@@ -242,6 +248,11 @@ export default function SurveyMenuBar({
         const { isDraft, ...rest } = question;
         return rest;
       }),
+      attributeFilters: localSurvey.attributeFilters.filter((attributeFilter) => {
+        if (attributeFilter.attributeClassId && attributeFilter.value) {
+          return true;
+        }
+      }),
     };
 
     if (!validateSurvey(localSurvey)) {
@@ -251,7 +262,6 @@ export default function SurveyMenuBar({
 
     try {
       await updateSurveyAction({ ...strippedSurvey });
-      router.refresh();
       setIsSurveySaving(false);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
@@ -262,7 +272,6 @@ export default function SurveyMenuBar({
         } else {
           router.push(`/environments/${environment.id}/surveys`);
         }
-        router.refresh();
       }
     } catch (e) {
       console.error(e);
@@ -271,6 +280,14 @@ export default function SurveyMenuBar({
       return;
     }
   };
+
+  function containsEmptyTriggers() {
+    return (
+      localSurvey.type === "web" &&
+      localSurvey.triggers &&
+      (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
+    );
+  }
 
   return (
     <>
@@ -302,11 +319,20 @@ export default function SurveyMenuBar({
           />
         </div>
         {responseCount > 0 && (
-          <div className="mx-auto flex items-center rounded-full border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm">
-            <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
-            <p className=" pl-1 text-xs lg:text-sm">
-              This survey received responses, make changes with caution.
-            </p>
+          <div className="ju flex items-center rounded-lg border border-amber-200 bg-amber-100 p-2 text-amber-700 shadow-sm lg:mx-auto">
+            <TooltipProvider delayDuration={50}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
+                </TooltipTrigger>
+                <TooltipContent side={"top"} className="lg:hidden">
+                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400 ">
+                    {cautionText}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <p className=" hidden pl-1 text-xs md:text-sm lg:block">{cautionText}</p>
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
@@ -318,7 +344,7 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            disabled={isSurveyPublishing}
+            disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
@@ -338,11 +364,7 @@ export default function SurveyMenuBar({
           )}
           {localSurvey.status === "draft" && !audiencePrompt && (
             <Button
-              disabled={
-                localSurvey.type === "web" &&
-                localSurvey.triggers &&
-                (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0 || isSurveySaving)
-              }
+              disabled={isSurveySaving || containsEmptyTriggers()}
               variant="darkCTA"
               loading={isSurveyPublishing}
               onClick={async () => {

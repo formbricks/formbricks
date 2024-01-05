@@ -1,9 +1,10 @@
 "use client";
 
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { useEffect, useState } from "react";
+
 import { Button } from "@formbricks/ui/Button";
 import { Confetti } from "@formbricks/ui/Confetti";
-import { useEffect, useState } from "react";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
 interface ConfirmationPageProps {
   environmentId: string;

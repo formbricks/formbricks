@@ -1,6 +1,6 @@
-import { TSurveyQuestion } from "@formbricks/types/surveys";
-import { TResponse } from "@formbricks/types/responses";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 export const getQuestionResponseMapping = (
   survey: { questions: TSurveyQuestion[] },
