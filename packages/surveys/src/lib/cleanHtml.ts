@@ -21,9 +21,9 @@ export function cleanHtml(str: string): string {
    */
   function removeScripts(html: Element) {
     let scripts = html.querySelectorAll("script");
-    for (let script of scripts) {
+    scripts.forEach((script) => {
       script.remove();
-    }
+    });
   }
 
   /**
@@ -38,8 +38,8 @@ export function cleanHtml(str: string): string {
   function isPossiblyDangerous(name: string, value: string): boolean {
     let val = value.replace(/\s+/g, "").toLowerCase();
     if (
-      ["src", "href", "xlink:href"].includes(name) &&
-      (val.includes("javascript:") || val.includes("data:"))
+      ["src", "href", "xlink:href", "srcdoc"].includes(name) &&
+      (val.includes("javascript:") || val.includes("data:") || val.includes("<script>"))
     ) {
       return true;
     }
@@ -57,9 +57,14 @@ export function cleanHtml(str: string): string {
     // Loop through each attribute
     // If it's dangerous, remove it
     let atts = elem.attributes;
-    for (let { name, value } of atts) {
-      if (!isPossiblyDangerous(name, value)) continue;
-      elem.removeAttribute(name);
+    for (let i = atts.length - 1; i >= 0; i--) {
+      let { name, value } = atts[i];
+      if (isPossiblyDangerous(name, value)) {
+        elem.removeAttribute(name);
+      } else if (name === "srcdoc") {
+        // Recursively sanitize srcdoc content
+        elem.setAttribute(name, cleanHtml(value));
+      }
     }
   }
 
@@ -72,7 +77,7 @@ export function cleanHtml(str: string): string {
    * @param  {Element} html The HTML element
    */
   function clean(html: Element) {
-    let nodes = html.children;
+    let nodes = Array.from(html.children);
     for (let node of nodes) {
       removeAttributes(node);
       clean(node);
