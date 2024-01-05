@@ -68,7 +68,8 @@ export default function EditWelcomeCard({
       <div
         className={cn(
           open ? "bg-slate-700" : "bg-slate-400",
-          "flex w-10 items-center justify-center rounded-l-lg hover:bg-slate-600 group-aria-expanded:rounded-bl-none"
+          "flex w-10 items-center justify-center rounded-l-lg hover:bg-slate-600 group-aria-expanded:rounded-bl-none",
+          isInValid && "bg-red-400  hover:bg-red-600"
         )}>
         <p>✋</p>
       </div>

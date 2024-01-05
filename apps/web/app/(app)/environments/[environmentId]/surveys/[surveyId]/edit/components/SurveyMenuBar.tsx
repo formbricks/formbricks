@@ -113,7 +113,7 @@ export default function SurveyMenuBar({
 
   const validateSurvey = (survey) => {
     const existingQuestionIds = new Set();
-    console.log(survey);
+    faultyQuestions = [];
     if (survey.questions.length === 0) {
       toast.error("Please add at least one question");
       return;
@@ -121,15 +121,11 @@ export default function SurveyMenuBar({
     if (survey.thankYouCard.enabled) {
       if (!isLabelValidForAllLanguages(survey.thankYouCard.headline, languages)) {
         faultyQuestions.push("end");
-        toast.error("Please fill all required fields.");
-        return;
       }
     }
     if (survey.welcomeCard.enabled) {
       if (!isLabelValidForAllLanguages(survey.welcomeCard.headline, languages)) {
         faultyQuestions.push("start");
-        toast.error("Please fill all required fields.");
-        return;
       }
     }
     let pin = survey?.pin;
@@ -138,7 +134,6 @@ export default function SurveyMenuBar({
       return;
     }
 
-    faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
       const isValid = validateQuestion(question, languages);

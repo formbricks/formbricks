@@ -1,11 +1,13 @@
 "use client";
 
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
+import { isLabelValidForAllLanguages } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Validation";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -255,10 +257,11 @@ export default function MultipleChoiceSingleForm({
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
                   isInValid={
-                    (isInvalidValue === "" &&
-                      getLocalizedValue(choice.label, selectedLanguage).trim() === "") ||
-                    (isInvalidValue !== null &&
-                      getLocalizedValue(choice.label, selectedLanguage).trim() === isInvalidValue.trim())
+                    isInValid &&
+                    !isLabelValidForAllLanguages(
+                      question.choices[choiceIdx].label,
+                      extractLanguageSymbols(languages)
+                    )
                   }
                 />
                 {question.choices && question.choices.length > 2 && (

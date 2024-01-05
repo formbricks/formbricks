@@ -111,7 +111,6 @@ export const updateProduct = async (
   inputProduct: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
   validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
-
   const { environments, ...data } = inputProduct;
   let updatedProduct;
   try {

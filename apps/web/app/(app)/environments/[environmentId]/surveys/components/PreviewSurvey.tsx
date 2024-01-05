@@ -242,6 +242,7 @@ export default function PreviewSurvey({
                       isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       onFileUpload={onFileUpload}
+                      language={language}
                       responseCount={42}
                     />
                   </div>
@@ -313,6 +314,7 @@ export default function PreviewSurvey({
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
+                    language={language}
                     responseCount={42}
                   />
                 </div>

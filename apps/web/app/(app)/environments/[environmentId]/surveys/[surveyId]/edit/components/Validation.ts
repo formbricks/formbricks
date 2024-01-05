@@ -41,7 +41,14 @@ const validationRules = {
   },
   // Assuming headline is of type TI18nString
   defaultValidation: (question: TSurveyQuestion, languages: string[]) => {
-    return isLabelValidForAllLanguages(question.headline, languages);
+    if (question.subheader && question.subheader["en"]) {
+      return (
+        isLabelValidForAllLanguages(question.subheader, languages) &&
+        isLabelValidForAllLanguages(question.headline, languages)
+      );
+    } else {
+      return isLabelValidForAllLanguages(question.headline, languages);
+    }
   },
 };
 

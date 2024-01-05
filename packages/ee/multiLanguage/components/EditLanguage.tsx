@@ -1,12 +1,15 @@
 "use client";
-import { TLanguages, TProduct } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+
+import { TLanguages, TProduct } from "@formbricks/types/product";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+
 import { updateProductAction } from "../lib/actions";
 
 export default function EditLanguage({ product }: { product: TProduct }) {

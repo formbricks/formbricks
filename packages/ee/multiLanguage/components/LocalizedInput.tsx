@@ -1,5 +1,7 @@
 import { TI18nString } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
+
+import { extractLanguageSymbols, isLabelValidForAllLanguages } from "../utils/i18n";
 import LanguageIndicator from "./LanguageIndicator";
 
 interface LocalizedInputProps {
@@ -25,11 +27,20 @@ const LocalizedInput = ({
   languages,
 }: LocalizedInputProps) => {
   const hasi18n = value._i18n_;
+  const showIncompleteTranslationWarning =
+    id === "subheader"
+      ? value.en.trim() !== "" &&
+        isInValid &&
+        !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
+        selectedLanguage === "en"
+      : isInValid &&
+        !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
+        selectedLanguage === "en";
   return (
     <div className="relative w-full">
       <Input
         id={id}
-        isInvalid={isInValid && value[selectedLanguage]?.trim() === ""}
+        isInvalid={isInValid && showIncompleteTranslationWarning}
         name={name}
         value={value[selectedLanguage] ? value[selectedLanguage] : ""}
         onChange={onChange}
@@ -49,6 +60,10 @@ const LocalizedInput = ({
             </div>
           )}
         </div>
+      )}
+
+      {showIncompleteTranslationWarning && (
+        <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
       )}
     </div>
   );

@@ -3,6 +3,7 @@
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useRef } from "react";
 
 import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
 import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
@@ -50,12 +51,14 @@ export default function SurveyEditor({
   const [languages, setLanguages] = useState<TLanguages>({ en: "English" });
   const allLanguages = Object.entries(product.languages ?? { en: "English" });
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
+  const [isFirstRender, setIsFirstRender] = useState(null);
+  const surveyEditorRef = useRef(null);
 
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
       setLocalSurvey(JSON.parse(JSON.stringify(survey)));
-
+      setIsFirstRender(true);
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
@@ -95,6 +98,12 @@ export default function SurveyEditor({
       setSelectedLanguage("en");
     }
   }, [languages]);
+  useEffect(() => {
+    if (surveyEditorRef.current && isFirstRender) {
+      surveyEditorRef.current.scrollTop = 60;
+      setIsFirstRender(false);
+    }
+  }, [localSurvey]);
 
   if (!localSurvey) {
     return <Loading />;
@@ -117,31 +126,34 @@ export default function SurveyEditor({
           selectedLanguage={selectedLanguage}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
-          <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
+          <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
             <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
-            <div className="mt-16">
-              <LanguageSwitch
-                allLanguages={allLanguages}
-                languages={languages}
-                setLanguages={setLanguages}
-                setI18n={setI18n}
-                environmentId={environment.id}
-                isEnterpriseEdition={isEnterpriseEdition}
-              />
-            </div>
+
             {activeView === "questions" ? (
-              <QuestionsView
-                localSurvey={translatedSurvey ? translatedSurvey : localSurvey}
-                setLocalSurvey={setLocalSurvey}
-                activeQuestionId={activeQuestionId}
-                setActiveQuestionId={setActiveQuestionId}
-                product={product}
-                invalidQuestions={invalidQuestions}
-                setInvalidQuestions={setInvalidQuestions}
-                selectedLanguage={selectedLanguage ? selectedLanguage : "en"}
-                setSelectedLanguage={setSelectedLanguage}
-                languages={Object.entries(languages)}
-              />
+              <>
+                <div className="mt-16">
+                  <LanguageSwitch
+                    allLanguages={allLanguages}
+                    languages={languages}
+                    setLanguages={setLanguages}
+                    setI18n={setI18n}
+                    environmentId={environment.id}
+                    isEnterpriseEdition={isEnterpriseEdition}
+                  />
+                </div>
+                <QuestionsView
+                  localSurvey={translatedSurvey ? translatedSurvey : localSurvey}
+                  setLocalSurvey={setLocalSurvey}
+                  activeQuestionId={activeQuestionId}
+                  setActiveQuestionId={setActiveQuestionId}
+                  product={product}
+                  invalidQuestions={invalidQuestions}
+                  setInvalidQuestions={setInvalidQuestions}
+                  selectedLanguage={selectedLanguage ? selectedLanguage : "en"}
+                  setSelectedLanguage={setSelectedLanguage}
+                  languages={Object.entries(languages)}
+                />
+              </>
             ) : (
               <SettingsView
                 environment={environment}

@@ -2,7 +2,7 @@
 
 import HiddenFieldsCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/HiddenFieldsCard";
 import { createId } from "@paralleldrive/cuid2";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
@@ -15,7 +15,7 @@ import EditThankYouCard from "./EditThankYouCard";
 import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
-import { validateQuestion } from "./Validation";
+import { isLabelValidForAllLanguages, validateQuestion } from "./Validation";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
@@ -186,6 +186,39 @@ export default function QuestionsView({
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
+
+  useEffect(() => {
+    if (invalidQuestions === null) return;
+
+    const languagesArray = languages.map((language) => language[0]);
+
+    const updateInvalidQuestions = (card, cardId, currentInvalidQuestions) => {
+      if (card.enabled) {
+        if (isLabelValidForAllLanguages(card.headline, languagesArray)) {
+          return currentInvalidQuestions.filter((id) => id !== cardId);
+        } else if (!currentInvalidQuestions.includes(cardId)) {
+          return [...currentInvalidQuestions, cardId];
+        }
+      } else {
+        return currentInvalidQuestions.filter((id) => id !== cardId);
+      }
+      return currentInvalidQuestions;
+    };
+
+    const updatedQuestionsAfterStart = updateInvalidQuestions(
+      localSurvey.welcomeCard,
+      "start",
+      invalidQuestions
+    );
+    setInvalidQuestions(updatedQuestionsAfterStart);
+
+    const updatedQuestionsAfterEnd = updateInvalidQuestions(
+      localSurvey.thankYouCard,
+      "end",
+      updatedQuestionsAfterStart
+    );
+    setInvalidQuestions(updatedQuestionsAfterEnd);
+  }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
 
   return (
     <div className="px-5 py-4">

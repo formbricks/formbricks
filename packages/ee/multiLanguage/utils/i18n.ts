@@ -1,5 +1,6 @@
 import { TI18nString, TSurveyThankYouCard, TSurveyWelcomeCard } from "@formbricks/types/surveys";
-import { TSurveyQuestion, TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyMultipleChoiceMultiQuestion, TSurveyQuestion } from "@formbricks/types/surveys";
+
 // Helper function to create an i18nString from a regular string.
 // languages = ["german","hindi"]
 const createI18nString = (text: string | TI18nString, languages?: string[]): TI18nString => {
@@ -122,15 +123,26 @@ export const getTranslation = (i18nObject: TI18nString, languageCode: string): s
 };
 
 export function convertArrayToObject(array2D: string[][]): Record<string, string> {
-  return array2D.reduce((obj: Record<string, string>, item) => {
-    if (item.length >= 2) {
-      const [key, value] = item;
-      obj[key] = value;
-    }
-    return obj;
-  }, {} as Record<string, string>);
+  return array2D.reduce(
+    (obj: Record<string, string>, item) => {
+      if (item.length >= 2) {
+        const [key, value] = item;
+        obj[key] = value;
+      }
+      return obj;
+    },
+    {} as Record<string, string>
+  );
 }
 
-export function extractLanguageSymbols(array2D: string[][]) {
+export function extractLanguageSymbols(array2D: string[][]): string[] {
   return array2D.map((item) => item[0]);
 }
+
+export const isLabelValidForAllLanguages = (label: string | TI18nString, languages: string[]): boolean => {
+  if (typeof label === "string") {
+    return label.trim() !== "";
+  } else {
+    return languages.every((language) => label[language] && label[language].trim() !== "");
+  }
+};

@@ -6,6 +6,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { extractLanguageSymbols, isLabelValidForAllLanguages } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -255,10 +256,11 @@ export default function MultipleChoiceMultiForm({
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
                   isInValid={
-                    (isInvalidValue === "" &&
-                      getLocalizedValue(choice.label, selectedLanguage).trim() === "") ||
-                    (isInvalidValue !== null &&
-                      getLocalizedValue(choice.label, selectedLanguage).trim() === isInvalidValue.trim())
+                    isInValid &&
+                    !isLabelValidForAllLanguages(
+                      question.choices[choiceIdx].label,
+                      extractLanguageSymbols(languages)
+                    )
                   }
                 />
                 {question.choices && question.choices.length > 2 && (

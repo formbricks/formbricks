@@ -46,8 +46,6 @@ export default async function SurveysEditPage({ params }) {
     getIsEnterpriseEdition(),
   ]);
 
-  console.log("isEnterpriseEdition", isEnterpriseEdition);
-
   if (!session) {
     throw new Error("Session not found");
   }
