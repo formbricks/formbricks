@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
@@ -36,7 +37,7 @@ import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
-  user: TUser;
+  user?: TUser;
   pageType: string;
   environmentTags: TTag[];
   environment: TEnvironment;
@@ -85,7 +86,9 @@ export default function SingleResponseCard({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const isSubmissionFresh = isSubmissionTimeLessThan5Minutes(response.updatedAt);
+  const canResponseBeDeleted = response.finished
+    ? true
+    : isSubmissionTimeMoreThan5Minutes(response.updatedAt);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
   const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
@@ -164,11 +167,11 @@ export default function SingleResponseCard({
       (response.meta?.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
 
-  function isSubmissionTimeLessThan5Minutes(submissionTimeISOString: Date) {
+  function isSubmissionTimeMoreThan5Minutes(submissionTimeISOString: Date) {
     const submissionTime: Date = new Date(submissionTimeISOString);
     const currentTime: Date = new Date();
     const timeDifference: number = (currentTime.getTime() - submissionTime.getTime()) / (1000 * 60); // Convert milliseconds to minutes
-    return timeDifference < 5;
+    return timeDifference > 5;
   }
 
   const tooltipContent = (
@@ -221,23 +224,38 @@ export default function SingleResponseCard({
         className={clsx(
           "relative z-10 my-6 rounded-lg border border-slate-200 bg-slate-50 shadow-sm transition-all",
           pageType === "response" &&
-            (isOpen ? "w-3/4" : response.notes.length ? "w-[96.5%]" : "w-full group-hover:w-[96.5%]")
+            (isOpen
+              ? "w-3/4"
+              : response.notes.length
+                ? "w-[96.5%]"
+                : cn("w-full", user ? "group-hover:w-[96.5%]" : ""))
         )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
             {pageType === "response" && (
               <div>
                 {response.person?.id ? (
-                  <Link
-                    className="group flex items-center"
-                    href={`/environments/${environmentId}/people/${response.person.id}`}>
-                    <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                      <PersonAvatar personId={response.person.id} />
-                    </TooltipRenderer>
-                    <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
-                      {displayIdentifier}
-                    </h3>
-                  </Link>
+                  user ? (
+                    <Link
+                      className="group flex items-center"
+                      href={`/environments/${environmentId}/people/${response.person.id}`}>
+                      <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                        <PersonAvatar personId={response.person.id} />
+                      </TooltipRenderer>
+                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                        {displayIdentifier}
+                      </h3>
+                    </Link>
+                  ) : (
+                    <div className="group flex items-center">
+                      <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                        <PersonAvatar personId={response.person.id} />
+                      </TooltipRenderer>
+                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
+                        {displayIdentifier}
+                      </h3>
+                    </div>
+                  )
                 ) : (
                   <div className="group flex items-center">
                     <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
@@ -266,18 +284,20 @@ export default function SingleResponseCard({
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
-              {!isViewer && (
-                <TooltipRenderer shouldRender={isSubmissionFresh} tooltipContent={deleteSubmissionToolTip}>
+              {user && !isViewer && (
+                <TooltipRenderer
+                  shouldRender={!canResponseBeDeleted}
+                  tooltipContent={deleteSubmissionToolTip}>
                   <TrashIcon
                     onClick={() => {
-                      if (!isSubmissionFresh) {
+                      if (canResponseBeDeleted) {
                         setDeleteDialogOpen(true);
                       }
                     }}
                     className={`h-4 w-4 ${
-                      isSubmissionFresh
-                        ? "cursor-not-allowed text-gray-400"
-                        : "text-slate-500 hover:text-red-700"
+                      canResponseBeDeleted
+                        ? "text-slate-500 hover:text-red-700"
+                        : "cursor-not-allowed text-gray-400"
                     } `}
                   />
                 </TooltipRenderer>
@@ -378,16 +398,18 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        <LoadingWrapper isLoading={isLoading} error={error}>
-          {!isViewer && (
-            <ResponseTagsWrapper
-              environmentId={environmentId}
-              responseId={response.id}
-              tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-              environmentTags={environmentTags}
-            />
-          )}
-        </LoadingWrapper>
+        {user && (
+          <LoadingWrapper isLoading={isLoading} error={error}>
+            {!isViewer && (
+              <ResponseTagsWrapper
+                environmentId={environmentId}
+                responseId={response.id}
+                tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+                environmentTags={environmentTags}
+              />
+            )}
+          </LoadingWrapper>
+        )}
 
         <DeleteDialog
           open={deleteDialogOpen}
@@ -397,7 +419,7 @@ export default function SingleResponseCard({
           isDeleting={isDeleting}
         />
       </div>
-      {pageType === "response" && (
+      {user && pageType === "response" && (
         <ResponseNotes
           user={user}
           responseId={response.id}
