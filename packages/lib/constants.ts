@@ -123,6 +123,10 @@ export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 10 * 15 * 1000, // 15 minutes
   allowedPerInterval: 60,
 };
+export const SHARE_RATE_LIMIT = {
+  interval: 60 * 60 * 1000, // 60 minutes
+  allowedPerInterval: 30,
+};
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
