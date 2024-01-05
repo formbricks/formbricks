@@ -86,7 +86,9 @@ export default function SingleResponseCard({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const isSubmissionFresh = isSubmissionTimeLessThan5Minutes(response.updatedAt);
+  const canResponseBeDeleted = response.finished
+    ? true
+    : isSubmissionTimeMoreThan5Minutes(response.updatedAt);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
   const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
@@ -165,11 +167,11 @@ export default function SingleResponseCard({
       (response.meta?.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
 
-  function isSubmissionTimeLessThan5Minutes(submissionTimeISOString: Date) {
+  function isSubmissionTimeMoreThan5Minutes(submissionTimeISOString: Date) {
     const submissionTime: Date = new Date(submissionTimeISOString);
     const currentTime: Date = new Date();
     const timeDifference: number = (currentTime.getTime() - submissionTime.getTime()) / (1000 * 60); // Convert milliseconds to minutes
-    return timeDifference < 5;
+    return timeDifference > 5;
   }
 
   const tooltipContent = (
@@ -283,17 +285,19 @@ export default function SingleResponseCard({
                 {timeSince(response.updatedAt.toISOString())}
               </time>
               {user && !isViewer && (
-                <TooltipRenderer shouldRender={isSubmissionFresh} tooltipContent={deleteSubmissionToolTip}>
+                <TooltipRenderer
+                  shouldRender={!canResponseBeDeleted}
+                  tooltipContent={deleteSubmissionToolTip}>
                   <TrashIcon
                     onClick={() => {
-                      if (!isSubmissionFresh) {
+                      if (canResponseBeDeleted) {
                         setDeleteDialogOpen(true);
                       }
                     }}
                     className={`h-4 w-4 ${
-                      isSubmissionFresh
-                        ? "cursor-not-allowed text-gray-400"
-                        : "text-slate-500 hover:text-red-700"
+                      canResponseBeDeleted
+                        ? "text-slate-500 hover:text-red-700"
+                        : "cursor-not-allowed text-gray-400"
                     } `}
                   />
                 </TooltipRenderer>
