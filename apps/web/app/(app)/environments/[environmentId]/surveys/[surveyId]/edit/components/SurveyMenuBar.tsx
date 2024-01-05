@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
@@ -217,6 +218,12 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
+    if (questionWithEmptyFallback) {
+      toast.error("Fallback missing");
+      return;
+    }
+
     setIsSurveySaving(true);
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {

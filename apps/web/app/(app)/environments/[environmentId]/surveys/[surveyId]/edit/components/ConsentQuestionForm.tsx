@@ -33,7 +33,7 @@ export default function ConsentQuestionForm({
         localSurvey={localSurvey}
         environmentId={environmentId}
         isInValid={isInValid}
-        question={question}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         type="headline"

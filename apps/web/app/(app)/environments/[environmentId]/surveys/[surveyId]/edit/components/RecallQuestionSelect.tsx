@@ -1,11 +1,12 @@
 import {
+  CalendarDaysIcon,
   ChatBubbleBottomCenterTextIcon,
   ListBulletIcon,
+  PhoneIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
 } from "@heroicons/react/24/solid";
-import { CalendarDaysIcon, Phone } from "lucide-react";
 import { RefObject, useEffect, useState } from "react";
 
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
@@ -18,7 +19,7 @@ const questionIconMapping = {
   rating: StarIcon,
   nps: PresentationChartBarIcon,
   date: CalendarDaysIcon,
-  cal: Phone,
+  cal: PhoneIcon,
 };
 
 interface RecallQuestionSelectProps {
@@ -41,12 +42,13 @@ export default function RecallQuestionSelect({
   recallQuestions,
 }: RecallQuestionSelectProps) {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
-  const isNotAllowedQuestionType = (question) => {
+  const isNotAllowedQuestionType = (question: TSurveyQuestion) => {
     return (
       question.type === "fileUpload" ||
       question.type === "cta" ||
       question.type === "consent" ||
-      question.type === "pictureSelection"
+      question.type === "pictureSelection" ||
+      question.type === "cal"
     );
   };
 

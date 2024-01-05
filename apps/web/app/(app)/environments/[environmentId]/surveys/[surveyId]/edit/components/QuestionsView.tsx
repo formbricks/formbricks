@@ -2,10 +2,11 @@
 
 import HiddenFieldsCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/HiddenFieldsCard";
 import { createId } from "@paralleldrive/cuid2";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
+import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -182,6 +183,16 @@ export default function QuestionsView({
     const updatedSurvey = { ...localSurvey, questions: newQuestions };
     setLocalSurvey(updatedSurvey);
   };
+
+  useEffect(() => {
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
+    if (questionWithEmptyFallback) {
+      setActiveQuestionId(questionWithEmptyFallback.id);
+      if (activeQuestionId === questionWithEmptyFallback.id) {
+        toast.error("Fallback missing");
+      }
+    }
+  }, [activeQuestionId]);
 
   return (
     <div className="mt-12 px-5 py-4">

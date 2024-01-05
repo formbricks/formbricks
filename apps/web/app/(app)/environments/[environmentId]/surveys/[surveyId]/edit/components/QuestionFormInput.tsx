@@ -65,8 +65,7 @@ const QuestionFormInput = ({
     });
     return recallQuestionArray;
   };
-
-  const [text, setText] = useState(question[type]);
+  const [text, setText] = useState(question[type] ?? "");
   const [renderedText, setRenderedText] = useState<JSX.Element[]>();
   const highlightContainerRef = useRef<HTMLInputElement>(null);
   const fallbackInputRef = useRef<HTMLInputElement>(null);
@@ -179,7 +178,6 @@ const QuestionFormInput = ({
       return updatedQuestions;
     });
     if (!Object.keys(fallbacks).includes(recallQuestion.id)) {
-      // Update the fallbacks state
       setFallbacks((prevFallbacks) => ({
         ...prevFallbacks,
         [recallQuestion.id]: "",

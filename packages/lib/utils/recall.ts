@@ -81,3 +81,13 @@ export function replaceRecallInfoWithUnderline(recallQuestion: TSurveyQuestion):
   }
   return recallQuestion;
 }
+export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | null => {
+  const questions = survey.questions;
+  for (let i = 0; i < questions.length; i++) {
+    const question = questions[i];
+    if (question.headline.includes("recall:") && !extractFallbackValue(question.headline)) {
+      return question;
+    }
+  }
+  return null;
+};
