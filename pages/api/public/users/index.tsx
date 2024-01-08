@@ -36,6 +36,8 @@ export default async function handle(
         id: true,
       },
     });
+    console.log("*****user: ", user);
+    console.log("*****form: ", form);
 
     // create user in database
     try {
