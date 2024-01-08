@@ -27,7 +27,7 @@ const LocalizedInput = ({
   languages,
 }: LocalizedInputProps) => {
   const hasi18n = value._i18n_;
-  const showIncompleteTranslationWarning =
+  const isInComplete =
     id === "subheader"
       ? value.en.trim() !== "" &&
         isInValid &&
@@ -40,7 +40,7 @@ const LocalizedInput = ({
     <div className="relative w-full">
       <Input
         id={id}
-        isInvalid={isInValid && showIncompleteTranslationWarning}
+        isInvalid={isInValid && isInComplete}
         name={name}
         value={value[selectedLanguage] ? value[selectedLanguage] : ""}
         onChange={onChange}
@@ -62,9 +62,7 @@ const LocalizedInput = ({
         </div>
       )}
 
-      {showIncompleteTranslationWarning && (
-        <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
-      )}
+      {isInComplete && <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>}
     </div>
   );
 };

@@ -4,6 +4,7 @@ import Headline from "@/components/general/Headline";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
+import { getLocalizedValue } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
 
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
@@ -18,6 +19,7 @@ interface DateQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
+  language: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -30,6 +32,7 @@ export default function DateQuestion({
   isFirstQuestion,
   isLastQuestion,
   onChange,
+  language,
   setTtc,
   ttc,
 }: DateQuestionProps) {
@@ -120,8 +123,15 @@ export default function DateQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline
+        headline={getLocalizedValue(question.headline, language)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
+        questionId={question.id}
+      />
 
       <div className={"text-red-600"}>
         <span>{errorMessage}</span>

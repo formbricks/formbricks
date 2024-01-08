@@ -80,7 +80,7 @@ export default function OpenTextQuestion({
       <Subheader
         subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
         questionId={question.id}
-      />{" "}
+      />
       <div className="mt-4">
         {question.longAnswer === false ? (
           <input

@@ -76,6 +76,7 @@ export class ResponseQueue {
       if (this.surveyState.responseId !== null) {
         await this.api.client.response.update({ ...responseUpdate, responseId: this.surveyState.responseId });
       } else {
+        console.log(responseUpdate);
         const response = await this.api.client.response.create({
           ...responseUpdate,
           surveyId: this.surveyState.surveyId,

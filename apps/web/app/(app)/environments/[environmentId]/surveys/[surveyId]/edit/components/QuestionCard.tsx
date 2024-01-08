@@ -287,6 +287,9 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
@@ -315,11 +318,15 @@ export default function QuestionCard({
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
+                  languages={languages}
                 />
               ) : null}
               <div className="mt-4">

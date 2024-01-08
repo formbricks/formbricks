@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
+import type { TI18nString, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
@@ -59,7 +59,7 @@ export default function MultipleChoiceSingleQuestion({
   );
 
   useEffect(() => {
-    setOtherSelected(!!value && !question.choices.find((c) => c.label === value));
+    setOtherSelected(!!value && !question.choices.find((c) => (c.label as TI18nString)[language] === value));
   }, [question.id]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);

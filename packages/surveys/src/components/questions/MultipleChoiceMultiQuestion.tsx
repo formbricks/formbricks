@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
+import type { TI18nString, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
@@ -54,11 +54,14 @@ export default function MultipleChoiceMultiQuestion({
     setOtherSelected(
       !!value &&
         ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
+          console.log(getChoicesWithoutOtherLabels());
           return getChoicesWithoutOtherLabels().includes(item) === false;
         })
     );
     setOtherValue(
-      (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
+      (Array.isArray(value) &&
+        value.filter((v) => !question.choices.find((c) => (c.label as TI18nString)[language] === v))[0]) ||
+        ""
     );
   }, [question.id]);
 
@@ -74,7 +77,7 @@ export default function MultipleChoiceMultiQuestion({
   }, [question.choices, question.shuffleOption]);
 
   const questionChoiceLabels = questionChoices.map((questionChoice) => {
-    return questionChoice.label;
+    return questionChoice.label[language];
   });
 
   const otherOption = useMemo(
@@ -99,6 +102,7 @@ export default function MultipleChoiceMultiQuestion({
         });
         return onChange({ [question.id]: [...newValue, item] });
       } else {
+        console.log([...value, item]);
         return onChange({ [question.id]: [...value, item] });
       }
     }
@@ -134,7 +138,7 @@ export default function MultipleChoiceMultiQuestion({
       <Subheader
         subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
         questionId={question.id}
-      />{" "}
+      />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>

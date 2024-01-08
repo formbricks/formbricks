@@ -1,5 +1,6 @@
 "use client";
 
+import { getUpdatedLanguages } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -49,16 +50,25 @@ export default function SurveyEditor({
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
   const [languages, setLanguages] = useState<TLanguages>({ en: "English" });
-  const allLanguages = Object.entries(product.languages ?? { en: "English" });
+  const [allLanguages, setAllLanguages] = useState(Object.entries(product.languages ?? { en: "English" }));
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
-  const [isFirstRender, setIsFirstRender] = useState(null);
   const surveyEditorRef = useRef(null);
+
+  async function refetchLanguages() {
+    try {
+      const updatedLanguages = await getUpdatedLanguages(product.id);
+      if (updatedLanguages) {
+        setAllLanguages(Object.entries(updatedLanguages));
+      }
+    } catch (error) {
+      console.error("Failed to fetch languages:", error);
+    }
+  }
 
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
       setLocalSurvey(JSON.parse(JSON.stringify(survey)));
-      setIsFirstRender(true);
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
@@ -98,12 +108,18 @@ export default function SurveyEditor({
       setSelectedLanguage("en");
     }
   }, [languages]);
+
   useEffect(() => {
-    if (surveyEditorRef.current && isFirstRender) {
-      surveyEditorRef.current.scrollTop = 60;
-      setIsFirstRender(false);
-    }
-  }, [localSurvey]);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refetchLanguages();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   if (!localSurvey) {
     return <Loading />;

@@ -1,9 +1,9 @@
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
-import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { TI18nString, TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
 
@@ -16,6 +16,9 @@ interface IDateQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
   isInValid: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
+  languages: string[][];
 }
 
 const dateOptions = [
@@ -39,6 +42,9 @@ export default function DateQuestionForm({
   updateQuestion,
   isInValid,
   localSurvey,
+  selectedLanguage,
+  setSelectedLanguage,
+  languages,
 }: IDateQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
@@ -50,18 +56,34 @@ export default function DateQuestionForm({
         question={question}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        selectedLanguage={selectedLanguage}
+        setSelectedLanguage={setSelectedLanguage}
+        languages={languages}
       />
       <div className="mt-3">
         {showSubheader && (
           <>
             <Label htmlFor="subheader">Description</Label>
             <div className="mt-2 inline-flex w-full items-center">
-              <Input
-                id="subheader"
-                name="subheader"
-                value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
-              />
+              <div className="w-full">
+                <LocalizedInput
+                  id="subheader"
+                  name="subheader"
+                  value={question.subheader as TI18nString}
+                  languages={languages}
+                  isInValid={isInValid}
+                  onChange={(e) => {
+                    let translatedSubheader = {
+                      ...(question.subheader as TI18nString),
+                      [selectedLanguage]: e.target.value,
+                    };
+                    updateQuestion(questionIdx, { subheader: translatedSubheader });
+                  }}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
+                />
+              </div>
+
               <TrashIcon
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {

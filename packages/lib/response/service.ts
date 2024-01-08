@@ -206,7 +206,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
-  const { environmentId, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
+  const { environmentId, language, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
 
   try {
     let person: TPerson | null = null;
@@ -228,6 +228,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         },
         finished: finished,
         data: data,
+        language: language,
         ...(person?.id && {
           person: {
             connect: {
@@ -521,6 +522,7 @@ export const updateResponse = async (
         ? calculateTtcTotal(responseInput.ttc)
         : responseInput.ttc
       : {};
+    const language = responseInput.language;
 
     const responsePrisma = await prisma.response.update({
       where: {
@@ -530,6 +532,7 @@ export const updateResponse = async (
         finished: responseInput.finished,
         data,
         ttc,
+        language,
       },
       select: responseSelection,
     });

@@ -104,6 +104,7 @@ export const ZResponseUpdateInput = z.object({
   finished: z.boolean(),
   data: ZResponseData,
   ttc: ZResponseTtc.optional(),
+  language: z.string().optional(),
 });
 
 export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;

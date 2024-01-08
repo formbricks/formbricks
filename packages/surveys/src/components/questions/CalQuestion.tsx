@@ -4,6 +4,7 @@ import CalEmbed from "@/components/general/CalEmbed";
 import Headline from "@/components/general/Headline";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { getLocalizedValue } from "@/lib/utils";
 import { useCallback, useState } from "preact/hooks";
 
 import { TResponseData } from "@formbricks/types/responses";
@@ -18,6 +19,7 @@ interface CalQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  language: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -30,6 +32,7 @@ export default function CalQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  language,
   ttc,
   setTtc,
 }: CalQuestionProps) {
@@ -61,10 +64,15 @@ export default function CalQuestion({
         onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="w-full">
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-
-      <Subheader subheader={question.subheader} questionId={question.id} />
-
+      <Headline
+        headline={getLocalizedValue(question.headline, language)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
+        questionId={question.id}
+      />
       <>
         {errorMessage && <span className="text-red-500">{errorMessage}</span>}
         <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
