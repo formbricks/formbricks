@@ -43,7 +43,8 @@ export default function ShareInviteModal({ inviteToken, open, setOpen }: ShareIn
             <p
               ref={linkTextRef}
               className="relative mt-3 w-full truncate rounded-lg border border-slate-300 bg-slate-50 p-3 text-center text-slate-800"
-              onClick={() => handleTextSelection()}>
+              onClick={() => handleTextSelection()}
+              id="inviteLinkText">
               {`${window.location.protocol}//${window.location.host}/invite?token=${inviteToken}`}
             </p>
           </div>
