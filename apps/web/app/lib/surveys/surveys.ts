@@ -163,7 +163,6 @@ export const generateQuestionAndFilterOptions = (
   const tagsOptions = environmentTags?.map((t) => {
     return t.name;
   });
-  console.log(responses);
   if (Object.keys(survey.questions[0].headline).length > 2) {
     // If so, add the LANGUAGES filter to the questionOptions array.
     questionOptions.push({

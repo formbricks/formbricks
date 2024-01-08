@@ -54,7 +54,6 @@ export default function MultipleChoiceMultiQuestion({
     setOtherSelected(
       !!value &&
         ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
-          console.log(getChoicesWithoutOtherLabels());
           return getChoicesWithoutOtherLabels().includes(item) === false;
         })
     );
@@ -102,7 +101,6 @@ export default function MultipleChoiceMultiQuestion({
         });
         return onChange({ [question.id]: [...newValue, item] });
       } else {
-        console.log([...value, item]);
         return onChange({ [question.id]: [...value, item] });
       }
     }
