@@ -2,8 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
 import { prisma } from "../../../../lib/prisma";
 import { UserRole } from "@prisma/client";
-// Not important now
-// import { sendVerificationEmail } from "../../../../lib/email";
+import { sendVerificationEmail } from "../../../../lib/email";
 import getConfig from "next/config";
 import { capturePosthogEvent } from "../../../../lib/posthog";
 import { hashPassword } from "../../../../lib/auth";
@@ -20,12 +19,11 @@ export default async function handle(
   // Required fields in body: email, password (hashed)
   // Optional fields in body: firstname, lastname
   if (req.method === "POST") {
-    let { user, trainingSession } = req.body;
+    let { user, trainingSession, callbackUrl } = req.body;
     const password = await hashPassword(`${publicRuntimeConfig.nextauthSecret}`);
     user = { ...user, ...{ email: user.email.toLowerCase(), password, profileIsValid: true } };
 
-    // Not important now
-    // const { emailVerificationDisabled } = publicRuntimeConfig;
+    const { emailVerificationDisabled } = publicRuntimeConfig;
 
     // get related training session
     const form = await prisma.form.findFirst({
@@ -47,8 +45,7 @@ export default async function handle(
         },
       });
 
-      // Not importat now
-      // if (!emailVerificationDisabled) await sendVerificationEmail(userData, callbackUrl);
+      if (!emailVerificationDisabled) await sendVerificationEmail(userData, callbackUrl);
       capturePosthogEvent(user.email, "user created");
       const token = createToken(userData.id, userData.email);
       res.status(200).json({
