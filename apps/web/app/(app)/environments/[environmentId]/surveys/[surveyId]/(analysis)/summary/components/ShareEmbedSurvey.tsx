@@ -31,7 +31,7 @@ export default function ShareEmbedSurvey({
   product,
   user,
 }: ShareEmbedSurveyProps) {
-  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey]);
+  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey, webAppUrl]);
   const isSingleUseLinkSurvey = survey.singleUse?.enabled;
   const { email } = user;
   const { brandColor } = product;
