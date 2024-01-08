@@ -31,9 +31,10 @@ export default function ResponseTimeline({
 
   useEffect(() => {
     setDisplayedResponses(responses.slice(0, responsesPerPage));
-  }, [responses]);
+  }, [responses, responsesPerPage]);
 
   useEffect(() => {
+    const currentLoadingRef = loadingRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -46,16 +47,16 @@ export default function ResponseTimeline({
       { threshold: 0.8 }
     );
 
-    if (loadingRef.current) {
-      observer.observe(loadingRef.current);
+    if (currentLoadingRef) {
+      observer.observe(currentLoadingRef);
     }
 
     return () => {
-      if (loadingRef.current) {
-        observer.unobserve(loadingRef.current);
+      if (currentLoadingRef) {
+        observer.unobserve(currentLoadingRef);
       }
     };
-  }, [responses]);
+  }, [responses, responsesPerPage]);
 
   return (
     <div className="space-y-4">
