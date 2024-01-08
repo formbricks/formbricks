@@ -96,7 +96,7 @@ export const SigninForm = ({
     if (error) {
       setSignInError(error);
     }
-  }, []);
+  }, [error]);
 
   const formLabel = useMemo(() => {
     if (totpBackup) {
