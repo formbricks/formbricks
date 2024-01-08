@@ -110,7 +110,7 @@ export default function WhenToSendCard({
 
       setActiveIndex(null);
     }
-  }, [actionClassArray, activeIndex, setTriggerEvent]);
+  }, [actionClassArray, activeIndex, setTriggerEvent, isAddEventModalOpen, localSurvey.triggers]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {

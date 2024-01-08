@@ -280,9 +280,9 @@ export default function Header() {
             Pricing
           </Link>
           <Link
-            href="/concierge"
+            href="/community"
             className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
-            Concierge
+            Community
           </Link>
           <Link
             href="/docs"
@@ -331,7 +331,7 @@ export default function Header() {
               router.push("https://app.formbricks.com");
               plausible("NavBar_CTA_Login");
             }}>
-            Go to app
+            Get started
           </Button>
         </div>
       </div>
@@ -391,7 +391,7 @@ export default function Header() {
                     <hr className="mx-20 my-6 opacity-25" />
                   </div>
                 )}
-                <Link href="/concierge">Concierge</Link>
+                <Link href="/community">Community</Link>
                 <Link href="/pricing">Pricing</Link>
                 <Link href="/docs">Docs</Link>
                 <Link href="/blog">Blog</Link>

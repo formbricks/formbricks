@@ -11,6 +11,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.appsmith.com",
         },
         {
+          name: "Argos",
+          description: "Argos provides the developer tools to debug tests and detect visual regressions..",
+          href: "https://argos-ci.com",
+        },
+        {
           name: "BoxyHQ",
           description:
             "BoxyHQ’s suite of APIs for security and privacy helps engineering teams build and ship compliant cloud applications faster.",
@@ -103,6 +108,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Open source, end-to-end encrypted platform that lets you securely manage secrets and configs across your team, devices, and infrastructure.",
           href: "https://infisical.com",
+        },
+        {
+          name: "Langfuse",
+          description: "Open source LLM engineering platform. Debug, analyze and iterate together.",
+          href: "https://langfuse.com",
         },
         {
           name: "Mockoon",
