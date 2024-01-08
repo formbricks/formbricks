@@ -1,3 +1,4 @@
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { handleDeleteFile } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/deleteFile";
@@ -11,7 +12,7 @@ import { ZStorageRetrievalParams } from "@formbricks/types/storage";
 import getFile from "./lib/getFile";
 
 export async function GET(
-  _: NextRequest,
+  request: NextRequest,
   { params }: { params: { environmentId: string; accessType: string; fileName: string } }
 ) {
   const paramValidation = ZStorageRetrievalParams.safeParse(params);
@@ -32,22 +33,28 @@ export async function GET(
     return await getFile(environmentId, accessType, fileName);
   }
 
-  // auth and download private file
+  // if the user is authenticated via the session
 
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user) {
-    return responses.notAuthenticatedResponse();
+    // check for api key auth
+    const res = await authenticateRequest(request);
+
+    if (!res) {
+      return responses.notAuthenticatedResponse();
+    }
+
+    return await getFile(environmentId, accessType, fileName);
+  } else {
+    const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+
+    if (!isUserAuthorized) {
+      return responses.unauthorizedResponse();
+    }
+
+    return await getFile(environmentId, accessType, fileName);
   }
-
-  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-
-  if (!isUserAuthorized) {
-    return responses.unauthorizedResponse();
-  }
-
-  const file = await getFile(environmentId, accessType, fileName);
-  return file;
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: { fileName: string } }) {
