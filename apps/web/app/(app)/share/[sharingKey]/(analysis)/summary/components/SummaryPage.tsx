@@ -49,7 +49,7 @@ const SummaryPage = ({
     if (!searchParams?.get("referer")) {
       resetState();
     }
-  }, [searchParams]);
+  }, [searchParams, resetState]);
 
   // get the filtered array when the selected filter value changes
   const filterResponses: TResponse[] = useMemo(() => {
