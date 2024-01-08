@@ -11,7 +11,8 @@ import SelectAction from "./select-action.webp";
 
 export const metadata = {
   title: "Setting Up Feature Chaser Surveys with Formbricks: A Comprehensive Guide",
-  description: "Learn how to harness the power of Formbricks to gather targeted user feedback on specific features. Dive deep into creating, triggering, and publishing the Feature Chaser survey to enhance your product with actionable insights for specific users.",
+  description:
+    "Learn how to harness the power of Formbricks to gather targeted user feedback on specific features. Dive deep into creating, triggering, and publishing the Feature Chaser survey to enhance your product with actionable insights for specific users.",
 };
 
 #### Best Practices
@@ -38,13 +39,13 @@ Product analytics never tell you why a feature is used - and why not. Following 
 
 To run the Feature Chaser survey in your app you want to proceed as follows:
 
-1. Create new Feature Chaser survey at [app.formbricks.com](http://app.formbricks.com/)
+1. Create new Feature Chaser survey at [app.formbricks.com](https://app.formbricks.com/)
 2. Setup a user action to display survey at the right point in time
 
 <Note>
-  ## Formbricks Widget running? 
-  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages
-  and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins max.)](/docs/getting-started/quickstart-in-app-survey)
+  ## Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web
+  app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide
+  (takes 15mins max.)](/docs/getting-started/quickstart-in-app-survey)
 </Note>
 
 ### 1. Create new Feature Chaser
@@ -57,7 +58,7 @@ Click on "Create Survey" and choose the template “Feature Chaser”:
   src={CreateSurvey}
   alt="Create survey by template"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 2. Update questions
@@ -68,7 +69,7 @@ The questions you want to ask are dependent on your feature and can be very spec
   src={ChangeText}
   alt="Change text content"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 Save, and move over to where the magic happens: The “Audience” tab.
@@ -87,7 +88,7 @@ There are two ways to track a button:
   src={ActionText}
   alt="Set the trigger by inner Text"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 2. **Trigger by CSS Selector:** In case you have more than one button saying “Export Report” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“export-report-featurename”` and set your user action up like so:
@@ -96,7 +97,7 @@ There are two ways to track a button:
   src={ActionCSS}
   alt="Set the trigger by CSS Selector"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 Please follow our [Actions manual](/docs/actions/why) for an in-depth description of how Actions work.
@@ -107,7 +108,7 @@ Please follow our [Actions manual](/docs/actions/why) for an in-depth descriptio
   src={SelectAction}
   alt="Select PMF trigger button action"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 5. Last step: Set Recontact Options correctly
@@ -118,17 +119,17 @@ Lastly, scroll down to “Recontact Options”. Here you have full freedom to de
   src={RecontactOptions}
   alt="Set recontact options"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 7. Congrats! You’re ready to publish your survey 💃
 
-<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
-  ## Formbricks Widget running? 
-  You need to have the Formbricks Widget installed to display the Feature Chaser in your app. Please follow [this
-  tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey) to install the widget.
+  ## Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feature Chaser
+  in your app. Please follow [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey)
+  to install the widget.
 </Note>
 
 ###
