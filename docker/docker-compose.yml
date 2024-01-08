@@ -9,39 +9,40 @@ x-environment: &environment
 
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-    # You can use: `openssl rand -base64 32` to generate one
+    # You can use: `openssl rand -hex 32` to generate one
     NEXTAUTH_SECRET:
 
     # Set this to your public-facing URL, e.g., https://example.com
     # You do not need the NEXTAUTH_URL environment variable in Vercel.
     NEXTAUTH_URL: http://localhost:3000
 
-    # Formbricks Encryption Key is used to generate encrypted single use URLs for Link Surveys
-    # You can use: $(openssl rand -base64 16) to generate one
-    # FORMBRICKS_ENCRYPTION_KEY:
+    # Encryption Key is used for 2FA & Single use URLs for Link Surveys
+    # You can use: $(openssl rand -hex 32) to generate one
+    ENCRYPTION_KEY:
 
     # PostgreSQL password
     POSTGRES_PASSWORD: postgres
 
-    # Email Configuration
-    MAIL_FROM:
-    SMTP_HOST:
-    SMTP_PORT:
-    SMTP_SECURE_ENABLED:
-    SMTP_USER:
-    SMTP_PASSWORD:
+    # Enterprise License Key
+    # Required to access Enterprise-only features
+    # ENTERPRISE_LICENSE_KEY:
 
-    # Set the below value if you want to have another base URL apart from your Domain Name
-    # SURVEY_BASE_URL:
+    # Email Configuration
+    # MAIL_FROM:
+    # SMTP_HOST:
+    # SMTP_PORT:
+    # SMTP_SECURE_ENABLED:
+    # SMTP_USER:
+    # SMTP_PASSWORD:
 
     # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
-    # SHORT_SURVEY_BASE_URL:
+    # SHORT_URL_BASE:
 
-    # Uncomment the below and set it to 1 to disable Email Verification for new signups
-    # EMAIL_VERIFICATION_DISABLED:
+    # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
+    EMAIL_VERIFICATION_DISABLED: 1
 
-    # Uncomment the below and set it to 1 to disable Password Reset
-    # PASSWORD_RESET_DISABLED:
+    # Set the below to 0 to enable Password Reset (will required Email Configuration)
+    PASSWORD_RESET_DISABLED: 1
 
     # Uncomment the below and set it to 1 to disable Signups
     # SIGNUP_DISABLED:
@@ -68,8 +69,14 @@ x-environment: &environment
     # GOOGLE_CLIENT_ID:
     # GOOGLE_CLIENT_SECRET:
 
-    # Configure ASSET_PREFIX_URL when you want to ship JS & CSS files from a complete URL instead of the current domain
-    # ASSET_PREFIX_URL: *asset_prefix_url
+    # Uncomment the below to automatically assign new users to a specific team and role within that team
+    # Insert an existing team id or generate a valid CUID for a new one at https://www.getuniqueid.com/cuid (e.g. cjld2cjxh0000qzrmn831i7rn)
+    # (Role Management is an Enterprise feature)
+    # DEFAULT_TEAM_ID:
+    # DEFAULT_TEAM_ROLE: admin
+
+    # Uncomment and set to 1 to skip onboarding for new users
+    # ONBOARDING_DISABLED: 1
 
 services:
   postgres:
@@ -81,13 +88,13 @@ services:
 
   formbricks:
     restart: always
-    image: formbricks/formbricks:latest
+    image: ghcr.io/formbricks/formbricks:latest
     depends_on:
       - postgres
     ports:
       - 3000:3000
     volumes:
-      - uploads:/apps/web/uploads/
+      - uploads:/home/nextjs/apps/web/uploads/
     <<: *environment
 
 volumes:

@@ -1,15 +1,16 @@
 "use client";
 
 import { createProductAction } from "@/app/(app)/environments/[environmentId]/actions";
-import { Modal } from "@formbricks/ui/Modal";
-import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
-import { Input } from "@formbricks/ui/Input";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Modal } from "@formbricks/ui/Modal";
 
 interface AddProductModalProps {
   environmentId: string;
@@ -20,9 +21,14 @@ interface AddProductModalProps {
 export default function AddProductModal({ environmentId, open, setOpen }: AddProductModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [productName, setProductName] = useState("");
+  const isProductNameValid = productName.trim() !== "";
   const { register, handleSubmit } = useForm();
 
   const submitProduct = async (data: { name: string }) => {
+    data.name = data.name.trim();
+    if (!isProductNameValid) return;
+
     try {
       setLoading(true);
       const newEnv = await createProductAction(environmentId, data.name);
@@ -59,7 +65,12 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
             <div className="grid w-full gap-x-2">
               <div>
                 <Label>Name</Label>
-                <Input placeholder="e.g. My New Product" {...register("name", { required: true })} />
+                <Input
+                  placeholder="e.g. My New Product"
+                  {...register("name", { required: true })}
+                  value={productName}
+                  onChange={(e) => setProductName(e.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -73,7 +84,7 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={loading}>
+              <Button variant="darkCTA" type="submit" loading={loading} disabled={!isProductNameValid}>
                 Add product
               </Button>
             </div>

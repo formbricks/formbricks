@@ -1,14 +1,15 @@
 "use client";
 
-import { Button } from "@formbricks/ui/Button";
-import { useState } from "react";
-import { TWebhook } from "@formbricks/types/v1/webhooks";
 import AddWebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/AddWebhookModal";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 import WebhookModal from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
 import { Webhook } from "lucide-react";
+import { useState } from "react";
+
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TWebhook } from "@formbricks/types/webhooks";
+import { Button } from "@formbricks/ui/Button";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import { TEnvironment } from "@formbricks/types/v1/environment";
 
 export default function WebhookTable({
   environment,

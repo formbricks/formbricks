@@ -1,9 +1,10 @@
 "use client";
 
 /* import { persistForm, useForm } from "@/app/lib/forms"; */
-import useClickOutside from "@formbricks/lib/useClickOutside";
 import { useCallback, useRef, useState } from "react";
 import { HexColorInput, HexColorPicker } from "react-colorful";
+
+import useClickOutside from "@formbricks/lib/useClickOutside";
 
 export const ColorPicker = ({ color, onChange }: { color: string; onChange: (v: string) => void }) => {
   return (
@@ -15,6 +16,8 @@ export const ColorPicker = ({ color, onChange }: { color: string; onChange: (v: 
             className="ml-2 mr-2 h-10 w-32 flex-1 border-0 bg-transparent text-slate-500 outline-none focus:border-none"
             color={color}
             onChange={onChange}
+            id="color"
+            aria-label="Primary color"
           />
         </div>
         <PopoverPicker color={color} onChange={onChange} />
@@ -33,6 +36,7 @@ export const PopoverPicker = ({ color, onChange }: { color: string; onChange: (v
   return (
     <div className="picker relative">
       <div
+        id="color-picker"
         className="h-6 w-10 cursor-pointer rounded"
         style={{ backgroundColor: color }}
         onClick={() => toggle(!isOpen)}

@@ -1,6 +1,7 @@
-import { FORMBRICKS_ENCRYPTION_KEY } from "@formbricks/lib/constants";
-import { decryptAES128, encryptAES128 } from "@formbricks/lib/crypto";
 import cuid2 from "@paralleldrive/cuid2";
+
+import { decryptAES128, symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
+import { env } from "@formbricks/lib/env.mjs";
 
 // generate encrypted single use id for the survey
 export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
@@ -8,20 +9,26 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
   if (!isEncrypted) {
     return cuid;
   }
-  if (!FORMBRICKS_ENCRYPTION_KEY) {
-    throw new Error("FORMBRICKS_ENCRYPTION_KEY is not defined");
-  }
-  const encryptedCuid = encryptAES128(FORMBRICKS_ENCRYPTION_KEY, cuid);
+
+  const encryptedCuid = symmetricEncrypt(cuid, env.ENCRYPTION_KEY);
   return encryptedCuid;
 };
 
 // validate the survey single use id
 export const validateSurveySingleUseId = (surveySingleUseId: string): string | undefined => {
-  if (!FORMBRICKS_ENCRYPTION_KEY) {
-    throw new Error("FORMBRICKS_ENCRYPTION_KEY is not defined");
-  }
   try {
-    const decryptedCuid = decryptAES128(FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
+    let decryptedCuid: string | null = null;
+
+    if (surveySingleUseId.length === 64) {
+      if (!env.FORMBRICKS_ENCRYPTION_KEY) {
+        throw new Error("FORMBRICKS_ENCRYPTION_KEY is not defined");
+      }
+
+      decryptedCuid = decryptAES128(env.FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
+    } else {
+      decryptedCuid = symmetricDecrypt(surveySingleUseId, env.ENCRYPTION_KEY);
+    }
+
     if (cuid2.isCuid(decryptedCuid)) {
       return decryptedCuid;
     } else {

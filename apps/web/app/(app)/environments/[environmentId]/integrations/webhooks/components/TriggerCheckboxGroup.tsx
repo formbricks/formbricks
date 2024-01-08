@@ -1,6 +1,7 @@
 import React from "react";
+
+import { TPipelineTrigger } from "@formbricks/types/pipelines";
 import { Checkbox } from "@formbricks/ui/Checkbox";
-import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
 
 interface TriggerCheckboxGroupProps {
   triggers: { title: string; value: TPipelineTrigger }[];

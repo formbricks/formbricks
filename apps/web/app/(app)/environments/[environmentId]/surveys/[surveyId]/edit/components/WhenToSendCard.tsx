@@ -1,9 +1,15 @@
 "use client";
 
-import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddNoCodeActionModal";
+import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
+import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { useCallback, useEffect, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
@@ -16,14 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui/Select";
-import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { useCallback, useEffect, useState } from "react";
+
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   environmentId: string;
   actionClasses: TActionClass[];
+  membershipRole?: TMembershipRole;
 }
 
 export default function WhenToSendCard({
@@ -31,11 +36,13 @@ export default function WhenToSendCard({
   localSurvey,
   setLocalSurvey,
   actionClasses,
+  membershipRole,
 }: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClassArray, setActionClassArray] = useState<TActionClass[]>(actionClasses);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   const autoClose = localSurvey.autoClose !== null;
 
@@ -92,6 +99,7 @@ export default function WhenToSendCard({
   };
 
   useEffect(() => {
+    if (isAddEventModalOpen) return;
     if (activeIndex !== null) {
       const newActionClass = actionClassArray[actionClassArray.length - 1].name;
       const currentActionClass = localSurvey.triggers[activeIndex];
@@ -272,6 +280,7 @@ export default function WhenToSendCard({
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}
         setActionClassArray={setActionClassArray}
+        isViewer={isViewer}
       />
     </>
   );

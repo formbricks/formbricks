@@ -1,5 +1,6 @@
-import { prisma } from "@formbricks/database";
 import type { NextApiRequest, NextApiResponse } from "next";
+
+import { prisma } from "@formbricks/database";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const surveyId = req.query.surveyId?.toString();
@@ -48,7 +49,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       },
       select: {
         brandColor: true,
-        formbricksSignature: true,
+        linkSurveyBranding: true,
       },
     });
 
@@ -57,7 +58,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         message: "Survey not running",
         reason: survey.status,
         brandColor: product?.brandColor,
-        formbricksSignature: product?.formbricksSignature,
+        formbricksSignature: product?.linkSurveyBranding,
         surveyClosedMessage: survey?.surveyClosedMessage,
       });
     }
@@ -66,7 +67,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(200).json({
       ...survey,
       brandColor: product?.brandColor,
-      formbricksSignature: product?.formbricksSignature,
+      formbricksSignature: product?.linkSurveyBranding,
     });
   }
 

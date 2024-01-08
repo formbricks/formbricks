@@ -1,11 +1,12 @@
-import { authOptions } from "@formbricks/lib/authOptions";
 import { hasTeamAccess } from "@/app/lib/api/apiHelper";
-import { getEnvironments } from "@formbricks/lib/environment/service";
-import { getProducts } from "@formbricks/lib/product/service";
-import { AuthenticationError, AuthorizationError } from "@formbricks/types/v1/errors";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getEnvironments } from "@formbricks/lib/environment/service";
+import { getProducts } from "@formbricks/lib/product/service";
+import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 
 export async function GET(_: Request, context: { params: { teamId: string } }) {
   const teamId = context?.params?.teamId;

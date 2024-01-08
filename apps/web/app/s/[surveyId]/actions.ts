@@ -1,24 +1,16 @@
 "use server";
 
-interface LinkSurveyEmailData {
-  surveyId: string;
-  email: string;
-  surveyData?: {
-    name?: string;
-    subheading?: string;
-  } | null;
-}
+import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 
-interface ISurveyPinValidationResponse {
+import { LinkSurveyEmailData, sendLinkSurveyToVerifiedEmail } from "@formbricks/lib/emails/emails";
+import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { TSurvey } from "@formbricks/types/surveys";
+
+interface TSurveyPinValidationResponse {
   error?: TSurveyPinValidationResponseError;
   survey?: TSurvey;
 }
-
-import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
-import { sendLinkSurveyToVerifiedEmail } from "@/app/lib/email";
-import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
-import { getSurvey } from "@formbricks/lib/survey/service";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 
 export async function sendLinkSurveyEmailAction(data: LinkSurveyEmailData) {
   if (!data.surveyData) {
@@ -30,15 +22,15 @@ export async function verifyTokenAction(token: string, surveyId: string): Promis
   return await verifyTokenForLinkSurvey(token, surveyId);
 }
 
-export async function validateSurveyPin(
+export async function validateSurveyPinAction(
   surveyId: string,
-  pin: number
-): Promise<ISurveyPinValidationResponse> {
+  pin: string
+): Promise<TSurveyPinValidationResponse> {
   try {
     const survey = await getSurvey(surveyId);
     if (!survey) return { error: TSurveyPinValidationResponseError.NOT_FOUND };
 
-    const originalPin = survey.pin;
+    const originalPin = survey.pin?.toString();
 
     if (!originalPin) return { survey };
 

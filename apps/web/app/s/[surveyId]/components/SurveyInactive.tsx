@@ -1,8 +1,10 @@
-import { TSurveyClosedMessage } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui/Button";
 import { CheckCircleIcon, PauseCircleIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
+
+import { TSurveyClosedMessage } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+
 import footerLogo from "../lib/footerlogo.svg";
 
 const SurveyInactive = ({

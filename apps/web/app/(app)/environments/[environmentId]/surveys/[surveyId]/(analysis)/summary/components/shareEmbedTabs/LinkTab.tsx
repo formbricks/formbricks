@@ -1,13 +1,14 @@
 "use client";
 
-import toast from "react-hot-toast";
-import { SurveyInline } from "@formbricks/ui/Survey";
-import { cn } from "@formbricks/lib/cn";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui/Button";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
 import { ArrowUpRightIcon } from "lucide-react";
 import { useRef } from "react";
+import toast from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface EmailTabProps {
   surveyUrl: string;
@@ -56,10 +57,11 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
         <SurveyInline
           brandColor={brandColor}
           survey={survey}
-          formbricksSignature={false}
+          isBrandingEnabled={false}
           autoFocus={false}
           isRedirectDisabled={false}
           key={survey.id}
+          onFileUpload={async () => ""}
         />
 
         <Button

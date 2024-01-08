@@ -1,13 +1,15 @@
-import { createDisplay } from "@formbricks/lib/client/display";
+import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
 import { renderSurveyModal } from "@formbricks/surveys";
-import { TSurveyWithTriggers } from "@formbricks/types/v1/js";
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
+import { TJSStateDisplay } from "@formbricks/types/js";
+import { TResponseUpdate } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
 import { Logger } from "./logger";
-import { sync } from "./sync";
+import { filterPublicSurveys, sync } from "./sync";
 
 const containerId = "formbricks-web-container";
 const config = Config.getInstance();
@@ -15,7 +17,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 
-export const renderWidget = (survey: TSurveyWithTriggers) => {
+export const renderWidget = (survey: TSurvey) => {
   if (surveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -28,16 +30,16 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
 
   const product = config.get().state.product;
 
-  const surveyState = new SurveyState(survey.id);
+  const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
   const responseQueue = new ResponseQueue(
     {
       apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
       retryAttempts: 2,
       onResponseSendingFailed: (response) => {
         alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
       },
-      personId: config.get().state.person.id,
     },
     surveyState
   );
@@ -45,37 +47,101 @@ export const renderWidget = (survey: TSurveyWithTriggers) => {
   const productOverwrites = survey.productOverwrites ?? {};
   const brandColor = productOverwrites.brandColor ?? product.brandColor;
   const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
-  const clickOutside = productOverwrites.clickOutside ?? product.clickOutsideClose;
+  const clickOutside = productOverwrites.clickOutsideClose ?? product.clickOutsideClose;
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
+  const isBrandingEnabled = product.inAppSurveyBranding;
 
   setTimeout(() => {
     renderSurveyModal({
       survey: survey,
       brandColor,
-      formbricksSignature: product.formbricksSignature,
+      isBrandingEnabled: isBrandingEnabled,
       clickOutside,
       darkOverlay,
       highlightBorderColor,
       placement,
       onDisplay: async () => {
-        const { id } = await createDisplay(
-          {
+        const { userId } = config.get();
+        // if config does not have a person, we store the displays in local storage
+        if (!userId) {
+          const localDisplay: TJSStateDisplay = {
+            createdAt: new Date(),
             surveyId: survey.id,
-            personId: config.get().state.person.id,
-          },
-          config.get().apiHost
-        );
+            responded: false,
+          };
+
+          const existingDisplays = config.get().state.displays;
+          const displays = existingDisplays ? [...existingDisplays, localDisplay] : [localDisplay];
+          const previousConfig = config.get();
+          let state = filterPublicSurveys({
+            ...previousConfig.state,
+            displays,
+          });
+          config.update({
+            ...previousConfig,
+            state,
+          });
+        }
+
+        const api = new FormbricksAPI({
+          apiHost: config.get().apiHost,
+          environmentId: config.get().environmentId,
+        });
+        const res = await api.client.display.create({
+          surveyId: survey.id,
+          userId,
+        });
+        if (!res.ok) {
+          throw new Error("Could not create display");
+        }
+        const { id } = res.data;
+
         surveyState.updateDisplayId(id);
         responseQueue.updateSurveyState(surveyState);
       },
       onResponse: (responseUpdate: TResponseUpdate) => {
+        const { userId } = config.get();
+        // if user is unidentified, update the display in local storage if not already updated
+        if (!userId) {
+          const displays = config.get().state.displays;
+          const lastDisplay = displays && displays[displays.length - 1];
+          if (!lastDisplay) {
+            throw new Error("No lastDisplay found");
+          }
+          if (!lastDisplay.responded) {
+            lastDisplay.responded = true;
+            const previousConfig = config.get();
+            let state = filterPublicSurveys({
+              ...previousConfig.state,
+              displays,
+            });
+            config.update({
+              ...previousConfig,
+              state,
+            });
+          }
+        }
+
+        if (userId) {
+          surveyState.updateUserId(userId);
+        }
+        responseQueue.updateSurveyState(surveyState);
         responseQueue.add({
           data: responseUpdate.data,
+          ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
         });
       },
       onClose: closeSurvey,
+      onFileUpload: async (file: File, params) => {
+        const api = new FormbricksAPI({
+          apiHost: config.get().apiHost,
+          environmentId: config.get().environmentId,
+        });
+
+        return await api.client.storage.uploadFile(file, params);
+      },
     });
   }, survey.delay * 1000);
 };
@@ -85,12 +151,24 @@ export const closeSurvey = async (): Promise<void> => {
   document.getElementById(containerId)?.remove();
   addWidgetContainer();
 
+  // if unidentified user, refilter the surveys
+  if (!config.get().userId) {
+    const state = config.get().state;
+    const updatedState = filterPublicSurveys(state);
+    config.update({
+      ...config.get(),
+      state: updatedState,
+    });
+    surveyRunning = false;
+    return;
+  }
+
+  // for identified users we sync to get the latest surveys
   try {
     await sync({
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
-      personId: config.get().state.person?.id,
-      sessionId: config.get().state.session?.id,
+      userId: config.get().userId,
     });
     surveyRunning = false;
   } catch (e) {

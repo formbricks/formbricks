@@ -1,17 +1,18 @@
 "use client";
 
+import clsx from "clsx";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import * as React from "react";
+
+import useClickOutside from "@formbricks/lib/useClickOutside";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { Command, CommandEmpty, CommandGroup, CommandItem } from "@formbricks/ui/Command";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Command, CommandGroup, CommandItem, CommandEmpty } from "@formbricks/ui/Command";
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
-import { QuestionType } from "@formbricks/types/questions";
-import clsx from "clsx";
 
 type QuestionFilterComboBoxProps = {
   filterOptions: string[] | undefined;
@@ -20,7 +21,7 @@ type QuestionFilterComboBoxProps = {
   filterComboBoxValue: string | string[] | undefined;
   onChangeFilterValue: (o: string) => void;
   onChangeFilterComboBoxValue: (o: string | string[]) => void;
-  type: QuestionType | "Attributes" | "Tags" | undefined;
+  type: TSurveyQuestionType | "Attributes" | "Tags" | undefined;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
 };
@@ -42,7 +43,8 @@ const QuestionFilterComboBox = ({
   useClickOutside(commandRef, () => setOpen(false));
 
   // multiple when question type is multi selection
-  const isMultiple = type === QuestionType.MultipleChoiceMulti || type === QuestionType.MultipleChoiceSingle;
+  const isMultiple =
+    type === TSurveyQuestionType.MultipleChoiceMulti || type === TSurveyQuestionType.MultipleChoiceSingle;
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
@@ -51,7 +53,7 @@ const QuestionFilterComboBox = ({
 
   // disable the combo box for selection of value when question type is nps or rating and selected value is submitted or skipped
   const isDisabledComboBox =
-    (type === QuestionType.NPS || type === QuestionType.Rating) &&
+    (type === TSurveyQuestionType.NPS || type === TSurveyQuestionType.Rating) &&
     (filterValue === "Submitted" || filterValue === "Skipped");
 
   return (

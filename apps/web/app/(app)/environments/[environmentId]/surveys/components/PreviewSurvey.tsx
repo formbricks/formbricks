@@ -2,12 +2,7 @@
 
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
-
-import { SurveyInline } from "@formbricks/ui/Survey";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TProduct } from "@formbricks/types/v1/product";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui/Button";
+import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import {
   ArrowsPointingInIcon,
@@ -18,6 +13,13 @@ import {
 import { Variants, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { SurveyInline } from "@formbricks/ui/Survey";
+
 type TPreviewType = "modal" | "fullwidth" | "email";
 
 interface PreviewSurveyProps {
@@ -27,6 +29,7 @@ interface PreviewSurveyProps {
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
 let surveyNameTemp;
@@ -64,6 +67,7 @@ export default function PreviewSurvey({
   previewType,
   product,
   environment,
+  onFileUpload,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -123,10 +127,10 @@ export default function PreviewSurvey({
   useEffect(() => {
     // close modal if there are no questions left
     if (survey.type === "web" && !survey.thankYouCard.enabled) {
-      if (activeQuestionId === "thank-you-card") {
+      if (activeQuestionId === "end") {
         setIsModalOpen(false);
         setTimeout(() => {
-          setActiveQuestionId(survey.questions[0].id);
+          setActiveQuestionId(survey.questions[0]?.id);
           setIsModalOpen(true);
         }, 500);
       }
@@ -151,6 +155,20 @@ export default function PreviewSurvey({
 
     setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   }
+
+  function animationTrigger() {
+    let storePreviewMode = previewMode;
+    setPreviewMode("null");
+    setTimeout(() => {
+      setPreviewMode(storePreviewMode);
+    }, 10);
+  }
+
+  useEffect(() => {
+    if (survey.styling?.background?.bgType === "animation") {
+      animationTrigger();
+    }
+  }, [survey.styling?.background?.bg]);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -188,12 +206,13 @@ export default function PreviewSurvey({
         className="relative flex h-[95] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
+            <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
+              Preview
+            </p>
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
-            <div className="relative h-[90%] max-h-[40rem] w-80 overflow-hidden rounded-[3rem] border-8 border-slate-500 bg-slate-400">
-              {/* below element is use to create notch for the mobile device mockup   */}
-              <div className="absolute left-1/2 right-1/2 top-0 z-20 h-4 w-1/2 -translate-x-1/2 transform rounded-b-md bg-slate-500"></div>
+            <MediaBackground survey={survey} ContentRef={ContentRef} isMobilePreview>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
@@ -204,29 +223,28 @@ export default function PreviewSurvey({
                     survey={survey}
                     brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
-                    formbricksSignature={product.formbricksSignature}
+                    isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
+                    onFileUpload={onFileUpload}
                   />
                 </Modal>
               ) : (
-                <div
-                  className="absolute top-0 z-10 flex h-full w-full flex-grow flex-col overflow-y-auto"
-                  ref={ContentRef}>
-                  <div className="flex w-full flex-grow flex-col items-center justify-center bg-white py-6">
-                    <div className="w-full max-w-md px-4">
-                      <SurveyInline
-                        survey={survey}
-                        brandColor={brandColor}
-                        activeQuestionId={activeQuestionId || undefined}
-                        formbricksSignature={product.formbricksSignature}
-                        onActiveQuestionChange={setActiveQuestionId}
-                      />
-                    </div>
+                <div className="px-4">
+                  <div className="no-scrollbar z-10 max-h-[500px] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                    <SurveyInline
+                      survey={survey}
+                      brandColor={brandColor}
+                      activeQuestionId={activeQuestionId || undefined}
+                      isBrandingEnabled={product.linkSurveyBranding}
+                      onActiveQuestionChange={setActiveQuestionId}
+                      onFileUpload={onFileUpload}
+                      responseCount={42}
+                    />
                   </div>
                 </div>
               )}
-            </div>
+            </MediaBackground>
           </>
         )}
         {previewMode === "desktop" && (
@@ -274,26 +292,27 @@ export default function PreviewSurvey({
                   survey={survey}
                   brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
-                  formbricksSignature={product.formbricksSignature}
+                  isBrandingEnabled={product.linkSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
+                  onFileUpload={onFileUpload}
                 />
               </Modal>
             ) : (
-              <div className="flex flex-grow flex-col overflow-y-auto rounded-b-lg" ref={ContentRef}>
-                <div className="flex w-full flex-grow flex-col items-center justify-center bg-white p-4 py-6">
-                  <div className="w-full max-w-md">
-                    <SurveyInline
-                      survey={survey}
-                      brandColor={brandColor}
-                      activeQuestionId={activeQuestionId || undefined}
-                      formbricksSignature={product.formbricksSignature}
-                      onActiveQuestionChange={setActiveQuestionId}
-                      isRedirectDisabled={true}
-                    />
-                  </div>
+              <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
+                <div className="z-0 w-full  max-w-md rounded-lg p-4">
+                  <SurveyInline
+                    survey={survey}
+                    brandColor={brandColor}
+                    activeQuestionId={activeQuestionId || undefined}
+                    isBrandingEnabled={product.linkSurveyBranding}
+                    onActiveQuestionChange={setActiveQuestionId}
+                    isRedirectDisabled={true}
+                    onFileUpload={onFileUpload}
+                    responseCount={42}
+                  />
                 </div>
-              </div>
+              </MediaBackground>
             )}
           </div>
         )}

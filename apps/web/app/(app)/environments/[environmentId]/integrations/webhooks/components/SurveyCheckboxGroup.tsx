@@ -1,6 +1,7 @@
 import React from "react";
+
+import { TSurvey } from "@formbricks/types/surveys";
 import { Checkbox } from "@formbricks/ui/Checkbox";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 
 interface SurveyCheckboxGroupProps {
   surveys: TSurvey[];

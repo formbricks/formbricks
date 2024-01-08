@@ -1,16 +1,17 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
-import { Button } from "@formbricks/ui/Button";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
+import { Button } from "@formbricks/ui/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+
 const DummyUI: React.FC = () => {
-  const eventClasses = [
+  const actionClasses = [
     { id: "1", name: "View Dashboard" },
     { id: "2", name: "Upgrade to Pro" },
     { id: "3", name: "Cancel Plan" },
   ];
 
-  const [triggers, setTriggers] = useState<string[]>([eventClasses[0].id]);
+  const [triggers, setTriggers] = useState<string[]>([actionClasses[0].id]);
 
   const setTriggerEvent = (index: number, eventClassId: string) => {
     setTriggers((prevTriggers) =>
@@ -19,7 +20,7 @@ const DummyUI: React.FC = () => {
   };
 
   const addTriggerEvent = () => {
-    setTriggers((prevTriggers) => [...prevTriggers, eventClasses[0].id]);
+    setTriggers((prevTriggers) => [...prevTriggers, actionClasses[0].id]);
   };
 
   const removeTriggerEvent = (index: number) => {
@@ -41,12 +42,12 @@ const DummyUI: React.FC = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {eventClasses.map((eventClass) => (
+                {actionClasses.map((actionClass) => (
                   <SelectItem
-                    key={eventClass.id}
+                    key={actionClass.id}
                     className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
-                    value={eventClass.id}>
-                    {eventClass.name}
+                    value={actionClass.id}>
+                    {actionClass.name}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "storybook dev -p 6006",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
@@ -14,24 +13,23 @@
   "dependencies": {
     "@formbricks/ui": "workspace:*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "storybook": "^7.4.6"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "@storybook/addon-essentials": "^7.5.0-alpha.5",
-    "@storybook/addon-interactions": "^7.5.0-alpha.5",
-    "@storybook/addon-links": "^7.5.0-alpha.5",
-    "@storybook/addon-onboarding": "^1.0.8",
-    "@storybook/blocks": "^7.5.0-alpha.5",
-    "@storybook/react": "^7.5.0-alpha.5",
-    "@storybook/react-vite": "^7.5.0-alpha.5",
+    "@storybook/addon-essentials": "^7.6.7",
+    "@storybook/addon-interactions": "^7.6.7",
+    "@storybook/addon-links": "^7.6.7",
+    "@storybook/addon-onboarding": "^1.0.10",
+    "@storybook/blocks": "^7.6.7",
+    "@storybook/react": "^7.6.7",
+    "@storybook/react-vite": "^7.6.7",
     "@storybook/testing-library": "^0.2.2",
-    "@typescript-eslint/eslint-plugin": "^6.8.0",
-    "@typescript-eslint/parser": "^6.8.0",
-    "@vitejs/plugin-react": "^4.1.0",
-    "esbuild": "^0.19.5",
-    "tsup": "^7.2.0",
-    "vite": "^4.4.11"
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "esbuild": "^0.19.11",
+    "tsup": "^8.0.1",
+    "vite": "^5.0.10"
   }
 }

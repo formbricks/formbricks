@@ -1,18 +1,13 @@
 "use client";
 
-import { Modal } from "@formbricks/ui/Modal";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@formbricks/ui/Select";
+import { useForm } from "react-hook-form";
+
+import { AddMemberRole } from "@formbricks/ee/RoleManagement/components/AddMemberRole";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { useForm, Controller } from "react-hook-form";
+import { Modal } from "@formbricks/ui/Modal";
+import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 enum MembershipRole {
   Admin = "admin",
@@ -24,9 +19,19 @@ interface MemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: MembershipRole }) => void;
+  canDoRoleManagement: boolean;
+  isFormbricksCloud: boolean;
+  environmentId: string;
 }
 
-export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalProps) {
+export default function AddMemberModal({
+  open,
+  setOpen,
+  onSubmit,
+  canDoRoleManagement,
+  isFormbricksCloud,
+  environmentId,
+}: MemberModalProps) {
   const { register, getValues, handleSubmit, reset, control } = useForm<{
     name: string;
     email: string;
@@ -35,6 +40,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
 
   const submitEventClass = async () => {
     const data = getValues();
+    data.role = data.role || MembershipRole.Admin;
     onSubmit(data);
     setOpen(false);
     reset();
@@ -50,40 +56,40 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
             </div>
           </div>
         </div>
+        {!canDoRoleManagement &&
+          (isFormbricksCloud ? (
+            <div className="mx-6 mt-2">
+              <UpgradePlanNotice
+                message="To manage access roles for your team"
+                url={`/environments/${environmentId}/settings/billing`}
+                textForUrl="Upgrade to the App Surveys plan."
+              />
+            </div>
+          ) : (
+            <div className="mx-6 mt-2">
+              <UpgradePlanNotice
+                message="To manage access roles for your team,"
+                url="mailto:hola@formbricks.com"
+                textForUrl="get a self-hosted license (free to get started)."
+              />
+            </div>
+          ))}
+
         <form onSubmit={handleSubmit(submitEventClass)}>
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
               <div>
                 <Label>Full Name</Label>
-                <Input placeholder="e.g. Hans Wurst" {...register("name", { required: true })} />
+                <Input
+                  placeholder="e.g. Hans Wurst"
+                  {...register("name", { required: true, validate: (value) => value.trim() !== "" })}
+                />
               </div>
               <div>
                 <Label>Email Adress</Label>
                 <Input type="email" placeholder="hans@wurst.com" {...register("email", { required: true })} />
               </div>
-              <Controller
-                name="role"
-                control={control}
-                render={({ field: { onChange, value } }) => (
-                  <div>
-                    <Label>Role</Label>
-                    <Select value={value} onValueChange={(v) => onChange(v as MembershipRole)}>
-                      <SelectTrigger className="capitalize">
-                        <SelectValue placeholder={<span className="text-slate-400">Select role</span>} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {Object.values(MembershipRole).map((role) => (
-                            <SelectItem className="capitalize" key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              />
+              {canDoRoleManagement && <AddMemberRole control={control} />}
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">

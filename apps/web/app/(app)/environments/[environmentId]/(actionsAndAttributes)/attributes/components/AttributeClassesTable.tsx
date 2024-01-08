@@ -1,11 +1,13 @@
 "use client";
 
-import { Switch } from "@formbricks/ui/Switch";
 import { useState } from "react";
+import { useMemo } from "react";
+
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { Switch } from "@formbricks/ui/Switch";
+
 import AttributeDetailModal from "./AttributeDetailModal";
 import UploadAttributesModal from "./UploadAttributesModal";
-import { useMemo } from "react";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 export default function AttributeClassesTable({
   attributeClasses,

@@ -1,11 +1,13 @@
 import "server-only";
 
-import { ZId } from "@formbricks/types/v1/environment";
-import { validateInputs } from "../utils/validate";
-import { hasUserEnvironmentAccess } from "../environment/auth";
-import { getAttributeClass } from "./service";
 import { unstable_cache } from "next/cache";
+
+import { ZId } from "@formbricks/types/environment";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { hasUserEnvironmentAccess } from "../environment/auth";
+import { validateInputs } from "../utils/validate";
+import { getAttributeClass } from "./service";
 
 export const canUserAccessAttributeClass = async (
   userId: string,

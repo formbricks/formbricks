@@ -1,21 +1,32 @@
-import {
-  TSurveyOpenTextQuestion,
-  TSurveyOpenTextQuestionInputType,
-  TSurvey,
-} from "@formbricks/types/v1/surveys";
-import { QuestionTypeSelector } from "@formbricks/ui/QuestionTypeSelector";
-import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
-import { Input } from "@formbricks/ui/Input";
+"use client";
+
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import {
+  ChatBubbleBottomCenterTextIcon,
+  EnvelopeIcon,
+  HashtagIcon,
+  LinkIcon,
+  PhoneIcon,
+} from "@heroicons/react/24/solid";
 import { useState } from "react";
 
+import {
+  TSurvey,
+  TSurveyOpenTextQuestion,
+  TSurveyOpenTextQuestionInputType,
+} from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
+
 const questionTypes = [
-  { value: "text", label: "Text" },
-  { value: "email", label: "Email" },
-  { value: "url", label: "URL" },
-  { value: "number", label: "Number" },
-  { value: "phone", label: "Phone" },
+  { value: "text", label: "Text", icon: <ChatBubbleBottomCenterTextIcon /> },
+  { value: "email", label: "Email", icon: <EnvelopeIcon /> },
+  { value: "url", label: "URL", icon: <LinkIcon /> },
+  { value: "number", label: "Number", icon: <HashtagIcon /> },
+  { value: "phone", label: "Phone", icon: <PhoneIcon /> },
 ];
 
 interface OpenQuestionFormProps {
@@ -32,6 +43,7 @@ export default function OpenQuestionForm({
   questionIdx,
   updateQuestion,
   isInValid,
+  localSurvey,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
@@ -45,21 +57,17 @@ export default function OpenQuestionForm({
     updateQuestion(questionIdx, updatedAttributes);
   };
 
+  const environmentId = localSurvey.environmentId;
+
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            autoFocus
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
-        </div>
-      </div>
+      <QuestionFormInput
+        environmentId={environmentId}
+        isInValid={isInValid}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+      />
 
       <div className="mt-3">
         {showSubheader && (
@@ -106,9 +114,9 @@ export default function OpenQuestionForm({
       <div className="mt-3">
         <Label htmlFor="questionType">Input Type</Label>
         <div className="mt-2 flex items-center">
-          <QuestionTypeSelector
-            questionTypes={questionTypes}
-            currentType={question.inputType}
+          <OptionsSwitcher
+            options={questionTypes}
+            currentOption={question.inputType}
             handleTypeChange={handleInputChange} // Use the merged function
           />
         </div>

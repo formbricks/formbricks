@@ -1,15 +1,13 @@
-export const revalidate = REVALIDATION_INTERVAL;
+import Link from "next/link";
 
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import { truncateMiddle } from "@/app/lib/utils";
-import { ITEMS_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
-import { TPerson } from "@formbricks/types/v1/people";
+import { truncateMiddle } from "@formbricks/lib/strings";
+import { TPerson } from "@formbricks/types/people";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { Pagination } from "@formbricks/ui/Pagination";
-
-import Link from "next/link";
 
 const getAttributeValue = (person: TPerson, attributeName: string) =>
   person.attributes[attributeName]?.toString();
@@ -80,7 +78,7 @@ export default async function PeoplePage({
                 </div>
                 <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
                   <div className="ph-no-capture text-slate-900">
-                    {truncateMiddle(getAttributeValue(person, "userId"), 24)}
+                    {truncateMiddle(getAttributeValue(person, "userId"), 24) || person.userId}
                   </div>
                 </div>
                 <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">

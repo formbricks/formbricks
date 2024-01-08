@@ -1,25 +1,30 @@
 "use client";
 
-import type { NextPage } from "next";
-import { TProduct } from "@/../../packages/types/v1/product";
-import { TResponse } from "@/../../packages/types/v1/responses";
-import { OTPInput } from "@formbricks/ui/OTPInput";
-import { useCallback, useEffect, useState } from "react";
-import { validateSurveyPin } from "@/app/s/[surveyId]/actions";
-import { TSurvey } from "@/../../packages/types/v1/surveys";
-import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
+import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
+import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
+import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
+import type { NextPage } from "next";
+import { useCallback, useEffect, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
+import { TProduct } from "@formbricks/types/product";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { OTPInput } from "@formbricks/ui/OTPInput";
 
 interface LinkSurveyPinScreenProps {
   surveyId: string;
   product: TProduct;
-  personId?: string;
+  userId?: string;
   emailVerificationStatus?: string;
   prefillAnswer?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
+  IMPRINT_URL?: string;
+  PRIVACY_URL?: string;
 }
 
 const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
@@ -28,10 +33,12 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     product,
     webAppUrl,
     emailVerificationStatus,
-    personId,
+    userId,
     prefillAnswer,
     singleUseId,
     singleUseResponse,
+    IMPRINT_URL,
+    PRIVACY_URL,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -40,8 +47,8 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
   const [error, setError] = useState<TSurveyPinValidationResponseError>();
   const [survey, setSurvey] = useState<TSurvey>();
 
-  const _validateSurveyPinAsync = useCallback(async (surveyId: string, pin: number) => {
-    const response = await validateSurveyPin(surveyId, pin);
+  const _validateSurveyPinAsync = useCallback(async (surveyId: string, pin: string) => {
+    const response = await validateSurveyPinAction(surveyId, pin);
     if (response.error) {
       setError(response.error);
     } else if (response.survey) {
@@ -69,12 +76,10 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     const validPinRegex = /^\d{4}$/;
     const isValidPin = validPinRegex.test(localPinEntry);
 
-    const pinAsNumber = Number(localPinEntry);
-
     if (isValidPin) {
       // Show loading and check against the server
       setLoading(true);
-      _validateSurveyPinAsync(surveyId, pinAsNumber);
+      _validateSurveyPinAsync(surveyId, localPinEntry);
       return;
     }
 
@@ -102,16 +107,25 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
   }
 
   return (
-    <LinkSurvey
-      survey={survey}
-      product={product}
-      personId={personId}
-      emailVerificationStatus={emailVerificationStatus}
-      prefillAnswer={prefillAnswer}
-      singleUseId={singleUseId}
-      singleUseResponse={singleUseResponse}
-      webAppUrl={webAppUrl}
-    />
+    <div>
+      <MediaBackground survey={survey}>
+        <LinkSurvey
+          survey={survey}
+          product={product}
+          userId={userId}
+          emailVerificationStatus={emailVerificationStatus}
+          prefillAnswer={prefillAnswer}
+          singleUseId={singleUseId}
+          singleUseResponse={singleUseResponse}
+          webAppUrl={webAppUrl}
+        />
+      </MediaBackground>
+      <LegalFooter
+        bgColor={survey.styling?.background?.bg || "#ffff"}
+        IMPRINT_URL={IMPRINT_URL}
+        PRIVACY_URL={PRIVACY_URL}
+      />
+    </div>
   );
 };
 

@@ -1,23 +1,25 @@
 "use client";
 
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
+import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
+import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
+import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { TWebhook, TWebhookInput } from "@formbricks/types/v1/webhooks";
+
+import { TPipelineTrigger } from "@formbricks/types/pipelines";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TWebhook, TWebhookInput } from "@formbricks/types/webhooks";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+
 import { deleteWebhookAction, updateWebhookAction } from "../actions";
-import { TPipelineTrigger } from "@formbricks/types/v1/pipelines";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
-import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/HardcodedTriggers";
-import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
-import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
 
 interface ActionSettingsTabProps {
   environmentId: string;
@@ -156,10 +158,10 @@ export default function WebhookSettingsTab({
                 endpointAccessible === true
                   ? "border-green-500 bg-green-50"
                   : endpointAccessible === false
-                  ? "border-red-200 bg-red-50"
-                  : endpointAccessible === undefined
-                  ? "border-slate-200 bg-white"
-                  : null
+                    ? "border-red-200 bg-red-50"
+                    : endpointAccessible === undefined
+                      ? "border-slate-200 bg-white"
+                      : null
               )}
               placeholder="Paste the URL you want the event to trigger on"
             />
@@ -213,7 +215,7 @@ export default function WebhookSettingsTab({
 
             <Button
               variant="secondary"
-              href="https://formbricks.com/docs/webhook-api/overview"
+              href="https://formbricks.com/docs/api/management/webhooks"
               target="_blank">
               Read Docs
             </Button>

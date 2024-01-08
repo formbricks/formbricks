@@ -1,15 +1,14 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { env } from "@/env.mjs";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { UPLOADS_DIR } from "@formbricks/lib/constants";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { getFileFromLocalStorage, getFileFromS3 } from "@formbricks/lib/storage/service";
-import { ZStorageRetrievalParams } from "@formbricks/types/v1/storage";
+import { handleDeleteFile } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/deleteFile";
 import { getServerSession } from "next-auth";
-import { notFound } from "next/navigation";
 import { NextRequest } from "next/server";
-import path from "path";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { ZStorageRetrievalParams } from "@formbricks/types/storage";
+
+import getFile from "./lib/getFile";
 
 export async function GET(
   _: NextRequest,
@@ -25,46 +24,12 @@ export async function GET(
     );
   }
 
-  const { environmentId, accessType, fileName } = params;
+  const { environmentId, accessType, fileName: fileNameOG } = params;
 
-  const getFile = async () => {
-    if (!env.S3_ACCESS_KEY || !env.S3_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
-      try {
-        const { fileBuffer, metaData } = await getFileFromLocalStorage(
-          path.join(UPLOADS_DIR, environmentId, accessType, fileName)
-        );
-
-        return new Response(fileBuffer, {
-          headers: {
-            "Content-Type": metaData.contentType,
-            "Content-Disposition": "inline",
-          },
-        });
-      } catch (err) {
-        notFound();
-      }
-    }
-
-    try {
-      const { fileBuffer, metaData } = await getFileFromS3(`${environmentId}/${accessType}/${fileName}`);
-
-      return new Response(fileBuffer, {
-        headers: {
-          "Content-Type": metaData.contentType,
-          "Content-Disposition": "inline",
-        },
-      });
-    } catch (err) {
-      if (err.name === "NoSuchKey") {
-        return responses.notFoundResponse("File not found", fileName);
-      } else {
-        return responses.internalServerErrorResponse("Internal server error");
-      }
-    }
-  };
+  const fileName = decodeURIComponent(fileNameOG);
 
   if (accessType === "public") {
-    return await getFile();
+    return await getFile(environmentId, accessType, fileName);
   }
 
   // auth and download private file
@@ -81,5 +46,47 @@ export async function GET(
     return responses.unauthorizedResponse();
   }
 
-  return await getFile();
+  const file = await getFile(environmentId, accessType, fileName);
+  return file;
+}
+
+export async function DELETE(_: NextRequest, { params }: { params: { fileName: string } }) {
+  if (!params.fileName) {
+    return responses.badRequestResponse("Fields are missing or incorrectly formatted", {
+      fileName: "fileName is required",
+    });
+  }
+
+  const [environmentId, accessType, file] = params.fileName.split("/");
+
+  const paramValidation = ZStorageRetrievalParams.safeParse({ fileName: file, environmentId, accessType });
+
+  if (!paramValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(paramValidation.error),
+      true
+    );
+  }
+  // check if user is authenticated
+
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user) {
+    return responses.notAuthenticatedResponse();
+  }
+
+  // check if the user has access to the environment
+
+  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+
+  if (!isUserAuthorized) {
+    return responses.unauthorizedResponse();
+  }
+
+  return await handleDeleteFile(
+    paramValidation.data.environmentId,
+    paramValidation.data.accessType,
+    paramValidation.data.fileName
+  );
 }

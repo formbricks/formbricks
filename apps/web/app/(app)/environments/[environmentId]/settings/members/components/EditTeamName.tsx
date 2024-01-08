@@ -1,14 +1,17 @@
 "use client";
 
 import { updateTeamNameAction } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import { TTeam } from "@formbricks/types/v1/teams";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
+
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TTeam } from "@formbricks/types/teams";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 
 type TEditTeamNameForm = {
   name: string;
@@ -17,9 +20,10 @@ type TEditTeamNameForm = {
 type TEditTeamNameProps = {
   environmentId: string;
   team: TTeam;
+  membershipRole?: TMembershipRole;
 };
 
-export default function EditTeamName({ team }: TEditTeamNameProps) {
+export default function EditTeamName({ team, membershipRole }: TEditTeamNameProps) {
   const router = useRouter();
   const {
     register,
@@ -32,6 +36,7 @@ export default function EditTeamName({ team }: TEditTeamNameProps) {
     },
   });
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   const teamName = useWatch({
     control,
@@ -44,6 +49,7 @@ export default function EditTeamName({ team }: TEditTeamNameProps) {
 
   const handleUpdateTeamName: SubmitHandler<TEditTeamNameForm> = async (data) => {
     try {
+      data.name = data.name.trim();
       setIsUpdatingTeam(true);
       await updateTeamNameAction(team.id, data.name);
 
@@ -57,7 +63,9 @@ export default function EditTeamName({ team }: TEditTeamNameProps) {
     }
   };
 
-  return (
+  return isViewer ? (
+    <p className="text-sm text-red-700">You are not authorized to perform this action.</p>
+  ) : (
     <form className="w-full max-w-sm items-center" onSubmit={handleSubmit(handleUpdateTeamName)}>
       <Label htmlFor="teamname">Team Name</Label>
       <Input

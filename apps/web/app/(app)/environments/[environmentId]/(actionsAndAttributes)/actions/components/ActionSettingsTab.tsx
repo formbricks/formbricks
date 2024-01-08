@@ -1,32 +1,41 @@
 "use client";
 
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import type { NoCodeConfig } from "@formbricks/types/events";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import {
+  deleteActionClassAction,
+  updateActionClassAction,
+} from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
+import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
+import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
+import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TActionClassInput, TActionClassNoCodeConfig, TNoCodeConfig } from "@formbricks/types/actionClasses";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+
 import { testURLmatch } from "../lib/testURLmatch";
-import { TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/v1/actionClasses";
-import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
-import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
-import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
-import {
-  deleteActionClassAction,
-  updateActionClassAction,
-} from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
 
 interface ActionSettingsTabProps {
   environmentId: string;
   actionClass: any;
   setOpen: (v: boolean) => void;
+  membershipRole?: TMembershipRole;
 }
 
-export default function ActionSettingsTab({ environmentId, actionClass, setOpen }: ActionSettingsTabProps) {
+export default function ActionSettingsTab({
+  environmentId,
+  actionClass,
+  setOpen,
+  membershipRole,
+}: ActionSettingsTabProps) {
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [testUrl, setTestUrl] = useState("");
@@ -36,6 +45,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
   const [isInnerHtml, setIsInnerHtml] = useState(actionClass.noCodeConfig?.innerHtml ? true : false);
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   const { register, handleSubmit, control, watch } = useForm({
     defaultValues: {
@@ -75,16 +85,20 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
 
   const onSubmit = async (data) => {
     try {
+      const isCodeAction = actionClass.type === "code";
       setIsUpdatingAction(true);
       if (data.name === "") throw new Error("Please give your action a name");
-      if (!isPageUrl && !isCssSelector && !isInnerHtml) throw new Error("Please select atleast one selector");
-
-      const filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as NoCodeConfig);
+      if (!isPageUrl && !isCssSelector && !isInnerHtml && !isCodeAction)
+        throw new Error("Please select at least one selector");
+      let filteredNoCodeConfig = data.noCodeConfig;
+      if (!isCodeAction) {
+        filteredNoCodeConfig = filterNoCodeConfig(data.noCodeConfig as TNoCodeConfig);
+      }
       const updatedData: TActionClassInput = {
         ...data,
         environmentId,
         noCodeConfig: filteredNoCodeConfig,
-        type: "noCode",
+        type: isCodeAction ? "code" : "noCode",
       } as TActionClassInput;
       await updateActionClassAction(environmentId, actionClass.id, updatedData);
       setOpen(false);
@@ -125,16 +139,18 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
               })}
             />
           </div>
-          <div className="col-span-1">
-            <Label>Description</Label>
-            <Input
-              placeholder="User clicked Download Button "
-              {...register("description", {
-                value: actionClass.description,
-                disabled: actionClass.type === "automatic" ? true : false,
-              })}
-            />
-          </div>
+          {!isViewer && (
+            <div className="col-span-1">
+              <Label>Description</Label>
+              <Input
+                placeholder="User clicked Download Button "
+                {...register("description", {
+                  value: actionClass.description,
+                  disabled: actionClass.type === "automatic" ? true : false,
+                })}
+              />
+            </div>
+          )}
         </div>
         {actionClass.type === "code" ? (
           <p className="text-sm text-slate-600">
@@ -174,7 +190,7 @@ export default function ActionSettingsTab({ environmentId, actionClass, setOpen 
         ) : null}
         <div className="flex justify-between border-t border-slate-200 py-6">
           <div>
-            {actionClass.type !== "automatic" && (
+            {!isViewer && actionClass.type !== "automatic" && (
               <Button
                 type="button"
                 variant="warn"

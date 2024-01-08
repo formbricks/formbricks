@@ -1,6 +1,7 @@
-import { prisma } from "@formbricks/database";
-import { TActionClassType } from "@formbricks/types/v1/actionClasses";
 import type { NextApiRequest, NextApiResponse } from "next";
+
+import { prisma } from "@formbricks/database";
+import { TActionClassType } from "@formbricks/types/actionClasses";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -15,10 +16,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
   // POST
   else if (req.method === "POST") {
-    const { sessionId, eventName, properties } = req.body;
+    const { personId, eventName, properties } = req.body;
 
-    if (!sessionId) {
-      return res.status(400).json({ message: "Missing sessionId" });
+    if (!personId) {
+      return res.status(400).json({ message: "Missing personId" });
     }
     if (!eventName) {
       return res.status(400).json({ message: "Missing eventName" });
@@ -29,15 +30,15 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       eventType = "automatic";
     }
 
-    const eventData = await prisma.event.create({
+    const eventData = await prisma.action.create({
       data: {
         properties,
-        session: {
+        person: {
           connect: {
-            id: sessionId,
+            id: personId,
           },
         },
-        eventClass: {
+        actionClass: {
           connectOrCreate: {
             where: {
               name_environmentId: {

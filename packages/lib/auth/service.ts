@@ -1,13 +1,14 @@
 import crypto from "crypto";
 import { authenticator } from "otplib";
 import qrcode from "qrcode";
+
 import { prisma } from "@formbricks/database";
-import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
+
 import { verifyPassword } from "../auth";
-import { totpAuthenticatorCheck } from "../totp";
-import { revalidateTag } from "next/cache";
-import { getProfileCacheTag } from "../profile/service";
 import { ENCRYPTION_KEY } from "../constants";
+import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
+import { totpAuthenticatorCheck } from "../totp";
+import { userCache } from "../user/cache";
 
 export const setupTwoFactorAuth = async (
   userId: string,
@@ -71,10 +72,10 @@ export const setupTwoFactorAuth = async (
   return { secret, keyUri, dataUri, backupCodes };
 };
 
-export const enableTwoFactorAuth = async (userId: string, code: string) => {
+export const enableTwoFactorAuth = async (id: string, code: string) => {
   const user = await prisma.user.findUnique({
     where: {
-      id: userId,
+      id,
     },
   });
 
@@ -114,14 +115,16 @@ export const enableTwoFactorAuth = async (userId: string, code: string) => {
 
   await prisma.user.update({
     where: {
-      id: userId,
+      id,
     },
     data: {
       twoFactorEnabled: true,
     },
   });
 
-  revalidateTag(getProfileCacheTag(userId));
+  userCache.revalidate({
+    id,
+  });
 
   return {
     message: "Two factor authentication enabled",
@@ -134,10 +137,10 @@ type TDisableTwoFactorAuthParams = {
   backupCode?: string;
 };
 
-export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFactorAuthParams) => {
+export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactorAuthParams) => {
   const user = await prisma.user.findUnique({
     where: {
-      id: userId,
+      id,
     },
   });
 
@@ -211,7 +214,7 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
 
   await prisma.user.update({
     where: {
-      id: userId,
+      id,
     },
     data: {
       backupCodes: null,
@@ -220,7 +223,9 @@ export const disableTwoFactorAuth = async (userId: string, params: TDisableTwoFa
     },
   });
 
-  revalidateTag(getProfileCacheTag(userId));
+  userCache.revalidate({
+    id,
+  });
 
   return {
     message: "Two factor authentication disabled",

@@ -1,16 +1,18 @@
 import GoogleSheetWrapper from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper";
-import GoBackButton from "@formbricks/ui/GoBackButton";
+
+import {
+  GOOGLE_SHEETS_CLIENT_ID,
+  GOOGLE_SHEETS_CLIENT_SECRET,
+  GOOGLE_SHEETS_REDIRECT_URL,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TGoogleSheetIntegration, TGoogleSpreadsheet } from "@formbricks/types/v1/integrations";
-import {
-  GOOGLE_SHEETS_CLIENT_ID,
-  WEBAPP_URL,
-  GOOGLE_SHEETS_CLIENT_SECRET,
-  GOOGLE_SHEETS_REDIRECT_URL,
-} from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
+import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function GoogleSheet({ params }) {
   const enabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
@@ -23,10 +25,10 @@ export default async function GoogleSheet({ params }) {
     throw new Error("Environment not found");
   }
 
-  const googleSheetIntegration: TGoogleSheetIntegration | undefined = integrations?.find(
-    (integration): integration is TGoogleSheetIntegration => integration.type === "googleSheets"
+  const googleSheetIntegration: TIntegrationGoogleSheets | undefined = integrations?.find(
+    (integration): integration is TIntegrationGoogleSheets => integration.type === "googleSheets"
   );
-  let spreadSheetArray: TGoogleSpreadsheet[] = [];
+  let spreadSheetArray: TIntegrationItem[] = [];
   if (googleSheetIntegration && googleSheetIntegration.config.key) {
     spreadSheetArray = await getSpreadSheets(params.environmentId);
   }

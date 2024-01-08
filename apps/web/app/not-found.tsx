@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Button } from "@formbricks/ui/Button";
 
 export default function NotFound() {
@@ -9,9 +11,9 @@ export default function NotFound() {
         <p className="mt-2 text-base text-zinc-600 dark:text-zinc-400">
           Sorry, we couldn’t find the page you’re looking for.
         </p>
-        <Button href="/" className="mt-8">
-          Back to home
-        </Button>
+        <Link href={"/"}>
+          <Button className="mt-8">Back to home</Button>
+        </Link>
       </div>
     </>
   );

@@ -1,6 +1,21 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import SurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
+import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
+import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { EllipsisHorizontalIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TUser } from "@formbricks/types/user";
+import { Badge } from "@formbricks/ui/Badge";
+import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,66 +28,58 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Button } from "@formbricks/ui/Button";
-import { PencilSquareIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/solid";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
-import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
-import LinkSurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { TProfile } from "@formbricks/types/v1/profile";
-import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 
 interface SummaryHeaderProps {
   surveyId: string;
   environment: TEnvironment;
   survey: TSurvey;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
+  membershipRole?: TMembershipRole;
 }
 const SummaryHeader = ({
   surveyId,
   environment,
   survey,
-  surveyBaseUrl,
+  webAppUrl,
   product,
-  profile,
+  user,
+  membershipRole,
 }: SummaryHeaderProps) => {
   const router = useRouter();
 
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled = (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date()) ?? false;
+  const { isViewer } = getAccessFlags(membershipRole);
 
   return (
     <div className="mb-11 mt-6 flex flex-wrap items-center justify-between">
       <div>
-        <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
+        <div className="flex gap-4">
+          <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
+          {survey.resultShareKey && <Badge text="Public Results" type="success" size="normal"></Badge>}
+        </div>
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        {survey.type === "link" && (
-          <LinkSurveyShareButton
-            survey={survey}
-            surveyBaseUrl={surveyBaseUrl}
-            product={product}
-            profile={profile}
-          />
-        )}
-        {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
+        <SurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+        {!isViewer &&
+        (environment?.widgetSetupCompleted || survey.type === "link") &&
+        survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
         ) : null}
-        <Button
-          variant="darkCTA"
-          className="h-full w-full px-3 lg:px-6"
-          href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
-          Edit
-          <PencilSquareIcon className="ml-1 h-4" />
-        </Button>
+        {!isViewer && (
+          <Button
+            variant="darkCTA"
+            className="h-full w-full px-3 lg:px-6"
+            href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
+            Edit
+            <PencilSquareIcon className="ml-1 h-4" />
+          </Button>
+        )}
       </div>
       <div className="block sm:hidden">
         <DropdownMenu>
@@ -84,12 +91,12 @@ const SummaryHeader = ({
           <DropdownMenuContent align="end" className="p-2">
             {survey.type === "link" && (
               <>
-                <LinkSurveyShareButton
+                <SurveyShareButton
                   className="flex w-full justify-center p-1"
                   survey={survey}
-                  surveyBaseUrl={surveyBaseUrl}
+                  webAppUrl={webAppUrl}
                   product={product}
-                  profile={profile}
+                  user={user}
                 />
                 <DropdownMenuSeparator />
               </>
@@ -123,10 +130,10 @@ const SummaryHeader = ({
                                 value === "inProgress"
                                   ? "Survey live"
                                   : value === "paused"
-                                  ? "Survey paused"
-                                  : value === "completed"
-                                  ? "Survey completed"
-                                  : ""
+                                    ? "Survey paused"
+                                    : value === "completed"
+                                      ? "Survey completed"
+                                      : ""
                               );
                               router.refresh();
                             })
@@ -172,9 +179,9 @@ const SummaryHeader = ({
       <SuccessMessage
         environment={environment}
         survey={survey}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
-        profile={profile}
+        user={user}
       />
     </div>
   );

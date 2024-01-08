@@ -1,14 +1,18 @@
-import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
 import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
+
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
+
 import EventActivityTab from "./ActionActivityTab";
 import ActionSettingsTab from "./ActionSettingsTab";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
 
 interface ActionDetailModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
+  membershipRole?: TMembershipRole;
 }
 
 export default function ActionDetailModal({
@@ -16,16 +20,22 @@ export default function ActionDetailModal({
   open,
   setOpen,
   actionClass,
+  membershipRole,
 }: ActionDetailModalProps) {
   const tabs = [
     {
       title: "Activity",
-      children: <EventActivityTab actionClass={actionClass} />,
+      children: <EventActivityTab actionClass={actionClass} environmentId={environmentId} />,
     },
     {
       title: "Settings",
       children: (
-        <ActionSettingsTab environmentId={environmentId} actionClass={actionClass} setOpen={setOpen} />
+        <ActionSettingsTab
+          environmentId={environmentId}
+          actionClass={actionClass}
+          setOpen={setOpen}
+          membershipRole={membershipRole}
+        />
       ),
     },
   ];

@@ -1,11 +1,13 @@
 "use server";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
-import { getServerSession } from "next-auth";
-import { prisma } from "@formbricks/database";
-import { NotificationSettings } from "@formbricks/types/users";
 
-export async function updateNotificationSettingsAction(notificationSettings: NotificationSettings) {
+import { getServerSession } from "next-auth";
+
+import { prisma } from "@formbricks/database";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { AuthorizationError } from "@formbricks/types/errors";
+import { TUserNotificationSettings } from "@formbricks/types/user";
+
+export async function updateNotificationSettingsAction(notificationSettings: TUserNotificationSettings) {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new AuthorizationError("Not authenticated");

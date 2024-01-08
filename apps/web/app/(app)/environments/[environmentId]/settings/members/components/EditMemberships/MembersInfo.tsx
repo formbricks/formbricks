@@ -1,12 +1,13 @@
 import MemberActions from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/MemberActions";
-import MembershipRole from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/MembershipRole";
 import { isInviteExpired } from "@/app/lib/utils";
-import { TInvite } from "@formbricks/types/v1/invites";
-import { TMember, TMembershipRole } from "@formbricks/types/v1/memberships";
-import { TTeam } from "@formbricks/types/v1/teams";
-import { Badge } from "@formbricks/ui/Badge";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import React from "react";
+
+import { EditMembershipRole } from "@formbricks/ee/RoleManagement/components/EditMembershipRole";
+import { TInvite } from "@formbricks/types/invites";
+import { TMember, TMembershipRole } from "@formbricks/types/memberships";
+import { TTeam } from "@formbricks/types/teams";
+import { ProfileAvatar } from "@formbricks/ui/Avatars";
+import { Badge } from "@formbricks/ui/Badge";
 
 type MembersInfoProps = {
   team: TTeam;
@@ -15,6 +16,7 @@ type MembersInfoProps = {
   isUserAdminOrOwner: boolean;
   currentUserId: string;
   currentUserRole: TMembershipRole;
+  canDoRoleManagement: boolean;
 };
 
 // Type guard to check if member is an invitee
@@ -29,6 +31,7 @@ const MembersInfo = async ({
   members,
   currentUserId,
   currentUserRole,
+  canDoRoleManagement,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
 
@@ -53,8 +56,8 @@ const MembersInfo = async ({
           </div>
 
           <div className="ph-no-capture col-span-3 flex flex-col items-start justify-center break-all">
-            {allMembers?.length > 0 && (
-              <MembershipRole
+            {canDoRoleManagement && allMembers?.length > 0 && (
+              <EditMembershipRole
                 isAdminOrOwner={isUserAdminOrOwner}
                 memberRole={member.role}
                 memberId={!isInvitee(member) ? member.userId : ""}

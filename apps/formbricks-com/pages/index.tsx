@@ -14,9 +14,9 @@ const IndexPage = () => (
     title="Formbricks | Privacy-first Experience Management"
     description="Build qualitative user research into your product. Leverage Best practices to increase Product-Market Fit.">
     <Hero />
-    <div className="hidden lg:block">
+    {/*     <div className="hidden lg:block">
       <GitHubSponsorship />
-    </div>
+    </div> */}
     <BestPractices />
     <Features />
     <Highlights />
@@ -27,9 +27,9 @@ const IndexPage = () => (
     <div className="hidden lg:block">
       <BreakerCTA
         teaser="READY?"
-        headline="Create surveys in minutes."
-        subheadline="Don’t take our word for it, try it yourself."
-        cta="Create survey"
+        headline="Get started in minutes."
+        subheadline="Dive right in, no credit card required."
+        cta="Get started"
         href="https://app.formbricks.com/auth/signup"
       />
     </div>

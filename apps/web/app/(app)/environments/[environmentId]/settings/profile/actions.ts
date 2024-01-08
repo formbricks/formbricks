@@ -1,24 +1,25 @@
 "use server";
 
-import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
-import { updateProfile, deleteProfile } from "@formbricks/lib/profile/service";
-import { TProfileUpdateInput } from "@formbricks/types/v1/profile";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
 
-export async function updateProfileAction(data: Partial<TProfileUpdateInput>) {
+import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { deleteUser, updateUser } from "@formbricks/lib/user/service";
+import { AuthorizationError } from "@formbricks/types/errors";
+import { TUserUpdateInput } from "@formbricks/types/user";
+
+export async function updateUserAction(data: Partial<TUserUpdateInput>) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  return await updateProfile(session.user.id, data);
+  return await updateUser(session.user.id, data);
 }
 
-export async function deleteProfileAction() {
+export async function deleteUserAction() {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  return await deleteProfile(session.user.id);
+  return await deleteUser(session.user.id);
 }
 
 export async function setupTwoFactorAuthAction(password: string) {
@@ -66,4 +67,18 @@ export async function disableTwoFactorAuthAction(params: TDisableTwoFactorAuthPa
   }
 
   return await disableTwoFactorAuth(session.user.id, params);
+}
+
+export async function updateAvatarAction(avatarUrl: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+
+  if (!session.user.id) {
+    throw new Error("User not found");
+  }
+
+  return await updateUser(session.user.id, { imageUrl: avatarUrl });
 }

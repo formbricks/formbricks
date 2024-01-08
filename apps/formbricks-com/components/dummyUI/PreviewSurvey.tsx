@@ -1,15 +1,16 @@
 import { useState } from "react";
+
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+
 import Modal from "./Modal";
 import QuestionConditional from "./QuestionConditional";
-import type { Question } from "@formbricks/types/questions";
-import { Survey } from "@formbricks/types/surveys";
 import ThankYouCard from "./ThankYouCard";
 
 interface PreviewSurveyProps {
-  localSurvey?: Survey;
+  localSurvey?: TSurvey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
-  questions: Question[];
+  questions: TSurveyQuestion[];
   brandColor: string;
 }
 

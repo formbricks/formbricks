@@ -1,4 +1,7 @@
-import type { TJsConfigInput } from "@formbricks/types/v1/js";
+import type { TJsConfig, TJsConfigInput } from "@formbricks/types/js";
+import { TPersonAttributes } from "@formbricks/types/people";
+
+import { trackAction } from "./actions";
 import { Config } from "./config";
 import {
   ErrorHandler,
@@ -13,10 +16,9 @@ import {
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
-import { resetPerson } from "./person";
-import { isExpired } from "./session";
+import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
-import { addWidgetContainer } from "./widget";
+import { addWidgetContainer, closeSurvey } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -64,52 +66,82 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
-  const localConfigResult = config.loadFromLocalStorage();
+  if (!c.userId && c.attributes) {
+    logger.error("No userId provided but attributes. Cannot update attributes without userId.");
+    return err({
+      code: "missing_field",
+      field: "userId",
+    });
+  }
+
+  // if userId and attributes are available, set them in backend
+  let updatedAttributes: TPersonAttributes | null = null;
+  if (c.userId && c.attributes) {
+    const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+
+    if (res.ok !== true) {
+      return err(res.error);
+    }
+    updatedAttributes = res.value;
+  }
+
+  let existingConfig: TJsConfig | undefined;
+  try {
+    existingConfig = config.get();
+  } catch (e) {
+    logger.debug("No existing configuration found.");
+  }
 
   if (
-    localConfigResult.ok &&
-    localConfigResult.value.state &&
-    localConfigResult.value.environmentId === c.environmentId &&
-    localConfigResult.value.apiHost === c.apiHost
+    existingConfig &&
+    existingConfig.state &&
+    existingConfig.environmentId === c.environmentId &&
+    existingConfig.apiHost === c.apiHost &&
+    existingConfig.userId === c.userId &&
+    existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
   ) {
-    const { state, apiHost, environmentId } = localConfigResult.value;
+    logger.debug("Found existing configuration.");
+    if (existingConfig.expiresAt < new Date()) {
+      logger.debug("Configuration expired.");
 
-    logger.debug("Found existing configuration. Checking session.");
-    const existingSession = state.session;
-
-    config.update(localConfigResult.value);
-
-    if (isExpired(existingSession)) {
-      logger.debug("Session expired. Resyncing.");
-
-      try {
-        await sync({
-          apiHost,
-          environmentId,
-          personId: state.person.id,
-          sessionId: existingSession.id,
-        });
-      } catch (e) {
-        logger.debug("Sync failed. Clearing config and starting from scratch.");
-        await resetPerson();
-        return await initialize(c);
-      }
+      await sync({
+        apiHost: c.apiHost,
+        environmentId: c.environmentId,
+        userId: c.userId,
+      });
     } else {
-      logger.debug("Session valid. Continuing.");
-      // continue for now - next sync will check complete state
+      logger.debug("Configuration not expired. Extending expiration.");
+      config.update(existingConfig);
     }
   } else {
-    logger.debug("No valid configuration found. Creating new config.");
-
+    logger.debug("No valid configuration found or it has been expired. Creating new config.");
     logger.debug("Syncing.");
+
     await sync({
       apiHost: c.apiHost,
       environmentId: c.environmentId,
+      userId: c.userId,
+    });
+
+    // and track the new session event
+    await trackAction("New Session");
+  }
+
+  // update attributes in config
+  if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
+    config.update({
+      environmentId: config.get().environmentId,
+      apiHost: config.get().apiHost,
+      userId: config.get().userId,
+      state: {
+        ...config.get().state,
+        attributes: { ...config.get().state.attributes, ...c.attributes },
+      },
     });
   }
 
   logger.debug("Adding event listeners");
-  addEventListeners(c.debug);
+  addEventListeners();
   addCleanupEventListeners();
 
   isInitialized = true;
@@ -135,6 +167,7 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
 
 export const deinitalize = (): void => {
   logger.debug("Deinitializing");
+  closeSurvey();
   removeAllEventListeners();
   config.resetConfig();
   isInitialized = false;

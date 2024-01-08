@@ -1,9 +1,11 @@
-import { TTeam } from "@formbricks/types/v1/teams";
-import React from "react";
 import MembersInfo from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/MembersInfo";
-import { getMembersByTeamId } from "@formbricks/lib/membership/service";
+import React from "react";
+
+import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { getInvitesByTeamId } from "@formbricks/lib/invite/service";
-import { TMembership } from "@formbricks/types/v1/memberships";
+import { getMembersByTeamId } from "@formbricks/lib/membership/service";
+import { TMembership } from "@formbricks/types/memberships";
+import { TTeam } from "@formbricks/types/teams";
 
 type EditMembershipsProps = {
   team: TTeam;
@@ -22,6 +24,7 @@ export async function EditMemberships({
 
   const currentUserRole = membership?.role;
   const isUserAdminOrOwner = membership?.role === "admin" || membership?.role === "owner";
+  const canDoRoleManagement = getRoleManagementPermission(team);
 
   return (
     <div>
@@ -30,7 +33,7 @@ export async function EditMemberships({
           <div className="col-span-2"></div>
           <div className="col-span-5">Fullname</div>
           <div className="col-span-5">Email</div>
-          <div className="col-span-3">Role</div>
+          {canDoRoleManagement && <div className="col-span-3">Role</div>}
           <div className="col-span-5"></div>
         </div>
 
@@ -42,6 +45,7 @@ export async function EditMemberships({
             members={members ?? []}
             isUserAdminOrOwner={isUserAdminOrOwner}
             currentUserRole={currentUserRole}
+            canDoRoleManagement={canDoRoleManagement}
           />
         )}
       </div>

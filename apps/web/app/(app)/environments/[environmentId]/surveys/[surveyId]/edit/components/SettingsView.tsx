@@ -1,13 +1,15 @@
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TSurvey } from "@formbricks/types/surveys";
+
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
+import StylingCard from "./StylingCard";
 import WhenToSendCard from "./WhenToSendCard";
 import WhoToSendCard from "./WhoToSendCard";
-import StylingCard from "./StylingCard";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
 
 interface SettingsViewProps {
   environment: TEnvironment;
@@ -15,8 +17,9 @@ interface SettingsViewProps {
   setLocalSurvey: (survey: TSurvey) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  isEncryptionKeySet: boolean;
   responseCount: number;
+  membershipRole?: TMembershipRole;
+  colours: string[];
 }
 
 export default function SettingsView({
@@ -25,8 +28,9 @@ export default function SettingsView({
   setLocalSurvey,
   actionClasses,
   attributeClasses,
-  isEncryptionKeySet,
   responseCount,
+  membershipRole,
+  colours,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -44,12 +48,12 @@ export default function SettingsView({
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
         actionClasses={actionClasses}
+        membershipRole={membershipRole}
       />
 
       <ResponseOptionsCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        isEncryptionKeySet={isEncryptionKeySet}
         responseCount={responseCount}
       />
 
@@ -59,7 +63,7 @@ export default function SettingsView({
         environmentId={environment.id}
       />
 
-      <StylingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <StylingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} colours={colours} />
     </div>
   );
 }

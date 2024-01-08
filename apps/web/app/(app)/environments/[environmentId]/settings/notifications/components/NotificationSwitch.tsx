@@ -1,15 +1,17 @@
 "use client";
 
-import { Switch } from "@formbricks/ui/Switch";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import { updateNotificationSettingsAction } from "../actions";
-import { NotificationSettings } from "@formbricks/types/users";
 import { useState } from "react";
+import toast from "react-hot-toast";
+
+import { TUserNotificationSettings } from "@formbricks/types/user";
+import { Switch } from "@formbricks/ui/Switch";
+
+import { updateNotificationSettingsAction } from "../actions";
 
 interface NotificationSwitchProps {
   surveyOrProductId: string;
-  notificationSettings: NotificationSettings;
+  notificationSettings: TUserNotificationSettings;
   notificationType: "alert" | "weeklySummary";
 }
 

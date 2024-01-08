@@ -1,22 +1,23 @@
 "use client";
 
-import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/settings/tags/components/MergeTagsCombobox";
-import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-import { cn } from "@formbricks/lib/cn";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TTag, TTagsCount } from "@formbricks/types/v1/tags";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import React, { useState } from "react";
-import { toast } from "react-hot-toast";
-import { useRouter } from "next/navigation";
 import {
   deleteTagAction,
   mergeTagsAction,
   updateTagNameAction,
 } from "@/app/(app)/environments/[environmentId]/settings/tags/actions";
+import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/settings/tags/components/MergeTagsCombobox";
 import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { toast } from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TTag, TTagsCount } from "@formbricks/types/tags";
+import { Button } from "@formbricks/ui/Button";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { Input } from "@formbricks/ui/Input";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
 interface IEditTagsWrapperProps {
   environment: TEnvironment;

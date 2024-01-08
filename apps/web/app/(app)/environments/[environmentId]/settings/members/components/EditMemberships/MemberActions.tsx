@@ -1,21 +1,22 @@
 "use client";
 
-import ShareInviteModal from "@/app/(app)/environments/[environmentId]/settings/members/components/ShareInviteModal";
 import {
   createInviteTokenAction,
   deleteInviteAction,
   deleteMembershipAction,
   resendInviteAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { TInvite } from "@formbricks/types/v1/invites";
-import { TMember } from "@formbricks/types/v1/memberships";
-import { TTeam } from "@formbricks/types/v1/teams";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import ShareInviteModal from "@/app/(app)/environments/[environmentId]/settings/members/components/ShareInviteModal";
 import { PaperAirplaneIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+
+import { TInvite } from "@formbricks/types/invites";
+import { TMember } from "@formbricks/types/memberships";
+import { TTeam } from "@formbricks/types/teams";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 type MemberActionsProps = {
   team: TTeam;
@@ -74,7 +75,6 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
   const handleShareInvite = async () => {
     try {
       if (!invite) return;
-
       const { inviteToken } = await createInviteTokenAction(invite.id);
       setShareInviteToken(inviteToken);
       setShowShareInviteModal(true);

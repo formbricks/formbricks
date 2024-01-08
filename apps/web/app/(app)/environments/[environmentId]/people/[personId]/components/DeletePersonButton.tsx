@@ -1,15 +1,18 @@
 "use client";
 
 import { deletePersonAction } from "@/app/(app)/environments/[environmentId]/people/[personId]/actions";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+
 interface DeletePersonButtonProps {
   environmentId: string;
   personId: string;
+  membershipRole?: TMembershipRole;
 }
 
 export function DeletePersonButton({ environmentId, personId }: DeletePersonButtonProps) {

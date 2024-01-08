@@ -1,21 +1,23 @@
 import formbricks from "@formbricks/js";
-import { env } from "@/env.mjs";
+import { env } from "@formbricks/lib/env.mjs";
 
 export const formbricksEnabled =
   typeof env.NEXT_PUBLIC_FORMBRICKS_API_HOST && env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID;
+const ttc = { onboarding: 0 };
 
 export const createResponse = async (
   surveyId: string,
+  userId: string,
   data: { [questionId: string]: any },
   finished: boolean = false
 ): Promise<any> => {
   const api = formbricks.getApi();
-  const personId = formbricks.getPerson()?.id;
   return await api.client.response.create({
     surveyId,
-    personId,
+    userId,
     finished,
     data,
+    ttc,
   });
 };
 
@@ -29,6 +31,7 @@ export const updateResponse = async (
     responseId,
     finished,
     data,
+    ttc,
   });
 };
 

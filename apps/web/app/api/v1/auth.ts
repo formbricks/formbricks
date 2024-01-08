@@ -1,8 +1,9 @@
-import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
-import { TAuthenticationApiKey } from "@formbricks/types/v1/auth";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { responses } from "@/app/lib/api/response";
 import { NextResponse } from "next/server";
+
+import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export async function authenticateRequest(request: Request): Promise<TAuthenticationApiKey | null> {
   const apiKey = request.headers.get("x-api-key");

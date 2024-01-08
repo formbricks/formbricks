@@ -1,11 +1,12 @@
 "use client";
 
+import * as Collapsible from "@radix-ui/react-collapsible";
+
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
-import * as Collapsible from "@radix-ui/react-collapsible";
 
 interface EditThankYouCardProps {
   localSurvey: TSurvey;

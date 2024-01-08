@@ -1,15 +1,17 @@
 "use client";
+
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
 import { md } from "@formbricks/lib/markdownIt";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
-import * as Collapsible from "@radix-ui/react-collapsible";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;
@@ -46,6 +48,7 @@ export default function EditWelcomeCard({
       },
     });
   };
+
   return (
     <div
       className={cn(
@@ -99,12 +102,14 @@ export default function EditWelcomeCard({
             </div>
             <div className="mt-3 flex w-full items-center justify-center">
               <FileInput
+                id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg"]}
                 environmentId={environmentId}
-                onFileUpload={(url: string) => {
-                  updateSurvey({ fileUrl: url });
+                onFileUpload={(url: string[]) => {
+                  updateSurvey({ fileUrl: url[0] });
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
+                imageFit="contain"
               />
             </div>
             <div className="mt-3">
@@ -155,7 +160,7 @@ export default function EditWelcomeCard({
                 </div>
               </div>
             </div>
-            {/*             <div className="mt-8 flex items-center">
+            <div className="mt-8 flex items-center">
               <div className="mr-2">
                 <Switch
                   id="timeToFinish"
@@ -174,7 +179,29 @@ export default function EditWelcomeCard({
                   Display an estimate of completion time for survey
                 </div>
               </div>
-            </div> */}
+            </div>
+            {localSurvey?.type === "link" && (
+              <div className="mt-6 flex items-center">
+                <div className="mr-2">
+                  <Switch
+                    id="showResponseCount"
+                    name="showResponseCount"
+                    checked={localSurvey?.welcomeCard?.showResponseCount}
+                    onCheckedChange={() =>
+                      updateSurvey({ showResponseCount: !localSurvey.welcomeCard.showResponseCount })
+                    }
+                  />
+                </div>
+                <div className="flex-column">
+                  <Label htmlFor="showResponseCount" className="">
+                    Show Response Count
+                  </Label>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Display number of responses for survey
+                  </div>
+                </div>
+              </div>
+            )}
           </form>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

@@ -1,5 +1,6 @@
-import { Result, err, ok, wrapThrows } from "@formbricks/types/v1/errorHandlers";
-import { NetworkError } from "@formbricks/types/v1/errors";
+import { Result, err, ok, wrapThrows } from "@formbricks/types/errorHandlers";
+import { NetworkError } from "@formbricks/types/errors";
+
 import { ApiResponse } from "../types";
 
 export async function makeRequest<T>(

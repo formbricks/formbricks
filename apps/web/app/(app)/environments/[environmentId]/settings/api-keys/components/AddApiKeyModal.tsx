@@ -1,11 +1,12 @@
 "use client";
 
-import { Modal } from "@formbricks/ui/Modal";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { useForm } from "react-hook-form";
+
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
-import { useForm } from "react-hook-form";
+import { Modal } from "@formbricks/ui/Modal";
 
 interface MemberModalProps {
   open: boolean;
@@ -38,7 +39,10 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
             <div className="w-full space-y-4">
               <div>
                 <Label>API Key Label</Label>
-                <Input placeholder="e.g. GitHub, PostHog, Slack" {...register("label", { required: true })} />
+                <Input
+                  placeholder="e.g. GitHub, PostHog, Slack"
+                  {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
+                />
               </div>
 
               <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-700">

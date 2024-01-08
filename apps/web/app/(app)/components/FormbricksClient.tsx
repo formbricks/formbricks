@@ -1,9 +1,10 @@
 "use client";
 
-import { env } from "@/env.mjs";
 import { formbricksEnabled } from "@/app/lib/formbricks";
-import formbricks from "@formbricks/js";
 import { useEffect } from "react";
+
+import formbricks from "@formbricks/js";
+import { env } from "@formbricks/lib/env.mjs";
 
 type UsageAttributesUpdaterProps = {
   numSurveys: number;
@@ -15,8 +16,8 @@ export default function FormbricksClient({ session }) {
       formbricks.init({
         environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
         apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
+        userId: session.user.id,
       });
-      formbricks.setUserId(session.user.id);
       formbricks.setEmail(session.user.email);
     }
   }, [session]);

@@ -1,14 +1,15 @@
 "use client";
 
+import { ArchiveBoxArrowDownIcon, ArchiveBoxXMarkIcon } from "@heroicons/react/24/solid";
+import type { AttributeClass } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+
+import { updateAttributeClass } from "@formbricks/lib/attributeClass/service";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import type { AttributeClass } from "@prisma/client";
-import { useForm } from "react-hook-form";
-import { ArchiveBoxArrowDownIcon, ArchiveBoxXMarkIcon } from "@heroicons/react/24/solid";
-import { useRouter } from "next/navigation";
-import { updatetAttributeClass } from "@formbricks/lib/attributeClass/service";
-import { useState } from "react";
 
 interface AttributeSettingsTabProps {
   attributeClass: AttributeClass;
@@ -25,7 +26,7 @@ export default function AttributeSettingsTab({ attributeClass, setOpen }: Attrib
   const onSubmit = async (data) => {
     setisAttributeBeingSubmitted(true);
     setOpen(false);
-    await updatetAttributeClass(attributeClass.id, data);
+    await updateAttributeClass(attributeClass.id, data);
     router.refresh();
     setisAttributeBeingSubmitted(false);
   };
@@ -33,7 +34,7 @@ export default function AttributeSettingsTab({ attributeClass, setOpen }: Attrib
   const handleArchiveToggle = async () => {
     setisAttributeBeingSubmitted(true);
     const data = { archived: !attributeClass.archived };
-    await updatetAttributeClass(attributeClass.id, data);
+    await updateAttributeClass(attributeClass.id, data);
     setisAttributeBeingSubmitted(false);
   };
 

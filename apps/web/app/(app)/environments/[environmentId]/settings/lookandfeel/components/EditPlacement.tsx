@@ -1,14 +1,16 @@
 "use client";
 
-import { cn } from "@formbricks/lib/cn";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
-import { Button } from "@formbricks/ui/Button";
-import { Label } from "@formbricks/ui/Label";
 import { getPlacementStyle } from "@/app/lib/preview";
-import { PlacementType } from "@formbricks/types/js";
-import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { useState } from "react";
 import toast from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { TPlacement } from "@formbricks/types/common";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+
 import { updateProductAction } from "../actions";
 
 const placements = [
@@ -21,10 +23,11 @@ const placements = [
 
 interface EditPlacementProps {
   product: TProduct;
+  environmentId: string;
 }
 
 export function EditPlacement({ product }: EditPlacementProps) {
-  const [currentPlacement, setCurrentPlacement] = useState<PlacementType>(product.placement);
+  const [currentPlacement, setCurrentPlacement] = useState<TPlacement>(product.placement);
   const [overlay, setOverlay] = useState(product.darkOverlay ? "darkOverlay" : "lightOverlay");
   const [clickOutside, setClickOutside] = useState(product.clickOutsideClose ? "allow" : "disallow");
   const [updatingPlacement, setUpdatingPlacement] = useState(false);
@@ -51,7 +54,7 @@ export function EditPlacement({ product }: EditPlacementProps) {
   return (
     <div className="w-full items-center">
       <div className="flex">
-        <RadioGroup onValueChange={(e) => setCurrentPlacement(e as PlacementType)} value={currentPlacement}>
+        <RadioGroup onValueChange={(e) => setCurrentPlacement(e as TPlacement)} value={currentPlacement}>
           {placements.map((placement) => (
             <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
               <RadioGroupItem id={placement.value} value={placement.value} disabled={placement.disabled} />

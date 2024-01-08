@@ -1,10 +1,11 @@
 "use client";
 
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/v1/surveys";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
 import { useState } from "react";
 import toast from "react-hot-toast";
+
+import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
 
 interface UpdateQuestionIdProps {
   localSurvey: TSurvey;
@@ -39,6 +40,11 @@ export default function UpdateQuestionId({
       setCurrentValue(prevValue);
       updateQuestion(questionIdx, { id: prevValue });
       toast.error("ID should not be empty.");
+      return;
+    } else if (["userId", "source", "suid", "end", "start", "welcomeCard", "hidden"].includes(currentValue)) {
+      setCurrentValue(prevValue);
+      updateQuestion(questionIdx, { id: prevValue });
+      toast.error("Reserved words cannot be used as question ID");
       return;
     } else {
       setIsInputInvalid(false);

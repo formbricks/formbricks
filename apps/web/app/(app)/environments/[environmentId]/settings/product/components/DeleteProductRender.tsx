@@ -1,13 +1,14 @@
 "use client";
 
 import { deleteProductAction } from "@/app/(app)/environments/[environmentId]/settings/product/actions";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { truncate } from "@/app/lib/utils";
-import { TProduct } from "@formbricks/types/v1/product";
-import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+
+import { truncate } from "@formbricks/lib/strings";
+import { TProduct } from "@formbricks/types/product";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 
 type DeleteProductRenderProps = {
   environmentId: string;
@@ -26,16 +27,19 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
 }) => {
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteProduct = async () => {
     try {
+      setIsDeleting(true);
       const deletedProduct = await deleteProductAction(environmentId, userId, product.id);
-
       if (!!deletedProduct?.id) {
         toast.success("Product deleted successfully.");
         router.push("/");
       }
+      setIsDeleting(false);
     } catch (err) {
+      setIsDeleting(false);
       toast.error("Could not delete product.");
       setIsDeleteDialogOpen(false);
     }
@@ -77,6 +81,7 @@ const DeleteProductRender: React.FC<DeleteProductRenderProps> = ({
           product.name,
           30
         )}"? This action cannot be undone.`}
+        isDeleting={isDeleting}
       />
     </div>
   );

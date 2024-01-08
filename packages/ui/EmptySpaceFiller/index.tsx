@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
-import { TEnvironment } from "@formbricks/types/v1/environment";
+import React from "react";
+
+import { TEnvironment } from "@formbricks/types/environment";
 
 type EmptySpaceFillerProps = {
   type: "table" | "response" | "event" | "linkResponse" | "tag";
@@ -35,7 +36,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
               </Link>
             )}
             {((environment.widgetSetupCompleted || noWidgetRequired) && emptyMessage) ||
-              "Your data will appear here as soon as you receive your first response ⏲️"}
+              "Waiting for a response 🧘‍♂️"}
           </div>
 
           <div className="h-16 w-full rounded-lg bg-slate-50/50"></div>
@@ -64,9 +65,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
               </Link>
             )}
             {(environment.widgetSetupCompleted || noWidgetRequired) && (
-              <span className="text-center">
-                Your data will appear here as soon as you receive your first response ⏲️
-              </span>
+              <span className="bg-light-background-primary-500 text-center">Waiting for a response 🧘‍♂️</span>
             )}
           </div>
           <div className="h-12 w-full rounded-full bg-slate-50/50"></div>
@@ -123,9 +122,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
             </Link>
           )}
           {(environment.widgetSetupCompleted || noWidgetRequired) && (
-            <span className="text-center">
-              Your data will appear here as soon as you receive your first response ⏲️
-            </span>
+            <span className="text-center">Waiting for a response 🧘‍♂️</span>
           )}
         </div>
         <div className="h-12 w-full rounded-full bg-slate-50/50"></div>

@@ -1,8 +1,10 @@
-import { authOptions } from "@formbricks/lib/authOptions";
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { prisma } from "@formbricks/database";
-import { NotificationSettings } from "@formbricks/types/users";
 import { getServerSession } from "next-auth";
+
+import { prisma } from "@formbricks/database";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { TUserNotificationSettings } from "@formbricks/types/user";
+
 import SettingsTitle from "../components/SettingsTitle";
 import EditAlerts from "./components/EditAlerts";
 import EditWeeklySummary from "./components/EditWeeklySummary";
@@ -31,7 +33,10 @@ async function getUser(userId: string | undefined): Promise<User> {
   return user;
 }
 
-function cleanNotificationSettings(notificationSettings: NotificationSettings, memberships: Membership[]) {
+function cleanNotificationSettings(
+  notificationSettings: TUserNotificationSettings,
+  memberships: Membership[]
+) {
   const newNotificationSettings = { alert: {}, weeklySummary: {} };
   for (const membership of memberships) {
     for (const product of membership.team.products) {

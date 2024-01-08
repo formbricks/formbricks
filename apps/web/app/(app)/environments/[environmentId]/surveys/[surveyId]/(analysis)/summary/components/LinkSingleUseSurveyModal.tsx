@@ -1,14 +1,15 @@
 "use client";
 
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { truncateMiddle } from "@/app/lib/utils";
-import { cn } from "@formbricks/lib/cn";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Button } from "@formbricks/ui/Button";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { truncateMiddle } from "@formbricks/lib/strings";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 
 interface LinkSingleUseSurveyModalProps {
   survey: TSurvey;
@@ -20,6 +21,8 @@ export default function LinkSingleUseSurveyModal({ survey, surveyBaseUrl }: Link
 
   useEffect(() => {
     fetchSingleUseIds();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey.singleUse?.isEncrypted]);
 
   const fetchSingleUseIds = async () => {
@@ -30,12 +33,11 @@ export default function LinkSingleUseSurveyModal({ survey, surveyBaseUrl }: Link
   const generateSingleUseIds = async (isEncrypted: boolean) => {
     const promises = Array(7)
       .fill(null)
-      .map(() => generateSingleUseIdAction(isEncrypted));
-    const ids = await Promise.all(promises);
-    return ids;
+      .map(() => generateSingleUseIdAction(survey.id, isEncrypted));
+    return await Promise.all(promises);
   };
 
-  const defaultSurveyUrl = `${surveyBaseUrl}/${survey.id}`;
+  const defaultSurveyUrl = `${surveyBaseUrl}/s/${survey.id}`;
   const [selectedSingleUseIds, setSelectedSingleIds] = useState<number[]>([]);
 
   const linkTextRef = useRef<HTMLDivElement>(null);

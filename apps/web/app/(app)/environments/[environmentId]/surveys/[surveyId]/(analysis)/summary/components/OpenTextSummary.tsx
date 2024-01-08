@@ -1,26 +1,33 @@
-import { getPersonIdentifier } from "@formbricks/lib/people/helpers";
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import { timeSince } from "@formbricks/lib/time";
-import type { QuestionSummary } from "@formbricks/types/responses";
-import { TSurveyOpenTextQuestion } from "@formbricks/types/v1/surveys";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { questionTypes } from "@/app/lib/questions";
+import React, { useState } from "react";
+
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { timeSince } from "@formbricks/lib/time";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
 
 interface OpenTextSummaryProps {
-  questionSummary: QuestionSummary<TSurveyOpenTextQuestion>;
+  questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;
   environmentId: string;
+  responsesPerPage: number;
 }
 
-export default function OpenTextSummary({ questionSummary, environmentId }: OpenTextSummaryProps) {
+export default function OpenTextSummary({
+  questionSummary,
+  environmentId,
+  responsesPerPage,
+}: OpenTextSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
+  const [displayCount, setDisplayCount] = useState(responsesPerPage);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
-
+        <Headline headline={questionSummary.question.headline} />
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
             {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
@@ -30,6 +37,9 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
             <InboxStackIcon className="mr-2 h-4 w-4" />
             {questionSummary.responses.length} Responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
       <div className="rounded-b-lg bg-white ">
@@ -38,12 +48,12 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
           <div className="px-4 md:px-6">Time</div>
         </div>
-        {questionSummary.responses.map((response) => {
+        {questionSummary.responses.slice(0, displayCount).map((response) => {
           const displayIdentifier = getPersonIdentifier(response.person!);
           return (
             <div
               key={response.id}
-              className="grid  grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
+              className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
               <div className="pl-4 md:pl-6">
                 {response.person ? (
                   <Link
@@ -72,6 +82,16 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
             </div>
           );
         })}
+
+        {displayCount < questionSummary.responses.length && (
+          <div className="flex justify-center py-1">
+            <button
+              onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
+              className="my-2 flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+              Show more
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

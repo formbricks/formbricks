@@ -1,4 +1,4 @@
-export const meta = {
+export const metadata = {
   title: "Guide to Deploying Formbricks Using Docker",
   description:
     "Step-by-step tutorial on how to effortlessly set up and run Formbricks via Docker. Explore the quick deployment process with Docker-Compose, learn how to update Formbricks, and troubleshoot common issues. Ideal for those looking for a hassle-free Formbricks experience",
@@ -6,7 +6,7 @@ export const meta = {
 
 #### Self-Hosting
 
-# Running Formbricks with Docker
+# Advanced Setup
 
 Quickly set up and start using Formbricks without getting into the technicalities of the build process. You'll be using an image that we've already built for you. The pre-built image is ready-to-run, and it only requires minimal configuration on your part. This approach is perfect for getting a functional instance of Formbricks up and running with minimal hassle. It's as easy as downloading the Docker image and firing up the container.
 
@@ -21,98 +21,131 @@ Ensure `docker` & `docker compose` are installed on your server/system. Both are
   Docker documentation.
 </Note>
 
-1. **Create a New Directory for Formbricks**
+1.  **Create a New Directory for Formbricks**
 
-   Open a terminal and create a new directory for Formbricks, then navigate into this new directory:
+Open a terminal and create a new directory for Formbricks, then navigate into this new directory:
+
 <Col>
    <CodeGroup title="Create and cd into the new directory">
 
-   ```bash
-   mkdir formbricks-quickstart && cd formbricks-quickstart
-   ```
+    ```bash
+    mkdir formbricks-quickstart && cd formbricks-quickstart
+    ```
 
-   </CodeGroup>
+    </CodeGroup>
+
 </Col>
-2. **Download the Docker-Compose File**
 
-   Download the docker-compose file directly from the Formbricks repository:
+2.  **Download the Docker-Compose File**
+
+Download the docker-compose file directly from the Formbricks repository:
+
 <Col>
    <CodeGroup title="Download docker compose file">
 
-   ```bash
-   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
-   ```
+    ```bash
+    curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
+    ```
 
-   </CodeGroup>
+    </CodeGroup>
+
 </Col>
-3. **Generate NextAuth Secret**
 
-   Next, you need to generate a NextAuth secret. This will be used for session signing and encryption. The `sed` command below generates a random string using `openssl`, then replaces the `NEXTAUTH_SECRET:` placeholder in the `docker-compose.yml` file with this generated secret:
+3.  **Generate NextAuth Secret**
+
+Next, you need to generate a NextAuth secret. This will be used for session signing and encryption. The `sed` command below generates a random string using `openssl`, then replaces the `NEXTAUTH_SECRET:` placeholder in the `docker-compose.yml` file with this generated secret:
+
 <Col>
    <CodeGroup title="Generate NextAuth Secret">
 
-   ```bash
-   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)/" docker-compose.yml
-   ```
+    ```bash
+    sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+    ```
 
-   </CodeGroup>
+    </CodeGroup>
+
 </Col>
-4. **Start the Docker Setup**
 
-   You're now ready to start the Formbricks Docker setup. The following command will start Formbricks together with a postgreSQL database using Docker Compose:
+4.  **Generate Encryption Key**
 
-   We pass the `--env-file /dev/null` flag to docker-compose to prevent it from reading the .env file. This is because we're using environment variables directly in the docker-compose.yml file as the env file is currently in a format not well recognised by docker systems.
+Next, you need to generate an Encryption Key. This will be used for authenticating and verifying 2 Factor Authentication. The `sed` command below generates a random string using `openssl`, then replaces the `ENCRYPTION_KEY:` placeholder in the `docker-compose.yml` file with this generated secret:
+
+<Col>
+   <CodeGroup title="Generate Encryption Key">
+
+    ```bash
+    sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+    ```
+
+    </CodeGroup>
+
+</Col>
+
+5.  **Start the Docker Setup**
+
+You're now ready to start the Formbricks Docker setup. The following command will start Formbricks together with a postgreSQL database using Docker Compose:
+
 <Col>
    <CodeGroup title="Launch Docker Instance">
 
-   ```bash
-    docker compose --env-file /dev/null up -d
-   ```
+```bash
+ docker compose up -d
+```
 
    </CodeGroup>
 </Col>
    The `-d` flag will run the containers in detached mode, meaning they'll run in the background.
 
-5. **Visit Formbricks in Your Browser**
+6. **Visit Formbricks in Your Browser**
 
    After starting the Docker setup, visit http://localhost:3000 in your browser to interact with the Formbricks application. The first time you access this page, you'll be greeted by a setup wizard. Follow the prompts to define your first user and get started.
 
 ## Updating Formbricks
 
-1. Stop the Formbricks stack
+1.  Stop the Formbricks stack
+
 <Col>
    <CodeGroup title="Stop the docker instance">
 
-   ```bash
-   docker compose down
-   ```
+    ```bash
+    docker compose down
+    ```
 
-   </CodeGroup>
+    </CodeGroup>
+
 </Col>
-2. Pull the latest changes
+
+2.  Pull the latest changes
+
 <Col>
    <CodeGroup title="Pull the changes into docker">
 
-   ```bash
-   docker compose pull
-   ```
+    ```bash
+    docker compose pull
+    ```
 
-   </CodeGroup>
+    </CodeGroup>
+
 </Col>
-3. Update env vars as necessary in the docker-compose file.
-4. Re-start the Formbricks stack
+
+3.  Update env vars as necessary in the docker-compose file.
+4.  Re-start the Formbricks stack
+
 <Col>
    <CodeGroup title="Relaunch the Docker Instance">
 
-   ```bash
-   docker compose --env-file /dev/null up -d
-   ```
+    ```bash
+    docker compose up -d
+    ```
 
-   </CodeGroup>
+    </CodeGroup>
+
 </Col>
+
 ## Debugging
 
 If you encounter any issues, you can check the logs of the container with:
+
 <Col>
 <CodeGroup title="Look into docker logs">
 
@@ -178,40 +211,41 @@ To edit any of the variables that start with `NEXT_PUBLIC_`, you need to rebuild
 
 These variables can be provided at the runtime i.e. in your docker-compose file.
 
-| Variable                    | Description                                                                                  | Required                                                | Default                                                                 |
-| --------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- |
-| WEBAPP_URL                  | Base URL of the site.                                                                        | required                                                | `http://localhost:3000`                                                 |
-| SURVEY_BASE_URL             | Base URL of the link surveys.                                                                | required                                                | `http://localhost:3000/s/`                                              |
-| DATABASE_URL                | Database URL with credentials.                                                               | required                                                | `postgresql://postgres:postgres@postgres:5432/formbricks?schema=public` |
-| NEXTAUTH_SECRET             | Secret for NextAuth, used for session signing and encryption.                                | required                                                | (Generated by the user)                                                 |
-| NEXTAUTH_URL                | Location of the auth server. By default, this is the Formbricks docker instance itself.      | required                                                | `http://localhost:3000`                                                 |
-| PRIVACY_URL                 | URL for privacy policy.                                                                      | optional                                                |                                                                         |
-| TERMS_URL                   | URL for terms of service.                                                                    | optional                                                |                                                                         |
-| IMPRINT_URL                 | URL for imprint.                                                                             | optional                                                |                                                                         |
-| SIGNUP_DISABLED             | Disables the ability for new users to create an account if set to `1`.                       | optional                                                |                                                                         |
-| PASSWORD_RESET_DISABLED     | Disables password reset functionality if set to `1`.                                         | optional                                                |                                                                         |
-| EMAIL_VERIFICATION_DISABLED | Disables email verification if set to `1`.                                                   | optional                                                |                                                                         |
-| INVITE_DISABLED             | Disables the ability for invited users to create an account if set to `1`.                   | optional                                                |                                                                         |
-| MAIL_FROM                   | Email address to send emails from.                                                           | optional (required if email services are to be enabled) |                                                                         |
-| SMTP_HOST                   | Host URL of your SMTP server.                                                                | optional (required if email services are to be enabled) |                                                                         |
-| SMTP_PORT                   | Host Port of your SMTP server.                                                               | optional (required if email services are to be enabled) |                                                                         |
-| SMTP_USER                   | Username for your SMTP Server.                                                               | optional (required if email services are to be enabled) |                                                                         |
-| SMTP_PASSWORD               | Password for your SMTP Server.                                                               | optional (required if email services are to be enabled) |                                                                         |
-| SMTP_SECURE_ENABLED         | SMTP secure connection. For using TLS, set to `1` else to `0`.                               | optional (required if email services are to be enabled) |                                                                         |
-| GITHUB_AUTH_ENABLED         | Enables GitHub login if set to `1`.                                                          | optional                                                |                                                                         |
-| GOOGLE_AUTH_ENABLED         | Enables Google login if set to `1`.                                                          | optional                                                |                                                                         |
-| GITHUB_ID                   | Client ID for GitHub.                                                                        | optional (required if GitHub auth is enabled)           |                                                                         |
-| GITHUB_SECRET               | Secret for GitHub.                                                                           | optional (required if GitHub auth is enabled)           |                                                                         |
-| GOOGLE_CLIENT_ID            | Client ID for Google.                                                                        | optional (required if Google auth is enabled)           |                                                                         |
-| GOOGLE_CLIENT_SECRET        | Secret for Google.                                                                           | optional (required if Google auth is enabled)           |                                                                         |
-| CRON_SECRET                 | API Secret for running cron jobs.                                                            | optional                                                |                                                                         |
-| STRIPE_SECRET_KEY           | Secret key for Stripe integration.                                                           | optional                                                |                                                                         |
-| STRIPE_WEBHOOK_SECRET       | Webhook secret for Stripe integration.                                                       | optional                                                |                                                                         |
-| TELEMETRY_DISABLED          | Disables telemetry if set to `1`.                                                            | optional                                                |                                                                         |
-| INSTANCE_ID                 | Instance ID for Formbricks Cloud to be sent to Telemetry.                                    | optional                                                |                                                                         |
-| INTERNAL_SECRET             | Internal Secret (Currently we overwrite the value with a random value).                      | optional                                                |                                                                         |
-| IS_FORMBRICKS_CLOUD         | Uses Formbricks Cloud if set to `1`                                                          | optional                                                |                                                                         |
-| DEFAULT_BRAND_COLOR         | Default brand color for your app (Can be overwritten from the UI as well).                   | optional                                                | `#64748b`                                                               |
+| Variable                    | Description                                                                             | Required                                                | Default                                                                 |
+| --------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| WEBAPP_URL                  | Base URL of the site.                                                                   | required                                                | `http://localhost:3000`                                                 |
+| DATABASE_URL                | Database URL with credentials.                                                          | required                                                | `postgresql://postgres:postgres@postgres:5432/formbricks?schema=public` |
+| NEXTAUTH_SECRET             | Secret for NextAuth, used for session signing and encryption.                           | required                                                | (Generated by the user)                                                 |
+| NEXTAUTH_URL                | Location of the auth server. By default, this is the Formbricks docker instance itself. | required                                                | `http://localhost:3000`                                                 |
+| PRIVACY_URL                 | URL for privacy policy.                                                                 | optional                                                |                                                                         |
+| TERMS_URL                   | URL for terms of service.                                                               | optional                                                |                                                                         |
+| IMPRINT_URL                 | URL for imprint.                                                                        | optional                                                |                                                                         |
+| SIGNUP_DISABLED             | Disables the ability for new users to create an account if set to `1`.                  | optional                                                |                                                                         |
+| PASSWORD_RESET_DISABLED     | Disables password reset functionality if set to `1`.                                    | optional                                                |                                                                         |
+| EMAIL_VERIFICATION_DISABLED | Disables email verification if set to `1`.                                              | optional                                                |                                                                         |
+| INVITE_DISABLED             | Disables the ability for invited users to create an account if set to `1`.              | optional                                                |                                                                         |
+| MAIL_FROM                   | Email address to send emails from.                                                      | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_HOST                   | Host URL of your SMTP server.                                                           | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_PORT                   | Host Port of your SMTP server.                                                          | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_USER                   | Username for your SMTP Server.                                                          | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_PASSWORD               | Password for your SMTP Server.                                                          | optional (required if email services are to be enabled) |                                                                         |
+| SMTP_SECURE_ENABLED         | SMTP secure connection. For using TLS, set to `1` else to `0`.                          | optional (required if email services are to be enabled) |                                                                         |
+| GITHUB_AUTH_ENABLED         | Enables GitHub login if set to `1`.                                                     | optional                                                |                                                                         |
+| GOOGLE_AUTH_ENABLED         | Enables Google login if set to `1`.                                                     | optional                                                |                                                                         |
+| GITHUB_ID                   | Client ID for GitHub.                                                                   | optional (required if GitHub auth is enabled)           |                                                                         |
+| GITHUB_SECRET               | Secret for GitHub.                                                                      | optional (required if GitHub auth is enabled)           |                                                                         |
+| GOOGLE_CLIENT_ID            | Client ID for Google.                                                                   | optional (required if Google auth is enabled)           |                                                                         |
+| GOOGLE_CLIENT_SECRET        | Secret for Google.                                                                      | optional (required if Google auth is enabled)           |                                                                         |
+| CRON_SECRET                 | API Secret for running cron jobs.                                                       | optional                                                |                                                                         |
+| STRIPE_SECRET_KEY           | Secret key for Stripe integration.                                                      | optional                                                |                                                                         |
+| STRIPE_WEBHOOK_SECRET       | Webhook secret for Stripe integration.                                                  | optional                                                |                                                                         |
+| TELEMETRY_DISABLED          | Disables telemetry if set to `1`.                                                       | optional                                                |                                                                         |
+| INSTANCE_ID                 | Instance ID for Formbricks Cloud to be sent to Telemetry.                               | optional                                                |                                                                         |
+| INTERNAL_SECRET             | Internal Secret (Currently we overwrite the value with a random value).                 | optional                                                |                                                                         |
+| DEFAULT_BRAND_COLOR         | Default brand color for your app (Can be overwritten from the UI as well).              | optional                                                | `#64748b`                                                               |
+| DEFAULT_TEAM_ID             | Automatically assign new users to a specific team when joining                          | optional                                                |                                                                         |
+| DEFAULT_TEAM_ROLE           | Role of the user in the default team.                                                   | optional                                                | `admin`                                                                 |
+| ONBOARDING_DISABLED         | Disables onboarding for new users if set to `1`                                         | optional                                                |                                                                         |
 
 ## Build-time Variables
 
@@ -231,6 +265,5 @@ These variables must be provided at the time of the docker build and would requi
 | NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID          | Environment ID for Formbricks (if you already have one)         | optional |         |
 | NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID | Survey ID for the feedback survey on the docs site.             | optional |         |
 | NEXT_PUBLIC_FORMBRICKS_COM_API_HOST                | Host for the Formbricks API.                                    | optional |         |
-
 
 Still facing issues? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!

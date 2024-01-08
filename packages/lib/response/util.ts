@@ -1,26 +1,10 @@
 import "server-only";
 
-import { TResponseDates } from "@formbricks/types/v1/responses";
+import { TResponseTtc } from "@formbricks/types/responses";
 
-export const formatResponseDateFields = (response: TResponseDates): TResponseDates => {
-  if (typeof response.createdAt === "string") {
-    response.createdAt = new Date(response.createdAt);
-  }
-  if (typeof response.updatedAt === "string") {
-    response.updatedAt = new Date(response.updatedAt);
-  }
+export function calculateTtcTotal(ttc: TResponseTtc) {
+  const result = { ...ttc };
+  result._total = Object.values(result).reduce((acc: number, val: number) => acc + val, 0);
 
-  response.notes = response.notes.map((note) => {
-    if (typeof note.createdAt === "string") {
-      note.createdAt = new Date(note.createdAt);
-    }
-
-    if (typeof note.updatedAt === "string") {
-      note.updatedAt = new Date(note.updatedAt);
-    }
-
-    return note;
-  });
-
-  return response;
-};
+  return result;
+}

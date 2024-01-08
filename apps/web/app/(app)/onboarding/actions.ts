@@ -1,19 +1,20 @@
 "use server";
 
-import { authOptions } from "@formbricks/lib/authOptions";
-import { updateProduct } from "@formbricks/lib/product/service";
-import { updateProfile } from "@formbricks/lib/profile/service";
-import { TProductUpdateInput } from "@formbricks/types/v1/product";
-import { TProfileUpdateInput } from "@formbricks/types/v1/profile";
 import { getServerSession } from "next-auth";
-import { AuthorizationError } from "@formbricks/types/v1/errors";
-import { canUserAccessProduct } from "@formbricks/lib/product/auth";
 
-export async function updateProfileAction(updatedProfile: Partial<TProfileUpdateInput>) {
+import { authOptions } from "@formbricks/lib/authOptions";
+import { canUserAccessProduct, verifyUserRoleAccess } from "@formbricks/lib/product/auth";
+import { getProduct, updateProduct } from "@formbricks/lib/product/service";
+import { updateUser } from "@formbricks/lib/user/service";
+import { AuthorizationError } from "@formbricks/types/errors";
+import { TProductUpdateInput } from "@formbricks/types/product";
+import { TUserUpdateInput } from "@formbricks/types/user";
+
+export async function updateUserAction(updatedUser: TUserUpdateInput) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  return await updateProfile(session.user.id, updatedProfile);
+  return await updateUser(session.user.id, updatedUser);
 }
 
 export async function updateProductAction(productId: string, updatedProduct: Partial<TProductUpdateInput>) {
@@ -22,6 +23,11 @@ export async function updateProductAction(productId: string, updatedProduct: Par
 
   const isAuthorized = await canUserAccessProduct(session.user.id, productId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const product = await getProduct(productId);
+
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user.id);
+  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateProduct(productId, updatedProduct);
 }

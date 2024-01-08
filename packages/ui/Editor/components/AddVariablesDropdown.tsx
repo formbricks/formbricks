@@ -1,5 +1,6 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
+
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 
 interface IAddVariablesDropdown {
   addVariable: (variable: string) => void;

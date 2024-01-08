@@ -1,11 +1,12 @@
 import "server-only";
 
 import { prisma } from "@formbricks/database";
-import { TTag } from "@formbricks/types/v1/tags";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { TTag } from "@formbricks/types/tags";
+
 import { ITEMS_PER_PAGE } from "../constants";
-import { ZOptionalNumber, ZString } from "@formbricks/types/v1/common";
 import { validateInputs } from "../utils/validate";
-import { ZId } from "@formbricks/types/v1/environment";
 
 export const getTagsByEnvironmentId = async (environmentId: string, page?: number): Promise<TTag[]> => {
   validateInputs([environmentId, ZId], [page, ZOptionalNumber]);

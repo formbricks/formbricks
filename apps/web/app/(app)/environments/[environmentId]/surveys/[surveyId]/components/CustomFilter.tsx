@@ -1,33 +1,31 @@
 "use client";
 
 import {
+  DateRange,
+  useResponseFilter,
+} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { fetchFile } from "@/app/lib/fetchFile";
+import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
+import { createId } from "@paralleldrive/cuid2";
+import { differenceInDays, format, subDays } from "date-fns";
+import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
+
+import { getTodaysDateFormatted } from "@formbricks/lib/time";
+import useClickOutside from "@formbricks/lib/useClickOutside";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
+import { Calendar } from "@formbricks/ui/Calendar";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
-import { Calendar } from "@formbricks/ui/Calendar";
-import { format, subDays, differenceInDays } from "date-fns";
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
-import {
-  generateQuestionsAndAttributes,
-  generateQuestionAndFilterOptions,
-  getTodayDate,
-} from "@/app/lib/surveys/surveys";
-import toast from "react-hot-toast";
-import { getTodaysDateFormatted } from "@formbricks/lib/time";
-import { fetchFile } from "@/app/lib/fetchFile";
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { createId } from "@paralleldrive/cuid2";
+
 import ResponseFilter from "./ResponseFilter";
-import {
-  DateRange,
-  useResponseFilter,
-} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { TTag } from "@formbricks/types/v1/tags";
 
 enum DateSelected {
   FROM = "from",
@@ -89,7 +87,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
-  const getMatchQandA = (responses: any, survey: any) => {
+  const getMatchQandA = (responses: TResponse[], survey: TSurvey) => {
     if (survey && responses) {
       // Create a mapping of question IDs to their headlines
       const questionIdToHeadline = {};
@@ -143,20 +141,58 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     return "my_survey_responses";
   }, [survey]);
 
+  function extracMetadataKeys(obj, parentKey = "") {
+    let keys: string[] = [];
+
+    for (let key in obj) {
+      if (typeof obj[key] === "object" && obj[key] !== null) {
+        keys = keys.concat(extracMetadataKeys(obj[key], parentKey + key + " - "));
+      } else {
+        keys.push(parentKey + key);
+      }
+    }
+
+    return keys;
+  }
+
   const downloadResponses = useCallback(
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
       const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
-      const { attributeMap, questionNames } = generateQuestionsAndAttributes(survey, downloadResponse);
+      const questionNames = survey.questions?.map((question) => question.headline);
+      const hiddenFieldIds = survey.hiddenFields.fieldIds;
+      const hiddenFieldResponse = {};
+      let metaDataFields = extracMetadataKeys(downloadResponse[0].meta);
+      const userAttributes = ["Init Attribute 1", "Init Attribute 2"];
       const matchQandA = getMatchQandA(downloadResponse, survey);
       const jsonData = matchQandA.map((response) => {
-        const fileResponse = {
+        const basicInfo = {
           "Response ID": response.id,
           Timestamp: response.createdAt,
           Finished: response.finished,
           "Survey ID": response.surveyId,
           "Formbricks User ID": response.person?.id ?? "",
         };
+        const metaDataKeys = extracMetadataKeys(response.meta);
+        let metaData = {};
+        metaDataKeys.forEach((key) => {
+          if (!metaDataFields.includes(key)) metaDataFields.push(key);
+          if (response.meta) {
+            if (key.includes("-")) {
+              const nestedKeyArray = key.split("-");
+              metaData[key] = response.meta[nestedKeyArray[0].trim()][nestedKeyArray[1].trim()] ?? "";
+            } else {
+              metaData[key] = response.meta[key] ?? "";
+            }
+          }
+        });
 
+        const personAttributes = response.personAttributes;
+        if (hiddenFieldIds && hiddenFieldIds.length > 0) {
+          hiddenFieldIds.forEach((hiddenFieldId) => {
+            hiddenFieldResponse[hiddenFieldId] = response.data[hiddenFieldId] ?? "";
+          });
+        }
+        const fileResponse = { ...basicInfo, ...metaData, ...personAttributes, ...hiddenFieldResponse };
         // Map each question name to its corresponding answer
         questionNames.forEach((questionName: string) => {
           const matchingQuestion = response.responses.find((question) => question.question === questionName);
@@ -175,18 +211,6 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
         return fileResponse;
       });
 
-      // Add attribute columns to the file
-      Object.keys(attributeMap).forEach((attributeName) => {
-        const attributeValues = attributeMap[attributeName];
-        Object.keys(attributeValues).forEach((personId) => {
-          const value = attributeValues[personId];
-          const matchingResponse = jsonData.find((response) => response["Formbricks User ID"] === personId);
-          if (matchingResponse) {
-            matchingResponse[attributeName] = value;
-          }
-        });
-      });
-
       // Fields which will be used as column headers in the file
       const fields = [
         "Response ID",
@@ -194,8 +218,10 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
         "Finished",
         "Survey ID",
         "Formbricks User ID",
-        ...Object.keys(attributeMap),
+        ...metaDataFields,
         ...questionNames,
+        ...(hiddenFieldIds ?? []),
+        ...(survey.type === "web" ? userAttributes : []),
       ];
 
       let response;

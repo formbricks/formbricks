@@ -1,5 +1,6 @@
-import { Button } from "@formbricks/ui/Button";
 import { useRouter } from "next/router";
+
+import { Button } from "@formbricks/ui/Button";
 
 interface UseCaseCTAProps {
   href: string;

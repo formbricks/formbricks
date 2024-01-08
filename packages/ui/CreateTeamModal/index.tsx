@@ -1,13 +1,14 @@
-import { createTeamAction } from "../../../apps/web/app/(app)/environments/[environmentId]/actions";
-import { Modal } from "../Modal";
-import { Button } from "../Button";
-import { Input } from "../Input";
-import { Label } from "../Label";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+
+import { createTeamAction } from "../../../apps/web/app/(app)/environments/[environmentId]/actions";
+import { Button } from "../Button";
+import { Input } from "../Input";
+import { Label } from "../Label";
+import { Modal } from "../Modal";
 
 interface CreateTeamModalProps {
   open: boolean;
@@ -21,9 +22,14 @@ type FormValues = {
 export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [teamName, setTeamName] = useState("");
+  const isTeamNameValid = teamName.trim() !== "";
   const { register, handleSubmit } = useForm<FormValues>();
 
   const submitTeam = async (data: FormValues) => {
+    data.name = data.name.trim();
+    if (!data.name) return;
+
     try {
       setLoading(true);
       const newTeam = await createTeamAction(data.name);
@@ -66,6 +72,8 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
                   autoFocus
                   placeholder="e.g. Power Puff Girls"
                   {...register("name", { required: true })}
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
                 />
               </div>
             </div>
@@ -80,7 +88,7 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
                 }}>
                 Cancel
               </Button>
-              <Button variant="darkCTA" type="submit" loading={loading}>
+              <Button variant="darkCTA" type="submit" loading={loading} disabled={!isTeamNameValid}>
                 Create team
               </Button>
             </div>

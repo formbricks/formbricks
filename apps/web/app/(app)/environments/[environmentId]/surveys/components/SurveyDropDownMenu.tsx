@@ -5,17 +5,6 @@ import {
   deleteSurveyAction,
   duplicateSurveyAction,
 } from "@/app/(app)/environments/[environmentId]/actions";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TSurvey } from "@formbricks/types/v1/surveys";
 import {
   ArrowUpOnSquareStackIcon,
   DocumentDuplicateIcon,
@@ -30,13 +19,26 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TSurvey } from "@formbricks/types/surveys";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@formbricks/ui/DropdownMenu";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+
 interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   singleUseId?: string;
+  isSurveyCreationDeletionDisabled?: boolean;
 }
 
 export default function SurveyDropDownMenu({
@@ -44,14 +46,15 @@ export default function SurveyDropDownMenu({
   survey,
   environment,
   otherEnvironment,
-  surveyBaseUrl,
+  webAppUrl,
   singleUseId,
+  isSurveyCreationDeletionDisabled,
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const surveyUrl = useMemo(() => surveyBaseUrl + survey.id, [survey.id, surveyBaseUrl]);
+  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
 
   const handleDeleteSurvey = async (survey) => {
     setLoading(true);
@@ -111,47 +114,56 @@ export default function SurveyDropDownMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-40">
           <DropdownMenuGroup>
-            <DropdownMenuItem>
-              <Link
-                className="flex w-full items-center"
-                href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                <PencilSquareIcon className="mr-2 h-4 w-4" />
-                Edit
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <button
-                className="flex w-full items-center"
-                onClick={async () => {
-                  duplicateSurveyAndRefresh(survey.id);
-                }}>
-                <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
-                Duplicate
-              </button>
-            </DropdownMenuItem>
-            {environment.type === "development" ? (
-              <DropdownMenuItem>
-                <button
-                  className="flex w-full items-center"
-                  onClick={() => {
-                    copyToOtherEnvironment(survey.id);
-                  }}>
-                  <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
-                  Copy to Prod
-                </button>
-              </DropdownMenuItem>
-            ) : environment.type === "production" ? (
-              <DropdownMenuItem>
-                <button
-                  className="flex w-full items-center"
-                  onClick={() => {
-                    copyToOtherEnvironment(survey.id);
-                  }}>
-                  <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
-                  Copy to Dev
-                </button>
-              </DropdownMenuItem>
-            ) : null}
+            {!isSurveyCreationDeletionDisabled && (
+              <>
+                <DropdownMenuItem>
+                  <Link
+                    className="flex w-full items-center"
+                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                    <PencilSquareIcon className="mr-2 h-4 w-4" />
+                    Edit
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem>
+                  <button
+                    className="flex w-full items-center"
+                    onClick={async () => {
+                      duplicateSurveyAndRefresh(survey.id);
+                    }}>
+                    <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
+                    Duplicate
+                  </button>
+                </DropdownMenuItem>
+              </>
+            )}
+            {!isSurveyCreationDeletionDisabled && (
+              <>
+                {environment.type === "development" ? (
+                  <DropdownMenuItem>
+                    <button
+                      className="flex w-full items-center"
+                      onClick={() => {
+                        copyToOtherEnvironment(survey.id);
+                      }}>
+                      <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                      Copy to Prod
+                    </button>
+                  </DropdownMenuItem>
+                ) : environment.type === "production" ? (
+                  <DropdownMenuItem>
+                    <button
+                      className="flex w-full items-center"
+                      onClick={() => {
+                        copyToOtherEnvironment(survey.id);
+                      }}>
+                      <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                      Copy to Dev
+                    </button>
+                  </DropdownMenuItem>
+                ) : null}
+              </>
+            )}
             {survey.type === "link" && survey.status !== "draft" && (
               <>
                 <DropdownMenuItem>
@@ -183,27 +195,31 @@ export default function SurveyDropDownMenu({
                 </DropdownMenuItem>
               </>
             )}
-            <DropdownMenuItem>
-              <button
-                className="flex w-full  items-center"
-                onClick={() => {
-                  setDeleteDialogOpen(true);
-                }}>
-                <TrashIcon className="mr-2 h-4 w-4" />
-                Delete
-              </button>
-            </DropdownMenuItem>
+            {!isSurveyCreationDeletionDisabled && (
+              <DropdownMenuItem>
+                <button
+                  className="flex w-full  items-center"
+                  onClick={() => {
+                    setDeleteDialogOpen(true);
+                  }}>
+                  <TrashIcon className="mr-2 h-4 w-4" />
+                  Delete
+                </button>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DeleteDialog
-        deleteWhat="Survey"
-        open={isDeleteDialogOpen}
-        setOpen={setDeleteDialogOpen}
-        onDelete={() => handleDeleteSurvey(survey)}
-        text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
-      />
+      {!isSurveyCreationDeletionDisabled && (
+        <DeleteDialog
+          deleteWhat="Survey"
+          open={isDeleteDialogOpen}
+          setOpen={setDeleteDialogOpen}
+          onDelete={() => handleDeleteSurvey(survey)}
+          text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
+        />
+      )}
     </>
   );
 }

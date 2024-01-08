@@ -1,9 +1,11 @@
-import { ZId } from "@formbricks/types/v1/environment";
+import { unstable_cache } from "next/cache";
+
+import { ZId } from "@formbricks/types/environment";
+
+import { canUserAccessResponse } from "../response/auth";
+import { getResponse } from "../response/service";
 import { validateInputs } from "../utils/validate";
 import { getResponseNote } from "./service";
-import { unstable_cache } from "next/cache";
-import { getResponse } from "../response/service";
-import { canUserAccessResponse } from "../response/auth";
 
 export const canUserModifyResponseNote = async (userId: string, responseNoteId: string): Promise<boolean> =>
   await unstable_cache(

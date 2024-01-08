@@ -1,15 +1,17 @@
 "use client";
 
+import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
+import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
+import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
 import { createUser } from "@/app/lib/users/users";
-import { PasswordInput } from "@formbricks/ui/PasswordInput";
-import { Button } from "@formbricks/ui/Button";
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
-import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
-import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
-import IsPasswordValid from "@/app/(auth)/auth/components/IsPasswordValid";
+
+import { Button } from "@formbricks/ui/Button";
+import { PasswordInput } from "@formbricks/ui/PasswordInput";
 
 export const SignupForm = ({
   webAppUrl,
@@ -19,6 +21,7 @@ export const SignupForm = ({
   emailVerificationDisabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
+  azureOAuthEnabled,
 }: {
   webAppUrl: string;
   privacyUrl: string | undefined;
@@ -27,6 +30,7 @@ export const SignupForm = ({
   emailVerificationDisabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
+  azureOAuthEnabled: boolean;
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -197,6 +201,11 @@ export const SignupForm = ({
           {githubOAuthEnabled && (
             <>
               <GithubButton inviteUrl={callbackUrl} />
+            </>
+          )}
+          {azureOAuthEnabled && (
+            <>
+              <AzureButton inviteUrl={callbackUrl} />
             </>
           )}
         </div>

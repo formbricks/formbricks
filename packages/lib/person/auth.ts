@@ -1,11 +1,14 @@
 import "server-only";
 
-import { ZId } from "@formbricks/types/v1/environment";
-import { validateInputs } from "../utils/validate";
-import { hasUserEnvironmentAccess } from "../environment/auth";
-import { getPersonCached } from "./service";
 import { unstable_cache } from "next/cache";
+
+import { ZId } from "@formbricks/types/environment";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { hasUserEnvironmentAccess } from "../environment/auth";
+import { validateInputs } from "../utils/validate";
+import { personCache } from "./cache";
+import { getPerson } from "./service";
 
 export const canUserAccessPerson = async (userId: string, personId: string): Promise<boolean> =>
   await unstable_cache(
@@ -13,7 +16,7 @@ export const canUserAccessPerson = async (userId: string, personId: string): Pro
       validateInputs([userId, ZId], [personId, ZId]);
       if (!userId) return false;
 
-      const person = await getPersonCached(personId);
+      const person = await getPerson(personId);
       if (!person) return false;
 
       const hasAccessToEnvironment = await hasUserEnvironmentAccess(userId, person.environmentId);
@@ -21,7 +24,9 @@ export const canUserAccessPerson = async (userId: string, personId: string): Pro
 
       return true;
     },
-
-    [`users-${userId}-persons-${personId}`],
-    { revalidate: SERVICES_REVALIDATION_INTERVAL, tags: [`persons-${personId}`] }
+    [`canUserAccessPerson-${userId}-people-${personId}`],
+    {
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+      tags: [personCache.tag.byId(personId)],
+    }
   )();

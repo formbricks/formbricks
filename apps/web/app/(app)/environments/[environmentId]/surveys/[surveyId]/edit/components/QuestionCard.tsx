@@ -1,20 +1,20 @@
 "use client";
 
 import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
-import { getQuestionTypeName } from "@/app/lib/questions";
-import { cn } from "@formbricks/lib/cn";
-import { QuestionType } from "@formbricks/types/questions";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
+import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
+import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
+import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
 import {
+  ArrowUpTrayIcon,
+  CalendarDaysIcon,
   ChatBubbleBottomCenterTextIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   CursorArrowRippleIcon,
   ListBulletIcon,
+  PhoneIcon,
+  PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
@@ -22,8 +22,19 @@ import {
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
+
+import { cn } from "@formbricks/lib/cn";
+import { TProduct } from "@formbricks/types/product";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
+
 import CTAQuestionForm from "./CTAQuestionForm";
+import CalQuestionForm from "./CalQuestionForm";
 import ConsentQuestionForm from "./ConsentQuestionForm";
+import FileUploadQuestionForm from "./FileUploadQuestionForm";
 import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
 import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
 import NPSQuestionForm from "./NPSQuestionForm";
@@ -33,6 +44,7 @@ import RatingQuestionForm from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
+  product?: TProduct;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -72,6 +84,7 @@ export function BackButtonInput({
 
 export default function QuestionCard({
   localSurvey,
+  product,
   questionIdx,
   moveQuestion,
   updateQuestion,
@@ -85,6 +98,14 @@ export default function QuestionCard({
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
+
+  const updateEmptyNextButtonLabels = (labelValue: string) => {
+    localSurvey.questions.forEach((q, index) => {
+      if (!q.buttonLabel || q.buttonLabel?.trim() === "") {
+        updateQuestion(index, { buttonLabel: labelValue });
+      }
+    });
+  };
 
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
@@ -121,25 +142,33 @@ export default function QuestionCard({
               <div>
                 <div className="inline-flex">
                   <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
-                    {question.type === QuestionType.OpenText ? (
+                    {question.type === TSurveyQuestionType.FileUpload ? (
+                      <ArrowUpTrayIcon />
+                    ) : question.type === TSurveyQuestionType.OpenText ? (
                       <ChatBubbleBottomCenterTextIcon />
-                    ) : question.type === QuestionType.MultipleChoiceSingle ? (
+                    ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
                       <QueueListIcon />
-                    ) : question.type === QuestionType.MultipleChoiceMulti ? (
+                    ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
                       <ListBulletIcon />
-                    ) : question.type === QuestionType.NPS ? (
+                    ) : question.type === TSurveyQuestionType.NPS ? (
                       <PresentationChartBarIcon />
-                    ) : question.type === QuestionType.CTA ? (
+                    ) : question.type === TSurveyQuestionType.CTA ? (
                       <CursorArrowRippleIcon />
-                    ) : question.type === QuestionType.Rating ? (
+                    ) : question.type === TSurveyQuestionType.Rating ? (
                       <StarIcon />
-                    ) : question.type === "consent" ? (
+                    ) : question.type === TSurveyQuestionType.Consent ? (
                       <CheckIcon />
+                    ) : question.type === TSurveyQuestionType.PictureSelection ? (
+                      <PhotoIcon />
+                    ) : question.type === TSurveyQuestionType.Date ? (
+                      <CalendarDaysIcon />
+                    ) : question.type === TSurveyQuestionType.Cal ? (
+                      <PhoneIcon />
                     ) : null}
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {question.headline || getQuestionTypeName(question.type)}
+                      {question.headline || getTSurveyQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-slate-500">
@@ -161,7 +190,7 @@ export default function QuestionCard({
               </div>
             </Collapsible.CollapsibleTrigger>
             <Collapsible.CollapsibleContent className="px-4 pb-4">
-              {question.type === QuestionType.OpenText ? (
+              {question.type === TSurveyQuestionType.OpenText ? (
                 <OpenQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -170,7 +199,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
-              ) : question.type === QuestionType.MultipleChoiceSingle ? (
+              ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
                   localSurvey={localSurvey}
                   question={question}
@@ -179,7 +208,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
-              ) : question.type === QuestionType.MultipleChoiceMulti ? (
+              ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
                   localSurvey={localSurvey}
                   question={question}
@@ -188,7 +217,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
-              ) : question.type === QuestionType.NPS ? (
+              ) : question.type === TSurveyQuestionType.NPS ? (
                 <NPSQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -197,7 +226,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
-              ) : question.type === QuestionType.CTA ? (
+              ) : question.type === TSurveyQuestionType.CTA ? (
                 <CTAQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -206,7 +235,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
-              ) : question.type === QuestionType.Rating ? (
+              ) : question.type === TSurveyQuestionType.Rating ? (
                 <RatingQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -215,7 +244,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   isInValid={isInValid}
                 />
-              ) : question.type === "consent" ? (
+              ) : question.type === TSurveyQuestionType.Consent ? (
                 <ConsentQuestionForm
                   localSurvey={localSurvey}
                   question={question}
@@ -223,10 +252,46 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   isInValid={isInValid}
                 />
+              ) : question.type === TSurveyQuestionType.Date ? (
+                <DateQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === TSurveyQuestionType.PictureSelection ? (
+                <PictureSelectionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === TSurveyQuestionType.FileUpload ? (
+                <FileUploadQuestionForm
+                  localSurvey={localSurvey}
+                  product={product}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
+              ) : question.type === TSurveyQuestionType.Cal ? (
+                <CalQuestionForm
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInValid={isInValid}
+                />
               ) : null}
               <div className="mt-4">
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
-                  <Collapsible.CollapsibleTrigger className="flex items-center text-xs text-slate-700">
+                  <Collapsible.CollapsibleTrigger className="flex items-center text-sm text-slate-700">
                     {openAdvanced ? (
                       <ChevronDownIcon className="mr-1 h-4 w-3" />
                     ) : (
@@ -236,12 +301,12 @@ export default function QuestionCard({
                   </Collapsible.CollapsibleTrigger>
 
                   <Collapsible.CollapsibleContent className="space-y-4">
-                    {question.type !== QuestionType.NPS &&
-                    question.type !== QuestionType.Rating &&
-                    question.type !== QuestionType.CTA ? (
+                    {question.type !== TSurveyQuestionType.NPS &&
+                    question.type !== TSurveyQuestionType.Rating &&
+                    question.type !== TSurveyQuestionType.CTA ? (
                       <div className="mt-4 flex space-x-2">
                         <div className="w-full">
-                          <Label htmlFor="buttonLabel">Button Label</Label>
+                          <Label htmlFor="buttonLabel">&quot;Next&quot; Button Label</Label>
                           <div className="mt-2">
                             <Input
                               id="buttonLabel"
@@ -250,8 +315,10 @@ export default function QuestionCard({
                               maxLength={48}
                               placeholder={lastQuestion ? "Finish" : "Next"}
                               onChange={(e) => {
-                                if (e.target.value.trim() == "") e.target.value = "";
                                 updateQuestion(questionIdx, { buttonLabel: e.target.value });
+                              }}
+                              onBlur={(e) => {
+                                updateEmptyNextButtonLabels(e.target.value);
                               }}
                             />
                           </div>
@@ -267,7 +334,8 @@ export default function QuestionCard({
                         )}
                       </div>
                     ) : null}
-                    {(question.type === QuestionType.Rating || question.type === QuestionType.NPS) &&
+                    {(question.type === TSurveyQuestionType.Rating ||
+                      question.type === TSurveyQuestionType.NPS) &&
                       questionIdx !== 0 && (
                         <div className="mt-4">
                           <BackButtonInput

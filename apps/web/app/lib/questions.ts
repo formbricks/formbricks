@@ -1,17 +1,23 @@
 import {
-  CursorArrowRippleIcon,
+  ArrowUpTrayIcon,
+  CalendarDaysIcon,
   ChatBubbleBottomCenterTextIcon,
+  CheckIcon,
+  CursorArrowRippleIcon,
   ListBulletIcon,
+  PhoneIcon,
+  PhotoIcon,
   PresentationChartBarIcon,
   QueueListIcon,
   StarIcon,
-  CheckIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
-import { replaceQuestionPresetPlaceholders } from "./templates";
-import { QuestionType as QuestionId } from "@formbricks/types/questions";
 
-export type QuestionType = {
+import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
+
+import { replaceQuestionPresetPlaceholders } from "./templates";
+
+export type TSurveyQuestionType = {
   id: string;
   label: string;
   description: string;
@@ -19,11 +25,11 @@ export type QuestionType = {
   preset: any;
 };
 
-export const questionTypes: QuestionType[] = [
+export const questionTypes: TSurveyQuestionType[] = [
   {
     id: QuestionId.OpenText,
     label: "Free text",
-    description: "A single line of text",
+    description: "Ask for a text-based answer",
     icon: ChatBubbleBottomCenterTextIcon,
     preset: {
       headline: "Who let the dogs out?",
@@ -63,32 +69,30 @@ export const questionTypes: QuestionType[] = [
     },
   },
   {
-    id: QuestionId.NPS,
-    label: "Net Promoter Score® (NPS)",
-    description: "Rate satisfaction on a 0-10 scale",
-    icon: PresentationChartBarIcon,
+    id: QuestionId.PictureSelection,
+    label: "Picture Selection",
+    description: "Ask respondents to select one or more pictures",
+    icon: PhotoIcon,
     preset: {
-      headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
-      lowerLabel: "Not at all likely",
-      upperLabel: "Extremely likely",
-    },
-  },
-  {
-    id: QuestionId.CTA,
-    label: "Call-to-Action",
-    description: "Ask your users to perform an action",
-    icon: CursorArrowRippleIcon,
-    preset: {
-      headline: "You are one of our power users!",
-      buttonLabel: "Book interview",
-      buttonExternal: false,
-      dismissButtonLabel: "Skip",
+      headline: "Which is the cutest puppy?",
+      subheader: "You can also pick both.",
+      allowMulti: true,
+      choices: [
+        {
+          id: createId(),
+          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
+        },
+        {
+          id: createId(),
+          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
+        },
+      ],
     },
   },
   {
     id: QuestionId.Rating,
     label: "Rating",
-    description: "Ask your users to rate something",
+    description: "Ask respondents for a rating",
     icon: StarIcon,
     preset: {
       headline: "How would you rate {{productName}}",
@@ -100,14 +104,68 @@ export const questionTypes: QuestionType[] = [
     },
   },
   {
-    id: "consent",
+    id: QuestionId.NPS,
+    label: "Net Promoter Score (NPS)",
+    description: "Rate satisfaction on a 0-10 scale",
+    icon: PresentationChartBarIcon,
+    preset: {
+      headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
+      lowerLabel: "Not at all likely",
+      upperLabel: "Extremely likely",
+    },
+  },
+  {
+    id: QuestionId.CTA,
+    label: "Call-to-Action",
+    description: "Prompt respondents to perform an action",
+    icon: CursorArrowRippleIcon,
+    preset: {
+      headline: "You are one of our power users!",
+      buttonLabel: "Book interview",
+      buttonExternal: false,
+      dismissButtonLabel: "Skip",
+    },
+  },
+  {
+    id: QuestionId.Consent,
     label: "Consent",
-    description: "Ask your users to accept something",
+    description: "Ask respondents for consent",
     icon: CheckIcon,
     preset: {
       headline: "Terms and Conditions",
       label: "I agree to the terms and conditions",
       dismissButtonLabel: "Skip",
+    },
+  },
+  {
+    id: QuestionId.Date,
+    label: "Date",
+    description: "Ask your users to select a date",
+    icon: CalendarDaysIcon,
+    preset: {
+      headline: "When is your birthday?",
+      format: "M-d-y",
+    },
+  },
+  {
+    id: QuestionId.FileUpload,
+    label: "File Upload",
+    description: "Allow respondents to upload a file",
+    icon: ArrowUpTrayIcon,
+    preset: {
+      headline: "File Upload",
+      allowMultipleFiles: false,
+    },
+  },
+  {
+    id: QuestionId.Cal,
+    label: "Schedule a meeting",
+    description: "Allow respondents to schedule a meet",
+    icon: PhoneIcon,
+    preset: {
+      headline: "Schedule a call with me",
+      buttonLabel: "Skip",
+      calUserName: "rick/get-rick-rolled",
     },
   },
 ];
@@ -121,7 +179,7 @@ export const getQuestionDefaults = (id: string, product: any) => {
   return replaceQuestionPresetPlaceholders(questionType?.preset, product);
 };
 
-export const getQuestionTypeName = (id: string) => {
+export const getTSurveyQuestionTypeName = (id: string) => {
   const questionType = questionTypes.find((questionType) => questionType.id === id);
   return questionType?.label;
 };

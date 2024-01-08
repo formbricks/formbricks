@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
 import { EnvelopeIcon } from "@heroicons/react/24/solid";
+import { useState } from "react";
+import { Toaster, toast } from "react-hot-toast";
+
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { Toaster, toast } from "react-hot-toast";
-import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
-import { TSurvey } from "@formbricks/types/v1/surveys";
 
 export default function VerifyEmail({
   survey,
@@ -52,6 +53,12 @@ export default function VerifyEmail({
     setEmailSent(false);
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      submitEmail(email);
+    }
+  };
+
   if (isErrorComponent) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50">
@@ -65,27 +72,30 @@ export default function VerifyEmail({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50">
+    <div className="flex h-full w-full flex-col items-center justify-center text-center">
       <Toaster />
       {!emailSent && !showPreviewQuestions && (
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center px-4">
           <EnvelopeIcon className="h-24 w-24 rounded-full bg-slate-300 p-6 text-white" />
-          <p className="mt-8 text-4xl font-bold">Verify your email to respond.</p>
-          <p className="mt-2 text-slate-400">To respond to this survey please verify your email.</p>
+          <p className="mt-8 text-2xl font-bold lg:text-4xl">Verify your email to respond.</p>
+          <p className="mt-2 text-sm text-slate-400 lg:text-base">
+            To respond to this survey please verify your email.
+          </p>
           <div className="mt-6 flex w-full space-x-2">
             <Input
               type="string"
-              className="h-full"
               placeholder="user@gmail.com"
+              className="h-12"
               value={email || ""}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyPress={handleKeyPress}
             />
             <Button variant="darkCTA" onClick={() => submitEmail(email)} loading={isLoading}>
               Verify
             </Button>
           </div>
-          <p className="mt-6 cursor-pointer text-sm text-slate-400" onClick={handlePreviewClick}>
-            Just curious? Preview survey questions.
+          <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
+            Just curious? <span className="underline">Preview survey questions.</span>
           </p>
         </div>
       )}
@@ -97,15 +107,15 @@ export default function VerifyEmail({
               <p key={index} className="my-1">{`${index + 1}. ${question.headline}`}</p>
             ))}
           </div>
-          <p className="mt-6 cursor-pointer text-sm text-slate-400" onClick={handlePreviewClick}>
-            Want to respond? Verify email.
+          <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
+            Want to respond? <span className="underline">Verify email.</span>
           </p>
         </div>
       )}
       {emailSent && (
-        <div className="flex flex-col items-center justify-center">
-          <h1 className="mt-8 text-4xl font-bold">Survey sent successfully</h1>
-          <p className="mt-4 text-center text-slate-400">
+        <div className="flex flex-col items-center justify-center px-4">
+          <h1 className="mt-8 text-2xl font-bold lg:text-4xl">Check your email.</h1>
+          <p className="mt-4 text-center text-sm text-slate-400 lg:text-base">
             We sent an email to <span className="font-semibold italic">{email}</span>. Please click the link
             in the email to take your survey.
           </p>

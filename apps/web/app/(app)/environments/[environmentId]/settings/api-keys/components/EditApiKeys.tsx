@@ -1,15 +1,18 @@
 "use client";
 
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
-import { capitalizeFirstLetter } from "@/app/lib/utils";
-import { timeSince } from "@formbricks/lib/time";
-import { TApiKey } from "@formbricks/types/v1/apiKeys";
-import { Button } from "@formbricks/ui/Button";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { FilesIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import AddAPIKeyModal from "./AddApiKeyModal";
+
+import { capitalizeFirstLetter } from "@formbricks/lib/strings";
+import { timeSince } from "@formbricks/lib/time";
+import { TApiKey } from "@formbricks/types/apiKeys";
+import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
+import AddAPIKeyModal from "./AddApiKeyModal";
 
 export default function EditAPIKeys({
   environmentTypeId,
@@ -59,6 +62,24 @@ export default function EditAPIKeys({
     }
   };
 
+  const ApiKeyDisplay = ({ apiKey }) => {
+    const copyToClipboard = () => {
+      navigator.clipboard.writeText(apiKey);
+      toast.success("API Key copied to clipboard");
+    };
+
+    if (!apiKey) {
+      return <span className="italic">secret</span>;
+    }
+
+    return (
+      <div className="flex items-center">
+        <span>{apiKey}</span>
+        <FilesIcon className="mx-2 h-4 w-4 cursor-pointer" onClick={copyToClipboard} />
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="mb-6 text-right">
@@ -72,10 +93,9 @@ export default function EditAPIKeys({
         </Button>
       </div>
       <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-9 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
+        <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-4 sm:col-span-2">Label</div>
-          <div className="col-span-4 hidden sm:col-span-2 sm:block">API Key</div>
-          <div className="col-span-4 hidden sm:col-span-2 sm:block">Last used</div>
+          <div className="col-span-4 hidden sm:col-span-5 sm:block">API Key</div>
           <div className="col-span-4 sm:col-span-2">Created at</div>
           <div className=""></div>
         </div>
@@ -88,14 +108,11 @@ export default function EditAPIKeys({
             apiKeysLocal &&
             apiKeysLocal.map((apiKey) => (
               <div
-                className="grid h-12 w-full grid-cols-9 content-center rounded-lg px-6 text-left text-sm text-slate-900"
+                className="grid h-12 w-full grid-cols-10 content-center rounded-lg px-6 text-left text-sm text-slate-900"
                 key={apiKey.hashedKey}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
-                <div className="col-span-4 hidden sm:col-span-2 sm:block">
-                  {apiKey.apiKey || <span className="italic">secret</span>}
-                </div>
-                <div className="col-span-4 hidden sm:col-span-2 sm:block">
-                  {apiKey.lastUsedAt && timeSince(apiKey.lastUsedAt.toString())}
+                <div className="col-span-4 hidden sm:col-span-5 sm:block">
+                  <ApiKeyDisplay apiKey={apiKey.apiKey} />
                 </div>
                 <div className="col-span-4 sm:col-span-2">{timeSince(apiKey.createdAt.toString())}</div>
                 <div className="col-span-1 text-center">

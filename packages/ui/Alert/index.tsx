@@ -1,5 +1,5 @@
-import * as React from "react";
 import { VariantProps, cva } from "class-variance-authority";
+import * as React from "react";
 
 import { cn } from "@formbricks/lib/cn";
 
@@ -11,6 +11,7 @@ const alertVariants = cva(
         default: "bg-background text-foreground",
         destructive:
           "text-destructive border-destructive/50 dark:border-destructive [&>svg]:text-destructive text-destructive",
+        info: "text-slate-800 bg-brand/5",
       },
     },
     defaultVariants: {

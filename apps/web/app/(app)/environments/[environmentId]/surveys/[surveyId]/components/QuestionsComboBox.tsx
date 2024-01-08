@@ -1,22 +1,23 @@
 "use client";
 
-import * as React from "react";
-import { Command, CommandGroup, CommandItem, CommandInput, CommandEmpty } from "@formbricks/ui/Command";
-import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { QuestionType } from "@formbricks/types/questions";
 import {
-  StarIcon,
-  HashtagIcon,
-  TagIcon,
-  CursorArrowRippleIcon,
-  QuestionMarkCircleIcon,
-  ListBulletIcon,
-  QueueListIcon,
   CheckIcon,
+  CursorArrowRippleIcon,
+  HashtagIcon,
+  ListBulletIcon,
+  QuestionMarkCircleIcon,
+  QueueListIcon,
+  StarIcon,
+  TagIcon,
 } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import * as React from "react";
+
+import useClickOutside from "@formbricks/lib/useClickOutside";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@formbricks/ui/Command";
+import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 
 export enum OptionsType {
   QUESTIONS = "Questions",
@@ -26,7 +27,7 @@ export enum OptionsType {
 
 export type QuestionOption = {
   label: string;
-  questionType?: QuestionType;
+  questionType?: TSurveyQuestionType;
   type: OptionsType;
   id: string;
 };
@@ -45,19 +46,19 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
   const getIconType = () => {
     if (type === OptionsType.QUESTIONS) {
       switch (questionType) {
-        case QuestionType.Rating:
+        case TSurveyQuestionType.Rating:
           return <StarIcon width={18} className="text-white" />;
-        case QuestionType.CTA:
+        case TSurveyQuestionType.CTA:
           return <CursorArrowRippleIcon width={18} className="text-white" />;
-        case QuestionType.OpenText:
+        case TSurveyQuestionType.OpenText:
           return <QuestionMarkCircleIcon width={18} className="text-white" />;
-        case QuestionType.MultipleChoiceMulti:
+        case TSurveyQuestionType.MultipleChoiceMulti:
           return <ListBulletIcon width={18} className="text-white" />;
-        case QuestionType.MultipleChoiceSingle:
+        case TSurveyQuestionType.MultipleChoiceSingle:
           return <QueueListIcon width={18} className="text-white" />;
-        case QuestionType.NPS:
+        case TSurveyQuestionType.NPS:
           return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
-        case QuestionType.Consent:
+        case TSurveyQuestionType.Consent:
           return <CheckIcon width={18} height={18} className="text-white" />;
       }
     }

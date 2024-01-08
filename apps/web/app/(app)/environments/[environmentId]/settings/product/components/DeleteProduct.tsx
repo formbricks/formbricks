@@ -1,10 +1,11 @@
-import { getProducts } from "@formbricks/lib/product/service";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { TProduct } from "@formbricks/types/v1/product";
 import DeleteProductRender from "@/app/(app)/environments/[environmentId]/settings/product/components/DeleteProductRender";
 import { getServerSession } from "next-auth";
+
 import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { getProducts } from "@formbricks/lib/product/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { TProduct } from "@formbricks/types/product";
 
 type DeleteProductProps = {
   environmentId: string;

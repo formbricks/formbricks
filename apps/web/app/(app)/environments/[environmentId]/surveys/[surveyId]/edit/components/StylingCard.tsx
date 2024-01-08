@@ -1,25 +1,38 @@
 "use client";
 
-import { PlacementType } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { Label } from "@formbricks/ui/Label";
-import { Switch } from "@formbricks/ui/Switch";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
+
+import { TPlacement } from "@formbricks/types/common";
+import { TSurvey, TSurveyBackgroundBgType } from "@formbricks/types/surveys";
+import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { Label } from "@formbricks/ui/Label";
+import { Switch } from "@formbricks/ui/Switch";
+
 import Placement from "./Placement";
+import SurveyBgSelectorTab from "./SurveyBgSelectorTab";
 
 interface StylingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  colours: string[];
 }
 
-export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCardProps) {
+export default function StylingCard({ localSurvey, setLocalSurvey, colours }: StylingCardProps) {
   const [open, setOpen] = useState(false);
 
-  const { type, productOverwrites } = localSurvey;
-  const { brandColor, clickOutside, darkOverlay, placement, highlightBorderColor } = productOverwrites ?? {};
+  const { type, productOverwrites, styling } = localSurvey;
+  const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
+    productOverwrites ?? {};
+  const { bg, bgType, brightness } = styling?.background ?? {};
+
+  const [inputValue, setInputValue] = useState(100);
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+    handleBrightnessChange(parseInt(e.target.value));
+  };
 
   const togglePlacement = () => {
     setLocalSurvey({
@@ -27,6 +40,8 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
       productOverwrites: {
         ...localSurvey.productOverwrites,
         placement: !!placement ? null : "bottomRight",
+        clickOutsideClose: false,
+        darkOverlay: false,
       },
     });
   };
@@ -39,6 +54,34 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
         brandColor: !!brandColor ? null : "#64748b",
       },
     });
+  };
+
+  const toggleBackgroundColor = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...localSurvey.styling,
+        background: {
+          ...localSurvey.styling?.background,
+          bg: !!bg ? undefined : "#ffff",
+          bgType: !!bg ? undefined : "color",
+        },
+      },
+    });
+  };
+
+  const toggleBrightness = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...localSurvey.styling,
+        background: {
+          ...localSurvey.styling?.background,
+          brightness: !!brightness ? undefined : 100,
+        },
+      },
+    });
+    setInputValue(100);
   };
 
   const toggleHighlightBorderColor = () => {
@@ -61,6 +104,35 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
+  const handleBgChange = (color: string, type: TSurveyBackgroundBgType) => {
+    setInputValue(100);
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...localSurvey.styling,
+        background: {
+          ...localSurvey.styling?.background,
+          bg: color,
+          bgType: type,
+          brightness: undefined,
+        },
+      },
+    });
+  };
+
+  const handleBrightnessChange = (percent: number) => {
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...(localSurvey.styling || {}),
+        background: {
+          ...localSurvey.styling?.background,
+          brightness: percent,
+        },
+      },
+    });
+  };
+
   const handleBorderColorChange = (color: string) => {
     setLocalSurvey({
       ...localSurvey,
@@ -71,7 +143,7 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
-  const handlePlacementChange = (placement: PlacementType) => {
+  const handlePlacementChange = (placement: TPlacement) => {
     setLocalSurvey({
       ...localSurvey,
       productOverwrites: {
@@ -93,12 +165,12 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
     });
   };
 
-  const handleClickOutside = (clickOutside: boolean) => {
+  const handleClickOutsideClose = (clickOutsideClose: boolean) => {
     setLocalSurvey({
       ...localSurvey,
       productOverwrites: {
         ...localSurvey.productOverwrites,
-        clickOutside,
+        clickOutsideClose,
       },
     });
   };
@@ -142,6 +214,66 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
               </div>
             )}
           </div>
+          {type == "link" && (
+            <>
+              {/* Background */}
+              <div className="p-3">
+                <div className="ml-2 flex items-center space-x-1">
+                  <Switch id="autoCompleteBg" checked={!!bg} onCheckedChange={toggleBackgroundColor} />
+                  <Label htmlFor="autoCompleteBg" className="cursor-pointer">
+                    <div className="ml-2">
+                      <h3 className="text-sm font-semibold text-slate-700">Change Background</h3>
+                      <p className="text-xs font-normal text-slate-500">
+                        Pick a background from our library or upload your own.
+                      </p>
+                    </div>
+                  </Label>
+                </div>
+                {bg && (
+                  <SurveyBgSelectorTab
+                    localSurvey={localSurvey}
+                    handleBgChange={handleBgChange}
+                    colours={colours}
+                    bgType={bgType}
+                  />
+                )}
+              </div>
+              {/* Overlay */}
+              <div className="p-3">
+                <div className="ml-2 flex items-center space-x-1">
+                  <Switch
+                    id="autoCompleteOverlay"
+                    checked={!!brightness}
+                    onCheckedChange={toggleBrightness}
+                  />
+                  <Label htmlFor="autoCompleteOverlay" className="cursor-pointer">
+                    <div className="ml-2">
+                      <h3 className="text-sm font-semibold text-slate-700">Background Overlay</h3>
+                      <p className="text-xs font-normal text-slate-500">
+                        Darken or lighten background of your choice.
+                      </p>
+                    </div>
+                  </Label>
+                </div>
+                {brightness && (
+                  <div>
+                    <div className="mt-4 flex flex-col justify-center rounded-lg border bg-slate-50 p-4 px-8">
+                      <h3 className="mb-4 text-sm font-semibold text-slate-700">Transparency</h3>
+                      <input
+                        id="small-range"
+                        type="range"
+                        min="1"
+                        max="200"
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
           {/* positioning */}
           {type !== "link" && (
             <div className="p-3 ">
@@ -163,8 +295,8 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                         setCurrentPlacement={handlePlacementChange}
                         setOverlay={handleOverlay}
                         overlay={darkOverlay ? "dark" : "light"}
-                        setClickOutside={handleClickOutside}
-                        clickOutside={!!clickOutside}
+                        setClickOutsideClose={handleClickOutsideClose}
+                        clickOutsideClose={!!clickOutsideClose}
                       />
                     </div>
                   </div>
@@ -183,9 +315,9 @@ export default function StylingCard({ localSurvey, setLocalSurvey }: StylingCard
                 />
                 <Label htmlFor="autoComplete" className="cursor-pointer">
                   <div className="ml-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Overwrite border highlight</h3>
+                    <h3 className="text-sm font-semibold text-slate-700">Overwrite Highlight Border</h3>
                     <p className="text-xs font-normal text-slate-500">
-                      Change the border highlight for this survey.
+                      Change the highlight border for this survey.
                     </p>
                   </div>
                 </Label>
