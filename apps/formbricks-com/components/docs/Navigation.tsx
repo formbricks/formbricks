@@ -287,6 +287,15 @@ export const navigation: Array<NavGroup> = [
       { title: "Webhooks", href: "/docs/api/management/webhooks" },
     ],
   },
+  {
+    title: "WordPress",
+    links: [
+      { title: "Setup", href: "/docs/wordpress/setup" },
+      { title: "Styling", href: "/docs/wordpress/styling" },
+      { title: "Targeting", href: "/docs/wordpress/targeting" },
+      { title: "Exit Intent", href: "/docs/wordpress/exit-intent" },
+    ],
+  },
 ];
 
 export function Navigation(props: React.ComponentPropsWithoutRef<"nav">) {
