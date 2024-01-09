@@ -112,7 +112,7 @@ export default function NPSQuestion({
         {!isFirstQuestion && (
           <BackButton
             tabIndex={isLastQuestion ? 12 : 13}
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -124,7 +124,7 @@ export default function NPSQuestion({
         {!question.required && (
           <SubmitButton
             tabIndex={12}
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, language)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

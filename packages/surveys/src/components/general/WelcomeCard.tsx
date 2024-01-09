@@ -104,7 +104,7 @@ export default function WelcomeCard({
       )}
 
       <Headline headline={getLocalizedValue(headline, language)} questionId="welcomeCard" />
-      <HtmlBody htmlString={html} questionId="welcomeCard" />
+      <HtmlBody htmlString={getLocalizedValue(html, language)} questionId="welcomeCard" />
 
       <div className="mt-10 flex w-full justify-between">
         <div className="flex w-full justify-start gap-4">

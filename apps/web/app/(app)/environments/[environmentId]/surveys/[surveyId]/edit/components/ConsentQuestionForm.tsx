@@ -1,11 +1,10 @@
 "use client";
 
 import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { md } from "@formbricks/lib/markdownIt";
-import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
-import { Editor } from "@formbricks/ui/Editor";
+import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
+import { TI18nString, TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
@@ -32,6 +31,9 @@ export default function ConsentQuestionForm({
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
   const environmentId = localSurvey.environmentId;
+  useEffect(() => {
+    setFirstRender(true);
+  }, [selectedLanguage]);
 
   return (
     <form>
@@ -49,19 +51,17 @@ export default function ConsentQuestionForm({
       <div className="mt-3">
         <Label htmlFor="subheader">Description</Label>
         <div className="mt-2">
-          <Editor
-            getText={() =>
-              md.render(
-                question.html || "We would love to talk to you and learn more about how you use our product."
-              )
-            }
-            setText={(value: string) => {
-              updateQuestion(questionIdx, { html: value });
-            }}
-            excludedToolbarItems={["blockType"]}
-            disableLists
+          <LocalizedEditor
+            id="subheader"
+            value={question.html as TI18nString}
+            languages={languages}
+            isInValid={isInValid}
+            updateQuestion={updateQuestion}
+            selectedLanguage={selectedLanguage}
+            setSelectedLanguage={setSelectedLanguage}
             firstRender={firstRender}
             setFirstRender={setFirstRender}
+            questionIdx={questionIdx}
           />
         </div>
       </div>

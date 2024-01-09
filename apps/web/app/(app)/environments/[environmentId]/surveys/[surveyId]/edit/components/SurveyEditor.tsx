@@ -152,6 +152,7 @@ export default function SurveyEditor({
                     allLanguages={allLanguages}
                     languages={languages}
                     setLanguages={setLanguages}
+                    i18n={i18n}
                     setI18n={setI18n}
                     environmentId={environment.id}
                     isEnterpriseEdition={isEnterpriseEdition}

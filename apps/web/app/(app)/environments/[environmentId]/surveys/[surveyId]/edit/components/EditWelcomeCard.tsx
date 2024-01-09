@@ -2,14 +2,13 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
-import { md } from "@formbricks/lib/markdownIt";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
-import { Editor } from "@formbricks/ui/Editor";
 import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -58,6 +57,9 @@ export default function EditWelcomeCard({
       },
     });
   };
+  useEffect(() => {
+    setFirstRender(true);
+  }, [selectedLanguage]);
 
   return (
     <div
@@ -147,19 +149,17 @@ export default function EditWelcomeCard({
             <div className="mt-3">
               <Label htmlFor="subheader">Welcome Message</Label>
               <div className="mt-2">
-                <Editor
-                  getText={() =>
-                    md.render(
-                      localSurvey?.welcomeCard?.html || "Thanks for providing your feedback - let's go!"
-                    )
-                  }
-                  setText={(value: string) => {
-                    updateSurvey({ html: value });
-                  }}
-                  excludedToolbarItems={["blockType"]}
-                  disableLists
+                <LocalizedEditor
+                  id="subheader"
+                  value={localSurvey.welcomeCard.html as TI18nString}
+                  languages={languages}
+                  isInValid={isInValid}
+                  updateQuestion={updateSurvey}
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
                   firstRender={firstRender}
                   setFirstRender={setFirstRender}
+                  questionIdx={-1}
                 />
               </div>
             </div>

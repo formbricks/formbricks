@@ -19,7 +19,6 @@ import {
   TSurveyOpenTextQuestionInputType,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
 
@@ -125,11 +124,21 @@ export default function OpenQuestionForm({
       <div className="mt-3">
         <Label htmlFor="placeholder">Placeholder</Label>
         <div className="mt-2">
-          <Input
+          <LocalizedInput
             id="placeholder"
             name="placeholder"
             value={question.placeholder ?? defaultPlaceholder}
-            onChange={(e) => updateQuestion(questionIdx, { placeholder: e.target.value })}
+            languages={languages}
+            isInValid={isInValid}
+            onChange={(e) => {
+              let translatedPlaceholder = {
+                ...(question.placeholder as TI18nString),
+                [selectedLanguage]: e.target.value,
+              };
+              updateQuestion(questionIdx, { placeholder: translatedPlaceholder });
+            }}
+            selectedLanguage={selectedLanguage}
+            setSelectedLanguage={setSelectedLanguage}
           />
         </div>
       </div>

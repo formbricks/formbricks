@@ -207,7 +207,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
             tabIndex={questionChoices.length + 3}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -219,7 +219,7 @@ export default function MultipleChoiceSingleQuestion({
         <div></div>
         <SubmitButton
           tabIndex={questionChoices.length + 2}
-          buttonLabel={question.buttonLabel}
+          buttonLabel={getLocalizedValue(question.buttonLabel, language)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
         />

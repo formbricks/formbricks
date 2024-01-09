@@ -151,7 +151,7 @@ export default function DateQuestion({
         <div>
           {!isFirstQuestion && (
             <BackButton
-              backButtonLabel={question.backButtonLabel}
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);
@@ -161,7 +161,11 @@ export default function DateQuestion({
           )}
         </div>
 
-        <SubmitButton isLastQuestion={isLastQuestion} onClick={() => {}} buttonLabel={question.buttonLabel} />
+        <SubmitButton
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+          buttonLabel={getLocalizedValue(question.buttonLabel, language)}
+        />
       </div>
     </form>
   );

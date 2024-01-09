@@ -81,7 +81,7 @@ export default function CalQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
             onClick={() => {
               onBack();
             }}
@@ -90,7 +90,7 @@ export default function CalQuestion({
         <div></div>
         {!question.required && (
           <SubmitButton
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, language)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

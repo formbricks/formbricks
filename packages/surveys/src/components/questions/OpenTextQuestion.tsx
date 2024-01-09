@@ -88,7 +88,7 @@ export default function OpenTextQuestion({
             tabIndex={1}
             name={question.id}
             id={question.id}
-            placeholder={question.placeholder}
+            placeholder={getLocalizedValue(question.placeholder, language)}
             required={question.required}
             value={value ? (value as string) : ""}
             type={question.inputType}
@@ -114,7 +114,7 @@ export default function OpenTextQuestion({
             name={question.id}
             tabIndex={1}
             id={question.id}
-            placeholder={question.placeholder}
+            placeholder={getLocalizedValue(question.placeholder, language)}
             required={question.required}
             value={value as string}
             type={question.inputType}
@@ -129,7 +129,7 @@ export default function OpenTextQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
             onClick={() => {
               const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedttc);
@@ -138,7 +138,11 @@ export default function OpenTextQuestion({
           />
         )}
         <div></div>
-        <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
+        <SubmitButton
+          buttonLabel={getLocalizedValue(question.buttonLabel, language)}
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+        />
       </div>
     </form>
   );

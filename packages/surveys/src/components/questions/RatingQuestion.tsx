@@ -190,7 +190,7 @@ export default function RatingQuestion({
         {!isFirstQuestion && (
           <BackButton
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -202,7 +202,7 @@ export default function RatingQuestion({
         {(!question.required || value) && (
           <SubmitButton
             tabIndex={question.range + 1}
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, language)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

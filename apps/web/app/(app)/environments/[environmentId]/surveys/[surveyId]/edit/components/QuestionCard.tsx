@@ -23,11 +23,11 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TI18nString, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -62,23 +62,33 @@ interface QuestionCardProps {
 export function BackButtonInput({
   value,
   onChange,
-  className,
+  languages,
+  isInValid,
+  selectedLanguage,
+  setSelectedLanguage,
 }: {
-  value: string | undefined;
+  value: TI18nString;
   onChange: (e: any) => void;
-  className?: string;
+  languages: string[][];
+  isInValid: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
 }) {
   return (
     <div className="w-full">
       <Label htmlFor="backButtonLabel">&quot;Back&quot; Button Label</Label>
       <div className="mt-2">
-        <Input
+        <LocalizedInput
           id="backButtonLabel"
           name="backButtonLabel"
           value={value}
+          maxLength={48}
           placeholder="Back"
+          languages={languages}
+          isInValid={isInValid}
           onChange={onChange}
-          className={className}
+          selectedLanguage={selectedLanguage}
+          setSelectedLanguage={setSelectedLanguage}
         />
       </div>
     </div>
@@ -105,9 +115,9 @@ export default function QuestionCard({
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
 
-  const updateEmptyNextButtonLabels = (labelValue: string) => {
+  const updateEmptyNextButtonLabels = (labelValue: TI18nString) => {
     localSurvey.questions.forEach((q, index) => {
-      if (!q.buttonLabel || q.buttonLabel?.trim() === "") {
+      if (!q.buttonLabel || q.buttonLabel[selectedLanguage]?.trim() === "") {
         updateQuestion(index, { buttonLabel: labelValue });
       }
     });
@@ -348,28 +358,48 @@ export default function QuestionCard({
                         <div className="w-full">
                           <Label htmlFor="buttonLabel">&quot;Next&quot; Button Label</Label>
                           <div className="mt-2">
-                            <Input
+                            <LocalizedInput
                               id="buttonLabel"
                               name="buttonLabel"
-                              value={question.buttonLabel}
+                              value={question.buttonLabel as TI18nString}
                               maxLength={48}
                               placeholder={lastQuestion ? "Finish" : "Next"}
+                              languages={languages}
+                              isInValid={isInValid}
                               onChange={(e) => {
-                                updateQuestion(questionIdx, { buttonLabel: e.target.value });
+                                let translatedNextButtonLabel = {
+                                  ...(question.buttonLabel as TI18nString),
+                                  [selectedLanguage]: e.target.value,
+                                };
+                                updateQuestion(questionIdx, { buttonLabel: translatedNextButtonLabel });
                               }}
+                              selectedLanguage={selectedLanguage}
+                              setSelectedLanguage={setSelectedLanguage}
                               onBlur={(e) => {
-                                updateEmptyNextButtonLabels(e.target.value);
+                                console.log("running");
+                                let translatedNextButtonLabel = {
+                                  ...(question.buttonLabel as TI18nString),
+                                  [selectedLanguage]: e.target.value,
+                                };
+                                updateEmptyNextButtonLabels(translatedNextButtonLabel);
                               }}
                             />
                           </div>
                         </div>
                         {questionIdx !== 0 && (
                           <BackButtonInput
-                            value={question.backButtonLabel}
+                            value={question.backButtonLabel as TI18nString}
                             onChange={(e) => {
-                              if (e.target.value.trim() == "") e.target.value = "";
-                              updateQuestion(questionIdx, { backButtonLabel: e.target.value });
+                              let translatedBackButtonLabel = {
+                                ...(question.buttonLabel as TI18nString),
+                                [selectedLanguage]: e.target.value,
+                              };
+                              updateQuestion(questionIdx, { backButtonLabel: translatedBackButtonLabel });
                             }}
+                            languages={languages}
+                            isInValid={isInValid}
+                            selectedLanguage={selectedLanguage}
+                            setSelectedLanguage={setSelectedLanguage}
                           />
                         )}
                       </div>
@@ -379,11 +409,18 @@ export default function QuestionCard({
                       questionIdx !== 0 && (
                         <div className="mt-4">
                           <BackButtonInput
-                            value={question.backButtonLabel}
+                            value={question.backButtonLabel as TI18nString}
                             onChange={(e) => {
-                              if (e.target.value.trim() == "") e.target.value = "";
-                              updateQuestion(questionIdx, { backButtonLabel: e.target.value });
+                              let translatedBackButtonLabel = {
+                                ...(question.buttonLabel as TI18nString),
+                                [selectedLanguage]: e.target.value,
+                              };
+                              updateQuestion(questionIdx, { backButtonLabel: translatedBackButtonLabel });
                             }}
+                            languages={languages}
+                            isInValid={isInValid}
+                            selectedLanguage={selectedLanguage}
+                            setSelectedLanguage={setSelectedLanguage}
                           />
                         </div>
                       )}

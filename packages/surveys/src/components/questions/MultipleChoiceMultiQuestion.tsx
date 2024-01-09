@@ -262,7 +262,7 @@ export default function MultipleChoiceMultiQuestion({
         {!isFirstQuestion && (
           <BackButton
             tabIndex={questionChoices.length + 3}
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -273,7 +273,7 @@ export default function MultipleChoiceMultiQuestion({
         <div></div>
         <SubmitButton
           tabIndex={questionChoices.length + 2}
-          buttonLabel={question.buttonLabel}
+          buttonLabel={getLocalizedValue(question.buttonLabel, language)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
         />

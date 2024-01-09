@@ -46,12 +46,12 @@ export default function CTAQuestion({
         headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
         required={question.required}
-      />{" "}
-      <HtmlBody htmlString={question.html} questionId={question.id} />
+      />
+      <HtmlBody htmlString={getLocalizedValue(question.html, language)} questionId={question.id} />
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -75,7 +75,7 @@ export default function CTAQuestion({
             </button>
           )}
           <SubmitButton
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, language)}
             isLastQuestion={isLastQuestion}
             focus={true}
             onClick={() => {

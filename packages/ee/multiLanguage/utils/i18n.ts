@@ -1,4 +1,10 @@
-import { TI18nString, TSurveyThankYouCard, TSurveyWelcomeCard } from "@formbricks/types/surveys";
+import {
+  TI18nString,
+  TSurveyCTAQuestion,
+  TSurveyOpenTextQuestion,
+  TSurveyThankYouCard,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys";
 import { TSurvey, TSurveyMultipleChoiceMultiQuestion, TSurveyQuestion } from "@formbricks/types/surveys";
 
 // Helper function to create an i18nString from a regular string.
@@ -59,6 +65,8 @@ export const translateWelcomeCard = (
 ): TSurveyWelcomeCard => {
   const clonedWelcomeCard = { ...welcomeCard };
   clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages);
+  clonedWelcomeCard.html = createI18nString(welcomeCard.html ?? "", languages);
+
   return clonedWelcomeCard;
 };
 
@@ -85,19 +93,34 @@ export const translateQuestion = (question: TSurveyQuestion, languages?: string[
 
   // Translate headline and subheader
   clonedQuestion.headline = createI18nString(question.headline, languages);
-  clonedQuestion.subheader = createI18nString(question.subheader ? question.subheader : "", languages);
-
+  clonedQuestion.subheader = createI18nString(question.subheader ?? "", languages);
+  clonedQuestion.buttonLabel = createI18nString(question.buttonLabel ?? "", languages);
+  clonedQuestion.backButtonLabel = createI18nString(question.backButtonLabel ?? "", languages);
   if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
-    // Make sure to create a deep copy of the choices to avoid any reference issues
     (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
       question.choices.map((choice) => translateChoice({ ...choice }, languages));
   }
+  if (question.type === "openText") {
+    (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(
+      question.placeholder ?? "",
+      languages
+    );
+  }
+  if (question.type === "cta") {
+    (clonedQuestion as TSurveyCTAQuestion).dismissButtonLabel = createI18nString(
+      question.dismissButtonLabel ?? "",
+      languages
+    );
+    (clonedQuestion as TSurveyCTAQuestion).html = createI18nString(question.html ?? "", languages);
+  }
+  console.log(clonedQuestion);
 
   return clonedQuestion;
 };
 
 // Function to translate an entire survey
 export const translateSurvey = (survey: TSurvey, languages?: string[]): TSurvey => {
+  console.log("translating");
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languages); // Added return here
   });

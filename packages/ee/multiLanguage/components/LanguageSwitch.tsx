@@ -15,6 +15,7 @@ import { convertArrayToObject } from "../utils/i18n";
 interface LanguageSwitchProps {
   allLanguages: string[][];
   setLanguages: any;
+  i18n: boolean;
   setI18n: (i18n: boolean) => void;
   languages: TLanguages;
   environmentId: string;
@@ -23,12 +24,13 @@ interface LanguageSwitchProps {
 export default function LanguageSwitch({
   allLanguages,
   setLanguages,
+  i18n,
   setI18n,
   languages,
   environmentId,
   isEnterpriseEdition,
 }: LanguageSwitchProps) {
-  const [translationsEnabled, setTranslationsEnabled] = useState(false);
+  const [translationsEnabled, setTranslationsEnabled] = useState(i18n);
   const [languagesArray, setLanguagesArray] = useState<string[][]>(Object.entries(languages));
   const [showLanguageToggle, setshowLanguageToggle] = useState(false);
 

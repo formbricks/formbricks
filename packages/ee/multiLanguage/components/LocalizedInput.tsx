@@ -10,10 +10,12 @@ interface LocalizedInputProps {
   value: TI18nString;
   isInValid: boolean;
   onChange: React.ChangeEventHandler<HTMLInputElement>;
+  placeholder?: string;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   languages: string[][];
+  maxLength?: number;
 }
 const LocalizedInput = ({
   id,
@@ -21,10 +23,12 @@ const LocalizedInput = ({
   value,
   isInValid,
   onChange,
+  placeholder,
   selectedLanguage,
   setSelectedLanguage,
   onBlur,
   languages,
+  maxLength,
 }: LocalizedInputProps) => {
   const hasi18n = value._i18n_;
   const isInComplete =
@@ -42,9 +46,11 @@ const LocalizedInput = ({
         id={id}
         isInvalid={isInValid && isInComplete}
         name={name}
-        value={value[selectedLanguage] ? value[selectedLanguage] : ""}
+        value={value[selectedLanguage] ?? ""}
         onChange={onChange}
         onBlur={onBlur}
+        placeholder={placeholder ?? ""}
+        maxLength={maxLength}
       />
       {hasi18n && languages?.length > 1 && (
         <div>
