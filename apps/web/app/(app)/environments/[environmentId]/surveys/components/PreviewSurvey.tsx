@@ -11,7 +11,7 @@ import {
   DevicePhoneMobileIcon,
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
@@ -158,19 +158,19 @@ export default function PreviewSurvey({
     setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   }
 
-  function animationTrigger() {
+  const animationTrigger = useCallback(() => {
     let storePreviewMode = previewMode;
     setPreviewMode("null");
     setTimeout(() => {
       setPreviewMode(storePreviewMode);
     }, 10);
-  }
+  }, [previewMode, setPreviewMode]);
 
   useEffect(() => {
     if (survey.styling?.background?.bgType === "animation") {
       animationTrigger();
     }
-  }, [survey.styling?.background?.bg]);
+  }, [survey.styling?.background?.bg, survey.styling?.background?.bgType, animationTrigger]);
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {

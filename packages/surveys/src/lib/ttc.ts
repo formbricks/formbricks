@@ -27,7 +27,7 @@ export const useTtc = (
 ) => {
   useEffect(() => {
     setStartTime(performance.now());
-  }, [questionId]);
+  }, [questionId, setStartTime]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -47,5 +47,5 @@ export const useTtc = (
       // Clean up the event listener when the component is unmounted
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, []);
+  }, [questionId, setStartTime, setTtc, startTime, ttc]);
 };

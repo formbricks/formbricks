@@ -140,7 +140,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     return "my_survey_responses";
   }, [survey]);
 
-  function extracMetadataKeys(obj, parentKey = "") {
+  const extracMetadataKeys = useCallback((obj, parentKey = "") => {
     let keys: string[] = [];
 
     for (let key in obj) {
@@ -152,7 +152,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     }
 
     return keys;
-  }
+  }, []);
 
   const downloadResponses = useCallback(
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
@@ -268,7 +268,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
 
       URL.revokeObjectURL(downloadUrl);
     },
-    [downloadFileName, responses, totalResponses, survey]
+    [downloadFileName, responses, totalResponses, survey, extracMetadataKeys]
   );
 
   const handleDateHoveredChange = (date: Date) => {

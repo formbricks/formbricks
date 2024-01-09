@@ -59,8 +59,11 @@ export default function MultipleChoiceSingleQuestion({
   );
 
   useEffect(() => {
-    setOtherSelected(!!value && !question.choices.find((c) => (c.label as TI18nString)[language] === value));
-  }, [question.id]);
+    const isOtherSelected =
+      value !== undefined &&
+      !question.choices.some((choice) => (choice.label as TI18nString)[language] === value);
+    setOtherSelected(isOtherSelected);
+  }, [question.id, question.choices, value]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
 

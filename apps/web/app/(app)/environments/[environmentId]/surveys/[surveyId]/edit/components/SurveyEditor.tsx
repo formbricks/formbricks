@@ -84,7 +84,7 @@ export default function SurveyEditor({
         setLanguages(languagesObj);
       }
     }
-  }, [survey]);
+  }, [survey, localSurvey]);
 
   const translatedSurvey = useMemo(() => {
     if (!localSurvey || localSurvey.questions.length === 0) return;

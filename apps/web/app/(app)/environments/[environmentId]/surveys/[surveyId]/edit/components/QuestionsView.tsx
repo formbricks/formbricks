@@ -47,7 +47,7 @@ export default function QuestionsView({
       acc[question.id] = createId();
       return acc;
     }, {});
-  }, []);
+  }, [localSurvey.questions]);
 
   const [backButtonLabel, setbackButtonLabel] = useState(null);
 

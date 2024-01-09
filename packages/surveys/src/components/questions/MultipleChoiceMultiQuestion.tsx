@@ -62,7 +62,7 @@ export default function MultipleChoiceMultiQuestion({
         value.filter((v) => !question.choices.find((c) => (c.label as TI18nString)[language] === v))[0]) ||
         ""
     );
-  }, [question.id]);
+  }, [question.id, getChoicesWithoutOtherLabels, question.choices, value]);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {

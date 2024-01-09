@@ -151,12 +151,13 @@ export default function SummaryDropOffs({ responses, survey, displayCount }: Sum
       viewsCount: viewsArr,
       dropoffPercentage: dropoffPercentageArr,
     };
-  }, [responses, survey.questions, displayCount, initialAvgTtc, avgTtc]);
+  }, [responses, survey.questions, displayCount, initialAvgTtc, avgTtc, survey.welcomeCard.enabled]);
 
   useEffect(() => {
     const { newAvgTtc, dropoffCount, viewsCount, dropoffPercentage } = calculateMetrics();
     setAvgTtc(newAvgTtc);
     setDropoffMetrics({ dropoffCount, viewsCount, dropoffPercentage });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [responses]);
 
   return (
