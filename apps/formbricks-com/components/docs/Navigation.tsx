@@ -291,9 +291,9 @@ export const navigation: Array<NavGroup> = [
     title: "WordPress",
     links: [
       { title: "Setup", href: "/docs/wordpress/setup" },
-      { title: "Styling", href: "/docs/wordpress/styling" },
+      /*       { title: "Styling", href: "/docs/wordpress/styling" },
       { title: "Targeting", href: "/docs/wordpress/targeting" },
-      { title: "Exit Intent", href: "/docs/wordpress/exit-intent" },
+      { title: "Exit Intent", href: "/docs/wordpress/exit-intent" }, */
     ],
   },
 ];
