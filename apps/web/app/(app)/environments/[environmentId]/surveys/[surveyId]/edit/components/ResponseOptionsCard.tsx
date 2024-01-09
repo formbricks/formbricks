@@ -248,7 +248,13 @@ export default function ResponseOptionsCard({
       setCloseOnDate(localSurvey.closeOnDate);
       setSurveyCloseOnDateToggle(true);
     }
-  }, [localSurvey]);
+  }, [
+    localSurvey,
+    singleUseMessage.heading,
+    singleUseMessage.subheading,
+    surveyClosedMessage.heading,
+    surveyClosedMessage.subheading,
+  ]);
 
   const handleCheckMark = () => {
     if (autoComplete) {

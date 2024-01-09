@@ -94,7 +94,7 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - uploads:/apps/web/uploads/
+      - uploads:/home/nextjs/apps/web/uploads/
     <<: *environment
 
 volumes:

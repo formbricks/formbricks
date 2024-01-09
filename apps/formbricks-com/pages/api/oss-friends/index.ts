@@ -110,6 +110,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://infisical.com",
         },
         {
+          name: "Langfuse",
+          description:
+            "Open source LLM engineering platform. Debug, analyze and iterate together.",
+          href: "https://langfuse.com",
+        },
+        {
           name: "Mockoon",
           description: "Mockoon is the easiest and quickest way to design and run mock REST APIs.",
           href: "https://mockoon.com",
