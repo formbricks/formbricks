@@ -2,7 +2,6 @@ import { handleAirtable } from "../components/pipelines/airtable";
 import { handleWebhook } from "../components/pipelines/webhook";
 import { capturePosthogEvent } from "./posthog";
 import { prisma } from "./prisma";
-import { sendTelemetry } from "./telemetry";
 import { ApiEvent, SchemaPage } from "./types";
 
 type validationError = {
@@ -93,7 +92,7 @@ export const processApiEvent = async (event: ApiEvent, formId, candidateId) => {
       },
     });
     capturePosthogEvent(form.ownerId, "pageSubmission received", { formId });
-    sendTelemetry("pageSubmission received");
+    // sendTelemetry("pageSubmission received");
   } else if (event.type === "submissionCompleted") {
     // TODO
   } else if (event.type === "updateSchema") {
