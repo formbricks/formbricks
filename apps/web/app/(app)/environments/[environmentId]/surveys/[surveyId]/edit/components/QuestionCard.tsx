@@ -376,7 +376,6 @@ export default function QuestionCard({
                               selectedLanguage={selectedLanguage}
                               setSelectedLanguage={setSelectedLanguage}
                               onBlur={(e) => {
-                                console.log("running");
                                 let translatedNextButtonLabel = {
                                   ...(question.buttonLabel as TI18nString),
                                   [selectedLanguage]: e.target.value,

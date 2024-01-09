@@ -113,14 +113,12 @@ export const translateQuestion = (question: TSurveyQuestion, languages?: string[
     );
     (clonedQuestion as TSurveyCTAQuestion).html = createI18nString(question.html ?? "", languages);
   }
-  console.log(clonedQuestion);
 
   return clonedQuestion;
 };
 
 // Function to translate an entire survey
 export const translateSurvey = (survey: TSurvey, languages?: string[]): TSurvey => {
-  console.log("translating");
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languages); // Added return here
   });
