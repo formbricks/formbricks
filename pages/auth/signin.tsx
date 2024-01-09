@@ -107,25 +107,7 @@ export default function SignInPage() {
                     >
                       Se connecter
                     </button>
-                    <span className="text-center text-ui-gray-dark overflow-hidden before:h-[2px] after:h-[2px] after:bg-gray after:inline-block after:relative after:align-middle after:w-1/3 before:bg-gray before:inline-block before:relative before:align-middle before:w-1/3 before:right-2 after:left-2 text-xs mt-3">
-                      OU
-                    </span>
-
-                    <Link
-                      href={{
-                        pathname: "/auth/signup",
-                        query: {
-                          callbackUrl:
-                            router.query.callbackUrl?.toString() || "/forms",
-                        },
-                      }}
-                    >
-                      <a href="">
-                        <button className="flex justify-center w-full px-4 py-2 text-sm font-medium text-slate-900 border-2 border-red-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 mt-3 hover:bg-red-600 hover:text-white hover:border-red-600">
-                          Créer un compte
-                        </button>
-                      </a>
-                    </Link>
+                    
 
                     {passwordResetDisabled && (
                       <Link href="/auth/forgot-password">
