@@ -56,6 +56,8 @@ jobs:
         # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -89,7 +91,7 @@ jobs:
         with:
           context: .
           file: ./apps/web/Dockerfile
-          # platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
