@@ -1,5 +1,6 @@
 "use client";
 
+import { getMoreResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -31,20 +32,26 @@ export default function ResponseTimeline({
 }: ResponseTimelineProps) {
   const [displayedResponses, setDisplayedResponses] = useState<TResponse[]>([]);
   const loadingRef = useRef(null);
-
+  let newResponses = responses;
+  const [page, setPage] = useState(2);
   useEffect(() => {
     setDisplayedResponses(responses.slice(0, responsesPerPage));
   }, [responses, setDisplayedResponses, responsesPerPage]);
 
   useEffect(() => {
     const currentLoadingRef = loadingRef.current;
+
+    const loadResponses = async () => {
+      newResponses = await getMoreResponses(survey.id, page);
+      if (newResponses.length > 0) {
+        setPage(page + 1);
+      }
+      setDisplayedResponses((prevResponses) => [...prevResponses, ...newResponses]);
+    };
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setDisplayedResponses((prevResponses) => [
-            ...prevResponses,
-            ...responses.slice(prevResponses.length, prevResponses.length + responsesPerPage),
-          ]);
+          if (newResponses.length > 0) loadResponses();
         }
       },
       { threshold: 0.8 }
@@ -59,7 +66,7 @@ export default function ResponseTimeline({
         observer.unobserve(currentLoadingRef);
       }
     };
-  }, [responses, responsesPerPage]);
+  }, [responses, responsesPerPage, page]);
 
   return (
     <div className="space-y-4">
