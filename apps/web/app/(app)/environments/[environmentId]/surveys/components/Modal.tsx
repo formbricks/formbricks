@@ -24,14 +24,18 @@ export default function Modal({
   const calculateScaling = () => {
     let scaleValue = "1";
 
-    if (windowWidth > 1600) {
+    if (previewMode === "mobile") {
       scaleValue = "1";
-    } else if (windowWidth > 1200) {
-      scaleValue = ".9";
-    } else if (windowWidth > 900) {
-      scaleValue = ".8";
     } else {
-      scaleValue = "0.7";
+      if (windowWidth > 1600) {
+        scaleValue = "1";
+      } else if (windowWidth > 1200) {
+        scaleValue = ".9";
+      } else if (windowWidth > 900) {
+        scaleValue = ".8";
+      } else {
+        scaleValue = "0.7";
+      }
     }
 
     let placementClass = "";
@@ -89,10 +93,10 @@ export default function Modal({
         ? "translate-x-0 opacity-100"
         : "translate-x-32 opacity-0"
       : previewMode === "mobile"
-        ? show
-          ? "bottom-0"
-          : "-bottom-full"
-        : "";
+      ? show
+        ? "bottom-0"
+        : "-bottom-full"
+      : "";
 
   return (
     <div aria-live="assertive" className="relative h-full w-full bg-slate-300">
