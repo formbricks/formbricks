@@ -9,7 +9,7 @@ import { Fragment } from "react";
 import { classNames } from "../../lib/utils";
 import { useRouter } from "next/router";
 
-export default function MenuProfile({}) {
+export default function MenuProfile({ }) {
   const router = useRouter();
   const session = useSession();
   const { user } = session.data;
@@ -18,7 +18,7 @@ export default function MenuProfile({}) {
   const onClickSettings = () => {
     router.push({
       pathname: `/users/update-profile`,
-      query: {next : asPath} 
+      query: { next: asPath }
     });
   };
 
@@ -33,9 +33,7 @@ export default function MenuProfile({}) {
                 <div className="w-8 h-8">
                   <img
                     className="rounded-full"
-                    src={
-                      user.photo ? user.photo : "/img/avatar-placeholder.png"
-                    }
+                    src="/img/avatar-placeholder.png"
                     alt="user avatar"
                     width={50}
                     height={50}
@@ -69,24 +67,9 @@ export default function MenuProfile({}) {
                           className="w-5 h-5 mr-3 text-ui-gray-dark"
                           aria-hidden="true"
                         />
-                        {user.firstname} {user.lastname}
+                        {user.email}
                       </label>
                       <hr />
-                      <button
-                        onClick={onClickSettings}
-                        className={classNames(
-                          active
-                            ? "bg-ui-gray-light rounded-sm text-ui-black"
-                            : "text-ui-gray-dark",
-                          "flex px-4 py-2 text-sm w-full"
-                        )}
-                      >
-                        <CogIcon
-                          className="w-5 h-5 mr-3 text-ui-gray-dark"
-                          aria-hidden="true"
-                        />
-                        Mettre à Jour
-                      </button>
                       <button
                         onClick={() => signOut({ callbackUrl: "/" })}
                         className={classNames(
