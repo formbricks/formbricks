@@ -30,28 +30,27 @@ export default function ResponseTimeline({
   environmentTags,
   responsesPerPage,
 }: ResponseTimelineProps) {
-  const [displayedResponses, setDisplayedResponses] = useState<TResponse[]>([]);
   const loadingRef = useRef(null);
-  let newResponses = responses;
+  const [fetchedResponses, setFetchedResponses] = useState<TResponse[]>(responses);
   const [page, setPage] = useState(2);
-  useEffect(() => {
-    setDisplayedResponses(responses.slice(0, responsesPerPage));
-  }, [responses, setDisplayedResponses, responsesPerPage]);
+  const [hasMoreResponses, setHasMoreResponses] = useState(true);
 
   useEffect(() => {
     const currentLoadingRef = loadingRef.current;
 
     const loadResponses = async () => {
-      newResponses = await getMoreResponses(survey.id, page);
-      if (newResponses.length > 0) {
+      const newResponses = await getMoreResponses(survey.id, page);
+      if (newResponses.length === 0) {
+        setHasMoreResponses(false);
+      } else {
         setPage(page + 1);
       }
-      setDisplayedResponses((prevResponses) => [...prevResponses, ...newResponses]);
+      setFetchedResponses((prevResponses) => [...prevResponses, ...newResponses]);
     };
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          if (newResponses.length > 0) loadResponses();
+          if (hasMoreResponses) loadResponses();
         }
       },
       { threshold: 0.8 }
@@ -66,13 +65,13 @@ export default function ResponseTimeline({
         observer.unobserve(currentLoadingRef);
       }
     };
-  }, [responses, responsesPerPage, page]);
+  }, [responses, responsesPerPage, page, survey.id, fetchedResponses.length, hasMoreResponses]);
 
   return (
     <div className="space-y-4">
-      {survey.type === "web" && displayedResponses.length === 0 && !environment.widgetSetupCompleted ? (
+      {survey.type === "web" && fetchedResponses.length === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
-      ) : displayedResponses.length === 0 ? (
+      ) : fetchedResponses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}
@@ -80,7 +79,7 @@ export default function ResponseTimeline({
         />
       ) : (
         <div>
-          {displayedResponses.map((response) => {
+          {fetchedResponses.map((response) => {
             return (
               <div key={response.id}>
                 <SingleResponseCard
