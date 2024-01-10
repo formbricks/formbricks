@@ -36,10 +36,10 @@ const MembersInfo = async ({
   const allMembers = [...members, ...invites];
 
   return (
-    <div className="grid-cols-20">
+    <div className="grid-cols-20" id="membersInfoWrapper">
       {allMembers.map((member) => (
         <div
-          className="grid-cols-20 grid h-auto w-full content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
+          className="singleMemberInfo grid-cols-20 grid h-auto w-full content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
           key={member.email}>
           <div className="h-58 col-span-2 pl-4">
             {isInvitee(member) ? (

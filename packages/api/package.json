@@ -37,6 +37,6 @@
     "eslint-config-turbo": "latest",
     "terser": "^5.26.0",
     "vite": "^5.0.10",
-    "vite-plugin-dts": "^3.6.4"
+    "vite-plugin-dts": "^3.7.0"
   }
 }

@@ -148,7 +148,7 @@ export default function Navigation({
         hidden: false,
       },
     ],
-    [environment.id, pathname]
+    [environment.id, pathname, isViewer]
   );
 
   const dropdownnavigation = [
@@ -312,7 +312,7 @@ export default function Navigation({
               {/* User Dropdown */}
               <div className="hidden lg:ml-6 lg:flex lg:items-center">
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger asChild id="userDropdownTrigger">
                     <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
                       {session.user.imageUrl ? (
                         <Image
@@ -335,7 +335,7 @@ export default function Navigation({
                       <ChevronDownIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
                     </div>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
+                  <DropdownMenuContent className="w-56" id="userDropdownContentWrapper">
                     <DropdownMenuLabel className="cursor-default break-all">
                       <span className="ph-no-capture font-normal">Signed in as </span>
                       {session?.user?.name && session?.user?.name.length > 30 ? (
