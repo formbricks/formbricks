@@ -38,7 +38,7 @@
     "lottie-web": "^5.12.2",
     "mdast-util-to-string": "^4.0.0",
     "mdx-annotations": "^0.1.4",
-    "next": "14.0.4",
+    "next": "13.4.19",
     "next-plausible": "^3.12.0",
     "next-seo": "^6.4.0",
     "next-sitemap": "^4.2.3",
