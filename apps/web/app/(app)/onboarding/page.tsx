@@ -1,23 +1,31 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getUser } from "@formbricks/lib/user/service";
+
 import Onboarding from "./components/Onboarding";
-import { getEnvironmentByUser } from "@formbricks/lib/services/environment";
-import { getProfile } from "@formbricks/lib/services/profile";
-import { ErrorComponent } from "@formbricks/ui";
-import { getProductByEnvironmentId } from "@formbricks/lib/services/product";
 
 export default async function OnboardingPage() {
   const session = await getServerSession(authOptions);
-  const environment = await getEnvironmentByUser(session?.user);
-  const profile = await getProfile(session?.user.id!);
-  const product = await getProductByEnvironmentId(environment?.id!);
+  if (!session) {
+    redirect("/auth/login");
+  }
+  const userId = session?.user.id;
+  const environment = await getFirstEnvironmentByUserId(userId);
 
-  if (!environment || !profile || !product) {
-    return <ErrorComponent />;
+  if (!environment) {
+    throw new Error("No environment found for user");
   }
 
-  return <Onboarding session={session} environmentId={environment?.id} profile={profile} product={product} />;
+  const user = await getUser(userId);
+  const product = await getProductByEnvironmentId(environment?.id!);
+
+  if (!environment || !user || !product) {
+    throw new Error("Failed to get environment, user, or product");
+  }
+
+  return <Onboarding session={session} environmentId={environment.id} user={user} product={product} />;
 }

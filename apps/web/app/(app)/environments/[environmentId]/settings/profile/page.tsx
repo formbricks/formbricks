@@ -1,35 +1,44 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/profile/components/AccountSecurity";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import SettingsCard from "../SettingsCard";
-import SettingsTitle from "../SettingsTitle";
-import { DeleteAccount } from "./DeleteAccount";
-import { EditName } from "./EditName";
-import { EditAvatar } from "./EditAvatar";
-import { getProfile } from "@formbricks/lib/services/profile";
 
-export default async function ProfileSettingsPage() {
+import { authOptions } from "@formbricks/lib/authOptions";
+import { getUser } from "@formbricks/lib/user/service";
+import { SettingsId } from "@formbricks/ui/SettingsId";
+
+import SettingsCard from "../components/SettingsCard";
+import SettingsTitle from "../components/SettingsTitle";
+import { DeleteAccount } from "./components/DeleteAccount";
+import { EditAvatar } from "./components/EditAvatar";
+import { EditName } from "./components/EditName";
+
+export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
+  const { environmentId } = params;
   const session = await getServerSession(authOptions);
-  const profile = session ? await getProfile(session.user.id) : null;
+  const user = session && session.user ? await getUser(session.user.id) : null;
 
   return (
     <>
-      {profile && (
+      {user && (
         <div>
           <SettingsTitle title="Profile" />
           <SettingsCard title="Personal Information" description="Update your personal information.">
-            <EditName profile={profile} />
+            <EditName user={user} />
           </SettingsCard>
           <SettingsCard title="Avatar" description="Assist your team in identifying you on Formbricks.">
-            <EditAvatar session={session} />
+            <EditAvatar session={session} environmentId={environmentId} />
           </SettingsCard>
+          {user.identityProvider === "email" && (
+            <SettingsCard title="Security" description="Manage your password and other security settings.">
+              <AccountSecurity user={user} />
+            </SettingsCard>
+          )}
+
           <SettingsCard
             title="Delete account"
             description="Delete your account with all of your personal information and data.">
-            <DeleteAccount session={session} profile={profile} />
+            <DeleteAccount session={session} />
           </SettingsCard>
+          <SettingsId title="Profile" id={user.id}></SettingsId>
         </div>
       )}
     </>

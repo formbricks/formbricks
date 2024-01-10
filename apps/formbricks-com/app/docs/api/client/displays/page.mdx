@@ -1,0 +1,145 @@
+import { Fence } from "@/components/shared/Fence";
+
+export const metadata = {
+  title: "Formbricks Public Client API Guide: Manage Survey Displays & Responses",
+  description:
+    "Dive deep into Formbricks' Public Client API designed for customisation. This comprehensive guide provides detailed instructions on how to mark create and update survey displays for users.",
+};
+
+#### Client API
+
+# Displays API
+
+The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+
+This set of API can be used to
+- [Create Display](#create-display)
+- [Update Display](#update-display)
+
+---
+
+## Create Display {{ tag: 'POST', label: '/api/v1/client/<environment-id>/diplays' }}
+
+<Row>
+  <Col>
+
+    Create Display of survey for a user
+
+    ### Mandatory Request Body JSON Keys
+    <Properties>
+      <Property name="surveyId" type="string">
+        Survey ID to mark as viewed for a person
+      </Property>
+    </Properties>
+
+    ### Optional Request Body JSON Keys
+    <Properties>
+      <Property name="userId" type="string">
+        Already existing user's ID to mark as viewed for a survey
+      </Property>
+      <Property name="responseId" type="string">
+        Already existing response's ID to link with this new Display
+      </Property>
+    </Properties>
+
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="POST" label="/api/v1/client/<environment-id>/displays">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST \
+    'https://app.formbricks.com/api/v1/client/displays' \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "surveyId":"<survey-id>",
+        "userId":"<user-id>"
+      }'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {
+        "id": "clphzz6oo00083zdmc7e0nwzi"
+      }
+    }
+    ```
+
+    ```json {{ title: '400 Bad Request' }}
+    {
+      "code": "bad_request",
+      "message": "Fields are missing or incorrectly formatted",
+      "details": {
+        "surveyId": "Required"
+        }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---
+
+## Update Display {{ tag: 'PUT', label: '/api/v1/client/<environment-id>/diplays/<display-id>' }}
+
+<Row>
+  <Col>
+
+    Update a display by it's ID
+
+    ### Optional Request Body JSON Keys
+    <Properties>
+      <Property name="userId" type="string">
+        Already existing user's ID to mark as viewed for a survey
+      </Property>
+      <Property name="responseId" type="string">
+        Already existing response's ID to link with this new Display
+      </Property>
+    </Properties>
+
+
+  </Col>
+  <Col sticky>
+
+    <CodeGroup title="Request" tag="PUT" label="/api/v1/client/<environment-id>/displays/<display-id>">
+
+    ```bash {{ title: 'cURL' }}
+    curl -X POST \
+    'https://app.formbricks.com/api/v1/client/<environment-id>/displays/<display-id>' \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "userId":"<user-id>"
+      }'
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup title="Response">
+
+    ```json {{title:'200 Success'}}
+    {
+      "data": {}
+    }
+    ```
+
+    ```json {{ title: '400 Bad Request' }}
+    {
+      "code": "bad_request",
+      "message": "Fields are missing or incorrectly formatted",
+      "details": {
+        "surveyId": "Required"
+      }
+    }
+    ```
+    </CodeGroup>
+
+  </Col>
+</Row>
+
+---

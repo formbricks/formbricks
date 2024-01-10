@@ -1,7 +1,8 @@
-import { responses } from "@/lib/api/response";
-import { getApiKeyFromKey } from "@formbricks/lib/services/apiKey";
-import { deleteWebhook, getWebhook } from "@formbricks/lib/services/webhook";
+import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
+
+import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
+import { deleteWebhook, getWebhook } from "@formbricks/lib/webhook/service";
 
 export async function GET(_: Request, { params }: { params: { webhookId: string } }) {
   const apiKey = headers().get("x-api-key");

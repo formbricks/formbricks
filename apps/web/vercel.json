@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "app/api/cron/weekly_summary/*.ts": {
+      "maxDuration": 30
+    },
+    "app/api/v1/js/sync/*.ts": {
+      "maxDuration": 5
+    },
+    "app/api/**/*.ts": {
+      "maxDuration": 10
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import PeopleSegmentsTabs from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/PeopleSegmentsTabs";
-import ContentWrapper from "@/components/shared/ContentWrapper";
 import { Metadata } from "next";
+
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
 export const metadata: Metadata = {
   title: "People",

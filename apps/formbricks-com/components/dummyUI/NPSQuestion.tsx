@@ -1,11 +1,13 @@
 import { useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
-import type { NPSQuestion } from "@formbricks/types/questions";
+import { TSurveyNPSQuestion } from "@formbricks/types/surveys";
+
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface NPSQuestionProps {
-  question: NPSQuestion;
+  question: TSurveyNPSQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

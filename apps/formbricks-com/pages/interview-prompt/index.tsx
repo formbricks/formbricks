@@ -1,14 +1,14 @@
-import Layout from "@/components/shared/Layout";
-import UseCaseHeader from "@/components/shared/UseCaseHeader";
-import UseCaseCTA from "@/components/shared/UseCaseCTA";
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
+import Layout from "@/components/shared/Layout";
+import UseCaseCTA from "@/components/shared/UseCaseCTA";
+import UseCaseHeader from "@/components/shared/UseCaseHeader";
 
 export default function InterviewPromptPage() {
   return (
     <Layout
-      title="Interview Prompt"
-      description="Ask only power users users to book a time in your calendar. Get those juicy details.">
+      title="Interview Prompt with Formbricks"
+      description="Ask only power users to book a time in your calendar. Get those juicy details.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">
           <UseCaseHeader title="Interview Prompt" difficulty="Easy" setupMinutes="15" />
@@ -32,7 +32,7 @@ export default function InterviewPromptPage() {
         </div>
         <DemoPreview template="Interview Prompt" />
       </div>
-      <h2 className="mb-6 ml-4 mt-12 text-2xl font-semibold text-slate-700 dark:text-slate-400 md:mt-0">
+      <h2 className="mb-6 ml-4 mt-12 text-2xl font-semibold text-slate-700 md:mt-0 dark:text-slate-400">
         Other Best Practices
       </h2>
       <BestPracticeNavigation />

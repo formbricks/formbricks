@@ -1,11 +1,13 @@
-import type { Template } from "@formbricks/types/templates";
 import { useEffect, useState } from "react";
+
+import { TTemplate } from "@formbricks/types/templates";
+
 import PreviewSurvey from "./PreviewSurvey";
 import TemplateList from "./TemplateList";
 import { templates } from "./templates";
 
 export default function SurveyTemplatesPage({}) {
-  const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
+  const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function SurveyTemplatesPage({}) {
             setActiveTemplate(template);
           }}
         />
-        <aside className="group relative h-full flex-1 flex-shrink-0 overflow-hidden rounded-r-lg bg-slate-200 shadow-inner  dark:bg-slate-700 md:flex md:flex-col">
+        <aside className="group relative h-full flex-1 flex-shrink-0 overflow-hidden rounded-r-lg bg-slate-200 shadow-inner  md:flex md:flex-col dark:bg-slate-700">
           {activeTemplate && (
             <PreviewSurvey
               activeQuestionId={activeQuestionId}

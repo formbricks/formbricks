@@ -1,26 +1,35 @@
-import FormbricksClient from "@/app/(app)/FormbricksClient";
-import { PHProvider, PostHogPageview } from "@/app/PostHogClient";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
+import FormbricksClient from "@/app/(app)/components/FormbricksClient";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+// import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import PosthogIdentify from "./PosthogIdentify";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { NoMobileOverlay } from "@formbricks/ui/NoMobileOverlay";
+import { PHProvider, PostHogPageview } from "@formbricks/ui/PostHogClient";
+
+import PosthogIdentify from "./components/PosthogIdentify";
 
 export default async function AppLayout({ children }) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return redirect(`/auth/login`);
-  }
+  // if (!session) {
+  //   return redirect(`/auth/login`);
+  // }
 
   return (
     <>
+      <NoMobileOverlay />
       <Suspense>
         <PostHogPageview />
       </Suspense>
       <PHProvider>
         <>
-          <PosthogIdentify session={session} />
-          <FormbricksClient session={session} />
+          {session ? (
+            <>
+              <PosthogIdentify session={session} />
+              <FormbricksClient session={session} />
+            </>
+          ) : null}
+
           {children}
         </>
       </PHProvider>

@@ -1,11 +1,5 @@
 {
   "extends": "@formbricks/tsconfig/js-library.json",
   "include": ["."],
-  "exclude": ["dist", "build", "node_modules"],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@prisma/client/*": ["@formbricks/database/client/*"]
-    }
-  }
+  "exclude": ["dist", "build", "node_modules"]
 }

@@ -15,7 +15,7 @@ import Image from "next/image";
 export default function MeasurePMFPage() {
   return (
     <Layout
-      title="Product-Market Fit Survey"
+      title="Product-Market Fit Survey with Formbricks"
       description="Measure Product-Market Fit to understand how to develop your product further.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">
@@ -55,7 +55,7 @@ export default function MeasurePMFPage() {
                 <strong>only survey the right subset</strong> of your user base.
               </p>
             </div>
-            <div className="rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:p-8">
+            <div className="rounded-lg bg-slate-100 p-4 sm:p-8 dark:bg-slate-800">
               <Image
                 src={PreSegmentation}
                 quality="100"
@@ -81,7 +81,7 @@ export default function MeasurePMFPage() {
             </div>
             <div className="pb-8 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 2</h4>
-              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl dark:text-slate-100">
                 Survey users in-app
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">
@@ -97,7 +97,7 @@ export default function MeasurePMFPage() {
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
             <div className="pb-8 sm:pl-10 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 3</h4>
-              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-3xl">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl dark:text-slate-200">
                 Loop in your team
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">
@@ -136,7 +136,7 @@ export default function MeasurePMFPage() {
             </div>
             <div className="pb-8 pl-4 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 4</h4>
-              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl dark:text-slate-100">
                 Make better decisions
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">

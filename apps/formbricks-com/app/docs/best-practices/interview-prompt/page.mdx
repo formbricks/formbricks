@@ -12,9 +12,10 @@ import Publish from "./publish-survey.webp";
 import RecontactOptions from "./recontact-options.webp";
 import SelectAction from "./select-action.webp";
 
-export const meta = {
-  title: "In-app Interview Prompt",
-  description: "Invite only power users to schedule an interview with your product team.",
+export const metadata = {
+  title: "Maximize User Interview Participation with In-app Interview Prompts",
+  description:
+    "Engage with your power users seamlessly using Formbricks' In-app Interview Prompt. Ditch traditional email invites and experience way more more respondents. Dive into our comprehensive guide on setting up auto-scheduled interviews today and enhance your user understanding",
 };
 
 #### Best Practices
@@ -42,14 +43,14 @@ Product analytics and in-app surveys are incomplete without user interviews. Set
 
 To display an Interview Prompt in your app you want to proceed as follows:
 
-1. Create new Interview Prompt at [app.formbricks.com](http://app.formbricks.com/)
+1. Create new Interview Prompt at [app.formbricks.com](https://app.formbricks.com/)
 2. Adjust content and settings
 3. That’s it! 🎉
 
 <Note>
-  ## Formbricks Widget running? 
-  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages
-  and surveys in your app. If not, please follow the [Quick Start Guide (15mins).](/docs/getting-started/quickstart-in-app-survey)
+  ## Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web
+  app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide
+  (15mins).](/docs/getting-started/quickstart-in-app-survey)
 </Note>
 
 ### 1. Create new Interview Prompt
@@ -62,7 +63,7 @@ Click on "Create Survey" and choose the template “Interview Prompt”:
   src={CreatePrompt}
   alt="Create interview prompt by template"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 2. Update prompt and CTA
@@ -73,7 +74,7 @@ Update the prompt, description and button text to match your products tonality. 
   src={ChangeText}
   alt="Change text content"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 In the button settings you have to make sure it is set to “External URL”. In the URL field, copy your booking link (e.g. https://cal.com/company/user-interview). If you don’t have a booking link yet, head over to [cal.com](http://cal.com) and get one - they have the best free plan out there!
@@ -82,7 +83,7 @@ In the button settings you have to make sure it is set to “External URL”. In
   src={InterviewExample}
   alt="Add CSS action"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 Save, and move over to the “Audience” tab.
@@ -90,8 +91,8 @@ Save, and move over to the “Audience” tab.
 ### 3. Pre-segment your audience (coming soon)
 
 <Note>
-  ## Filter by attribute coming soon 
-  We're working on pre-segmenting users by attributes. We will update this manual in the next few days.
+  ## Filter by attribute coming soon We're working on pre-segmenting users by attributes. We will update this
+  manual in the next few days.
 </Note>
 
 Once you clicked over to the “Audience” tab you can change the settings. In the **Who To Send** card, select “Filter audience by attribute”. This allows you to only show the prompt to a specific segment of your user base.
@@ -104,15 +105,15 @@ Great, now only the “Power User” segment will see our Interview Prompt. But 
 
 To create the trigger to show your Interview Prompt, go to the “Audience” tab, find the “When to send” card and choose “Add Action”. We will now use our super cool No-Code User Action Tracker:
 
-<Image src={AddAction} alt="Add action" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image src={AddAction} alt="Add action" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
-  ## You can also add actions in your code 
-  You can also create [Code Actions](/docs/actions/code) using `formbricks.track("Eventname")` - they will automatically
-  appear in your Actions overview as long as the SDK is embedded.
+  ## You can also add actions in your code You can also create [Code Actions](/docs/actions/code) using
+  `formbricks.track("Eventname")` - they will automatically appear in your Actions overview as long as the SDK
+  is embedded.
 </Note>
 
-Generally, we have two types of user actions: Page views and clicks. The Interview Prompt, you’ll likely want to display on a page visit since you already filter who sees the prompt by attributes.
+Generally, we have two types of user actions: Page views and clicks. The Interview Prompt, you’ll likely want to display it on a page visit since you already filter who sees the prompt by attributes.
 
 1. **pageURL:** Whenever a user visits a page the survey will be displayed, as long as the other conditions match. Other conditions are pre-segmentation, if this user has seen a survey in the past 2 weeks, etc.
 
@@ -120,18 +121,18 @@ Generally, we have two types of user actions: Page views and clicks. The Intervi
   src={ActionPageurl}
   alt="Add page URL action"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 2. **innerText & CSS-Selector:** When a user clicks an element (like a button) with a specific text content or CSS selector, the prompt will be displayed as long as the other conditions also match.
 
-<div className="grid grid-cols-2 space-x-2">
-  <Image src={ActionCSS} alt="Add CSS action" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<div className="flex max-w-full flex-col sm:max-w-3xl lg:gap-1">
+  <Image src={ActionCSS} alt="Add CSS action" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
   <Image
     src={ActionInner}
     alt="Add inner text action"
     quality="100"
-    className="rounded-lg max-w-full sm:max-w-3xl"
+    className="max-w-full rounded-lg sm:max-w-3xl"
   />
 </div>
 
@@ -141,7 +142,7 @@ Generally, we have two types of user actions: Page views and clicks. The Intervi
   src={SelectAction}
   alt="Select feedback button action"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 6. Set Recontact Options correctly
@@ -152,17 +153,17 @@ Scroll down to “Recontact Options”. Here you have to choose the correct sett
   src={RecontactOptions}
   alt="Set recontact options"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 7. Congrats! You’re ready to publish your survey 💃 🤸
 
-<Image src={Publish} alt="Publish survey" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<Image src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
-  ## Formbricks Widget running? 
-  You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow [this
-  tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey) to install the widget.
+  ## Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box
+  in your app. Please follow [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey)
+  to install the widget.
 </Note>
 
 ###

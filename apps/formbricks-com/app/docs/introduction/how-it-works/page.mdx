@@ -1,7 +1,15 @@
-export const meta = {
-  title: "How Formbricks works",
+import Image from "next/image";
+
+import FormBuilder from "./form-builder.webp";
+import Targeting from "./targeting.webp";
+import Trigger from "./trigger.webp";
+import integrations from "./integrations.webp";
+import Analytics from "./analytics.webp";
+
+export const metadata = {
+  title: "Inside Look: Formbricks In-Product Micro-Surveys",
   description:
-    "Master in-product micro-surveys with Formbricks: user-friendly form builder, precise targeting, seamless integration, and insightful analytics for SaaS products.",
+    "Unlock the full potential of Formbricks: From intuitive form-building and event-based triggers to effortless integrations and deep analytics. Master the art of in-product surveys for your SaaS or digital platform.",
 };
 
 #### Introduction
@@ -21,14 +29,49 @@ Formbricks is a powerful platform designed to help you create and manage in-prod
 
 The Form Builder is where you create and customize your micro-surveys. With its intuitive drag-and-drop interface, you can easily add different question types, set response options, and apply your branding to the survey forms. The Form Builder allows you to preview your survey in real-time, ensuring it looks and feels perfect for your users.
 
+<Image
+  src={FormBuilder}
+  alt="Create & Customize Surveys No Code with Formbricks"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
+
 ## Targeting & Triggers
 
 Formbricks offers fine-grained user targeting and event-based triggers to help you display your surveys to the most relevant audience. Using the platform, you can define user segments based on attributes and behaviors, and set up triggers to show your surveys at specific moments within your product. This ensures that you're capturing the most accurate and valuable feedback possible.
+
+<Image
+  src={Targeting}
+  alt="Targeting & Triggers with Formbricks"
+  quality="100"
+  className="rounded-lg w-full sm:max-w-3xl"
+/>
+
+<Image
+  src={Trigger}
+  alt="Targeting & Triggers with Formbricks"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ## Integration
 
 Integrating Formbricks into your web or mobile application is a breeze. With SDKs for popular web frameworks like React, and an HTML snippet for non-framework based websites, you can quickly add Formbricks to your project. The provided code snippets make it easy to initialize the Formbricks widget and configure it to communicate with your backend.
 
+<Image
+  src={integrations}
+  alt="Integrations with Formbricks"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
+
 ## Analytics & Insights
 
 Formbricks provides powerful analytics and insights to help you understand user responses and make data-driven decisions. The platform aggregates survey results and presents them in an easy-to-understand format, enabling you to identify trends, spot issues, and uncover opportunities for improvement. With Formbricks, you're always one step ahead in understanding your users and optimizing your product experience.
+
+<Image
+  src={Analytics}
+  alt="Analytics & Insights with Formbricks"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>

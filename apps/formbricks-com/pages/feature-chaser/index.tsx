@@ -1,14 +1,14 @@
-import Layout from "@/components/shared/Layout";
-import UseCaseHeader from "@/components/shared/UseCaseHeader";
-import UseCaseCTA from "@/components/shared/UseCaseCTA";
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import BestPracticeNavigation from "@/components/shared/BestPracticeNavigation";
+import Layout from "@/components/shared/Layout";
+import UseCaseCTA from "@/components/shared/UseCaseCTA";
+import UseCaseHeader from "@/components/shared/UseCaseHeader";
 
 export default function FeatureChaserPage() {
   return (
     <Layout
-      title="Feature Chaser"
-      description="Show a survey about a new feature shown only to people who used it.">
+      title="Feature Chaser with Formbricks"
+      description="Show a survey about a new feature shown only to people who used it and gain insightful data.">
       <div className="grid grid-cols-1 items-center md:grid-cols-2 md:gap-12 md:py-20">
         <div className="p-6 md:p-0">
           <UseCaseHeader title="Feature Chaser" difficulty="Easy" setupMinutes="10" />
@@ -34,7 +34,7 @@ export default function FeatureChaserPage() {
 
         <DemoPreview template="Feature Chaser" />
       </div>
-      <h2 className="mb-6 ml-4 mt-12 text-2xl font-semibold text-slate-700 dark:text-slate-400 md:mt-0">
+      <h2 className="mb-6 ml-4 mt-12 text-2xl font-semibold text-slate-700 md:mt-0 dark:text-slate-400">
         Other Best Practices
       </h2>
       <BestPracticeNavigation />

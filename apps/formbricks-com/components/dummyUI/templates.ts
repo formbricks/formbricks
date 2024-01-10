@@ -1,3 +1,7 @@
+import { createId } from "@paralleldrive/cuid2";
+
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
 import {
   AppPieChartIcon,
   ArrowRightCircleIcon,
@@ -20,11 +24,7 @@ import {
   TaskListSearchIcon,
   UserSearchGlasIcon,
   VideoTabletAdjustIcon,
-} from "@formbricks/ui";
-
-import { createId } from "@paralleldrive/cuid2";
-import type { Template } from "@formbricks/types/templates";
-import { QuestionType } from "@formbricks/types/questions";
+} from "@formbricks/ui/icons";
 
 const thankYouCardDefault = {
   enabled: true,
@@ -32,7 +32,13 @@ const thankYouCardDefault = {
   subheader: "We appreciate your feedback.",
 };
 
-export const customSurvey: Template = {
+const welcomeCardDefault = {
+  enabled: true,
+  timeToFinish: false,
+  showResponseCount: false,
+};
+
+export const customSurvey: TTemplate = {
   name: "Start from scratch",
   description: "Create a survey without template.",
   icon: null,
@@ -41,19 +47,24 @@ export const customSurvey: Template = {
     questions: [
       {
         id: createId(),
-        type: QuestionType.OpenText,
+        type: TSurveyQuestionType.OpenText,
         headline: "Custom Survey",
         subheader: "This is an example survey.",
         placeholder: "Type your answer here...",
+        inputType: "text",
         longAnswer: true,
         required: true,
       },
     ],
     thankYouCard: thankYouCardDefault,
+    welcomeCard: welcomeCardDefault,
+    hiddenFields: {
+      enabled: false,
+    },
   },
 };
 
-export const templates: Template[] = [
+export const templates: TTemplate[] = [
   {
     name: "Product Market Fit (Superhuman)",
     icon: PMFIcon,
@@ -65,7 +76,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How disappointed would you be if you could no longer use Formbricks?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -87,7 +98,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -117,28 +128,35 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What type of people do you think would most benefit from Formbricks?",
+          inputType: "text",
           longAnswer: true,
           required: true,
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
-          headline: "What is the main benefit your receive from Formbricks?",
+          type: TSurveyQuestionType.OpenText,
+          headline: "What is the main benefit you receive from Formbricks?",
+          inputType: "text",
           longAnswer: true,
           required: true,
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "How can we improve our service for you?",
+          inputType: "text",
           subheader: "Please be as specific as possible.",
           longAnswer: true,
           required: true,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
 
@@ -152,7 +170,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What is your role?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -182,7 +200,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What's your company size?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -212,7 +230,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -242,6 +260,10 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -254,7 +276,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What do you value most about our service?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -280,7 +302,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What should we improve on?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -306,14 +328,19 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Would you like to add something?",
           subheader: "Feel free to speak your mind, we do too.",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -326,7 +353,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How did you hear about us first?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -356,6 +383,10 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -368,7 +399,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Why did you cancel your subscription?",
           subheader: "We're sorry to see you leave. Please help us do better:",
           required: true,
@@ -398,14 +429,19 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "How can we win you back?",
           subheader: "Feel free to speak your mind, we do too.",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -418,7 +454,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Why did you stop your trial?",
           subheader: "Help us understand you better:",
           required: true,
@@ -448,21 +484,27 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Any details to share?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "How are you solving your problem instead?",
+          inputType: "text",
           subheader: "Please name alternative tools:",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -475,7 +517,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How easy was it to change your plan?",
           required: true,
           shuffleOption: "none",
@@ -504,7 +546,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Is the pricing information easy to understand?",
           required: true,
           shuffleOption: "none",
@@ -525,6 +567,10 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -537,7 +583,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Were you able to accomplish what you came here to do today?",
           required: true,
           shuffleOption: "none",
@@ -558,7 +604,7 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           headline: "How easy was it to achieve your goal?",
           required: true,
           lowerLabel: "Very difficult",
@@ -568,13 +614,18 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What did you come here to do today?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -588,7 +639,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What's your primary goal for using Formbricks?",
           required: true,
           shuffleOption: "none",
@@ -613,6 +664,10 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -625,7 +680,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           headline: "How easy was it to achieve your goal?",
           required: true,
           lowerLabel: "Very difficult",
@@ -635,14 +690,19 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Wanna add something?",
+          inputType: "text",
           subheader: "This really helps us do better!",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -655,7 +715,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           headline: "How important is this feature for you?",
           required: true,
           lowerLabel: "Not important",
@@ -665,6 +725,10 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -678,7 +742,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How disappointed would you be if you could no longer use Formbricks?",
           subheader: "Please select one of the following options:",
           required: true,
@@ -700,14 +764,19 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "How can we improve our service for you?",
+          inputType: "text",
           subheader: "Please be as specific as possible.",
           longAnswer: true,
           required: true,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -720,7 +789,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "What's on your mind, boss?",
           subheader: "Thanks for sharing. We'll get back to you asap.",
           required: true,
@@ -738,13 +807,18 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Give us the juicy details:",
+          inputType: "text",
           longAnswer: true,
           required: true,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -757,7 +831,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How easy was it to set this integration up?",
           required: true,
           shuffleOption: "none",
@@ -786,14 +860,19 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Which product would you like to integrate next?",
+          inputType: "text",
           subheader: "We keep building integrations. Yours can be next:",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -806,7 +885,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Which other tools are you using?",
           required: true,
           shuffleOption: "none",
@@ -835,13 +914,18 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "If you chose other, please clarify:",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -854,7 +938,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Was this page helpful?",
           required: true,
           shuffleOption: "none",
@@ -871,20 +955,26 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "Please elaborate:",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
+          inputType: "url",
           headline: "Page URL",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -897,7 +987,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           headline: "Do you have 15 min to talk to us? 🙏",
           html: "You're one of our power users. We would love to interview you briefly!",
           buttonLabel: "Book interview",
@@ -908,6 +998,10 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -920,7 +1014,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           headline: "You're one of our most valued customers! Please write a review for us.",
           buttonLabel: "Write review",
           buttonUrl: "https://formbricks.com/github",
@@ -929,6 +1023,10 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -941,7 +1039,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.NPS,
+          type: TSurveyQuestionType.NPS,
           headline: "How likely are you to recommend Formbricks to a friend or colleague?",
           required: false,
           lowerLabel: "Not likely",
@@ -949,6 +1047,10 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -961,7 +1063,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "How many hours does your team save per week by using Formbricks?",
           required: true,
           shuffleOption: "none",
@@ -986,6 +1088,10 @@ export const templates: Template[] = [
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -998,7 +1104,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           headline: "How satisfied are you with the features of Formbricks?",
           required: true,
           lowerLabel: "Not satisfied",
@@ -1008,13 +1114,18 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What's the #1 thing you'd like to change in Formbricks?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -1027,7 +1138,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.Rating,
+          type: TSurveyQuestionType.Rating,
           headline: "How easy was it to achieve ... ?",
           required: true,
           lowerLabel: "Not easy",
@@ -1037,13 +1148,18 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What is one thing we could do better?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
   {
@@ -1056,7 +1172,7 @@ export const templates: Template[] = [
       questions: [
         {
           id: createId(),
-          type: QuestionType.MultipleChoiceSingle,
+          type: TSurveyQuestionType.MultipleChoiceSingle,
           headline: "Do you have all the info you need to give Formbricks a try?",
           required: true,
           shuffleOption: "none",
@@ -1077,26 +1193,39 @@ export const templates: Template[] = [
         },
         {
           id: createId(),
-          type: QuestionType.OpenText,
+          type: TSurveyQuestionType.OpenText,
           headline: "What’s missing or unclear to you about Formbricks?",
+          inputType: "text",
           longAnswer: true,
           required: false,
         },
         {
           id: createId(),
-          type: QuestionType.CTA,
+          type: TSurveyQuestionType.CTA,
           headline: "Thanks for your answer! Get 25% off your first 6 months:",
           required: false,
           buttonLabel: "Get discount",
           buttonUrl: "https://app.formbricks.com/auth/signup",
           buttonExternal: true,
         },
+        {
+          id: createId(),
+          type: TSurveyQuestionType.FileUpload,
+          headline: "Upload file",
+          required: false,
+          allowMultipleFiles: false,
+          maxSizeInMB: 10,
+        },
       ],
       thankYouCard: thankYouCardDefault,
+      welcomeCard: welcomeCardDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
 ];
 
-export const findTemplateByName = (name: string): Template | undefined => {
+export const findTemplateByName = (name: string): TTemplate | undefined => {
   return templates.find((template) => template.name === name);
 };

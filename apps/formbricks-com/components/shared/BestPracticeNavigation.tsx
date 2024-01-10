@@ -1,15 +1,16 @@
+import clsx from "clsx";
+import Link from "next/link";
+
 import {
+  BaseballIcon,
   CancelSubscriptionIcon,
+  CodeBookIcon,
   DogChaserIcon,
   FeedbackIcon,
   InterviewPromptIcon,
   OnboardingIcon,
   PMFIcon,
-  BaseballIcon,
-  CodeBookIcon,
-} from "@formbricks/ui";
-import clsx from "clsx";
-import Link from "next/link";
+} from "@formbricks/ui/icons";
 
 export default function BestPracticeNavigation() {
   const BestPractices = [
@@ -18,7 +19,7 @@ export default function BestPracticeNavigation() {
       href: "/interview-prompt",
       status: true,
       icon: InterviewPromptIcon,
-      description: "Ask only power users users to book a time in your calendar. Get those juicy details.",
+      description: "Ask only power users to book a time in your calendar. Get those juicy details.",
       category: "Understand Users",
     },
     {
@@ -81,14 +82,14 @@ export default function BestPracticeNavigation() {
   ];
 
   return (
-    <div className=" mx-auto grid grid-cols-1 gap-6 px-2 sm:grid-cols-3">
+    <div className="mx-auto grid grid-cols-1 gap-6 px-2 md:grid-cols-3">
       {BestPractices.map((bestPractice) => (
-        <Link href={bestPractice.href} key={bestPractice.name}>
-          <div className="drop-shadow-card duration-120 hover:border-brand-dark relative rounded-lg border border-slate-100 bg-slate-100 p-8 transition-all ease-in-out hover:scale-105 hover:cursor-pointer dark:bg-slate-800">
+        <Link className="relative block" href={bestPractice.href} key={bestPractice.name}>
+          <div className="drop-shadow-card duration-120 hover:border-brand-dark relative h-full rounded-lg border border-slate-100 bg-slate-100 p-6 transition-all ease-in-out hover:scale-105 hover:cursor-pointer dark:border-slate-600 dark:bg-slate-800">
             <div
               className={clsx(
                 // base styles independent what type of button it is
-                "absolute right-10 rounded-full px-3 py-1",
+                "absolute right-6 rounded-full px-3 py-1 text-xs lg:text-sm",
                 // different styles depending on type
                 bestPractice.category === "Boost Retention" &&
                   "bg-pink-100 text-pink-500 dark:bg-pink-800 dark:text-pink-200",
@@ -105,7 +106,9 @@ export default function BestPracticeNavigation() {
             <h3 className="mb-1 mt-3 text-xl font-bold text-slate-700 dark:text-slate-200">
               {bestPractice.name}
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">{bestPractice.description}</p>
+            <p className="flex self-end text-sm text-slate-600 dark:text-slate-400">
+              {bestPractice.description}
+            </p>
           </div>
         </Link>
       ))}

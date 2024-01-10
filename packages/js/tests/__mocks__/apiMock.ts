@@ -1,4 +1,5 @@
 import fetchMock from "jest-fetch-mock";
+
 import { constants } from "../constants";
 
 const {
@@ -31,12 +32,6 @@ export const mockInitResponse = () => {
           createdAt: "2021-03-09T15:00:00.000Z",
           updatedAt: "2021-03-09T15:00:00.000Z",
           attributes: {},
-        },
-        session: {
-          id: sessionId,
-          createdAt: "2021-03-09T15:00:00.000Z",
-          updatedAt: "2021-03-09T15:00:00.000Z",
-          expiresAt: expiryTime,
         },
         surveys: [
           {
@@ -85,7 +80,8 @@ export const mockInitResponse = () => {
         product: {
           noCodeEvents: [],
           brandColor: "#20b398",
-          formbricksSignature: true,
+          linkSurveyBranding: true,
+          inAppBranding: true,
           placement: "bottomRight",
           darkOverlay: false,
           clickOutsideClose: true,
@@ -121,19 +117,9 @@ export const mockSetEmailIdResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
       data: {
-        surveys: [],
-        session: {
-          id: sessionId,
-          createdAt: "2021-03-09T15:00:00.000Z",
-          updatedAt: "2021-03-09T15:00:00.000Z",
-          expiresAt: expiryTime,
-        },
-        noCodeActionClasses: [],
-        person: {
-          id: initialPersonUid,
-          environmentId,
-          attributes: { userId: initialUserId, email: initialUserEmail },
-        },
+        id: initialPersonUid,
+        environmentId,
+        attributes: { userId: initialUserId, email: initialUserEmail },
       },
     })
   );
@@ -143,22 +129,12 @@ export const mockSetCustomAttributeResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
       data: {
-        surveys: [],
-        session: {
-          id: sessionId,
-          createdAt: "2021-03-09T15:00:00.000Z",
-          updatedAt: "2021-03-09T15:00:00.000Z",
-          expiresAt: expiryTime,
-        },
-        noCodeActionClasses: [],
-        person: {
-          id: initialPersonUid,
-          environmentId,
-          attributes: {
-            userId: initialUserId,
-            email: initialUserEmail,
-            [customAttributeKey]: customAttributeValue,
-          },
+        id: initialPersonUid,
+        environmentId,
+        attributes: {
+          userId: initialUserId,
+          email: initialUserEmail,
+          [customAttributeKey]: customAttributeValue,
         },
       },
     })
@@ -169,22 +145,12 @@ export const mockUpdateEmailResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
       data: {
-        surveys: [],
-        noCodeActionClasses: [],
-        session: {
-          id: sessionId,
-          createdAt: "2021-03-09T15:00:00.000Z",
-          updatedAt: "2021-03-09T15:00:00.000Z",
-          expiresAt: expiryTime,
-        },
-        person: {
-          id: initialPersonUid,
-          environmentId,
-          attributes: {
-            userId: initialUserId,
-            email: updatedUserEmail,
-            [customAttributeKey]: customAttributeValue,
-          },
+        id: initialPersonUid,
+        environmentId,
+        attributes: {
+          userId: initialUserId,
+          email: updatedUserEmail,
+          [customAttributeKey]: customAttributeValue,
         },
       },
     })
@@ -218,10 +184,7 @@ export const mockResetResponse = () => {
   fetchMock.mockResponseOnce(
     JSON.stringify({
       data: {
-        settings: {
-          surveys: [],
-          noCodeEvents: [],
-        },
+        surveys: [],
         person: {
           id: newPersonUid,
           environmentId,

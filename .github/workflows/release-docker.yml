@@ -12,7 +12,18 @@ jobs:
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
     steps:
+      - name: Generate Random NEXTAUTH_SECRET
+        run: |
+          SECRET=$(openssl rand -hex 32)
+          echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
+
+      - name: Generate Random ENCRYPTION_KEY
+        run: |
+          SECRET=$(openssl rand -hex 32)
+          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+
       - name: Checkout Repo
         uses: actions/checkout@v2
 
@@ -41,3 +52,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/formbricks:${{ env.RELEASE_TAG }}
             ${{ secrets.DOCKER_USERNAME }}/formbricks:latest
+          build-args: |
+            NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
+            DATABASE_URL=${{ env.DATABASE_URL }}
+            ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}

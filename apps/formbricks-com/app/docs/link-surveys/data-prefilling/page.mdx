@@ -2,9 +2,9 @@ import Image from "next/image";
 
 import QuestionId from "./question-id.webp";
 
-export const meta = {
-  title: "Data Prefilling in Link Surveys",
-  description: "Prefill data in your surveys to make it easier for your users to provide feedback.",
+export const metadata = {
+  title: "URL Data Prefilling for Link Surveys in Formbricks",
+  description: "Master the art of data prefilling in Formbricks link surveys. Dive into our guide on how to use URL parameters to prepopulate answers, boosting conversion rates and enhancing user experience. Learn through examples and ensure correct validation for each question type.",
 };
 
 #### Link Surveys
@@ -22,7 +22,7 @@ URL prefilling of data comes in handy when you:
 - Want to embed the first question in an email and increase conversion by prefilling the choice
 
 ## Quick Example
-
+<Col>
 <CodeGroup title="Example URL">
 
 ```sh
@@ -30,7 +30,7 @@ https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id=5
 ```
 
 </CodeGroup>
-
+</Col>
 ## How it works
 
 To prefill the first question of a survey, append `?question_id=answer` at the end of the survey URL. The answer has to match the expected type of the question. For example, if the first question is a rating question, the answer has to be a number. If the first question is a single select question, the answer has to be a string.
@@ -58,7 +58,7 @@ You find the `questionId` in the Advanced Settings at the bottom of each questio
 Here are a few examples to get you started:
 
 ### Rating Question
-
+<Col>
 <CodeGroup title="Translates to 5 stars / points / emojis">
 
 ```sh
@@ -66,9 +66,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
 ```
 
 </CodeGroup>
-
+</Col>
 ### NPS Question
-
+<Col>
 <CodeGroup title="Translates to an NPS rating of 10">
 
 ```sh
@@ -76,9 +76,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
 ```
 
 </CodeGroup>
-
+</Col>
 ### Single Select Question (Radio)
-
+<Col>
 <CodeGroup title="Chooses the option 'Very disappointed' in the single select question. The string has to be identical to the option in your question">
 
 ```sh
@@ -86,9 +86,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id
 ```
 
 </CodeGroup>
-
+</Col>
 ### Multi Select Question (Checkbox)
-
+<Col>
 <CodeGroup title="Selects three options 'Sun, Palms and Beach' in the multi select question. The strings have to be identical to the options in your question">
 
 ```sh
@@ -96,9 +96,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=
 ```
 
 </CodeGroup>
-
+</Col>
 ### Open Text Question
-
+<Col>
 <CodeGroup title="Adds 'I love Formbricks' as the answer to the open text question">
 
 ```sh
@@ -106,9 +106,9 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20
 ```
 
 </CodeGroup>
-
+</Col>
 ### CTA Question
-
+<Col>
 <CodeGroup title="Adds 'clicked' as the answer to the CTA question. Alternatively, you can set it to 'dismissed' to skip the question.">
 
 ```txt
@@ -116,7 +116,7 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?cta_question_id=clicked
 ```
 
 </CodeGroup>
-
+</Col>
 ## Validation
 
 Make sure that the answer in the URL matches the expected type for the first question.

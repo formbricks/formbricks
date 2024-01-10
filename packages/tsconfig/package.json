@@ -4,12 +4,12 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "clean": "rimraf node_modules"
+    "clean": "rimraf node_modules dist turbo"
   },
   "devDependencies": {
-    "@types/node": "20.6.0",
-    "@types/react": "18.2.21",
-    "@types/react-dom": "18.2.7",
-    "typescript": "5.2.2"
+    "@types/node": "20.10.6",
+    "@types/react": "18.2.46",
+    "@types/react-dom": "18.2.18",
+    "typescript": "^5.3.3"
   }
 }

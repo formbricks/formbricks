@@ -1,25 +1,50 @@
-export const revalidate = REVALIDATION_INTERVAL;
-
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import { truncateMiddle } from "@/lib/utils";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getPeople } from "@formbricks/lib/services/person";
-import { TPerson } from "@formbricks/types/v1/people";
-import { PersonAvatar } from "@formbricks/ui";
 import Link from "next/link";
+
+import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
+import { truncateMiddle } from "@formbricks/lib/strings";
+import { TPerson } from "@formbricks/types/people";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { Pagination } from "@formbricks/ui/Pagination";
 
 const getAttributeValue = (person: TPerson, attributeName: string) =>
   person.attributes[attributeName]?.toString();
 
-export default async function PeoplePage({ params }) {
-  const people = await getPeople(params.environmentId);
+export default async function PeoplePage({
+  params,
+  searchParams,
+}: {
+  params: { environmentId: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const pageNumber = searchParams.page ? parseInt(searchParams.page as string) : 1;
+  const [environment, totalPeople] = await Promise.all([
+    getEnvironment(params.environmentId),
+    getPeopleCount(params.environmentId),
+  ]);
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
+  const maxPageNumber = Math.ceil(totalPeople / ITEMS_PER_PAGE);
+  let hidePagination = false;
+
+  let people: TPerson[] = [];
+
+  if (pageNumber < 1 || pageNumber > maxPageNumber) {
+    people = [];
+    hidePagination = true;
+  } else {
+    people = await getPeople(params.environmentId, pageNumber);
+  }
 
   return (
     <>
       {people.length === 0 ? (
         <EmptySpaceFiller
           type="table"
-          environmentId={params.environmentId}
+          environment={environment}
           emptyMessage="Your users will appear here as soon as they use your app ⏲️"
         />
       ) : (
@@ -53,7 +78,7 @@ export default async function PeoplePage({ params }) {
                 </div>
                 <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
                   <div className="ph-no-capture text-slate-900">
-                    {truncateMiddle(getAttributeValue(person, "userId"), 24)}
+                    {truncateMiddle(getAttributeValue(person, "userId"), 24) || person.userId}
                   </div>
                 </div>
                 <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
@@ -63,6 +88,14 @@ export default async function PeoplePage({ params }) {
             </Link>
           ))}
         </div>
+      )}
+      {hidePagination ? null : (
+        <Pagination
+          baseUrl={`/environments/${params.environmentId}/people`}
+          currentPage={pageNumber}
+          totalItems={totalPeople}
+          itemsPerPage={ITEMS_PER_PAGE}
+        />
       )}
     </>
   );

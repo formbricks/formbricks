@@ -1,11 +1,13 @@
-import type { Template } from "@formbricks/types/templates";
 import { useEffect, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
+import { TTemplate } from "@formbricks/types/templates";
+
 import { templates } from "./templates";
 
 type TemplateList = {
-  onTemplateClick: (template: Template) => void;
-  activeTemplate: Template | null;
+  onTemplateClick: (template: TTemplate) => void;
+  activeTemplate: TTemplate | null;
 };
 
 const ALL_CATEGORY_NAME = "All";
@@ -50,7 +52,7 @@ export default function TemplateList({ onTemplateClick, activeTemplate }: Templa
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {templates
           .filter((template) => selectedFilter === ALL_CATEGORY_NAME || template.category === selectedFilter)
-          .map((template: Template) => (
+          .map((template: TTemplate) => (
             <button
               type="button"
               onClick={() => {

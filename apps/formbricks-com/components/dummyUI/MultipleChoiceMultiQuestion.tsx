@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
-import type { MultipleChoiceMultiQuestion } from "@formbricks/types/questions";
+import { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
+
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface MultipleChoiceMultiProps {
-  question: MultipleChoiceMultiQuestion;
+  question: TSurveyMultipleChoiceMultiQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

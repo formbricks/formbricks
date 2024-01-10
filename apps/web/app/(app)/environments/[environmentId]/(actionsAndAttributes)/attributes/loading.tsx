@@ -1,6 +1,7 @@
-import { Button } from "@formbricks/ui";
 import { TagIcon } from "@heroicons/react/24/solid";
 import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
+
+import { Button } from "@formbricks/ui/Button";
 
 export default function Loading() {
   return (

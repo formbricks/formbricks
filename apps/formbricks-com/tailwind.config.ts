@@ -1,8 +1,9 @@
 import headlessuiPlugin from "@headlessui/tailwindcss";
-import typographyPlugin from "@tailwindcss/typography";
 import forms from "@tailwindcss/forms";
+import typographyPlugin from "@tailwindcss/typography";
 import { type Config } from "tailwindcss";
 import defaultTheme from "tailwindcss/defaultTheme";
+
 import typographyStyles from "./typography";
 
 export default {
@@ -64,6 +65,7 @@ export default {
       fontFamily: {
         sans: ["Poppins", ...defaultTheme.fontFamily.sans],
         display: ["Lexend", ...defaultTheme.fontFamily.sans],
+        kablammo: ["Kablammo", "sans"],
       },
       screens: {
         xs: "430px",

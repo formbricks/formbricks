@@ -11,6 +11,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.appsmith.com",
         },
         {
+          name: "Argos",
+          description: "Argos provides the developer tools to debug tests and detect visual regressions..",
+          href: "https://argos-ci.com",
+        },
+        {
           name: "BoxyHQ",
           description:
             "BoxyHQ’s suite of APIs for security and privacy helps engineering teams build and ship compliant cloud applications faster.",
@@ -29,10 +34,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.crowd.dev",
         },
         {
+          name: "DevHunt",
+          description: "Find the best Dev Tools upvoted by the community every week.",
+          href: "https://devhunt.org/",
+        },
+        {
           name: "Documenso",
           description:
             "The Open-Source DocuSign Alternative. We aim to earn your trust by enabling you to self-host the platform and examine its inner workings.",
           href: "https://documenso.com",
+        },
+        {
+          name: "dyrector.io",
+          description:
+            "dyrector.io is an open-source continuous delivery & deployment platform with version management.",
+          href: "https://dyrector.io",
         },
         {
           name: "Erxes",
@@ -45,6 +61,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Survey granular user segments at any point in the user journey. Gather up to 6x more insights with targeted micro-surveys. All open-source.",
           href: "https://formbricks.com",
+        },
+        {
+          name: "Firecamp",
+          description: "vscode for apis, open-source postman/insomnia alternative",
+          href: "https://firecamp.io",
         },
         {
           name: "Ghostfolio",
@@ -65,16 +86,38 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.hanko.io",
         },
         {
+          name: "Hook0",
+          description:
+            "Open-Source Webhooks-as-a-service (WaaS) that makes it easy for developers to send webhooks.",
+          href: "https://www.hook0.com/",
+        },
+        {
           name: "HTMX",
           description:
             "HTMX is a dependency-free JavaScript library that allows you to access AJAX, CSS Transitions, WebSockets, and Server Sent Events directly in HTML.",
           href: "https://htmx.org",
         },
         {
+          name: "Inbox Zero",
+          description:
+            "Inbox Zero makes it easy to clean up your inbox and reach inbox zero fast. It provides bulk newsletter unsubscribe, cold email blocking, email analytics, and AI automations.",
+          href: "https://getinboxzero.com",
+        },
+        {
           name: "Infisical",
           description:
             "Open source, end-to-end encrypted platform that lets you securely manage secrets and configs across your team, devices, and infrastructure.",
           href: "https://infisical.com",
+        },
+        {
+          name: "Langfuse",
+          description: "Open source LLM engineering platform. Debug, analyze and iterate together.",
+          href: "https://langfuse.com",
+        },
+        {
+          name: "Lost Pixel",
+          description: "Open source visual regression testing alternative to Percy & Chromatic",
+          href: "https://lost-pixel.com",
         },
         {
           name: "Mockoon",
@@ -99,10 +142,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.openstatus.dev",
         },
         {
+          name: "Papermark",
+          description:
+            "Open-Source Docsend Alternative to securely share documents with real-time analytics.",
+          href: "https://www.papermark.io/",
+        },
+        {
           name: "Requestly",
           description:
             "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
           href: "https://requestly.io",
+        },
+        {
+          name: "Revert",
+          description: "The open-source unified API to build B2B integrations remarkably fast",
+          href: "https://revert.dev",
         },
         {
           name: "Rivet",
@@ -110,10 +164,22 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://rivet.gg",
         },
         {
+          name: "Shelf.nu",
+          description:
+            "Open Source Asset and Equipment tracking software that lets you create QR asset labels, manage and overview your assets across locations.",
+          href: "https://www.shelf.nu/",
+        },
+        {
           name: "Sniffnet",
           description:
             "Sniffnet is a network monitoring tool to help you easily keep track of your Internet traffic.",
           href: "https://www.sniffnet.net",
+        },
+        {
+          name: "Spark.NET",
+          description:
+            "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
+          href: "https://spark-framework.net",
         },
         {
           name: "Tolgee",
@@ -139,6 +205,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://twenty.com",
         },
         {
+          name: "Unkey",
+          description:
+            "An API authentication and authorization platform for scaling user facing APIs. Create, verify, and manage low latency API keys in seconds.",
+          href: "https://unkey.dev",
+        },
+        {
           name: "Webiny",
           description:
             "Open-source enterprise-grade serverless CMS. Own your data. Scale effortlessly. Customize everything.",
@@ -148,12 +220,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           name: "Webstudio",
           description: "Webstudio is an open source alternative to Webflow",
           href: "https://webstudio.is",
-        },
-        {
-          name: "Spark.NET",
-          description:
-            "The .NET Web Framework for Makers. Build production ready, full-stack web applications fast without sweating the small stuff.",
-          href: "https://spark-framework.net",
         },
       ],
     });

@@ -1,6 +1,7 @@
-import Layout from "@/components/shared/Layout";
 import HeroTitle from "@/components/shared/HeroTitle";
-import { Button } from "@formbricks/ui";
+import Layout from "@/components/shared/Layout";
+
+import { Button } from "@formbricks/ui/Button";
 
 type OSSFriend = {
   href: string;
@@ -18,18 +19,27 @@ export default function OSSFriendsPage({ OSSFriends }: Props) {
       <HeroTitle headingPt1="Our" headingTeal="Open-source" headingPt2="Friends" />
       <div className="m-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {OSSFriends.map((friend, index) => (
-          <div key={index} className="overflow-hidden rounded bg-slate-100 p-6 shadow-md">
-            <a href={friend.href} className="mb-2 text-xl font-bold">
+          <div key={index} className="overflow-hidden rounded bg-slate-100 p-6 shadow-md dark:bg-slate-800">
+            <a href={friend.href} className="mb-2 text-xl font-bold text-slate-900 dark:text-slate-100">
               {friend.name}
             </a>
-            <p className="mt-4 text-sm text-gray-700">{friend.description}</p>
+            <p className="mt-4 text-sm text-slate-700 dark:text-slate-300">{friend.description}</p>
             <div className="mt-4">
-              <Button target="_blank" variant="primary" href={friend.href}>
+              <Button target="_blank" variant="secondary" href={friend.href}>
                 Learn more
               </Button>
             </div>
           </div>
         ))}
+      </div>
+      <div className="mt-4 text-center">
+        <Button
+          variant="minimal"
+          className="dark:text-slate-400"
+          href="https://formbricks.com/clhys1p9r001cpr0hu65rwh17"
+          target="_blank">
+          Wanna join OSS Friends?
+        </Button>
       </div>
     </Layout>
   );

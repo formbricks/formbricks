@@ -1,10 +1,16 @@
-import formbricks from "@formbricks/js";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+
+import formbricks from "@formbricks/js";
+
 import fbsetup from "../../public/fb-setup.png";
+
+declare const window: any;
 
 export default function AppPage({}) {
   const [darkMode, setDarkMode] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (darkMode) {
@@ -14,8 +20,34 @@ export default function AppPage({}) {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
+      const isUserId = window.location.href.includes("userId=true");
+      const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
+      const attributes = isUserId ? { "Init Attribute 1": "eight", "Init Attribute 2": "two" } : undefined;
+      formbricks.init({
+        environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
+        apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
+        userId,
+        debug: true,
+        attributes,
+      });
+      window.formbricks = formbricks;
+    }
+
+    // Connect next.js router to Formbricks
+    if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
+      const handleRouteChange = formbricks?.registerRouteChange;
+      router.events.on("routeChangeComplete", handleRouteChange);
+
+      return () => {
+        router.events.off("routeChangeComplete", handleRouteChange);
+      };
+    }
+  });
+
   return (
-    <div className="h-full bg-white px-12 py-6 dark:bg-slate-800">
+    <div className="h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col justify-between md:flex-row">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -29,7 +61,7 @@ export default function AppPage({}) {
         <button
           className="mt-2 rounded-lg bg-slate-200 px-6 py-1 dark:bg-slate-700 dark:text-slate-100"
           onClick={() => setDarkMode(!darkMode)}>
-          Toggle Dark Mode
+          {darkMode ? "Toggle Light Mode" : "Toggle Dark Mode"}
         </button>
       </div>
 
@@ -42,7 +74,7 @@ export default function AppPage({}) {
             </p>
             <Image src={fbsetup} alt="fb setup" className="mt-4 rounded" priority />
 
-            <div className="mt-4 flex-col items-start text-sm text-slate-700 dark:text-slate-300 sm:flex sm:items-center sm:text-base">
+            <div className="mt-4 flex-col items-start text-sm text-slate-700 sm:flex sm:items-center sm:text-base dark:text-slate-300">
               <p className="mb-1 sm:mb-0 sm:mr-2">You&apos;re connected with env:</p>
               <div className="flex items-center">
                 <strong className="w-32 truncate sm:w-auto">
@@ -204,25 +236,37 @@ export default function AppPage({}) {
             </div>
           </div>
           <div className="p-6">
-            <div>
-              <button
-                onClick={() => {
-                  formbricks.setUserId("THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING");
-                }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
-                Set User ID
-              </button>
-            </div>
+            {router.query.userId === "true" ? (
+              <div>
+                <button
+                  onClick={() => {
+                    window.location.href = "/app";
+                  }}
+                  className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
+                  Deactivate User Identification
+                </button>
+              </div>
+            ) : (
+              <div>
+                <button
+                  onClick={() => {
+                    window.location.href = "/app?userId=true";
+                  }}
+                  className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
+                  Activate User Identification
+                </button>
+              </div>
+            )}
             <div>
               <p className="text-xs text-slate-700 dark:text-gray-300">
-                This button sets an external{" "}
+                This button activates/deactivates{" "}
                 <a
                   href="https://formbricks.com/docs/attributes/identify-users"
                   target="_blank"
                   className="underline dark:text-blue-500">
-                  user ID
+                  user identification
                 </a>{" "}
-                to &apos;THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING&apos;
+                with the userId &apos;THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING&apos;
               </p>
             </div>
           </div>

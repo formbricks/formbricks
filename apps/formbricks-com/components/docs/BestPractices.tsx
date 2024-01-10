@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { type MotionValue, motion, useMotionTemplate, useMotionValue } from "framer-motion";
-
-import { GridPattern } from "./GridPattern";
-import { Heading } from "./Heading";
 import { ChatBubbleIcon } from "@/components/docs/icons/ChatBubbleIcon";
 import { EnvelopeIcon } from "@/components/docs/icons/EnvelopeIcon";
 import { UserIcon } from "@/components/docs/icons/UserIcon";
 import { UsersIcon } from "@/components/docs/icons/UsersIcon";
+import { type MotionValue, motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import Link from "next/link";
+
+import { GridPattern } from "./GridPattern";
+import { Heading } from "./Heading";
 
 interface BestPractice {
   href: string;
@@ -73,7 +73,7 @@ const bestPractices: Array<BestPractice> = [
 
 function BestPracticeIcon({ icon: Icon }: { icon: BestPractice["icon"] }) {
   return (
-    <div className="dark:bg-white/7.5 dark:ring-white/15 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/5 ring-1 ring-slate-900/25 backdrop-blur-[2px] transition duration-300 group-hover:bg-white/50 group-hover:ring-slate-900/25 dark:group-hover:bg-emerald-300/10 dark:group-hover:ring-emerald-400">
+    <div className="dark:bg-white/7.5 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/5 ring-1 ring-slate-900/25 backdrop-blur-[2px] transition duration-300 group-hover:bg-white/50 group-hover:ring-slate-900/25 dark:ring-white/15 dark:group-hover:bg-emerald-300/10 dark:group-hover:ring-emerald-400">
       <Icon className="h-5 w-5 fill-slate-700/10 stroke-slate-700 transition-colors duration-300 group-hover:stroke-slate-900 dark:fill-white/10 dark:stroke-slate-400 dark:group-hover:fill-emerald-300/10 dark:group-hover:stroke-emerald-400" />
     </div>
   );
@@ -151,13 +151,13 @@ function BestPractice({ resource }: { resource: BestPractice }) {
   );
 }
 
-export function BestPractices() {
+export default function BestPractices() {
   return (
     <div className="my-16 xl:max-w-none">
       <Heading level={2} id="resources">
         Best Practices
       </Heading>
-      <div className="not-prose mt-4 grid grid-cols-1 gap-8 border-t border-slate-900/5 pt-10 dark:border-white/5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="not-prose mt-4 grid grid-cols-1 gap-8 border-t border-slate-900/5 pt-10 sm:grid-cols-2 xl:grid-cols-4 dark:border-white/5">
         {bestPractices.map((resource) => (
           <BestPractice key={resource.href} resource={resource} />
         ))}

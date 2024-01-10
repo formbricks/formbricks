@@ -1,23 +1,22 @@
-import { withSentryConfig } from "@sentry/nextjs";
-import "./env.mjs";
 import { createId } from "@paralleldrive/cuid2";
+import { withSentryConfig } from "@sentry/nextjs";
+
+import "@formbricks/lib/env.mjs";
 
 /** @type {import('next').NextConfig} */
 
-const isCloud = process.env.NEXT_PUBLIC_IS_FORMBRICKS_CLOUD === "1";
+function getHostname(url) {
+  const urlObj = new URL(url);
+  return urlObj.hostname;
+}
 
 const nextConfig = {
-  assetPrefix: isCloud ? process.env.NEXT_PUBLIC_WEBAPP_URL : undefined,
+  assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   experimental: {
-    serverActions: true,
+    serverComponentsExternalPackages: ["@aws-sdk"],
   },
-  transpilePackages: [
-    "@formbricks/database",
-    "@formbricks/ee",
-    "@formbricks/ui",
-    "@formbricks/lib",
-  ],
+  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {
@@ -28,7 +27,48 @@ const nextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
+        protocol: "https",
+        hostname: "app.formbricks.com",
+      },
+      {
+        protocol: "https",
+        hostname: "formbricks-cdn.s3.eu-central-1.amazonaws.com",
+      },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/i/:path*",
+        destination: "/:path*",
+        permanent: false,
+      },
+      {
+        source: "/api/v1/surveys",
+        destination: "/api/v1/management/surveys",
+        permanent: true,
+      },
+      {
+        source: "/api/v1/responses",
+        destination: "/api/v1/management/responses",
+        permanent: true,
+      },
+      {
+        source: "/api/v1/me",
+        destination: "/api/v1/management/me",
+        permanent: true,
+      },
+      {
+        source: "/api/v1/me",
+        destination: "/api/v1/management/me",
+        permanent: true,
+      },
+    ];
   },
   async headers() {
     return [
@@ -67,6 +107,17 @@ const nextConfig = {
     INTERNAL_SECRET: createId(),
   },
 };
+
+// set actions allowed origins
+if (process.env.WEBAPP_URL) {
+  nextConfig.experimental.serverActions = {
+    allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
+  };
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: getHostname(process.env.WEBAPP_URL),
+  });
+}
 
 const sentryOptions = {
   // For all available options, see:

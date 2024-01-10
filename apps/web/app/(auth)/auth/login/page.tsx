@@ -1,7 +1,15 @@
-import { SigninForm } from "@/components/auth/SigninForm";
-import Testimonial from "@/components/auth/Testimonial";
-import FormWrapper from "@/components/auth/FormWrapper";
+import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
+import Testimonial from "@/app/(auth)/auth/components/Testimonial";
+import { SigninForm } from "@/app/(auth)/auth/login/components/SigninForm";
 import { Metadata } from "next";
+
+import {
+  AZURE_OAUTH_ENABLED,
+  GITHUB_OAUTH_ENABLED,
+  GOOGLE_OAUTH_ENABLED,
+  PASSWORD_RESET_DISABLED,
+  SIGNUP_ENABLED,
+} from "@formbricks/lib/constants";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -16,7 +24,13 @@ export default function SignInPage() {
       </div>
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
-          <SigninForm />
+          <SigninForm
+            publicSignUpEnabled={SIGNUP_ENABLED}
+            passwordResetEnabled={!PASSWORD_RESET_DISABLED}
+            googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
+            githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
+            azureOAuthEnabled={AZURE_OAUTH_ENABLED}
+          />
         </FormWrapper>
       </div>
     </div>

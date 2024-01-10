@@ -1,8 +1,11 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
+
+import { TTemplate } from "@formbricks/types/templates";
+
 import PreviewSurvey from "./PreviewSurvey";
 import { findTemplateByName } from "./templates";
-import type { Template } from "@formbricks/types/templates";
 
 interface DemoPreviewProps {
   template: string;
@@ -10,7 +13,7 @@ interface DemoPreviewProps {
 
 const DemoPreview: React.FC<DemoPreviewProps> = ({ template }) => {
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const selectedTemplate: Template | undefined = findTemplateByName(template);
+  const selectedTemplate: TTemplate | undefined = findTemplateByName(template);
 
   useEffect(() => {
     if (selectedTemplate) {

@@ -1,13 +1,14 @@
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
-import { createResponse, updateResponse } from "./client/response";
+import { FormbricksAPI } from "@formbricks/api";
+import { TResponseUpdate } from "@formbricks/types/responses";
+
 import SurveyState from "./surveyState";
 
 interface QueueConfig {
   apiHost: string;
+  environmentId: string;
   retryAttempts: number;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
   setSurveyState?: (state: SurveyState) => void;
-  personId?: string;
 }
 
 export class ResponseQueue {
@@ -15,10 +16,15 @@ export class ResponseQueue {
   private config: QueueConfig;
   private surveyState: SurveyState;
   private isRequestInProgress = false;
+  private api: FormbricksAPI;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
     this.surveyState = surveyState;
+    this.api = new FormbricksAPI({
+      apiHost: config.apiHost,
+      environmentId: config.environmentId,
+    });
   }
 
   add(responseUpdate: TResponseUpdate) {
@@ -47,7 +53,7 @@ export class ResponseQueue {
         this.queue.shift(); // remove the successfully sent response from the queue
         break; // exit the retry loop
       }
-      console.log("Formbricks: Failed to send response. Retrying...", attempts);
+      console.error("Formbricks: Failed to send response. Retrying...", attempts);
       attempts++;
     }
 
@@ -68,13 +74,21 @@ export class ResponseQueue {
   async sendResponse(responseUpdate: TResponseUpdate): Promise<boolean> {
     try {
       if (this.surveyState.responseId !== null) {
-        await updateResponse(responseUpdate, this.surveyState.responseId, this.config.apiHost);
+        await this.api.client.response.update({ ...responseUpdate, responseId: this.surveyState.responseId });
       } else {
-        const response = await createResponse(
-          { ...responseUpdate, surveyId: this.surveyState.surveyId, personId: this.config.personId || null },
-          this.config.apiHost
-        );
-        this.surveyState.updateResponseId(response.id);
+        const response = await this.api.client.response.create({
+          ...responseUpdate,
+          surveyId: this.surveyState.surveyId,
+          userId: this.surveyState.userId || null,
+          singleUseId: this.surveyState.singleUseId || null,
+        });
+        if (!response.ok) {
+          throw new Error("Could not create response");
+        }
+        if (this.surveyState.displayId) {
+          await this.api.client.display.update(this.surveyState.displayId, { responseId: response.data.id });
+        }
+        this.surveyState.updateResponseId(response.data.id);
         if (this.config.setSurveyState) {
           this.config.setSurveyState(this.surveyState);
         }
@@ -84,5 +98,10 @@ export class ResponseQueue {
       console.error(error);
       return false;
     }
+  }
+
+  // update surveyState
+  updateSurveyState(surveyState: SurveyState) {
+    this.surveyState = surveyState;
   }
 }

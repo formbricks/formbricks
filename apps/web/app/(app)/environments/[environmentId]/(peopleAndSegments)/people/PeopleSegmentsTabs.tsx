@@ -1,5 +1,5 @@
-import SecondNavbar from "@/components/environments/SecondNavBar";
-import { UserIcon, UserGroupIcon } from "@heroicons/react/24/solid";
+import SecondNavbar from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/SecondNavbar";
+import { UserGroupIcon, UserIcon } from "@heroicons/react/24/solid";
 
 interface PeopleSegmentsTabsProps {
   activeId: string;
@@ -22,5 +22,5 @@ export default function PeopleSegmentsTabs({ activeId, environmentId }: PeopleSe
     },
   ];
 
-  return <SecondNavbar tabs={tabs} activeId={activeId} />;
+  return <SecondNavbar tabs={tabs} activeId={activeId} environmentId={environmentId} />;
 }

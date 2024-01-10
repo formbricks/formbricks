@@ -1,18 +1,19 @@
-import Image from "next/image";
 import DemoPreview from "@/components/dummyUI/DemoPreview";
+import Image from "next/image";
 
-import CreateChurnFlow from "./create-cancel-flow.webp";
 import ChangeText from "./change-text.webp";
-import TriggerInnerText from "./trigger-inner-text.webp";
-import TriggerCSS from "./trigger-css-selector.webp";
-import TriggerPageUrl from "./trigger-page-url.webp";
-import RecontactOptions from "./recontact-options.webp";
+import CreateChurnFlow from "./create-cancel-flow.webp";
 import PublishSurvey from "./publish-survey.webp";
+import RecontactOptions from "./recontact-options.webp";
 import SelectAction from "./select-action.webp";
+import TriggerCSS from "./trigger-css-selector.webp";
+import TriggerInnerText from "./trigger-inner-text.webp";
+import TriggerPageUrl from "./trigger-page-url.webp";
 
-export const meta = {
-  title: "Learn from Churn",
-  description: "To know how to decrease churn, you have to understand it. Use a micro-survey.",
+export const metadata = {
+  title: "Mastering Churn Surveys with Formbricks | Essential Tips & Steps",
+  description:
+    "Learn how to effectively utilize Formbricks' Churn Surveys to gain deeper insights into user departures. Dive into a step-by-step guide to craft, trigger, and optimize your churn surveys, ensuring you capture invaluable feedback at critical junctures",
 };
 
 #### Best Practices
@@ -23,7 +24,7 @@ Churn is hard, but can teach you a lot. Whenever a user decides that your produc
 
 ## Purpose
 
-The Churn Survey is among the most effective ways to identify weaknesses in you offering. People were willing to pay but now are not anymore: What changed? Let’s find out!
+The Churn Survey is among the most effective ways to identify weaknesses in your offering. People were willing to pay but now are not anymore: What changed? Let’s find out!
 
 ## Preview
 
@@ -39,15 +40,15 @@ The Churn Survey is among the most effective ways to identify weaknesses in you 
 
 To run the Churn Survey in your app you want to proceed as follows:
 
-1. Create new Churn Survey at [app.formbricks.com](http://app.formbricks.com/)
+1. Create new Churn Survey at [app.formbricks.com](https://app.formbricks.com/)
 2. Set up the user action to display survey at right point in time
 3. Choose correct recontact options to never miss a feedback
 4. Prevent that churn!
 
 <Note>
-  ## Formbricks Widget running?
-  We assume that you have already installed the Formbricks Widget in your web app. It’s required to display messages
-  and surveys in your app. If not, please follow the [Quick Start Guide (takes 15mins max.)](/docs/getting-started/quickstart-in-app-survey)
+  ## Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web
+  app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide
+  (takes 15mins max.)](/docs/getting-started/quickstart-in-app-survey)
 </Note>
 
 ### 1. Create new Churn Survey
@@ -60,7 +61,7 @@ Click on "Create Survey" and choose the template “Churn Survey”:
   src={CreateChurnFlow}
   alt="Create churn survey by template"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 2. Update questions (if you like)
@@ -71,7 +72,7 @@ You’re free to update the question and answer options. However, based on our e
   src={ChangeText}
   alt="Change text content"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 _Want to change the button color? You can do so in the product settings._
@@ -92,7 +93,7 @@ To create the trigger for your Churn Survey, you have two options to choose from
   src={TriggerInnerText}
   alt="Set the trigger by inner Text"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 2. **Trigger by CSS Selector:** In case you have more than one button saying “Cancel Subscription” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“cancel-subscription”` and set your user action up like so:
@@ -101,7 +102,7 @@ To create the trigger for your Churn Survey, you have two options to choose from
   src={TriggerCSS}
   alt="Set the trigger by CSS Selector"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 3. **Trigger by pageURL:** Lastly, you could also display your survey on a subpage “/subscription-cancelled” where you forward users once they cancelled the trial subscription. You can then create a user Action with the type `pageURL` with the following settings:
@@ -110,7 +111,7 @@ To create the trigger for your Churn Survey, you have two options to choose from
   src={TriggerPageUrl}
   alt="Set the trigger by page URL"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 Whenever a user visits this page, matches the filter conditions above and the recontact options (below) the survey will be displayed ✅
@@ -118,10 +119,9 @@ Whenever a user visits this page, matches the filter conditions above and the re
 Here is our complete [Actions manual](/docs/actions/why) covering [Code](/docs/actions/code) and [No-Code](/docs/actions/no-code) Actions.
 
 <Note>
-  ## Pre-churn flow coming soon 
-  We’re currently building full-screen survey pop-ups. You’ll be able to prevent users from closing the survey
-  unless they respond to it. It’s certainly debatable if you want that but you could force them to click through
-  the survey before letting them cancel 🤷
+  ## Pre-churn flow coming soon We’re currently building full-screen survey pop-ups. You’ll be able to prevent
+  users from closing the survey unless they respond to it. It’s certainly debatable if you want that but you
+  could force them to click through the survey before letting them cancel 🤷
 </Note>
 
 ### 5. Select Action in the “When to ask” card
@@ -130,7 +130,7 @@ Here is our complete [Actions manual](/docs/actions/why) covering [Code](/docs/a
   src={SelectAction}
   alt="Select feedback button action"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 6. Last step: Set Recontact Options correctly
@@ -141,7 +141,7 @@ Lastly, scroll down to “Recontact Options”. Here you have to choose the corr
   src={RecontactOptions}
   alt="Set recontact options"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 These settings make sure the survey is always displayed, when a user wants to Cancel their subscription.
@@ -152,13 +152,13 @@ These settings make sure the survey is always displayed, when a user wants to Ca
   src={PublishSurvey}
   alt="Publish survey"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 <Note>
-  ## Formbricks Widget running? 
-  You need to have the Formbricks Widget installed to display the Churn Survey in your app. Please follow [this
-  tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey) to install the widget.
+  ## Formbricks Widget running? You need to have the Formbricks Widget installed to display the Churn Survey
+  in your app. Please follow [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey)
+  to install the widget.
 </Note>
 
 ###

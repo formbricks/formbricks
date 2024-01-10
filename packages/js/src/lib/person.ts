@@ -1,6 +1,6 @@
-import { TJsPeopleAttributeInput, TJsPeopleUserIdInput, TJsState } from "@formbricks/types/v1/js";
-import type { Person } from "../../../types/js";
-import type { Session, Settings } from "../../../types/js";
+import { FormbricksAPI } from "@formbricks/api";
+import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people";
+
 import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,
@@ -8,138 +8,133 @@ import {
   NetworkError,
   Result,
   err,
-  match,
   ok,
   okVoid,
 } from "./errors";
+import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
 import { sync } from "./sync";
-import { TPerson } from "@formbricks/types/v1/people";
+import { closeSurvey } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-export const updatePersonUserId = async (
-  userId: string
-): Promise<Result<TJsState, NetworkError | MissingPersonError>> => {
-  if (!config.get().state.person || !config.get().state.person.id)
-    return err({
-      code: "missing_person",
-      message: "Unable to update userId. No person set.",
-    });
-
-  const url = `${config.get().apiHost}/api/v1/js/people/${config.get().state.person.id}/set-user-id`;
-
-  const input: TJsPeopleUserIdInput = {
-    environmentId: config.get().environmentId,
-    userId,
-    sessionId: config.get().state.session.id,
-  };
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
-  });
-
-  const jsonRes = await res.json();
-
-  if (!res.ok) {
-    return err({
-      code: "network_error",
-      message: "Error updating person",
-      status: res.status,
-      url,
-      responseMessage: jsonRes.message,
-    });
-  }
-
-  return ok(jsonRes.data as TJsState);
-};
-
 export const updatePersonAttribute = async (
   key: string,
   value: string
-): Promise<Result<TJsState, NetworkError | MissingPersonError>> => {
-  if (!config.get().state.person || !config.get().state.person.id) {
+): Promise<Result<void, NetworkError | MissingPersonError>> => {
+  const { apiHost, environmentId, userId } = config.get();
+  if (!userId) {
     return err({
       code: "missing_person",
-      message: "Unable to update attribute. No person set.",
+      message: "Unable to update attribute. User identification deactivated. No userId set.",
     });
   }
 
-  const input: TJsPeopleAttributeInput = {
-    environmentId: config.get().environmentId,
-    sessionId: config.get().state.session.id,
-    key,
-    value,
+  const input: TPersonUpdateInput = {
+    attributes: {
+      [key]: value,
+    },
   };
 
-  const res = await fetch(
-    `${config.get().apiHost}/api/v1/js/people/${config.get().state.person.id}/set-attribute`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(input),
-    }
-  );
-
-  const resJson = await res.json();
+  const api = new FormbricksAPI({
+    apiHost: config.get().apiHost,
+    environmentId: config.get().environmentId,
+  });
+  const res = await api.client.people.update(userId, input);
 
   if (!res.ok) {
     return err({
       code: "network_error",
-      status: res.status,
-      message: "Error updating person",
-      url: res.url,
-      responseMessage: resJson.message,
+      status: 500,
+      message: `Error updating person with userId ${userId}`,
+      url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}`,
+      responseMessage: res.error.message,
     });
   }
 
-  return ok(resJson.data as TJsState);
+  logger.debug("Attribute updated. Syncing...");
+
+  await sync({
+    environmentId: environmentId,
+    apiHost: apiHost,
+    userId: userId,
+  });
+
+  return okVoid();
 };
 
-export const hasAttributeValue = (key: string, value: string): boolean => {
-  if (config.get().state.person?.attributes?.[key] === value) {
-    return true;
-  }
-  return false;
-};
-
-export const hasAttributeKey = (key: string): boolean => {
-  if (config.get().state.person?.attributes?.[key]) {
-    return true;
-  }
-  return false;
-};
-
-export const setPersonUserId = async (
-  userId: string | number
-): Promise<Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>> => {
-  logger.debug("setting userId: " + userId);
-  // check if attribute already exists with this value
-  if (hasAttributeValue("userId", userId.toString())) {
-    logger.debug("userId already set to this value. Skipping update.");
-    return okVoid();
-  }
-  if (hasAttributeKey("userId")) {
+export const updatePersonAttributes = async (
+  apiHost: string,
+  environmentId: string,
+  userId: string,
+  attributes: TPersonAttributes
+): Promise<Result<TPersonAttributes, NetworkError | MissingPersonError>> => {
+  if (!userId) {
     return err({
-      code: "attribute_already_exists",
-      message: "userId cannot be changed after it has been set. You need to reset first",
+      code: "missing_person",
+      message: "Unable to update attribute. User identification deactivated. No userId set.",
     });
   }
-  const result = await updatePersonUserId(userId.toString());
 
-  if (result.ok !== true) return err(result.error);
+  // clean attributes and remove existing attributes if config already exists
+  const updatedAttributes = { ...attributes };
+  try {
+    const existingAttributes = config.get()?.state?.attributes;
+    if (existingAttributes) {
+      for (const [key, value] of Object.entries(existingAttributes)) {
+        if (updatedAttributes[key] === value) {
+          delete updatedAttributes[key];
+        }
+      }
+    }
+  } catch (e) {
+    logger.debug("config not set; sending all attributes to backend");
+  }
 
-  const state = result.value;
+  // send to backend if updatedAttributes is not empty
+  if (Object.keys(updatedAttributes).length === 0) {
+    logger.debug("No attributes to update. Skipping update.");
+    return ok(updatedAttributes);
+  }
 
-  config.update({ state });
+  logger.debug("Updating attributes: " + JSON.stringify(updatedAttributes));
 
+  const input: TPersonUpdateInput = {
+    attributes: updatedAttributes,
+  };
+
+  const api = new FormbricksAPI({
+    apiHost,
+    environmentId,
+  });
+
+  const res = await api.client.people.update(userId, input);
+
+  if (res.ok) {
+    return ok(updatedAttributes);
+  }
+
+  return err({
+    code: "network_error",
+    status: 500,
+    message: `Error updating person with userId ${userId}`,
+    url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}`,
+    responseMessage: res.error.message,
+  });
+};
+
+export const isExistingAttribute = (key: string, value: string): boolean => {
+  if (config.get().state.attributes[key] === value) {
+    return true;
+  }
+  return false;
+};
+
+export const setPersonUserId = async (): Promise<
+  Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>
+> => {
+  logger.error("'setUserId' is no longer supported. Please set the userId in the init call instead.");
   return okVoid();
 };
 
@@ -149,51 +144,50 @@ export const setPersonAttribute = async (
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
   logger.debug("Setting attribute: " + key + " to value: " + value);
   // check if attribute already exists with this value
-  if (hasAttributeValue(key, value.toString())) {
+  if (isExistingAttribute(key, value.toString())) {
     logger.debug("Attribute already set to this value. Skipping update.");
     return okVoid();
   }
 
   const result = await updatePersonAttribute(key, value.toString());
 
-  let error: NetworkError | MissingPersonError;
-
-  match(
-    result,
-    (state) => {
-      config.update({ state });
-    },
-    (err) => {
-      // pass error to outer scope
-      error = err;
-    }
-  );
-
-  if (error) {
-    return err(error);
+  if (result.ok) {
+    // udpdate attribute in config
+    config.update({
+      environmentId: config.get().environmentId,
+      apiHost: config.get().apiHost,
+      userId: config.get().userId,
+      state: {
+        ...config.get().state,
+        attributes: {
+          ...config.get().state.attributes,
+          [key]: value.toString(),
+        },
+      },
+    });
+    return okVoid();
   }
 
-  return okVoid();
+  return err(result.error);
 };
 
 export const logoutPerson = async (): Promise<void> => {
-  logger.debug("Resetting state");
-  config.update({ state: undefined });
-  config.disallowSync();
+  deinitalize();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
+  closeSurvey();
+  const syncParams = {
+    environmentId: config.get().environmentId,
+    apiHost: config.get().apiHost,
+    userId: config.get().userId,
+  };
   await logoutPerson();
   try {
-    config.allowSync();
-    await sync();
+    await initialize(syncParams);
     return okVoid();
   } catch (e) {
-    return err(e);
+    return err(e as NetworkError);
   }
-};
-
-export const getPerson = (): TPerson => {
-  return config.get().state.person;
 };

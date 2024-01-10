@@ -1,15 +1,17 @@
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
+import { Button } from "@formbricks/ui/Button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+
 const DummyUI: React.FC = () => {
-  const eventClasses = [
+  const actionClasses = [
     { id: "1", name: "View Dashboard" },
     { id: "2", name: "Upgrade to Pro" },
     { id: "3", name: "Cancel Plan" },
   ];
 
-  const [triggers, setTriggers] = useState<string[]>([eventClasses[0].id]);
+  const [triggers, setTriggers] = useState<string[]>([actionClasses[0].id]);
 
   const setTriggerEvent = (index: number, eventClassId: string) => {
     setTriggers((prevTriggers) =>
@@ -18,7 +20,7 @@ const DummyUI: React.FC = () => {
   };
 
   const addTriggerEvent = () => {
-    setTriggers((prevTriggers) => [...prevTriggers, eventClasses[0].id]);
+    setTriggers((prevTriggers) => [...prevTriggers, actionClasses[0].id]);
   };
 
   const removeTriggerEvent = (index: number) => {
@@ -29,23 +31,23 @@ const DummyUI: React.FC = () => {
     <>
       {triggers.map((triggerEventClassId, idx) => (
         <div className="mt-2" key={idx}>
-          <div className="inline-flex items-center">
-            <p className="mr-2 w-14 text-right text-sm text-slate-800 dark:text-slate-300">
+          <div className="flex items-center gap-2">
+            <p className="mr-2 w-10 text-right text-sm text-slate-800 dark:text-slate-300">
               {idx === 0 ? "When" : "or"}
             </p>
             <Select
               value={triggerEventClassId}
               onValueChange={(eventClassId) => setTriggerEvent(idx, eventClassId)}>
-              <SelectTrigger className="w-[180px] text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
-                <SelectValue className="" />
+              <SelectTrigger className="xs:w-[180px] xs:text-base w-full p-1.5 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {eventClasses.map((eventClass) => (
+                {actionClasses.map((actionClass) => (
                   <SelectItem
-                    key={eventClass.id}
-                    className="px-0.5 py-1 text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
-                    value={eventClass.id}>
-                    {eventClass.name}
+                    key={actionClass.id}
+                    className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                    value={actionClass.id}>
+                    {actionClass.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -56,10 +58,10 @@ const DummyUI: React.FC = () => {
           </div>
         </div>
       ))}
-      <div className="p-3">
+      <div className="ml-4 w-fit p-3">
         <Button
           variant="secondary"
-          className="dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+          className="xs:text-base w-fit text-xs dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
           onClick={() => {
             addTriggerEvent();
           }}>

@@ -1,19 +1,21 @@
-import { TResponse, TResponseData } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import { TResponseData, TResponseUpdate } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TSurvey } from "@formbricks/types/surveys";
 
 export interface SurveyBaseProps {
   survey: TSurvey;
-  brandColor: string;
-  formbricksSignature: boolean;
+  isBrandingEnabled: boolean;
   activeQuestionId?: string;
   onDisplay?: () => void;
-  onResponse?: (response: Partial<TResponse>) => void;
+  onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
   onClose?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
+  onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  responseCount?: number;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {
