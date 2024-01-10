@@ -33,7 +33,7 @@ export default function ResponseTimeline({
   const loadingRef = useRef(null);
   const [fetchedResponses, setFetchedResponses] = useState<TResponse[]>(responses);
   const [page, setPage] = useState(2);
-  const [hasMoreResponses, setHasMoreResponses] = useState(true);
+  const [hasMoreResponses, setHasMoreResponses] = useState<boolean>(responses.length > 0);
 
   useEffect(() => {
     const currentLoadingRef = loadingRef.current;
