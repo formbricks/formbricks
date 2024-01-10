@@ -1,14 +1,12 @@
 "use client";
 
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
-import { ArrowUpRightIcon } from "lucide-react";
+import Link from "next/link";
 import { useRef } from "react";
 import toast from "react-hot-toast";
 
-import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface EmailTabProps {
   surveyUrl: string;
@@ -32,9 +30,33 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
     }
   };
 
+  const docsLinks = [
+    {
+      title: "Identify users",
+      description: "You have the email address or a userId? Append it to the URL.",
+      link: "https://formbricks.com/docs/link-surveys/user-identification",
+    },
+    {
+      title: "Data prefilling",
+      description: "You want to prefill some fields in the survey? Here is how.",
+      link: "https://formbricks.com/docs/link-surveys/data-prefilling",
+    },
+    {
+      title: "Source tracking",
+      description: "Run GDPR & CCPA compliant source tracking without extra tools.",
+      link: "https://formbricks.com/docs/link-surveys/source-tracking",
+    },
+    {
+      title: "Create single-use links",
+      description: "Accept only one submission per link. Here is how.",
+      link: "https://formbricks.com/docs/link-surveys/single-use-links",
+    },
+  ];
+
   return (
-    <div className="flex h-full grow flex-col gap-5">
+    <div className="flex h-full grow flex-col gap-8">
       <div className="flex flex-wrap justify-between gap-2">
+        <p className="pt-2 text-lg font-semibold text-slate-800">Share the link to get responses:</p>
         <div
           ref={linkTextRef}
           className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
@@ -53,29 +75,38 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
           Copy URL
         </Button>
       </div>
-      <div className="relative grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
-        <SurveyInline
-          brandColor={brandColor}
-          survey={survey}
-          isBrandingEnabled={false}
-          autoFocus={false}
-          isRedirectDisabled={false}
-          key={survey.id}
-          onFileUpload={async () => ""}
-        />
-
+      <div className="flex flex-wrap justify-between gap-2">
+        <p className="pt-2 font-semibold text-slate-800">You can do a lot more with links surveys</p>
+        <div className="grid grid-cols-2 gap-2">
+          {docsLinks.map((tip) => (
+            <Link
+              target="_blank"
+              href={tip.link}
+              className="relative w-full rounded-md border border-slate-100 bg-white px-6 py-4 text-sm text-slate-600 hover:bg-slate-50">
+              <p className="mb-1 font-semibold">{tip.title}</p>
+              <p className="text-slate-500">{tip.description}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-wrap justify-between gap-2">
+        <p className="pt-2 font-semibold text-slate-800">Link URL got too long? Shorten it!</p>
+        <div
+          ref={linkTextRef}
+          className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
+          onClick={() => handleTextSelection()}>
+          <span style={{ wordBreak: "break-all" }}>{surveyUrl}</span>
+        </div>
         <Button
-          variant="minimal"
-          className={cn(
-            "absolute bottom-8 left-1/2 -translate-x-1/2 transform rounded-lg border border-slate-200 bg-white"
-          )}
-          EndIcon={ArrowUpRightIcon}
-          title="Open survey in new tab"
-          aria-label="Open survey in new tab"
-          endIconClassName="h-4 w-4 "
-          href={`${surveyUrl}?preview=true`}
-          target="_blank">
-          Open in new tab
+          variant="darkCTA"
+          title="Copy survey link to clipboard"
+          aria-label="Copy survey link to clipboard"
+          onClick={() => {
+            navigator.clipboard.writeText(surveyUrl);
+            toast.success("URL copied to clipboard!");
+          }}
+          EndIcon={DocumentDuplicateIcon}>
+          Copy URL
         </Button>
       </div>
     </div>
