@@ -1,9 +1,10 @@
 import { Libraries } from "@/components/docs/Libraries";
 import Image from "next/image";
+
 import SetupChecklist from "./env-id.webp";
-import WidgetNotConnected from "./widget-not-connected.webp";
-import WidgetConnected from "./widget-connected.webp";
 import ReactApp from "./react-in-app-survey-app-popup-form.webp";
+import WidgetConnected from "./widget-connected.webp";
+import WidgetNotConnected from "./widget-not-connected.webp";
 
 export const metadata = {
   title: "Integrate Formbricks: Comprehensive Framework Guide & Integration Tutorial",
@@ -222,9 +223,10 @@ Refer to our [Example NextJS App Directory project](https://github.com/formbrick
 
 ```tsx {{ title: 'Typescript' }}
 // other import
-import formbricks from "@formbricks/js";
-import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
+
+import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -388,9 +390,9 @@ To this:
 
 ## Overwrite CSS Styles for In-App Surveys
 
-You can overwrite the default CSS styles for the in-app surveys by adding the following CSS to your global CSS file:
+You can overwrite the default CSS styles for the in-app surveys by adding the following CSS to your global CSS file (eg. `globals.css`):
 
-Make sure that you do not change the CSS variable names as they are used by Formbricks to identify the CSS variables. You can change the values to your liking.
+Make sure that you do not change the CSS variable names as they are used by Formbricks to identify the CSS variables. You can change the values to your liking. We have filled in some sample values for you to change according to your desired appearance.
 
 <Col>
 <CodeGroup title="Overwrite Formbricks CSS">
@@ -400,7 +402,7 @@ Make sure that you do not change the CSS variable names as they are used by Form
 --fb-brand-color: red;
 --fb-brand-text-color: white;
 --fb-border-color: green;
---fb-border-color-highlight: var(--slate-500);
+--fb-border-color-highlight: rgb(13, 13, 12);
 --fb-focus-color: red;
 --fb-heading-color: yellow;
 --fb-subheading-color: green;
@@ -410,10 +412,10 @@ Make sure that you do not change the CSS variable names as they are used by Form
 --fb-accent-background-color: rgb(13, 13, 12);
 --fb-accent-background-color-selected: red;
 --fb-placeholder-color: white;
---fb-shadow-color: yellow;
---fb-rating-fill: var(--yellow-300);
---fb-rating-hover: var(--yellow-500);
---fb-back-btn-border: currentColor;
+--fb-shadow-color: var(--fb-brand-color);
+--fb-rating-fill: rgb(13, 13, 12);
+--fb-rating-hover: green;
+--fb-back-btn-border: blue;
 --fb-submit-btn-border: transparent;
 --fb-rating-selected: black;
 ```
@@ -422,7 +424,6 @@ Make sure that you do not change the CSS variable names as they are used by Form
 </Col>
 
 We have an example of this in our [Demo project](https://github.com/formbricks/formbricks/blob/main/apps/demo/styles/globals.css.) here.
-
 
 **Can’t figure it out? [Join our Discord!](https://formbricks.com/discord)**
 
