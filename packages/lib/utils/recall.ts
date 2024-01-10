@@ -91,3 +91,10 @@ export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | n
   }
   return null;
 };
+
+export const checkForRecallInHeadline = (survey: TSurvey): TSurvey => {
+  survey.questions.forEach((question) => {
+    question.headline = recallToHeadline(question.headline, survey, false);
+  });
+  return survey;
+};

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
-import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
+import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -114,6 +114,16 @@ export default function QuestionsView({
     const questionId = localSurvey.questions[questionIdx].id;
     const activeQuestionIdTemp = activeQuestionId ?? localSurvey.questions[0].id;
     let updatedSurvey: TSurvey = { ...localSurvey };
+
+    // check if we are recalling from this question
+    updatedSurvey.questions.forEach((question) => {
+      if (question.headline.includes(`recall:${questionId}`)) {
+        const recallInfo = extractRecallInfo(question.headline);
+        if (recallInfo) {
+          question.headline = question.headline.replace(recallInfo, "");
+        }
+      }
+    });
     updatedSurvey.questions.splice(questionIdx, 1);
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
 

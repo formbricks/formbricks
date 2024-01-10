@@ -41,7 +41,11 @@ export default function FallbackInput({
       <div className="flex w-full justify-end">
         <Button
           className="mt-2 h-full py-2"
-          disabled={Object.values(fallbacks).includes("") || Object.entries(fallbacks).length === 0}
+          disabled={
+            Object.values(fallbacks)
+              .map((value) => value.trim())
+              .includes("") || Object.entries(fallbacks).length === 0
+          }
           variant="darkCTA"
           onClick={(e) => {
             e.preventDefault();
