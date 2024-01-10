@@ -1,3 +1,5 @@
+<!-- We require pull request titles to follow the Conventional Commits specification ( https://www.conventionalcommits.org/en/v1.0.0/#summary ). Please make sure your title follow these conventions -->
+
 ## What does this PR do?
 
 <!-- Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change. -->
@@ -7,18 +9,6 @@ Fixes # (issue)
 <!-- Please provide a screenshots or a loom video for visual changes to speed up reviews
  Loom Video: https://www.loom.com/
 -->
-
-## Type of change
-
-<!-- Please mark the relevant points by using [x] -->
-
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] Chore (refactoring code, technical debt, workflow improvements)
-- [ ] Enhancement (small improvements)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change adds a new database migration
-- [ ] This change requires a documentation update
 
 ## How should this be tested?
 
