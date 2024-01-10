@@ -32,6 +32,8 @@ import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 
+const RESPONSES_PER_PAGE = 10;
+
 export const responseSelection = {
   id: true,
   createdAt: true,
@@ -398,8 +400,8 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
               createdAt: "desc",
             },
           ],
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          take: page ? RESPONSES_PER_PAGE : undefined,
+          skip: page ? RESPONSES_PER_PAGE * (page - 1) : undefined,
         });
 
         const transformedResponses: TResponse[] = await Promise.all(
@@ -421,7 +423,7 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
         throw error;
       }
     },
-    [`getResponses-${surveyId}`],
+    [`getResponses-${surveyId}-${page}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
