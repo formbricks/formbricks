@@ -336,6 +336,9 @@ importers:
       '@vercel/og':
         specifier: ^0.6.2
         version: 0.6.2
+      '@vercel/speed-insights':
+        specifier: ^1.0.2
+        version: 1.0.2
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
@@ -377,7 +380,7 @@ importers:
         version: 12.0.1
       posthog-js:
         specifier: ^1.97.0
-        version: 1.97.0
+        version: 1.97.1
       prismjs:
         specifier: ^1.29.0
         version: 1.29.0
@@ -665,7 +668,7 @@ importers:
         version: 6.9.8
       posthog-node:
         specifier: ^3.4.0
-        version: 3.4.0
+        version: 3.5.0
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
@@ -9330,6 +9333,11 @@ packages:
       yoga-wasm-web: 0.3.3
     dev: false
 
+  /@vercel/speed-insights@1.0.2:
+    resolution: {integrity: sha512-y5HWeB6RmlyVYxJAMrjiDEz8qAIy2cit0fhBq+MD78WaUwQvuBnQlX4+5MuwVTWi46bV3klaRMq83u9zUy1KOg==}
+    requiresBuild: true
+    dev: false
+
   /@vitejs/plugin-react@3.1.0(vite@5.0.11):
     resolution: {integrity: sha512-AfgcRL8ZBhAlc3BFdigClmTUMISmmzHn7sB2h9U1odvc5U/MjWXsAaz18b/WoppUTDBzxOJwo2VdClfUcItu9g==}
     engines: {node: ^14.18.0 || >=16.0.0}
@@ -17257,14 +17265,14 @@ packages:
       picocolors: 1.0.0
       source-map-js: 1.0.2
 
-  /posthog-js@1.97.0:
-    resolution: {integrity: sha512-kp1xGrL5m4MbVKpF33E5qDqWE4wl/D843W3un4QEe2V4dSvAmpRfP0t0X4EyM79ALZ3EDE+SGbJWdVQEJo9ldA==}
+  /posthog-js@1.97.1:
+    resolution: {integrity: sha512-N5r7sm4EiSxBgFTZuReR7wvHgzK/UkPbIsy/nZuIexLD+oa94ZQFNY/i1o8utDNmXHFWVKv4rwFmzRmPZYc8Zw==}
     dependencies:
       fflate: 0.4.8
     dev: false
 
-  /posthog-node@3.4.0:
-    resolution: {integrity: sha512-gX5EMw5VDBRCBg1y+gmtVb8nvx6wchKeqfG2jbFudZoa8WKs6sC/odxTHoG9jRIxrPuSAMMRASJzca1mLTYYjw==}
+  /posthog-node@3.5.0:
+    resolution: {integrity: sha512-u1lzJiLiYH3ShBS5s+uy/FEiAnpkYfNuKs+GmkYo9Z6hO6UXWKPkib9mtTx3y2pbV7O/+Pjup1+/1Q3CA55Z2Q==}
     engines: {node: '>=15.0.0'}
     dependencies:
       axios: 1.6.2
