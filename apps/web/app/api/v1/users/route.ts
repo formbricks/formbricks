@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INVITE_DISABLED, SIGNUP_ENABLED } from "@formbricks/lib/constants";
-import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/emails/emails";
+import {
+  sendGettingStartedEmail,
+  sendInviteAcceptedEmail,
+  sendVerificationEmail,
+} from "@formbricks/lib/emails/emails";
 import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
@@ -25,6 +29,7 @@ export async function POST(request: Request) {
 
     // create the user
     user = await createUser(user);
+    await sendGettingStartedEmail(user);
 
     // User is invited to team
     if (inviteToken) {

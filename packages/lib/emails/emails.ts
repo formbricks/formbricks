@@ -32,6 +32,10 @@ interface TEmailUser {
   email: string;
 }
 
+interface TEmailUserWithName extends TEmailUser {
+  name: string | null;
+}
+
 export interface LinkSurveyEmailData {
   surveyId: string;
   email: string;
@@ -75,7 +79,7 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
   )}`;
   await sendEmail({
     to: user.email,
-    subject: "Welcome to Formbricks 🤍",
+    subject: "Verify your Formbricks Email",
     html: withEmailTemplate(`<h1>Welcome!</h1>
     To start using Formbricks please verify your email by clicking the button below:<br/><br/>
     <a class="button" href="${verifyLink}">Confirm email</a><br/>
@@ -84,6 +88,50 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
     <a href="${verificationRequestLink}">Request new verification</a><br/>
     <br/>
     Your Formbricks Team`),
+  });
+};
+
+export const sendGettingStartedEmail = async (user: TEmailUserWithName) => {
+  await sendEmail({
+    to: user.email,
+    subject: "Get started with Formbricks 🤍",
+    html: withEmailTemplate(`
+    <p>Dear ${user.name || "friend"},</p>
+    <p>Welcome aboard, and thank you for choosing Formbricks - we’re thrilled to have you!</p>
+    <h4>First Impressions Count</h4>
+    <p>You’ve likely already had a look around Formbricks - love it! What's your first impression? Any issues getting started? Wanna share some love? Please <a href="https://app.formbricks.com/s/clqe9gpsi0572114z052uig9j?userId=${
+      user.email
+    }">leave a quick note for the team here</a>, takes literally 10 seconds 🤸</p>
+    <h3>No Matter the Channel, Formbricks Can Handle Your Feedback</h3>
+    <p>Our open source survey platform is really powerful. Run:</p>
+    <ul>
+        <li>Website Surveys like HotJar Ask</li>
+        <li>In-App Surveys like Sprig</li>
+        <li>Link Surveys like Typeform</li>
+        <li>Headless Surveys via API</li>
+    </ul>
+    <p>You're missing something? <a href="https://github.com/formbricks/formbricks/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.yml&title=%5BFEATURE%5D"> Request it</a> and we'll build it 👷</p>
+    <b>Best Practices with Formbricks</b>
+    <p>We've created a list with the use cases which are most popular among Formbricks user. Maybe they inspire you to harvest more user insights as well:</p>
+    <ul>
+        <li><a href="https://formbricks.com/docs/best-practices/cancel-subscription">Learn from Churn</a></li>
+        <li><a href="https://formbricks.com/docs/best-practices/interview-prompt">Interview Prompts</a> with Power Users</li>
+        <li>Measure <a href="https://formbricks.com/docs/best-practices/pmf-survey">Product-Market Fit</a></li>
+        <li><a href="https://formbricks.com/docs/best-practices/improve-trial-cr">Improve Trial Conversion</a></li>
+        <li><a href="https://formbricks.com/docs/best-practices/feedback-box">Feedback Box</a></li>
+        <li><a href="https://formbricks.com/docs/best-practices/feature-chaser">Feature Follow Up</a></li>
+        <li><a href="https://formbricks.com/docs/best-practices/docs-feedback">Docs Feedback</a></li>
+    </ul>
+    <b>Join Our Community</b>
+    <p>Formbricks is powered by an open source survey platform. We're building it with our community - come and join us to share ideas, feedback and contribute.</p>
+    <a class="button" href="https://formbricks.com/discord">Join Discord</a><br/><br/>
+    <h2>Privacy-first Experience Management</h2>
+    <p>Your privacy and security are paramount. Formbricks is GDRP and CCPA compliant. We also make self-hosting really easy to maintain full control over your data. Feel free to reach out to <a href="mailto:privacy@formbricks.com">privacy@formbricks.com</a> with any questions.</p>
+    <p>Once again, <strong>welcome to the Formbricks family!</strong> We can’t wait to see what you’ll craft.</p>
+    <p>Life is too short for mediocre products,<br>
+    craft an irresistible experience.</p>
+    <p>The Formbricks Team</p>    
+    `),
   });
 };
 
