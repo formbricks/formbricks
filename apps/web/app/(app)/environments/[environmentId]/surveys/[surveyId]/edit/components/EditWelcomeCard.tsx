@@ -59,7 +59,7 @@ export default function EditWelcomeCard({
   };
   useEffect(() => {
     setFirstRender(true);
-  }, [selectedLanguage]);
+  }, [selectedLanguage, activeQuestionId]);
 
   return (
     <div
