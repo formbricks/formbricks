@@ -1,4 +1,4 @@
-import ResponseTimeline from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponseTimeline";
+import ResponseTimeline from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ResponseTimeline";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";

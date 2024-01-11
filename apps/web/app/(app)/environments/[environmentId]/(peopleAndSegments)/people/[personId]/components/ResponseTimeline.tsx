@@ -1,6 +1,6 @@
 "use client";
 
-import ResponseFeed from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponsesFeed";
+import ResponseFeed from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ResponsesFeed";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 

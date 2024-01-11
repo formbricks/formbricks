@@ -3,16 +3,18 @@
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import Modal from "@/components/shared/Modal";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
-import { Button, Input } from "@formbricks/ui";
 import { UserGroupIcon } from "@heroicons/react/20/solid";
 import { produce } from "immer";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/userSegment";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
+import { Modal } from "@formbricks/ui/Modal";
 
 type TCreateSegmentModalProps = {
   environmentId: string;

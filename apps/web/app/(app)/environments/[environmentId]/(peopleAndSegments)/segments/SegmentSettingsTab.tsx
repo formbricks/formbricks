@@ -6,19 +6,17 @@ import {
   deleteUserSegmentAction,
   updateUserSegmentAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { cn } from "@formbricks/lib/cn";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import {
-  TBaseFilterGroupItem,
-  TUserSegment,
-  ZUserSegmentFilterGroup,
-} from "@formbricks/types/v1/userSegment";
-import { Button, Input } from "@formbricks/ui";
 import { produce } from "immer";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+
+import { cn } from "@formbricks/lib/cn";
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TBaseFilterGroupItem, TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
+import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
 
 type TSegmentSettingsTabProps = {
   environmentId: string;

@@ -2,11 +2,12 @@
 
 import SegmentActivityTab from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentActivityTab";
 import SegmentSettingsTab from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentSettingsTab";
-import ModalWithTabs from "@/components/shared/ModalWithTabs";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
+
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TUserSegment } from "@formbricks/types/userSegment";
+import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
 
 interface EditSegmentModalProps {
   environmentId: string;

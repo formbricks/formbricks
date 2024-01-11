@@ -1,26 +1,27 @@
+import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
+import SegmentFilterItem from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilterItem";
+import { createId } from "@paralleldrive/cuid2";
+import { produce } from "immer";
+import { MoreVertical, Trash2 } from "lucide-react";
+import { useState } from "react";
+
 import { cn } from "@formbricks/lib/cn";
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TBaseFilterGroup,
   TBaseFilterGroupItem,
-  TUserSegmentConnector,
   TUserSegment,
+  TUserSegmentConnector,
   isResourceFilter,
-} from "@formbricks/types/v1/userSegment";
+} from "@formbricks/types/userSegment";
+import { Button } from "@formbricks/ui/Button";
 import {
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui";
-import { createId } from "@paralleldrive/cuid2";
-import { MoreVertical, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { produce } from "immer";
-import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
-import SegmentFilterItem from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilterItem";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+} from "@formbricks/ui/DropdownMenu";
 
 type TSegmentFilterProps = {
   group: TBaseFilterGroup;

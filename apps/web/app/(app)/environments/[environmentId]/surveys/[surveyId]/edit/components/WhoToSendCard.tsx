@@ -117,6 +117,8 @@ export default function WhoToSendCard({
     setUserSegment(updatedUserSegment);
   };
 
+  console.log({ userSegment, localSurvey });
+
   return (
     <>
       <Collapsible.Root

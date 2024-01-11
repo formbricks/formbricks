@@ -1,7 +1,8 @@
-import { hasEnvironmentAccess } from "@/lib/api/apiHelper";
-import { getUserSegment } from "@formbricks/lib/services/userSegment";
+import { hasEnvironmentAccess } from "@/app/lib/api/apiHelper";
 import type { NextApiRequest, NextApiResponse } from "next";
+
 import { prisma } from "@formbricks/database";
+import { getUserSegment } from "@formbricks/lib/services/userSegment";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();

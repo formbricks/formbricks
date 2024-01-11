@@ -1,7 +1,8 @@
-import Modal from "@/components/shared/Modal";
-import { Button } from "@formbricks/ui";
 import { useRouter } from "next/navigation";
 import React from "react";
+
+import { Button } from "@formbricks/ui/Button";
+import { Modal } from "@formbricks/ui/Modal";
 
 type TSegmentAlreadyUsedModalProps = {
   open: boolean;

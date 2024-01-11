@@ -1,10 +1,11 @@
 "use client";
 
 import { loadNewUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import Modal from "@/components/shared/Modal";
-import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
-import { Button } from "@formbricks/ui";
 import toast from "react-hot-toast";
+
+import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
+import { Button } from "@formbricks/ui/Button";
+import { Modal } from "@formbricks/ui/Modal";
 
 type LoadSegmentModalProps = {
   open: boolean;

@@ -1,11 +1,23 @@
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
-import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { TUserSegmentFilterValue } from "@formbricks/types/v1/userSegment";
+// import LoadingSpinner from "@/components/shared/LoadingSpinner";
+// import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
+// import { useEventClasses } from "@/lib/eventClasses/eventClasses";
+import { produce } from "immer";
+import {
+  MonitorSmartphoneIcon,
+  MoreVertical,
+  MousePointerClick,
+  TagIcon,
+  Trash2,
+  Users2Icon,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import z from "zod";
+
 import { cn } from "@formbricks/lib/cn";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TUserSegmentFilterValue } from "@formbricks/types/userSegment";
 import {
   ACTION_METRICS,
   ARITHMETIC_OPERATORS,
@@ -31,31 +43,16 @@ import {
   convertOperatorToText,
   convertOperatorToTitle,
   isResourceFilter,
-} from "@formbricks/types/v1/userSegment";
+} from "@formbricks/types/userSegment";
 import {
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui";
-
-import { produce } from "immer";
-import {
-  MonitorSmartphoneIcon,
-  MoreVertical,
-  MousePointerClick,
-  TagIcon,
-  Trash2,
-  Users2Icon,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import z from "zod";
+} from "@formbricks/ui/DropdownMenu";
+import { Input } from "@formbricks/ui/Input";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 type SegmentFilterItemProps = {
   connector: TUserSegmentConnector;
@@ -179,9 +176,10 @@ const AttributeSegmentFilter = ({
   updateValueInLocalSurvey,
   userSegment,
   setUserSegment,
+  attributeClasses,
 }: TAttributeSegmentFilterProps) => {
   const { attributeClassId } = resource.root;
-  const { attributeClasses, isLoadingAttributeClasses } = useAttributeClasses(environmentId);
+  // const { attributeClasses, isLoadingAttributeClasses } = useAttributeClasses(environmentId);
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
   const [valueError, setValueError] = useState("");
@@ -201,13 +199,13 @@ const AttributeSegmentFilter = ({
     }
   }, [resource.qualifier, resource.value]);
 
-  if (isLoadingAttributeClasses) {
-    return (
-      <div className="h-10 w-10">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  // if (isLoadingAttributeClasses) {
+  //   return (
+  //     <div className="h-10 w-10">
+  //       <LoadingSpinner />
+  //     </div>
+  //   );
+  // }
 
   const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
     return {
@@ -392,21 +390,22 @@ const ActionSegmentFilter = ({
   onDeleteFilter,
   onMoveFilter,
   updateValueInLocalSurvey,
+  actionClasses,
 }: TActionSegmentFilterProps) => {
   const { actionClassId } = resource.root;
-  const { eventClasses, isLoadingEventClasses } = useEventClasses(environmentId);
+  // const { eventClasses, isLoadingEventClasses } = useEventClasses(environmentId);
   const operatorText = convertOperatorToText(resource.qualifier.operator);
   const qualifierMetric = resource.qualifier.metric;
 
   const [valueError, setValueError] = useState("");
 
-  if (isLoadingEventClasses) {
-    return (
-      <div className="h-10 w-10">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  // if (isLoadingEventClasses) {
+  //   return (
+  //     <div className="h-10 w-10">
+  //       <LoadingSpinner />
+  //     </div>
+  //   );
+  // }
 
   const operatorArr = BASE_OPERATORS.map((operator) => ({
     id: operator,
@@ -418,7 +417,7 @@ const ActionSegmentFilter = ({
     name: convertMetricToText(metric),
   }));
 
-  const actionClass = eventClasses.find((eventClass) => eventClass.id === actionClassId)?.name;
+  const actionClass = actionClasses.find((actionClass) => actionClass.id === actionClassId)?.name;
 
   const updateOperatorInUserSegment = (filterId: string, newOperator: TBaseOperator) => {
     const updatedUserSegment = produce(userSegment, (draft) => {
@@ -538,10 +537,10 @@ const ActionSegmentFilter = ({
           </div>
         </SelectTrigger>
         <SelectContent className="bottom-0">
-          {eventClasses
-            .filter((eventClass) => !eventClass.archived)
-            .map((eventClass) => (
-              <SelectItem value={eventClass.id}>{eventClass.name}</SelectItem>
+          {actionClasses
+            // .filter((actionClass) => !actionClass.archived)
+            .map((actionClass) => (
+              <SelectItem value={actionClass.id}>{actionClass.name}</SelectItem>
             ))}
         </SelectContent>
       </Select>

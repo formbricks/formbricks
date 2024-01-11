@@ -235,6 +235,7 @@ export async function copyToOtherEnvironmentAction(
 
   // create new survey with the data of the existing survey
   const newSurvey = await prisma.survey.create({
+    // @ts-expect-error
     data: {
       ...existingSurvey,
       id: undefined, // id is auto-generated

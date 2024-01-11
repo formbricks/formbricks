@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
+// import { ZId } from "./environment";
+
 export const BASE_OPERATORS = [
   "lessThan",
   "lessEqual",
@@ -267,6 +269,7 @@ export const ZUserSegment = z.object({
 
   // describes which surveys is this segment applicable to
   surveys: z.array(z.string()),
+  // surveys: z.array(z.object({ id: ZId })),
 });
 
 export const convertOperatorToText = (operator: TAllOperators) => {

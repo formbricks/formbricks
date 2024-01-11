@@ -1,8 +1,9 @@
 import SegmentTableDataRowContainer from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentTableDataRowContainer";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import React from "react";
+
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TUserSegment } from "@formbricks/types/userSegment";
 
 type TSegmentTableProps = {
   userSegments: TUserSegment[];

@@ -1,8 +1,8 @@
 "use client";
 
-import { Label } from "@formbricks/ui";
-import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
+import { TUserSegment } from "@formbricks/types/userSegment";
+import { Label } from "@formbricks/ui/Label";
 
 interface SegmentActivityTabProps {
   environmentId: string;
@@ -23,17 +23,13 @@ export default function SegmentActivityTab({ currentSegment }: SegmentActivityTa
           <Label className="text-slate-500">Active surveys</Label>
           {!activeSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
-          {activeSurveys?.map((survey) => (
-            <p className="text-sm text-slate-900">{survey}</p>
-          ))}
+          {activeSurveys?.map((survey) => <p className="text-sm text-slate-900">{survey}</p>)}
         </div>
         <div>
           <Label className="text-slate-500">Inactive surveys</Label>
           {!inactiveSurveys?.length && <p className="text-sm text-slate-900">-</p>}
 
-          {inactiveSurveys?.map((survey) => (
-            <p className="text-sm text-slate-900">{survey}</p>
-          ))}
+          {inactiveSurveys?.map((survey) => <p className="text-sm text-slate-900">{survey}</p>)}
         </div>
       </div>
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">

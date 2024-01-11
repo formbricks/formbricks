@@ -74,6 +74,16 @@ export const selectSurvey = {
       value: true,
     },
   },
+  userSegmentId: true,
+  userSegment: {
+    include: {
+      surveys: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  },
 };
 
 const getActionClassIdFromName = (actionClasses: TActionClass[], actionClassName: string): string => {
@@ -123,10 +133,11 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         return null;
       }
 
-      const transformedSurvey = {
+      const transformedSurvey: TSurvey = {
         ...surveyPrisma,
         triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
       };
+
       return transformedSurvey;
     },
     [`getSurvey-${surveyId}`],
@@ -418,6 +429,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     const prismaSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data,
+      select: selectSurvey,
     });
 
     const modifiedSurvey: TSurvey = {
@@ -485,7 +497,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   }
 
   if (surveyBody.triggers) {
-    const actionClasses = await getActionClasses(environmentId);
     revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
   }
 

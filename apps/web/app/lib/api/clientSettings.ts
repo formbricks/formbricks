@@ -1,9 +1,9 @@
 // import { prisma } from "@formbricks/database";
 // import { selectSurvey } from "@formbricks/lib/services/survey";
-// import { TPerson } from "@formbricks/types/v1/people";
-// import { TSurvey } from "@formbricks/types/v1/surveys";
+// import { TPerson } from "@formbricks/types/people";
+// import { TSurvey } from "@formbricks/types/surveys";
 // import { evaluateSegment } from "@formbricks/lib/services/userSegment";
-// import { ZUserSegmentFilterGroup } from "@formbricks/types/v1/userSegment";
+// import { ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
 // import { unstable_cache } from "next/cache";
 // // const getSurveysCacheTags = (environmentId: string, personId: string): string[] => [
 // //   `env-${environmentId}-surveys`,

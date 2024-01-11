@@ -12,6 +12,7 @@ import {
   updateUserSegment,
 } from "@formbricks/lib/services/userSegment";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
+import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { AuthorizationError } from "@formbricks/types/errors";
@@ -45,7 +46,10 @@ export const createUserSegmentAction = async ({
     throw new Error(errMsg);
   }
 
-  return await createUserSegment(environmentId, surveyId, title, description, isPrivate, filters);
+  const segment = await createUserSegment(environmentId, surveyId, title, description, isPrivate, filters);
+  surveyCache.revalidate({ id: surveyId });
+
+  return segment;
 };
 
 export const updateUserSegmentAction = async (segmentId: string, data: TUserSegmentUpdateInput) => {

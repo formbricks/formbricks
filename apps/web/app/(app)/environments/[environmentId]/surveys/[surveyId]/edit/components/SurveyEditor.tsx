@@ -13,6 +13,7 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUserSegment } from "@formbricks/types/userSegment";
+import { Button } from "@formbricks/ui/Button";
 
 import PreviewSurvey from "../../../components/PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
@@ -48,18 +49,35 @@ export default function SurveyEditor({
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
-  // const [localSurvey, setLocalSurvey] = useState<TSurveyWithAnalytics | null>();
 
   useEffect(() => {
-    if (survey) {
-      if (localSurvey) return;
+    // no localSurvey, but survey exists
+    if (!localSurvey && survey) {
       setLocalSurvey(JSON.parse(JSON.stringify(survey)));
 
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
     }
-  }, [survey, localSurvey]);
+
+    // if survey updates, we update the local survey
+    if (survey && localSurvey) {
+      // compare the local survey to the survey from the server
+      // if same, do nothing
+      // if different, update the local survey
+
+      const localSurveyString = JSON.stringify(localSurvey);
+      const surveyString = JSON.stringify(survey);
+
+      if (localSurveyString !== surveyString) {
+        setLocalSurvey(JSON.parse(surveyString));
+
+        if (survey.questions.length > 0) {
+          setActiveQuestionId(survey.questions[0].id);
+        }
+      }
+    }
+  }, [survey]);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
@@ -69,6 +87,12 @@ export default function SurveyEditor({
   }, [localSurvey?.type, survey?.questions]);
 
   useEffect(() => {
+    // do nothing if its not an in-app survey
+
+    if (survey.type !== "web") {
+      return;
+    }
+
     const createSegment = async () => {
       await createUserSegmentAction({
         title: "",
@@ -83,13 +107,12 @@ export default function SurveyEditor({
     if (survey && !survey.userSegmentId) {
       try {
         createSegment();
-
         router.refresh();
       } catch (err) {
         throw new Error("Error creating segment");
       }
     }
-  }, [environment.id, router, survey]);
+  }, [environment.id, survey]);
 
   if (!localSurvey) {
     return <Loading />;
@@ -98,6 +121,20 @@ export default function SurveyEditor({
   return (
     <>
       <div className="flex h-full flex-col">
+        <Button
+          onClick={async () => {
+            await createUserSegmentAction({
+              title: "",
+              description: "",
+              environmentId: environment.id,
+              surveyId: survey.id,
+              filters: [],
+              isPrivate: true,
+            });
+            router.refresh();
+          }}>
+          Create Segment
+        </Button>
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
           localSurvey={localSurvey}

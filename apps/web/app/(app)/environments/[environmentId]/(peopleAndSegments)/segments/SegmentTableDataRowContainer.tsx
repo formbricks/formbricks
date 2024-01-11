@@ -1,9 +1,10 @@
 import SegmentTableDataRow from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentTableDataRow";
-import { getUserSegmentActiveInactiveSurveys } from "@formbricks/lib/services/userSegment";
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import React from "react";
+
+import { getUserSegmentActiveInactiveSurveys } from "@formbricks/lib/services/userSegment";
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TUserSegment } from "@formbricks/types/userSegment";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TUserSegment;

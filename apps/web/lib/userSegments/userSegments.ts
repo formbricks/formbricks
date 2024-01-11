@@ -1,6 +1,7 @@
-import { fetcher } from "@formbricks/lib/fetcher";
-import { TUserSegment } from "@formbricks/types/v1/userSegment";
 import useSWR from "swr";
+
+import { fetcher } from "@formbricks/lib/fetcher";
+import { TUserSegment } from "@formbricks/types/userSegment";
 
 export const useUserSegments = (environmentId: string) => {
   const { data, isLoading, error, mutate } = useSWR<TUserSegment[]>(

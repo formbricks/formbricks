@@ -1,12 +1,15 @@
 "use client";
 
-import { TActionClass } from "@formbricks/types/v1/actionClasses";
-import { TAttributeClass } from "@formbricks/types/v1/attributeClasses";
-import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/v1/userSegment";
-import { Dialog, DialogContent, Input, TabBar } from "@formbricks/ui";
 import { createId } from "@paralleldrive/cuid2";
 import { MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
 import React, { useMemo, useState } from "react";
+
+import { TActionClass } from "@formbricks/types/actionClasses";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/userSegment";
+import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
+import { Input } from "@formbricks/ui/Input";
+import { TabBar } from "@formbricks/ui/TabBar";
 
 type TAddFilterModalProps = {
   open: boolean;
