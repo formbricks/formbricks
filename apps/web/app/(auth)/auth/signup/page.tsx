@@ -1,8 +1,11 @@
 import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
 import Testimonial from "@/app/(auth)/auth/components/Testimonial";
 import { SignupForm } from "@/app/(auth)/auth/signup/components/SignupForm";
+import { getServerSession } from "next-auth";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { authOptions } from "@formbricks/lib/authOptions";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
@@ -16,11 +19,15 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 
-export default function SignUpPage({
+export default async function SignUpPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
+  const session = await getServerSession(authOptions);
+  if (session) {
+    redirect(`/`);
+  }
   const inviteToken = searchParams["inviteToken"] ?? null;
 
   return (

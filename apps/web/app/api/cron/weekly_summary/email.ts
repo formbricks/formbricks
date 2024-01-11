@@ -159,21 +159,21 @@ const createSurveyFields = (surveyResponses: SurveyResponse[]) => {
   return surveyFields;
 };
 
-const notificationFooter = () => {
+const notificationFooter = (environmentId: string) => {
   return `
   <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
   <p style="margin-top:0px;">The Formbricks Team 🤍</p>
-  <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;"><p><i>This is a Beta feature. If you experience any issues, please let us know by replying to this email 🙏</i></p></div>
+  <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;"><p><i>To halt Weekly Updates, <a href="${WEBAPP_URL}/auth/login?callbackUrl=${WEBAPP_URL}/environments/${environmentId}/settings/notifications">please turn them off</a> in your settings 🙏</i></p></div>
  `;
 };
 
-const createReminderNotificationBody = (notificationData: NotificationResponse, webUrl) => {
+const createReminderNotificationBody = (notificationData: NotificationResponse) => {
   return `
     <p>We’d love to send you a Weekly Summary, but currently there are no surveys running for ${notificationData.productName}.</p>
 
     <p style="font-weight: bold; padding-top:1em;">Don’t let a week pass without learning about your users:</p>
 
-    <a class="button" href="${webUrl}/environments/${notificationData.environmentId}/surveys?utm_source=weekly&utm_medium=email&utm_content=SetupANewSurveyCTA">Setup a new survey</a>
+    <a class="button" href="${WEBAPP_URL}/environments/${notificationData.environmentId}/surveys?utm_source=weekly&utm_medium=email&utm_content=SetupANewSurveyCTA">Setup a new survey</a>
     
     <br/>
     <p style="padding-top:1em;">Need help finding the right survey for your product? Pick a 15-minute slot <a href="https://cal.com/johannes/15">in our CEOs calendar</a> or reply to this email :)</p>
@@ -182,7 +182,7 @@ const createReminderNotificationBody = (notificationData: NotificationResponse, 
     <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
     <p style="margin-top:0px;">The Formbricks Team</p>
    
-    <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:99px; margin:1em; padding:0.01em 1.6em; text-align:center;"><p><i>This is a Beta feature. If you experience any issues, please let us know by replying to this email 🙏</i></p></div>
+    <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:99px; margin:1em; padding:0.01em 1.6em; text-align:center;"><p><i>To halt Weekly Updates, <a href="${WEBAPP_URL}/auth/login?callbackUrl=${WEBAPP_URL}/environments/${notificationData.environmentId}/settings/notifications">please turn them off</a> in your settings 🙏</i></p></div>
   `;
 };
 
@@ -207,7 +207,7 @@ export const sendWeeklySummaryNotificationEmail = async (
         ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
         ${notificationInsight(notificationData.insights)}
         ${notificationLiveSurveys(notificationData.surveys, notificationData.environmentId)}
-        ${notificationFooter()}
+        ${notificationFooter(notificationData.environmentId)}
       `),
   });
 };
@@ -231,7 +231,7 @@ export const sendNoLiveSurveyNotificationEmail = async (
     subject: getEmailSubject(notificationData.productName),
     html: withEmailTemplate(`
         ${notificationHeader(notificationData.productName, startDate, endDate, startYear, endYear)}
-        ${createReminderNotificationBody(notificationData, WEBAPP_URL)}
+        ${createReminderNotificationBody(notificationData)}
       `),
   });
 };

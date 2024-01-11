@@ -9,7 +9,7 @@ import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { createTeam, getTeam } from "@formbricks/lib/team/service";
-import { createUser } from "@formbricks/lib/user/service";
+import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
@@ -76,7 +76,22 @@ export async function POST(request: Request) {
     else {
       const team = await createTeam({ name: user.name + "'s Team" });
       await createMembership(team.id, user.id, { role: "owner", accepted: true });
-      await createProduct(team.id, { name: "My Product" });
+      const product = await createProduct(team.id, { name: "My Product" });
+
+      const updatedNotificationSettings = {
+        ...user.notificationSettings,
+        alert: {
+          ...user.notificationSettings?.alert,
+        },
+        weeklySummary: {
+          ...user.notificationSettings?.weeklySummary,
+          [product.id]: true,
+        },
+      };
+
+      await updateUser(user.id, {
+        notificationSettings: updatedNotificationSettings,
+      });
     }
     // send verification email amd return user
     if (!EMAIL_VERIFICATION_DISABLED) {

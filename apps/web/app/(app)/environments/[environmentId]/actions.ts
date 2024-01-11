@@ -15,6 +15,7 @@ import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/surve
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, duplicateSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { updateUser } from "@formbricks/lib/user/service";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const createShortUrlAction = async (url: string) => {
@@ -44,8 +45,23 @@ export async function createTeamAction(teamName: string): Promise<Team> {
     accepted: true,
   });
 
-  await createProduct(newTeam.id, {
+  const product = await createProduct(newTeam.id, {
     name: "My Product",
+  });
+
+  const updatedNotificationSettings = {
+    ...session.user.notificationSettings,
+    alert: {
+      ...session.user.notificationSettings?.alert,
+    },
+    weeklySummary: {
+      ...session.user.notificationSettings?.weeklySummary,
+      [product.id]: true,
+    },
+  };
+
+  await updateUser(session.user.id, {
+    notificationSettings: updatedNotificationSettings,
   });
 
   return newTeam;
@@ -243,6 +259,20 @@ export const createProductAction = async (environmentId: string, productName: st
 
   const product = await createProduct(team.id, {
     name: productName,
+  });
+  const updatedNotificationSettings = {
+    ...session.user.notificationSettings,
+    alert: {
+      ...session.user.notificationSettings?.alert,
+    },
+    weeklySummary: {
+      ...session.user.notificationSettings?.weeklySummary,
+      [product.id]: true,
+    },
+  };
+
+  await updateUser(session.user.id, {
+    notificationSettings: updatedNotificationSettings,
   });
 
   // get production environment
