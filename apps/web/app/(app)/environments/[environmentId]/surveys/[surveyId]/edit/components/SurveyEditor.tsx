@@ -1,5 +1,6 @@
 "use client";
 
+import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import React from "react";
 import { useEffect, useState } from "react";
@@ -19,7 +20,7 @@ import SurveyMenuBar from "./SurveyMenuBar";
 
 interface SurveyEditorProps {
   survey: TSurvey;
-  product: TProduct;
+  productInfo: TProduct;
   environment: TEnvironment;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
@@ -30,7 +31,7 @@ interface SurveyEditorProps {
 
 export default function SurveyEditor({
   survey,
-  product,
+  productInfo,
   environment,
   actionClasses,
   attributeClasses,
@@ -42,7 +43,7 @@ export default function SurveyEditor({
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
-
+  const [product, setproduct] = useState<TProduct>(productInfo);
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
@@ -53,6 +54,24 @@ export default function SurveyEditor({
       }
     }
   }, [survey, localSurvey]);
+
+  useEffect(() => {
+    const listener = () => {
+      if (document.visibilityState === "visible") {
+        const fetchLatestProduct = async () => {
+          const latestProduct = await refetchProduct(product.id);
+          if (latestProduct) {
+            setproduct(latestProduct);
+          }
+        };
+        fetchLatestProduct();
+      }
+    };
+    document.addEventListener("visibilitychange", listener);
+    return () => {
+      document.removeEventListener("visibilitychange", listener);
+    };
+  }, []);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
