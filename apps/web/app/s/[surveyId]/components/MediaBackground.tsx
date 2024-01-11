@@ -20,6 +20,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   ContentRef,
 }) => {
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
+
   useEffect(() => {
     if (survey.styling?.background?.bgType === "animation") {
       if (animatedBackgroundRef.current && survey.styling?.background?.bg) {
@@ -36,7 +37,6 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   };
 
   const renderBackground = () => {
-    console.log("running");
     const filterStyle = getFilterStyle();
     const baseClasses = "absolute inset-0 h-full w-full";
 
