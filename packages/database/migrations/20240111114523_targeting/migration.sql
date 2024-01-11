@@ -1,9 +1,3 @@
--- CreateEnum
-CREATE TYPE "DeviceType" AS ENUM ('phone', 'desktop');
-
--- AlterTable
-ALTER TABLE "Session" ADD COLUMN     "deviceType" "DeviceType";
-
 -- AlterTable
 ALTER TABLE "Survey" ADD COLUMN     "userSegmentId" TEXT;
 

@@ -10,6 +10,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
+import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
 
 import { getActionClasses } from "../actionClass/service";
 import { getAttributeClasses } from "../attributeClass/service";
@@ -133,9 +134,18 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         return null;
       }
 
+      let surveyUserSegment: TUserSegment | null = null;
+      if (surveyPrisma.userSegment) {
+        surveyUserSegment = {
+          ...surveyPrisma.userSegment,
+          surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
+        };
+      }
+
       const transformedSurvey: TSurvey = {
         ...surveyPrisma,
         triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+        userSegment: surveyUserSegment,
       };
 
       return transformedSurvey;
@@ -294,7 +304,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const { triggers, attributeFilters, environmentId, ...surveyData } = updatedSurvey;
+  const { triggers, attributeFilters, environmentId, userSegmentId, userSegment, ...surveyData } =
+    updatedSurvey;
 
   if (triggers) {
     const newTriggers: string[] = [];
@@ -420,6 +431,32 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     revalidateSurveyByAttributeClassId([...newFilters, ...removedFilters]);
   }
 
+  if (userSegment && userSegmentId) {
+    // parse the segment filters:
+    const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+    if (!parsedFilters.success) {
+      throw new Error("Error parsing user segment");
+    }
+
+    const { surveys, ...segmentData } = userSegment;
+
+    try {
+      await prisma.userSegment.update({
+        where: {
+          id: userSegmentId,
+        },
+        data: {
+          ...segmentData,
+        },
+      });
+
+      data;
+    } catch (err) {
+      console.log({ err });
+      throw new Error("Error updating survey");
+    }
+  }
+
   data = {
     ...surveyData,
     ...data,
@@ -432,10 +469,19 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       select: selectSurvey,
     });
 
+    let surveyUserSegment: TUserSegment | null = null;
+    if (prismaSurvey.userSegment) {
+      surveyUserSegment = {
+        ...prismaSurvey.userSegment,
+        surveys: prismaSurvey.userSegment.surveys.map((survey) => survey.id),
+      };
+    }
+
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
       attributeFilters: updatedSurvey.attributeFilters ? updatedSurvey.attributeFilters : [], // Include attributeFilters from updatedSurvey
+      userSegment: surveyUserSegment,
     };
 
     surveyCache.revalidate({

@@ -217,6 +217,7 @@ export default function SurveyMenuBar({
 
   const saveSurveyAction = async (shouldNavigateBack = false) => {
     console.log("localsurvey", localSurvey);
+    console.log(typeof localSurvey.createdAt);
     if (localSurvey.questions.length === 0) {
       toast.error("Please add at least one question.");
       return;
@@ -240,6 +241,8 @@ export default function SurveyMenuBar({
       setIsSurveySaving(false);
       return;
     }
+
+    console.log("strippedSurvey", strippedSurvey);
 
     try {
       await updateSurveyAction({ ...strippedSurvey });
