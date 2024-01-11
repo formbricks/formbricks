@@ -69,7 +69,7 @@ export default function WebhookRowData({ webhook, surveys }: { webhook: TWebhook
         </div>
       </div>
       <div className="col-span-1 my-auto text-center text-sm text-slate-800">
-        <Badge text={capitalizeFirstLetter(webhook.source) || "User"} type="gray" size="tiny" />
+        <Badge text={capitalizeFirstLetter(webhook.source) || "User"} type="slate" size="tiny" />
       </div>
       <div className="col-span-4 my-auto text-center text-sm text-slate-800">
         {renderSelectedSurveysText(webhook, surveys)}

@@ -242,7 +242,7 @@ export default function StylingCard({
                         max="200"
                         value={inputValue}
                         onChange={handleInputChange}
-                        className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700"
+                        className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 dark:bg-slate-700"
                       />
                     </div>
                   </div>

@@ -5,10 +5,9 @@ import {
   generateResultShareUrlAction,
   getResultShareUrlAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { LinkIcon } from "@heroicons/react/24/outline";
+import { ArrowUpRightIcon, GlobeAltIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { DownloadIcon } from "lucide-react";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { TProduct } from "@formbricks/types/product";
@@ -96,7 +95,9 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
               onClick={() => {
                 setShowLinkModal(true);
               }}>
-              <p className="text-slate-700">Share Survey</p>
+              <p className="text-slate-700">
+                Share Survey <ArrowUpRightIcon className="ml-2 inline h-4 w-4" />
+              </p>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
@@ -104,7 +105,9 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
             onClick={() => {
               setShowResultsLinkModal(true);
             }}>
-            <p className="text-slate-700">Publish Results</p>
+            <p className="text-slate-700">
+              Publish Results <GlobeAltIcon className="ml-2 inline h-4 w-4" />
+            </p>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

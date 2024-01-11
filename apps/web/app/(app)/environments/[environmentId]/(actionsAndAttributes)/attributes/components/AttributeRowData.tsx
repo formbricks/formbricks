@@ -15,7 +15,7 @@ export default function AttributeClassDataRow({ attributeClass }) {
             <div className="font-medium text-slate-900">
               {attributeClass.name}
               <span className="ml-2">
-                {attributeClass.archived && <Badge text="Archived" type="gray" size="tiny" />}
+                {attributeClass.archived && <Badge text="Archived" type="slate" size="tiny" />}
               </span>
             </div>
             <div className="text-xs text-slate-400">{attributeClass.description}</div>

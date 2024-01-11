@@ -15,7 +15,7 @@ export default function WebpageTab({ surveyUrl }) {
     </div>`;
 
   return (
-    <div className="flex h-full grow flex-col gap-5">
+    <div className="flex h-full grow flex-col">
       <div className="flex justify-between">
         <div className=""></div>
         <Button
@@ -30,7 +30,7 @@ export default function WebpageTab({ surveyUrl }) {
           Copy code
         </Button>
       </div>
-      <div className="grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
+      <div className="prose prose-slate">
         <CodeBlock
           customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
           language="html"

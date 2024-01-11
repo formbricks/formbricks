@@ -105,7 +105,7 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
                 );
               })
             ) : (
-              <p className="text-sm italic text-gray-500">No hidden fields yet. Add the first one below.</p>
+              <p className="text-sm italic text-slate-500">No hidden fields yet. Add the first one below.</p>
             )}
           </div>
           <form

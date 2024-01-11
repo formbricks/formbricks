@@ -97,10 +97,10 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
           {showEmbed ? "Hide Embed Code" : "View Embed Code"}
         </Button>
       </div>
-      <div className="grow overflow-y-scroll rounded-xl border border-gray-200 bg-white px-4 py-[18px]">
+      <div className="grow overflow-y-auto rounded-xl border border-slate-200 bg-white p-4">
         {showEmbed ? (
           <CodeBlock
-            customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
+            customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal text-sm"
             language="html"
             showCopyToClipboard={false}>
             {emailHtml}

@@ -178,7 +178,7 @@ export default function EditWelcomeCard({
                 <Label htmlFor="timeToFinish" className="">
                   Time to Finish
                 </Label>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-slate-500 dark:text-slate-400">
                   Display an estimate of completion time for survey
                 </div>
               </div>
@@ -199,7 +199,7 @@ export default function EditWelcomeCard({
                   <Label htmlFor="showResponseCount" className="">
                     Show Response Count
                   </Label>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
                     Display number of responses for survey
                   </div>
                 </div>

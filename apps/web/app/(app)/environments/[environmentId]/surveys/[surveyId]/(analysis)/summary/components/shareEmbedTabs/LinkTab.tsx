@@ -1,20 +1,17 @@
-"use client";
-
+import UrlShortenerForm from "@/app/(app)/environments/[environmentId]/components/UrlShortenerForm";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRef } from "react";
 import toast from "react-hot-toast";
 
-import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 
-interface EmailTabProps {
+interface LinkTabProps {
   surveyUrl: string;
-  survey: TSurvey;
-  brandColor: string;
+  webAppUrl: string;
 }
 
-export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps) {
+export default function LinkTab({ surveyUrl, webAppUrl }: LinkTabProps) {
   const linkTextRef = useRef(null);
 
   const handleTextSelection = () => {
@@ -56,12 +53,12 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
   return (
     <div className="flex h-full grow flex-col gap-8">
       <div className="flex flex-wrap justify-between gap-2">
-        <p className="pt-2 text-lg font-semibold text-slate-800">Share the link to get responses:</p>
+        <p className="pt-2 text-lg font-semibold text-slate-800">Share the link to get responses</p>
         <div
           ref={linkTextRef}
-          className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
+          className="relative flex grow items-center overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
           onClick={() => handleTextSelection()}>
-          <span style={{ wordBreak: "break-all" }}>{surveyUrl}</span>
+          <span>{surveyUrl}</span>
         </div>
         <Button
           variant="darkCTA"
@@ -76,10 +73,11 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
         </Button>
       </div>
       <div className="flex flex-wrap justify-between gap-2">
-        <p className="pt-2 font-semibold text-slate-800">You can do a lot more with links surveys</p>
+        <p className="pt-2 font-semibold text-slate-700">You can do a lot more with links surveys 💡</p>
         <div className="grid grid-cols-2 gap-2">
           {docsLinks.map((tip) => (
             <Link
+              key={tip.title}
               target="_blank"
               href={tip.link}
               className="relative w-full rounded-md border border-slate-100 bg-white px-6 py-4 text-sm text-slate-600 hover:bg-slate-50">
@@ -90,24 +88,10 @@ export default function LinkTab({ surveyUrl, survey, brandColor }: EmailTabProps
         </div>
       </div>
       <div className="flex flex-wrap justify-between gap-2">
-        <p className="pt-2 font-semibold text-slate-800">Link URL got too long? Shorten it!</p>
-        <div
-          ref={linkTextRef}
-          className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800"
-          onClick={() => handleTextSelection()}>
-          <span style={{ wordBreak: "break-all" }}>{surveyUrl}</span>
+        <p className="pt-2 font-semibold text-slate-700">Survey link got too long? Shorten it!</p>
+        <div className="rounded-md border border-slate-200 bg-white">
+          <UrlShortenerForm webAppUrl={webAppUrl} />
         </div>
-        <Button
-          variant="darkCTA"
-          title="Copy survey link to clipboard"
-          aria-label="Copy survey link to clipboard"
-          onClick={() => {
-            navigator.clipboard.writeText(surveyUrl);
-            toast.success("URL copied to clipboard!");
-          }}
-          EndIcon={DocumentDuplicateIcon}>
-          Copy URL
-        </Button>
       </div>
     </div>
   );

@@ -170,7 +170,7 @@ export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOp
                       onClick={() => {
                         handleEditPencil(note);
                       }}>
-                      <PencilIcon className="h-3 w-3 text-gray-500" />
+                      <PencilIcon className="h-3 w-3 text-slate-500" />
                     </button>
                   )}
                   <TooltipProvider>
@@ -181,7 +181,7 @@ export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOp
                           onClick={() => {
                             handleResolveNote(note);
                           }}>
-                          <CheckIcon className="h-4 w-4 text-gray-500" />
+                          <CheckIcon className="h-4 w-4 text-slate-500" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-[45rem] break-all" side="left" sideOffset={5}>
