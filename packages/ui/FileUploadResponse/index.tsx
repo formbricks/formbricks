@@ -2,6 +2,8 @@
 
 import { FileIcon } from "lucide-react";
 
+import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
+
 interface FileUploadResponseProps {
   selected: string | number | string[];
 }
@@ -9,10 +11,7 @@ interface FileUploadResponseProps {
 export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
   const SingleFileResponse = () => {
     const selectedFile = selected as string;
-    const fileNameFromURL = new URL(selectedFile).pathname.split("/").pop();
-    const fileExt = fileNameFromURL?.split(".").pop();
-    const originalFileName = fileNameFromURL?.split("--fid--")[0];
-    const fileName = originalFileName ? decodeURIComponent(`${originalFileName}.${fileExt}` || "") : "";
+    const fileName = getOriginalFileNameFromUrl(selectedFile);
 
     return (
       <div className="relative m-2 rounded-lg bg-slate-300">
@@ -54,12 +53,7 @@ export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
         <div className="col-span-2 grid md:grid-cols-2 lg:grid-cols-4">
           {Array.isArray(selected) ? (
             selected.map((fileUrl, index) => {
-              const fileNameFromURL = new URL(fileUrl).pathname.split("/").pop();
-              const fileExt = fileNameFromURL?.split(".").pop();
-              const originalFileName = fileNameFromURL?.split("--fid--")[0];
-              const fileName = originalFileName
-                ? decodeURIComponent(`${originalFileName}.${fileExt}` || "")
-                : "";
+              const fileName = getOriginalFileNameFromUrl(fileUrl);
 
               return (
                 <div className="relative m-2 ml-0 rounded-lg bg-slate-200">

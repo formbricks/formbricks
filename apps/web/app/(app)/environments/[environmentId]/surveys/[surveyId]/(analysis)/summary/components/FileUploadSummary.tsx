@@ -5,6 +5,7 @@ import { DownloadIcon, FileIcon } from "lucide-react";
 import Link from "next/link";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
@@ -82,12 +83,7 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
                 {Array.isArray(response.value) &&
                   (response.value.length > 0 ? (
                     response.value.map((fileUrl, index) => {
-                      const fileNameFromURL = new URL(fileUrl).pathname.split("/").pop();
-                      const fileExt = fileNameFromURL?.split(".").pop();
-                      const originalFileName = fileNameFromURL?.split("--fid--")[0];
-                      const fileName = originalFileName
-                        ? decodeURIComponent(`${originalFileName}.${fileExt}` || "")
-                        : "";
+                      const fileName = getOriginalFileNameFromUrl(fileUrl);
 
                       return (
                         <div className="relative m-2 rounded-lg bg-slate-200" key={fileUrl}>

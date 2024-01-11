@@ -2,6 +2,7 @@ import { useMemo } from "preact/hooks";
 import { JSXInternal } from "preact/src/jsx";
 import { useState } from "react";
 
+import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 
@@ -205,12 +206,7 @@ export default function FileInput({
       <div>
         {fileUrls &&
           fileUrls?.map((file, index) => {
-            const fileNameFromURL = new URL(file).pathname.split("/").pop();
-            const fileExt = fileNameFromURL?.split(".").pop();
-            const originalFileName = fileNameFromURL?.split("--fid--")[0];
-            const fileName = originalFileName
-              ? decodeURIComponent(`${originalFileName}.${fileExt}` || "")
-              : "";
+            const fileName = getOriginalFileNameFromUrl(file);
 
             return (
               <div key={index} className="relative m-2 rounded-md bg-slate-200">
