@@ -29,7 +29,7 @@ export default function StylingCard({
   environmentId,
 }: StylingCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
-
+  const progressBarHidden = localSurvey.styling?.hideProgressBar ?? false;
   const { type, productOverwrites, styling } = localSurvey;
   const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
     productOverwrites ?? {};
@@ -180,6 +180,16 @@ export default function StylingCard({
       productOverwrites: {
         ...localSurvey.productOverwrites,
         clickOutsideClose,
+      },
+    });
+  };
+
+  const toggleProgressBarVisibility = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...localSurvey.styling,
+        hideProgressBar: !progressBarHidden,
       },
     });
   };
@@ -339,6 +349,23 @@ export default function StylingCard({
               )}
             </div>
           )}
+          <div className="p-3">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch
+                id="hideProgressBar"
+                checked={progressBarHidden}
+                onCheckedChange={toggleProgressBarVisibility}
+              />
+              <Label htmlFor="hideProgressBar" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Disable the visibility of survey progress
+                  </p>
+                </div>
+              </Label>
+            </div>
+          </div>
           <div className="mt-2 flex items-center space-x-3 rounded-lg px-4 py-2 text-slate-500">
             <p className="text-xs">
               To keep the styling over all surveys consistent, you can{" "}

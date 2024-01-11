@@ -13,12 +13,18 @@ export default async function revalidateSurveyIdPath(environmentId: string, surv
   revalidatePath(`/environments/${environmentId}/surveys/${surveyId}`);
 }
 
-export async function getMoreResponses(surveyId: string, page: number): Promise<TResponse[]> {
+export async function getMoreResponses(
+  surveyId: string,
+  page: number,
+  batchSize?: number
+): Promise<TResponse[]> {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
-  const responses = await getResponses(surveyId, page);
+
+  batchSize = batchSize ?? 10;
+  const responses = await getResponses(surveyId, page, batchSize);
   return responses;
 }
