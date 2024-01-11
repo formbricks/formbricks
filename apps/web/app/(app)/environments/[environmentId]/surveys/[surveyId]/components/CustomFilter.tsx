@@ -156,7 +156,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     return keys;
   }, []);
 
-  const getAllResponsesInBatches = async () => {
+  const getAllResponsesInBatches = useCallback(async () => {
     const BATCH_SIZE = 3000;
     const responses: TResponse[] = [];
     for (let page = 1; ; page++) {
@@ -167,7 +167,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
       }
     }
     return responses;
-  };
+  }, [survey.id]);
 
   const downloadResponses = useCallback(
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
@@ -284,7 +284,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
 
       URL.revokeObjectURL(downloadUrl);
     },
-    [downloadFileName, responses, survey, extracMetadataKeys]
+    [downloadFileName, responses, survey, extracMetadataKeys, getAllResponsesInBatches]
   );
 
   const handleDateHoveredChange = (date: Date) => {
