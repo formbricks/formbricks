@@ -64,7 +64,7 @@ export default function StylingCard({
     });
   };
 
-  const toggleBackgroundColor = () => {
+  /*  const toggleBackgroundColor = () => {
     setLocalSurvey({
       ...localSurvey,
       styling: {
@@ -89,8 +89,9 @@ export default function StylingCard({
         },
       },
     });
+    
     setInputValue(100);
-  };
+  }; */
 
   const toggleHighlightBorderColor = () => {
     setLocalSurvey({

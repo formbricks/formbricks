@@ -27,6 +27,7 @@ interface ShareEmbedSurveyProps {
   product: TProduct;
   user: TUser;
   environmentId: string;
+  showOptimizedModal?: boolean;
 }
 export default function ShareEmbedSurvey({
   survey,
@@ -35,6 +36,7 @@ export default function ShareEmbedSurvey({
   webAppUrl,
   user,
   environmentId,
+  showOptimizedModal,
 }: ShareEmbedSurveyProps) {
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey, webAppUrl]);
   const isSingleUseLinkSurvey = survey.singleUse?.enabled;
@@ -47,7 +49,7 @@ export default function ShareEmbedSurvey({
   ];
 
   const [activeId, setActiveId] = useState(tabs[0].id);
-  const [showInitialPage, setShowInitialPage] = useState(true);
+  const [showInitialPage, setShowInitialPage] = useState(showOptimizedModal || false);
   const linkTextRef = useRef(null);
 
   const handleTextSelection = () => {
