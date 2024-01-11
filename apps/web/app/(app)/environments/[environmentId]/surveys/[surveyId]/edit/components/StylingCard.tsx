@@ -21,7 +21,7 @@ interface StylingCardProps {
 
 export default function StylingCard({ localSurvey, setLocalSurvey, colours }: StylingCardProps) {
   const [open, setOpen] = useState(false);
-  const progressBarHidden = localSurvey.productOverwrites?.hideProgressBar ?? false;
+  const progressBarHidden = localSurvey.styling?.hideProgressBar ?? false;
   const { type, productOverwrites, styling } = localSurvey;
   const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
     productOverwrites ?? {};
@@ -178,8 +178,8 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
   const toggleProgressBarVisibility = () => {
     setLocalSurvey({
       ...localSurvey,
-      productOverwrites: {
-        ...localSurvey.productOverwrites,
+      styling: {
+        ...localSurvey.styling,
         hideProgressBar: !progressBarHidden,
       },
     });

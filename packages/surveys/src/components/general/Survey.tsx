@@ -35,7 +35,7 @@ export function Survey({
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const showProgressBar = !survey.productOverwrites?.hideProgressBar;
+  const showProgressBar = !survey.styling?.hideProgressBar;
   const [ttc, setTtc] = useState<TResponseTtc>({});
   useEffect(() => {
     if (activeQuestionId === "hidden") return;
