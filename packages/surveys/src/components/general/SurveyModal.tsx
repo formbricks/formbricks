@@ -9,8 +9,7 @@ export function SurveyModal({
   isBrandingEnabled,
   activeQuestionId,
   brandColor,
-  isError,
-  triggerErrorFunction,
+  getSetIsError,
   placement,
   clickOutside,
   darkOverlay,
@@ -21,6 +20,7 @@ export function SurveyModal({
   onClose,
   onFinished = () => {},
   onFileUpload,
+  onRetry,
   isRedirectDisabled = false,
   responseCount,
 }: SurveyModalProps) {
@@ -61,8 +61,8 @@ export function SurveyModal({
               }
             }, 3000); // close modal automatically after 3 seconds
           }}
-          triggerErrorFunction={triggerErrorFunction}
-          isError={isError}
+          onRetry={onRetry}
+          getSetIsError={getSetIsError}
           onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
           responseCount={responseCount}

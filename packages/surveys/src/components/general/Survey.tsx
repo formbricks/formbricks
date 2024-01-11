@@ -22,10 +22,10 @@ export function Survey({
   onResponse = () => {},
   onClose = () => {},
   onFinished = () => {},
+  onRetry = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
-  isError,
-  triggerErrorFunction,
+  getSetIsError,
   onFileUpload,
   responseCount,
   supportEmail,
@@ -34,7 +34,7 @@ export function Survey({
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
-  const [showError, setShowError] = useState(isError);
+  const [showError, setShowError] = useState(false);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
@@ -44,12 +44,6 @@ export function Survey({
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !survey.styling?.hideProgressBar;
-
-  useEffect(() => {
-    if (isError) {
-      setShowError(true);
-    }
-  }, [isError]);
 
   useEffect(() => {
     if (activeQuestionId === "hidden") return;
@@ -77,9 +71,9 @@ export function Survey({
   }, []);
 
   useEffect(() => {
-    if (triggerErrorFunction) {
-      triggerErrorFunction(() => {
-        setShowError(true);
+    if (getSetIsError) {
+      getSetIsError((value: boolean) => {
+        setShowError(value);
       });
     }
   });
@@ -157,6 +151,7 @@ export function Survey({
           brandColor={brandColor}
           questions={survey.questions}
           supportEmail={supportEmail}
+          onRetry={onRetry}
         />
       );
     }

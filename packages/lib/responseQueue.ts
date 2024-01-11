@@ -54,21 +54,22 @@ export class ResponseQueue {
         break; // exit the retry loop
       }
       console.error("Formbricks: Failed to send response. Retrying...", attempts);
+      await setTimeout(() => {}, 3000); // wait for 1 second before retrying
       attempts++;
     }
 
     if (attempts >= this.config.retryAttempts) {
       // Inform the user after 2 failed attempts
       console.error("Failed to send response after 2 attempts.");
-      // If the response is finished and thus fails finally, inform the user
-      if (this.surveyState.responseAcc.finished && this.config.onResponseSendingFailed) {
-        this.config.onResponseSendingFailed(this.surveyState.responseAcc);
+      // If the response fails finally, inform the user
+      if (this.config.onResponseSendingFailed) {
+        this.config.onResponseSendingFailed(responseUpdate);
       }
-      this.queue.shift(); // remove the failed response from the queue
+      this.isRequestInProgress = false;
+    } else {
+      this.isRequestInProgress = false;
+      this.processQueue(); // process the next item in the queue if any
     }
-
-    this.isRequestInProgress = false;
-    this.processQueue(); // process the next item in the queue if any
   }
 
   async sendResponse(responseUpdate: TResponseUpdate): Promise<boolean> {

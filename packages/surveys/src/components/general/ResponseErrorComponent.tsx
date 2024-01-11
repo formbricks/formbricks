@@ -1,13 +1,16 @@
+import { BackButton } from "@/components/buttons/BackButton";
+import SubmitButton from "@/components/buttons/SubmitButton";
+import { cn, isLight } from "@/lib/utils";
+
 import { type TResponseData } from "@formbricks/types/responses";
 import { type TSurveyQuestion } from "@formbricks/types/surveys";
-
-import { cn, isLight } from "../../lib/utils";
 
 type ResponseErrorComponentProps = {
   questions: TSurveyQuestion[];
   responseData: TResponseData;
   brandColor: string;
   supportEmail?: string | null;
+  onRetry: () => void;
 };
 
 export const ResponseErrorComponent = ({
@@ -15,6 +18,7 @@ export const ResponseErrorComponent = ({
   responseData,
   brandColor,
   supportEmail,
+  onRetry,
 }: ResponseErrorComponentProps) => {
   const transformResponses = (isEmail = false) => {
     const questionIdToHeadline = new Map(questions.map((q) => [q.id, q.headline]));
@@ -37,7 +41,7 @@ export const ResponseErrorComponent = ({
       <p className={"max-w-md text-sm font-normal leading-6 text-slate-600"}>
         The servers cannot be reached at the moment.
         <br />
-        Please forward your feedback via email &#128591;
+        Please retry now or try again later.
       </p>
       <div className={"mt-4 rounded-lg border border-slate-200 bg-slate-100 px-4 py-5"}>
         <div className={"flex max-h-36 flex-1 flex-col space-y-3 overflow-y-scroll"}>
@@ -56,16 +60,14 @@ export const ResponseErrorComponent = ({
         </div>
       </div>
       <div className={"mt-4 flex flex-1 flex-row items-center justify-end space-x-2"}>
-        <button
-          type="button"
+        {/*         <BackButton
+          tabIndex={3}
+          backButtonLabel="Copy Response"
           onClick={() => {
             navigator.clipboard.writeText(transformResponses());
           }}
-          className={cn(
-            "flex items-center rounded-md border border-transparent bg-slate-200 px-3 py-3 text-base font-medium leading-4 text-black shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-          )}>
-          <span className="text-md">Copy Response</span>
-        </button>
+        /> */}
+        <SubmitButton tabIndex={2} buttonLabel="Retry" isLastQuestion={false} onClick={() => onRetry()} />
         {supportEmail && (
           <>
             <button
