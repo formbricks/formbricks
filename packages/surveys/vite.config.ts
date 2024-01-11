@@ -13,9 +13,15 @@ const fileName = buildPackage === "surveys" ? "index" : "question-date";
 const config = ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
+  const isDevelopment = mode === "dev";
+  const datePickerScriptSrc = isDevelopment
+    ? "http://localhost:3003/question-date.umd.js"
+    : "https://unpkg.com/@formbricks/surveys@^1.4.0/dist/question-date.umd.js";
+
   return defineConfig({
     define: {
       "process.env": env,
+      "import.meta.env.SCRIPT_SRC": JSON.stringify(datePickerScriptSrc),
     },
     build: {
       emptyOutDir: false,
