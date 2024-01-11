@@ -204,45 +204,52 @@ export default function FileInput({
     <div className="items-left relative mt-3 flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
       <div>
         {fileUrls &&
-          fileUrls?.map((file, index) => (
-            <div key={index} className="relative m-2 rounded-md bg-slate-200">
-              <div className="absolute right-0 top-0 m-2">
-                <div className="flex h-5 w-5 items-center justify-center rounded-md bg-slate-100 hover:bg-slate-50">
+          fileUrls?.map((file, index) => {
+            const fileNameFromURL = new URL(file).pathname.split("/").pop();
+            const fileExt = fileNameFromURL?.split(".").pop();
+            const originalFileName = fileNameFromURL?.split("--fid--")[0];
+            const fileName = originalFileName
+              ? decodeURIComponent(`${originalFileName}.${fileExt}` || "")
+              : "";
+
+            return (
+              <div key={index} className="relative m-2 rounded-md bg-slate-200">
+                <div className="absolute right-0 top-0 m-2">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-slate-100 hover:bg-slate-50">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 26 26"
+                      strokeWidth={1}
+                      stroke="currentColor"
+                      className="h-5 text-slate-700 hover:text-slate-900"
+                      onClick={(e) => handleDeleteFile(index, e)}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center justify-center p-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
                     fill="none"
-                    viewBox="0 0 26 26"
-                    strokeWidth={1}
                     stroke="currentColor"
-                    className="h-5 text-slate-700 hover:text-slate-900"
-                    onClick={(e) => handleDeleteFile(index, e)}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-file"
+                    className="h-6 text-slate-500">
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                    <polyline points="14 2 14 8 20 8" />
                   </svg>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{fileName}</p>
                 </div>
               </div>
-
-              <div className="flex flex-col items-center justify-center p-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="lucide lucide-file"
-                  className="h-6 text-slate-500">
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  {decodeURIComponent(file).split("/").pop()}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
 
       <div>
