@@ -100,7 +100,7 @@ export const sendGettingStartedEmail = async (user: TEmailUserWithName) => {
     <p>Welcome aboard, and thank you for choosing Formbricks - we’re thrilled to have you!</p>
     <h4>First Impressions Count</h4>
     <p>You’ve likely already had a look around Formbricks - love it! What's your first impression? Any issues getting started? Wanna share some love? Please <a href="https://app.formbricks.com/s/clqe9gpsi0572114z052uig9j?userId=${
-      user.email
+      user.id
     }">leave a quick note for the team here</a>, takes literally 10 seconds 🤸</p>
     <h3>No Matter the Channel, Formbricks Can Handle Your Feedback</h3>
     <p>Our open source survey platform is really powerful. Run:</p>
