@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -19,6 +19,16 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   isMobilePreview = false,
   ContentRef,
 }) => {
+  const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (survey.styling?.background?.bgType === "animation") {
+      if (animatedBackgroundRef.current && survey.styling?.background?.bg) {
+        animatedBackgroundRef.current.src = survey.styling?.background?.bg;
+        animatedBackgroundRef.current.play();
+      }
+    }
+  }, [survey.styling?.background?.bg, survey.styling?.background?.bgType]);
+
   const getFilterStyle = () => {
     return survey.styling?.background?.brightness
       ? `brightness(${survey.styling?.background?.brightness}%)`
@@ -26,6 +36,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   };
 
   const renderBackground = () => {
+    console.log("running");
     const filterStyle = getFilterStyle();
     const baseClasses = "absolute inset-0 h-full w-full";
 
@@ -40,6 +51,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
       case "animation":
         return (
           <video
+            ref={animatedBackgroundRef}
             muted
             loop
             autoPlay
