@@ -4,15 +4,21 @@ import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
-import { TActionClass } from "@formbricks/types/actionClasses";
+import { TActionClass, TActionClassInput } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
 
-import { getActionClasses } from "../actionClass/service";
-import { getAttributeClasses } from "../attributeClass/service";
+import { createActionClass, getActionClasses } from "../actionClass/service";
+import { getActionClassByEnvironmentIdAndName } from "../actionClass/service";
+import {
+  createAttributeClass,
+  getAttributeClass,
+  getAttributeClassByName,
+  getAttributeClasses,
+} from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
@@ -708,4 +714,72 @@ export const getSurveyByResultShareKey = async (resultShareKey: string): Promise
 
     throw error;
   }
+};
+
+export const copySurveyToOtherEnvironment = async (surveyId: string, targetEnvironmentId: string) => {
+  const existingSurvey = await getSurvey(surveyId);
+  if (!existingSurvey) {
+    throw new ResourceNotFoundError("Survey", surveyId);
+  }
+  let targetEnvironmentTriggers: string[] = [];
+  for (const trigger of existingSurvey.triggers) {
+    const actionClass = await getActionClassByEnvironmentIdAndName(existingSurvey.environmentId, trigger);
+    const targetEnvironmentTrigger = await getActionClassByEnvironmentIdAndName(targetEnvironmentId, trigger);
+    if (actionClass) {
+      if (!targetEnvironmentTrigger) {
+        // if the trigger does not exist in the target environment, create it
+        const actionClassInput: TActionClassInput = {
+          environmentId: targetEnvironmentId,
+          name: actionClass.name,
+          description: actionClass.description ?? undefined,
+          noCodeConfig: actionClass.noCodeConfig,
+          type: actionClass.type,
+        };
+        const newTrigger = await createActionClass(targetEnvironmentId, actionClassInput);
+        targetEnvironmentTriggers.push(newTrigger.id);
+      } else {
+        targetEnvironmentTriggers.push(targetEnvironmentTrigger.id);
+      }
+    }
+  }
+  let targetEnvironmentAttributeFilters: string[] = [];
+  for (const attributeFilter of existingSurvey.attributeFilters) {
+    const attributeClass = await getAttributeClass(attributeFilter.attributeClassId);
+    if (attributeClass) {
+      const targetEnvironmentAttributeClass = await getAttributeClassByName(
+        targetEnvironmentId,
+        attributeClass!.name
+      );
+      if (!targetEnvironmentAttributeClass) {
+        // if the trigger does not exist in the target environment, create it
+        const newAttributeClass = await createAttributeClass(
+          targetEnvironmentId,
+          attributeClass.name,
+          attributeClass.type
+        );
+        if (newAttributeClass) {
+          targetEnvironmentAttributeFilters.push(newAttributeClass.id);
+        }
+      } else {
+        targetEnvironmentAttributeFilters.push(targetEnvironmentAttributeClass.id);
+      }
+    }
+  }
+  // create new survey with the data of the existing survey
+  const newSurvey = await duplicateSurvey(existingSurvey.environmentId, existingSurvey.id);
+  updateSurvey({
+    ...existingSurvey,
+    environmentId: targetEnvironmentId,
+    triggers: targetEnvironmentTriggers,
+    attributeFilters: existingSurvey.attributeFilters.map((attributeFilter, idx) => ({
+      attributeClassId: targetEnvironmentAttributeFilters[idx],
+      condition: attributeFilter.condition,
+      value: attributeFilter.value,
+    })),
+  });
+  surveyCache.revalidate({
+    id: newSurvey.id,
+    environmentId: targetEnvironmentId,
+  });
+  return newSurvey;
 };
