@@ -44,6 +44,7 @@ export const ZSurveyProductOverwrites = z.object({
   placement: ZPlacement.nullish(),
   clickOutsideClose: z.boolean().nullish(),
   darkOverlay: z.boolean().nullish(),
+  hideProgressBar: z.boolean().nullish(),
 });
 
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
