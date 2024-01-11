@@ -38,12 +38,12 @@ export function Survey({
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
+  const [ttc, setTtc] = useState<TResponseTtc>({});
 
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
-
-  const [ttc, setTtc] = useState<TResponseTtc>({});
+  const showProgressBar = !survey.styling?.hideProgressBar;
 
   useEffect(() => {
     if (isError) {
@@ -221,7 +221,7 @@ export function Survey({
           </div>
           <div className="mt-8">
             {isBrandingEnabled && <FormbricksBranding />}
-            <ProgressBar survey={survey} questionId={questionId} />
+            {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>
         </div>
       </AutoCloseWrapper>

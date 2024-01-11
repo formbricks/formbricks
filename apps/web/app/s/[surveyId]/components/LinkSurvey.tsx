@@ -72,7 +72,7 @@ export default function LinkSurvey({
         },
         surveyState
       ),
-    [webAppUrl]
+    [webAppUrl, survey.environmentId, surveyState]
   );
   const [autoFocus, setAutofocus] = useState(false);
   const hasFinishedSingleUseResponse = useMemo(() => {

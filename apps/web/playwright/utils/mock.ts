@@ -32,6 +32,18 @@ export const users = {
       password: "XpP%X9UU3efj8vJa",
     },
   ],
+  team: [
+    {
+      name: "Team User 1",
+      email: "team1@formbricks.com",
+      password: "Test#1234",
+    },
+    {
+      name: "Team User 2",
+      email: "team2@formbricks.com",
+      password: "Test#1234",
+    },
+  ],
 };
 
 export const teams = {
@@ -95,5 +107,12 @@ export const surveys = {
       headline: "This is my Thank You Card Headline!",
       description: "This is my Thank you Card Description!",
     },
+  },
+};
+
+export const invites = {
+  addMember: {
+    name: "Team User 2",
+    email: "team2@formbricks.com",
   },
 };
