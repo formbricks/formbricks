@@ -8,11 +8,11 @@ import CodeBlock from "@formbricks/ui/CodeBlock";
 
 export default function WebpageTab({ surveyUrl }) {
   const iframeCode = `<div style="position: relative; height:100vh; max-height:100vh; overflow:auto;"> 
-    <iframe 
+  <iframe 
     src="${surveyUrl}" 
     frameborder="0" style="position: absolute; left:0; top:0; width:100%; height:100%; border:0;">
-    </iframe>
-    </div>`;
+  </iframe>
+</div>`;
 
   return (
     <div className="flex h-full grow flex-col">
@@ -30,9 +30,9 @@ export default function WebpageTab({ surveyUrl }) {
           Copy code
         </Button>
       </div>
-      <div className="prose prose-slate">
+      <div className="prose prose-slate max-w-full">
         <CodeBlock
-          customCodeClass="!whitespace-normal sm:!whitespace-pre-wrap !break-all sm:!break-normal"
+          customCodeClass="text-sm h-48 overflow-y-scroll text-sm"
           language="html"
           showCopyToClipboard={false}>
           {iframeCode}

@@ -51,26 +51,28 @@ export default function LinkTab({ surveyUrl, webAppUrl }: LinkTabProps) {
   ];
 
   return (
-    <div className="flex h-full grow flex-col gap-8">
-      <div className="flex flex-wrap justify-between gap-2">
-        <p className="pt-2 text-lg font-semibold text-slate-800">Share the link to get responses</p>
-        <div
-          ref={linkTextRef}
-          className="relative flex grow items-center overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
-          onClick={() => handleTextSelection()}>
-          <span>{surveyUrl}</span>
+    <div className="flex h-full grow flex-col gap-6">
+      <div>
+        <p className="text-lg font-semibold text-slate-800">Share the link to get responses</p>
+        <div className="mt-2 flex gap-2">
+          <div
+            ref={linkTextRef}
+            className="relative flex grow items-center overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+            onClick={() => handleTextSelection()}>
+            <span>{surveyUrl}</span>
+          </div>
+          <Button
+            variant="darkCTA"
+            title="Copy survey link to clipboard"
+            aria-label="Copy survey link to clipboard"
+            onClick={() => {
+              navigator.clipboard.writeText(surveyUrl);
+              toast.success("URL copied to clipboard!");
+            }}
+            EndIcon={DocumentDuplicateIcon}>
+            Copy URL
+          </Button>
         </div>
-        <Button
-          variant="darkCTA"
-          title="Copy survey link to clipboard"
-          aria-label="Copy survey link to clipboard"
-          onClick={() => {
-            navigator.clipboard.writeText(surveyUrl);
-            toast.success("URL copied to clipboard!");
-          }}
-          EndIcon={DocumentDuplicateIcon}>
-          Copy URL
-        </Button>
       </div>
       <div className="flex flex-wrap justify-between gap-2">
         <p className="pt-2 font-semibold text-slate-700">You can do a lot more with links surveys 💡</p>
@@ -87,8 +89,8 @@ export default function LinkTab({ surveyUrl, webAppUrl }: LinkTabProps) {
           ))}
         </div>
       </div>
-      <div className="flex flex-wrap justify-between gap-2">
-        <p className="pt-2 font-semibold text-slate-700">Survey link got too long? Shorten it!</p>
+      <div className="">
+        <p className="mb-2 pt-2 font-semibold text-slate-700">Survey link got too long? Shorten it!</p>
         <div className="rounded-md border border-slate-200 bg-white">
           <UrlShortenerForm webAppUrl={webAppUrl} />
         </div>

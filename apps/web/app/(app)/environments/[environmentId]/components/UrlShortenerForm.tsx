@@ -60,16 +60,16 @@ export default function UrlShortenerForm({ webAppUrl }: { webAppUrl: string }) {
   };
 
   return (
-    <div>
+    <div className="space-y-2 p-4">
       <form onSubmit={handleSubmit(shortenUrl)}>
-        <div className="grid w-full space-y-2 rounded-lg px-6 py-4">
+        <div className="w-full space-y-2 rounded-lg">
           <Label>Paste Survey Link</Label>
-          <div className="grid grid-cols-6 gap-3">
+          <div className="flex gap-3 ">
             <Input
               autoFocus
               placeholder={`${webAppUrl}...`}
               className={clsx(
-                "col-span-5",
+                "",
                 urlValidationState === "valid"
                   ? "border-green-500 bg-green-50"
                   : urlValidationState === "invalid"
@@ -85,7 +85,6 @@ export default function UrlShortenerForm({ webAppUrl }: { webAppUrl: string }) {
               disabled={watch("url") === ""}
               variant="darkCTA"
               size="sm"
-              className="col-span-1 text-center"
               type="submit"
               loading={isSubmitting}>
               Shorten
@@ -94,11 +93,11 @@ export default function UrlShortenerForm({ webAppUrl }: { webAppUrl: string }) {
         </div>
       </form>
       {shortUrl && (
-        <div className="grid w-full space-y-2 rounded-lg px-6 pb-4">
+        <div className="w-full space-y-2 rounded-lg">
           <Label>Short Link</Label>
-          <div className="grid grid-cols-6 gap-3">
+          <div className="flex gap-3 ">
             <span
-              className="col-span-5 h-10 cursor-pointer rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700"
+              className="h-10  w-full cursor-pointer rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700"
               onClick={() => {
                 if (shortUrl) {
                   copyShortUrlToClipboard();
@@ -110,7 +109,6 @@ export default function UrlShortenerForm({ webAppUrl }: { webAppUrl: string }) {
               disabled={shortUrl === ""}
               variant="secondary"
               size="sm"
-              className="col-span-1 justify-center"
               type="button"
               onClick={() => copyShortUrlToClipboard()}>
               <span>Copy</span>

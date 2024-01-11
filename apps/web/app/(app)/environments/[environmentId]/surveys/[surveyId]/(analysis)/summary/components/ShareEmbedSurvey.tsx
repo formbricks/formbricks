@@ -2,7 +2,11 @@
 
 import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
 import { ArrowLeftIcon, CodeBracketIcon, EnvelopeIcon, LinkIcon } from "@heroicons/react/24/outline";
-import { useMemo, useState } from "react";
+import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
+import { BellRing, BlocksIcon, Code2Icon } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
@@ -22,20 +26,19 @@ interface ShareEmbedSurveyProps {
   webAppUrl: string;
   product: TProduct;
   user: TUser;
+  environmentId: string;
 }
 export default function ShareEmbedSurvey({
   survey,
   open,
   setOpen,
   webAppUrl,
-  product,
   user,
+  environmentId,
 }: ShareEmbedSurveyProps) {
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey, webAppUrl]);
   const isSingleUseLinkSurvey = survey.singleUse?.enabled;
   const { email } = user;
-  const { brandColor } = product;
-  const surveyBrandColor = survey.productOverwrites?.brandColor || brandColor;
 
   const tabs = [
     { id: "email", label: "Embed in an Email", icon: EnvelopeIcon },
@@ -45,6 +48,20 @@ export default function ShareEmbedSurvey({
 
   const [activeId, setActiveId] = useState(tabs[0].id);
   const [showInitialPage, setShowInitialPage] = useState(true);
+  const linkTextRef = useRef(null);
+
+  const handleTextSelection = () => {
+    if (linkTextRef.current) {
+      const range = document.createRange();
+      range.selectNodeContents(linkTextRef.current);
+
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+  };
 
   const handleOpenChange = (open: boolean) => {
     setActiveId(tabs[0].id);
@@ -58,44 +75,85 @@ export default function ShareEmbedSurvey({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bottom-0 flex h-[95%] w-full flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[960px]">
+      <DialogContent className="h-[700px] w-full max-w-5xl bg-white p-0">
         {showInitialPage ? (
-          <div>
-            {/* Your initial page content here */}
-            <Button onClick={handleInitialPageButton}>Show new</Button>
+          <div className="h-full">
+            <div className="flex h-2/5 flex-col items-center justify-center space-y-6 text-center">
+              <p className="pt-2 text-xl font-semibold text-slate-800">Your survey has been published 🎉</p>
+              <div className="flex gap-2">
+                <div
+                  ref={linkTextRef}
+                  className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
+                  onClick={() => handleTextSelection()}>
+                  <span>{surveyUrl}</span>
+                </div>
+                <Button
+                  variant="darkCTA"
+                  title="Copy survey link to clipboard"
+                  aria-label="Copy survey link to clipboard"
+                  onClick={() => {
+                    navigator.clipboard.writeText(surveyUrl);
+                    toast.success("URL copied to clipboard!");
+                  }}
+                  EndIcon={DocumentDuplicateIcon}>
+                  Copy Link
+                </Button>
+              </div>
+            </div>
+            <div className="flex h-3/5 flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50">
+              <p className="-mt-8 text-sm text-slate-500">What&apos;s next?</p>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={handleInitialPageButton}
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-8  text-sm text-slate-500 hover:border-slate-200">
+                  <Code2Icon className="h-6 w-6 text-slate-700" />
+                  Embed survey
+                </button>
+                <Link
+                  href={`/environments/${environmentId}//settings/notifications`}
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100  bg-white  p-8 text-sm text-slate-500 hover:border-slate-200">
+                  <BellRing className="h-6 w-6 text-slate-700" />
+                  Configure alerts
+                </Link>
+                <Link
+                  href={`/environments/${environmentId}/integrations`}
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100  bg-white  p-8 text-sm text-slate-500 hover:border-slate-200">
+                  <BlocksIcon className="h-6 w-6 text-slate-700" />
+                  Setup integrations
+                </Link>
+              </div>
+            </div>
           </div>
         ) : (
-          <>
-            <div className="border-b border-slate-200 p-2 ">
+          <div className="h-full overflow-hidden">
+            <div className="border-b border-slate-200 py-2">
               <Button variant="minimal" onClick={handleInitialPageButton} StartIcon={ArrowLeftIcon}>
                 Back
               </Button>
             </div>
-            <div className="flex grow overflow-y-auto overflow-x-hidden">
-              <div className="hidden basis-[326px] border-r border-slate-200 px-6 py-8 lg:block lg:shrink-0">
-                <div className="flex w-max flex-col gap-3">
-                  {tabs.map((tab) => (
-                    <Button
-                      StartIcon={tab.icon}
-                      startIconClassName={cn("h-4 w-4")}
-                      variant="minimal"
-                      key={tab.id}
-                      onClick={() => setActiveId(tab.id)}
-                      className={cn(
-                        "rounded-md border px-4 py-2 text-slate-600",
-                        // "focus:ring-0 focus:ring-offset-0", // enable these classes to remove the focus rings on buttons
-                        tab.id === activeId
-                          ? "border-slate-200 bg-slate-100 font-semibold text-slate-900"
-                          : "border-transparent text-slate-500 hover:text-slate-700"
-                      )}
-                      aria-current={tab.id === activeId ? "page" : undefined}>
-                      {tab.label}
-                    </Button>
-                  ))}
-                </div>
+            <div className="grid h-full grid-cols-4">
+              <div className="col-span-1 flex flex-col gap-3 border-r border-slate-200 p-4">
+                {tabs.map((tab) => (
+                  <Button
+                    StartIcon={tab.icon}
+                    startIconClassName="h-4 w-4"
+                    variant="minimal"
+                    key={tab.id}
+                    onClick={() => setActiveId(tab.id)}
+                    className={cn(
+                      "rounded-md border px-4 py-2 text-slate-600",
+                      // "focus:ring-0 focus:ring-offset-0", // enable these classes to remove the focus rings on buttons
+                      tab.id === activeId
+                        ? "border-slate-200 bg-slate-100 font-semibold text-slate-900"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
+                    )}
+                    aria-current={tab.id === activeId ? "page" : undefined}>
+                    {tab.label}
+                  </Button>
+                ))}
               </div>
-              <div className="flex w-full grow flex-col gap-6 bg-slate-50 px-4 py-6 lg:p-6">
-                <div className="flex h-full overflow-y-auto lg:h-[590px] lg:overflow-y-visible">
+              <div className="col-span-3 h-full bg-slate-50 px-4 py-6 lg:p-6">
+                <div className="h-full ">
                   {isSingleUseLinkSurvey ? (
                     <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={webAppUrl} />
                   ) : activeId === "email" ? (
@@ -106,7 +164,7 @@ export default function ShareEmbedSurvey({
                     <LinkTab surveyUrl={surveyUrl} webAppUrl={webAppUrl} />
                   ) : null}
                 </div>
-                <div className="mx-auto flex max-w-max rounded-md bg-slate-100 p-1 lg:hidden">
+                <div className="mx-auto flex rounded-md bg-slate-100 p-1 md:hidden">
                   {tabs.slice(0, 2).map((tab) => (
                     <Button
                       variant="minimal"
@@ -123,8 +181,8 @@ export default function ShareEmbedSurvey({
                   ))}
                 </div>
               </div>
-            </div>{" "}
-          </>
+            </div>
+          </div>
         )}
       </DialogContent>
     </Dialog>

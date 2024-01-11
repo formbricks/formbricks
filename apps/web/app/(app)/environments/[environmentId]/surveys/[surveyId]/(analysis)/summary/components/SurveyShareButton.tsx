@@ -29,9 +29,16 @@ interface SurveyShareButtonProps {
   webAppUrl: string;
   product: TProduct;
   user: TUser;
+  environmentId: string;
 }
 
-export default function SurveyShareButton({ survey, webAppUrl, product, user }: SurveyShareButtonProps) {
+export default function SurveyShareButton({
+  survey,
+  webAppUrl,
+  product,
+  user,
+  environmentId,
+}: SurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
@@ -79,7 +86,7 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
       <DropdownMenu>
         <DropdownMenuTrigger
           asChild
-          className="focus:bg-muted cursor-pointer border border-slate-300 outline-none">
+          className="focus:bg-muted cursor-pointer border border-slate-300 outline-none hover:border-slate-400">
           <div className="min-w-auto h-auto rounded-md border bg-white p-3 sm:flex sm:min-w-[7rem] sm:px-6 sm:py-3">
             <div className="hidden w-full items-center justify-between sm:flex">
               <span className="text-sm text-slate-700"> Share</span>
@@ -120,6 +127,7 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
           product={product}
           webAppUrl={webAppUrl}
           user={user}
+          environmentId={environmentId}
         />
       )}
       {showResultsLinkModal && (
