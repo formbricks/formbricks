@@ -40,7 +40,7 @@ export const renderWidget = (survey: TSurvey) => {
       environmentId: config.get().environmentId,
       retryAttempts: 2,
       onResponseSendingFailed: () => {
-        isError = true;
+        triggerError();
       },
     },
     surveyState
@@ -65,7 +65,7 @@ export const renderWidget = (survey: TSurvey) => {
       placement,
       isError,
       supportEmail: product.supportEmail,
-      triggerErrorFunc: (setIsError: () => void) => {
+      triggerErrorFunction: (setIsError: () => void) => {
         triggerError = setIsError;
       },
       onDisplay: async () => {
