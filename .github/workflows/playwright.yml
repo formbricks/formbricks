@@ -1,6 +1,9 @@
 name: E2E Tests
 on:
   workflow_call:
+  push:
+    branches:
+      - shubham/debug-playwright-ci
 jobs:
   build:
     name: Run E2E Tests
