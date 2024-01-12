@@ -43,23 +43,25 @@ export interface LinkSurveyEmailData {
 
 export const sendEmail = async (emailData: sendEmailData) => {
   try {
-    if (!IS_SMTP_CONFIGURED) throw new Error("Could not Email: SMTP not configured");
-
-    let transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASSWORD,
-      },
-      // logger: true,
-      // debug: true,
-    });
-    const emailDefaults = {
-      from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
-    };
-    await transporter.sendMail({ ...emailDefaults, ...emailData });
+    if (IS_SMTP_CONFIGURED) {
+      let transporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
+        auth: {
+          user: SMTP_USER,
+          pass: SMTP_PASSWORD,
+        },
+        // logger: true,
+        // debug: true,
+      });
+      const emailDefaults = {
+        from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
+      };
+      await transporter.sendMail({ ...emailDefaults, ...emailData });
+    } else {
+      console.log(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
+    }
   } catch (error) {
     throw error;
   }
