@@ -75,12 +75,12 @@ export default function ShareEmbedSurvey({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="h-[700px] w-full max-w-5xl bg-white p-0">
+      <DialogContent className=" w-full max-w-xl bg-white p-0 md:max-w-3xl lg:h-[700px] lg:max-w-5xl">
         {showInitialPage ? (
           <div className="h-full">
-            <div className="flex h-2/5 flex-col items-center justify-center space-y-6 text-center">
+            <div className="flex h-[200px] flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
               <p className="pt-2 text-xl font-semibold text-slate-800">Your survey is public 🎉</p>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 lg:flex-row">
                 <div
                   ref={linkTextRef}
                   className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
@@ -89,6 +89,7 @@ export default function ShareEmbedSurvey({
                 </div>
                 <Button
                   variant="darkCTA"
+                  className="inline"
                   title="Copy survey link to clipboard"
                   aria-label="Copy survey link to clipboard"
                   onClick={() => {
@@ -100,24 +101,24 @@ export default function ShareEmbedSurvey({
                 </Button>
               </div>
             </div>
-            <div className="flex h-3/5 flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50">
+            <div className="flex h-[300px] flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 lg:h-3/5">
               <p className="-mt-8 text-sm text-slate-500">What&apos;s next?</p>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={handleInitialPageButton}
-                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-8  text-sm text-slate-500 hover:border-slate-200">
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm  text-slate-500 hover:border-slate-200 md:p-8">
                   <Code2Icon className="h-6 w-6 text-slate-700" />
                   Embed survey
                 </button>
                 <Link
                   href={`/environments/${environmentId}//settings/notifications`}
-                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100  bg-white  p-8 text-sm text-slate-500 hover:border-slate-200">
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100  bg-white p-4  text-sm text-slate-500 hover:border-slate-200 md:p-8">
                   <BellRing className="h-6 w-6 text-slate-700" />
                   Configure alerts
                 </Link>
                 <Link
                   href={`/environments/${environmentId}/integrations`}
-                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100  bg-white  p-8 text-sm text-slate-500 hover:border-slate-200">
+                  className="flex flex-col items-center gap-3 rounded-lg border border-slate-100  bg-white  p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
                   <BlocksIcon className="h-6 w-6 text-slate-700" />
                   Setup integrations
                 </Link>
@@ -136,7 +137,7 @@ export default function ShareEmbedSurvey({
               </Button>
             </div>
             <div className="grid h-full grid-cols-4">
-              <div className="col-span-1 flex flex-col gap-3 border-r border-slate-200 p-4">
+              <div className="col-span-1 hidden flex-col gap-3 border-r border-slate-200 p-4 lg:flex">
                 {tabs.map((tab) => (
                   <Button
                     StartIcon={tab.icon}
@@ -156,8 +157,8 @@ export default function ShareEmbedSurvey({
                   </Button>
                 ))}
               </div>
-              <div className="col-span-3 h-full bg-slate-50 px-4 py-6 lg:p-6">
-                <div className="h-full ">
+              <div className="col-span-4 h-full bg-slate-50 px-4 py-6 lg:col-span-3 lg:p-6">
+                <div className="">
                   {isSingleUseLinkSurvey ? (
                     <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={webAppUrl} />
                   ) : activeId === "email" ? (
@@ -168,16 +169,16 @@ export default function ShareEmbedSurvey({
                     <LinkTab surveyUrl={surveyUrl} webAppUrl={webAppUrl} />
                   ) : null}
                 </div>
-                <div className="mx-auto flex rounded-md bg-slate-100 p-1 md:hidden">
+                <div className="mt-2 rounded-md p-3 text-center lg:hidden">
                   {tabs.slice(0, 2).map((tab) => (
                     <Button
                       variant="minimal"
                       key={tab.id}
                       onClick={() => setActiveId(tab.id)}
                       className={cn(
-                        "rounded-sm px-3 py-[6px]",
+                        "rounded-md px-4 py-2",
                         tab.id === activeId
-                          ? "bg-white text-slate-900"
+                          ? "bg-white text-slate-900 shadow-sm"
                           : "border-transparent text-slate-700 hover:text-slate-900"
                       )}>
                       {tab.label}
