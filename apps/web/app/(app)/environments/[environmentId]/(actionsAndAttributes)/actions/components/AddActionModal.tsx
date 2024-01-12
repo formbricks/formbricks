@@ -24,8 +24,8 @@ interface AddNoCodeActionModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
-  actionClassArray: TActionClass[];
-  setActionClassArray?;
+  actionClasses: TActionClass[];
+  setActionClasses?;
   isViewer: boolean;
 }
 
@@ -46,8 +46,8 @@ export default function AddNoCodeActionModal({
   environmentId,
   open,
   setOpen,
-  actionClassArray,
-  setActionClassArray,
+  actionClasses,
+  setActionClasses,
   isViewer,
 }: AddNoCodeActionModalProps) {
   const { register, control, handleSubmit, watch, reset } = useForm();
@@ -58,7 +58,7 @@ export default function AddNoCodeActionModal({
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
   const [type, setType] = useState("noCode");
-  const actionClassNames = actionClassArray.map((actionClass) => actionClass.name);
+  const actionClassNames = actionClasses.map((actionClass) => actionClass.name);
 
   const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
     const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
@@ -127,11 +127,8 @@ export default function AddNoCodeActionModal({
       }
 
       const newActionClass: TActionClass = await createActionClassAction(updatedAction);
-      if (setActionClassArray) {
-        setActionClassArray((prevActionClassArray: TActionClass[]) => [
-          ...prevActionClassArray,
-          newActionClass,
-        ]);
+      if (setActionClasses) {
+        setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
       }
       reset();
       resetAllStates(false);
