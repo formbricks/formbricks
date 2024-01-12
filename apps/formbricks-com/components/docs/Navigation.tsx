@@ -240,6 +240,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Notion", href: "/docs/integrations/notion" },
       { title: "Make.com", href: "/docs/integrations/make" },
       { title: "n8n", href: "/docs/integrations/n8n" },
+      { title: "Wordpress", href: "/docs/integrations/wordpress" },
       { title: "Zapier", href: "/docs/integrations/zapier" },
     ],
   },

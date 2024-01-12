@@ -1,3 +1,4 @@
+import QuestionImage from "@/components/general/QuestionImage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getLocalizedValue } from "@/lib/utils";
 import { useState } from "preact/hooks";
@@ -66,6 +67,7 @@ export default function FileUploadQuestion({
         }
       }}
       className="w-full">
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}

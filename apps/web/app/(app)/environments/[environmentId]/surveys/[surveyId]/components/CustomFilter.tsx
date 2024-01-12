@@ -4,6 +4,7 @@ import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { getMoreResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { fetchFile } from "@/app/lib/fetchFile";
 import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
 import { createId } from "@paralleldrive/cuid2";
@@ -156,9 +157,23 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     return keys;
   }, []);
 
+  const getAllResponsesInBatches = useCallback(async () => {
+    const BATCH_SIZE = 3000;
+    const responses: TResponse[] = [];
+    for (let page = 1; ; page++) {
+      const batchResponses = await getMoreResponses(survey.id, page, BATCH_SIZE);
+      responses.push(...batchResponses);
+      if (batchResponses.length < BATCH_SIZE) {
+        break;
+      }
+    }
+    return responses;
+  }, [survey.id]);
+
   const downloadResponses = useCallback(
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
-      const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
+      const downloadResponse = filter === FilterDownload.ALL ? await getAllResponsesInBatches() : responses;
+
       const questionNames = survey.questions?.map((question) => getLocalizedValue(question.headline, "en"));
       const hiddenFieldIds = survey.hiddenFields.fieldIds;
       const hiddenFieldResponse = {};
@@ -270,7 +285,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
 
       URL.revokeObjectURL(downloadUrl);
     },
-    [downloadFileName, responses, totalResponses, survey, extracMetadataKeys]
+    [downloadFileName, responses, survey, extracMetadataKeys, getAllResponsesInBatches]
   );
 
   const handleDateHoveredChange = (date: Date) => {

@@ -73,6 +73,7 @@ export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
 
 export const ZSurveyStyling = z.object({
   background: ZSurveyStylingBackground.nullish(),
+  hideProgressBar: z.boolean().nullish(),
 });
 
 export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;

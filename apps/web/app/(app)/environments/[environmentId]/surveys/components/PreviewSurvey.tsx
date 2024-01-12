@@ -11,7 +11,7 @@ import {
   DevicePhoneMobileIcon,
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
@@ -158,20 +158,6 @@ export default function PreviewSurvey({
     setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   }
 
-  const animationTrigger = useCallback(() => {
-    let storePreviewMode = previewMode;
-    setPreviewMode("null");
-    setTimeout(() => {
-      setPreviewMode(storePreviewMode);
-    }, 10);
-  }, [previewMode, setPreviewMode]);
-
-  useEffect(() => {
-    if (survey.styling?.background?.bgType === "animation") {
-      animationTrigger();
-    }
-  }, [survey.styling?.background?.bg, survey.styling?.background?.bgType, animationTrigger]);
-
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
@@ -305,7 +291,7 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
-                <div className="z-0 w-full  max-w-md rounded-lg p-4">
+                <div className="z-0 w-full max-w-md rounded-lg p-4">
                   <SurveyInline
                     survey={survey}
                     brandColor={brandColor}

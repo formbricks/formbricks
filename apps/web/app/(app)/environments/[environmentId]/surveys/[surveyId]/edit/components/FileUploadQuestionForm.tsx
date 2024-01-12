@@ -111,6 +111,7 @@ export default function FileUploadQuestionForm({
 
     return 10;
   }, [billingInfo, billingInfoError, billingInfoLoading]);
+
   const environmentId = localSurvey.environmentId;
 
   return (

@@ -3,8 +3,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { TI18nString, TSurvey } from "@formbricks/types/surveys";
-import { TSurveyCalQuestion } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -22,21 +21,22 @@ interface CalQuestionFormProps {
 }
 
 export default function CalQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
-  localSurvey,
   isInValid,
   selectedLanguage,
   setSelectedLanguage,
   languages,
 }: CalQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const environmentId = localSurvey.environmentId;
 
   return (
     <form>
       <QuestionFormInput
-        environmentId={localSurvey.environmentId}
+        environmentId={environmentId}
         isInValid={isInValid}
         question={question}
         questionIdx={questionIdx}

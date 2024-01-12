@@ -1,6 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
@@ -123,6 +124,7 @@ export default function DateQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, language)}
         questionId={question.id}
