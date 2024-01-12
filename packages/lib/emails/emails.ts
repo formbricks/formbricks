@@ -79,7 +79,7 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
   )}`;
   await sendEmail({
     to: user.email,
-    subject: "Verify your Formbricks Email",
+    subject: "Please verify your email to use Formbricks",
     html: withEmailTemplate(`<h1>Welcome!</h1>
     To start using Formbricks please verify your email by clicking the button below:<br/><br/>
     <a class="button" href="${verifyLink}">Confirm email</a><br/>
@@ -94,43 +94,27 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
 export const sendGettingStartedEmail = async (user: TEmailUserWithName) => {
   await sendEmail({
     to: user.email,
-    subject: "Get started with Formbricks 🤍",
+    subject: "Get started with Formbricks 🤸",
     html: withEmailTemplate(`
-    <p>Dear ${user.name || "friend"},</p>
-    <p>Welcome aboard, and thank you for choosing Formbricks - we’re thrilled to have you!</p>
-    <h4>First Impressions Count</h4>
-    <p>You’ve likely already had a look around Formbricks - love it! What's your first impression? Any issues getting started? Wanna share some love? Please <a href="https://app.formbricks.com/s/clqe9gpsi0572114z052uig9j?userId=${
-      user.id
-    }">leave a quick note for the team here</a>, takes literally 10 seconds 🤸</p>
-    <h3>No Matter the Channel, Formbricks Can Handle Your Feedback</h3>
-    <p>Our open source survey platform is really powerful. Run:</p>
+    <h1 style="text-align: center; line-height: 1.2; padding-top: 16px; padding-bottom:8px;">Turn customer insights into irresistable experiences</h1>
+    <a href="https://app.formbricks.com"><img src="https://formbricks-cdn.s3.eu-central-1.amazonaws.com/getting-started-with-formbricks-v5.png" alt="Formbricks can do it all" /></a>
+    <h3 style="text-align:center;">Welcome to Formbricks! 🤗</h3>
+    <p style="text-align:center;">We're the fastest growing Experience Management platform! Gracefully collect feedback without survey fatigue. Are you ready?</p>
+    <div style="text-align:center; margin-bottom:72px;">
+    <a class="button" href="https://app.formbricks.com">Create your survey</a><br/>
+    </div>
+    <a href="https://app.formbricks.com"><img style="border-radius:16px; box-shadow: 10px 10px 57px -21px rgba(71,85,105,0.58);" src="https://formbricks-cdn.s3.eu-central-1.amazonaws.com/getting-started-header-v4.png" alt="Formbricks can do it all"></a>
+    <h2 style="margin-top:32px;">Collect feedback everywhere!</h2>
+    <p>Formbricks is very versatile. Run:</p>
     <ul>
-        <li>Website Surveys like HotJar Ask</li>
-        <li>In-App Surveys like Sprig</li>
-        <li>Link Surveys like Typeform</li>
-        <li>Headless Surveys via API</li>
+        <li><b>Website Surveys</b> like HotJar Ask</li>
+        <li><b>In-App Surveys</b> like Sprig</li>
+        <li><b>Link Surveys</b> like Typeform</li>
+        <li><b>Headless Surveys</b> via API</li>
     </ul>
-    <p>You're missing something? <a href="https://github.com/formbricks/formbricks/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.yml&title=%5BFEATURE%5D"> Request it</a> and we'll build it 👷</p>
-    <b>Best Practices with Formbricks</b>
-    <p>We've created a list with the use cases which are most popular among Formbricks user. Maybe they inspire you to harvest more user insights as well:</p>
-    <ul>
-        <li><a href="https://formbricks.com/docs/best-practices/cancel-subscription">Learn from Churn</a></li>
-        <li><a href="https://formbricks.com/docs/best-practices/interview-prompt">Interview Prompts</a> with Power Users</li>
-        <li>Measure <a href="https://formbricks.com/docs/best-practices/pmf-survey">Product-Market Fit</a></li>
-        <li><a href="https://formbricks.com/docs/best-practices/improve-trial-cr">Improve Trial Conversion</a></li>
-        <li><a href="https://formbricks.com/docs/best-practices/feedback-box">Feedback Box</a></li>
-        <li><a href="https://formbricks.com/docs/best-practices/feature-chaser">Feature Follow Up</a></li>
-        <li><a href="https://formbricks.com/docs/best-practices/docs-feedback">Docs Feedback</a></li>
-    </ul>
-    <b>Join Our Community</b>
-    <p>Formbricks is powered by an open source survey platform. We're building it with our community - come and join us to share ideas, feedback and contribute.</p>
-    <a class="button" href="https://formbricks.com/discord">Join Discord</a><br/><br/>
-    <h2>Privacy-first Experience Management</h2>
-    <p>Your privacy and security are paramount. Formbricks is GDRP and CCPA compliant. We also make self-hosting really easy to maintain full control over your data. Feel free to reach out to <a href="mailto:privacy@formbricks.com">privacy@formbricks.com</a> with any questions.</p>
-    <p>Once again, <strong>welcome to the Formbricks family!</strong> We can’t wait to see what you’ll craft.</p>
-    <p>Life is too short for mediocre products,<br>
-    craft an irresistible experience.</p>
-    <p>The Formbricks Team</p>    
+    <p>All on one, open source platform ✅</p>
+    <a class="button" style="margin-bottom:12px; margin-top:0px;" href="https://app.formbricks.com">Create your survey</a><br/>
+    <p style="margin-bottom:0px; margin-top:40px; text-align:center;"><b>Life is short, craft something irresistable!</b><br/>The Formbricks Team 🤍</p>   
     `),
   });
 };

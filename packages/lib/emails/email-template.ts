@@ -15,7 +15,7 @@ export const withEmailTemplate = (content: string) =>
           font-family: "Poppins", "Helvetica Neue", "Segoe UI", Helvetica,
             sans-serif;
           font-size: 15px;
-          font-weight: 300;
+          font-weight: 500;
           line-height: 26px;
           margin: 0;
           color: #1e293b;
