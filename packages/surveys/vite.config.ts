@@ -21,7 +21,7 @@ const config = ({ mode }) => {
   return defineConfig({
     define: {
       "process.env": env,
-      "import.meta.env.SCRIPT_SRC": JSON.stringify(datePickerScriptSrc),
+      "import.meta.env.DATE_PICKER_SCRIPT_SRC": JSON.stringify(datePickerScriptSrc),
     },
     build: {
       emptyOutDir: false,

@@ -40,7 +40,7 @@ export default function DateQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const defaultDate = value ? new Date(value as string) : undefined;
-  const scriptSrc = import.meta.env.SCRIPT_SRC;
+  const datePickerScriptSrc = import.meta.env.DATE_PICKER_SCRIPT_SRC;
 
   useEffect(() => {
     // Check if the DatePicker has already been loaded
@@ -48,7 +48,7 @@ export default function DateQuestion({
     if (!window.initDatePicker) {
       const script = document.createElement("script");
 
-      script.src = scriptSrc;
+      script.src = datePickerScriptSrc;
 
       script.async = true;
 
