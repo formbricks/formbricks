@@ -21,7 +21,7 @@ const thankYouCardDefault = {
 };
 
 const welcomeCardDefault = {
-  enabled: true,
+  enabled: false,
   headline: {
     _i18n_: false,
     en: "Welcome!",
