@@ -143,7 +143,7 @@ export const withEmailTemplate = (content: string) =>
       "
     >
       <div class="gutter" style="padding: 30px">
-        <a href="https://formbricks.com" target="_blank">
+        <a href="https://formbricks.com?utm_source=email_header&utm_medium=email" target="_blank">
           <img
             src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png"
             alt="Formbricks Logo"
