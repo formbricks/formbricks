@@ -279,6 +279,7 @@ export default function WhenToSendCard({
         environmentId={environmentId}
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}
+        actionClassArray={actionClassArray}
         setActionClassArray={setActionClassArray}
         isViewer={isViewer}
       />

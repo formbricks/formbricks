@@ -24,6 +24,7 @@ interface AddNoCodeActionModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
+  actionClassArray: TActionClass[];
   setActionClassArray?;
   isViewer: boolean;
 }
@@ -45,6 +46,7 @@ export default function AddNoCodeActionModal({
   environmentId,
   open,
   setOpen,
+  actionClassArray,
   setActionClassArray,
   isViewer,
 }: AddNoCodeActionModalProps) {
@@ -56,6 +58,7 @@ export default function AddNoCodeActionModal({
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
   const [type, setType] = useState("noCode");
+  const actionClassNames = actionClassArray.map((actionClass) => actionClass.name);
 
   const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
     const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
@@ -92,7 +95,12 @@ export default function AddNoCodeActionModal({
         throw new Error("You are not authorised to perform this action.");
       }
       setIsCreatingAction(true);
-      if (data.name === "") throw new Error("Please give your action a name");
+      if (!data.name || data.name?.trim() === "") {
+        throw new Error("Please give your action a name");
+      }
+      if (data.name && actionClassNames.includes(data.name)) {
+        throw new Error(`Action with name ${data.name} already exist`);
+      }
       if (type === "noCode") {
         if (!isPageUrl && !isCssSelector && !isInnerHtml)
           throw new Error("Please select at least one selector");
@@ -178,7 +186,7 @@ export default function AddNoCodeActionModal({
                 <div className="grid w-full grid-cols-2 gap-x-4">
                   <div className="col-span-1">
                     <Label>What did your user do?</Label>
-                    <Input placeholder="E.g. Clicked Download" {...register("name", { required: true })} />
+                    <Input placeholder="E.g. Clicked Download" {...register("name")} />
                   </div>
                   <div className="col-span-1">
                     <Label>Description</Label>
