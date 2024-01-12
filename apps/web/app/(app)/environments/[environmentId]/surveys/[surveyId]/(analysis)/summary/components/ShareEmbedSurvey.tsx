@@ -27,7 +27,6 @@ interface ShareEmbedSurveyProps {
   product: TProduct;
   user: TUser;
   environmentId: string;
-  showOptimizedModal?: boolean;
 }
 export default function ShareEmbedSurvey({
   survey,
@@ -36,7 +35,6 @@ export default function ShareEmbedSurvey({
   webAppUrl,
   user,
   environmentId,
-  showOptimizedModal,
 }: ShareEmbedSurveyProps) {
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey, webAppUrl]);
   const isSingleUseLinkSurvey = survey.singleUse?.enabled;
@@ -49,7 +47,7 @@ export default function ShareEmbedSurvey({
   ];
 
   const [activeId, setActiveId] = useState(tabs[0].id);
-  const [showInitialPage, setShowInitialPage] = useState(showOptimizedModal || false);
+  const [showInitialPage, setShowInitialPage] = useState(true);
   const linkTextRef = useRef(null);
 
   const handleTextSelection = () => {
@@ -81,7 +79,7 @@ export default function ShareEmbedSurvey({
         {showInitialPage ? (
           <div className="h-full">
             <div className="flex h-2/5 flex-col items-center justify-center space-y-6 text-center">
-              <p className="pt-2 text-xl font-semibold text-slate-800">Your survey has been published 🎉</p>
+              <p className="pt-2 text-xl font-semibold text-slate-800">Your survey is public 🎉</p>
               <div className="flex gap-2">
                 <div
                   ref={linkTextRef}
@@ -129,7 +127,11 @@ export default function ShareEmbedSurvey({
         ) : (
           <div className="h-full overflow-hidden">
             <div className="border-b border-slate-200 py-2">
-              <Button variant="minimal" onClick={handleInitialPageButton} StartIcon={ArrowLeftIcon}>
+              <Button
+                variant="minimal"
+                className="focus:ring-0"
+                onClick={handleInitialPageButton}
+                StartIcon={ArrowLeftIcon}>
                 Back
               </Button>
             </div>

@@ -66,7 +66,6 @@ export default function SuccessMessage({
         webAppUrl={webAppUrl}
         product={product}
         user={user}
-        showOptimizedModal
       />
       {confetti && <Confetti />}
     </>
