@@ -282,6 +282,7 @@ export default function QuestionCard({
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
+                  localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
