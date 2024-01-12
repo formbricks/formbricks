@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TI18nString, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import {
   AppPieChartIcon,
@@ -28,12 +28,22 @@ import {
 
 const thankYouCardDefault = {
   enabled: true,
-  headline: "Thank you!",
-  subheader: "We appreciate your feedback.",
+  headline: {
+    _i18n_: false,
+    en: "Thank you!",
+  } as TI18nString,
+  subheader: {
+    _i18n_: false,
+    en: "TWe appreciate your feedback.",
+  } as TI18nString,
 };
 
 const welcomeCardDefault = {
   enabled: true,
+  headline: {
+    _i18n_: false,
+    en: "Welcome!",
+  } as TI18nString,
   timeToFinish: false,
   showResponseCount: false,
 };

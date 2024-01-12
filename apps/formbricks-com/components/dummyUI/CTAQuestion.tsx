@@ -15,7 +15,7 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
   return (
     <div>
       <Headline headline={getLocalizedValue(question.headline, "en")} questionId={question.id} />
-      <HtmlBody htmlString={question.html || ""} questionId={question.id} />
+      <HtmlBody htmlString={getLocalizedValue(question.html, "en") || ""} questionId={question.id} />
 
       <div className="mt-4 flex w-full justify-end">
         <div></div>
@@ -26,7 +26,7 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
               onSubmit({ [question.id]: "dismissed" });
             }}
             className="mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 text-slate-500 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:border-slate-400 dark:text-slate-400">
-            {question.dismissButtonLabel || "Skip"}
+            {getLocalizedValue(question.dismissButtonLabel, "en") || "Skip"}
           </button>
         )}
         <button
@@ -39,7 +39,7 @@ export default function CTAQuestion({ question, onSubmit, lastQuestion, brandCol
           }}
           className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           style={{ backgroundColor: brandColor }}>
-          {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
+          {getLocalizedValue(question.buttonLabel, "en") || (lastQuestion ? "Finish" : "Next")}
         </button>
       </div>
     </div>

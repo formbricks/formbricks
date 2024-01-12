@@ -82,6 +82,7 @@ const SummaryPage = ({
       <SummaryList
         responses={filterResponses}
         survey={survey}
+        languages={product.languages}
         environment={environment}
         responsesPerPage={openTextResponsesPerPage}
       />

@@ -2,7 +2,7 @@ import FormbricksBranding from "@/components/general/FormbricksBranding";
 import ProgressBar from "@/components/general/ProgressBar";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
-import { cn } from "@/lib/utils";
+import { cn, getLocalizedValue } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
 import { useEffect, useRef, useState } from "preact/hooks";
 
@@ -131,7 +131,7 @@ export function Survey({
       return (
         <WelcomeCard
           headline={survey.welcomeCard.headline}
-          html={survey.welcomeCard.html}
+          html={getLocalizedValue(survey.welcomeCard.html, language)}
           fileUrl={survey.welcomeCard.fileUrl}
           buttonLabel={survey.welcomeCard.buttonLabel}
           onSubmit={onSubmit}

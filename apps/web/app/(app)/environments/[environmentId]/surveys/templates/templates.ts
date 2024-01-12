@@ -1,29 +1,32 @@
 import { createId } from "@paralleldrive/cuid2";
 
-import {
-  TSurvey,
-  TSurveyHiddenFields,
-  TSurveyQuestionType,
-  TSurveyWelcomeCard,
-} from "@formbricks/types/surveys";
+import { TI18nString, TSurvey, TSurveyHiddenFields, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
-
-const thankYouCardDefault = {
-  enabled: true,
-  headline: "Thank you!",
-  subheader: "We appreciate your feedback.",
-};
 
 const hiddenFieldsDefault: TSurveyHiddenFields = {
   enabled: true,
   fieldIds: [],
 };
 
-const welcomeCardDefault: TSurveyWelcomeCard = {
-  enabled: false,
-  headline: "Welcome!",
-  html: "Thanks for providing your feedback - let's go!",
-  timeToFinish: true,
+const thankYouCardDefault = {
+  enabled: true,
+  headline: {
+    _i18n_: false,
+    en: "Thank you!",
+  } as TI18nString,
+  subheader: {
+    _i18n_: false,
+    en: "TWe appreciate your feedback.",
+  } as TI18nString,
+};
+
+const welcomeCardDefault = {
+  enabled: true,
+  headline: {
+    _i18n_: false,
+    en: "Welcome!",
+  } as TI18nString,
+  timeToFinish: false,
   showResponseCount: false,
 };
 
@@ -319,11 +322,7 @@ export const testTemplate: TTemplate = {
       },
     ],
     thankYouCard: thankYouCardDefault,
-    welcomeCard: {
-      enabled: false,
-      timeToFinish: false,
-      showResponseCount: false,
-    },
+    welcomeCard: welcomeCardDefault,
     hiddenFields: {
       enabled: false,
     },

@@ -127,7 +127,7 @@ export default function OpenQuestionForm({
           <LocalizedInput
             id="placeholder"
             name="placeholder"
-            value={question.placeholder ?? defaultPlaceholder}
+            value={(question.placeholder as TI18nString) ?? defaultPlaceholder}
             languages={languages}
             isInValid={isInValid}
             onChange={(e) => {

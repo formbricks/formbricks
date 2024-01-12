@@ -118,12 +118,22 @@ export default function NPSQuestionForm({
         <div className="mt-3">
           <Label htmlFor="buttonLabel">Button Label</Label>
           <div className="mt-2">
-            <Input
+            <LocalizedInput
               id="buttonLabel"
               name="buttonLabel"
-              value={question.buttonLabel}
+              value={question.buttonLabel as TI18nString}
               placeholder={lastQuestion ? "Finish" : "Next"}
-              onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+              languages={languages}
+              isInValid={isInValid}
+              onChange={(e) => {
+                let translatedButtonLabel = {
+                  ...(question.buttonLabel as TI18nString),
+                  [selectedLanguage]: e.target.value,
+                };
+                updateQuestion(questionIdx, { buttonLabel: translatedButtonLabel });
+              }}
+              selectedLanguage={selectedLanguage}
+              setSelectedLanguage={setSelectedLanguage}
             />
           </div>
         </div>

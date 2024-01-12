@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 import Modal from "./Modal";
@@ -67,8 +68,8 @@ export default function PreviewSurvey({
         {activeQuestionId == "thank-you-card" ? (
           <ThankYouCard
             brandColor={brandColor}
-            headline={localSurvey?.thankYouCard?.headline || ""}
-            subheader={localSurvey?.thankYouCard?.subheader || ""}
+            headline={getLocalizedValue(localSurvey?.thankYouCard?.headline, "en") || ""}
+            subheader={getLocalizedValue(localSurvey?.thankYouCard?.subheader, "en") || ""}
           />
         ) : (
           questions.map(

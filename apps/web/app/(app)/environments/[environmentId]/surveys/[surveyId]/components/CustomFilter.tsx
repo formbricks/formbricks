@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 
 import { getTodaysDateFormatted } from "@formbricks/lib/time";
 import useClickOutside from "@formbricks/lib/useClickOutside";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -111,7 +112,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
           if (answer) {
             updatedResponse.push({
               id: createId(),
-              question: question.headline,
+              question: getLocalizedValue(question.headline, "en"),
               type: question.type,
               scale: question.scale,
               range: question.range,
@@ -158,7 +159,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
   const downloadResponses = useCallback(
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
       const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
-      const questionNames = survey.questions?.map((question) => question.headline);
+      const questionNames = survey.questions?.map((question) => getLocalizedValue(question.headline, "en"));
       const hiddenFieldIds = survey.hiddenFields.fieldIds;
       const hiddenFieldResponse = {};
       let metaDataFields = extracMetadataKeys(downloadResponse[0].meta);

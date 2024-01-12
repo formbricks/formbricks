@@ -156,12 +156,22 @@ export default function RatingQuestionForm({
           <div className="flex-1">
             <Label htmlFor="buttonLabel">Dismiss Button Label</Label>
             <div className="mt-2">
-              <Input
+              <LocalizedInput
                 id="dismissButtonLabel"
                 name="dismissButtonLabel"
-                value={question.buttonLabel}
+                value={question.buttonLabel as TI18nString}
                 placeholder={lastQuestion ? "Finish" : "Next"}
-                onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
+                languages={languages}
+                isInValid={isInValid}
+                onChange={(e) => {
+                  let translatedButtonLabel = {
+                    ...(question.buttonLabel as TI18nString),
+                    [selectedLanguage]: e.target.value,
+                  };
+                  updateQuestion(questionIdx, { buttonLabel: translatedButtonLabel });
+                }}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
               />
             </div>
           </div>

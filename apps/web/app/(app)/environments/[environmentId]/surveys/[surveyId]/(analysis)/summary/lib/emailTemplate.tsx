@@ -73,7 +73,9 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
             {getLocalizedValue(firstQuestion.headline, "en")}
           </Text>
           <Container className="m-0 text-sm font-normal leading-6 text-slate-500">
-            <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
+            <Text
+              className="m-0 p-0"
+              dangerouslySetInnerHTML={{ __html: getLocalizedValue(firstQuestion.html, "en") || "" }}></Text>
           </Container>
 
           <Container className="m-0 mt-4 block w-full max-w-none rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 font-medium text-slate-800">
@@ -142,7 +144,9 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
             {getLocalizedValue(firstQuestion.headline, "en")}
           </Text>
           <Container className="mt-2 text-sm font-normal leading-6 text-slate-500">
-            <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
+            <Text
+              className="m-0 p-0"
+              dangerouslySetInnerHTML={{ __html: getLocalizedValue(firstQuestion.html, "en") || "" }}></Text>
           </Container>
 
           <Container className="mx-0 mt-4 max-w-none">
@@ -150,7 +154,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
               <EmailButton
                 href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
                 className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
-                {firstQuestion.dismissButtonLabel || "Skip"}
+                {getLocalizedValue(firstQuestion.dismissButtonLabel, "en") || "Skip"}
               </EmailButton>
             )}
             <EmailButton
@@ -159,7 +163,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
                 "bg-brand-color inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
                 isLight(brandColor) ? "text-black" : "text-white"
               )}>
-              {firstQuestion.buttonLabel}
+              {getLocalizedValue(firstQuestion.buttonLabel, "en")}
             </EmailButton>
           </Container>
           <EmailFooter />
@@ -289,7 +293,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {firstQuestion.subheader}
+            {getLocalizedValue(firstQuestion.subheader, "en")}
           </Text>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
             You have been invited to schedule a meet via cal.com Open Survey to continue{" "}
@@ -301,10 +305,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {firstQuestion.headline}
+            {getLocalizedValue(firstQuestion.headline, "en")}
           </Text>
           <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {firstQuestion.subheader}
+            {getLocalizedValue(firstQuestion.subheader, "en")}
           </Text>
           <Section className="mt-4 flex h-12 w-full items-center justify-center rounded-lg border border-solid border-gray-200 bg-white">
             <CalendarDaysIcon className="mb-1 inline h-4 w-4" />
