@@ -240,6 +240,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Notion", href: "/docs/integrations/notion" },
       { title: "Make.com", href: "/docs/integrations/make" },
       { title: "n8n", href: "/docs/integrations/n8n" },
+      { title: "Wordpress", href: "/docs/integrations/wordpress" },
       { title: "Zapier", href: "/docs/integrations/zapier" },
     ],
   },
@@ -285,15 +286,6 @@ export const navigation: Array<NavGroup> = [
       { title: "People", href: "/docs/api/management/people" },
       { title: "Surveys", href: "/docs/api/management/surveys" },
       { title: "Webhooks", href: "/docs/api/management/webhooks" },
-    ],
-  },
-  {
-    title: "WordPress",
-    links: [
-      { title: "Setup", href: "/docs/wordpress/setup" },
-      /*       { title: "Styling", href: "/docs/wordpress/styling" },
-      { title: "Targeting", href: "/docs/wordpress/targeting" },
-      { title: "Exit Intent", href: "/docs/wordpress/exit-intent" }, */
     ],
   },
 ];
