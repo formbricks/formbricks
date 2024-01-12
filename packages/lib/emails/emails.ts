@@ -97,13 +97,13 @@ export const sendGettingStartedEmail = async (user: TEmailUserWithName) => {
     subject: "Get started with Formbricks 🤸",
     html: withEmailTemplate(`
     <h1 style="text-align: center; line-height: 1.2; padding-top: 16px; padding-bottom:8px;">Turn customer insights into irresistable experiences</h1>
-    <a href="https://app.formbricks.com"><img src="https://formbricks-cdn.s3.eu-central-1.amazonaws.com/getting-started-with-formbricks-v5.png" alt="Formbricks can do it all" /></a>
+    <a href="https://app.formbricks.com?utm_source=dripCampaign&utm_medium=email&utm_campaign=firstDripMail&utm_content=topImage"><img src="https://formbricks-cdn.s3.eu-central-1.amazonaws.com/getting-started-with-formbricks-v5.png" alt="Formbricks can do it all" /></a>
     <h3 style="text-align:center;">Welcome to Formbricks! 🤗</h3>
     <p style="text-align:center;">We're the fastest growing Experience Management platform! Gracefully collect feedback without survey fatigue. Are you ready?</p>
     <div style="text-align:center; margin-bottom:72px;">
-    <a class="button" href="https://app.formbricks.com">Create your survey</a><br/>
+    <a class="button" href="https://app.formbricks.com?utm_source=dripCampaign&utm_medium=email&utm_campaign=firstDripMail&utm_content=firstButton">Create your survey</a><br/>
     </div>
-    <a href="https://app.formbricks.com"><img style="border-radius:16px; box-shadow: 10px 10px 57px -21px rgba(71,85,105,0.58);" src="https://formbricks-cdn.s3.eu-central-1.amazonaws.com/getting-started-header-v4.png" alt="Formbricks can do it all"></a>
+    <a href="https://app.formbricks.com?utm_source=dripCampaign&utm_medium=email&utm_campaign=firstDripMail&utm_content=secondImage"><img style="border-radius:16px; box-shadow: 10px 10px 57px -21px rgba(71,85,105,0.58);" src="https://formbricks-cdn.s3.eu-central-1.amazonaws.com/getting-started-header-v4.png" alt="Formbricks can do it all"></a>
     <h2 style="margin-top:32px;">Collect feedback everywhere!</h2>
     <p>Formbricks is very versatile. Run:</p>
     <ul>
@@ -113,7 +113,7 @@ export const sendGettingStartedEmail = async (user: TEmailUserWithName) => {
         <li><b>Headless Surveys</b> via API</li>
     </ul>
     <p>All on one, open source platform ✅</p>
-    <a class="button" style="margin-bottom:12px; margin-top:0px;" href="https://app.formbricks.com">Create your survey</a><br/>
+    <a class="button" style="margin-bottom:12px; margin-top:0px;" href="https://app.formbricks.com?utm_source=dripCampaign&utm_medium=email&utm_campaign=firstDripMail&utm_content=secondButton">Create your survey</a><br/>
     <p style="margin-bottom:0px; margin-top:40px; text-align:center;"><b>Life is short, craft something irresistable!</b><br/>The Formbricks Team 🤍</p>   
     `),
   });
