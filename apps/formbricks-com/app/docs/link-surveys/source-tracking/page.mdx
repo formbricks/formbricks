@@ -12,9 +12,9 @@ export const metadata = {
 
 # Source Tracking
 
-This guide will help you understand how to you can track the source of your users that visit and fill your link surveys in an easy & compliant way!
+Understand the source a survey respondent comes from when responding to your survey - all while keeping data privacy standards high!
 
-Check this video to learn more about source tracking in link surveys:
+Check out this video to learn more about source tracking in link surveys:
 
 {/* Replace link below with our new link on Source Tracking */}
 <iframe width="700" height="450" src="https://www.youtube.com/embed/CytWhuyEMVI?si=t-SFB2A1l1RZDdAC" title="YouTube video player: Formbricks" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
@@ -26,12 +26,12 @@ Source tracking for link surveys is essential when you:
 - Want to analyze the origin of your survey respondents.
 - Aim to ensure compliance with tracking and data collection regulations.
 
-## Quick Example
+## Code Example
 <Col>
 <CodeGroup title="Example Source as Google">
 
 ```sh
-https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?source=Google
+https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?source=Google
 ```
 
 </CodeGroup>
@@ -41,16 +41,19 @@ https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?source=Google
 
 To track the source of users in your link surveys effectively, follow these steps:
 
-1. **Generate Survey URL**: Create a Link Survey and get the sharable link. Now append the link with a `?source=<your-source>` to reference it with your campaigns and sources.
+1. **Generate Survey URL**: Create a Link Survey and get the sharable link. Append `?source=YourSouce` to the link to reference it with your campaigns and sources.
 
-<Image
-    src={ShareLink}
-    alt="Share Survey Link"
-    quality="100"
-    className="max-w-full rounded-lg sm:max-w-3xl"
-/>
+<Col>
+<CodeGroup title="Example Source as Google">
 
-2. **Collect Data**: When users access the survey through these unique links, the URL parameters will capture the source information from which they were shared.
+```sh
+https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?source=Google
+```
+
+</CodeGroup>
+</Col>
+
+2. **Collect Data**: When users access the survey through these links, the URL parameters will capture the source information from which they were shared.
 
 3. **View Responses**: Use the collected source data to analyze where your survey respondents are coming from. You can hover over the user icon in the responses tab to see the source of the user.
 
