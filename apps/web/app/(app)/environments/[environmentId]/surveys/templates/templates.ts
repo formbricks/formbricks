@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 
-import { TI18nString, TSurvey, TSurveyHiddenFields, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyHiddenFields, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 
 const hiddenFieldsDefault: TSurveyHiddenFields = {
@@ -10,22 +10,13 @@ const hiddenFieldsDefault: TSurveyHiddenFields = {
 
 const thankYouCardDefault = {
   enabled: true,
-  headline: {
-    _i18n_: false,
-    en: "Thank you!",
-  } as TI18nString,
-  subheader: {
-    _i18n_: false,
-    en: "TWe appreciate your feedback.",
-  } as TI18nString,
+  headline: "Thank You",
+  subheader: "We appreciate your feedback.",
 };
 
 const welcomeCardDefault = {
   enabled: false,
-  headline: {
-    _i18n_: false,
-    en: "Welcome!",
-  } as TI18nString,
+  headline: "Welcome!",
   timeToFinish: false,
   showResponseCount: false,
 };

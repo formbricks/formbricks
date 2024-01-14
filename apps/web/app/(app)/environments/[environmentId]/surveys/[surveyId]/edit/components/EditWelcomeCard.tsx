@@ -10,7 +10,6 @@ import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -169,11 +168,24 @@ export default function EditWelcomeCard({
                 <div className="w-full">
                   <Label htmlFor="buttonLabel">Button Label</Label>
                   <div className="mt-2">
-                    <Input
+                    <LocalizedInput
                       id="buttonLabel"
                       name="buttonLabel"
-                      defaultValue={localSurvey?.welcomeCard?.buttonLabel || "Next"}
-                      onChange={(e) => updateSurvey({ buttonLabel: e.target.value })}
+                      value={localSurvey?.welcomeCard?.buttonLabel as TI18nString}
+                      maxLength={48}
+                      placeholder={"Next"}
+                      defaultValue="Next"
+                      languages={languages}
+                      isInValid={isInValid}
+                      onChange={(e) => {
+                        let translatedNextButtonLabel = {
+                          ...(localSurvey.welcomeCard.buttonLabel as TI18nString),
+                          [selectedLanguage]: e.target.value,
+                        };
+                        updateSurvey({ buttonLabel: translatedNextButtonLabel });
+                      }}
+                      selectedLanguage={selectedLanguage}
+                      setSelectedLanguage={setSelectedLanguage}
                     />
                   </div>
                 </div>

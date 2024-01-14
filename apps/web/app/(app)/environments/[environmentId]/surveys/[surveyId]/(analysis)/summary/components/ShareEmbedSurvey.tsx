@@ -37,6 +37,10 @@ export default function ShareEmbedSurvey({
   const { brandColor } = product;
   const surveyBrandColor = survey.productOverwrites?.brandColor || brandColor;
 
+  const surveyLanguages = Object.entries(product.languages)
+    .filter(([langCode]) => survey.questions[0].headline[langCode])
+    .map((lang) => lang);
+
   const tabs = [
     { id: "link", label: `${isSingleUseLinkSurvey ? "Single Use Links" : "Share the Link"}`, icon: LinkIcon },
     { id: "email", label: "Embed in an Email", icon: EnvelopeIcon },
@@ -82,7 +86,12 @@ export default function ShareEmbedSurvey({
               {isSingleUseLinkSurvey ? (
                 <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={webAppUrl} />
               ) : activeId === "link" ? (
-                <LinkTab surveyUrl={surveyUrl} survey={survey} brandColor={surveyBrandColor} />
+                <LinkTab
+                  surveyUrl={surveyUrl}
+                  survey={survey}
+                  brandColor={surveyBrandColor}
+                  surveyLanguages={surveyLanguages}
+                />
               ) : activeId === "email" ? (
                 <EmailTab surveyId={survey.id} email={email} />
               ) : activeId === "webpage" ? (

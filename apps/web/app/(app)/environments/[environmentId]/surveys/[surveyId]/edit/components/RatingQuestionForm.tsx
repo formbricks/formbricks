@@ -4,10 +4,10 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
 import Dropdown from "./RatingTypeDropdown";
@@ -76,7 +76,7 @@ export default function RatingQuestionForm({
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
+                  updateQuestion(questionIdx, { subheader: createI18nString("") });
                 }}
               />
             </div>
@@ -128,24 +128,44 @@ export default function RatingQuestionForm({
         <div className="flex-1">
           <Label htmlFor="lowerLabel">Lower label</Label>
           <div className="mt-2">
-            <Input
+            <LocalizedInput
               id="lowerLabel"
               name="lowerLabel"
+              value={question.lowerLabel as TI18nString}
               placeholder="Not good"
-              value={question.lowerLabel}
-              onChange={(e) => updateQuestion(questionIdx, { lowerLabel: e.target.value })}
+              languages={languages}
+              isInValid={isInValid}
+              onChange={(e) => {
+                let translatedLowerLabel = {
+                  ...(question.lowerLabel as TI18nString),
+                  [selectedLanguage]: e.target.value,
+                };
+                updateQuestion(questionIdx, { lowerLabel: translatedLowerLabel });
+              }}
+              selectedLanguage={selectedLanguage}
+              setSelectedLanguage={setSelectedLanguage}
             />
           </div>
         </div>
         <div className="flex-1">
           <Label htmlFor="upperLabel">Upper label</Label>
           <div className="mt-2">
-            <Input
+            <LocalizedInput
               id="upperLabel"
               name="upperLabel"
+              value={question.upperLabel as TI18nString}
               placeholder="Very satisfied"
-              value={question.upperLabel}
-              onChange={(e) => updateQuestion(questionIdx, { upperLabel: e.target.value })}
+              languages={languages}
+              isInValid={isInValid}
+              onChange={(e) => {
+                let translatedUpperLabel = {
+                  ...(question.upperLabel as TI18nString),
+                  [selectedLanguage]: e.target.value,
+                };
+                updateQuestion(questionIdx, { upperLabel: translatedUpperLabel });
+              }}
+              selectedLanguage={selectedLanguage}
+              setSelectedLanguage={setSelectedLanguage}
             />
           </div>
         </div>

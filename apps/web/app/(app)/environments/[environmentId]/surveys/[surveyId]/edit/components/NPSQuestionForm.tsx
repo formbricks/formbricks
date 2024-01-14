@@ -8,7 +8,6 @@ import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInp
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
 interface NPSQuestionFormProps {
@@ -89,26 +88,46 @@ export default function NPSQuestionForm({
         )}
       </div>
 
-      <div className="mt-3 flex justify-between">
-        <div>
+      <div className="mt-3 flex justify-between space-x-2">
+        <div className="w-full">
           <Label htmlFor="subheader">Lower label</Label>
           <div className="mt-2">
-            <Input
-              id="subheader"
-              name="subheader"
-              value={question.lowerLabel}
-              onChange={(e) => updateQuestion(questionIdx, { lowerLabel: e.target.value })}
+            <LocalizedInput
+              id="lowerLabel"
+              name="lowerLabel"
+              value={question.lowerLabel as TI18nString}
+              languages={languages}
+              isInValid={isInValid}
+              onChange={(e) => {
+                let translatedLowerLabel = {
+                  ...(question.lowerLabel as TI18nString),
+                  [selectedLanguage]: e.target.value,
+                };
+                updateQuestion(questionIdx, { lowerLabel: translatedLowerLabel });
+              }}
+              selectedLanguage={selectedLanguage}
+              setSelectedLanguage={setSelectedLanguage}
             />
           </div>
         </div>
-        <div>
+        <div className="w-full">
           <Label htmlFor="subheader">Upper label</Label>
           <div className="mt-2">
-            <Input
-              id="subheader"
-              name="subheader"
-              value={question.upperLabel}
-              onChange={(e) => updateQuestion(questionIdx, { upperLabel: e.target.value })}
+            <LocalizedInput
+              id="upperLabel"
+              name="upperLabel"
+              value={question.upperLabel as TI18nString}
+              languages={languages}
+              isInValid={isInValid}
+              onChange={(e) => {
+                let translatedUpperLabel = {
+                  ...(question.upperLabel as TI18nString),
+                  [selectedLanguage]: e.target.value,
+                };
+                updateQuestion(questionIdx, { upperLabel: translatedUpperLabel });
+              }}
+              selectedLanguage={selectedLanguage}
+              setSelectedLanguage={setSelectedLanguage}
             />
           </div>
         </div>

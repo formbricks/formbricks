@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
@@ -154,7 +155,7 @@ export default function FileUploadQuestionForm({
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
+                  updateQuestion(questionIdx, { subheader: createI18nString("") });
                 }}
               />
             </div>

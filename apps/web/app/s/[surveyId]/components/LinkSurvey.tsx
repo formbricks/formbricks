@@ -1,5 +1,6 @@
 "use client";
 
+import InvalidLanguage from "@/app/s/[surveyId]/components/InvalidLanguage";
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
@@ -8,6 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { FormbricksAPI } from "@formbricks/api";
+import { isSurveyAvailableInSelectedLanguage } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TLanguages, TProduct } from "@formbricks/types/product";
@@ -42,6 +44,7 @@ export default function LinkSurvey({
   languages,
   responseCount,
 }: LinkSurveyProps) {
+  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey, webAppUrl]);
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
@@ -57,6 +60,9 @@ export default function LinkSurvey({
     : undefined;
 
   const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
+  const surveyLanguages = Object.entries(product.languages)
+    .filter(([langCode]) => survey.questions[0].headline[langCode])
+    .map((lang) => lang);
 
   const responseQueue = useMemo(
     () =>
@@ -119,6 +125,9 @@ export default function LinkSurvey({
     }
     //emailVerificationStatus === "not-verified"
     return <VerifyEmail survey={survey} />;
+  }
+  if (languageSymbol && !isSurveyAvailableInSelectedLanguage(languageSymbol, survey)) {
+    return <InvalidLanguage languages={surveyLanguages} surveyUrl={surveyUrl} />;
   }
 
   return (

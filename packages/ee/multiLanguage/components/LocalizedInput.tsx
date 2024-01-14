@@ -16,6 +16,7 @@ interface LocalizedInputProps {
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   languages: string[][];
   maxLength?: number;
+  defaultValue?: string;
 }
 const LocalizedInput = ({
   id,
@@ -29,11 +30,12 @@ const LocalizedInput = ({
   onBlur,
   languages,
   maxLength,
+  defaultValue,
 }: LocalizedInputProps) => {
   const hasi18n = value._i18n_;
   const isInComplete =
     id === "subheader"
-      ? value.en.trim() !== "" &&
+      ? value.en?.trim() !== "" &&
         isInValid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
         selectedLanguage === "en"
@@ -51,6 +53,7 @@ const LocalizedInput = ({
         onBlur={onBlur}
         placeholder={placeholder ?? ""}
         maxLength={maxLength}
+        defaultValue={defaultValue ?? ""}
       />
       {hasi18n && languages?.length > 1 && (
         <div>

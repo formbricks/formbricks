@@ -1,7 +1,10 @@
 import {
   TI18nString,
   TSurveyCTAQuestion,
+  TSurveyConsentQuestion,
+  TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
+  TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
@@ -9,11 +12,11 @@ import { TSurvey, TSurveyMultipleChoiceMultiQuestion, TSurveyQuestion } from "@f
 
 // Helper function to create an i18nString from a regular string.
 // languages = ["german","hindi"]
-const createI18nString = (text: string | TI18nString, languages?: string[]): TI18nString => {
+export const createI18nString = (text: string | TI18nString, languages?: string[]): TI18nString => {
   if (typeof text === "object" && "_i18n_" in text) {
     // It's already an i18n object, so clone it
     const i18nString: TI18nString = { ...text };
-
+    i18nString._i18n_ = true;
     // Add new language keys with empty strings if they don't exist
     languages?.forEach((language) => {
       if (!(language in i18nString)) {
@@ -66,6 +69,7 @@ export const translateWelcomeCard = (
   const clonedWelcomeCard = { ...welcomeCard };
   clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages);
   clonedWelcomeCard.html = createI18nString(welcomeCard.html ?? "", languages);
+  clonedWelcomeCard.buttonLabel = createI18nString(welcomeCard.buttonLabel ?? "", languages);
 
   return clonedWelcomeCard;
 };
@@ -112,6 +116,30 @@ export const translateQuestion = (question: TSurveyQuestion, languages?: string[
       languages
     );
     (clonedQuestion as TSurveyCTAQuestion).html = createI18nString(question.html ?? "", languages);
+  }
+  if (question.type === "consent") {
+    (clonedQuestion as TSurveyConsentQuestion).html = createI18nString(question.html ?? "", languages);
+    (clonedQuestion as TSurveyConsentQuestion).label = createI18nString(question.label ?? "", languages);
+  }
+  if (question.type === "nps") {
+    (clonedQuestion as TSurveyNPSQuestion).lowerLabel = createI18nString(
+      question.lowerLabel ?? "",
+      languages
+    );
+    (clonedQuestion as TSurveyNPSQuestion).upperLabel = createI18nString(
+      question.upperLabel ?? "",
+      languages
+    );
+  }
+  if (question.type === "rating") {
+    (clonedQuestion as TSurveyRatingQuestion).lowerLabel = createI18nString(
+      question.lowerLabel ?? "",
+      languages
+    );
+    (clonedQuestion as TSurveyRatingQuestion).upperLabel = createI18nString(
+      question.upperLabel ?? "",
+      languages
+    );
   }
 
   return clonedQuestion;
@@ -166,4 +194,11 @@ export const isLabelValidForAllLanguages = (label: string | TI18nString, languag
   } else {
     return languages.every((language) => label[language] && label[language].trim() !== "");
   }
+};
+
+export const isSurveyAvailableInSelectedLanguage = (langaugeSymbol: string, survey: TSurvey) => {
+  if ((survey.questions[0].headline as TI18nString)[langaugeSymbol]) {
+    return true;
+  }
+  return false;
 };

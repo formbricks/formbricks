@@ -16,8 +16,8 @@ export type TI18nString = z.infer<typeof ZI18nObject>;
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
-  headline: z.optional(ZI18nObject),
-  subheader: z.optional(ZI18nObject),
+  headline: z.union([z.string(), ZI18nObject]).optional(),
+  subheader: z.union([z.string(), ZI18nObject]).optional(),
 });
 
 export enum TSurveyQuestionType {
@@ -36,10 +36,10 @@ export enum TSurveyQuestionType {
 
 export const ZSurveyWelcomeCard = z.object({
   enabled: z.boolean(),
-  headline: ZI18nObject,
+  headline: z.union([z.string(), ZI18nObject]),
   html: z.union([z.string(), ZI18nObject]).optional(),
   fileUrl: z.string().optional(),
-  buttonLabel: z.string().optional(),
+  buttonLabel: z.union([z.string(), ZI18nObject]).optional(),
   timeToFinish: z.boolean().default(true),
   showResponseCount: z.boolean().default(false),
 });
@@ -272,7 +272,7 @@ export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Consent),
   html: z.union([z.string(), ZI18nObject]).optional(),
-  label: z.string(),
+  label: z.union([z.string(), ZI18nObject]),
   dismissButtonLabel: z.string().optional(),
   placeholder: z.string().optional(),
   logic: z.array(ZSurveyConsentLogic).optional(),
@@ -300,8 +300,8 @@ export type TSurveyMultipleChoiceMultiQuestion = z.infer<typeof ZSurveyMultipleC
 
 export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.NPS),
-  lowerLabel: z.string(),
-  upperLabel: z.string(),
+  lowerLabel: z.union([z.string(), ZI18nObject]),
+  upperLabel: z.union([z.string(), ZI18nObject]),
   logic: z.array(ZSurveyNPSLogic).optional(),
 });
 
@@ -333,8 +333,8 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Rating),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
-  lowerLabel: z.string(),
-  upperLabel: z.string(),
+  lowerLabel: z.union([z.string(), ZI18nObject]),
+  upperLabel: z.union([z.string(), ZI18nObject]),
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
 

@@ -4,8 +4,8 @@ import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/
 import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
+import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { TI18nString, TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
 interface ConsentQuestionFormProps {
@@ -68,14 +68,22 @@ export default function ConsentQuestionForm({
 
       <div className="mt-3">
         <Label htmlFor="label">Checkbox Label</Label>
-        <Input
+        <LocalizedInput
           id="label"
           name="label"
-          className="mt-2"
-          value={question.label}
+          value={question.label as TI18nString}
+          languages={languages}
+          isInValid={isInValid}
+          onChange={(e) => {
+            let translatedLabel = {
+              ...(question.label as TI18nString),
+              [selectedLanguage]: e.target.value,
+            };
+            updateQuestion(questionIdx, { label: translatedLabel });
+          }}
           placeholder="I agree to the terms and conditions"
-          onChange={(e) => updateQuestion(questionIdx, { label: e.target.value })}
-          isInvalid={isInValid && question.label.trim() === ""}
+          selectedLanguage={selectedLanguage}
+          setSelectedLanguage={setSelectedLanguage}
         />
       </div>
       {/* <div className="mt-3">

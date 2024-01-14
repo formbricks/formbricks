@@ -7,7 +7,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { createI18nString, extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -112,7 +112,7 @@ export default function MultipleChoiceSingleForm({
     if (otherChoice) {
       newChoices = newChoices.filter((choice) => choice.id !== "other");
     }
-    const newChoice = { id: createId(), label: "" };
+    const newChoice = { id: createId(), label: createI18nString("") };
     if (choiceIdx !== undefined) {
       newChoices.splice(choiceIdx + 1, 0, newChoice);
     } else {
@@ -127,7 +127,7 @@ export default function MultipleChoiceSingleForm({
   const addOther = () => {
     if (question.choices.filter((c) => c.id === "other").length === 0) {
       const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
-      newChoices.push({ id: "other", label: "Other" });
+      newChoices.push({ id: "other", label: createI18nString("Other") });
       updateQuestion(questionIdx, {
         choices: newChoices,
         ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
@@ -212,7 +212,7 @@ export default function MultipleChoiceSingleForm({
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
+                  updateQuestion(questionIdx, { subheader: createI18nString("") });
                 }}
               />
             </div>

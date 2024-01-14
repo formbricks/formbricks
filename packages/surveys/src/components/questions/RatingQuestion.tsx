@@ -180,8 +180,8 @@ export default function RatingQuestion({
             ))}
           </div>
           <div className="text-subheading flex justify-between px-1.5 text-xs leading-6">
-            <p className="w-1/2 text-left">{question.lowerLabel}</p>
-            <p className="w-1/2 text-right">{question.upperLabel}</p>
+            <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, language)}</p>
+            <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, language)}</p>
           </div>
         </fieldset>
       </div>

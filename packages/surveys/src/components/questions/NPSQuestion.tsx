@@ -103,8 +103,8 @@ export default function NPSQuestion({
             ))}
           </div>
           <div className="text-info-text flex justify-between px-1.5 text-xs leading-6">
-            <p>{question.lowerLabel}</p>
-            <p>{question.upperLabel}</p>
+            <p>{getLocalizedValue(question.lowerLabel, language)}</p>
+            <p>{getLocalizedValue(question.upperLabel, language)}</p>
           </div>
         </fieldset>
       </div>

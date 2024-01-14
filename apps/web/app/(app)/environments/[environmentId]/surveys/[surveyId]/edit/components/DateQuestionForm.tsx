@@ -2,6 +2,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TI18nString, TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -88,7 +89,7 @@ export default function DateQuestionForm({
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
+                  updateQuestion(questionIdx, { subheader: createI18nString("") });
                 }}
               />
             </div>

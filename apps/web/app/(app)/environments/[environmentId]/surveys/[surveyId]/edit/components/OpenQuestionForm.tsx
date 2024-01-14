@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TI18nString } from "@formbricks/types/surveys";
 import {
   TSurvey,
@@ -58,7 +59,7 @@ export default function OpenQuestionForm({
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
       inputType: inputType,
-      placeholder: getPlaceholderByInputType(inputType),
+      placeholder: createI18nString(getPlaceholderByInputType(inputType)),
       longAnswer: inputType === "text" ? question.longAnswer : false,
     };
     updateQuestion(questionIdx, updatedAttributes);
@@ -107,7 +108,7 @@ export default function OpenQuestionForm({
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
+                  updateQuestion(questionIdx, { subheader: createI18nString("") });
                 }}
               />
             </div>

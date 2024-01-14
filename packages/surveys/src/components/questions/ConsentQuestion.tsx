@@ -68,7 +68,7 @@ export default function ConsentQuestion({
             type="checkbox"
             id={question.id}
             name={question.id}
-            value={question.label}
+            value={getLocalizedValue(question.label, language)}
             onChange={(e) => {
               if (e.target instanceof HTMLInputElement && e.target.checked) {
                 onChange({ [question.id]: "accepted" });
@@ -82,7 +82,7 @@ export default function ConsentQuestion({
             required={question.required}
           />
           <span id={`${question.id}-label`} className="ml-3 font-medium">
-            {question.label}
+            {getLocalizedValue(question.label, language)}
           </span>
         </label>
 
