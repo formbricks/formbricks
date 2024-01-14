@@ -17,7 +17,7 @@ import {
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { produce } from "immer";
 import { Info } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
@@ -34,7 +34,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface WhoToSendCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  // setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
@@ -62,15 +63,23 @@ export default function WhoToSendCard({
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(false);
 
   // sync local survey with user segment
+  // useEffect(() => {
+  //   const updatedLocalSurvey = produce(localSurvey, (draft) => {
+  //     draft.userSegmentId = userSegment?.id ?? null;
+  //     draft.userSegment = userSegment;
+  //   });
+
+  //   setLocalSurvey(updatedLocalSurvey);
+
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [setLocalSurvey, userSegment]);
+
   useEffect(() => {
-    const updatedLocalSurvey = produce(localSurvey, (draft) => {
-      draft.userSegmentId = userSegment?.id ?? null;
-      draft.userSegment = userSegment;
-    });
-
-    setLocalSurvey(updatedLocalSurvey);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setLocalSurvey((localSurveyOld) => ({
+      ...localSurveyOld,
+      userSegmentId: userSegment?.id ?? null,
+      userSegment,
+    }));
   }, [setLocalSurvey, userSegment]);
 
   const isSegmentUsedInOtherSurveys = useMemo(
@@ -116,8 +125,6 @@ export default function WhoToSendCard({
 
     setUserSegment(updatedUserSegment);
   };
-
-  console.log({ userSegment, localSurvey });
 
   return (
     <>

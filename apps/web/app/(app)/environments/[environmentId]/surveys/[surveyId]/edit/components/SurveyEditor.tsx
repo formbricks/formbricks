@@ -121,20 +121,6 @@ export default function SurveyEditor({
   return (
     <>
       <div className="flex h-full flex-col">
-        <Button
-          onClick={async () => {
-            await createUserSegmentAction({
-              title: "",
-              description: "",
-              environmentId: environment.id,
-              surveyId: survey.id,
-              filters: [],
-              isPrivate: true,
-            });
-            router.refresh();
-          }}>
-          Create Segment
-        </Button>
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
           localSurvey={localSurvey}

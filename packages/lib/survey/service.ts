@@ -7,7 +7,7 @@ import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
 import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
@@ -186,10 +186,21 @@ export const getSurveysByAttributeClassId = async (
       const surveys: TSurvey[] = [];
 
       for (const surveyPrisma of surveysPrisma) {
-        const transformedSurvey = {
+        let userSegment: TUserSegment | null = null;
+
+        if (surveyPrisma.userSegment) {
+          userSegment = {
+            ...surveyPrisma.userSegment,
+            surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
+          };
+        }
+
+        const transformedSurvey: TSurvey = {
           ...surveyPrisma,
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+          userSegment,
         };
+
         surveys.push(transformedSurvey);
       }
 
@@ -227,9 +238,19 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       const surveys: TSurvey[] = [];
 
       for (const surveyPrisma of surveysPrisma) {
-        const transformedSurvey = {
+        let userSegment: TUserSegment | null = null;
+
+        if (surveyPrisma.userSegment) {
+          userSegment = {
+            ...surveyPrisma.userSegment,
+            surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
+          };
+        }
+
+        const transformedSurvey: TSurvey = {
           ...surveyPrisma,
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+          userSegment,
         };
         surveys.push(transformedSurvey);
       }
@@ -271,10 +292,21 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
       const surveys: TSurvey[] = [];
 
       for (const surveyPrisma of surveysPrisma) {
-        const transformedSurvey = {
+        let userSegment: TUserSegment | null = null;
+
+        if (surveyPrisma.userSegment) {
+          userSegment = {
+            ...surveyPrisma.userSegment,
+            surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
+          };
+        }
+
+        const transformedSurvey: TSurvey = {
           ...surveyPrisma,
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+          userSegment,
         };
+
         surveys.push(transformedSurvey);
       }
       return surveys;
@@ -435,7 +467,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     // parse the segment filters:
     const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
     if (!parsedFilters.success) {
-      throw new Error("Error parsing user segment");
+      throw new InvalidInputError("Invalid user segment filters");
     }
 
     const { surveys, ...segmentData } = userSegment;
@@ -449,8 +481,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           ...segmentData,
         },
       });
-
-      data;
     } catch (err) {
       console.log({ err });
       throw new Error("Error updating survey");
@@ -543,6 +573,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   }
 
   if (surveyBody.triggers) {
+    const actionClasses = await getActionClasses(environmentId);
     revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
   }
 
@@ -565,9 +596,11 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     select: selectSurvey,
   });
 
-  const transformedSurvey = {
+  const transformedSurvey: TSurvey = {
     ...survey,
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
+    userSegment: null,
+    userSegmentId: null,
   };
 
   surveyCache.revalidate({

@@ -1,8 +1,4 @@
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
-// import LoadingSpinner from "@/components/shared/LoadingSpinner";
-// import { useAttributeClasses } from "@/lib/attributeClasses/attributeClasses";
-// import { useEventClasses } from "@/lib/eventClasses/eventClasses";
-import { produce } from "immer";
 import {
   MonitorSmartphoneIcon,
   MoreVertical,
@@ -15,6 +11,16 @@ import { useEffect, useState } from "react";
 import z from "zod";
 
 import { cn } from "@formbricks/lib/cn";
+import {
+  toggleFilterConnector,
+  updateActionClassIdInFilter,
+  updateAttributeClassIdInFilter,
+  updateDeviceTypeInFilter,
+  updateFilterValue,
+  updateMetricInFilter,
+  updateOperatorInFilter,
+  updateSegmentIdInFilter,
+} from "@formbricks/lib/userSegment/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TUserSegmentFilterValue } from "@formbricks/types/userSegment";
@@ -51,7 +57,6 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 import { Input } from "@formbricks/ui/Input";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 type SegmentFilterItemProps = {
@@ -81,25 +86,10 @@ const SegmentFilterItemConnector = ({
   filterId: string;
 }) => {
   const updateLocalSurvey = (newConnector: TUserSegmentConnector) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              group[i].connector = newConnector;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      toggleFilterConnector(updatedUserSegment.filters, filterId, newConnector);
+    }
 
     setUserSegment(updatedUserSegment);
   };
@@ -166,7 +156,6 @@ type TAttributeSegmentFilterProps = SegmentFilterItemProps & {
 };
 
 const AttributeSegmentFilter = ({
-  environmentId,
   connector,
   resource,
   onAddFilterBelow,
@@ -179,7 +168,6 @@ const AttributeSegmentFilter = ({
   attributeClasses,
 }: TAttributeSegmentFilterProps) => {
   const { attributeClassId } = resource.root;
-  // const { attributeClasses, isLoadingAttributeClasses } = useAttributeClasses(environmentId);
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
   const [valueError, setValueError] = useState("");
@@ -199,14 +187,6 @@ const AttributeSegmentFilter = ({
     }
   }, [resource.qualifier, resource.value]);
 
-  // if (isLoadingAttributeClasses) {
-  //   return (
-  //     <div className="h-10 w-10">
-  //       <LoadingSpinner />
-  //     </div>
-  //   );
-  // }
-
   const operatorArr = ATTRIBUTE_OPERATORS.map((operator) => {
     return {
       id: operator,
@@ -218,51 +198,19 @@ const AttributeSegmentFilter = ({
     ?.name;
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              resource.qualifier.operator = newOperator;
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+    }
 
     setUserSegment(updatedUserSegment);
   };
 
   const updateAttributeClassIdInLocalSurvey = (filterId: string, newAttributeClassId: string) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              (resource as TUserSegmentAttributeFilter).root.attributeClassId = newAttributeClassId;
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateAttributeClassIdInFilter(updatedUserSegment.filters, filterId, newAttributeClassId);
+    }
 
     setUserSegment(updatedUserSegment);
   };
@@ -380,7 +328,6 @@ type TActionSegmentFilterProps = SegmentFilterItemProps & {
   updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
 };
 const ActionSegmentFilter = ({
-  environmentId,
   connector,
   resource,
   userSegment,
@@ -393,19 +340,10 @@ const ActionSegmentFilter = ({
   actionClasses,
 }: TActionSegmentFilterProps) => {
   const { actionClassId } = resource.root;
-  // const { eventClasses, isLoadingEventClasses } = useEventClasses(environmentId);
   const operatorText = convertOperatorToText(resource.qualifier.operator);
   const qualifierMetric = resource.qualifier.metric;
 
   const [valueError, setValueError] = useState("");
-
-  // if (isLoadingEventClasses) {
-  //   return (
-  //     <div className="h-10 w-10">
-  //       <LoadingSpinner />
-  //     </div>
-  //   );
-  // }
 
   const operatorArr = BASE_OPERATORS.map((operator) => ({
     id: operator,
@@ -420,76 +358,28 @@ const ActionSegmentFilter = ({
   const actionClass = actionClasses.find((actionClass) => actionClass.id === actionClassId)?.name;
 
   const updateOperatorInUserSegment = (filterId: string, newOperator: TBaseOperator) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              resource.qualifier.operator = newOperator;
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+    }
 
     setUserSegment(updatedUserSegment);
   };
 
   const updateActionClassIdInUserSegment = (filterId: string, actionClassId: string) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              (resource as TUserSegmentActionFilter).root.actionClassId = actionClassId;
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateActionClassIdInFilter(updatedUserSegment.filters, filterId, actionClassId);
+    }
 
     setUserSegment(updatedUserSegment);
   };
 
   const updateActionMetricInLocalSurvey = (filterId: string, newMetric: TActionMetric) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              (resource as TUserSegmentActionFilter).qualifier.metric = newMetric;
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateMetricInFilter(updatedUserSegment.filters, filterId, newMetric);
+    }
 
     setUserSegment(updatedUserSegment);
   };
@@ -626,52 +516,19 @@ const UserSegmentFilter = ({
   const currentUserSegment = userSegments?.find((segment) => segment.id === userSegmentId);
 
   const updateOperatorInUserSegment = (filterId: string, newOperator: TSegmentOperator) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              resource.qualifier.operator = newOperator;
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+    }
 
     setUserSegment(updatedUserSegment);
   };
 
   const updateSegmentIdInUserSegment = (filterId: string, newSegmentId: string) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              (resource as TUserSegmentSegmentFilter).root.userSegmentId = newSegmentId;
-              resource.value = newSegmentId;
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateSegmentIdInFilter(updatedUserSegment.filters, filterId, newSegmentId);
+    }
 
     setUserSegment(updatedUserSegment);
   };
@@ -762,52 +619,19 @@ const DeviceFilter = ({
   }));
 
   const updateOperatorInUserSegment = (filterId: string, newOperator: TDeviceOperator) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              resource.qualifier.operator = newOperator;
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+    }
 
     setUserSegment(updatedUserSegment);
   };
 
   const updateValueInUserSegment = (filterId: string, newValue: "phone" | "desktop") => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              (resource as TUserSegmentDeviceFilter).root.deviceType = newValue;
-              resource.value = newValue;
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateDeviceTypeInFilter(updatedUserSegment.filters, filterId, newValue);
+    }
 
     setUserSegment(updatedUserSegment);
   };
@@ -890,27 +714,10 @@ const SegmentFilterItem = ({
 }: SegmentFilterItemProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const updateFilterValueInUserSegment = (filterId: string, newValue: string | number) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === filterId) {
-              resource.value = newValue;
-
-              break;
-            }
-          } else {
-            searchAndUpdate(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateFilterValue(updatedUserSegment.filters, filterId, newValue);
+    }
 
     setUserSegment(updatedUserSegment);
   };

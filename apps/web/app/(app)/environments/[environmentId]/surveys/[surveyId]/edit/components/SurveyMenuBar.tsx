@@ -6,8 +6,10 @@ import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import z from "zod";
 
 import { TEnvironment } from "@formbricks/types/environment";
+import { ValidationError } from "@formbricks/types/errors";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
@@ -216,8 +218,6 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = async (shouldNavigateBack = false) => {
-    console.log("localsurvey", localSurvey);
-    console.log(typeof localSurvey.createdAt);
     if (localSurvey.questions.length === 0) {
       toast.error("Please add at least one question.");
       return;
@@ -242,8 +242,6 @@ export default function SurveyMenuBar({
       return;
     }
 
-    console.log("strippedSurvey", strippedSurvey);
-
     try {
       await updateSurveyAction({ ...strippedSurvey });
       setIsSurveySaving(false);
@@ -259,6 +257,7 @@ export default function SurveyMenuBar({
       }
     } catch (e) {
       console.error(e);
+      console.log(e.name);
       setIsSurveySaving(false);
       toast.error(`Error saving changes`);
       return;

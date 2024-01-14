@@ -3,6 +3,7 @@
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { produce } from "immer";
 import { useCallback, useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -74,14 +75,17 @@ export default function WhenToSendCard({
 
   const setTriggerEvent = useCallback(
     (idx: number, actionClassName: string) => {
-      const updatedSurvey = { ...localSurvey };
+      // const updatedSurvey = { ...localSurvey };
       const newActionClass = actionClassArray!.find((actionClass) => {
         return actionClass.name === actionClassName;
       });
       if (!newActionClass) {
         throw new Error("Action class not found");
       }
-      updatedSurvey.triggers[idx] = newActionClass.name;
+      const updatedSurvey = produce(localSurvey, (draft) => {
+        draft.triggers[idx] = newActionClass.name;
+      });
+      // updatedSurvey.triggers[idx] = newActionClass.name;
       setLocalSurvey(updatedSurvey);
     },
     [actionClassArray, localSurvey, setLocalSurvey]

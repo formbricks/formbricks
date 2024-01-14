@@ -1,11 +1,18 @@
 import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 import SegmentFilterItem from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilterItem";
-import { createId } from "@paralleldrive/cuid2";
-import { produce } from "immer";
 import { MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
+import {
+  addFilterBelow,
+  addFilterInGroup,
+  createGroupFromResource,
+  deleteEmptyGroups,
+  deleteResource,
+  moveResource,
+  toggleGroupConnector,
+} from "@formbricks/lib/userSegment/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
@@ -30,7 +37,8 @@ type TSegmentFilterProps = {
   userSegments: TUserSegment[];
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  setUserSegment: (userSegment: TUserSegment) => void;
+  // setUserSegment: (userSegment: TUserSegment) => void;
+  setUserSegment: React.Dispatch<React.SetStateAction<TUserSegment>>;
 };
 
 const SegmentFilters = ({
@@ -46,294 +54,72 @@ const SegmentFilters = ({
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
 
   const handleAddFilterBelow = (resourceId: string, filter: TBaseFilterGroupItem) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
+    const localSegmentCopy = structuredClone(userSegment);
 
-          if (isResourceFilter(resource)) {
-            if (resource.id === resourceId) {
-              group.splice(i + 1, 0, filter);
-              break;
-            }
-          } else {
-            if (group[i].id === resourceId) {
-              group.splice(i + 1, 0, filter);
-              break;
-            } else {
-              searchAndUpdate(resource);
-            }
-          }
-        }
-      };
+    if (localSegmentCopy.filters) {
+      addFilterBelow(localSegmentCopy.filters, resourceId, filter);
+    }
 
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
-
-    setUserSegment(updatedUserSegment);
+    setUserSegment(localSegmentCopy);
   };
 
   const handleCreateGroup = (resourceId: string) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndCreateGroup = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const filterGroup = group[i];
-          if (isResourceFilter(filterGroup.resource)) {
-            if (filterGroup.resource.id === resourceId) {
-              const newGroupToAdd: TBaseFilterGroupItem = {
-                id: createId(),
-                connector: filterGroup.connector,
-                resource: [
-                  {
-                    ...filterGroup,
-                    connector: null,
-                  },
-                ],
-              };
+    const localSegmentCopy = structuredClone(userSegment);
+    if (localSegmentCopy.filters) {
+      createGroupFromResource(localSegmentCopy.filters, resourceId);
+    }
 
-              group.splice(i, 1, newGroupToAdd);
-
-              break;
-            }
-          } else {
-            if (group[i].id === resourceId) {
-              // make an outer group, wrap the current group in it and add a filter below it
-
-              const newFilter: TBaseFilterGroupItem = {
-                id: createId(),
-                connector: "and",
-                resource: {
-                  id: createId(),
-                  root: { type: "attribute", attributeClassId: "" },
-                  qualifier: { operator: "endsWith" },
-                  value: "",
-                },
-              };
-
-              const outerGroup: TBaseFilterGroupItem = {
-                connector: filterGroup.connector,
-                id: createId(),
-                resource: [{ ...filterGroup, connector: null }, newFilter],
-              };
-
-              group.splice(i, 1, outerGroup);
-
-              break;
-            } else {
-              searchAndCreateGroup(filterGroup.resource);
-            }
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndCreateGroup(draft.filters);
-      }
-    });
-
-    setUserSegment(updatedUserSegment);
+    setUserSegment(localSegmentCopy);
   };
 
   const handleMoveResource = (resourceId: string, direction: "up" | "down") => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const moveUp = (group: TBaseFilterGroup, i: number) => {
-        if (i === 0) {
-          return;
-        }
+    const localSegmentCopy = structuredClone(userSegment);
+    if (localSegmentCopy.filters) {
+      moveResource(localSegmentCopy.filters, resourceId, direction);
+    }
 
-        const previousTemp = group[i - 1];
-
-        group[i - 1] = group[i];
-        group[i] = previousTemp;
-
-        if (i - 1 === 0) {
-          const newConnector = group[i - 1].connector;
-
-          group[i - 1].connector = null;
-          group[i].connector = newConnector;
-        }
-      };
-
-      const moveDown = (group: TBaseFilterGroup, i: number) => {
-        if (i === group.length - 1) {
-          return;
-        }
-
-        const temp = group[i + 1];
-        group[i + 1] = group[i];
-        group[i] = temp;
-
-        // after the swap, determine if the connector should be null or not
-        if (i === 0) {
-          const nextConnector = group[i].connector;
-
-          group[i].connector = null;
-          group[i + 1].connector = nextConnector;
-        }
-      };
-
-      const searchAndMove = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (isResourceFilter(resource)) {
-            if (resource.id === resourceId) {
-              if (direction === "up") {
-                moveUp(group, i);
-                break;
-              } else {
-                moveDown(group, i);
-                break;
-              }
-            }
-          } else {
-            if (group[i].id === resourceId) {
-              if (direction === "up") {
-                moveUp(group, i);
-                break;
-              } else {
-                moveDown(group, i);
-                break;
-              }
-            }
-
-            searchAndMove(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        searchAndMove(draft.filters);
-      }
-    });
-
-    setUserSegment(updatedUserSegment);
+    setUserSegment(localSegmentCopy);
   };
 
   const handleDeleteResource = (resourceId: string) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const deleteResource = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
+    const localSegmentCopy = structuredClone(userSegment);
 
-          if (isResourceFilter(resource) && resource.id === resourceId) {
-            group.splice(i, 1);
+    if (localSegmentCopy.filters) {
+      deleteResource(localSegmentCopy.filters, resourceId);
 
-            if (group.length) {
-              group[0].connector = null;
-            }
+      // check if there are any empty groups and delete them
+      deleteEmptyGroups(localSegmentCopy.filters);
+    }
 
-            break;
-          } else if (!isResourceFilter(resource) && group[i].id === resourceId) {
-            group.splice(i, 1);
-
-            if (group.length) {
-              group[0].connector = null;
-            }
-
-            break;
-          } else if (!isResourceFilter(resource)) {
-            deleteResource(resource);
-          }
-        }
-      };
-
-      const deleteEmptyGroups = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-
-          if (!isResourceFilter(resource) && resource.length === 0) {
-            group.splice(i, 1);
-          } else if (!isResourceFilter(resource)) {
-            deleteEmptyGroups(resource);
-          }
-        }
-      };
-
-      if (draft.filters) {
-        deleteResource(draft.filters);
-
-        // check if there are any empty groups and delete them
-        deleteEmptyGroups(draft.filters);
-      }
-    });
-
-    setUserSegment(updatedUserSegment);
+    setUserSegment(localSegmentCopy);
   };
 
-  const toggleGroupConnector = (groupId: string, newConnectorValue: TUserSegmentConnector) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const searchAndUpdate = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
-          if (!isResourceFilter(resource)) {
-            if (group[i].id === groupId) {
-              group[i].connector = newConnectorValue;
-              break;
-            } else {
-              searchAndUpdate(resource);
-            }
-          }
-        }
-      };
+  const handleToggleGroupConnector = (groupId: string, newConnectorValue: TUserSegmentConnector) => {
+    const localSegmentCopy = structuredClone(userSegment);
+    if (localSegmentCopy.filters) {
+      toggleGroupConnector(localSegmentCopy.filters, groupId, newConnectorValue);
+    }
 
-      if (draft.filters) {
-        searchAndUpdate(draft.filters);
-      }
-    });
-
-    setUserSegment(updatedUserSegment);
+    setUserSegment(localSegmentCopy);
   };
 
   const onConnectorChange = (groupId: string, connector: TUserSegmentConnector) => {
     if (!connector) return;
 
     if (connector === "and") {
-      toggleGroupConnector(groupId, "or");
+      handleToggleGroupConnector(groupId, "or");
     } else {
-      toggleGroupConnector(groupId, "and");
+      handleToggleGroupConnector(groupId, "and");
     }
   };
 
   const handleAddFilterInGroup = (groupId: string, filter: TBaseFilterGroupItem) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      const addFilter = (group: TBaseFilterGroup) => {
-        for (let i = 0; i < group.length; i++) {
-          const { resource } = group[i];
+    const localSegmentCopy = structuredClone(userSegment);
 
-          if (isResourceFilter(resource)) {
-            continue;
-          } else {
-            if (group[i].id === groupId) {
-              const { resource } = group[i];
-
-              if (!isResourceFilter(resource)) {
-                if (resource.length === 0) {
-                  resource.push({
-                    ...filter,
-                    connector: null,
-                  });
-                } else {
-                  resource.push(filter);
-                }
-              }
-
-              break;
-            } else {
-              addFilter(resource);
-            }
-          }
-        }
-      };
-
-      if (draft.filters) {
-        addFilter(draft.filters);
-      }
-    });
-
-    setUserSegment(updatedUserSegment);
+    if (localSegmentCopy.filters) {
+      addFilterInGroup(localSegmentCopy.filters, groupId, filter);
+    }
+    setUserSegment(localSegmentCopy);
   };
 
   return (
