@@ -104,7 +104,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, sessio
                       value={choice.label}
                       name="role"
                       checked={choice.label === selectedChoice}
-                      className="checked:text-brand-dark  focus:text-brand-dark h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+                      className="checked:text-brand-dark focus:text-brand-dark h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                       aria-labelledby={`${choice.id}-label`}
                       onChange={(e) => {
                         setSelectedChoice(e.currentTarget.value);

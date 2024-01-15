@@ -33,7 +33,7 @@ export default function StylingCard({
   const { type, productOverwrites, styling } = localSurvey;
   const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
     productOverwrites ?? {};
-  const { bg, bgType, brightness } = styling?.background ?? {};
+  const { bgType } = styling?.background ?? {};
 
   const [inputValue, setInputValue] = useState(100);
 

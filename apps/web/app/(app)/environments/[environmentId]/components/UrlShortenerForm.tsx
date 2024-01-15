@@ -21,7 +21,6 @@ export default function UrlShortenerForm({ webAppUrl }: { webAppUrl: string }) {
     register,
     handleSubmit,
     watch,
-
     formState: { isSubmitting },
   } = useForm<UrlShortenerFormDataProps>({
     mode: "onSubmit",
