@@ -4,7 +4,7 @@ on:
 jobs:
   build:
     name: Run E2E Tests
-    runs-on: ubuntu-latest
+    runs-on: buildjet-4vcpu-ubuntu-2204
     timeout-minutes: 60
 
     steps:
