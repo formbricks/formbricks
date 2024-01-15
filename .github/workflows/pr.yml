@@ -1,6 +1,9 @@
 name: PR Update
 
 on:
+  push:
+    branches:
+      - shubham/integrate-buildjet
   pull_request_target:
     branches:
       - main
@@ -35,7 +38,7 @@ jobs:
   required:
     needs: [lint, test, build, e2e-test]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
       - name: fail if conditional jobs failed
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') || contains(needs.*.result, 'cancelled')
