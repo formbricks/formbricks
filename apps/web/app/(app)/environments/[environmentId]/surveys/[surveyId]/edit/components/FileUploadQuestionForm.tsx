@@ -1,5 +1,6 @@
 "use client";
 
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -24,6 +25,7 @@ interface FileUploadFormProps {
 }
 
 export default function FileUploadQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
@@ -102,21 +104,17 @@ export default function FileUploadQuestionForm({
     return 10;
   }, [billingInfo, billingInfoError, billingInfoLoading]);
 
+  const environmentId = localSurvey.environmentId;
+
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            autoFocus
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
-        </div>
-      </div>
+      <QuestionFormInput
+        environmentId={environmentId}
+        isInValid={isInValid}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+      />
       <div className="mt-3">
         {showSubheader && (
           <>

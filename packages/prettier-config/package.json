@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
-    "prettier": "^3.1.1",
-    "prettier-plugin-tailwindcss": "^0.5.10"
+    "prettier": "^3.2.1",
+    "prettier-plugin-tailwindcss": "^0.5.11"
   }
 }

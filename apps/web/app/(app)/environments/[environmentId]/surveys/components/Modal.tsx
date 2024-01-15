@@ -20,34 +20,42 @@ export default function Modal({
   const [show, setShow] = useState(false);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const calculateScaling = () => {
-    const scaleValue = (() => {
-      if (windowWidth > 1600) return "1";
-      else if (windowWidth > 1200) return ".9";
-      else if (windowWidth > 900) return ".8";
-      return "0.7";
-    })();
 
-    const getPlacementClass = (() => {
-      switch (placement) {
-        case "bottomLeft":
-          return "bottom left";
-        case "bottomRight":
-          return "bottom right";
-        case "topLeft":
-          return "top left";
-        case "topRight":
-          return "top right";
-        default:
-          return "";
+  const calculateScaling = () => {
+    let scaleValue = "1";
+
+    if (previewMode === "mobile") {
+      scaleValue = "1";
+    } else {
+      if (windowWidth > 1600) {
+        scaleValue = "1";
+      } else if (windowWidth > 1200) {
+        scaleValue = ".9";
+      } else if (windowWidth > 900) {
+        scaleValue = ".8";
+      } else {
+        scaleValue = "0.7";
       }
-    })();
+    }
+
+    let placementClass = "";
+
+    if (placement === "bottomLeft") {
+      placementClass = "bottom left";
+    } else if (placement === "bottomRight") {
+      placementClass = "bottom right";
+    } else if (placement === "topLeft") {
+      placementClass = "top left";
+    } else if (placement === "topRight") {
+      placementClass = "top right";
+    }
 
     return {
       transform: `scale(${scaleValue})`,
-      "transform-origin": getPlacementClass,
+      "transform-origin": placementClass,
     };
   };
+
   const scalingClasses = calculateScaling();
 
   useEffect(() => {
@@ -91,7 +99,7 @@ export default function Modal({
         : "";
 
   return (
-    <div aria-live="assertive" className="relative h-full w-full overflow-visible bg-slate-300">
+    <div aria-live="assertive" className="relative h-full w-full bg-slate-300">
       <div
         ref={modalRef}
         style={{ ...highlightBorderColorStyle, ...scalingClasses }}

@@ -21,7 +21,7 @@ interface StylingCardProps {
 
 export default function StylingCard({ localSurvey, setLocalSurvey, colours }: StylingCardProps) {
   const [open, setOpen] = useState(false);
-
+  const progressBarHidden = localSurvey.styling?.hideProgressBar ?? false;
   const { type, productOverwrites, styling } = localSurvey;
   const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
     productOverwrites ?? {};
@@ -171,6 +171,16 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
       productOverwrites: {
         ...localSurvey.productOverwrites,
         clickOutsideClose,
+      },
+    });
+  };
+
+  const toggleProgressBarVisibility = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...localSurvey.styling,
+        hideProgressBar: !progressBarHidden,
       },
     });
   };
@@ -342,6 +352,23 @@ export default function StylingCard({ localSurvey, setLocalSurvey, colours }: St
               )}
             </div>
           )}
+          <div className="p-3">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch
+                id="hideProgressBar"
+                checked={progressBarHidden}
+                onCheckedChange={toggleProgressBarVisibility}
+              />
+              <Label htmlFor="hideProgressBar" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Disable the visibility of survey progress
+                  </p>
+                </div>
+              </Label>
+            </div>
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
