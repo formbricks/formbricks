@@ -23,7 +23,7 @@
     }
   },
   "scripts": {
-    "dev": "SURVEYS_PACKAGE_MODE=development vite build --watch",
+    "dev": "vite build --watch --mode dev",
     "build": "pnpm run build:surveys && pnpm run build:question-date",
     "build:surveys": "tsc && SURVEYS_PACKAGE_BUILD=surveys vite build",
     "build:question-date": "tsc && SURVEYS_PACKAGE_BUILD=question-date vite build",
