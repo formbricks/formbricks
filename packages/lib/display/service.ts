@@ -256,7 +256,7 @@ export const markDisplayRespondedLegacy = async (displayId: string): Promise<TDi
       data: {
         status: "responded",
       },
-      select: { ...selectDisplay, status: true },
+      select: { ...selectDisplay },
     });
 
     if (!display) {

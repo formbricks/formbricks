@@ -49,6 +49,7 @@ describe("Tests for getDisplay", () => {
       const display = await getDisplay(mockDisplay.id);
       expect(display).toEqual(mockDisplay);
     });
+
     it("Returns all displays associated with a given person ID", async () => {
       prismaMock.display.findMany.mockResolvedValue([mockDisplayWithPersonId]);
 
