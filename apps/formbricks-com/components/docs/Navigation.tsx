@@ -218,6 +218,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
       { title: "Identify Users", href: "/docs/link-surveys/user-identification" },
       { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
+      { title: "Source Tracking", href: "/docs/link-surveys/source-tracking" },
     ],
   },
   {
@@ -240,6 +241,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Notion", href: "/docs/integrations/notion" },
       { title: "Make.com", href: "/docs/integrations/make" },
       { title: "n8n", href: "/docs/integrations/n8n" },
+      { title: "Wordpress", href: "/docs/integrations/wordpress" },
       { title: "Zapier", href: "/docs/integrations/zapier" },
     ],
   },

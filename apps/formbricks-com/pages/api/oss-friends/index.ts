@@ -111,9 +111,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Langfuse",
-          description:
-            "Open source LLM engineering platform. Debug, analyze and iterate together.",
+          description: "Open source LLM engineering platform. Debug, analyze and iterate together.",
           href: "https://langfuse.com",
+        },
+        {
+          name: "Lost Pixel",
+          description: "Open source visual regression testing alternative to Percy & Chromatic",
+          href: "https://lost-pixel.com",
         },
         {
           name: "Mockoon",

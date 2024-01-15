@@ -45,6 +45,7 @@ export const ZResponseMeta = z.object({
       device: z.string().optional(),
     })
     .optional(),
+  country: z.string().optional(),
 });
 
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
@@ -86,6 +87,7 @@ export const ZResponseInput = z.object({
           os: z.string().optional(),
         })
         .optional(),
+      country: z.string().optional(),
     })
     .optional(),
 });

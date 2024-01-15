@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { randomUUID } from "crypto";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
 import { unstable_cache } from "next/cache";
@@ -61,6 +62,7 @@ type TGetSignedUrlResponse =
   | { signedUrl: string; fileUrl: string; presignedFields: Object }
   | {
       signedUrl: string;
+      updatedFileName: string;
       fileUrl: string;
       signingData: {
         signature: string;
@@ -171,10 +173,21 @@ export const getUploadSignedUrl = async (
   accessType: TAccessType,
   plan: "free" | "pro" = "free"
 ): Promise<TGetSignedUrlResponse> => {
+  // add a unique id to the file name
+
+  const fileExtension = fileName.split(".").pop();
+  const fileNameWithoutExtension = fileName.split(".").slice(0, -1).join(".");
+
+  if (!fileExtension) {
+    throw new Error("File extension not found");
+  }
+
+  const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
+
   // handle the local storage case first
   if (!IS_S3_CONFIGURED) {
     try {
-      const { signature, timestamp, uuid } = generateLocalSignedUrl(fileName, environmentId, fileType);
+      const { signature, timestamp, uuid } = generateLocalSignedUrl(updatedFileName, environmentId, fileType);
 
       return {
         signedUrl:
@@ -186,7 +199,8 @@ export const getUploadSignedUrl = async (
           timestamp,
           uuid,
         },
-        fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
+        updatedFileName,
+        fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
       };
     } catch (err) {
       throw err;
@@ -195,7 +209,7 @@ export const getUploadSignedUrl = async (
 
   try {
     const { presignedFields, signedUrl } = await getS3UploadSignedUrl(
-      fileName,
+      updatedFileName,
       fileType,
       accessType,
       environmentId,
@@ -206,7 +220,7 @@ export const getUploadSignedUrl = async (
     return {
       signedUrl,
       presignedFields,
-      fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`).href,
+      fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
     };
   } catch (err) {
     throw err;

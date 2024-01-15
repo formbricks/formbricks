@@ -55,6 +55,7 @@ export const createSubscription = async (
           billing_cycle_anchor: getFirstOfNextMonthTimestamp(),
           metadata: { teamId },
         },
+        automatic_tax: { enabled: true },
       });
 
       return { status: 200, data: "Your Plan has been upgraded!", newPlan: true, url: session.url };
