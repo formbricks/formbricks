@@ -133,10 +133,8 @@ const QuestionFormInput = ({
           </span>
         );
       }
-
       return parts;
     };
-
     setRenderedText(processInput());
   }, [text]);
 
@@ -174,7 +172,6 @@ const QuestionFormInput = ({
       "@",
       `recall:${recallQuestion.id}/fallback: `
     );
-    console.log(text);
     updateQuestionDetails(modifiedHeadlineWithId);
 
     const modifiedHeadlineWithName = recallToHeadline(modifiedHeadlineWithId, localSurvey, false);
@@ -198,7 +195,6 @@ const QuestionFormInput = ({
         setFallbacks(updatedFallback);
       }
     });
-
     setRecallQuestions(includedQuestions);
   };
 
@@ -217,12 +213,10 @@ const QuestionFormInput = ({
             recallInfo,
             `recall:${recallQuestion?.id}/fallback:${fallBackValue}`
           );
-          console.log(headlineWithFallback);
           updateQuestionDetails(headlineWithFallback);
         }
       }
     });
-    console.log("setting false");
     setShowFallbackInput(false);
     inputRef.current?.focus();
   };
@@ -239,7 +233,6 @@ const QuestionFormInput = ({
       }
     } else {
       if (updateQuestion) {
-        console.log("updating");
         updateQuestion(questionIdx, {
           [type]: updatedText,
         });

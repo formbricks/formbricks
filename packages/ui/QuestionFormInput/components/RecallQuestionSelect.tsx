@@ -62,14 +62,12 @@ export default function RecallQuestionSelect({
       questionId === "end"
         ? localSurvey.questions.length
         : localSurvey.questions.findIndex((recallQuestion) => recallQuestion.id === questionId);
-
     const filteredQuestions = localSurvey.questions.filter((question, index) => {
       const notAllowed = isNotAllowedQuestionType(question);
       return (
         !recallQuestionIds.includes(question.id) && !notAllowed && question.id !== questionId && idx > index
       );
     });
-
     return filteredQuestions;
   }, [localSurvey.questions, questionId, recallQuestionIds]);
 

@@ -12,6 +12,7 @@ interface FallbackInputProps {
   fallbackInputRef: RefObject<HTMLInputElement>;
   addFallback: () => void;
 }
+
 export function FallbackInput({
   filteredRecallQuestions,
   fallbacks,
