@@ -54,7 +54,7 @@ interface QuestionCardProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export function BackButtonInput({
@@ -94,12 +94,13 @@ export default function QuestionCard({
   activeQuestionId,
   setActiveQuestionId,
   lastQuestion,
-  isInValid,
+  isInvalid,
 }: QuestionCardProps) {
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
 
+  // formats the text to highlight specific parts of the text with slashes
   const formatTextWithSlashes = (text) => {
     const regex = /\/(.*?)\\/g;
     const parts = text.split(regex);
@@ -141,7 +142,7 @@ export default function QuestionCard({
             className={cn(
               open ? "bg-slate-700" : "bg-slate-400",
               "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-600",
-              isInValid && "bg-red-400  hover:bg-red-600"
+              isInvalid && "bg-red-400  hover:bg-red-600"
             )}>
             {questionIdx + 1}
           </div>
@@ -218,7 +219,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
@@ -227,7 +228,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
@@ -236,7 +237,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.NPS ? (
                 <NPSQuestionForm
@@ -245,7 +246,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.CTA ? (
                 <CTAQuestionForm
@@ -254,7 +255,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Rating ? (
                 <RatingQuestionForm
@@ -263,7 +264,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Consent ? (
                 <ConsentQuestionForm
@@ -271,7 +272,7 @@ export default function QuestionCard({
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Date ? (
                 <DateQuestionForm
@@ -280,7 +281,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
@@ -289,7 +290,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.FileUpload ? (
                 <FileUploadQuestionForm
@@ -299,7 +300,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
@@ -308,7 +309,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : null}
               <div className="mt-4">

@@ -1,4 +1,3 @@
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
@@ -7,6 +6,7 @@ import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 import Dropdown from "./RatingTypeDropdown";
 
@@ -16,7 +16,7 @@ interface RatingQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function RatingQuestionForm({
@@ -24,7 +24,7 @@ export default function RatingQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -35,7 +35,7 @@ export default function RatingQuestionForm({
       <QuestionFormInput
         localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
@@ -49,7 +49,7 @@ export default function RatingQuestionForm({
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={environmentId}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 questionId={question.id}
                 questionIdx={questionIdx}
                 updateQuestion={updateQuestion}

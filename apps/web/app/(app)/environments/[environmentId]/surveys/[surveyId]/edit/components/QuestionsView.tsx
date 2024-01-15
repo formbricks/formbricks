@@ -202,7 +202,8 @@ export default function QuestionsView({
         toast.error("Fallback missing");
       }
     }
-  }, [activeQuestionId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeQuestionId, setActiveQuestionId]);
 
   return (
     <div className="mt-12 px-5 py-4">
@@ -233,7 +234,7 @@ export default function QuestionsView({
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
-                    isInValid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
+                    isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
                   />
                 ))}
                 {provided.placeholder}

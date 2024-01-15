@@ -1,6 +1,5 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import {
   ChatBubbleBottomCenterTextIcon,
@@ -19,6 +18,7 @@ import {
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
 
 const questionTypes = [
@@ -35,14 +35,14 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function OpenQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -64,7 +64,7 @@ export default function OpenQuestionForm({
       <QuestionFormInput
         localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
@@ -78,7 +78,7 @@ export default function OpenQuestionForm({
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={environmentId}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 questionId={question.id}
                 questionIdx={questionIdx}
                 updateQuestion={updateQuestion}

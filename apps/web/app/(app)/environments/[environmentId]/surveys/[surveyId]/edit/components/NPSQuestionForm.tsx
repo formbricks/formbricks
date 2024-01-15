@@ -1,6 +1,5 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
@@ -8,6 +7,7 @@ import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;
@@ -15,7 +15,7 @@ interface NPSQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function NPSQuestionForm({
@@ -23,7 +23,7 @@ export default function NPSQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
 }: NPSQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -34,7 +34,7 @@ export default function NPSQuestionForm({
       <QuestionFormInput
         localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
@@ -48,7 +48,7 @@ export default function NPSQuestionForm({
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={environmentId}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 questionId={question.id}
                 questionIdx={questionIdx}
                 updateQuestion={updateQuestion}

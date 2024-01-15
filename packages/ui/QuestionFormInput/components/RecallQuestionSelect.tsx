@@ -7,7 +7,7 @@ import {
   QueueListIcon,
   StarIcon,
 } from "@heroicons/react/24/solid";
-import { RefObject, useEffect, useState } from "react";
+import { RefObject, useEffect, useMemo, useState } from "react";
 
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
@@ -52,23 +52,37 @@ export default function RecallQuestionSelect({
     );
   };
 
-  const recallQuestionIds = recallQuestions.map((recallQuestion) => recallQuestion.id);
-  const filteredRecallQuestions = localSurvey.questions.filter((question) => {
-    const notAllowed = isNotAllowedQuestionType(question);
-    return question.id === questionId || (!recallQuestionIds.includes(question.id) && !notAllowed);
-  });
-  const currentQuestionIdx =
-    questionId === "end"
-      ? filteredRecallQuestions.length
-      : filteredRecallQuestions.findIndex((recallQuestion) => recallQuestion.id === questionId);
+  const recallQuestionIds = useMemo(() => {
+    return recallQuestions.map((recallQuestion) => recallQuestion.id);
+  }, [recallQuestions]);
 
+  // function to remove some specific type of questions (fileUpload, imageSelect etc) from the list of questions to recall from and few other checks
+  const filteredRecallQuestions = useMemo(() => {
+    const idx =
+      questionId === "end"
+        ? localSurvey.questions.length
+        : localSurvey.questions.findIndex((recallQuestion) => recallQuestion.id === questionId);
+
+    const filteredQuestions = localSurvey.questions.filter((question, index) => {
+      const notAllowed = isNotAllowedQuestionType(question);
+      return (
+        !recallQuestionIds.includes(question.id) && !notAllowed && question.id !== questionId && idx > index
+      );
+    });
+
+    return filteredQuestions;
+  }, [localSurvey.questions, questionId, recallQuestionIds]);
+
+  // function to modify headline (recallInfo to corresponding headline)
   const getRecallHeadline = (question: TSurveyQuestion): TSurveyQuestion => {
     let questionTemp = { ...question };
     questionTemp = replaceRecallInfoWithUnderline(questionTemp);
     return questionTemp;
   };
+
+  // function to handle key press
   useEffect(() => {
-    const handleKeyPress = (event) => {
+    const handleKeyPress = (event: KeyboardEvent) => {
       if (showQuestionSelect) {
         if (event.key === "ArrowDown") {
           event.preventDefault();
@@ -80,9 +94,9 @@ export default function RecallQuestionSelect({
           );
         } else if (event.key === "Enter") {
           const selectedQuestion = filteredRecallQuestions[focusedQuestionIdx];
-
-          addRecallQuestion(selectedQuestion);
           setShowQuestionSelect(false);
+          if (!selectedQuestion) return;
+          addRecallQuestion(selectedQuestion);
         }
       }
     };
@@ -94,22 +108,21 @@ export default function RecallQuestionSelect({
       inputElement?.removeEventListener("keydown", handleKeyPress);
     };
   }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
+
   return (
     <div className="absolute z-30 mt-1 flex max-h-[50%] max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
-      {currentQuestionIdx === 0 ? (
+      {filteredRecallQuestions.length === 0 ? (
         <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (
         <p className="mb-2 font-medium">Recall Information from...</p>
       )}
       <div>
         {filteredRecallQuestions.map((q, idx) => {
-          if (q.id === questionId) return;
-          if (idx > currentQuestionIdx) return;
           const isFocused = idx === focusedQuestionIdx;
-          const IconComponent = questionIconMapping[q.type]; // Accessing the icon component
+          const IconComponent = questionIconMapping[q.type as keyof typeof questionIconMapping];
           return (
             <div
-              key={idx}
+              key={q.id}
               className={`flex max-w-full cursor-pointer items-center rounded-md px-3 py-2 ${
                 isFocused ? "bg-slate-200" : "hover:bg-slate-200 "
               }`}

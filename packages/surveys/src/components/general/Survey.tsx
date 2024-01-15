@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
 import { useEffect, useRef, useState } from "preact/hooks";
 
-import { formatDateWithOrdinal, isValidDate } from "@formbricks/lib/utils/datetime";
+import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
@@ -121,7 +121,7 @@ export function Survey({
         const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
         let value = questionId && responseData[questionId] ? (responseData[questionId] as string) : fallback;
 
-        if (isValidDate(value)) {
+        if (isValidDateString(value)) {
           value = formatDateWithOrdinal(new Date(value));
         }
         if (Array.isArray(value)) {

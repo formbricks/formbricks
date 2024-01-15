@@ -1,26 +1,37 @@
 "use client";
 
-import FallbackInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FallbackInput";
-import RecallQuestionSelect from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/RecallQuestionSelect";
 import { PencilIcon } from "@heroicons/react/24/solid";
 import { ImagePlusIcon } from "lucide-react";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 
-import { recallToHeadline, replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
-import { extractId, extractIds, extractRecallInfo, findRecallInfoById } from "@formbricks/lib/utils/recall";
+import {
+  extractId,
+  extractRecallInfo,
+  findRecallInfoById,
+  getFallbackValues,
+  getRecallQuestions,
+  headlineToRecall,
+  recallToHeadline,
+  replaceRecallInfoWithUnderline,
+  useSyncScroll,
+} from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
-import FileInput from "@formbricks/ui/FileInput";
-import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+
+import FileInput from "../FileInput";
+import { Input } from "../Input";
+import { Label } from "../Label";
+import { FallbackInput } from "./components/FallbackInput";
+import RecallQuestionSelect from "./components/RecallQuestionSelect";
 
 interface QuestionFormInputProps {
   localSurvey: TSurvey;
   questionId: string;
   questionIdx: number;
-  updateQuestion: any;
+  updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
+  updateSurvey?: (data: Partial<TSurveyQuestion>) => void;
   environmentId: string;
   type: string;
-  isInValid?: boolean;
+  isInvalid?: boolean;
   ref?: RefObject<HTMLInputElement>;
 }
 
@@ -29,44 +40,25 @@ const QuestionFormInput = ({
   questionId,
   questionIdx,
   updateQuestion,
-  isInValid,
+  updateSurvey,
+  isInvalid,
   environmentId,
   type,
 }: QuestionFormInputProps) => {
   const isThankYouCard = questionId === "end";
-  const question = isThankYouCard
-    ? localSurvey.thankYouCard
-    : localSurvey.questions.find((question) => question.id === questionId)!;
+  const question = useMemo(() => {
+    return isThankYouCard
+      ? localSurvey.thankYouCard
+      : localSurvey.questions.find((question) => question.id === questionId)!;
+  }, [isThankYouCard, localSurvey, questionId]);
 
-  function getFallbackValues() {
-    const text = question[type];
-    const pattern = /recall:([A-Za-z0-9]+)\/fallback:([\S*]+)/g;
-    let match;
-    const fallbacks = {};
-
-    while ((match = pattern.exec(text)) !== null) {
-      const id = match[1];
-      const fallbackValue = match[2];
-      fallbacks[id] = fallbackValue;
-    }
-    return fallbacks;
-  }
-
-  const getRecallQuestions = () => {
-    const ids = extractIds(question[type]);
-    let recallQuestionArray: TSurveyQuestion[] = [];
-    ids.forEach((questionId) => {
-      let recallQuestion = localSurvey.questions.find((question) => question.id === questionId);
-      if (recallQuestion) {
-        let recallQuestionTemp = { ...recallQuestion };
-        recallQuestionTemp = replaceRecallInfoWithUnderline(recallQuestionTemp);
-        recallQuestionArray.push(recallQuestionTemp);
-      }
-    });
-    return recallQuestionArray;
+  const getQuestionTextBasedOnType = (): string => {
+    return question[type as keyof typeof question] || "";
   };
-  const [text, setText] = useState(question[type] ?? "");
+
+  const [text, setText] = useState(getQuestionTextBasedOnType() ?? "");
   const [renderedText, setRenderedText] = useState<JSX.Element[]>();
+
   const highlightContainerRef = useRef<HTMLInputElement>(null);
   const fallbackInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -75,50 +67,43 @@ const QuestionFormInput = ({
   );
   const [showQuestionSelect, setShowQuestionSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
-  const [recallQuestions, setrecallQuestions] = useState<TSurveyQuestion[]>(
-    question[type]?.includes("recall:") ? getRecallQuestions() : []
+  const [recallQuestions, setRecallQuestions] = useState<TSurveyQuestion[]>(
+    text.includes("recall:") ? getRecallQuestions(text, localSurvey) : []
   );
   const filteredRecallQuestions = Array.from(new Set(recallQuestions.map((q) => q.id))).map((id) => {
     return recallQuestions.find((q) => q.id === id);
   });
   const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(
-    question[type]?.includes("fallback:") ? getFallbackValues() : {}
+    text.includes("fallback:") ? getFallbackValues(text) : {}
   );
 
-  useEffect(() => {
-    const syncScrollPosition = () => {
-      if (highlightContainerRef.current && inputRef.current) {
-        highlightContainerRef.current.scrollLeft = inputRef.current.scrollLeft;
-      }
-    };
-    const inputElement = inputRef.current;
-    if (inputElement) {
-      inputElement.addEventListener("scroll", syncScrollPosition);
-    }
-    return () => {
-      if (inputElement) {
-        inputElement.removeEventListener("scroll", syncScrollPosition);
-      }
-    };
-  }, [text]);
+  // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
+  useSyncScroll(highlightContainerRef, inputRef, text);
 
   useEffect(() => {
-    const recallQuestionHeadlines = recallQuestions.map((recallQuestion) => {
+    // Generates an array of headlines from recallQuestions, replacing nested recall questions with '___' .
+    const recallQuestionHeadlines = recallQuestions.flatMap((recallQuestion) => {
       if (!recallQuestion.headline.includes("recall:")) {
-        return recallQuestion.headline;
+        return [recallQuestion.headline];
       }
-      const recallInfo = extractRecallInfo(recallQuestion[type]);
+      const recallQuestionText = (recallQuestion[type as keyof typeof recallQuestion] as string) || "";
+      const recallInfo = extractRecallInfo(recallQuestionText);
+
       if (recallInfo) {
         const recallQuestionId = extractId(recallInfo);
         const recallQuestion = localSurvey.questions.find((question) => question.id === recallQuestionId);
+
         if (recallQuestion) {
-          return recallQuestion[type].replace(recallInfo, `___`);
+          return [recallQuestionText.replace(recallInfo, `___`)];
         }
       }
+      return [];
     });
+
+    // Constructs an array of JSX elements representing segmented parts of text, interspersed with special formatted spans for recall headlines.
     const processInput = (): JSX.Element[] => {
       const parts: JSX.Element[] = [];
-      let remainingText: string = question[type] ?? "";
+      let remainingText: string = text ?? "";
       remainingText = recallToHeadline(remainingText, localSurvey, false);
       filterRecallQuestions(remainingText);
       recallQuestionHeadlines.forEach((headline) => {
@@ -153,7 +138,7 @@ const QuestionFormInput = ({
     };
 
     setRenderedText(processInput());
-  }, [text, question[type]]);
+  }, [text]);
 
   useEffect(() => {
     if (fallbackInputRef.current) {
@@ -163,17 +148,18 @@ const QuestionFormInput = ({
 
   const checkForRecallSymbol = () => {
     const pattern = /(^|\s)@(\s|$)/;
-
-    if (pattern.test(question[type])) {
+    if (pattern.test(text)) {
       setShowQuestionSelect(true);
     } else {
       setShowQuestionSelect(false);
     }
   };
+
+  // Adds a new recall question to the recallQuestions array, updates fallbacks, modifies the text with recall details.
   const addRecallQuestion = (recallQuestion: TSurveyQuestion) => {
     let recallQuestionTemp = { ...recallQuestion };
     recallQuestionTemp = replaceRecallInfoWithUnderline(recallQuestionTemp);
-    setrecallQuestions((prevQuestions) => {
+    setRecallQuestions((prevQuestions) => {
       const updatedQuestions = [...prevQuestions, recallQuestionTemp];
       return updatedQuestions;
     });
@@ -184,7 +170,11 @@ const QuestionFormInput = ({
       }));
     }
     setShowQuestionSelect(false);
-    const modifiedHeadlineWithId = question[type].replace("@", `recall:${recallQuestion.id}/fallback: `);
+    const modifiedHeadlineWithId = getQuestionTextBasedOnType().replace(
+      "@",
+      `recall:${recallQuestion.id}/fallback: `
+    );
+    console.log(text);
     updateQuestionDetails(modifiedHeadlineWithId);
 
     const modifiedHeadlineWithName = recallToHeadline(modifiedHeadlineWithId, localSurvey, false);
@@ -192,7 +182,8 @@ const QuestionFormInput = ({
     setShowFallbackInput(true);
   };
 
-  const filterRecallQuestions = (text) => {
+  // Filters and updates the list of recall questions based on their presence in the given text, also managing related text and fallback states.
+  const filterRecallQuestions = (text: string) => {
     let includedQuestions: TSurveyQuestion[] = [];
     recallQuestions.forEach((recallQuestion) => {
       if (text.includes(`@${recallQuestion.headline}`)) {
@@ -208,53 +199,53 @@ const QuestionFormInput = ({
       }
     });
 
-    setrecallQuestions(includedQuestions);
+    setRecallQuestions(includedQuestions);
   };
 
   const addFallback = () => {
-    let headlineWithFallback = question[type];
+    let headlineWithFallback = getQuestionTextBasedOnType();
     filteredRecallQuestions.forEach((recallQuestion) => {
       if (recallQuestion) {
-        const recallInfo = findRecallInfoById(question[type], recallQuestion!.id);
+        const recallInfo = findRecallInfoById(getQuestionTextBasedOnType(), recallQuestion!.id);
         if (recallInfo) {
           let fallBackValue = fallbacks[recallQuestion.id].trim();
           fallBackValue = fallBackValue.replace(/ /g, "nbsp");
           let updatedFallback = { ...fallbacks };
           updatedFallback[recallQuestion.id] = fallBackValue;
           setFallbacks(updatedFallback);
-          headlineWithFallback = headlineWithFallback.replaceAll(
+          headlineWithFallback = headlineWithFallback.replace(
             recallInfo,
             `recall:${recallQuestion?.id}/fallback:${fallBackValue}`
           );
+          console.log(headlineWithFallback);
           updateQuestionDetails(headlineWithFallback);
         }
       }
     });
+    console.log("setting false");
     setShowFallbackInput(false);
     inputRef.current?.focus();
   };
 
-  const headlineToRecall = (text): string => {
-    recallQuestions.forEach((recallQuestion) => {
-      const recallInfo = `recall:${recallQuestion.id}/fallback:${fallbacks[recallQuestion.id]}`;
-      text = text.replace(`@${recallQuestion.headline}`, recallInfo);
-    });
-    return text;
-  };
-
   useEffect(() => {
     checkForRecallSymbol();
-  }, [question[type]]);
+  }, [text]);
 
-  function updateQuestionDetails(updatedText) {
+  // updation of questions and Thank You Card is done in a different manner, so for question we use updateQuestion and for ThankYouCard we use updateSurvey
+  const updateQuestionDetails = (updatedText: string) => {
     if (isThankYouCard) {
-      updateQuestion({ [type]: updatedText });
+      if (updateSurvey) {
+        updateSurvey({ [type]: updatedText });
+      }
     } else {
-      updateQuestion(questionIdx, {
-        [type]: updatedText,
-      });
+      if (updateQuestion) {
+        console.log("updating");
+        updateQuestion(questionIdx, {
+          [type]: updatedText,
+        });
+      }
     }
-  }
+  };
 
   return (
     <div className="mt-3 w-full">
@@ -265,8 +256,10 @@ const QuestionFormInput = ({
             id="question-image"
             allowedFileExtensions={["png", "jpeg", "jpg"]}
             environmentId={environmentId}
-            onFileUpload={(url: string[]) => {
-              updateQuestion(questionIdx, { imageUrl: url[0] });
+            onFileUpload={(url: string[] | undefined) => {
+              if (updateQuestion && url) {
+                updateQuestion(questionIdx, { imageUrl: url[0] });
+              }
             }}
             fileUrl={isThankYouCard ? "" : (question as TSurveyQuestion).imageUrl}
           />
@@ -280,15 +273,16 @@ const QuestionFormInput = ({
               className="no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ">
               {renderedText}
             </div>
-            {question[type]?.includes("recall:") && (
-              <div
+            {getQuestionTextBasedOnType().includes("recall:") && (
+              <button
                 className="fixed right-14 hidden items-center rounded-b-lg bg-slate-100 px-2.5 py-1 text-xs hover:bg-slate-200 group-hover:flex"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
                   setShowFallbackInput(true);
                 }}>
                 Edit Recall
                 <PencilIcon className="ml-2 h-3 w-3" />
-              </div>
+              </button>
             )}
             <Input
               className="absolute top-0 text-black  caret-black"
@@ -300,11 +294,10 @@ const QuestionFormInput = ({
               value={recallToHeadline(text ?? "", localSurvey, false)}
               onChange={(e) => {
                 setText(recallToHeadline(e.target.value ?? "", localSurvey, false));
-                updateQuestionDetails(headlineToRecall(e.target.value));
+                updateQuestionDetails(headlineToRecall(e.target.value, recallQuestions, fallbacks));
               }}
-              isInvalid={isInValid && question[type].trim() === ""}
+              isInvalid={isInvalid && text.trim() === ""}
             />
-
             {!showQuestionSelect && showFallbackInput && recallQuestions.length > 0 && (
               <FallbackInput
                 filteredRecallQuestions={filteredRecallQuestions}

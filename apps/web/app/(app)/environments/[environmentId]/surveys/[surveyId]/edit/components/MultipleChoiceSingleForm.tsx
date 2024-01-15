@@ -1,6 +1,5 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +9,7 @@ import { TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface OpenQuestionFormProps {
@@ -18,20 +18,20 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function MultipleChoiceSingleForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
+  const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
   const questionRef = useRef<HTMLInputElement>(null);
 
   const shuffleOptionsTypes = {
@@ -131,7 +131,7 @@ export default function MultipleChoiceSingleForm({
 
     const choiceValue = question.choices[choiceIdx].label;
     if (isInvalidValue === choiceValue) {
-      setIsInvalidValue(null);
+      setisInvalidValue(null);
     }
     let newLogic: any[] = [];
     question.logic?.forEach((logic) => {
@@ -167,7 +167,7 @@ export default function MultipleChoiceSingleForm({
       <QuestionFormInput
         localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         ref={questionRef}
         questionId={question.id}
         questionIdx={questionIdx}
@@ -182,7 +182,7 @@ export default function MultipleChoiceSingleForm({
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={environmentId}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 questionId={question.id}
                 questionIdx={questionIdx}
                 updateQuestion={updateQuestion}
@@ -227,11 +227,11 @@ export default function MultipleChoiceSingleForm({
                   onBlur={() => {
                     const duplicateLabel = findDuplicateLabel();
                     if (duplicateLabel) {
-                      setIsInvalidValue(duplicateLabel);
+                      setisInvalidValue(duplicateLabel);
                     } else if (findEmptyLabel()) {
-                      setIsInvalidValue("");
+                      setisInvalidValue("");
                     } else {
-                      setIsInvalidValue(null);
+                      setisInvalidValue(null);
                     }
                   }}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}

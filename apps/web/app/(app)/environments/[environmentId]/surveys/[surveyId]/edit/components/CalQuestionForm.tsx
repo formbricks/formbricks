@@ -1,4 +1,3 @@
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
@@ -6,6 +5,7 @@ import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;
@@ -13,7 +13,7 @@ interface CalQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function CalQuestionForm({
@@ -21,7 +21,7 @@ export default function CalQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
 }: CalQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
@@ -30,7 +30,7 @@ export default function CalQuestionForm({
       <QuestionFormInput
         localSurvey={localSurvey}
         environmentId={localSurvey.environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
@@ -43,7 +43,7 @@ export default function CalQuestionForm({
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={localSurvey.environmentId}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 questionId={question.id}
                 questionIdx={questionIdx}
                 updateQuestion={updateQuestion}

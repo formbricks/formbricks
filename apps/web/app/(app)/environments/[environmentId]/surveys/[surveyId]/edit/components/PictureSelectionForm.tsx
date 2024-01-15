@@ -1,4 +1,3 @@
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useState } from "react";
@@ -8,6 +7,7 @@ import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surv
 import { Button } from "@formbricks/ui/Button";
 import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface PictureSelectionFormProps {
@@ -16,7 +16,7 @@ interface PictureSelectionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function PictureSelectionForm({
@@ -24,7 +24,7 @@ export default function PictureSelectionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
 }: PictureSelectionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
@@ -34,7 +34,7 @@ export default function PictureSelectionForm({
       <QuestionFormInput
         localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
@@ -47,7 +47,7 @@ export default function PictureSelectionForm({
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={environmentId}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 questionId={question.id}
                 questionIdx={questionIdx}
                 updateQuestion={updateQuestion}
@@ -80,7 +80,7 @@ export default function PictureSelectionForm({
           Images{" "}
           <span
             className={cn("text-slate-400", {
-              "text-red-600": isInValid && question.choices?.length < 2,
+              "text-red-600": isInvalid && question.choices?.length < 2,
             })}>
             (Upload at least 2 images)
           </span>

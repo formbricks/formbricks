@@ -1,11 +1,11 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import * as Collapsible from "@radix-ui/react-collapsible";
 
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface EditThankYouCardProps {
@@ -94,7 +94,7 @@ export default function EditThankYouCard({
             <QuestionFormInput
               localSurvey={localSurvey}
               environmentId={localSurvey.environmentId}
-              isInValid={false}
+              isInvalid={false}
               questionId="end"
               questionIdx={localSurvey.questions.length}
               updateQuestion={updateSurvey}
@@ -106,10 +106,10 @@ export default function EditThankYouCard({
                 <QuestionFormInput
                   localSurvey={localSurvey}
                   environmentId={localSurvey.environmentId}
-                  isInValid={false}
+                  isInvalid={false}
                   questionId="end"
                   questionIdx={localSurvey.questions.length}
-                  updateQuestion={updateSurvey}
+                  updateSurvey={updateSurvey}
                   type="subheader"
                 />
               </div>

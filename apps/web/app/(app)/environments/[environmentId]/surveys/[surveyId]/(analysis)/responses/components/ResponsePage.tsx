@@ -46,7 +46,9 @@ const ResponsePage = ({
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const searchParams = useSearchParams();
-  survey = checkForRecallInHeadline(survey);
+  survey = useMemo(() => {
+    return checkForRecallInHeadline(survey);
+  }, [survey]);
   useEffect(() => {
     if (!searchParams?.get("referer")) {
       resetState();

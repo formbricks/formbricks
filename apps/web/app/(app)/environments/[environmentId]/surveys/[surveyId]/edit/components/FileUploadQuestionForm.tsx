@@ -1,6 +1,5 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -12,6 +11,7 @@ import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
@@ -20,7 +20,7 @@ interface FileUploadFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function FileUploadQuestionForm({
@@ -28,7 +28,7 @@ export default function FileUploadQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   product,
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -110,7 +110,7 @@ export default function FileUploadQuestionForm({
       <QuestionFormInput
         localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
@@ -123,7 +123,7 @@ export default function FileUploadQuestionForm({
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={environmentId}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 questionId={question.id}
                 questionIdx={questionIdx}
                 updateQuestion={updateQuestion}

@@ -73,11 +73,13 @@ export const formatDateWithOrdinal = (date: Date): string => {
   return `${dayOfWeek}, ${monthNames[monthIndex]} ${day}${getOrdinalSuffix(day)}, ${year}`;
 };
 
-export function isValidDate(value: string) {
-  const regex = /^(?:\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4}|\d{2}-\d{2}-\d{4})$/;
+export function isValidDateString(value: string) {
+  const regex = /^(?:\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4})$/;
 
   if (!regex.test(value)) {
     return false;
   }
-  return true;
+
+  const date = new Date(value);
+  return date;
 }

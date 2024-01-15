@@ -4,9 +4,8 @@ import { useState } from "react";
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
-
-import QuestionFormInput from "./QuestionFormInput";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;
@@ -14,7 +13,7 @@ interface IDateQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 const dateOptions = [
@@ -36,7 +35,7 @@ export default function DateQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
 }: IDateQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -45,7 +44,7 @@ export default function DateQuestionForm({
     <form>
       <QuestionFormInput
         environmentId={localSurvey.environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
@@ -59,7 +58,7 @@ export default function DateQuestionForm({
               <QuestionFormInput
                 localSurvey={localSurvey}
                 environmentId={localSurvey.environmentId}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 questionId={question.id}
                 questionIdx={questionIdx}
                 updateQuestion={updateQuestion}
