@@ -3,6 +3,10 @@
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
+import { surveyCache } from "@formbricks/lib/survey/cache";
+import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import {
   cloneUserSegment,
   createUserSegment,
@@ -10,11 +14,7 @@ import {
   getUserSegment,
   loadNewUserSegment,
   updateUserSegment,
-} from "@formbricks/lib/services/userSegment";
-import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
+} from "@formbricks/lib/userSegment/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys";
 import {

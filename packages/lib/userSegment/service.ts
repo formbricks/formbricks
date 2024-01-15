@@ -22,7 +22,7 @@ import {
   getLastQuarterEventCount,
   getLastWeekEventCount,
   getTotalOccurrences,
-} from "./actionsHelpers";
+} from "../action/service";
 
 export const createUserSegment = async (
   environmentId: string,
@@ -324,39 +324,34 @@ const evaluateAttributeFilter = (
   return attResult;
 };
 
-const getResolvedActionValue = async (
-  actiondClassId: string,
-  personId: string,
-  environmentId: string,
-  metric: TActionMetric
-) => {
+const getResolvedActionValue = async (actiondClassId: string, personId: string, metric: TActionMetric) => {
   if (metric === "lastQuarterCount") {
-    const lastQuarterCount = await getLastQuarterEventCount(environmentId, personId, actiondClassId);
+    const lastQuarterCount = await getLastQuarterEventCount(actiondClassId, personId);
     return lastQuarterCount;
   }
 
   if (metric === "lastMonthCount") {
-    const lastMonthCount = await getLastMonthEventCount(environmentId, personId, actiondClassId);
+    const lastMonthCount = await getLastMonthEventCount(actiondClassId, personId);
     return lastMonthCount;
   }
 
   if (metric === "lastWeekCount") {
-    const lastWeekCount = await getLastWeekEventCount(environmentId, personId, actiondClassId);
+    const lastWeekCount = await getLastWeekEventCount(actiondClassId, personId);
     return lastWeekCount;
   }
 
   if (metric === "lastOccurranceDaysAgo") {
-    const lastOccurranceDaysAgo = await getLastOccurrenceDaysAgo(environmentId, personId, actiondClassId);
+    const lastOccurranceDaysAgo = await getLastOccurrenceDaysAgo(actiondClassId, personId);
     return lastOccurranceDaysAgo;
   }
 
   if (metric === "firstOccurranceDaysAgo") {
-    const firstOccurranceDaysAgo = await getFirstOccurrenceDaysAgo(environmentId, personId, actiondClassId);
+    const firstOccurranceDaysAgo = await getFirstOccurrenceDaysAgo(actiondClassId, personId);
     return firstOccurranceDaysAgo;
   }
 
   if (metric === "occuranceCount") {
-    const occuranceCount = await getTotalOccurrences(environmentId, personId, actiondClassId);
+    const occuranceCount = await getTotalOccurrences(actiondClassId, personId);
     return occuranceCount;
   }
 };
@@ -364,8 +359,7 @@ const getResolvedActionValue = async (
 const evaluateActionFilter = async (
   actionIds: string[],
   filter: TUserSegmentActionFilter,
-  personId: string,
-  environmentId: string
+  personId: string
 ): Promise<boolean> => {
   const { value, qualifier, root } = filter;
   const { actionClassId } = root;
@@ -381,7 +375,7 @@ const evaluateActionFilter = async (
 
   // we have the action metric and we'll need to find out the values for those metrics from the db
 
-  const actionValue = await getResolvedActionValue(actionClassId, personId, environmentId, metric);
+  const actionValue = await getResolvedActionValue(actionClassId, personId, metric);
 
   const actionResult =
     actionValue !== undefined && compareValues(actionValue ?? 0, value, qualifier.operator);
@@ -488,8 +482,8 @@ export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilt
         result = await evaluateActionFilter(
           userData.actionIds,
           resource as TUserSegmentActionFilter,
-          userData.personId,
-          userData.environmentId
+          userData.personId
+          // userData.environmentId
         );
         resultPairs.push({
           result,

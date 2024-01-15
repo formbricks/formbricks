@@ -4,7 +4,7 @@ import SegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSeg
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
-import { getUserSegments } from "@formbricks/lib/services/userSegment";
+import { getUserSegments } from "@formbricks/lib/userSegment/service";
 
 export const revalidate = REVALIDATION_INTERVAL;
 

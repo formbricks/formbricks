@@ -1,6 +1,7 @@
 import "server-only";
 
 import { Prisma } from "@prisma/client";
+import { differenceInDays } from "date-fns";
 import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
@@ -17,6 +18,7 @@ import { createPerson, getPersonByUserId } from "../person/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
+import { getStartDateOfLastMonth, getStartDateOfLastQuarter, getStartDateOfLastWeek } from "./utils";
 
 export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
   const action = await unstable_cache(
@@ -352,3 +354,102 @@ export const getActionCountInLast7Days = async (actionClassId: string): Promise<
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
+export const getLastQuarterEventCount = async (actionClassId: string, personId: string): Promise<number> => {
+  return await prisma.action.count({
+    where: {
+      personId,
+      actionClass: {
+        id: actionClassId,
+      },
+      createdAt: {
+        gte: getStartDateOfLastQuarter(),
+      },
+    },
+  });
+};
+
+export const getLastMonthEventCount = async (actionClassId: string, personId: string): Promise<number> => {
+  return await prisma.action.count({
+    where: {
+      personId,
+      actionClass: {
+        id: actionClassId,
+      },
+      createdAt: {
+        gte: getStartDateOfLastMonth(),
+      },
+    },
+  });
+};
+
+export const getLastWeekEventCount = async (actionClassId: string, personId: string): Promise<number> => {
+  return await prisma.action.count({
+    where: {
+      personId,
+      actionClass: {
+        id: actionClassId,
+      },
+      createdAt: {
+        gte: getStartDateOfLastWeek(),
+      },
+    },
+  });
+};
+
+export const getTotalOccurrences = async (actionClassId: string, personId: string): Promise<number> => {
+  return await prisma.action.count({
+    where: {
+      personId,
+      actionClass: {
+        id: actionClassId,
+      },
+    },
+  });
+};
+
+export const getLastOccurrenceDaysAgo = async (
+  actionClassId: string,
+  personId: string
+): Promise<number | null> => {
+  const lastEvent = await prisma.action.findFirst({
+    where: {
+      personId,
+      actionClass: {
+        id: actionClassId,
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      createdAt: true,
+    },
+  });
+
+  if (!lastEvent) return null;
+  return differenceInDays(new Date(), lastEvent.createdAt);
+};
+
+export const getFirstOccurrenceDaysAgo = async (
+  actionClassId: string,
+  personId: string
+): Promise<number | null> => {
+  const firstEvent = await prisma.action.findFirst({
+    where: {
+      personId,
+      actionClass: {
+        id: actionClassId,
+      },
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    select: {
+      createdAt: true,
+    },
+  });
+
+  if (!firstEvent) return null;
+  return differenceInDays(new Date(), firstEvent.createdAt);
+};
