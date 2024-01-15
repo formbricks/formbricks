@@ -49,6 +49,7 @@ export const selectSurvey = {
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
+  resultShareKey: true,
   triggers: {
     select: {
       actionClass: {
@@ -685,4 +686,26 @@ export const getSyncSurveys = async (environmentId: string, person: TPerson): Pr
     }
   )();
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+};
+
+export const getSurveyByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
+  try {
+    const survey = await prisma.survey.findFirst({
+      where: {
+        resultShareKey,
+      },
+    });
+
+    if (!survey) {
+      return null;
+    }
+
+    return survey.id;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };

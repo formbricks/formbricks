@@ -55,7 +55,7 @@ export default function MultipleChoiceMultiQuestion({
     setOtherValue(
       (Array.isArray(value) && value.filter((v) => !question.choices.find((c) => c.label === v))[0]) || ""
     );
-  }, [question.id]);
+  }, [question.id, getChoicesWithoutOtherLabels, question.choices, value]);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {

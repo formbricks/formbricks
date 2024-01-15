@@ -156,20 +156,6 @@ export default function PreviewSurvey({
     setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
   }
 
-  function animationTrigger() {
-    let storePreviewMode = previewMode;
-    setPreviewMode("null");
-    setTimeout(() => {
-      setPreviewMode(storePreviewMode);
-    }, 10);
-  }
-
-  useEffect(() => {
-    if (survey.styling?.background?.bgType === "animation") {
-      animationTrigger();
-    }
-  }, [survey.styling?.background?.bg]);
-
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
       setWidgetSetupCompleted(true);
@@ -300,7 +286,7 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
-                <div className="z-0 w-full  max-w-md rounded-lg p-4">
+                <div className="z-0 w-full max-w-md rounded-lg p-4">
                   <SurveyInline
                     survey={survey}
                     brandColor={brandColor}

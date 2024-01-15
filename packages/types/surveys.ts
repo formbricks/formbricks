@@ -62,6 +62,7 @@ export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
 
 export const ZSurveyStyling = z.object({
   background: ZSurveyStylingBackground.nullish(),
+  hideProgressBar: z.boolean().nullish(),
 });
 
 export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;
@@ -430,6 +431,7 @@ export const ZSurvey = z.object({
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
   pin: z.string().nullable().optional(),
+  resultShareKey: z.string().nullable(),
 });
 
 export const ZSurveyInput = z.object({

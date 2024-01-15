@@ -57,8 +57,9 @@ export default function MultipleChoiceSingleQuestion({
   );
 
   useEffect(() => {
-    setOtherSelected(!!value && !question.choices.find((c) => c.label === value));
-  }, [question.id]);
+    const isOtherSelected = value !== undefined && !question.choices.some((choice) => choice.label === value);
+    setOtherSelected(isOtherSelected);
+  }, [question.id, question.choices, value]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
 

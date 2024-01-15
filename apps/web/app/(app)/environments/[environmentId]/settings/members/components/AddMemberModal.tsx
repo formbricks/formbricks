@@ -79,15 +79,21 @@ export default function AddMemberModal({
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
               <div>
-                <Label>Full Name</Label>
+                <Label htmlFor="memberNameInput">Full Name</Label>
                 <Input
+                  id="memberNameInput"
                   placeholder="e.g. Hans Wurst"
                   {...register("name", { required: true, validate: (value) => value.trim() !== "" })}
                 />
               </div>
               <div>
-                <Label>Email Adress</Label>
-                <Input type="email" placeholder="hans@wurst.com" {...register("email", { required: true })} />
+                <Label htmlFor="memberEmailInput">Email Address</Label>
+                <Input
+                  id="memberEmailInput"
+                  type="email"
+                  placeholder="hans@wurst.com"
+                  {...register("email", { required: true })}
+                />
               </div>
               {canDoRoleManagement && <AddMemberRole control={control} />}
             </div>

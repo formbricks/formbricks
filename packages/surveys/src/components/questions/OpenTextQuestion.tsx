@@ -47,11 +47,11 @@ export default function OpenTextQuestion({
   };
   const openTextRef = useCallback(
     (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-      if (currentElement && autoFocus) {
+      if (question.id && currentElement && autoFocus) {
         currentElement.focus();
       }
     },
-    [question.id]
+    [question.id, autoFocus]
   );
   const isInputEmpty = (value: string) => {
     return question.required && !value?.trim();

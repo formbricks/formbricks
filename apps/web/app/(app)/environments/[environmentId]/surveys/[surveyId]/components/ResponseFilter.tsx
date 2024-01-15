@@ -64,6 +64,7 @@ const ResponseFilter = () => {
     if (!isOpen) {
       clearItem();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleAddNewFilter = () => {

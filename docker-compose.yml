@@ -118,6 +118,10 @@ services:
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
 
+    volumes:
+      - uploads:/home/nextjs/apps/web/uploads/
+
 volumes:
   postgres:
     driver: local
+  uploads:

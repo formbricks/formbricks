@@ -123,3 +123,19 @@ export const wrapThrows =
       };
     }
   };
+
+export const wrapThrowsAsync =
+  <T, A extends any[]>(fn: (...args: A) => Promise<T>) =>
+  async (...args: A): Promise<Result<T>> => {
+    try {
+      return {
+        ok: true,
+        data: await fn(...args),
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error as Error,
+      };
+    }
+  };

@@ -299,6 +299,7 @@ model Survey {
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
   pin               String?
+  resultShareKey    String? @unique
 
   @@index([environmentId])
 }
