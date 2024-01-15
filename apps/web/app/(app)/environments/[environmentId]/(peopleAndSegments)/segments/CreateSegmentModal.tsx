@@ -4,7 +4,6 @@ import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[su
 import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
 import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { UserGroupIcon } from "@heroicons/react/20/solid";
-import { produce } from "immer";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -55,16 +54,15 @@ const CreateSegmentModal = ({
   };
 
   const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      if (draft?.filters?.length === 0) {
-        draft.filters.push({
-          ...filter,
-          connector: null,
-        });
-      } else {
-        draft?.filters.push(filter);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment?.filters?.length === 0) {
+      updatedUserSegment.filters.push({
+        ...filter,
+        connector: null,
+      });
+    } else {
+      updatedUserSegment?.filters.push(filter);
+    }
 
     setUserSegment(updatedUserSegment);
   };

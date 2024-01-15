@@ -29,7 +29,6 @@
     "@sentry/nextjs": "^7.91.0",
     "@vercel/og": "^0.6.2",
     "bcryptjs": "^2.4.3",
-    "immer": "^10.0.3",
     "eslint-config-next": "^13.4.19",
     "dotenv": "^16.3.1",
     "encoding": "^0.1.13",

@@ -15,7 +15,6 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { produce } from "immer";
 import { Info } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -62,18 +61,6 @@ export default function WhoToSendCard({
   const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(false);
 
-  // sync local survey with user segment
-  // useEffect(() => {
-  //   const updatedLocalSurvey = produce(localSurvey, (draft) => {
-  //     draft.userSegmentId = userSegment?.id ?? null;
-  //     draft.userSegment = userSegment;
-  //   });
-
-  //   setLocalSurvey(updatedLocalSurvey);
-
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [setLocalSurvey, userSegment]);
-
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({
       ...localSurveyOld,
@@ -112,16 +99,15 @@ export default function WhoToSendCard({
   }, [localSurvey.type]);
 
   const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
-    const updatedUserSegment = produce(userSegment, (draft) => {
-      if (draft?.filters?.length === 0) {
-        draft.filters.push({
-          ...filter,
-          connector: null,
-        });
-      } else {
-        draft?.filters.push(filter);
-      }
-    });
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment?.filters?.length === 0) {
+      updatedUserSegment.filters.push({
+        ...filter,
+        connector: null,
+      });
+    } else {
+      updatedUserSegment?.filters.push(filter);
+    }
 
     setUserSegment(updatedUserSegment);
   };
@@ -281,11 +267,10 @@ export default function WhoToSendCard({
                       }}
                       confirmBtnLabel="Ok"
                       onSecondBtnClick={() => {
-                        const updatedUserSegment = produce(userSegment, (draft) => {
-                          if (draft?.filters) {
-                            draft.filters = [];
-                          }
-                        });
+                        const updatedUserSegment = structuredClone(userSegment);
+                        if (updatedUserSegment?.filters) {
+                          updatedUserSegment.filters = [];
+                        }
 
                         setUserSegment(updatedUserSegment);
                         setResetAllFiltersModalOpen(false);

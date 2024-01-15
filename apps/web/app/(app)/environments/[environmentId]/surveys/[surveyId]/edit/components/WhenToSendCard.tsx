@@ -3,7 +3,6 @@
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { produce } from "immer";
 import { useCallback, useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -53,42 +52,19 @@ export default function WhenToSendCard({
     setLocalSurvey(updatedSurvey);
   }, [localSurvey, setLocalSurvey]);
 
-  // const setTriggerEvent = (idx: number, eventClassId: string) => {
-  //   // TODO: DEBUG ME
-
-  //   // const updatedSurvey = { ...localSurvey };
-  //   // updatedSurvey.triggers[idx] = eventClassId;
-  //   // setLocalSurvey(updatedSurvey);
-
-  //   setLocalSurvey({
-  //     ...localSurvey,
-  //     triggers: [...localSurvey.triggers.slice(0, idx), eventClassId, ...localSurvey.triggers.slice(idx + 1)],
-  //   });
-
-  // const setTriggerEvent = (idx: number, actionClassId: string) => {
-  //   const updatedSurvey = { ...localSurvey };
-  //   updatedSurvey.triggers[idx] = actionClassArray!.find((actionClass) => {
-  //     return actionClass.id === actionClassId;
-  //   })!;
-  //   setLocalSurvey(updatedSurvey);
-  // };
-
   const setTriggerEvent = useCallback(
     (idx: number, actionClassName: string) => {
-      // const updatedSurvey = { ...localSurvey };
-      const newActionClass = actionClassArray!.find((actionClass) => {
+      const updatedSurvey = { ...localSurvey };
+      const newActionClass = actionClasses!.find((actionClass) => {
         return actionClass.name === actionClassName;
       });
       if (!newActionClass) {
         throw new Error("Action class not found");
       }
-      const updatedSurvey = produce(localSurvey, (draft) => {
-        draft.triggers[idx] = newActionClass.name;
-      });
-      // updatedSurvey.triggers[idx] = newActionClass.name;
+      updatedSurvey.triggers[idx] = newActionClass.name;
       setLocalSurvey(updatedSurvey);
     },
-    [actionClassArray, localSurvey, setLocalSurvey]
+    [actionClasses, localSurvey, setLocalSurvey]
   );
 
   const removeTriggerEvent = (idx: number) => {
@@ -123,7 +99,6 @@ export default function WhenToSendCard({
   };
 
   useEffect(() => {
-    // console.log(actionClassArray);
     if (isAddEventModalOpen) return;
 
     if (activeIndex !== null) {

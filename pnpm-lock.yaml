@@ -354,9 +354,6 @@ importers:
       googleapis:
         specifier: ^129.0.0
         version: 129.0.0(encoding@0.1.13)
-      immer:
-        specifier: ^10.0.3
-        version: 10.0.3
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.2
@@ -13892,10 +13889,6 @@ packages:
 
   /immediate@3.0.6:
     resolution: {integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==}
-    dev: false
-
-  /immer@10.0.3:
-    resolution: {integrity: sha512-pwupu3eWfouuaowscykeckFmVTpqbzW+rXFCX8rQLkZzM9ftBmU/++Ra+o+L27mz03zJTlyV4UUr+fdKNffo4A==}
     dev: false
 
   /import-fresh@3.3.0:
