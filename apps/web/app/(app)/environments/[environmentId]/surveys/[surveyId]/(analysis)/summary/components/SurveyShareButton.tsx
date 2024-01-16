@@ -29,16 +29,9 @@ interface SurveyShareButtonProps {
   webAppUrl: string;
   product: TProduct;
   user: TUser;
-  environmentId: string;
 }
 
-export default function SurveyShareButton({
-  survey,
-  webAppUrl,
-  product,
-  user,
-  environmentId,
-}: SurveyShareButtonProps) {
+export default function SurveyShareButton({ survey, webAppUrl, product, user }: SurveyShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
@@ -127,7 +120,6 @@ export default function SurveyShareButton({
           product={product}
           webAppUrl={webAppUrl}
           user={user}
-          environmentId={environmentId}
         />
       )}
       {showResultsLinkModal && (

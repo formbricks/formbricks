@@ -59,7 +59,6 @@ export default function SuccessMessage({
   return (
     <>
       <ShareEmbedSurvey
-        environmentId={environment.id}
         survey={survey}
         open={showLinkModal}
         setOpen={setShowLinkModal}

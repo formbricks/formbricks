@@ -26,16 +26,9 @@ interface ShareEmbedSurveyProps {
   webAppUrl: string;
   product: TProduct;
   user: TUser;
-  environmentId: string;
 }
-export default function ShareEmbedSurvey({
-  survey,
-  open,
-  setOpen,
-  webAppUrl,
-  user,
-  environmentId,
-}: ShareEmbedSurveyProps) {
+export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, user }: ShareEmbedSurveyProps) {
+  const environmentId = survey.environmentId;
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey, webAppUrl]);
   const isSingleUseLinkSurvey = survey.singleUse?.enabled;
   const { email } = user;

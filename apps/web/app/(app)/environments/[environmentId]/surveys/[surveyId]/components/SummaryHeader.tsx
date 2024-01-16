@@ -65,13 +65,7 @@ const SummaryHeader = ({
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        <SurveyShareButton
-          survey={survey}
-          webAppUrl={webAppUrl}
-          product={product}
-          user={user}
-          environmentId={environment.id}
-        />
+        <SurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
         {!isViewer &&
         (environment?.widgetSetupCompleted || survey.type === "link") &&
         survey?.status !== "draft" ? (
@@ -103,7 +97,6 @@ const SummaryHeader = ({
                   webAppUrl={webAppUrl}
                   product={product}
                   user={user}
-                  environmentId={environment.id}
                 />
                 <DropdownMenuSeparator />
               </>

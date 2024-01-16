@@ -61,7 +61,7 @@ export default async function SurveysEditPage({ params }) {
   return (
     <SurveyEditor
       survey={survey}
-      productInfo={product}
+      product={product}
       environment={environment}
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
