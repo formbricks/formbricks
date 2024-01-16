@@ -68,13 +68,13 @@ const QuestionFormInput = ({
   const [showQuestionSelect, setShowQuestionSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallQuestions, setRecallQuestions] = useState<TSurveyQuestion[]>(
-    text.includes("recall:") ? getRecallQuestions(text, localSurvey) : []
+    text.includes("#recall:") ? getRecallQuestions(text, localSurvey) : []
   );
   const filteredRecallQuestions = Array.from(new Set(recallQuestions.map((q) => q.id))).map((id) => {
     return recallQuestions.find((q) => q.id === id);
   });
   const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(
-    text.includes("fallback:") ? getFallbackValues(text) : {}
+    text.includes("/fallback:") ? getFallbackValues(text) : {}
   );
 
   // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
@@ -83,7 +83,7 @@ const QuestionFormInput = ({
   useEffect(() => {
     // Generates an array of headlines from recallQuestions, replacing nested recall questions with '___' .
     const recallQuestionHeadlines = recallQuestions.flatMap((recallQuestion) => {
-      if (!recallQuestion.headline.includes("recall:")) {
+      if (!recallQuestion.headline.includes("#recall:")) {
         return [recallQuestion.headline];
       }
       const recallQuestionText = (recallQuestion[type as keyof typeof recallQuestion] as string) || "";
@@ -170,7 +170,7 @@ const QuestionFormInput = ({
     setShowQuestionSelect(false);
     const modifiedHeadlineWithId = getQuestionTextBasedOnType().replace(
       "@",
-      `recall:${recallQuestion.id}/fallback: `
+      `#recall:${recallQuestion.id}/fallback:# `
     );
     updateQuestionDetails(modifiedHeadlineWithId);
 
@@ -211,7 +211,7 @@ const QuestionFormInput = ({
           setFallbacks(updatedFallback);
           headlineWithFallback = headlineWithFallback.replace(
             recallInfo,
-            `recall:${recallQuestion?.id}/fallback:${fallBackValue}`
+            `#recall:${recallQuestion?.id}/fallback:${fallBackValue}#`
           );
           updateQuestionDetails(headlineWithFallback);
         }
