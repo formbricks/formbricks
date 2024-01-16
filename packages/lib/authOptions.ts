@@ -114,6 +114,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         user = await updateUser(user.id, { emailVerified: new Date() });
+        await sendGettingStartedEmail(user);
 
         return user;
       },

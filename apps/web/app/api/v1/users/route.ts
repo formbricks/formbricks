@@ -29,7 +29,6 @@ export async function POST(request: Request) {
 
     // create the user
     user = await createUser(user);
-    await sendGettingStartedEmail(user);
 
     // User is invited to team
     if (inviteToken) {
@@ -55,6 +54,8 @@ export async function POST(request: Request) {
 
       if (!EMAIL_VERIFICATION_DISABLED) {
         await sendVerificationEmail(user);
+      } else {
+        await sendGettingStartedEmail(user);
       }
 
       await sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
@@ -86,6 +87,8 @@ export async function POST(request: Request) {
     // send verification email amd return user
     if (!EMAIL_VERIFICATION_DISABLED) {
       await sendVerificationEmail(user);
+    } else {
+      await sendGettingStartedEmail(user);
     }
     return NextResponse.json(user);
   } catch (e) {
