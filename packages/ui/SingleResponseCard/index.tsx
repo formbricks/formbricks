@@ -208,6 +208,7 @@ export default function SingleResponseCard({
             </p>
           )}
           {response.meta?.source && <p>Source: {response.meta.source}</p>}
+          {response.meta?.country && <p>Country: {response.meta.country}</p>}
         </div>
       )}
     </>
