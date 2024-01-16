@@ -22,6 +22,7 @@
 
   // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "cp .env.example .env && sed -i '/^ENCRYPTION_KEY=/c\\ENCRYPTION_KEY='$(openssl rand -hex 32) .env && sed -i '/^NEXTAUTH_SECRET=/c\\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env && pnpm install && pnpm db:migrate:dev",
+  "postAttachCommand": "pnpm dev --filter=web... --filter=demo...",
 
   // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
   "remoteUser": "node"
