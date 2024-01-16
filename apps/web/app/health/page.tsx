@@ -14,14 +14,16 @@ export const metadata: Metadata = {
   },
 };
 
-const checkDatabaseConnection = async (): Promise<boolean> =>
-  await prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false);
-
-export default async function HealthPage() {
-  const connectedToDatabase = await checkDatabaseConnection();
-  if (!connectedToDatabase) {
+const checkDatabaseConnection = async () => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (e) {
     throw new Error("Database could not be reached");
   }
+};
+
+export default async function HealthPage() {
+  await checkDatabaseConnection();
 
   return (
     <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center">
