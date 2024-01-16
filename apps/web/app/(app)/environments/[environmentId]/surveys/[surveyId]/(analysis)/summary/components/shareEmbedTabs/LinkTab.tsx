@@ -10,11 +10,16 @@ import { Button } from "@formbricks/ui/Button";
 interface LinkTabProps {
   surveyUrl: string;
   webAppUrl: string;
-  getUrl: () => void;
+  generateNewSingleUseLink: () => void;
   isSingleUseLinkSurvey: boolean;
 }
 
-export default function LinkTab({ surveyUrl, webAppUrl, getUrl, isSingleUseLinkSurvey }: LinkTabProps) {
+export default function LinkTab({
+  surveyUrl,
+  webAppUrl,
+  generateNewSingleUseLink,
+  isSingleUseLinkSurvey,
+}: LinkTabProps) {
   const linkTextRef = useRef(null);
 
   const handleTextSelection = () => {
@@ -56,11 +61,11 @@ export default function LinkTab({ surveyUrl, webAppUrl, getUrl, isSingleUseLinkS
   return (
     <div className="flex h-full grow flex-col gap-6">
       <div>
-        <p className=" text-lg font-semibold text-slate-800">Share the link to get responses</p>
-        <div className="mt-2 flex max-w-full flex-col items-center justify-center space-x-2 lg:flex-row">
+        <p className="text-lg font-semibold text-slate-800">Share the link to get responses</p>
+        <div className="mt-2 flex max-w-full flex-col items-center space-x-2 lg:flex-row">
           <div
             ref={linkTextRef}
-            className="mt-2 max-w-[65%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
+            className="mt-2 max-w-[65%] overflow-hidden rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800"
             style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
             onClick={() => handleTextSelection()}>
             {surveyUrl}
@@ -84,7 +89,7 @@ export default function LinkTab({ surveyUrl, webAppUrl, getUrl, isSingleUseLinkS
                 className="inline"
                 title="Regenerate single use survey link"
                 aria-label="Regenerate single use survey link"
-                onClick={() => getUrl()}>
+                onClick={() => generateNewSingleUseLink()}>
                 <RefreshCcw className="h-5 w-5" />
               </Button>
             )}
@@ -99,9 +104,9 @@ export default function LinkTab({ surveyUrl, webAppUrl, getUrl, isSingleUseLinkS
               key={tip.title}
               target="_blank"
               href={tip.link}
-              className="relative w-full rounded-md border border-slate-100 bg-white px-6 py-4 text-sm text-slate-600 hover:bg-slate-50">
+              className="relative w-full rounded-md border border-slate-100 bg-white px-6 py-4 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-800">
               <p className="mb-1 font-semibold">{tip.title}</p>
-              <p className="text-slate-500">{tip.description}</p>
+              <p className="text-slate-500 hover:text-slate-700">{tip.description}</p>
             </Link>
           ))}
         </div>

@@ -79,6 +79,11 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
     setShowInitialPage(!showInitialPage);
   };
 
+  const generateNewSingleUseLink = () => {
+    getUrl();
+    toast.success("New single use link generated");
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className=" w-full max-w-xl bg-white p-0 md:max-w-3xl lg:h-[700px] lg:max-w-5xl">
@@ -113,7 +118,7 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
                       className="inline"
                       title="Regenerate single use survey link"
                       aria-label="Regenerate single use survey link"
-                      onClick={() => getUrl()}>
+                      onClick={() => generateNewSingleUseLink()}>
                       <RefreshCcw className="h-5 w-5" />
                     </Button>
                   )}
@@ -186,7 +191,7 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
                     <LinkTab
                       surveyUrl={surveyUrl}
                       webAppUrl={webAppUrl}
-                      getUrl={getUrl}
+                      generateNewSingleUseLink={generateNewSingleUseLink}
                       isSingleUseLinkSurvey={isSingleUseLinkSurvey}
                     />
                   ) : null}
