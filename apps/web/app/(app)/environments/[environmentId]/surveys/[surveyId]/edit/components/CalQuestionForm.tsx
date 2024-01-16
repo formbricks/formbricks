@@ -1,12 +1,14 @@
+import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
-import { TSurveyCalQuestion } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 
 interface CalQuestionFormProps {
+  localSurvey: TSurvey;
   question: TSurveyCalQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
@@ -15,28 +17,24 @@ interface CalQuestionFormProps {
 }
 
 export default function CalQuestionForm({
+  localSurvey,
   question,
   questionIdx,
   updateQuestion,
   isInValid,
 }: CalQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const environmentId = localSurvey.environmentId;
 
   return (
     <form>
-      <div className="mt-3">
-        <Label htmlFor="headline">Question</Label>
-        <div className="mt-2">
-          <Input
-            autoFocus
-            id="headline"
-            name="headline"
-            value={question.headline}
-            onChange={(e) => updateQuestion(questionIdx, { headline: e.target.value })}
-            isInvalid={isInValid && question.headline.trim() === ""}
-          />
-        </div>
-      </div>
+      <QuestionFormInput
+        environmentId={environmentId}
+        isInValid={isInValid}
+        question={question}
+        questionIdx={questionIdx}
+        updateQuestion={updateQuestion}
+      />
       <div className="mt-3">
         {showSubheader && (
           <>
