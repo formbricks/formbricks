@@ -279,6 +279,11 @@ const QuestionFormInput = ({
             )}
             <Input
               className="absolute top-0 text-black  caret-black"
+              placeholder={
+                type === "headline"
+                  ? "Your question here. Recall information with @"
+                  : "Your description here. Recall information with @"
+              }
               autoFocus
               ref={inputRef}
               id={type}
