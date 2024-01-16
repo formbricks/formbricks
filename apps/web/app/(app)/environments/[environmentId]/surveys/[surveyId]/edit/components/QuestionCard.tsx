@@ -121,6 +121,7 @@ export default function QuestionCard({
 
   const updateEmptyNextButtonLabels = (labelValue: string) => {
     localSurvey.questions.forEach((q, index) => {
+      if (index === localSurvey.questions.length - 1) return;
       if (!q.buttonLabel || q.buttonLabel?.trim() === "") {
         updateQuestion(index, { buttonLabel: labelValue });
       }
@@ -341,6 +342,8 @@ export default function QuestionCard({
                                 updateQuestion(questionIdx, { buttonLabel: e.target.value });
                               }}
                               onBlur={(e) => {
+                                //If it is the last question then do not update labels
+                                if (questionIdx === localSurvey.questions.length - 1) return;
                                 updateEmptyNextButtonLabels(e.target.value);
                               }}
                             />
