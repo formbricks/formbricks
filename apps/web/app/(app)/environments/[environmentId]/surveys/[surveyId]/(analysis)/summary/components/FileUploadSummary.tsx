@@ -5,6 +5,7 @@ import { DownloadIcon, FileIcon } from "lucide-react";
 import Link from "next/link";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
@@ -81,29 +82,31 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
 
                 {Array.isArray(response.value) &&
                   (response.value.length > 0 ? (
-                    response.value.map((fileUrl, index) => (
-                      <div className="relative m-2 rounded-lg bg-slate-200" key={fileUrl}>
-                        <a
-                          href={fileUrl as string}
-                          key={index}
-                          download
-                          target="_blank"
-                          rel="noopener noreferrer">
-                          <div className="absolute right-0 top-0 m-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 hover:bg-white">
-                              <DownloadIcon className="h-6 text-slate-500" />
-                            </div>
-                          </div>
-                        </a>
+                    response.value.map((fileUrl, index) => {
+                      const fileName = getOriginalFileNameFromUrl(fileUrl);
 
-                        <div className="flex flex-col items-center justify-center p-2">
-                          <FileIcon className="h-6 text-slate-500" />
-                          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                            {fileUrl.split("/").pop()}
-                          </p>
+                      return (
+                        <div className="relative m-2 rounded-lg bg-slate-200" key={fileUrl}>
+                          <a
+                            href={fileUrl as string}
+                            key={index}
+                            download={fileName}
+                            target="_blank"
+                            rel="noopener noreferrer">
+                            <div className="absolute right-0 top-0 m-2">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 hover:bg-white">
+                                <DownloadIcon className="h-6 text-slate-500" />
+                              </div>
+                            </div>
+                          </a>
+
+                          <div className="flex flex-col items-center justify-center p-2">
+                            <FileIcon className="h-6 text-slate-500" />
+                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{fileName}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="flex w-full flex-col items-center justify-center p-2">
                       <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">skipped</p>
