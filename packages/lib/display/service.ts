@@ -34,6 +34,7 @@ const selectDisplay = {
   surveyId: true,
   responseId: true,
   personId: true,
+  status: true,
 };
 
 export const getDisplay = async (displayId: string): Promise<TDisplay | null> => {
@@ -42,7 +43,7 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
       validateInputs([displayId, ZId]);
 
       try {
-        const display = await prisma.response.findUnique({
+        const display = await prisma.display.findUnique({
           where: {
             id: displayId,
           },
@@ -143,7 +144,6 @@ export const updateDisplayLegacy = async (
       data,
       select: selectDisplay,
     });
-
     displayCache.revalidate({
       id: display.id,
       surveyId: display.surveyId,
@@ -164,7 +164,6 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
   validateInputs([displayInput, ZDisplayCreateInput]);
 
   const { environmentId, userId, surveyId } = displayInput;
-
   try {
     let person;
     if (userId) {
@@ -191,13 +190,11 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
       },
       select: selectDisplay,
     });
-
     displayCache.revalidate({
       id: display.id,
       personId: display.personId,
       surveyId: display.surveyId,
     });
-
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -337,7 +334,6 @@ export const deleteDisplayByResponseId = async (
       personId: display.personId,
       surveyId,
     });
-
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
