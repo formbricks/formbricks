@@ -57,8 +57,8 @@ const AddFilterModal = ({
 
     if (!searchValue) return actionClasses;
 
-    return actionClasses.filter((eventClass) =>
-      eventClass.name.toLowerCase().includes(searchValue.toLowerCase())
+    return actionClasses.filter((actionClass) =>
+      actionClass.name.toLowerCase().includes(searchValue.toLowerCase())
     );
   }, [actionClasses, searchValue]);
 
@@ -102,19 +102,19 @@ const AddFilterModal = ({
 
   const handleAddFilter = ({
     type,
-    attributeClassId,
+    attributeClassName,
     deviceType,
-    eventClassId,
+    actionClassId,
     userSegmentId,
   }: {
     type: TFilterType;
-    eventClassId?: string;
-    attributeClassId?: string;
+    actionClassId?: string;
+    attributeClassName?: string;
     userSegmentId?: string;
     deviceType?: string;
   }) => {
     if (type === "action") {
-      if (!eventClassId) return;
+      if (!actionClassId) return;
 
       const newFilter: TBaseFilterGroupItem = {
         id: createId(),
@@ -123,7 +123,7 @@ const AddFilterModal = ({
           id: createId(),
           root: {
             type: type,
-            actionClassId: eventClassId,
+            actionClassId,
           },
           qualifier: {
             metric: "occuranceCount",
@@ -138,7 +138,7 @@ const AddFilterModal = ({
     }
 
     if (type === "attribute") {
-      if (!attributeClassId) return;
+      if (!attributeClassName) return;
 
       const newFilter: TBaseFilterGroupItem = {
         id: createId(),
@@ -147,7 +147,7 @@ const AddFilterModal = ({
           id: createId(),
           root: {
             type: type,
-            attributeClassId,
+            attributeClassName,
           },
           qualifier: {
             operator: "equals",
@@ -222,18 +222,18 @@ const AddFilterModal = ({
               {allFiltersFiltered.map((filterGroup) => {
                 return (
                   <>
-                    {filterGroup.actions.map((eventClass) => {
+                    {filterGroup.actions.map((actionClass) => {
                       return (
                         <div
                           onClick={() => {
                             handleAddFilter({
                               type: "action",
-                              eventClassId: eventClass.id,
+                              actionClassId: actionClass.id,
                             });
                           }}
                           className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                           <MousePointerClick className="h-4 w-4" />
-                          <p>{eventClass.name}</p>
+                          <p>{actionClass.name}</p>
                         </div>
                       );
                     })}
@@ -244,7 +244,7 @@ const AddFilterModal = ({
                           onClick={() => {
                             handleAddFilter({
                               type: "attribute",
-                              attributeClassId: attributeClass.id,
+                              attributeClassName: attributeClass.name,
                             });
                           }}
                           className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
@@ -292,18 +292,18 @@ const AddFilterModal = ({
 
           {activeTabId === "actions" && (
             <>
-              {actionClassesFiltered.map((eventClass) => {
+              {actionClassesFiltered.map((actionClass) => {
                 return (
                   <div
                     onClick={() => {
                       handleAddFilter({
                         type: "action",
-                        eventClassId: eventClass.id,
+                        actionClassId: actionClass.id,
                       });
                     }}
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                     <MousePointerClick className="h-4 w-4" />
-                    <p>{eventClass.name}</p>
+                    <p>{actionClass.name}</p>
                   </div>
                 );
               })}
@@ -318,7 +318,7 @@ const AddFilterModal = ({
                     onClick={() => {
                       handleAddFilter({
                         type: "attribute",
-                        attributeClassId: attributeClass.id,
+                        attributeClassName: attributeClass.name,
                       });
                     }}
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">

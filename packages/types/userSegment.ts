@@ -79,7 +79,7 @@ export const ZUserSegmentAttributeFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
     type: z.literal("attribute"),
-    attributeClassId: z.string(),
+    attributeClassName: z.string(),
   }),
   value: ZUserSegmentFilterValue,
   qualifier: z.object({

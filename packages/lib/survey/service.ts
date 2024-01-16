@@ -12,6 +12,7 @@ import { TPerson } from "@formbricks/types/people";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
 import { TUserSegment, ZUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
 
+import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
 import { getAttributeClasses } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
@@ -21,7 +22,7 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
-import { updateUserSegment } from "../userSegment/service";
+import { evaluateSegment, updateUserSegment } from "../userSegment/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -708,37 +709,46 @@ export const getSyncSurveys = async (environmentId: string, person: TPerson): Pr
         }
       });
 
-      const attributeClasses = await getAttributeClasses(environmentId);
+      const personActions = await getActionsByPersonId(person.id);
 
-      // filter surveys that meet the attributeFilters criteria
-      const potentialSurveysWithAttributes = surveys.filter((survey) => {
-        const attributeFilters = survey.attributeFilters;
-        if (attributeFilters.length === 0) {
-          return true;
-        }
-        // check if meets all attribute filters criterias
-        return attributeFilters.every((attributeFilter) => {
-          const attributeClassName = attributeClasses.find(
-            (attributeClass) => attributeClass.id === attributeFilter.attributeClassId
-          )?.name;
-          if (!attributeClassName) {
-            throw Error("Invalid attribute filter class");
-          }
-          const personAttributeValue = person.attributes[attributeClassName];
-          if (attributeFilter.condition === "equals") {
-            return personAttributeValue === attributeFilter.value;
-          } else if (attributeFilter.condition === "notEquals") {
-            return personAttributeValue !== attributeFilter.value;
-          } else {
-            throw Error("Invalid attribute filter condition");
+      const personActionClassIds = Array.from(
+        new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
+      );
+
+      if (!surveys.every((survey) => !survey.userSegment?.filters?.length)) {
+        const surveyPromises = surveys.map(async (survey) => {
+          const { userSegment } = survey;
+
+          if (userSegment) {
+            const result = await evaluateSegment(
+              {
+                attributes: person.attributes,
+                actionIds: personActionClassIds,
+                deviceType: "desktop",
+                environmentId,
+                personId: person.id,
+              },
+              userSegment.filters
+            );
+
+            if (result) {
+              return survey;
+            }
+
+            return null;
           }
         });
-      });
+
+        const promisesResult = await Promise.all(surveyPromises);
+        const filteredResult = promisesResult.filter((survey) => !!survey);
+
+        surveys = filteredResult as TSurvey[];
+      }
 
       const latestDisplay = displays[0];
 
       // filter surveys that meet the recontactDays criteria
-      surveys = potentialSurveysWithAttributes.filter((survey) => {
+      surveys = surveys.filter((survey) => {
         if (!latestDisplay) {
           return true;
         } else if (survey.recontactDays !== null) {

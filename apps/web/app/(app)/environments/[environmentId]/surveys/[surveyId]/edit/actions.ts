@@ -20,7 +20,6 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys";
 import {
   TBaseFilterGroup,
-  TUserSegment,
   TUserSegmentUpdateInput,
   ZUserSegmentFilterGroup,
   ZUserSegmentUpdateInput,

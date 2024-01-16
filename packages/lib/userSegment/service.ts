@@ -377,7 +377,7 @@ export const cloneUserSegment = async (userSegmentId: string, surveyId: string):
 };
 
 type UserAttributeData = {
-  [attributeClassId: string]: string | number;
+  [attributeClassName: string]: string | number;
 };
 
 type UserData = {
@@ -393,9 +393,9 @@ const evaluateAttributeFilter = (
   filter: TUserSegmentAttributeFilter
 ): boolean => {
   const { value, qualifier, root } = filter;
-  const { attributeClassId } = root;
+  const { attributeClassName } = root;
 
-  const attributeValue = attributes[attributeClassId];
+  const attributeValue = attributes[attributeClassName];
 
   if (!attributeValue) {
     return false;
@@ -438,7 +438,7 @@ const getResolvedActionValue = async (actiondClassId: string, personId: string, 
 };
 
 const evaluateActionFilter = async (
-  actionIds: string[],
+  actionClassIds: string[],
   filter: TUserSegmentActionFilter,
   personId: string
 ): Promise<boolean> => {
@@ -449,7 +449,7 @@ const evaluateActionFilter = async (
   // there could be a case when the actionIds do not have the actionClassId
   // in such a case, we return false
 
-  const actionClassIdIndex = actionIds.findIndex((actionId) => actionId === actionClassId);
+  const actionClassIdIndex = actionClassIds.findIndex((actionId) => actionId === actionClassId);
   if (actionClassIdIndex === -1) {
     return false;
   }

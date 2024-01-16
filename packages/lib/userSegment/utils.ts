@@ -65,7 +65,7 @@ export const createGroupFromResource = (group: TBaseFilterGroup, resourceId: str
           connector: "and",
           resource: {
             id: createId(),
-            root: { type: "attribute", attributeClassId: "" },
+            root: { type: "attribute", attributeClassName: "" },
             qualifier: { operator: "endsWith" },
             value: "",
           },
@@ -275,21 +275,21 @@ export const updateOperatorInFilter = (
   }
 };
 
-export const updateAttributeClassIdInFilter = (
+export const updateAttributeClassNameInFilter = (
   group: TBaseFilterGroup,
   filterId: string,
-  newAttributeClassId: string
+  newAttributeClassName: string
 ) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
     if (isResourceFilter(resource)) {
       if (resource.id === filterId) {
-        (resource as TUserSegmentAttributeFilter).root.attributeClassId = newAttributeClassId;
+        (resource as TUserSegmentAttributeFilter).root.attributeClassName = newAttributeClassName;
         break;
       }
     } else {
-      updateAttributeClassIdInFilter(resource, filterId, newAttributeClassId);
+      updateAttributeClassNameInFilter(resource, filterId, newAttributeClassName);
     }
   }
 };

@@ -14,7 +14,7 @@ import { cn } from "@formbricks/lib/cn";
 import {
   toggleFilterConnector,
   updateActionClassIdInFilter,
-  updateAttributeClassIdInFilter,
+  updateAttributeClassNameInFilter,
   updateDeviceTypeInFilter,
   updateFilterValue,
   updateMetricInFilter,
@@ -167,7 +167,7 @@ const AttributeSegmentFilter = ({
   setUserSegment,
   attributeClasses,
 }: TAttributeSegmentFilterProps) => {
-  const { attributeClassId } = resource.root;
+  const { attributeClassName } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
   const [valueError, setValueError] = useState("");
@@ -194,8 +194,9 @@ const AttributeSegmentFilter = ({
     };
   });
 
-  const attributeClass = attributeClasses?.find((attributeClass) => attributeClass?.id === attributeClassId)
-    ?.name;
+  const attributeClass = attributeClasses?.find(
+    (attributeClass) => attributeClass?.name === attributeClassName
+  )?.name;
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
     const updatedUserSegment = structuredClone(userSegment);
@@ -206,10 +207,10 @@ const AttributeSegmentFilter = ({
     setUserSegment(updatedUserSegment);
   };
 
-  const updateAttributeClassIdInLocalSurvey = (filterId: string, newAttributeClassId: string) => {
+  const updateAttributeClassNameInLocalSurvey = (filterId: string, newAttributeClassName: string) => {
     const updatedUserSegment = structuredClone(userSegment);
     if (updatedUserSegment.filters) {
-      updateAttributeClassIdInFilter(updatedUserSegment.filters, filterId, newAttributeClassId);
+      updateAttributeClassNameInFilter(updatedUserSegment.filters, filterId, newAttributeClassName);
     }
 
     setUserSegment(updatedUserSegment);
@@ -257,7 +258,7 @@ const AttributeSegmentFilter = ({
       <Select
         value={attributeClass}
         onValueChange={(value) => {
-          updateAttributeClassIdInLocalSurvey(resource.id, value);
+          updateAttributeClassNameInLocalSurvey(resource.id, value);
         }}>
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
@@ -427,11 +428,9 @@ const ActionSegmentFilter = ({
           </div>
         </SelectTrigger>
         <SelectContent className="bottom-0">
-          {actionClasses
-            // .filter((actionClass) => !actionClass.archived)
-            .map((actionClass) => (
-              <SelectItem value={actionClass.id}>{actionClass.name}</SelectItem>
-            ))}
+          {actionClasses.map((actionClass) => (
+            <SelectItem value={actionClass.id}>{actionClass.name}</SelectItem>
+          ))}
         </SelectContent>
       </Select>
 
