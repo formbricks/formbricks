@@ -358,6 +358,18 @@ export const convertMetricToText = (metric: TActionMetric) => {
 
 export type TUserSegment = z.infer<typeof ZUserSegment>;
 
+export const ZUserSegmentUpdateInput = z
+  .object({
+    title: z.string(),
+    description: z.string().nullable(),
+    isPrivate: z.boolean().default(true),
+    filters: ZUserSegmentFilterGroup,
+    surveys: z.array(z.string()),
+  })
+  .partial();
+
+export type TUserSegmentUpdateInput = z.infer<typeof ZUserSegmentUpdateInput>;
+
 // type guard to check if a resource is a filter
 export const isResourceFilter = (
   resource: TUserSegmentFilter | TBaseFilterGroup

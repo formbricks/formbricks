@@ -23,10 +23,5 @@ export const userSegmentCache = {
     if (environmentId) {
       revalidateTag(this.tag.byEnvironmentId(environmentId));
     }
-
-    if (id && environmentId) {
-      revalidateTag(this.tag.byId(id));
-      revalidateTag(this.tag.byEnvironmentId(environmentId));
-    }
   },
 };

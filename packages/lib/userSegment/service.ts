@@ -14,8 +14,9 @@ import {
   TUserSegmentConnector,
   TUserSegmentDeviceFilter,
   TUserSegmentSegmentFilter,
-  ZUserSegment,
+  TUserSegmentUpdateInput,
   ZUserSegmentFilterGroup,
+  ZUserSegmentUpdateInput,
   isResourceFilter,
 } from "@formbricks/types/userSegment";
 
@@ -167,17 +168,25 @@ export const getUserSegment = async (userSegmentId: string): Promise<TUserSegmen
   return userSegment;
 };
 
-export const updateUserSegment = async (userSegmentId: string, data: TUserSegment): Promise<TUserSegment> => {
-  validateInputs([userSegmentId, ZId], [data, ZUserSegment]);
+export const updateUserSegment = async (
+  userSegmentId: string,
+  data: TUserSegmentUpdateInput
+): Promise<TUserSegment> => {
+  validateInputs([userSegmentId, ZId], [data, ZUserSegmentUpdateInput]);
 
-  const updatedInput = {
+  let updatedInput: Prisma.UserSegmentUpdateInput = {
     ...data,
-    ...(data.surveys && {
+    surveys: undefined,
+  };
+
+  if (data.surveys) {
+    updatedInput = {
+      ...data,
       surveys: {
         connect: data.surveys.map((surveyId) => ({ id: surveyId })),
       },
-    }),
-  };
+    };
+  }
 
   const userSegment = await prisma.userSegment.update({
     where: {
@@ -194,6 +203,7 @@ export const updateUserSegment = async (userSegmentId: string, data: TUserSegmen
   });
 
   userSegmentCache.revalidate({ id: userSegmentId, environmentId: userSegment.environmentId });
+  userSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
 
   return {
     ...userSegment,
