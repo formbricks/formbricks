@@ -2,6 +2,7 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 import {
+  DEBUG,
   MAIL_FROM,
   SMTP_HOST,
   SMTP_PASSWORD,
@@ -52,15 +53,15 @@ export const sendEmail = async (emailData: sendEmailData) => {
           user: SMTP_USER,
           pass: SMTP_PASSWORD,
         },
-        // logger: true,
-        // debug: true,
+        logger: DEBUG,
+        debug: DEBUG,
       });
       const emailDefaults = {
         from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
       };
       await transporter.sendMail({ ...emailDefaults, ...emailData });
     } else {
-      console.log(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
+      console.error(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
     }
   } catch (error) {
     throw error;
