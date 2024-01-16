@@ -136,6 +136,7 @@ export const mockSurveyOutput: SurveyMock = {
   singleUse: null,
   styling: null,
   pin: null,
+  resultShareKey: null,
   ...baseSurveyProperties,
 };
 
@@ -157,6 +158,7 @@ export const updateSurveyInput: TSurvey = {
   styling: null,
   singleUse: null,
   pin: null,
+  resultShareKey: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
   attributeFilters: [mockAttributeFilter],
