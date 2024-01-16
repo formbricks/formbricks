@@ -7,6 +7,7 @@ import {
   TBaseFilterGroupItem,
   TDeviceOperator,
   TSegmentOperator,
+  TUserSegment,
   TUserSegmentActionFilter,
   TUserSegmentAttributeFilter,
   TUserSegmentConnector,
@@ -377,4 +378,16 @@ export const updateDeviceTypeInFilter = (
       updateDeviceTypeInFilter(resource, filterId, newDeviceType);
     }
   }
+};
+
+export const formatUserSegmentDateFields = (userSegment: TUserSegment): TUserSegment => {
+  if (typeof userSegment.createdAt === "string") {
+    userSegment.createdAt = new Date(userSegment.createdAt);
+  }
+
+  if (typeof userSegment.updatedAt === "string") {
+    userSegment.updatedAt = new Date(userSegment.updatedAt);
+  }
+
+  return userSegment;
 };

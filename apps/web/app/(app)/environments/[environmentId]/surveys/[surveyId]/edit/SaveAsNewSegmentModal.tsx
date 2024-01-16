@@ -9,8 +9,9 @@ import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { formatDateFields } from "@formbricks/lib/utils/datetime";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TUserSegment } from "@formbricks/types/userSegment";
+import { TUserSegment, ZUserSegment } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
@@ -62,6 +63,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
       setIsLoading(true);
       if (!!userSegment && userSegment?.isPrivate) {
         const updatedUserSegment = await updateUserSegmentAction(userSegment.id, {
+          ...userSegment,
           title: data.title,
           description: data.description,
           isPrivate: false,
@@ -69,7 +71,6 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
         });
 
         toast.success("Segment updated successfully");
-
         setUserSegment(updatedUserSegment);
 
         setIsSegmentEditorOpen(false);

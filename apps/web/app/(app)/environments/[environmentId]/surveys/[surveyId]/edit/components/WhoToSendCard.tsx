@@ -33,7 +33,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface WhoToSendCardProps {
   localSurvey: TSurvey;
-  // setLocalSurvey: (survey: TSurvey) => void;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
   actionClasses: TActionClass[];

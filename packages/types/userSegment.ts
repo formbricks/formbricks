@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 // import { ZId } from "./environment";
@@ -358,11 +357,6 @@ export const convertMetricToText = (metric: TActionMetric) => {
 };
 
 export type TUserSegment = z.infer<typeof ZUserSegment>;
-
-export type TUserSegmentUpdateInput = Omit<
-  Prisma.UserSegmentUpdateInput,
-  "id" | "createdAt" | "updatedAt" | "environmentId"
->;
 
 // type guard to check if a resource is a filter
 export const isResourceFilter = (

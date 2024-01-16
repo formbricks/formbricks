@@ -10,7 +10,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
-import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
+import { TUserSegment, ZUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
 
 import { getActionClasses } from "../actionClass/service";
 import { getAttributeClasses } from "../attributeClass/service";
@@ -21,6 +21,7 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
+import { updateUserSegment } from "../userSegment/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -136,10 +137,13 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
       let surveyUserSegment: TUserSegment | null = null;
       if (surveyPrisma.userSegment) {
-        surveyUserSegment = {
-          ...surveyPrisma.userSegment,
-          surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
-        };
+        surveyUserSegment = formatDateFields(
+          {
+            ...surveyPrisma.userSegment,
+            surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
+          },
+          ZUserSegment
+        );
       }
 
       const transformedSurvey: TSurvey = {
@@ -470,17 +474,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new InvalidInputError("Invalid user segment filters");
     }
 
-    const { surveys, ...segmentData } = userSegment;
-
     try {
-      await prisma.userSegment.update({
-        where: {
-          id: userSegmentId,
-        },
-        data: {
-          ...segmentData,
-        },
-      });
+      await updateUserSegment(userSegmentId, userSegment);
     } catch (err) {
       console.log({ err });
       throw new Error("Error updating survey");

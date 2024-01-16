@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function PeopleLayout({ params, children }) {
   return (
     <>
-      <PeopleSegmentsTabs activeId="segments" environmentId={params.environmentId} />
+      <PeopleSegmentsTabs activeId="people" environmentId={params.environmentId} />
       <ContentWrapper>{children}</ContentWrapper>
     </>
   );

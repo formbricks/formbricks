@@ -1,4 +1,8 @@
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
+import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TActionMetric,
@@ -10,7 +14,7 @@ import {
   TUserSegmentConnector,
   TUserSegmentDeviceFilter,
   TUserSegmentSegmentFilter,
-  TUserSegmentUpdateInput,
+  ZUserSegment,
   ZUserSegmentFilterGroup,
   isResourceFilter,
 } from "@formbricks/types/userSegment";
@@ -23,6 +27,27 @@ import {
   getLastWeekEventCount,
   getTotalOccurrences,
 } from "../action/service";
+import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { surveyCache } from "../survey/cache";
+import { validateInputs } from "../utils/validate";
+import { userSegmentCache } from "./cache";
+
+type PrismaUserSegment = Prisma.UserSegmentGetPayload<{
+  include: {
+    surveys: {
+      select: {
+        id: true;
+      };
+    };
+  };
+}>;
+
+export const transformPrismaUserSegment = (userSegment: PrismaUserSegment) => {
+  return {
+    ...userSegment,
+    surveys: userSegment.surveys.map((survey) => survey.id),
+  };
+};
 
 export const createUserSegment = async (
   environmentId: string,
@@ -56,6 +81,8 @@ export const createUserSegment = async (
     },
   });
 
+  userSegmentCache.revalidate({ id: userSegment.id, environmentId });
+
   return {
     ...userSegment,
     surveys: userSegment.surveys.map((survey) => survey.id),
@@ -63,34 +90,100 @@ export const createUserSegment = async (
 };
 
 export const getUserSegments = async (environmentId: string): Promise<TUserSegment[]> => {
-  const userSegments = await prisma.userSegment.findMany({
-    where: {
-      environmentId,
-    },
-    include: {
-      surveys: {
-        select: {
-          id: true,
-        },
-      },
-    },
-  });
+  validateInputs([environmentId, ZId]);
 
-  if (!userSegments) {
-    return [];
-  }
+  const userSegments = await unstable_cache(
+    async () => {
+      try {
+        const userSegments = await prisma.userSegment.findMany({
+          where: {
+            environmentId,
+          },
+          include: {
+            surveys: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        });
 
-  return userSegments.map((userSegment) => ({
-    ...userSegment,
-    surveys: userSegment.surveys.map((survey) => survey.id),
-  }));
+        if (!userSegments) {
+          return [];
+        }
+
+        return userSegments.map((userSegment) => transformPrismaUserSegment(userSegment));
+      } catch (err) {
+        throw new DatabaseError(
+          `Database error when fetching user segments for environment ${environmentId}`
+        );
+      }
+    },
+    [`getUserSegments-${environmentId}`],
+    {
+      tags: [userSegmentCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return userSegments;
 };
 
 export const getUserSegment = async (userSegmentId: string): Promise<TUserSegment> => {
-  const userSegment = await prisma.userSegment.findUnique({
+  validateInputs([userSegmentId, ZId]);
+
+  const userSegment = await unstable_cache(
+    async () => {
+      try {
+        const userSegment = await prisma.userSegment.findUnique({
+          where: {
+            id: userSegmentId,
+          },
+          include: {
+            surveys: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        });
+
+        if (!userSegment) {
+          throw new ResourceNotFoundError("userSegment", userSegmentId);
+        }
+
+        return transformPrismaUserSegment(userSegment);
+      } catch (err) {
+        throw new DatabaseError(`Database error when fetching user segment ${userSegmentId}`);
+      }
+    },
+    [`getUserSegment-${userSegmentId}`],
+    {
+      tags: [userSegmentCache.tag.byId(userSegmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return userSegment;
+};
+
+export const updateUserSegment = async (userSegmentId: string, data: TUserSegment): Promise<TUserSegment> => {
+  validateInputs([userSegmentId, ZId], [data, ZUserSegment]);
+
+  const updatedInput = {
+    ...data,
+    ...(data.surveys && {
+      surveys: {
+        connect: data.surveys.map((surveyId) => ({ id: surveyId })),
+      },
+    }),
+  };
+
+  const userSegment = await prisma.userSegment.update({
     where: {
       id: userSegmentId,
     },
+    data: updatedInput,
     include: {
       surveys: {
         select: {
@@ -100,33 +193,7 @@ export const getUserSegment = async (userSegmentId: string): Promise<TUserSegmen
     },
   });
 
-  if (!userSegment) {
-    throw new ResourceNotFoundError("userSegment", userSegmentId);
-  }
-
-  return {
-    ...userSegment,
-    surveys: userSegment.surveys.map((survey) => survey.id),
-  };
-};
-
-export const updateUserSegment = async (
-  segmentId: string,
-  data: TUserSegmentUpdateInput
-): Promise<TUserSegment> => {
-  const userSegment = await prisma.userSegment.update({
-    where: {
-      id: segmentId,
-    },
-    data,
-    include: {
-      surveys: {
-        select: {
-          id: true,
-        },
-      },
-    },
-  });
+  userSegmentCache.revalidate({ id: userSegmentId, environmentId: userSegment.environmentId });
 
   return {
     ...userSegment,
@@ -140,47 +207,58 @@ export const getUserSegmentActiveInactiveSurveys = async (
   activeSurveys: string[];
   inactiveSurveys: string[];
 }> => {
-  const activeSurveysData = await prisma.userSegment.findUnique({
-    where: {
-      id: userSegmentId,
-      surveys: {
-        every: {
-          status: "inProgress",
-        },
-      },
-    },
-    select: {
-      surveys: {
-        select: { name: true },
-      },
-    },
-  });
-
-  const inactiveSurveysData = await prisma.userSegment.findUnique({
-    where: {
-      id: userSegmentId,
-      surveys: {
-        every: {
-          status: {
-            in: ["paused", "completed"],
+  const surveys = await unstable_cache(
+    async () => {
+      const activeSurveysData = await prisma.userSegment.findUnique({
+        where: {
+          id: userSegmentId,
+          surveys: {
+            every: {
+              status: "inProgress",
+            },
           },
         },
-      },
-    },
-    select: {
-      surveys: {
-        select: { name: true },
-      },
-    },
-  });
+        select: {
+          surveys: {
+            select: { name: true },
+          },
+        },
+      });
 
-  const activeSurveys = activeSurveysData?.surveys.map((survey) => survey.name);
-  const inactiveSurveys = inactiveSurveysData?.surveys.map((survey) => survey.name);
+      const inactiveSurveysData = await prisma.userSegment.findUnique({
+        where: {
+          id: userSegmentId,
+          surveys: {
+            every: {
+              status: {
+                in: ["paused", "completed"],
+              },
+            },
+          },
+        },
+        select: {
+          surveys: {
+            select: { name: true },
+          },
+        },
+      });
 
-  return {
-    activeSurveys: activeSurveys ?? [],
-    inactiveSurveys: inactiveSurveys ?? [],
-  };
+      const activeSurveys = activeSurveysData?.surveys.map((survey) => survey.name);
+      const inactiveSurveys = inactiveSurveysData?.surveys.map((survey) => survey.name);
+
+      return {
+        activeSurveys: activeSurveys ?? [],
+        inactiveSurveys: inactiveSurveys ?? [],
+      };
+    },
+    [`getUserSegmentActiveInactiveSurveys-${userSegmentId}`],
+    {
+      tags: [userSegmentCache.tag.byId(userSegmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return surveys;
 };
 
 export const deleteUserSegment = async (segmentId: string) => {
@@ -195,26 +273,18 @@ export const deleteUserSegment = async (segmentId: string) => {
     },
   });
 
-  await prisma.userSegment.delete({
+  const segment = await prisma.userSegment.delete({
     where: {
       id: segmentId,
     },
   });
+
+  userSegmentCache.revalidate({ id: segmentId, environmentId: segment.environmentId });
+  surveyCache.revalidate({ environmentId: segment.environmentId });
 };
 
 export const loadNewUserSegment = async (surveyId: string, newSegmentId: string) => {
-  const userSegment = await prisma.userSegment.findUnique({
-    where: {
-      id: newSegmentId,
-    },
-    include: {
-      surveys: {
-        select: {
-          id: true,
-        },
-      },
-    },
-  });
+  const userSegment = await getUserSegment(newSegmentId);
 
   if (!userSegment) {
     throw new Error("User segment not found");
@@ -244,18 +314,17 @@ export const loadNewUserSegment = async (surveyId: string, newSegmentId: string)
     },
   });
 
+  userSegmentCache.revalidate({ id: newSegmentId });
+  surveyCache.revalidate({ id: surveyId });
+
   return updatedSurvey;
 };
 
-export const cloneUserSegment = async (segmentId: string, surveyId: string): Promise<TUserSegment> => {
-  const userSegment = await prisma.userSegment.findUnique({
-    where: {
-      id: segmentId,
-    },
-  });
+export const cloneUserSegment = async (userSegmentId: string, surveyId: string): Promise<TUserSegment> => {
+  const userSegment = await getUserSegment(userSegmentId);
 
   if (!userSegment) {
-    throw new ResourceNotFoundError("userSegment", segmentId);
+    throw new ResourceNotFoundError("userSegment", userSegmentId);
   }
 
   try {
@@ -285,6 +354,8 @@ export const cloneUserSegment = async (segmentId: string, surveyId: string): Pro
 
       clonedUserSegment.filters = parsedFilters.data;
     }
+
+    userSegmentCache.revalidate({ id: clonedUserSegment.id });
 
     return {
       ...clonedUserSegment,

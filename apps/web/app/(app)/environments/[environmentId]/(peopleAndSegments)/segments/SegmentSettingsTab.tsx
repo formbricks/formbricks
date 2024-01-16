@@ -85,6 +85,7 @@ const SegmentSettingsTab = ({
     try {
       setIsUpdatingSegment(true);
       await updateUserSegmentAction(userSegment.id, {
+        ...userSegment,
         title: userSegment.title,
         description: userSegment.description ?? "",
         isPrivate: userSegment.isPrivate,

@@ -15,13 +15,11 @@ import {
   loadNewUserSegment,
   updateUserSegment,
 } from "@formbricks/lib/userSegment/service";
+import { formatUserSegmentDateFields } from "@formbricks/lib/userSegment/utils";
+import { formatDateFields } from "@formbricks/lib/utils/datetime";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys";
-import {
-  TBaseFilterGroup,
-  TUserSegmentUpdateInput,
-  ZUserSegmentFilterGroup,
-} from "@formbricks/types/userSegment";
+import { TBaseFilterGroup, TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
 
 export const createUserSegmentAction = async ({
   description,
@@ -52,7 +50,7 @@ export const createUserSegmentAction = async ({
   return segment;
 };
 
-export const updateUserSegmentAction = async (segmentId: string, data: TUserSegmentUpdateInput) => {
+export const updateUserSegmentAction = async (segmentId: string, data: TUserSegment) => {
   const { filters } = data;
   const parsedFilters = ZUserSegmentFilterGroup.safeParse(filters);
 
@@ -60,7 +58,12 @@ export const updateUserSegmentAction = async (segmentId: string, data: TUserSegm
     throw new Error("Invalid filters");
   }
 
-  return await updateUserSegment(segmentId, data);
+  const _data = {
+    ...data,
+    ...formatUserSegmentDateFields(data),
+  };
+
+  return await updateUserSegment(segmentId, _data);
 };
 
 export const loadNewUserSegmentAction = async (surveyId: string, segmentId: string) => {
