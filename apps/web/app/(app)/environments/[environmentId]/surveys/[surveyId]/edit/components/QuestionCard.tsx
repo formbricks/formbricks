@@ -25,8 +25,7 @@ import { Draggable } from "react-beautiful-dnd";
 
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -122,7 +121,7 @@ export default function QuestionCard({
           <div
             className={cn(
               open ? "bg-slate-700" : "bg-slate-400",
-              "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-600",
+              "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
               isInValid && "bg-red-400  hover:bg-red-600"
             )}>
             {questionIdx + 1}
