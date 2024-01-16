@@ -1,5 +1,6 @@
 import UrlShortenerForm from "@/app/(app)/environments/[environmentId]/components/UrlShortenerForm";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
+import { RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
 import toast from "react-hot-toast";
@@ -9,9 +10,11 @@ import { Button } from "@formbricks/ui/Button";
 interface LinkTabProps {
   surveyUrl: string;
   webAppUrl: string;
+  getUrl: () => void;
+  isSingleUseLinkSurvey: boolean;
 }
 
-export default function LinkTab({ surveyUrl, webAppUrl }: LinkTabProps) {
+export default function LinkTab({ surveyUrl, webAppUrl, getUrl, isSingleUseLinkSurvey }: LinkTabProps) {
   const linkTextRef = useRef(null);
 
   const handleTextSelection = () => {
@@ -53,25 +56,39 @@ export default function LinkTab({ surveyUrl, webAppUrl }: LinkTabProps) {
   return (
     <div className="flex h-full grow flex-col gap-6">
       <div>
-        <p className="text-lg font-semibold text-slate-800">Share the link to get responses</p>
-        <div className="mt-2 flex gap-2">
+        <p className=" text-lg font-semibold text-slate-800">Share the link to get responses</p>
+        <div className="mt-2 flex max-w-full flex-col items-center justify-center space-x-2 lg:flex-row">
           <div
             ref={linkTextRef}
-            className="relative flex grow items-center overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+            className="mt-2 max-w-[65%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
+            style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
             onClick={() => handleTextSelection()}>
-            <span>{surveyUrl}</span>
+            {surveyUrl}
           </div>
-          <Button
-            variant="darkCTA"
-            title="Copy survey link to clipboard"
-            aria-label="Copy survey link to clipboard"
-            onClick={() => {
-              navigator.clipboard.writeText(surveyUrl);
-              toast.success("URL copied to clipboard!");
-            }}
-            EndIcon={DocumentDuplicateIcon}>
-            Copy URL
-          </Button>
+          <div className="mt-2 flex items-center justify-center space-x-2">
+            <Button
+              variant="darkCTA"
+              className="inline"
+              title="Copy survey link to clipboard"
+              aria-label="Copy survey link to clipboard"
+              onClick={() => {
+                navigator.clipboard.writeText(surveyUrl);
+                toast.success("URL copied to clipboard!");
+              }}
+              EndIcon={DocumentDuplicateIcon}>
+              Copy Link
+            </Button>
+            {isSingleUseLinkSurvey && (
+              <Button
+                variant="darkCTA"
+                className="inline"
+                title="Regenerate single use survey link"
+                aria-label="Regenerate single use survey link"
+                onClick={() => getUrl()}>
+                <RefreshCcw className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex flex-wrap justify-between gap-2">

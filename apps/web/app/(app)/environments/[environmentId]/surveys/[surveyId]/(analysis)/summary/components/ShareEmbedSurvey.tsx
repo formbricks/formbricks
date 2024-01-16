@@ -1,11 +1,11 @@
 "use client";
 
-import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
+import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { ArrowLeftIcon, CodeBracketIcon, EnvelopeIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
-import { BellRing, BlocksIcon, Code2Icon } from "lucide-react";
+import { BellRing, BlocksIcon, Code2Icon, RefreshCcw } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
@@ -29,8 +29,7 @@ interface ShareEmbedSurveyProps {
 }
 export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, user }: ShareEmbedSurveyProps) {
   const environmentId = survey.environmentId;
-  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey, webAppUrl]);
-  const isSingleUseLinkSurvey = survey.singleUse?.enabled;
+  const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
 
   const tabs = [
@@ -42,6 +41,20 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
   const [activeId, setActiveId] = useState(tabs[0].id);
   const [showInitialPage, setShowInitialPage] = useState(true);
   const linkTextRef = useRef(null);
+  const [surveyUrl, setSurveyUrl] = useState("");
+
+  const getUrl = useCallback(async () => {
+    let url = webAppUrl + "/s/" + survey.id;
+    if (survey.singleUse?.enabled) {
+      const singleUseId = await generateSingleUseIdAction(survey.id, survey.singleUse.isEncrypted);
+      url += "?suId=" + singleUseId;
+    }
+    setSurveyUrl(url);
+  }, [survey, webAppUrl]);
+
+  useEffect(() => {
+    getUrl();
+  }, [survey, webAppUrl, getUrl]);
 
   const handleTextSelection = () => {
     if (linkTextRef.current) {
@@ -70,28 +83,41 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className=" w-full max-w-xl bg-white p-0 md:max-w-3xl lg:h-[700px] lg:max-w-5xl">
         {showInitialPage ? (
-          <div className="h-full">
-            <div className="flex h-[200px] flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
+          <div className="h-full max-w-full overflow-hidden">
+            <div className="flex h-[200px] w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
               <p className="pt-2 text-xl font-semibold text-slate-800">Your survey is public 🎉</p>
-              <div className="flex flex-col gap-2 lg:flex-row">
+              <div className="flex max-w-full flex-col items-center justify-center space-x-2 lg:flex-row">
                 <div
                   ref={linkTextRef}
-                  className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
+                  className="mt-2 max-w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
+                  style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
                   onClick={() => handleTextSelection()}>
-                  <span>{surveyUrl}</span>
+                  {surveyUrl}
                 </div>
-                <Button
-                  variant="darkCTA"
-                  className="inline"
-                  title="Copy survey link to clipboard"
-                  aria-label="Copy survey link to clipboard"
-                  onClick={() => {
-                    navigator.clipboard.writeText(surveyUrl);
-                    toast.success("URL copied to clipboard!");
-                  }}
-                  EndIcon={DocumentDuplicateIcon}>
-                  Copy Link
-                </Button>
+                <div className="mt-2 flex items-center justify-center space-x-2">
+                  <Button
+                    variant="darkCTA"
+                    className="inline"
+                    title="Copy survey link to clipboard"
+                    aria-label="Copy survey link to clipboard"
+                    onClick={() => {
+                      navigator.clipboard.writeText(surveyUrl);
+                      toast.success("URL copied to clipboard!");
+                    }}
+                    EndIcon={DocumentDuplicateIcon}>
+                    Copy Link
+                  </Button>
+                  {survey.singleUse?.enabled && (
+                    <Button
+                      variant="darkCTA"
+                      className="inline"
+                      title="Regenerate single use survey link"
+                      aria-label="Regenerate single use survey link"
+                      onClick={() => getUrl()}>
+                      <RefreshCcw className="h-5 w-5" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex h-[300px] flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 lg:h-3/5">
@@ -150,16 +176,19 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
                   </Button>
                 ))}
               </div>
-              <div className="col-span-4 h-full bg-slate-50 px-4 py-6 lg:col-span-3 lg:p-6">
+              <div className="col-span-4 h-full overflow-y-auto bg-slate-50 px-4 py-6 lg:col-span-3 lg:p-6">
                 <div className="">
-                  {isSingleUseLinkSurvey ? (
-                    <LinkSingleUseSurveyModal survey={survey} surveyBaseUrl={webAppUrl} />
-                  ) : activeId === "email" ? (
+                  {activeId === "email" ? (
                     <EmailTab surveyId={survey.id} email={email} />
                   ) : activeId === "webpage" ? (
                     <WebpageTab surveyUrl={surveyUrl} />
                   ) : activeId === "link" ? (
-                    <LinkTab surveyUrl={surveyUrl} webAppUrl={webAppUrl} />
+                    <LinkTab
+                      surveyUrl={surveyUrl}
+                      webAppUrl={webAppUrl}
+                      getUrl={getUrl}
+                      isSingleUseLinkSurvey={isSingleUseLinkSurvey}
+                    />
                   ) : null}
                 </div>
                 <div className="mt-2 rounded-md p-3 text-center lg:hidden">

@@ -57,7 +57,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
   };
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 ">
       <div className="flex items-center justify-end gap-4">
         {showEmbed ? (
           <Button
@@ -107,7 +107,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
           </CodeBlock>
         </div>
       ) : (
-        <div className="grow overflow-y-auto rounded-xl border border-slate-200 bg-white p-4">
+        <div className="mb-12 grow overflow-y-auto rounded-xl border border-slate-200 bg-white p-4">
           <div className="mb-6 flex gap-2">
             <div className="h-3 w-3 rounded-full bg-red-500"></div>
             <div className="h-3 w-3 rounded-full bg-amber-500"></div>
