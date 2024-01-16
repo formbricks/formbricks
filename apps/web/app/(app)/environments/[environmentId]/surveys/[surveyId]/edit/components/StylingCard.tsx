@@ -64,35 +64,6 @@ export default function StylingCard({
     });
   };
 
-  /*  const toggleBackgroundColor = () => {
-    setLocalSurvey({
-      ...localSurvey,
-      styling: {
-        ...localSurvey.styling,
-        background: {
-          ...localSurvey.styling?.background,
-          bg: !!bg ? undefined : "#ffff",
-          bgType: !!bg ? undefined : "color",
-        },
-      },
-    });
-  };
-
-  const toggleBrightness = () => {
-    setLocalSurvey({
-      ...localSurvey,
-      styling: {
-        ...localSurvey.styling,
-        background: {
-          ...localSurvey.styling?.background,
-          brightness: !!brightness ? undefined : 100,
-        },
-      },
-    });
-    
-    setInputValue(100);
-  }; */
-
   const toggleHighlightBorderColor = () => {
     setLocalSurvey({
       ...localSurvey,
