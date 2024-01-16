@@ -4,7 +4,6 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -41,6 +40,7 @@ export interface SingleResponseCardProps {
   pageType: string;
   environmentTags: TTag[];
   environment: TEnvironment;
+  setFetchedResponses: React.Dispatch<React.SetStateAction<TResponse[]>>;
 }
 
 interface TooltipRendererProps {
@@ -79,9 +79,9 @@ export default function SingleResponseCard({
   pageType,
   environmentTags,
   environment,
+  setFetchedResponses,
 }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
-  const router = useRouter();
   const displayIdentifier = response.person ? getPersonIdentifier(response.person) : null;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -152,7 +152,7 @@ export default function SingleResponseCard({
         throw new Error("You are not authorized to perform this action.");
       }
       await deleteResponseAction(response.id);
-      router.refresh();
+      setFetchedResponses((prevResponses) => prevResponses.filter((r) => r.id !== response.id));
       toast.success("Submission deleted successfully.");
       setDeleteDialogOpen(false);
     } catch (error) {
