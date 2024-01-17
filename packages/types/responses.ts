@@ -69,6 +69,7 @@ export const ZResponse = z.object({
 export type TResponse = z.infer<typeof ZResponse>;
 
 export const ZResponseInput = z.object({
+  id: z.string().cuid2().optional(),
   environmentId: z.string().cuid2(),
   surveyId: z.string().cuid2(),
   userId: z.string().nullish(),

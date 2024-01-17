@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -207,7 +208,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
-  const { environmentId, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
+  let { id, environmentId, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
 
   try {
     let person: TPerson | null = null;
@@ -220,8 +221,13 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       }
     }
 
+    if (!id) {
+      id = createId();
+    }
+
     const responsePrisma = await prisma.response.create({
       data: {
+        id,
         survey: {
           connect: {
             id: surveyId,
