@@ -253,6 +253,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Advanced Setup", href: "/docs/self-hosting/docker" },
       { title: "Configure", href: "/docs/self-hosting/external-auth-providers" },
       { title: "Migration Guide", href: "/docs/self-hosting/migration-guide" },
+      { title: "Self-hosting License", href: "/docs/self-hosting/license" },
     ],
   },
   {
