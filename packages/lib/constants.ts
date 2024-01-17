@@ -128,5 +128,7 @@ export const SHARE_RATE_LIMIT = {
   allowedPerInterval: 30,
 };
 
+export const DEBUG = process.env.DEBUG === "1";
+
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
