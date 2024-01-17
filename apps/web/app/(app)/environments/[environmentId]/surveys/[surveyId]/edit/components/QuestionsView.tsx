@@ -192,32 +192,47 @@ export default function QuestionsView({
 
     const languagesArray = languages.map((language) => language[0]);
 
-    const updateInvalidQuestions = (card, cardId, currentInvalidQuestions) => {
-      if (card.enabled) {
-        if (isLabelValidForAllLanguages(card.headline, languagesArray)) {
-          return currentInvalidQuestions.filter((id) => id !== cardId);
-        } else if (!currentInvalidQuestions.includes(cardId)) {
-          return [...currentInvalidQuestions, cardId];
-        }
-      } else {
-        return currentInvalidQuestions.filter((id) => id !== cardId);
+    const isCardValid = (card, cardType) => {
+      if (cardType === "start") {
+        // welcomeCard identified as "start"
+        return (
+          isLabelValidForAllLanguages(card.headline, languagesArray) &&
+          (card.html && card.html["en"] === ""
+            ? true
+            : isLabelValidForAllLanguages(card.html, languagesArray)) &&
+          (card.buttonLabel && card.buttonLabel["en"] === ""
+            ? true
+            : isLabelValidForAllLanguages(card.buttonLabel, languagesArray))
+        );
+      } else if (cardType === "end") {
+        // thankYouCard identified as "end"
+        return (
+          isLabelValidForAllLanguages(card.headline, languagesArray) &&
+          (card.subheader && card.subheader["en"] === ""
+            ? true
+            : isLabelValidForAllLanguages(card.subheader, languagesArray))
+        );
       }
-      return currentInvalidQuestions;
+      return true;
     };
 
-    const updatedQuestionsAfterStart = updateInvalidQuestions(
-      localSurvey.welcomeCard,
-      "start",
-      invalidQuestions
-    );
-    setInvalidQuestions(updatedQuestionsAfterStart);
+    const updateInvalidQuestions = (card, cardId, currentInvalidQuestions) => {
+      if (card.enabled && !isCardValid(card, cardId)) {
+        return currentInvalidQuestions.includes(cardId)
+          ? currentInvalidQuestions
+          : [...currentInvalidQuestions, cardId];
+      }
+      return currentInvalidQuestions.filter((id) => id !== cardId);
+    };
 
-    const updatedQuestionsAfterEnd = updateInvalidQuestions(
+    const updatedQuestionsStart = updateInvalidQuestions(localSurvey.welcomeCard, "start", invalidQuestions);
+    const updatedQuestionsEnd = updateInvalidQuestions(
       localSurvey.thankYouCard,
       "end",
-      updatedQuestionsAfterStart
+      updatedQuestionsStart
     );
-    setInvalidQuestions(updatedQuestionsAfterEnd);
+
+    setInvalidQuestions(updatedQuestionsEnd);
   }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
 
   return (

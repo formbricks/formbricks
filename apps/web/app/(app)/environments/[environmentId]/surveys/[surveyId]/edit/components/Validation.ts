@@ -44,7 +44,7 @@ const validationRules = {
   defaultValidation: (question: TSurveyQuestion, languages: string[]) => {
     let isValid = isLabelValidForAllLanguages(question.headline, languages);
     let isValidCTADismissLabel = true;
-    if ((question as TSurveyCTAQuestion) && !question.required) {
+    if (question.type === "cta" && !question.required) {
       isValidCTADismissLabel = isLabelValidForAllLanguages(
         (question as TSurveyCTAQuestion).dismissButtonLabel ?? "",
         languages
