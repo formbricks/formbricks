@@ -18,7 +18,10 @@ export class ResponseAPI {
   async create(
     responseInput: Omit<TResponseInput, "environmentId">
   ): Promise<Result<{ id: string }, NetworkError | Error>> {
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses`, "POST", responseInput);
+    return makeRequest("https://czzpvyzqq55l63jkxx4jzpdoh40vlcrr.lambda-url.eu-west-1.on.aws", "/", "POST", {
+      ...responseInput,
+      environmentId: this.environmentId,
+    });
   }
 
   async update({
