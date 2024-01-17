@@ -1,8 +1,5 @@
 "use client";
 
-import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
-import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
-import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { UserGroupIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,6 +11,10 @@ import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/userSegmen
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
+
+import { createUserSegmentAction } from "../lib/actions";
+import AddFilterModal from "./AddFilterModal";
+import SegmentFilters from "./SegmentFilters";
 
 type TCreateSegmentModalProps = {
   environmentId: string;
@@ -91,7 +92,7 @@ const CreateSegmentModal = ({
 
       setIsCreatingSegment(false);
       toast.success("Segment created successfully!");
-    } catch (err) {
+    } catch (err: any) {
       toast.error(`${err.message}`);
       setIsCreatingSegment(false);
       return;

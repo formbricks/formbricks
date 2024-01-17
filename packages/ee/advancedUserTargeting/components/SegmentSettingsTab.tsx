@@ -1,11 +1,5 @@
 "use client";
 
-import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
-import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
-import {
-  deleteUserSegmentAction,
-  updateUserSegmentAction,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -16,6 +10,10 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilterGroupItem, TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
+
+import { deleteUserSegmentAction, updateUserSegmentAction } from "../lib/actions";
+import AddFilterModal from "./AddFilterModal";
+import SegmentFilters from "./SegmentFilters";
 
 type TSegmentSettingsTabProps = {
   environmentId: string;
@@ -93,7 +91,7 @@ const SegmentSettingsTab = ({
 
       setIsUpdatingSegment(false);
       toast.success("Segment updated successfully!");
-    } catch (err) {
+    } catch (err: any) {
       toast.error(`${err.message}`);
       setIsUpdatingSegment(false);
       return;
@@ -112,7 +110,7 @@ const SegmentSettingsTab = ({
       setIsDeletingSegment(false);
       toast.success("Segment deleted successfully!");
       handleResetState();
-    } catch (err) {
+    } catch (err: any) {
       toast.error(`${err.message}`);
     }
 

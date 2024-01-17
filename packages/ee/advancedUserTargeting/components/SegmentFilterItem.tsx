@@ -195,9 +195,7 @@ const AttributeSegmentFilter = ({
     };
   });
 
-  const attributeClass = attributeClasses?.find(
-    (attributeClass) => attributeClass?.name === attributeClassName
-  )?.name;
+  const attributeClass = attributeClasses?.find((attrClass) => attrClass?.name === attributeClassName)?.name;
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
     const updatedUserSegment = structuredClone(userSegment);
@@ -264,7 +262,7 @@ const AttributeSegmentFilter = ({
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
           hideArrow>
-          <SelectValue />
+          <SelectValue hidden />
           <div className="flex items-center gap-1">
             <TagIcon className="h-4 w-4 text-sm" />
             <p>{attributeClass}</p>
@@ -274,8 +272,10 @@ const AttributeSegmentFilter = ({
         <SelectContent>
           {attributeClasses
             ?.filter((attributeClass) => !attributeClass.archived)
-            ?.map((attributeClass) => (
-              <SelectItem value={attributeClass.id}>{attributeClass.name}</SelectItem>
+            ?.map((attrClass) => (
+              <SelectItem value={attrClass.name} key={attrClass.id}>
+                {attrClass.name}
+              </SelectItem>
             ))}
         </SelectContent>
       </Select>

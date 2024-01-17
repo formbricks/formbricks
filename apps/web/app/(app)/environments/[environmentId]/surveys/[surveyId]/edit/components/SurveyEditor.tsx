@@ -1,11 +1,11 @@
 "use client";
 
-import { createUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useEffect, useState } from "react";
 
+import { createUserSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -13,7 +13,6 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUserSegment } from "@formbricks/types/userSegment";
-import { Button } from "@formbricks/ui/Button";
 
 import PreviewSurvey from "../../../components/PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
@@ -112,6 +111,8 @@ export default function SurveyEditor({
         throw new Error("Error creating segment");
       }
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [environment.id, survey]);
 
   if (!localSurvey) {

@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
+import { NextResponse, userAgent } from "next/server";
 
 import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
@@ -26,7 +26,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function GET(
-  _: Request,
+  request: Request,
   {
     params,
   }: {
@@ -37,6 +37,8 @@ export async function GET(
   }
 ): Promise<NextResponse> {
   try {
+    const { device } = userAgent(request);
+
     // validate using zod
     const inputValidation = ZJsPeopleUserIdInput.safeParse({
       environmentId: params.environmentId,
@@ -109,7 +111,7 @@ export async function GET(
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person),
+      getSyncSurveys(environmentId, person, device.type === "mobile" ? "phone" : "desktop"),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);

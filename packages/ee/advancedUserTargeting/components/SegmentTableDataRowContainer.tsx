@@ -1,10 +1,9 @@
-import SegmentTableDataRow from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/SegmentTableDataRow";
-import React from "react";
-
 import { getUserSegmentActiveInactiveSurveys } from "@formbricks/lib/userSegment/service";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TUserSegment } from "@formbricks/types/userSegment";
+
+import SegmentTableDataRow from "./SegmentTableDataRow";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TUserSegment;

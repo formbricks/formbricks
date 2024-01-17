@@ -549,6 +549,8 @@ type ResultConnectorPair = {
 export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilterGroup): Promise<boolean> {
   let resultPairs: ResultConnectorPair[] = [];
 
+  console.log("userData: ", userData);
+
   for (let filterItem of filterGroup) {
     const { resource } = filterItem;
 

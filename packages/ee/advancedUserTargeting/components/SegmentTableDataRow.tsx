@@ -1,6 +1,5 @@
 "use client";
 
-import EditSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/EditSegmentModal";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
 import { format, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
@@ -8,6 +7,8 @@ import { useState } from "react";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TUserSegment } from "@formbricks/types/userSegment";
+
+import EditSegmentModal from "./EditSegmentModal";
 
 type TSegmentTableDataRowProps = {
   currentSegment: TUserSegment & {

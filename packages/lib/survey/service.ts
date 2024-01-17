@@ -14,7 +14,6 @@ import { TUserSegment, ZUserSegment, ZUserSegmentFilterGroup } from "@formbricks
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
-import { getAttributeClasses } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
@@ -675,7 +674,11 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
   return newSurvey;
 };
 
-export const getSyncSurveys = async (environmentId: string, person: TPerson): Promise<TSurvey[]> => {
+export const getSyncSurveys = async (
+  environmentId: string,
+  person: TPerson,
+  deviceType: "phone" | "desktop" = "desktop"
+): Promise<TSurvey[]> => {
   validateInputs([environmentId, ZId]);
 
   const surveys = await unstable_cache(
@@ -710,7 +713,6 @@ export const getSyncSurveys = async (environmentId: string, person: TPerson): Pr
       });
 
       const personActions = await getActionsByPersonId(person.id);
-
       const personActionClassIds = Array.from(
         new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
       );
@@ -724,7 +726,7 @@ export const getSyncSurveys = async (environmentId: string, person: TPerson): Pr
               {
                 attributes: person.attributes,
                 actionIds: personActionClassIds,
-                deviceType: "desktop",
+                deviceType,
                 environmentId,
                 personId: person.id,
               },
