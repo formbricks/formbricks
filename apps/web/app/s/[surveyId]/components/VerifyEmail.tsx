@@ -9,6 +9,16 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
+const StackedCardsContainer = ({ children }) => (
+  <div className="relative">
+    <div className="absolute -left-2 h-[93%] w-[98%] -rotate-6 rounded-xl border border-slate-200 bg-white opacity-40 backdrop-blur-lg"></div>
+    <div className="absolute -left-1 h-[93%] w-[98%] -rotate-3 rounded-xl border border-slate-200 bg-white opacity-70 backdrop-blur-md"></div>
+    <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white bg-opacity-70 p-16 backdrop-blur-lg">
+      {children}
+    </div>
+  </div>
+);
+
 export default function VerifyEmail({
   survey,
   isErrorComponent,
@@ -75,11 +85,11 @@ export default function VerifyEmail({
     <div className="flex h-full w-full flex-col items-center justify-center text-center">
       <Toaster />
       {!emailSent && !showPreviewQuestions && (
-        <div className="flex flex-col items-center justify-center px-4">
+        <StackedCardsContainer>
           <EnvelopeIcon className="h-24 w-24 rounded-full bg-slate-300 p-6 text-white" />
           <p className="mt-8 text-2xl font-bold lg:text-4xl">Verify your email to respond.</p>
-          <p className="mt-2 text-sm text-slate-400 lg:text-base">
-            To respond to this survey please verify your email.
+          <p className="mt-4 text-sm text-slate-500 lg:text-base">
+            To respond to this survey, please verify your email.
           </p>
           <div className="mt-6 flex w-full space-x-2">
             <Input
@@ -97,12 +107,13 @@ export default function VerifyEmail({
           <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
             Just curious? <span className="underline">Preview survey questions.</span>
           </p>
-        </div>
+        </StackedCardsContainer>
       )}
       {!emailSent && showPreviewQuestions && (
-        <div className="flex flex-col items-center justify-center">
+        <StackedCardsContainer>
+          {" "}
           <p className="text-4xl font-bold">Question Preview</p>
-          <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 p-8">
+          <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-8 text-slate-700">
             {survey.questions.map((question, index) => (
               <p key={index} className="my-1">{`${index + 1}. ${question.headline}`}</p>
             ))}
@@ -110,19 +121,23 @@ export default function VerifyEmail({
           <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
             Want to respond? <span className="underline">Verify email.</span>
           </p>
-        </div>
+        </StackedCardsContainer>
       )}
       {emailSent && (
-        <div className="flex flex-col items-center justify-center px-4">
+        <StackedCardsContainer>
+          {" "}
           <h1 className="mt-8 text-2xl font-bold lg:text-4xl">Check your email.</h1>
           <p className="mt-4 text-center text-sm text-slate-400 lg:text-base">
             We sent an email to <span className="font-semibold italic">{email}</span>. Please click the link
             in the email to take your survey.
           </p>
-          <p className="mt-6 cursor-pointer text-sm text-slate-400" onClick={handleGoBackClick}>
+          <Button
+            variant="secondary"
+            className="mt-6 cursor-pointer text-sm text-slate-400"
+            onClick={handleGoBackClick}>
             Go Back
-          </p>
-        </div>
+          </Button>
+        </StackedCardsContainer>
       )}
     </div>
   );
