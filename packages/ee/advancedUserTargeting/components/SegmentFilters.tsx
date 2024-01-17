@@ -1,5 +1,3 @@
-import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
-import SegmentFilterItem from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilterItem";
 import { MoreVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -29,6 +27,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
+
+import AddFilterModal from "./AddFilterModal";
+import SegmentFilterItem from "./SegmentFilterItem";
 
 type TSegmentFilterProps = {
   group: TBaseFilterGroup;

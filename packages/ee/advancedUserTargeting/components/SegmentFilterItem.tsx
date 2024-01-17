@@ -1,4 +1,3 @@
-import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
 import {
   MonitorSmartphoneIcon,
   MoreVertical,
@@ -58,6 +57,8 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 import { Input } from "@formbricks/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+
+import AddFilterModal from "./AddFilterModal";
 
 type SegmentFilterItemProps = {
   connector: TUserSegmentConnector;

@@ -1,11 +1,5 @@
 "use client";
 
-import AddFilterModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/AddFilterModal";
-import LoadSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/LoadSegmentModal";
-import SaveAsNewSegmentModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SaveAsNewSegmentModal";
-import SegmentAlreadyUsedModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentAlreadyUsedModal";
-import SegmentFilters from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/SegmentFilters";
-import { cloneUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -19,6 +13,12 @@ import { Info } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import AddFilterModal from "@formbricks/ee/advancedUserTargeting/components/AddFilterModal";
+import LoadSegmentModal from "@formbricks/ee/advancedUserTargeting/components/LoadSegmentModal";
+import SaveAsNewSegmentModal from "@formbricks/ee/advancedUserTargeting/components/SaveAsNewSegmentModal";
+import SegmentAlreadyUsedModal from "@formbricks/ee/advancedUserTargeting/components/SegmentAlreadyUsedModal";
+import SegmentFilters from "@formbricks/ee/advancedUserTargeting/components/SegmentFilters";
+import { cloneUserSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";

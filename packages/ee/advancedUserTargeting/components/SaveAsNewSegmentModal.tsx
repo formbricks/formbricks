@@ -1,20 +1,17 @@
 "use client";
 
-import {
-  createUserSegmentAction,
-  updateUserSegmentAction,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { UserGroupIcon } from "@heroicons/react/24/solid";
 import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { formatDateFields } from "@formbricks/lib/utils/datetime";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TUserSegment, ZUserSegment } from "@formbricks/types/userSegment";
+import { TUserSegment } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
+
+import { createUserSegmentAction, updateUserSegmentAction } from "../lib/actions";
 
 type SaveAsNewSegmentModalProps = {
   open: boolean;
@@ -93,7 +90,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
       setIsLoading(false);
       toast.success("Segment created successfully");
       handleReset();
-    } catch (err) {
+    } catch (err: any) {
       toast.error(err.message);
       setIsLoading(false);
     }

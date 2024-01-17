@@ -1,11 +1,12 @@
 "use client";
 
-import { loadNewUserSegmentAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import toast from "react-hot-toast";
 
 import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { Modal } from "@formbricks/ui/Modal";
+
+import { loadNewUserSegmentAction } from "../lib/actions";
 
 type LoadSegmentModalProps = {
   open: boolean;
@@ -61,7 +62,7 @@ const SegmentDetails = ({
 
       setIsSegmentEditorOpen(false);
       setOpen(false);
-    } catch (err) {
+    } catch (err: any) {
       toast.error(err.message);
       setOpen(false);
     }
