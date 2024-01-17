@@ -22,6 +22,9 @@ test.describe("JS Package Test", async () => {
       .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
       .click();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
+
+    await page.getByText("Survey Type").click();
+
     await page.locator("label").filter({ hasText: "In-App SurveyEmbed a survey" }).click();
     await page
       .locator("div")
