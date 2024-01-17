@@ -1,6 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
@@ -22,6 +23,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     responseInput.personId = null;
   }
   const agent = UAParser(request.headers.get("user-agent"));
+  const country = headers().get("CF-IPCountry") || headers().get("X-Vercel-IP-Country") || undefined;
   const inputValidation = ZResponseLegacyInput.safeParse(responseInput);
 
   if (!inputValidation.success) {
@@ -60,6 +62,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         device: agent?.device.type,
         os: agent?.os.name,
       },
+      country: country,
     };
 
     // check if personId is anonymous

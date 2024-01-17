@@ -52,7 +52,7 @@ export default function SettingsView({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
-        actionClasses={actionClasses}
+        propActionClasses={actionClasses}
         membershipRole={membershipRole}
       />
 
