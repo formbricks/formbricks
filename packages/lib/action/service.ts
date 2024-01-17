@@ -435,9 +435,6 @@ export const getTotalOccurrencesForAction = async (
         },
       });
 
-      console.log("ACTION COUNT", count);
-      console.log("\n\n\n");
-
       return count;
     },
     [`getTotalOccurrencesForAction-${actionClassId}-${personId}`],

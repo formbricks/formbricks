@@ -257,7 +257,6 @@ export default function SurveyMenuBar({
       }
     } catch (e) {
       console.error(e);
-      console.log(e.name);
       setIsSurveySaving(false);
       toast.error(`Error saving changes`);
       return;

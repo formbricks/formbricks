@@ -365,7 +365,8 @@ export const cloneUserSegment = async (userSegmentId: string, surveyId: string):
       clonedUserSegment.filters = parsedFilters.data;
     }
 
-    userSegmentCache.revalidate({ id: clonedUserSegment.id });
+    userSegmentCache.revalidate({ id: clonedUserSegment.id, environmentId: clonedUserSegment.environmentId });
+    surveyCache.revalidate({ id: surveyId });
 
     return {
       ...clonedUserSegment,
@@ -442,10 +443,6 @@ const evaluateActionFilter = async (
   filter: TUserSegmentActionFilter,
   personId: string
 ): Promise<boolean> => {
-  console.log("\n\n\n");
-  console.log("evaluating action filter: ", filter, actionClassIds, personId);
-  console.log("\n\n\n");
-
   const { value, qualifier, root } = filter;
   const { actionClassId } = root;
   const { metric } = qualifier;
@@ -459,10 +456,6 @@ const evaluateActionFilter = async (
   }
 
   // we have the action metric and we'll need to find out the values for those metrics from the db
-
-  console.log("Calling the db");
-  console.log("actionClassId: ", actionClassId, "personId: ", personId, "metric: ", metric);
-  console.log("\n\n\n");
   const actionValue = await getResolvedActionValue(actionClassId, personId, metric);
 
   const actionResult =
@@ -549,8 +542,6 @@ type ResultConnectorPair = {
 export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilterGroup): Promise<boolean> {
   let resultPairs: ResultConnectorPair[] = [];
 
-  console.log("userData: ", userData);
-
   for (let filterItem of filterGroup) {
     const { resource } = filterItem;
 
@@ -574,10 +565,6 @@ export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilt
           resource as TUserSegmentActionFilter,
           userData.personId
         );
-
-        console.log("\n\n\n");
-        console.log("evaluted the action filter: ", result);
-        console.log("\n\n\n");
 
         resultPairs.push({
           result,

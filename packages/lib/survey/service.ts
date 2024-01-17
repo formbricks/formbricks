@@ -733,8 +733,6 @@ export const getSyncSurveys = async (
               userSegment.filters
             );
 
-            console.log("result of evaluating the segment: ", { result });
-
             if (result) {
               return survey;
             }
