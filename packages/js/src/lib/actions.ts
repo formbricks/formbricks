@@ -22,7 +22,6 @@ export const trackAction = async (
     userId,
     name,
     properties: properties || {},
-    // personId: config.get().state?.person?.id,
   };
 
   // don't send actions to the backend if the person is not identified

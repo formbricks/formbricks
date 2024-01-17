@@ -731,6 +731,8 @@ export const getSyncSurveys = async (environmentId: string, person: TPerson): Pr
               userSegment.filters
             );
 
+            console.log("result of evaluating the segment: ", { result });
+
             if (result) {
               return survey;
             }

@@ -21,12 +21,12 @@ import {
 } from "@formbricks/types/userSegment";
 
 import {
+  getActionCountInLastMonth,
+  getActionCountInLastQuarter,
+  getActionCountInLastWeek,
   getFirstOccurrenceDaysAgo,
-  getLastMonthEventCount,
   getLastOccurrenceDaysAgo,
-  getLastQuarterEventCount,
-  getLastWeekEventCount,
-  getTotalOccurrences,
+  getTotalOccurrencesForAction,
 } from "../action/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { surveyCache } from "../survey/cache";
@@ -407,17 +407,17 @@ const evaluateAttributeFilter = (
 
 const getResolvedActionValue = async (actiondClassId: string, personId: string, metric: TActionMetric) => {
   if (metric === "lastQuarterCount") {
-    const lastQuarterCount = await getLastQuarterEventCount(actiondClassId, personId);
+    const lastQuarterCount = await getActionCountInLastQuarter(actiondClassId, personId);
     return lastQuarterCount;
   }
 
   if (metric === "lastMonthCount") {
-    const lastMonthCount = await getLastMonthEventCount(actiondClassId, personId);
+    const lastMonthCount = await getActionCountInLastMonth(actiondClassId, personId);
     return lastMonthCount;
   }
 
   if (metric === "lastWeekCount") {
-    const lastWeekCount = await getLastWeekEventCount(actiondClassId, personId);
+    const lastWeekCount = await getActionCountInLastWeek(actiondClassId, personId);
     return lastWeekCount;
   }
 
@@ -432,7 +432,7 @@ const getResolvedActionValue = async (actiondClassId: string, personId: string, 
   }
 
   if (metric === "occuranceCount") {
-    const occuranceCount = await getTotalOccurrences(actiondClassId, personId);
+    const occuranceCount = await getTotalOccurrencesForAction(actiondClassId, personId);
     return occuranceCount;
   }
 };
@@ -442,6 +442,10 @@ const evaluateActionFilter = async (
   filter: TUserSegmentActionFilter,
   personId: string
 ): Promise<boolean> => {
+  console.log("\n\n\n");
+  console.log("evaluating action filter: ", filter, actionClassIds, personId);
+  console.log("\n\n\n");
+
   const { value, qualifier, root } = filter;
   const { actionClassId } = root;
   const { metric } = qualifier;
@@ -456,6 +460,9 @@ const evaluateActionFilter = async (
 
   // we have the action metric and we'll need to find out the values for those metrics from the db
 
+  console.log("Calling the db");
+  console.log("actionClassId: ", actionClassId, "personId: ", personId, "metric: ", metric);
+  console.log("\n\n\n");
   const actionValue = await getResolvedActionValue(actionClassId, personId, metric);
 
   const actionResult =
@@ -564,8 +571,12 @@ export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilt
           userData.actionIds,
           resource as TUserSegmentActionFilter,
           userData.personId
-          // userData.environmentId
         );
+
+        console.log("\n\n\n");
+        console.log("evaluted the action filter: ", result);
+        console.log("\n\n\n");
+
         resultPairs.push({
           result,
           connector: filterItem.connector,
