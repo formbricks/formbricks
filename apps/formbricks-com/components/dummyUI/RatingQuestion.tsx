@@ -73,8 +73,8 @@ export default function RatingQuestion({
             ))}
           </div>
           <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
-            <p>{question.lowerLabel}</p>
-            <p>{question.upperLabel}</p>
+            <p>{getLocalizedValue(question.lowerLabel, "en")}</p>
+            <p>{getLocalizedValue(question.upperLabel, "en")}</p>
           </div>
         </fieldset>
       </div>

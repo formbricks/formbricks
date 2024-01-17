@@ -79,7 +79,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           </Container>
 
           <Container className="m-0 mt-4 block w-full max-w-none rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 font-medium text-slate-800">
-            <Text className="m-0 inline-block">{firstQuestion.label}</Text>
+            <Text className="m-0 inline-block">{getLocalizedValue(firstQuestion.label, "en")}</Text>
           </Container>
           <Container className="mx-0 mt-4 flex max-w-none justify-end">
             {!firstQuestion.required && (
@@ -125,10 +125,14 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
               <Section className="mt-2 px-1.5 text-xs leading-6 text-slate-500">
                 <Row>
                   <Column>
-                    <Text className="m-0 inline-block w-max p-0">{firstQuestion.lowerLabel}</Text>
+                    <Text className="m-0 inline-block w-max p-0">
+                      {getLocalizedValue(firstQuestion.lowerLabel, "en")}
+                    </Text>
                   </Column>
                   <Column className="text-right">
-                    <Text className="m-0 inline-block w-max p-0 text-right">{firstQuestion.upperLabel}</Text>
+                    <Text className="m-0 inline-block w-max p-0 text-right">
+                      {getLocalizedValue(firstQuestion.upperLabel, "en")}
+                    </Text>
                   </Column>
                 </Row>
               </Section>
@@ -203,10 +207,14 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
               <Section className="m-0 px-1.5 text-xs leading-6 text-slate-500">
                 <Row>
                   <Column>
-                    <Text className="m-0 inline-block p-0">{firstQuestion.lowerLabel}</Text>
+                    <Text className="m-0 inline-block p-0">
+                      {getLocalizedValue(firstQuestion.lowerLabel, "en")}
+                    </Text>
                   </Column>
                   <Column className="text-right">
-                    <Text className="m-0 inline-block  p-0 text-right">{firstQuestion.upperLabel}</Text>
+                    <Text className="m-0 inline-block  p-0 text-right">
+                      {getLocalizedValue(firstQuestion.upperLabel, "en")}
+                    </Text>
                   </Column>
                 </Row>
               </Section>
