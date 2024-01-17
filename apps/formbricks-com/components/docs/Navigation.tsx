@@ -286,6 +286,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Attribute Classes", href: "/docs/api/management/attribute-classes" },
       { title: "Me", href: "/docs/api/management/me" },
       { title: "People", href: "/docs/api/management/people" },
+      { title: "Responses", href: "/docs/api/management/responses" },
       { title: "Surveys", href: "/docs/api/management/surveys" },
       { title: "Webhooks", href: "/docs/api/management/webhooks" },
     ],
