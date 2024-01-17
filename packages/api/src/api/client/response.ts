@@ -7,11 +7,9 @@ import { makeRequest } from "../../utils/makeRequest";
 type TResponseUpdateInputWithResponseId = TResponseUpdateInput & { responseId: string };
 
 export class ResponseAPI {
-  private apiHost: string;
   private environmentId: string;
 
-  constructor(apiHost: string, environmentId: string) {
-    this.apiHost = apiHost;
+  constructor(_apiHost: string, environmentId: string) {
     this.environmentId = environmentId;
   }
 
