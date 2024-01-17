@@ -30,7 +30,9 @@ export class ResponseAPI {
     data,
     ttc,
   }: TResponseUpdateInputWithResponseId): Promise<Result<{}, NetworkError | Error>> {
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
+    return makeRequest("https://czzpvyzqq55l63jkxx4jzpdoh40vlcrr.lambda-url.eu-west-1.on.aws", "/", "PUT", {
+      environmentId: this.environmentId,
+      responseId,
       finished,
       data,
       ttc,
