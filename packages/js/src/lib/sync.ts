@@ -103,6 +103,7 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
       apiHost: params.apiHost,
       environmentId: params.environmentId,
       userId: params.userId,
+      language: params.language,
       state,
     });
 
@@ -174,6 +175,7 @@ export const addExpiryCheckListener = (): void => {
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,
         userId: config.get().userId,
+        language: config.get().language,
         // personId: config.get().state?.person?.id,
       });
     }, updateInterval);

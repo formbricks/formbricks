@@ -1,6 +1,7 @@
 // extend this object in order to add more validation rules
 import {
   TI18nString,
+  TSurveyCTAQuestion,
   TSurveyConsentQuestion,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
@@ -41,14 +42,32 @@ const validationRules = {
   },
   // Assuming headline is of type TI18nString
   defaultValidation: (question: TSurveyQuestion, languages: string[]) => {
-    if (question.subheader && question.subheader["en"]) {
-      return (
-        isLabelValidForAllLanguages(question.subheader, languages) &&
-        isLabelValidForAllLanguages(question.headline, languages)
+    let isValid = isLabelValidForAllLanguages(question.headline, languages);
+    let isValidCTADismissLabel = true;
+    if ((question as TSurveyCTAQuestion) && !question.required) {
+      isValidCTADismissLabel = isLabelValidForAllLanguages(
+        (question as TSurveyCTAQuestion).dismissButtonLabel ?? "",
+        languages
       );
-    } else {
-      return isLabelValidForAllLanguages(question.headline, languages);
     }
+    const fieldsToValidate = [
+      "subheader",
+      "html",
+      "buttonLabel",
+      "upperLabel",
+      "backButtonLabel",
+      "lowerLabel",
+      "placeholder",
+    ];
+
+    for (const field of fieldsToValidate) {
+      if (question[field] && question[field]["en"]) {
+        isValid =
+          isValid && isLabelValidForAllLanguages(question[field], languages) && isValidCTADismissLabel;
+      }
+    }
+
+    return isValid;
   },
 };
 

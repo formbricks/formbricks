@@ -34,7 +34,12 @@ const LocalizedInput = ({
 }: LocalizedInputProps) => {
   const hasi18n = value._i18n_;
   const isInComplete =
-    id === "subheader"
+    id === "subheader" ||
+    id === "lowerLabel" ||
+    id === "upperLabel" ||
+    id === "buttonLabel" ||
+    id === "placeholder" ||
+    id === "backButtonLabel"
       ? value.en?.trim() !== "" &&
         isInValid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&

@@ -7,6 +7,7 @@ import { SurveyBaseProps } from "@/types/props";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import { TI18nString } from "@formbricks/types/surveys";
 
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
@@ -131,10 +132,10 @@ export function Survey({
     if (questionId === "start" && survey.welcomeCard.enabled) {
       return (
         <WelcomeCard
-          headline={survey.welcomeCard.headline}
+          headline={survey.welcomeCard.headline as TI18nString}
           html={getLocalizedValue(survey.welcomeCard.html, language)}
           fileUrl={survey.welcomeCard.fileUrl}
-          buttonLabel={survey.welcomeCard.buttonLabel}
+          buttonLabel={getLocalizedValue(survey.welcomeCard.buttonLabel, language)}
           onSubmit={onSubmit}
           survey={survey}
           language={language}
@@ -144,8 +145,8 @@ export function Survey({
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
       return (
         <ThankYouCard
-          headline={survey.thankYouCard.headline}
-          subheader={survey.thankYouCard.subheader}
+          headline={survey.thankYouCard.headline as TI18nString}
+          subheader={survey.thankYouCard.subheader as TI18nString}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
           language={language}

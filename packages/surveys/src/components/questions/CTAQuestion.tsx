@@ -71,7 +71,7 @@ export default function CTAQuestion({
                 onSubmit({ [question.id]: "dismissed" }, updatedTtcObj);
               }}
               className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
-              {question.dismissButtonLabel || "Skip"}
+              {getLocalizedValue(question.dismissButtonLabel, language) || "Skip"}
             </button>
           )}
           <SubmitButton

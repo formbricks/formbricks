@@ -94,7 +94,6 @@ export const translateThankYouCard = (
 export const translateQuestion = (question: TSurveyQuestion, languages?: string[]) => {
   // Clone the question to avoid mutating the original
   const clonedQuestion = { ...question };
-
   // Translate headline and subheader
   clonedQuestion.headline = createI18nString(question.headline, languages);
   clonedQuestion.subheader = createI18nString(question.subheader ?? "", languages);
@@ -196,8 +195,8 @@ export const isLabelValidForAllLanguages = (label: string | TI18nString, languag
   }
 };
 
-export const isSurveyAvailableInSelectedLanguage = (langaugeSymbol: string, survey: TSurvey) => {
-  if ((survey.questions[0].headline as TI18nString)[langaugeSymbol]) {
+export const isSurveyAvailableInSelectedLanguage = (languageSymbol: string, survey: TSurvey) => {
+  if ((survey.questions[0].headline as TI18nString)[languageSymbol]) {
     return true;
   }
   return false;

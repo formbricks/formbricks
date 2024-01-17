@@ -119,12 +119,22 @@ export default function SurveyMenuBar({
       return;
     }
     if (survey.thankYouCard.enabled) {
-      if (!isLabelValidForAllLanguages(survey.thankYouCard.headline, languages)) {
+      if (
+        !isLabelValidForAllLanguages(survey.thankYouCard.headline, languages) ||
+        (survey.thankYouCard.subheader &&
+          survey.thankYouCard.subheader["en"] !== "" &&
+          !isLabelValidForAllLanguages(survey.thankYouCard.subheader, languages))
+      ) {
         faultyQuestions.push("end");
       }
     }
     if (survey.welcomeCard.enabled) {
-      if (!isLabelValidForAllLanguages(survey.welcomeCard.headline, languages)) {
+      if (
+        !isLabelValidForAllLanguages(survey.welcomeCard.headline, languages) ||
+        (survey.welcomeCard.html &&
+          survey.welcomeCard.html["en"] !== "" &&
+          !isLabelValidForAllLanguages(survey.welcomeCard.html, languages))
+      ) {
         faultyQuestions.push("start");
       }
     }

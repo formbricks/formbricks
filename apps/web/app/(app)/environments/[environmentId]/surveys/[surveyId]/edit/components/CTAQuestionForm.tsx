@@ -163,7 +163,7 @@ export default function CTAQuestionForm({
               isInValid={isInValid}
               onChange={(e) => {
                 let translatedDismissButtonLabel = {
-                  ...(question.buttonLabel as TI18nString),
+                  ...(question.dismissButtonLabel as TI18nString),
                   [selectedLanguage]: e.target.value,
                 };
                 updateQuestion(questionIdx, { dismissButtonLabel: translatedDismissButtonLabel });

@@ -77,6 +77,7 @@ export const ZJsConfig = z.object({
   apiHost: z.string(),
   userId: z.string().optional(),
   state: ZJsState,
+  language: z.string().optional(),
   expiresAt: z.date(),
 });
 
@@ -87,6 +88,7 @@ export const ZJsConfigUpdateInput = z.object({
   apiHost: z.string(),
   userId: z.string().optional(),
   state: ZJsState,
+  language: z.string().optional(),
 });
 
 export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
@@ -97,6 +99,7 @@ export const ZJsConfigInput = z.object({
   debug: z.boolean().optional(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string().optional(),
+  language: z.string().optional(),
   attributes: ZPersonAttributes.optional(),
 });
 
@@ -137,6 +140,7 @@ export const ZJsSyncParams = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   userId: z.string().optional(),
+  language: z.string().optional(),
 });
 
 export type TJsSyncParams = z.infer<typeof ZJsSyncParams>;

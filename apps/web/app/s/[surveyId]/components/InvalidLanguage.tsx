@@ -13,7 +13,7 @@ export default function InvalidLanguage({ languages, surveyUrl }: InvalidLanguag
       <span className="h-24 w-24 rounded-full bg-slate-300 p-6 text-5xl">🈂️</span>
       <p className="mt-8 text-4xl font-bold">Survey not available in specified language</p>
       <p className="mt-4 cursor-pointer text-sm text-slate-400">
-        Please try in one of the following langauges
+        Please try in one of the following languages
       </p>
       <div className="mt-6 flex space-x-2">
         {languages.map((language) => (

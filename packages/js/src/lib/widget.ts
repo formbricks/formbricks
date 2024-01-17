@@ -15,7 +15,6 @@ const containerId = "formbricks-web-container";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
-const language = "de";
 let surveyRunning = false;
 
 export const renderWidget = (survey: TSurvey) => {
@@ -30,7 +29,7 @@ export const renderWidget = (survey: TSurvey) => {
   }
 
   const product = config.get().state.product;
-
+  const language = config.get().language ?? "en";
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
   const responseQueue = new ResponseQueue(
@@ -44,7 +43,6 @@ export const renderWidget = (survey: TSurvey) => {
     },
     surveyState
   );
-
   const productOverwrites = survey.productOverwrites ?? {};
   const brandColor = productOverwrites.brandColor ?? product.brandColor;
   const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
@@ -171,6 +169,7 @@ export const closeSurvey = async (): Promise<void> => {
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
       userId: config.get().userId,
+      language: config.get().language,
     });
     surveyRunning = false;
   } catch (e) {

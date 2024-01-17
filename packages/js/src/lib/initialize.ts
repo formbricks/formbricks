@@ -73,7 +73,6 @@ export const initialize = async (
       field: "userId",
     });
   }
-
   // if userId and attributes are available, set them in backend
   let updatedAttributes: TPersonAttributes | null = null;
   if (c.userId && c.attributes) {
@@ -91,14 +90,14 @@ export const initialize = async (
   } catch (e) {
     logger.debug("No existing configuration found.");
   }
-
   if (
     existingConfig &&
     existingConfig.state &&
     existingConfig.environmentId === c.environmentId &&
     existingConfig.apiHost === c.apiHost &&
     existingConfig.userId === c.userId &&
-    existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
+    existingConfig.expiresAt &&
+    existingConfig.language === c.language // only accept config when they follow new config version with expiresAt
   ) {
     logger.debug("Found existing configuration.");
     if (existingConfig.expiresAt < new Date()) {
@@ -108,6 +107,7 @@ export const initialize = async (
         apiHost: c.apiHost,
         environmentId: c.environmentId,
         userId: c.userId,
+        language: c.language,
       });
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
@@ -121,6 +121,7 @@ export const initialize = async (
       apiHost: c.apiHost,
       environmentId: c.environmentId,
       userId: c.userId,
+      language: c.language,
     });
 
     // and track the new session event
@@ -133,6 +134,7 @@ export const initialize = async (
       environmentId: config.get().environmentId,
       apiHost: config.get().apiHost,
       userId: config.get().userId,
+      language: config.get().language,
       state: {
         ...config.get().state,
         attributes: { ...config.get().state.attributes, ...c.attributes },

@@ -390,7 +390,7 @@ export default function QuestionCard({
                             value={question.backButtonLabel as TI18nString}
                             onChange={(e) => {
                               let translatedBackButtonLabel = {
-                                ...(question.buttonLabel as TI18nString),
+                                ...(question.backButtonLabel as TI18nString),
                                 [selectedLanguage]: e.target.value,
                               };
                               updateQuestion(questionIdx, { backButtonLabel: translatedBackButtonLabel });
