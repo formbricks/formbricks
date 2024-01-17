@@ -17,7 +17,6 @@ import {
   TUserSegmentUpdateInput,
   ZUserSegmentFilterGroup,
   ZUserSegmentUpdateInput,
-  isResourceFilter,
 } from "@formbricks/types/userSegment";
 
 import {
@@ -32,6 +31,7 @@ import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { surveyCache } from "../survey/cache";
 import { validateInputs } from "../utils/validate";
 import { userSegmentCache } from "./cache";
+import { isResourceFilter } from "./utils";
 
 type PrismaUserSegment = Prisma.UserSegmentGetPayload<{
   include: {

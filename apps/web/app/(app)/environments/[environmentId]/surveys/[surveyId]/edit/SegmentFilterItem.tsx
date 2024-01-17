@@ -21,6 +21,11 @@ import {
   updateOperatorInFilter,
   updateSegmentIdInFilter,
 } from "@formbricks/lib/userSegment/utils";
+import {
+  convertMetricToText,
+  convertOperatorToText,
+  convertOperatorToTitle,
+} from "@formbricks/lib/userSegment/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TUserSegmentFilterValue } from "@formbricks/types/userSegment";
@@ -33,7 +38,6 @@ import {
   TActionMetric,
   TArithmeticOperator,
   TAttributeOperator,
-  TBaseFilterGroup,
   TBaseFilterGroupItem,
   TBaseOperator,
   TDeviceOperator,
@@ -45,10 +49,6 @@ import {
   TUserSegmentDeviceFilter,
   TUserSegmentFilter,
   TUserSegmentSegmentFilter,
-  convertMetricToText,
-  convertOperatorToText,
-  convertOperatorToTitle,
-  isResourceFilter,
 } from "@formbricks/types/userSegment";
 import {
   DropdownMenu,

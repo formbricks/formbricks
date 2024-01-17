@@ -10,6 +10,7 @@ import {
   createGroupFromResource,
   deleteEmptyGroups,
   deleteResource,
+  isResourceFilter,
   moveResource,
   toggleGroupConnector,
 } from "@formbricks/lib/userSegment/utils";
@@ -20,7 +21,6 @@ import {
   TBaseFilterGroupItem,
   TUserSegment,
   TUserSegmentConnector,
-  isResourceFilter,
 } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import {
@@ -37,7 +37,6 @@ type TSegmentFilterProps = {
   userSegments: TUserSegment[];
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  // setUserSegment: (userSegment: TUserSegment) => void;
   setUserSegment: React.Dispatch<React.SetStateAction<TUserSegment>>;
 };
 

@@ -14,8 +14,8 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { actionClassCache } from "../actionClass/cache";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { personCache } from "../person/cache";
 import { createPerson, getPersonByUserId } from "../person/service";
+import { surveyCache } from "../survey/cache";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
@@ -141,19 +141,13 @@ export const getActionsByPersonId = async (personId: string, page?: number): Pro
         },
       });
 
-      const actions: TAction[] = [];
-      // transforming response to type TAction[]
-      actionsPrisma.forEach((action) => {
-        actions.push({
-          id: action.id,
-          createdAt: action.createdAt,
-          personId: action.personId,
-          // sessionId: action.sessionId,
-          properties: action.properties,
-          actionClass: action.actionClass,
-        });
-      });
-      return actions;
+      return actionsPrisma.map((action) => ({
+        id: action.id,
+        createdAt: action.createdAt,
+        personId: action.personId,
+        properties: action.properties,
+        actionClass: action.actionClass,
+      }));
     },
     [`getActionsByPersonId-${personId}-${page}`],
     {
@@ -269,9 +263,8 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     personId: person.id,
   });
 
-  personCache.revalidate({
+  surveyCache.revalidate({
     environmentId,
-    userId,
   });
 
   return {

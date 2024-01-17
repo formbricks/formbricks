@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-// import { ZId } from "./environment";
-
 export const BASE_OPERATORS = [
   "lessThan",
   "lessEqual",
@@ -25,19 +23,6 @@ export const ATTRIBUTE_OPERATORS = [
   "startsWith",
   "endsWith",
 ] as const;
-export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
-export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
-
-export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
-export const ZSegmentOperator = z.enum(SEGMENT_OPERATORS);
-export type TSegmentOperator = z.infer<typeof ZSegmentOperator>;
-
-export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
-export const ZDeviceOperator = z.enum(DEVICE_OPERATORS);
-export type TDeviceOperator = z.infer<typeof ZDeviceOperator>;
-
-const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS, ...DEVICE_OPERATORS] as const;
-export type TAllOperators = (typeof ALL_OPERATORS)[number];
 
 export const ACTION_METRICS = [
   "lastQuarterCount",
@@ -47,6 +32,22 @@ export const ACTION_METRICS = [
   "lastOccurranceDaysAgo",
   "firstOccurranceDaysAgo",
 ] as const;
+
+export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
+export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
+export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS, ...DEVICE_OPERATORS] as const;
+
+export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
+export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
+
+export const ZSegmentOperator = z.enum(SEGMENT_OPERATORS);
+export type TSegmentOperator = z.infer<typeof ZSegmentOperator>;
+
+export const ZDeviceOperator = z.enum(DEVICE_OPERATORS);
+export type TDeviceOperator = z.infer<typeof ZDeviceOperator>;
+
+export type TAllOperators = (typeof ALL_OPERATORS)[number];
+
 export const ZActionMetric = z.enum(ACTION_METRICS);
 export type TActionMetric = z.infer<typeof ZActionMetric>;
 
@@ -268,93 +269,7 @@ export const ZUserSegment = z.object({
 
   // describes which surveys is this segment applicable to
   surveys: z.array(z.string()),
-  // surveys: z.array(z.object({ id: ZId })),
 });
-
-export const convertOperatorToText = (operator: TAllOperators) => {
-  switch (operator) {
-    case "equals":
-      return "=";
-    case "notEquals":
-      return "!=";
-    case "lessThan":
-      return "<";
-    case "lessEqual":
-      return "<=";
-    case "greaterThan":
-      return ">";
-    case "greaterEqual":
-      return ">=";
-    case "isSet":
-      return "is set";
-    case "contains":
-      return "contains ";
-    case "doesNotContain":
-      return "does not contain";
-    case "startsWith":
-      return "starts with";
-    case "endsWith":
-      return "ends with";
-    case "userIsIn":
-      return "User is in";
-    case "userIsNotIn":
-      return "User is not in";
-    default:
-      return operator;
-  }
-};
-
-export const convertOperatorToTitle = (operator: TAllOperators) => {
-  switch (operator) {
-    case "equals":
-      return "Equals";
-    case "notEquals":
-      return "Not equals to";
-    case "lessThan":
-      return "Less than";
-    case "lessEqual":
-      return "Less than or equal to";
-    case "greaterThan":
-      return "Greater than";
-    case "greaterEqual":
-      return "Greater than or equal to";
-    case "isSet":
-      return "Is set";
-    case "contains":
-      return "Contains";
-    case "doesNotContain":
-      return "Does not contain";
-    case "startsWith":
-      return "Starts with";
-    case "endsWith":
-      return "Ends with";
-    case "userIsIn":
-      return "User is in";
-    case "userIsNotIn":
-      return "User is not in";
-    default:
-      return operator;
-  }
-};
-
-export const convertMetricToText = (metric: TActionMetric) => {
-  switch (metric) {
-    case "lastQuarterCount":
-      return "Last quarter (Count)";
-    case "lastMonthCount":
-      return "Last month (Count)";
-    case "lastWeekCount":
-      return "Last week (Count)";
-    case "occuranceCount":
-      return "Occurance (Count)";
-    case "lastOccurranceDaysAgo":
-      return "Last occurrance (Days ago)";
-    case "firstOccurranceDaysAgo":
-      return "First occurrance (Days ago)";
-    default:
-      return metric;
-  }
-};
 
 export type TUserSegment = z.infer<typeof ZUserSegment>;
 
@@ -369,10 +284,3 @@ export const ZUserSegmentUpdateInput = z
   .partial();
 
 export type TUserSegmentUpdateInput = z.infer<typeof ZUserSegmentUpdateInput>;
-
-// type guard to check if a resource is a filter
-export const isResourceFilter = (
-  resource: TUserSegmentFilter | TBaseFilterGroup
-): resource is TUserSegmentFilter => {
-  return (resource as TUserSegmentFilter).root !== undefined;
-};

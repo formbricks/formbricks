@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 
 import {
   TActionMetric,
+  TAllOperators,
   TAttributeOperator,
   TBaseFilterGroup,
   TBaseFilterGroupItem,
@@ -12,9 +13,101 @@ import {
   TUserSegmentAttributeFilter,
   TUserSegmentConnector,
   TUserSegmentDeviceFilter,
+  TUserSegmentFilter,
   TUserSegmentSegmentFilter,
-  isResourceFilter,
 } from "@formbricks/types/userSegment";
+
+// type guard to check if a resource is a filter
+export const isResourceFilter = (
+  resource: TUserSegmentFilter | TBaseFilterGroup
+): resource is TUserSegmentFilter => {
+  return (resource as TUserSegmentFilter).root !== undefined;
+};
+
+export const convertOperatorToText = (operator: TAllOperators) => {
+  switch (operator) {
+    case "equals":
+      return "=";
+    case "notEquals":
+      return "!=";
+    case "lessThan":
+      return "<";
+    case "lessEqual":
+      return "<=";
+    case "greaterThan":
+      return ">";
+    case "greaterEqual":
+      return ">=";
+    case "isSet":
+      return "is set";
+    case "contains":
+      return "contains ";
+    case "doesNotContain":
+      return "does not contain";
+    case "startsWith":
+      return "starts with";
+    case "endsWith":
+      return "ends with";
+    case "userIsIn":
+      return "User is in";
+    case "userIsNotIn":
+      return "User is not in";
+    default:
+      return operator;
+  }
+};
+
+export const convertOperatorToTitle = (operator: TAllOperators) => {
+  switch (operator) {
+    case "equals":
+      return "Equals";
+    case "notEquals":
+      return "Not equals to";
+    case "lessThan":
+      return "Less than";
+    case "lessEqual":
+      return "Less than or equal to";
+    case "greaterThan":
+      return "Greater than";
+    case "greaterEqual":
+      return "Greater than or equal to";
+    case "isSet":
+      return "Is set";
+    case "contains":
+      return "Contains";
+    case "doesNotContain":
+      return "Does not contain";
+    case "startsWith":
+      return "Starts with";
+    case "endsWith":
+      return "Ends with";
+    case "userIsIn":
+      return "User is in";
+    case "userIsNotIn":
+      return "User is not in";
+    default:
+      return operator;
+  }
+};
+
+export const convertMetricToText = (metric: TActionMetric) => {
+  switch (metric) {
+    case "lastQuarterCount":
+      return "Last quarter (Count)";
+    case "lastMonthCount":
+      return "Last month (Count)";
+    case "lastWeekCount":
+      return "Last week (Count)";
+    case "occuranceCount":
+      return "Occurance (Count)";
+    case "lastOccurranceDaysAgo":
+      return "Last occurrance (Days ago)";
+    case "firstOccurranceDaysAgo":
+      return "First occurrance (Days ago)";
+    default:
+      return metric;
+  }
+};
 
 export const addFilterBelow = (group: TBaseFilterGroup, resourceId: string, filter: TBaseFilterGroupItem) => {
   for (let i = 0; i < group.length; i++) {

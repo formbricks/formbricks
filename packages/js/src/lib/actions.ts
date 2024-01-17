@@ -5,6 +5,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
+import { sync } from "./sync";
 import { renderWidget } from "./widget";
 
 const logger = Logger.getInstance();
@@ -46,6 +47,13 @@ export const trackAction = async (
         responseMessage: res.error.message,
       });
     }
+
+    // sync again
+    await sync({
+      environmentId: config.get().environmentId,
+      apiHost: config.get().apiHost,
+      userId,
+    });
   }
 
   logger.debug(`Formbricks: Action "${name}" tracked`);
