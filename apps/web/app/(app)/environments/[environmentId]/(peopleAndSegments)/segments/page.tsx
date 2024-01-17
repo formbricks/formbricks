@@ -1,5 +1,6 @@
 import CreateSegmentModal from "@formbricks/ee/advancedUserTargeting/components/CreateSegmentModal";
 import SegmentTable from "@formbricks/ee/advancedUserTargeting/components/SegmentTable";
+import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
@@ -10,7 +11,7 @@ import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 export const revalidate = REVALIDATION_INTERVAL;
 
 export default async function SegmentsPage({ params }) {
-  const [environment, userSegments, attributeClasses, actionClasses] = await Promise.all([
+  const [environment, userSegments, attributeClasses, actionClassesFromServer] = await Promise.all([
     getEnvironment(params.environmentId),
     getUserSegments(params.environmentId),
     getAttributeClasses(params.environmentId),
@@ -26,6 +27,18 @@ export default async function SegmentsPage({ params }) {
   }
 
   const segments = userSegments.filter((segment) => !segment.isPrivate);
+
+  const actionClasses = actionClassesFromServer.filter((actionClass) => {
+    if (actionClass.type === "automatic") {
+      if (ACTIONS_TO_EXCLUDE.includes(actionClass.name)) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return true;
+  });
 
   return (
     <>

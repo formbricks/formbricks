@@ -6,12 +6,11 @@ import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import z from "zod";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { ValidationError } from "@formbricks/types/errors";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
@@ -240,6 +239,18 @@ export default function SurveyMenuBar({
     if (!validateSurvey(localSurvey)) {
       setIsSurveySaving(false);
       return;
+    }
+
+    // validate the user segment filters
+    if (!!strippedSurvey.userSegment?.filters?.length) {
+      const parsedFilters = ZUserSegmentFilterGroup.safeParse(strippedSurvey.userSegment.filters);
+      if (!parsedFilters.success) {
+        const errMsg =
+          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
+        setIsSurveySaving(false);
+        toast.error(errMsg);
+        return;
+      }
     }
 
     try {
