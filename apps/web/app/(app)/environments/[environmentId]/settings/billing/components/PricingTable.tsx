@@ -43,7 +43,7 @@ export default function PricingTableComponent({
     setLoadingCustomerPortal(true);
     const sessionUrl = await manageSubscriptionAction(team.id, environmentId);
     router.push(sessionUrl);
-    setLoadingCustomerPortal(true);
+    setLoadingCustomerPortal(false);
   };
 
   const upgradePlan = async (priceLookupKeys: StripePriceLookupKeys[]) => {
@@ -141,7 +141,7 @@ export default function PricingTableComponent({
       unlimited: true,
     },
     {
-      title: "Reusable Segmentscoming",
+      title: "Reusable Segments",
       comingSoon: true,
       unlimited: true,
     },
@@ -172,6 +172,9 @@ export default function PricingTableComponent({
       <div className="justify-between gap-4 rounded-lg">
         {team.billing.stripeCustomerId ? (
           <div className="flex w-full justify-end">
+            <Button variant="minimal" className="justify-center py-2 shadow-sm" onClick={openCustomerPortal}>
+              Cancel Subscription
+            </Button>
             <Button
               variant="secondary"
               className="justify-center py-2 shadow-sm"
