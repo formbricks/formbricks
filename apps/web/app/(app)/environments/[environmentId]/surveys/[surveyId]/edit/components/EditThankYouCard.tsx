@@ -97,7 +97,7 @@ export default function EditThankYouCard({
               isInvalid={false}
               questionId="end"
               questionIdx={localSurvey.questions.length}
-              updateQuestion={updateSurvey}
+              updateSurvey={updateSurvey}
               type="headline"
             />
 
