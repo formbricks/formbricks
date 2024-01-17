@@ -44,6 +44,7 @@ export default function DateQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const defaultDate = value ? new Date(value as string) : undefined;
+  const datePickerScriptSrc = import.meta.env.DATE_PICKER_SCRIPT_SRC;
 
   useEffect(() => {
     // Check if the DatePicker has already been loaded
@@ -51,10 +52,7 @@ export default function DateQuestion({
     if (!window.initDatePicker) {
       const script = document.createElement("script");
 
-      script.src =
-        process.env.SURVEYS_PACKAGE_MODE === "development"
-          ? "http://localhost:3003/question-date.umd.js"
-          : "https://unpkg.com/@formbricks/surveys@^1.4.0/dist/question-date.umd.js";
+      script.src = datePickerScriptSrc;
 
       script.async = true;
 
