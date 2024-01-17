@@ -362,7 +362,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
               setIsFilterDropDownOpen(value);
             }}>
             <DropdownMenuTrigger>
-              <div className="flex h-auto min-w-[8rem] items-center justify-between rounded-md border bg-white p-3 sm:min-w-[11rem] sm:px-6 sm:py-3">
+              <div className="flex h-auto min-w-[8rem] items-center justify-between rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
                 <span className="text-sm text-slate-700">
                   {filterRange === FilterDropDownLabels.CUSTOM_RANGE
                     ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
@@ -419,7 +419,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
               setIsDownloadDropDownOpen(value);
             }}>
             <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
-              <div className="min-w-auto h-auto rounded-md border bg-white p-3 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
+              <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
                 <div className="hidden w-full items-center justify-between sm:flex">
                   <span className="text-sm text-slate-700">Download</span>
                   {isDownloadDropDownOpen ? (

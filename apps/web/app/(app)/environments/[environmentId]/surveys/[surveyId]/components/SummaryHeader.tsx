@@ -1,7 +1,7 @@
 "use client";
 
-import SurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
+import SurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyShareButton";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { EllipsisHorizontalIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
@@ -60,7 +60,7 @@ const SummaryHeader = ({
       <div>
         <div className="flex gap-4">
           <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
-          {survey.resultShareKey && <Badge text="Public Results" type="success" size="normal"></Badge>}
+          {survey.resultShareKey && <Badge text="Public Results" type="warning" size="normal"></Badge>}
         </div>
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>

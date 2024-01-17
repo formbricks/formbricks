@@ -15,7 +15,7 @@ interface SurveyBgSelectorTabProps {
 
 const TabButton = ({ isActive, onClick, children }) => (
   <button
-    className={`w-1/4 rounded-md p-2 text-sm font-medium leading-none text-slate-800 ${
+    className={`w-1/3 rounded-md p-3 text-sm font-medium leading-none text-slate-800 ${
       isActive ? "bg-white shadow-sm" : ""
     }`}
     onClick={onClick}>
@@ -29,7 +29,7 @@ export default function SurveyBgSelectorTab({
   colours,
   bgType,
 }: SurveyBgSelectorTabProps) {
-  const [tab, setTab] = useState(bgType || "image");
+  const [tab, setTab] = useState(bgType || "color");
 
   const renderContent = () => {
     switch (tab) {
@@ -45,16 +45,16 @@ export default function SurveyBgSelectorTab({
   };
 
   return (
-    <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4 px-8">
-      <div className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-slate-50 px-6 py-1.5">
-        <TabButton isActive={tab === "image"} onClick={() => setTab("image")}>
-          Image
+    <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4">
+      <div className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-slate-100 p-2">
+        <TabButton isActive={tab === "color"} onClick={() => setTab("color")}>
+          Color
         </TabButton>
         <TabButton isActive={tab === "animation"} onClick={() => setTab("animation")}>
           Animation
         </TabButton>
-        <TabButton isActive={tab === "color"} onClick={() => setTab("color")}>
-          Color
+        <TabButton isActive={tab === "image"} onClick={() => setTab("image")}>
+          Image
         </TabButton>
       </div>
       {renderContent()}
