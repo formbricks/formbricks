@@ -288,6 +288,7 @@ const QuestionFormInput = ({
               ref={inputRef}
               id={type}
               name={type}
+              aria-label={type === "headline" ? "Question" : "Description"}
               autoComplete={showQuestionSelect ? "off" : "on"}
               value={recallToHeadline(text ?? "", localSurvey, false)}
               onChange={(e) => {
