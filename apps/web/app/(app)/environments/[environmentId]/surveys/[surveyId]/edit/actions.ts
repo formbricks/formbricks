@@ -3,10 +3,13 @@
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { canUserAccessProduct } from "@formbricks/lib/product/auth";
+import { getProduct } from "@formbricks/lib/product/service";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export async function surveyMutateAction(survey: TSurvey): Promise<TSurvey> {
@@ -43,4 +46,15 @@ export const deleteSurveyAction = async (surveyId: string) => {
   if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   await deleteSurvey(surveyId);
+};
+
+export const refetchProduct = async (productId: string): Promise<TProduct | null> => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserAccessProduct(session.user.id, productId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const product = await getProduct(productId);
+  return product;
 };

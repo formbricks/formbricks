@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
@@ -108,7 +109,7 @@ export default function SurveyMenuBar({
     }
   };
 
-  const validateSurvey = (survey) => {
+  const validateSurvey = (survey: TSurvey) => {
     const existingQuestionIds = new Set();
 
     if (survey.questions.length === 0) {
@@ -117,7 +118,7 @@ export default function SurveyMenuBar({
     }
 
     let pin = survey?.pin;
-    if (pin !== null && pin.toString().length !== 4) {
+    if (pin !== null && pin!.toString().length !== 4) {
       toast.error("PIN must be a four digit number.");
       return;
     }
@@ -131,6 +132,7 @@ export default function SurveyMenuBar({
         faultyQuestions.push(question.id);
       }
     }
+
     // if there are any faulty questions, the user won't be allowed to save the survey
     if (faultyQuestions.length > 0) {
       setInvalidQuestions(faultyQuestions);
@@ -206,10 +208,7 @@ export default function SurveyMenuBar({
      Check whether the count for autocomplete responses is not less 
      than the current count of accepted response and also it is not set to 0
     */
-    if (
-      (survey.autoComplete && survey._count?.responses && survey._count.responses >= survey.autoComplete) ||
-      survey?.autoComplete === 0
-    ) {
+    if ((survey.autoComplete && responseCount >= survey.autoComplete) || survey?.autoComplete === 0) {
       return false;
     }
 
@@ -221,6 +220,12 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
+    if (questionWithEmptyFallback) {
+      toast.error("Fallback missing");
+      return;
+    }
+
     setIsSurveySaving(true);
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {

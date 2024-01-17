@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  FunnelIcon,
-  PlusIcon,
-  TrashIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/solid";
+import { CheckCircleIcon, ExclamationCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { Info } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -19,17 +11,12 @@ import SaveAsNewSegmentModal from "@formbricks/ee/advancedUserTargeting/componen
 import SegmentAlreadyUsedModal from "@formbricks/ee/advancedUserTargeting/components/SegmentAlreadyUsedModal";
 import SegmentFilters from "@formbricks/ee/advancedUserTargeting/components/SegmentFilters";
 import { cloneUserSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
-import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/userSegment";
-import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import AlertDialog from "@formbricks/ui/AlertDialog";
-import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface WhoToSendCardProps {
   localSurvey: TSurvey;
@@ -111,39 +98,27 @@ export default function WhoToSendCard({
     setUserSegment(updatedUserSegment);
   };
 
+  if (localSurvey.type === "link") {
+    return null; // Hide card completely
+  }
+
   return (
     <>
       <Collapsible.Root
         open={open}
-        onOpenChange={(openState) => {
-          if (localSurvey.type !== "link") {
-            setOpen(openState);
-          }
-        }}
+        onOpenChange={setOpen}
         className="w-full rounded-lg border border-slate-300 bg-white">
         <Collapsible.CollapsibleTrigger
           asChild
-          className={cn(
-            localSurvey.type !== "link"
-              ? "cursor-pointer hover:bg-slate-50"
-              : "cursor-not-allowed bg-slate-50",
-            "h-full w-full rounded-lg"
-          )}>
+          className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
           <div className="inline-flex px-4 py-6">
             <div className="flex items-center pl-2 pr-5">
-              <CheckCircleIcon
-                className={cn(localSurvey.type !== "link" ? "text-green-400" : "text-slate-300", "h-8 w-8 ")}
-              />
+              <CheckCircleIcon className="h-8 w-8 text-green-400 " />
             </div>
             <div>
               <p className="font-semibold text-slate-800">Target Audience</p>
               <p className="mt-1 text-sm text-slate-500">Pre-segment your users with attributes filters.</p>
             </div>
-            {localSurvey.type === "link" && (
-              <div className="flex w-full items-center justify-end pr-2">
-                <Badge size="normal" text="In-app survey settings" type="gray" />
-              </div>
-            )}
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="min-w-full overflow-auto">

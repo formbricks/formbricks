@@ -4,8 +4,8 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface EditThankYouCardProps {
@@ -45,12 +45,12 @@ export default function EditThankYouCard({
     <div
       className={cn(
         open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
-        "flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
+        "group flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div
         className={cn(
-          open ? "bg-slate-700" : "bg-slate-400",
-          "flex w-10 items-center justify-center rounded-l-lg hover:bg-slate-600 group-aria-expanded:rounded-bl-none"
+          open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
         <p>🙏</p>
       </div>
@@ -91,30 +91,26 @@ export default function EditThankYouCard({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <form>
-            <div className="mt-3">
-              <Label htmlFor="headline">Headline</Label>
-              <div className="mt-2">
-                <Input
-                  id="headline"
-                  name="headline"
-                  defaultValue={localSurvey?.thankYouCard?.headline}
-                  onChange={(e) => {
-                    updateSurvey({ headline: e.target.value });
-                  }}
-                />
-              </div>
-            </div>
+            <QuestionFormInput
+              localSurvey={localSurvey}
+              environmentId={localSurvey.environmentId}
+              isInvalid={false}
+              questionId="end"
+              questionIdx={localSurvey.questions.length}
+              updateSurvey={updateSurvey}
+              type="headline"
+            />
 
-            <div className="mt-3">
-              <Label htmlFor="subheader">Description</Label>
-              <div className="mt-2">
-                <Input
-                  id="subheader"
-                  name="subheader"
-                  defaultValue={localSurvey?.thankYouCard?.subheader}
-                  onChange={(e) => {
-                    updateSurvey({ subheader: e.target.value });
-                  }}
+            <div>
+              <div className="flex w-full items-center">
+                <QuestionFormInput
+                  localSurvey={localSurvey}
+                  environmentId={localSurvey.environmentId}
+                  isInvalid={false}
+                  questionId="end"
+                  questionIdx={localSurvey.questions.length}
+                  updateSurvey={updateSurvey}
+                  type="subheader"
                 />
               </div>
             </div>

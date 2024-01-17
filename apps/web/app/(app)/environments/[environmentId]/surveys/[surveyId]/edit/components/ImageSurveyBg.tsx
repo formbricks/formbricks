@@ -21,7 +21,7 @@ export default function ImageSurveyBg({ localSurvey, handleBgChange }: ImageSurv
     : "";
 
   return (
-    <div className="mb-2 mt-4 w-full rounded-lg border bg-slate-50 p-4">
+    <div className="mt-2 w-full">
       <div className="flex w-full items-center justify-center">
         <FileInput
           id="survey-bg-file-input"
