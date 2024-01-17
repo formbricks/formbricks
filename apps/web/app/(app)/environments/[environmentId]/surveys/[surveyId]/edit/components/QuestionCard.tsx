@@ -117,6 +117,7 @@ export default function QuestionCard({
 
   const updateEmptyNextButtonLabels = (labelValue: TI18nString) => {
     localSurvey.questions.forEach((q, index) => {
+      if (index === localSurvey.questions.length - 1) return;
       if (!q.buttonLabel || q.buttonLabel[selectedLanguage]?.trim() === "") {
         updateQuestion(index, { buttonLabel: labelValue });
       }
@@ -380,6 +381,7 @@ export default function QuestionCard({
                                   ...(question.buttonLabel as TI18nString),
                                   [selectedLanguage]: e.target.value,
                                 };
+                                if (questionIdx === localSurvey.questions.length - 1) return;
                                 updateEmptyNextButtonLabels(translatedNextButtonLabel);
                               }}
                             />
