@@ -83,7 +83,18 @@ export function Survey({
     if (currQues?.logic && currQues?.logic.length > 0) {
       for (let logic of currQues.logic) {
         if (!logic.destination) continue;
-
+        if (
+          currentQuestion.type === "multipleChoiceSingle" ||
+          currentQuestion.type === "multipleChoiceMulti"
+        ) {
+          const choice = currentQuestion.choices.find((choice) => choice.label === responseValue);
+          // if choice is undefined we can determine that, "other" option is selected
+          if (!choice) {
+            if (evaluateCondition(logic, "Other")) {
+              return logic.destination;
+            }
+          }
+        }
         if (evaluateCondition(logic, responseValue)) {
           return logic.destination;
         }

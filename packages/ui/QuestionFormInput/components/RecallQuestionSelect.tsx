@@ -91,6 +91,8 @@ export default function RecallQuestionSelect({
             prevIdx === 0 ? filteredRecallQuestions.length - 1 : prevIdx - 1
           );
         } else if (event.key === "Enter") {
+          event.preventDefault();
+          event.stopPropagation();
           const selectedQuestion = filteredRecallQuestions[focusedQuestionIdx];
           setShowQuestionSelect(false);
           if (!selectedQuestion) return;
