@@ -30,33 +30,27 @@ export default function ShareSurveyResults({
         setOpen(open);
       }}>
       {showPublishModal && surveyUrl ? (
-        <DialogContent className="bottom-0 flex h-[95%] w-full cursor-pointer flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[40%]">
-          <div className="no-scrollbar mt-4 flex grow flex-col items-center justify-center overflow-x-hidden overflow-y-scroll">
-            <CheckCircleIcon className="mt-4 h-20 w-20 text-slate-300" />
-            <div className="mt-6 px-4 py-3 text-lg font-medium text-slate-600 lg:px-6 lg:py-3">
-              Your survey results are public on the web.
-            </div>
-            <div className="text-md px-4  py-3 text-slate-500 lg:px-6 lg:py-0">
-              Your survey results are shared with anyone who has the link.
-            </div>
-            <div className="text-md mb-6 px-4 py-3 text-slate-500 lg:px-6 lg:py-0">
-              The results will not be indexed by search engines.
+        <DialogContent className="flex flex-col rounded-2xl bg-white px-12 py-6">
+          <div className="flex flex-col items-center gap-y-6 text-center">
+            <CheckCircleIcon className="h-20 w-20 text-slate-300" />
+            <div>
+              <p className="text-lg font-medium text-slate-600">Your survey results are public!</p>
+              <p className="text-balanced mt-2 text-sm text-slate-500">
+                Your survey results are shared with anyone who has the link. The results will not be indexed
+                by search engines.
+              </p>
             </div>
 
             <div className="flex gap-2">
-              <div className="relative grow overflow-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800">
-                <span
-                  style={{
-                    wordBreak: "break-all",
-                  }}>
-                  {surveyUrl}
-                </span>
+              <div className="whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-800">
+                <span>{surveyUrl}</span>
               </div>
               <Button
                 variant="secondary"
                 size="sm"
                 title="Copy survey link to clipboard"
                 aria-label="Copy survey link to clipboard"
+                className="hover:cursor-pointer"
                 onClick={() => {
                   navigator.clipboard.writeText(surveyUrl);
                   toast.success("URL copied to clipboard!");
@@ -65,7 +59,7 @@ export default function ShareSurveyResults({
               </Button>
             </div>
 
-            <div className="my-6 flex gap-2">
+            <div className="flex gap-2">
               <Button
                 type="submit"
                 variant="secondary"
@@ -81,22 +75,21 @@ export default function ShareSurveyResults({
           </div>
         </DialogContent>
       ) : (
-        <DialogContent className="bottom-0 flex h-[95%] w-full flex-col gap-0 overflow-hidden rounded-2xl bg-white p-0 sm:max-w-none lg:bottom-auto lg:h-auto lg:w-[40%]">
-          <div className="no-scrollbar mt-4 flex grow flex-col items-center justify-center overflow-x-hidden overflow-y-scroll">
-            <GlobeEuropeAfricaIcon className="mt-4 h-20 w-20 text-slate-300" />
-            <div className=" mt-6 px-4 py-3 text-lg font-medium text-slate-600 lg:px-6 lg:py-3">
-              Publish Results to web
+        <DialogContent className="flex flex-col rounded-2xl bg-white p-8">
+          <div className="flex flex-col items-center gap-y-6 text-center">
+            <GlobeEuropeAfricaIcon className="h-20 w-20 text-slate-300" />
+            <div>
+              <p className="text-lg font-medium text-slate-600">Publish Results to web</p>
+              <p className="text-balanced mt-2 text-sm text-slate-500">
+                Your survey results are shared with anyone who has the link. The results will not be indexed
+                by search engines.
+              </p>
             </div>
-            <div className="text-md px-4 py-3 text-slate-500 lg:px-6 lg:py-0">
-              Your survey results are shared with anyone who has the link.
-            </div>
-            <div className=" text-md px-4 py-3 text-slate-500  lg:px-6 lg:py-0">
-              The results will not be indexed by search engines.
-            </div>
+
             <Button
               type="submit"
               variant="darkCTA"
-              className="my-8  h-full text-center"
+              className="h-full text-center"
               onClick={() => handlePublish()}>
               Publish to web
             </Button>

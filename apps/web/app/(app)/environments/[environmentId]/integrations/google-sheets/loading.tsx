@@ -8,7 +8,7 @@ export default function Loading() {
       <div className="mb-6 text-right">
         <Button
           variant="darkCTA"
-          className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-gray-200">
+          className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200">
           Link new sheet
         </Button>
       </div>
@@ -28,27 +28,27 @@ export default function Loading() {
               <div className="col-span-3 flex items-center pl-6 text-sm">
                 <div className="text-left">
                   <div className="font-medium text-slate-900">
-                    <div className="mt-0 h-4 w-48 animate-pulse rounded-full bg-gray-200"></div>
+                    <div className="mt-0 h-4 w-48 animate-pulse rounded-full bg-slate-200"></div>
                   </div>
                 </div>
               </div>
               <div className="col-span-1 my-auto flex items-center justify-center text-center text-sm text-slate-500">
                 <div className="font-medium text-slate-500">
-                  <div className="mt-0 h-4 w-24 animate-pulse rounded-full bg-gray-200"></div>
+                  <div className="mt-0 h-4 w-24 animate-pulse rounded-full bg-slate-200"></div>
                 </div>
               </div>
               <div className="col-span-4 my-auto flex items-center justify-center text-center text-sm text-slate-500">
                 <div className="font-medium text-slate-500">
-                  <div className="mt-0 h-4 w-36 animate-pulse rounded-full bg-gray-200"></div>
+                  <div className="mt-0 h-4 w-36 animate-pulse rounded-full bg-slate-200"></div>
                 </div>
               </div>
               <div className="col-span-2 my-auto flex items-center justify-center text-center text-sm text-slate-500">
                 <div className="font-medium text-slate-500">
-                  <div className="mt-0 h-4 w-24 animate-pulse rounded-full bg-gray-200"></div>
+                  <div className="mt-0 h-4 w-24 animate-pulse rounded-full bg-slate-200"></div>
                 </div>
               </div>
               <div className="col-span-2 my-auto flex items-center justify-center whitespace-nowrap text-center text-sm text-slate-500">
-                <div className="h-4 w-16 animate-pulse rounded-full bg-gray-200"></div>
+                <div className="h-4 w-16 animate-pulse rounded-full bg-slate-200"></div>
               </div>
               <div className="text-center"></div>
             </div>

@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyHiddenFields, TSurveyQuestions } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -49,14 +50,14 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
     <div
       className={cn(
         open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
-        "flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
+        "group flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div
         className={cn(
-          open ? "bg-slate-700" : "bg-slate-400",
-          "flex w-10 items-center justify-center rounded-l-lg hover:bg-slate-600 group-aria-expanded:rounded-bl-none"
+          open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
-        <p>👁️</p>
+        <p>🥷</p>
       </div>
       <Collapsible.Root
         open={open}
@@ -105,13 +106,18 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
                 );
               })
             ) : (
-              <p className="text-sm italic text-gray-500">No hidden fields yet. Add the first one below.</p>
+              <p className="text-sm italic text-slate-500">No hidden fields yet. Add the first one below.</p>
             )}
           </div>
           <form
             className="mt-5"
             onSubmit={(e) => {
               e.preventDefault();
+
+              // Check if the hiddenField is empty or just whitespace
+              if (!hiddenField.trim()) {
+                return toast.error("The field cannot be empty.");
+              }
 
               const errorMessage = validateHiddenField(
                 // current field
@@ -131,7 +137,7 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
               setHiddenField("");
             }}>
             <Label htmlFor="headline">Hidden Field</Label>
-            <div className="mt-2">
+            <div className="mt-2 flex gap-2">
               <Input
                 autoFocus
                 id="headline"
@@ -140,6 +146,9 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
                 onChange={(e) => setHiddenField(e.target.value.trim())}
                 placeholder="Type field id..."
               />
+              <Button variant="secondary" type="submit" size="sm" className="whitespace-nowrap">
+                Add hidden field ID
+              </Button>
             </div>
           </form>
         </Collapsible.CollapsibleContent>

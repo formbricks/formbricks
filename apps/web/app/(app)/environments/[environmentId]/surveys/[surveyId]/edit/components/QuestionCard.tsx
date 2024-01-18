@@ -24,9 +24,9 @@ import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
 import { cn } from "@formbricks/lib/cn";
+import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -53,7 +53,7 @@ interface QuestionCardProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export function BackButtonInput({
@@ -93,11 +93,30 @@ export default function QuestionCard({
   activeQuestionId,
   setActiveQuestionId,
   lastQuestion,
-  isInValid,
+  isInvalid,
 }: QuestionCardProps) {
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
+
+  // formats the text to highlight specific parts of the text with slashes
+  const formatTextWithSlashes = (text) => {
+    const regex = /\/(.*?)\\/g;
+    const parts = text.split(regex);
+
+    return parts.map((part, index) => {
+      // Check if the part was inside slashes
+      if (index % 2 !== 0) {
+        return (
+          <span key={index} className="mx-1 rounded-md bg-slate-100 p-1 px-2 text-xs">
+            {part}
+          </span>
+        );
+      } else {
+        return part;
+      }
+    });
+  };
 
   const updateEmptyNextButtonLabels = (labelValue: string) => {
     localSurvey.questions.forEach((q, index) => {
@@ -122,8 +141,8 @@ export default function QuestionCard({
           <div
             className={cn(
               open ? "bg-slate-700" : "bg-slate-400",
-              "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:bg-slate-600",
-              isInValid && "bg-red-400  hover:bg-red-600"
+              "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
+              isInvalid && "bg-red-400  hover:bg-red-600"
             )}>
             {questionIdx + 1}
           </div>
@@ -142,7 +161,7 @@ export default function QuestionCard({
               className={cn(open ? "" : "  ", "flex cursor-pointer justify-between p-4 hover:bg-slate-50")}>
               <div>
                 <div className="inline-flex">
-                  <div className="-ml-0.5 mr-3 h-6 w-6 text-slate-400">
+                  <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
                     {question.type === TSurveyQuestionType.FileUpload ? (
                       <ArrowUpTrayIcon />
                     ) : question.type === TSurveyQuestionType.OpenText ? (
@@ -169,7 +188,9 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {question.headline || getTSurveyQuestionTypeName(question.type)}
+                      {recallToHeadline(question.headline, localSurvey, true)
+                        ? formatTextWithSlashes(recallToHeadline(question.headline, localSurvey, true))
+                        : getTSurveyQuestionTypeName(question.type)}
                     </p>
                     {!open && question?.required && (
                       <p className="mt-1 truncate text-xs text-slate-500">
@@ -198,7 +219,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
@@ -207,7 +228,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
@@ -216,7 +237,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.NPS ? (
                 <NPSQuestionForm
@@ -225,7 +246,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.CTA ? (
                 <CTAQuestionForm
@@ -234,7 +255,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Rating ? (
                 <RatingQuestionForm
@@ -243,7 +264,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Consent ? (
                 <ConsentQuestionForm
@@ -251,7 +272,7 @@ export default function QuestionCard({
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Date ? (
                 <DateQuestionForm
@@ -260,7 +281,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
@@ -269,7 +290,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.FileUpload ? (
                 <FileUploadQuestionForm
@@ -279,7 +300,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
@@ -288,7 +309,7 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                 />
               ) : null}
               <div className="mt-4">

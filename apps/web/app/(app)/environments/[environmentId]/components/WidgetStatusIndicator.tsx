@@ -1,4 +1,4 @@
-import { ArrowDownIcon, CheckIcon } from "@heroicons/react/24/solid";
+import { CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 
@@ -18,16 +18,15 @@ export default async function WidgetStatusIndicator({ environmentId, type }: Wid
 
   const stati = {
     notImplemented: {
-      icon: ArrowDownIcon,
-      color: "slate",
-      title: "Connect Formbricks to your app.",
-      subtitle: "You have not yet connected Formbricks to your app. Follow setup guide.",
+      icon: ExclamationTriangleIcon,
+      title: "Connect Formbricks to your app or website.",
+      subtitle:
+        "Your app or website is not yet connected with Formbricks. To run in-app surveys follow the setup guide.",
     },
     running: {
       icon: CheckIcon,
-      color: "green",
       title: "Receiving data.",
-      subtitle: "You have successfully connected Formbricks to your app.",
+      subtitle: "Your app or website is connected with Formbricks.",
     },
   };
 
@@ -58,7 +57,7 @@ export default async function WidgetStatusIndicator({ environmentId, type }: Wid
           <currentStatus.icon />
         </div>
         <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
-        <p className="text-sm text-slate-700">{currentStatus.subtitle}</p>
+        <p className="w-2/3 text-balance text-sm text-slate-600">{currentStatus.subtitle}</p>
       </div>
     );
   }
@@ -67,11 +66,11 @@ export default async function WidgetStatusIndicator({ environmentId, type }: Wid
       <Link href={`/environments/${environment.id}/settings/setup`}>
         <div className="group my-4 flex justify-center">
           <div className=" flex rounded-full bg-slate-100 px-2 py-1">
-            <p className="mr-2 text-sm text-slate-400 group-hover:underline">{currentStatus.subtitle}</p>
+            <p className="mr-2 text-sm text-slate-500 group-hover:underline">{currentStatus.subtitle}</p>
             <div
               className={clsx(
-                "h-5 w-5 rounded-full p-0.5",
-                status === "notImplemented" && "bg-slate-100 text-slate-700",
+                "h-5 w-5 rounded-full",
+                status === "notImplemented" && "border border-white bg-white text-amber-600",
                 status === "running" && "bg-green-100 text-green-700"
               )}>
               <currentStatus.icon />

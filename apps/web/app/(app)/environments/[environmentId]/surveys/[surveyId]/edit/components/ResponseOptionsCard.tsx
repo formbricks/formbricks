@@ -5,6 +5,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
@@ -287,7 +288,10 @@ export default function ResponseOptionsCard({
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className="w-full rounded-lg border border-slate-300 bg-white">
+      className={cn(
+        open ? "" : "hover:bg-slate-50",
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+      )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
@@ -295,7 +299,7 @@ export default function ResponseOptionsCard({
           </div>
           <div>
             <p className="font-semibold text-slate-800">Response Options</p>
-            <p className="mt-1 text-sm text-slate-500">Decide how and how long people can respond.</p>
+            <p className="mt-1 text-sm text-slate-500">Response limits, redirections and more.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
