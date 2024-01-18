@@ -186,6 +186,9 @@ export function Survey({
               ? replaceRecallInfo(survey.thankYouCard.subheader)
               : ""
           }
+          buttonLabel={survey.thankYouCard.buttonLabel}
+          buttonLink={survey.thankYouCard.buttonLink}
+          imageUrl={survey.thankYouCard.imageUrl}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
         />
