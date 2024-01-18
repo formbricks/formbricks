@@ -69,7 +69,7 @@ test.describe("Survey Create & Submit Response", async () => {
       .click();
     await page.getByRole("button", { name: "Rating" }).click();
     await page.getByLabel("Question").fill(surveys.createAndSubmit.ratingQuestion.question);
-    await page.getByLabel("Scale").fill(surveys.createAndSubmit.ratingQuestion.description);
+    await page.getByLabel("Description").fill(surveys.createAndSubmit.ratingQuestion.description);
     await page.getByPlaceholder("Not good").fill(surveys.createAndSubmit.ratingQuestion.lowLabel);
     await page.getByPlaceholder("Very satisfied").fill(surveys.createAndSubmit.ratingQuestion.highLabel);
 
@@ -135,7 +135,7 @@ test.describe("Survey Create & Submit Response", async () => {
       .filter({ hasText: /^Thank You CardShown$/ })
       .nth(1)
       .click();
-    await page.getByLabel("Headline").fill(surveys.createAndSubmit.thankYouCard.headline);
+    await page.getByLabel("Question").fill(surveys.createAndSubmit.thankYouCard.headline);
     await page.getByLabel("Description").fill(surveys.createAndSubmit.thankYouCard.description);
 
     // Save & Publish Survey

@@ -116,8 +116,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Lost Pixel",
-          description:
-            "Open source visual regression testing alternative to Percy & Chromatic",
+          description: "Open source visual regression testing alternative to Percy & Chromatic",
           href: "https://lost-pixel.com",
         },
         {

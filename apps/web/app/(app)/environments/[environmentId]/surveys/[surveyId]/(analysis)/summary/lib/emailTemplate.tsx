@@ -18,6 +18,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
 
 interface EmailTemplateProps {
   survey: TSurvey;
@@ -61,7 +62,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
             {firstQuestion.subheader}
           </Text>
-          <Section className="mt-4 block h-20 w-full rounded-lg border border-solid border-gray-200 bg-slate-50" />
+          <Section className="mt-4 block h-20 w-full rounded-lg border border-solid border-slate-200 bg-slate-50" />
           <EmailFooter />
         </EmailTemplateWrapper>
       );
@@ -75,7 +76,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
             <Text className="m-0 p-0" dangerouslySetInnerHTML={{ __html: firstQuestion.html || "" }}></Text>
           </Container>
 
-          <Container className="m-0 mt-4 block w-full max-w-none rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 font-medium text-slate-800">
+          <Container className="m-0 mt-4 block w-full max-w-none rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 font-medium text-slate-800">
             <Text className="m-0 inline-block">{firstQuestion.label}</Text>
           </Container>
           <Container className="mx-0 mt-4 flex max-w-none justify-end">
@@ -109,12 +110,12 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
               {firstQuestion.subheader}
             </Text>
             <Container className="mx-0 mt-4 flex w-max flex-col">
-              <Section className="block overflow-hidden rounded-md border border-gray-200">
+              <Section className="block overflow-hidden rounded-md border border-slate-200">
                 {Array.from({ length: 11 }, (_, i) => (
                   <EmailButton
                     key={i}
                     href={`${urlWithPrefilling}${firstQuestion.id}=${i}`}
-                    className="m-0 inline-flex h-10 w-10 items-center justify-center  border-gray-200 p-0 text-slate-800">
+                    className="m-0 inline-flex h-10 w-10 items-center justify-center  border-slate-200 p-0 text-slate-800">
                     {i}
                   </EmailButton>
                 ))}
@@ -167,33 +168,39 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
     case TSurveyQuestionType.Rating:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
-          <Section>
+          <Section className=" w-full">
             <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
               {firstQuestion.headline}
             </Text>
             <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
               {firstQuestion.subheader}
             </Text>
-            <Container className="mx-0 mt-4 flex">
+            <Container className="mx-0 mt-4 w-full items-center justify-center">
               <Section
-                className={cn("inline-block w-max overflow-hidden rounded-md", {
+                className={cn("w-full overflow-hidden rounded-md", {
                   ["border border-solid border-gray-200"]: firstQuestion.scale === "number",
                 })}>
-                {Array.from({ length: firstQuestion.range }, (_, i) => (
-                  <EmailButton
-                    key={i}
-                    href={`${urlWithPrefilling}${firstQuestion.id}=${i + 1}`}
-                    className={cn(
-                      "m-0 inline-flex h-16 w-16 items-center justify-center p-0 text-slate-800",
-                      {
-                        ["border border-solid border-gray-200"]: firstQuestion.scale === "number",
-                      }
-                    )}>
-                    {firstQuestion.scale === "smiley" && <Text className="text-3xl">😃</Text>}
-                    {firstQuestion.scale === "number" && i + 1}
-                    {firstQuestion.scale === "star" && <Text className="text-3xl">⭐</Text>}
-                  </EmailButton>
-                ))}
+                <Column className="mb-4 flex w-full justify-around">
+                  {Array.from({ length: firstQuestion.range }, (_, i) => (
+                    <EmailButton
+                      key={i}
+                      href={`${urlWithPrefilling}${firstQuestion.id}=${i + 1}`}
+                      className={cn(
+                        " m-0 h-10 w-full p-0 text-center align-middle leading-10 text-slate-800",
+                        {
+                          ["border border-solid border-gray-200"]: firstQuestion.scale === "number",
+                        }
+                      )}>
+                      {firstQuestion.scale === "smiley" && (
+                        <RatingSmiley active={false} idx={i} range={firstQuestion.range} />
+                      )}
+                      {firstQuestion.scale === "number" && (
+                        <Text className="m-0 flex h-10 items-center">{i + 1}</Text>
+                      )}
+                      {firstQuestion.scale === "star" && <Text className="text-3xl">⭐</Text>}
+                    </EmailButton>
+                  ))}
+                </Column>
               </Section>
               <Section className="m-0 px-1.5 text-xs leading-6 text-slate-500">
                 <Row>
@@ -222,7 +229,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Section
-                className="mt-2 block w-full rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800"
+                className="mt-2 block w-full rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 text-slate-800"
                 key={choice.id}>
                 {choice.label}
               </Section>
@@ -246,7 +253,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
               .map((choice) => (
                 <Link
                   key={choice.id}
-                  className="mt-2 block rounded-lg border border-solid border-gray-200 bg-slate-50 p-4 text-slate-800 hover:bg-slate-100"
+                  className="mt-2 block rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 text-slate-800 hover:bg-slate-100"
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.label}`}>
                   {choice.label}
                 </Link>
@@ -305,7 +312,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
             {firstQuestion.subheader}
           </Text>
-          <Section className="mt-4 flex h-12 w-full items-center justify-center rounded-lg border border-solid border-gray-200 bg-white">
+          <Section className="mt-4 flex h-12 w-full items-center justify-center rounded-lg border border-solid border-slate-200 bg-white">
             <CalendarDaysIcon className="mb-1 inline h-4 w-4" />
             <Text className="inline text-sm font-medium">Select a date</Text>
           </Section>

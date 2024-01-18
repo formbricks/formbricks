@@ -109,7 +109,7 @@ export const PricingCard = ({
                   </div>
                   <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature.title}</span>
                   {feature.comingSoon && (
-                    <span className=" mx-2 bg-blue-100 p-1 text-xs text-slate-400 dark:bg-slate-700 dark:text-teal-500">
+                    <span className="mx-2 rounded bg-blue-100 px-3 py-1 text-xs text-blue-700 dark:bg-slate-700 dark:text-teal-500">
                       coming soon
                     </span>
                   )}
