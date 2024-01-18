@@ -17,7 +17,6 @@ export default async function PeopleLayout({ params, children }) {
   }
 
   const isUserTargetingAllowed = getUserTargetingPermission(team);
-  console.log("isUserTargetingAllowed", isUserTargetingAllowed);
 
   return (
     <>
