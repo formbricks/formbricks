@@ -1,6 +1,7 @@
 import Navigation from "@/app/(app)/environments/[environmentId]/components/Navigation";
 import type { Session } from "next-auth";
 
+import { getUserTargetingPermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -35,6 +36,8 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
   }
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
+  const isUserTargetingAllowed = getUserTargetingPermission(team);
+
   return (
     <Navigation
       environment={environment}
@@ -46,6 +49,7 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       webAppUrl={WEBAPP_URL}
       membershipRole={currentUserMembership?.role}
+      isUserTargetingAllowed={isUserTargetingAllowed}
     />
   );
 }

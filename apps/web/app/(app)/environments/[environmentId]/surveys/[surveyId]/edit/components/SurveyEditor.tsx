@@ -2,8 +2,8 @@
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
+import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
-import React from "react";
 import { useEffect, useState } from "react";
 
 import { createUserSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
@@ -31,6 +31,7 @@ interface SurveyEditorProps {
   responseCount: number;
   membershipRole?: TMembershipRole;
   colours: string[];
+  isUserTargetingAllowed?: boolean;
 }
 
 export default function SurveyEditor({
@@ -43,6 +44,7 @@ export default function SurveyEditor({
   responseCount,
   membershipRole,
   colours,
+  isUserTargetingAllowed = false,
 }: SurveyEditorProps): JSX.Element {
   const router = useRouter();
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
@@ -50,10 +52,12 @@ export default function SurveyEditor({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
+
   useEffect(() => {
     // no localSurvey, but survey exists
     if (!localSurvey && survey) {
-      setLocalSurvey(JSON.parse(JSON.stringify(survey)));
+      const surveyClone = structuredClone(survey);
+      setLocalSurvey(surveyClone);
 
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
@@ -66,11 +70,9 @@ export default function SurveyEditor({
       // if same, do nothing
       // if different, update the local survey
 
-      const localSurveyString = JSON.stringify(localSurvey);
-      const surveyString = JSON.stringify(survey);
-
-      if (localSurveyString !== surveyString) {
-        setLocalSurvey(JSON.parse(surveyString));
+      if (!isEqual(localSurvey, survey)) {
+        const surveyClone = structuredClone(survey);
+        setLocalSurvey(surveyClone);
 
         if (survey.questions.length > 0) {
           setActiveQuestionId(survey.questions[0].id);
@@ -105,8 +107,12 @@ export default function SurveyEditor({
   }, [localSurvey?.type, survey?.questions]);
 
   useEffect(() => {
-    // do nothing if its not an in-app survey
+    // do nothing if the user targeting is not allowed
+    if (!isUserTargetingAllowed) {
+      return;
+    }
 
+    // do nothing if its not an in-app survey
     if (survey.type !== "web") {
       return;
     }
@@ -122,7 +128,9 @@ export default function SurveyEditor({
       });
     };
 
-    if (survey && !survey.userSegmentId) {
+    const { userSegment } = survey;
+
+    if (!userSegment?.id) {
       try {
         createSegment();
         router.refresh();
@@ -176,6 +184,7 @@ export default function SurveyEditor({
                 responseCount={responseCount}
                 membershipRole={membershipRole}
                 colours={colours}
+                isUserTargetingAllowed={isUserTargetingAllowed}
               />
             )}
           </main>

@@ -77,7 +77,7 @@ export const selectSurvey = {
       value: true,
     },
   },
-  userSegmentId: true,
+  // userSegmentId: true,
   userSegment: {
     include: {
       surveys: {
@@ -341,8 +341,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const { triggers, attributeFilters, environmentId, userSegmentId, userSegment, ...surveyData } =
-    updatedSurvey;
+  const { triggers, attributeFilters, environmentId, userSegment, ...surveyData } = updatedSurvey;
 
   if (triggers) {
     const newTriggers: string[] = [];
@@ -468,7 +467,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     revalidateSurveyByAttributeClassId([...newFilters, ...removedFilters]);
   }
 
-  if (userSegment && userSegmentId) {
+  if (userSegment) {
     // parse the segment filters:
     const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
     if (!parsedFilters.success) {
@@ -476,7 +475,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     try {
-      await updateUserSegment(userSegmentId, userSegment);
+      await updateUserSegment(userSegment.id, userSegment);
     } catch (err) {
       console.log({ err });
       throw new Error("Error updating survey");
@@ -545,6 +544,13 @@ export async function deleteSurvey(surveyId: string) {
     environmentId: deletedSurvey.environmentId,
   });
 
+  if (deletedSurvey.userSegment?.id) {
+    userSegmentCache.revalidate({
+      id: deletedSurvey.userSegment.id,
+      environmentId: deletedSurvey.environmentId,
+    });
+  }
+
   // Revalidate triggers by actionClassId
   deletedSurvey.triggers.forEach((trigger) => {
     surveyCache.revalidate({
@@ -596,7 +602,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     ...survey,
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
     userSegment: null,
-    userSegmentId: null,
   };
 
   surveyCache.revalidate({
@@ -658,7 +663,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : Prisma.JsonNull,
-      userSegmentId: undefined, // userSegmentId is set below
+      // userSegmentId: undefined, // userSegmentId is set below
       userSegment: existingSurvey.userSegment
         ? { connect: { id: existingSurvey.userSegment.id } }
         : undefined,

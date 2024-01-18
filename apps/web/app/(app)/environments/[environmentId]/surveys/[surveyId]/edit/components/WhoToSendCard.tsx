@@ -50,7 +50,6 @@ export default function WhoToSendCard({
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({
       ...localSurveyOld,
-      userSegmentId: userSegment?.id ?? null,
       userSegment,
     }));
   }, [setLocalSurvey, userSegment]);

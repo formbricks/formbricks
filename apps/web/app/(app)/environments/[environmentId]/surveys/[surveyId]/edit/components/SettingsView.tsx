@@ -22,6 +22,7 @@ interface SettingsViewProps {
   responseCount: number;
   membershipRole?: TMembershipRole;
   colours: string[];
+  isUserTargetingAllowed?: boolean;
 }
 
 export default function SettingsView({
@@ -34,19 +35,22 @@ export default function SettingsView({
   responseCount,
   membershipRole,
   colours,
+  isUserTargetingAllowed = false,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
-      <WhoToSendCard
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-        environmentId={environment.id}
-        attributeClasses={attributeClasses}
-        actionClasses={actionClasses}
-        userSegments={userSegments}
-      />
+      {isUserTargetingAllowed && (
+        <WhoToSendCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          environmentId={environment.id}
+          attributeClasses={attributeClasses}
+          actionClasses={actionClasses}
+          userSegments={userSegments}
+        />
+      )}
 
       <WhenToSendCard
         localSurvey={localSurvey}
