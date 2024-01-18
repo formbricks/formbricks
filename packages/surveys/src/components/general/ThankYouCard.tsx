@@ -35,7 +35,7 @@ export default function ThankYouCard({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [buttonLink]);
 
   return (
     <div className="text-center">
