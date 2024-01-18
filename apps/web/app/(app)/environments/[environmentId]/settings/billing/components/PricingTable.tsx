@@ -326,15 +326,15 @@ export default function PricingTableComponent({
       </div>
 
       <AlertDialog
-        confirmWhat="that you want to unsubscribe?"
+        headerText="Are your sure that you want to unsubscribe?"
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
-        onDiscard={() => {
+        onConfirm={() => {
           setOpenDeleteModal(false);
         }}
-        text="Your subscription for this product will be canceled at the end of the month. After that, you won't have access to the pro features anymore"
-        onSave={() => handleDeleteSubscription()}
-        confirmButtonLabel="Unsubscribe"
+        mainText="Your subscription for this product will be canceled at the end of the month. After that, you won't have access to the pro features anymore"
+        onDecline={() => handleDeleteSubscription()}
+        confirmBtnLabel="Unsubscribe"
       />
     </div>
   );

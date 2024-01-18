@@ -21,6 +21,7 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
+import { userSegmentCache } from "../userSegment/cache";
 import { evaluateSegment, updateUserSegment } from "../userSegment/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -657,6 +658,10 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : Prisma.JsonNull,
+      userSegmentId: undefined, // userSegmentId is set below
+      userSegment: existingSurvey.userSegment
+        ? { connect: { id: existingSurvey.userSegment.id } }
+        : undefined,
     },
   });
 
@@ -664,6 +669,13 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
     id: newSurvey.id,
     environmentId: newSurvey.environmentId,
   });
+
+  if (newSurvey.userSegmentId) {
+    userSegmentCache.revalidate({
+      id: newSurvey.userSegmentId,
+      environmentId: newSurvey.environmentId,
+    });
+  }
 
   // Revalidate surveys by actionClassId
   revalidateSurveyByActionClassId(actionClasses, existingSurvey.triggers);

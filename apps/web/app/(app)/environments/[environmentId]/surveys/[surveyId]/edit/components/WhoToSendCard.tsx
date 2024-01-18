@@ -236,11 +236,11 @@ export default function WhoToSendCard({
                       setOpen={setResetAllFiltersModalOpen}
                       mainText="This action resets all filters in this survey."
                       declineBtnLabel="Cancel"
-                      onFirstBtnClick={() => {
+                      onDecline={() => {
                         setResetAllFiltersModalOpen(false);
                       }}
                       confirmBtnLabel="Ok"
-                      onSecondBtnClick={() => {
+                      onConfirm={() => {
                         const updatedUserSegment = structuredClone(userSegment);
                         if (updatedUserSegment?.filters) {
                           updatedUserSegment.filters = [];

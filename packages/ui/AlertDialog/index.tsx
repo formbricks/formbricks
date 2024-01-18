@@ -9,10 +9,10 @@ interface AlertDialogProps {
   headerText: string;
   mainText: string;
   confirmBtnLabel: string;
-  declineBtnLabel: string;
+  declineBtnLabel?: string;
   declineBtnVariant?: "warn" | "minimal";
-  onFirstBtnClick: () => void;
-  onSecondBtnClick?: () => void;
+  onDecline: () => void;
+  onConfirm?: () => void;
 }
 
 export default function AlertDialog({
@@ -21,23 +21,23 @@ export default function AlertDialog({
   headerText,
   mainText = "Are you sure? This action cannot be undone.",
   declineBtnLabel,
-  onFirstBtnClick,
+  onDecline,
   confirmBtnLabel,
   declineBtnVariant = "minimal",
-  onSecondBtnClick,
+  onConfirm,
 }: AlertDialogProps) {
   return (
     <Modal open={open} setOpen={setOpen} title={headerText}>
       <p>{mainText}</p>
       <div className="space-x-2 text-right">
-        <Button variant={declineBtnVariant} onClick={onFirstBtnClick}>
-          {declineBtnLabel}
+        <Button variant={declineBtnVariant} onClick={onDecline}>
+          {declineBtnLabel || "Discard"}
         </Button>
         <Button
           variant="darkCTA"
           onClick={() => {
-            if (onSecondBtnClick) {
-              onSecondBtnClick();
+            if (onConfirm) {
+              onConfirm();
             } else {
               setOpen(false);
             }

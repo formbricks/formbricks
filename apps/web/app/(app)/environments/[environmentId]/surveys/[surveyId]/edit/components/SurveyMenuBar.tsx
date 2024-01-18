@@ -405,13 +405,11 @@ export default function SurveyMenuBar({
           confirmBtnLabel="Save"
           declineBtnLabel="Discard"
           declineBtnVariant="warn"
-          onFirstBtnClick={() => {
+          onDecline={() => {
             setConfirmDialogOpen(false);
             router.back();
           }}
-          onSecondBtnClick={() => saveSurveyAction(true)}
-          // text="You have unsaved changes in your survey. Would you like to save them before leaving?"
-          // onSave={() => saveSurveyAction(true)}
+          onConfirm={() => saveSurveyAction(true)}
         />
       </div>
     </>
