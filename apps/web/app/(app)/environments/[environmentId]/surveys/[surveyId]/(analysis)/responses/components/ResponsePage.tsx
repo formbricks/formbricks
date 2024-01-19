@@ -19,6 +19,8 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
+import ResultsShareButton from "../../../components/ResultsShareButton";
+
 interface ResponsePageProps {
   environment: TEnvironment;
   survey: TSurvey;
@@ -70,12 +72,15 @@ const ResponsePage = ({
         user={user}
         membershipRole={membershipRole}
       />
-      <CustomFilter
-        environmentTags={environmentTags}
-        responses={filterResponses}
-        survey={survey}
-        totalResponses={responses}
-      />
+      <div className="flex gap-1.5">
+        <CustomFilter
+          environmentTags={environmentTags}
+          responses={filterResponses}
+          survey={survey}
+          totalResponses={responses}
+        />
+        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+      </div>
       <SurveyResultsTabs activeId="responses" environmentId={environment.id} surveyId={surveyId} />
       <ResponseTimeline
         environment={environment}
