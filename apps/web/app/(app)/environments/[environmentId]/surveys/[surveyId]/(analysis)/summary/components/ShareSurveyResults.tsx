@@ -35,9 +35,10 @@ export default function ShareSurveyResults({
             <CheckCircleIcon className="h-20 w-20 text-slate-300" />
             <div>
               <p className="text-lg font-medium text-slate-600">Your survey results are public!</p>
-              <p className="text-balanced mt-2 text-sm text-slate-500">
-                Your survey results are shared with anyone who has the link. The results will not be indexed
-                by search engines.
+              <p className="text-balanced mt-2 max-w-3xl text-sm text-slate-500">
+                Publicly sharing survey results makes them accessible to anyone with the link, even without
+                authentication. Please be cautious, as this may expose sensitive information to those with
+                access. The shared results won&apos;t be indexed by search engines.
               </p>
             </div>
 
@@ -79,10 +80,11 @@ export default function ShareSurveyResults({
           <div className="flex flex-col items-center gap-y-6 text-center">
             <GlobeEuropeAfricaIcon className="h-20 w-20 text-slate-300" />
             <div>
-              <p className="text-lg font-medium text-slate-600">Publish Results to web</p>
-              <p className="text-balanced mt-2 text-sm text-slate-500">
-                Your survey results are shared with anyone who has the link. The results will not be indexed
-                by search engines.
+              <p className="text-lg font-medium text-slate-600">Publicly Share Survey Results</p>
+              <p className="text-balanced mt-2 max-w-3xl text-sm text-slate-500">
+                Publicly sharing survey results makes them accessible to anyone with the link, even without
+                authentication. Please be cautious, as this may expose sensitive information to those with
+                access. The shared results won&apos;t be indexed by search engines.
               </p>
             </div>
 
@@ -91,7 +93,7 @@ export default function ShareSurveyResults({
               variant="darkCTA"
               className="h-full text-center"
               onClick={() => handlePublish()}>
-              Publish to web
+              Publish Publicly
             </Button>
           </div>
         </DialogContent>

@@ -74,6 +74,11 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
     }
   }, [showResultsLinkModal]);
 
+  const copyPageLinkToClipboard = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success("Survey overview link copied to clipboard");
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -100,13 +105,18 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
               </p>
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem className="hover:ring-0" onClick={copyPageLinkToClipboard}>
+            <p className="text-slate-700">
+              Copy Survey Settings Link <LinkIcon className="ml-2 inline h-4 w-4" />
+            </p>
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="hover:ring-0"
             onClick={() => {
               setShowResultsLinkModal(true);
             }}>
             <p className="text-slate-700">
-              Publish Results <GlobeAltIcon className="ml-2 inline h-4 w-4" />
+              Publicly Publish Results <GlobeAltIcon className="ml-2 inline h-4 w-4" />
             </p>
           </DropdownMenuItem>
         </DropdownMenuContent>
