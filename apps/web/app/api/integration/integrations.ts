@@ -1,11 +1,15 @@
 import { writeData } from "@formbricks/lib/googleSheet/service";
+import { writeDataToSlack } from "@formbricks/lib/slack/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { TGoogleSheetIntegration, TIntegration } from "@formbricks/types/v1/integrations";
+import { TGoogleSheetIntegration, TIntegration, TSlackIntegration } from "@formbricks/types/v1/integrations";
 import { TPipelineInput } from "@formbricks/types/v1/pipelines";
 
 export async function handleIntegrations(integrations: TIntegration[], data: TPipelineInput) {
   for (const integration of integrations) {
     switch (integration.type) {
+      case "slack":
+        await handleSlackIntegration(integration as TSlackIntegration, data);
+        break;
       case "googleSheets":
         await handleGoogleSheetsIntegration(integration as TGoogleSheetIntegration, data);
         break;
@@ -19,6 +23,18 @@ async function handleGoogleSheetsIntegration(integration: TGoogleSheetIntegratio
       if (element.surveyId === data.surveyId) {
         const values = await extractResponses(data, element.questionIds);
         await writeData(integration.config.key, element.spreadsheetId, values);
+      }
+    }
+  }
+}
+
+async function handleSlackIntegration(integration: TSlackIntegration, data: TPipelineInput) {
+  if (integration.config.data.length > 0) {
+    for (const element of integration.config.data) {
+      if (element.surveyId === data.surveyId) {
+        const values = await extractResponses(data, element.questionIds);
+        console.log(values, element.channelId);
+        await writeDataToSlack(integration.config.key, element.channelId, values);
       }
     }
   }

@@ -98,6 +98,7 @@ export async function POST(request: Request) {
       },
     });
     if (integrations.length > 0) {
+      console.log("ran integrations");
       handleIntegrations(integrations, inputValidation.data);
     }
     // filter all users that have email notifications enabled for this survey

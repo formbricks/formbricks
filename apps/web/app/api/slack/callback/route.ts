@@ -7,6 +7,8 @@ import { TSlackConfig, TSlackCredential, TSlackIntegration } from "@formbricks/t
 
 export async function GET(req: NextRequest, res: NextResponse) {
   const url = req.url;
+  // __AUTO_GENERATED_PRINT_VAR_START__
+  console.log("RANN GET url: %s", url); // __AUTO_GENERATED_PRINT_VAR_END__
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("environment"); // Get the value of the 'state' parameter
 

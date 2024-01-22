@@ -55,6 +55,7 @@ export default function SlackWrapper({
         setSelectedIntegration={setSelectedIntegration}
         refreshSheet={refreshSheet}
       />
+      {/* <Connect enabled={enabled} environmentId={environmentId} webAppUrl={webAppUrl} /> */}
     </>
   ) : (
     <Connect enabled={enabled} environmentId={environmentId} webAppUrl={webAppUrl} />

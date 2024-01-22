@@ -71,3 +71,65 @@ export const getSlackIntegration = cache(async (environmentId: string): Promise<
 function isSlackIntegration(integration: any): integration is TSlackIntegration {
   return integration.type === "slack";
 }
+
+export async function writeDataToSlack(credentials: TSlackCredential, channelId: string, values: string[][]) {
+  try {
+    const [responses, questions] = values;
+    let blockResponse = [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `${questions[0]}`,
+        },
+      },
+      {
+        type: "divider",
+      },
+    ];
+    for (let i = 0; i < values[0].length; i++) {
+      let questionSection = {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*${questions[i]}*`,
+        },
+      };
+      let responseSection = {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `${responses[i]}\n`,
+        },
+      };
+      blockResponse.push(questionSection, responseSection);
+    }
+
+    const response = await fetch("https://slack.com/api/chat.postMessage", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${credentials.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        channel: channelId,
+        blocks: blockResponse,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error(data.error);
+    }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError("Database operation failed");
+    }
+    throw error;
+  }
+}
