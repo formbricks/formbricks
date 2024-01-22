@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -29,16 +29,51 @@ export default function SurveyBgSelectorTab({
   colours,
   bgType,
 }: SurveyBgSelectorTabProps) {
+  const background = localSurvey.styling?.background;
+  const [backgrounds, setBackgrounds] = useState({
+    image: background?.bgType === "image" ? background.bg : "",
+    animation: background?.bgType === "animation" ? background.bg : "",
+    color: background?.bgType === "color" ? background.bg : "",
+  });
+
+  useEffect(() => {
+    const bgType = background?.bgType;
+
+    setBackgrounds((prevBgUrl) => ({
+      ...prevBgUrl,
+      image: bgType === "image" ? background?.bg : prevBgUrl.image,
+      animation: bgType === "animation" ? background?.bg : prevBgUrl.animation,
+      color: bgType === "color" ? background?.bg : prevBgUrl.color,
+    }));
+  }, [background?.bg, background?.bgType]);
+
   const [tab, setTab] = useState(bgType || "color");
+
+  useEffect(() => {
+    handleBgChange(backgrounds[tab], tab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   const renderContent = () => {
     switch (tab) {
       case "image":
-        return <ImageSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />;
+        return (
+          <ImageSurveyBg
+            environmentId={localSurvey.environmentId}
+            handleBgChange={handleBgChange}
+            background={backgrounds.image ?? ""}
+          />
+        );
       case "animation":
-        return <AnimatedSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} />;
+        return <AnimatedSurveyBg handleBgChange={handleBgChange} background={backgrounds.animation ?? ""} />;
       case "color":
-        return <ColorSurveyBg localSurvey={localSurvey} handleBgChange={handleBgChange} colours={colours} />;
+        return (
+          <ColorSurveyBg
+            handleBgChange={handleBgChange}
+            colours={colours}
+            background={backgrounds.color ?? ""}
+          />
+        );
       default:
         return null;
     }

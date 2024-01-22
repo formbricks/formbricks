@@ -63,7 +63,7 @@ const QuestionFormInput = ({
   const fallbackInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
-    questionId === "end" ? false : !!(question as TSurveyQuestion).imageUrl
+    questionId === "end" ? false : !!(question as TSurveyQuestion).imageUrl && type === "headline"
   );
   const [showQuestionSelect, setShowQuestionSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);

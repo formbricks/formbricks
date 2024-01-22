@@ -112,7 +112,6 @@ export default function EditWelcomeCard({
                   updateSurvey({ fileUrl: url[0] });
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
-                imageFit="contain"
               />
             </div>
             <div className="mt-3">
