@@ -63,7 +63,7 @@ This will install the Formbricks codebase and all the dependencies on your local
         1. Wait for the web and demo apps to launch on Gitpod. This automatically opens the `apps/demo/.env` file. Utilize dynamic localhost URLs (e.g., `localhost:3000` for signup and `localhost:8025` for email confirmation) to configure `NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID`. After creating your account and finding the `ID` in the URL at `localhost:3000`, replace `YOUR_ENVIRONMENT_ID` in the `.env` file located in `app/demo`.
 
     **Web Component Initialization:**
-     - we initialize the @formbricks/web component during prebuilds. This involves:
+     - We initialize the @formbricks/web component during prebuilds. This involves:
         1. Installing build dependencies for the `@formbricks/web#go` task from turbo.json in prebuilds to save time.
         2. Starting PostgreSQL and Mailhog containers for running migrations in prebuilds.
         3. To prevent the "Init" task from running indefinitely due to prebuild rules, a cleanup `docker compose down` step i.e. `db:down` is added to `turbo.json`. This step is designed to halt the execution of containers that are currently running.
@@ -93,8 +93,8 @@ After clicking the one-click setup button, Gitpod will open a new tab or window.
 
 ### 2. Authorizing in Gitpod
 
-<Image src={GitpodAuth} alt="Gitpod Auth Page" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />-
-This is the Gitpod Authentication Page. It appears when you click the "Open in GitPod" button and Gitpod needs
+<Image src={GitpodAuth} alt="Gitpod Auth Page" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+- This is the Gitpod Authentication Page. It appears when you click the "Open in GitPod" button and Gitpod needs
 to authenticate your access to the workspace. Click on 'Continue With Github' to authorize your GitPod session.
 
 ### 3. Creating a New Workspace
@@ -159,7 +159,7 @@ Here are the ports and corresponding URLs for the services within your Gitpod en
 
 - **Port 1025**:
 
-  - **Service**: SMPT server
+  - **Service**: SMTP server
   - **Description**: SMTP Server for sending and receiving email messages. This server is responsible for handling email communication.
 
 - **Port 8025**:
@@ -304,7 +304,7 @@ cp .env.example .env
    </CodeGroup>
 </Col>
 
-4. Generate & set some secret values mandatory for the ENCRYPTION_KEY & NEXTAUTH_SECRET in the .env file. You can use the following command to generate the random string of required length:
+4. Generate & set some secret values mandatory for the `ENCRYPTION_KEY` & `NEXTAUTH_SECRET` in the .env file. You can use the following command to generate the random string of required length:
 
 <Col>
    <CodeGroup title="Set value of ENCRYPTION_KEY">
@@ -330,8 +330,8 @@ pnpm go
 </Col>
    This starts the Formbricks main app (plus all its dependencies) as well as the following services using Docker:
 
-- a `postgres` container for hosting your database,
-- a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
+- A `postgres` container for hosting your database,
+- A `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
 - Demo App at [http://localhost:3002](http://localhost:3002)
 - Landing Page at [http://localhost:3001](http://localhost:3001)
 
