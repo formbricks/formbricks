@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth";
 
-import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { getUserTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
@@ -30,7 +29,7 @@ export default async function SurveysEditPage({ params }) {
     survey,
     product,
     environment,
-    actionClassesFromServer,
+    actionClasses,
     attributeClasses,
     responseCount,
     team,
@@ -65,25 +64,13 @@ export default async function SurveysEditPage({ params }) {
   if (
     !survey ||
     !environment ||
-    !actionClassesFromServer ||
+    !actionClasses ||
     !attributeClasses ||
     !product ||
     isSurveyCreationDeletionDisabled
   ) {
     return <ErrorComponent />;
   }
-
-  const actionClasses = actionClassesFromServer.filter((actionClass) => {
-    if (actionClass.type === "automatic") {
-      if (ACTIONS_TO_EXCLUDE.includes(actionClass.name)) {
-        return false;
-      }
-
-      return true;
-    }
-
-    return true;
-  });
 
   return (
     <SurveyEditor

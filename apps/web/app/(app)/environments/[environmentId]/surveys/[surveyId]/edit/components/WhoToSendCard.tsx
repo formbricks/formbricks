@@ -11,6 +11,7 @@ import SaveAsNewSegmentModal from "@formbricks/ee/advancedUserTargeting/componen
 import SegmentAlreadyUsedModal from "@formbricks/ee/advancedUserTargeting/components/SegmentAlreadyUsedModal";
 import SegmentFilters from "@formbricks/ee/advancedUserTargeting/components/SegmentFilters";
 import { cloneUserSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
+import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -31,7 +32,7 @@ export default function WhoToSendCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
-  actionClasses,
+  actionClasses: actionClassesProps,
   attributeClasses,
   userSegments,
 }: WhoToSendCardProps) {
@@ -46,6 +47,18 @@ export default function WhoToSendCard({
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(localSurvey.userSegment?.isPrivate);
   const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(false);
+
+  const actionClasses = actionClassesProps.filter((actionClass) => {
+    if (actionClass.type === "automatic") {
+      if (ACTIONS_TO_EXCLUDE.includes(actionClass.name)) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return true;
+  });
 
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({
