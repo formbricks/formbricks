@@ -5,7 +5,7 @@ import {
   generateResultShareUrlAction,
   getResultShareUrlAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { ArrowUpRightIcon, GlobeAltIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { DocumentDuplicateIcon, GlobeAltIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { DownloadIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -20,10 +20,10 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import ShareEmbedSurvey from "./ShareEmbedSurvey";
-import ShareSurveyResults from "./ShareSurveyResults";
+import ShareEmbedSurvey from "../(analysis)/summary/components/ShareEmbedSurvey";
+import ShareSurveyResults from "../(analysis)/summary/components/ShareSurveyResults";
 
-interface SurveyShareButtonProps {
+interface ResultsShareButtonProps {
   survey: TSurvey;
   className?: string;
   webAppUrl: string;
@@ -31,7 +31,7 @@ interface SurveyShareButtonProps {
   user: TUser;
 }
 
-export default function SurveyShareButton({ survey, webAppUrl, product, user }: SurveyShareButtonProps) {
+export default function ResultsShareButton({ survey, webAppUrl, product, user }: ResultsShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
@@ -47,7 +47,7 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
   const handleUnpublish = () => {
     deleteResultShareUrlAction(survey.id)
       .then(() => {
-        toast.success("Survey Unpublished successfully");
+        toast.success("Results unpublished successfully.");
         setShowPublishModal(false);
         setShowLinkModal(false);
       })
@@ -74,39 +74,55 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
     }
   }, [showResultsLinkModal]);
 
+  const copyUrlToClipboard = () => {
+    if (typeof window !== "undefined") {
+      // Check if window is defined (i.e., if the code is running in the browser)
+      const currentUrl = window.location.href; // Get the current URL
+      navigator.clipboard
+        .writeText(currentUrl) // Copy it to the clipboard
+        .then(() => {
+          toast.success("Link to results copied to clipboard."); // Show success message
+        })
+        .catch((err) => {
+          console.error("Failed to copy: ", err); // Handle any errors
+          toast.error("Failed to copy link to results to clipboard."); // Show error message
+        });
+    } else {
+      console.error("Cannot copy URL: not running in a browser environment.");
+      toast.error("Failed to copy URL: not in a browser environment.");
+    }
+  };
   return (
-    <>
+    <div className="mb-12">
       <DropdownMenu>
         <DropdownMenuTrigger
           asChild
           className="focus:bg-muted cursor-pointer border border-slate-300 outline-none hover:border-slate-400">
           <div className="min-w-auto h-auto rounded-md border bg-white p-3 sm:flex sm:min-w-[7rem] sm:px-6 sm:py-3">
             <div className="hidden w-full items-center justify-between sm:flex">
-              <span className="text-sm text-slate-700"> Share</span>
-              <LinkIcon className="h-4 w-4" />
+              <span className="text-sm text-slate-700">Share Results</span>
+              <LinkIcon className="ml-2 h-4 w-4" />
             </div>
             <DownloadIcon className="block h-4 sm:hidden" />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          {survey.type === "link" && (
-            <DropdownMenuItem
-              className="hover:ring-0"
-              onClick={() => {
-                setShowLinkModal(true);
-              }}>
-              <p className="text-slate-700">
-                Share Survey <ArrowUpRightIcon className="ml-2 inline h-4 w-4" />
-              </p>
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem
+            className="hover:ring-0"
+            onClick={() => {
+              copyUrlToClipboard();
+            }}>
+            <p className="text-slate-700">
+              Copy link <DocumentDuplicateIcon className="ml-1.5 inline h-4 w-4" />
+            </p>
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="hover:ring-0"
             onClick={() => {
               setShowResultsLinkModal(true);
             }}>
             <p className="text-slate-700">
-              Publish Results <GlobeAltIcon className="ml-2 inline h-4 w-4" />
+              Publish to web <GlobeAltIcon className="ml-1.5 inline h-4 w-4" />
             </p>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -132,6 +148,6 @@ export default function SurveyShareButton({ survey, webAppUrl, product, user }: 
           showPublishModal={showPublishModal}
         />
       )}
-    </>
+    </div>
   );
 }

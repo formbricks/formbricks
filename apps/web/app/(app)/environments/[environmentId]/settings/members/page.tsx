@@ -24,7 +24,6 @@ const MembersLoading = () => (
       <div className="col-span-5">Fullname</div>
       <div className="col-span-5">Email</div>
       <div className="col-span-3">Role</div>
-      <div className="col-span-5"></div>
     </div>
 
     <div className="p-4">
