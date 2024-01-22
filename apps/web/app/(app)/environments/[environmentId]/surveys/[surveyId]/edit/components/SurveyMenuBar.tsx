@@ -127,17 +127,17 @@ export default function SurveyMenuBar({
       const { buttonLabel, buttonLink } = thankYouCard;
 
       if (buttonLabel && !buttonLink) {
-        toast.error("Button Link missing in Thank you card.");
+        toast.error("Button Link missing on Thank you card.");
         return;
       }
 
       if (!buttonLabel && buttonLink) {
-        toast.error("Button Label missing in Thank you card.");
+        toast.error("Button Label missing on Thank you card.");
         return;
       }
 
       if (buttonLink && !isValidUrl(buttonLink)) {
-        toast.error("Invalid Button Link url");
+        toast.error("Invalid URL on Thank You card.");
         return;
       }
     }
