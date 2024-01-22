@@ -3,6 +3,8 @@ import { Metadata } from "next";
 
 import { prisma } from "@formbricks/database";
 
+export const dynamic = "force-dynamic"; // no caching
+
 export const metadata: Metadata = {
   robots: {
     index: false,
