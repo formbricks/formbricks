@@ -1,29 +1,29 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { TI18nString, TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyConsentQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   languages: string[][];
+  isInvalid: boolean;
 }
 
 export default function ConsentQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
@@ -38,14 +38,16 @@ export default function ConsentQuestionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
-        question={question}
+        isInvalid={isInvalid}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
         languages={languages}
+        type="headline"
       />
 
       <div className="mt-3">
@@ -55,7 +57,7 @@ export default function ConsentQuestionForm({
             id="subheader"
             value={question.html as TI18nString}
             languages={languages}
-            isInValid={isInValid}
+            isInValid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
@@ -73,7 +75,7 @@ export default function ConsentQuestionForm({
           name="label"
           value={question.label as TI18nString}
           languages={languages}
-          isInValid={isInValid}
+          isInvalid={isInvalid}
           onChange={(e) => {
             let translatedLabel = {
               ...(question.label as TI18nString),

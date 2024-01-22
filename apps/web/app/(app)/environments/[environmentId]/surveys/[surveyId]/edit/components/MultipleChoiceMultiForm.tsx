@@ -1,6 +1,5 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
@@ -15,6 +14,7 @@ import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface OpenQuestionFormProps {
@@ -23,17 +23,17 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   languages: string[][];
+  isInvalid: boolean;
 }
 
 export default function MultipleChoiceMultiForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
@@ -43,7 +43,7 @@ export default function MultipleChoiceMultiForm({
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
-  const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
+  const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
 
   const shuffleOptionsTypes = {
     none: {
@@ -145,7 +145,7 @@ export default function MultipleChoiceMultiForm({
 
     const choiceValue = question.choices[choiceIdx].label;
     if (isInvalidValue === choiceValue) {
-      setIsInvalidValue(null);
+      setisInvalidValue(null);
     }
     let newLogic: any[] = [];
     question.logic?.forEach((logic) => {
@@ -179,18 +179,20 @@ export default function MultipleChoiceMultiForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         ref={questionRef}
-        question={question}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
         languages={languages}
+        type="headline"
       />
 
-      <div className="mt-3">
+      <div>
         {showSubheader && (
           <>
             <Label htmlFor="subheader">Description</Label>
@@ -200,7 +202,7 @@ export default function MultipleChoiceMultiForm({
                 name="subheader"
                 value={question.subheader as TI18nString}
                 languages={languages}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 onChange={(e) => {
                   let translatedSubheader = {
                     ...(question.subheader as TI18nString),
@@ -212,7 +214,7 @@ export default function MultipleChoiceMultiForm({
                 setSelectedLanguage={setSelectedLanguage}
               />
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
                   updateQuestion(questionIdx, { subheader: createI18nString("") });
@@ -222,7 +224,12 @@ export default function MultipleChoiceMultiForm({
           </>
         )}
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            variant="minimal"
+            className="mt-3"
+            type="button"
+            onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -242,11 +249,11 @@ export default function MultipleChoiceMultiForm({
                   onBlur={() => {
                     const duplicateLabel = findDuplicateLabel();
                     if (duplicateLabel) {
-                      setIsInvalidValue(duplicateLabel);
+                      setisInvalidValue(duplicateLabel);
                     } else if (findEmptyLabel()) {
-                      setIsInvalidValue("");
+                      setisInvalidValue("");
                     } else {
-                      setIsInvalidValue(null);
+                      setisInvalidValue(null);
                     }
                   }}
                   languages={languages}
@@ -259,8 +266,8 @@ export default function MultipleChoiceMultiForm({
                   }}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  isInValid={
-                    isInValid &&
+                  isInvalid={
+                    isInvalid &&
                     !isLabelValidForAllLanguages(
                       question.choices[choiceIdx].label,
                       extractLanguageSymbols(languages)

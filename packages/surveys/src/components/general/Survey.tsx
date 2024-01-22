@@ -6,8 +6,10 @@ import { cn, getLocalizedValue } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
 import { useEffect, useRef, useState } from "preact/hooks";
 
+import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
+import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TI18nString } from "@formbricks/types/surveys";
+import { TI18nString, TSurveyQuestion } from "@formbricks/types/surveys";
 
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
@@ -82,7 +84,18 @@ export function Survey({
     if (currQues?.logic && currQues?.logic.length > 0) {
       for (let logic of currQues.logic) {
         if (!logic.destination) continue;
-
+        if (
+          currentQuestion.type === "multipleChoiceSingle" ||
+          currentQuestion.type === "multipleChoiceMulti"
+        ) {
+          const choice = currentQuestion.choices.find((choice) => choice.label === responseValue);
+          // if choice is undefined we can determine that, "other" option is selected
+          if (!choice) {
+            if (evaluateCondition(logic, "Other")) {
+              return logic.destination;
+            }
+          }
+        }
         if (evaluateCondition(logic, responseValue)) {
           return logic.destination;
         }
@@ -110,6 +123,37 @@ export function Survey({
     setHistory([...history, questionId]);
     setLoadingElement(false);
     onActiveQuestionChange(nextQuestionId);
+  };
+
+  const replaceRecallInfo = (text: string) => {
+    while (text.includes("recall:")) {
+      const recallInfo = extractRecallInfo(text);
+      if (recallInfo) {
+        const questionId = extractId(recallInfo);
+        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+        let value = questionId && responseData[questionId] ? (responseData[questionId] as string) : fallback;
+
+        if (isValidDateString(value)) {
+          value = formatDateWithOrdinal(new Date(value));
+        }
+        if (Array.isArray(value)) {
+          value = value.join(", ");
+        }
+        text = text.replace(recallInfo, value);
+      }
+    }
+    return text;
+  };
+
+  const parseRecallInformation = (question: TSurveyQuestion) => {
+    const modifiedQuestion = { ...question };
+    if ((question.headline as TI18nString)[language].includes("recall:")) {
+      modifiedQuestion.headline = replaceRecallInfo((modifiedQuestion.headline as TI18nString)[language]);
+    }
+    if (question.subheader && (question.subheader as TI18nString)[language].includes("recall:")) {
+      modifiedQuestion.subheader = replaceRecallInfo(modifiedQuestion.subheader as string);
+    }
+    return modifiedQuestion;
   };
 
   const onBack = (): void => {
@@ -158,7 +202,7 @@ export function Survey({
         currQues && (
           <QuestionConditional
             surveyId={survey.id}
-            question={currQues}
+            question={parseRecallInformation(currQues)}
             value={responseData[currQues.id]}
             onChange={onChange}
             onSubmit={onSubmit}

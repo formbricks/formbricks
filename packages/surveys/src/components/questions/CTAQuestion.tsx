@@ -28,6 +28,7 @@ interface CTAQuestionProps {
 export default function CTAQuestion({
   question,
   onSubmit,
+  onChange,
   onBack,
   isFirstQuestion,
   isLastQuestion,
@@ -69,6 +70,7 @@ export default function CTAQuestion({
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);
                 onSubmit({ [question.id]: "dismissed" }, updatedTtcObj);
+                onChange({ [question.id]: "dismissed" });
               }}
               className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
               {getLocalizedValue(question.dismissButtonLabel, language) || "Skip"}
@@ -85,6 +87,7 @@ export default function CTAQuestion({
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
               onSubmit({ [question.id]: "clicked" }, updatedTtcObj);
+              onChange({ [question.id]: "clicked" });
             }}
             type="button"
           />

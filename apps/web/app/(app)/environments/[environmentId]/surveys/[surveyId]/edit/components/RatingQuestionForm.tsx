@@ -1,4 +1,3 @@
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
@@ -9,6 +8,7 @@ import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 import Dropdown from "./RatingTypeDropdown";
 
@@ -18,10 +18,10 @@ interface RatingQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   languages: string[][];
+  isInvalid: boolean;
 }
 
 export default function RatingQuestionForm({
@@ -29,7 +29,7 @@ export default function RatingQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
@@ -41,17 +41,19 @@ export default function RatingQuestionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
-        question={question}
+        isInvalid={isInvalid}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
         languages={languages}
+        type="headline"
       />
 
-      <div className="mt-3">
+      <div>
         {showSubheader && (
           <>
             <Label htmlFor="subheader">Description</Label>
@@ -60,7 +62,7 @@ export default function RatingQuestionForm({
                 id="subheader"
                 name="subheader"
                 value={question.subheader as TI18nString}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 languages={languages}
                 onChange={(e) => {
                   let translatedSubheader = {
@@ -73,7 +75,7 @@ export default function RatingQuestionForm({
                 setSelectedLanguage={setSelectedLanguage}
               />
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
                   updateQuestion(questionIdx, { subheader: createI18nString("") });
@@ -83,7 +85,12 @@ export default function RatingQuestionForm({
           </>
         )}
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            variant="minimal"
+            className="mt-3"
+            type="button"
+            onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -134,7 +141,7 @@ export default function RatingQuestionForm({
               value={question.lowerLabel as TI18nString}
               placeholder="Not good"
               languages={languages}
-              isInValid={isInValid}
+              isInvalid={isInvalid}
               onChange={(e) => {
                 let translatedLowerLabel = {
                   ...(question.lowerLabel as TI18nString),
@@ -156,7 +163,7 @@ export default function RatingQuestionForm({
               value={question.upperLabel as TI18nString}
               placeholder="Very satisfied"
               languages={languages}
-              isInValid={isInValid}
+              isInvalid={isInvalid}
               onChange={(e) => {
                 let translatedUpperLabel = {
                   ...(question.upperLabel as TI18nString),
@@ -182,7 +189,7 @@ export default function RatingQuestionForm({
                 value={question.buttonLabel as TI18nString}
                 placeholder={lastQuestion ? "Finish" : "Next"}
                 languages={languages}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 onChange={(e) => {
                   let translatedButtonLabel = {
                     ...(question.buttonLabel as TI18nString),

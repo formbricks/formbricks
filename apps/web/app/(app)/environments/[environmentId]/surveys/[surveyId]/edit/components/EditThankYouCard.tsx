@@ -14,7 +14,7 @@ interface EditThankYouCardProps {
   setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
-  isInValid: boolean;
+  isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   languages: string[][];
@@ -25,7 +25,7 @@ export default function EditThankYouCard({
   setLocalSurvey,
   setActiveQuestionId,
   activeQuestionId,
-  isInValid,
+  isInvalid,
   selectedLanguage,
   setSelectedLanguage,
   languages,
@@ -54,13 +54,12 @@ export default function EditThankYouCard({
     <div
       className={cn(
         open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
-        "flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
+        "group z-20 flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div
         className={cn(
-          open ? "bg-slate-700" : "bg-slate-400",
-          "flex w-10 items-center justify-center rounded-l-lg hover:bg-slate-600 group-aria-expanded:rounded-bl-none",
-          isInValid && "bg-red-400  hover:bg-red-600"
+          open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
         <p>🙏</p>
       </div>
@@ -109,7 +108,7 @@ export default function EditThankYouCard({
                   name="headline"
                   value={localSurvey?.thankYouCard?.headline as TI18nString}
                   languages={languages}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                   onChange={(e) => {
                     let translatedHeadline = {
                       ...(localSurvey?.thankYouCard?.headline as TI18nString),
@@ -131,7 +130,7 @@ export default function EditThankYouCard({
                   name="subheader"
                   value={localSurvey?.thankYouCard?.subheader as TI18nString}
                   languages={languages}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                   onChange={(e) => {
                     let translatedSubheader = {
                       ...(localSurvey?.thankYouCard?.subheader as TI18nString),

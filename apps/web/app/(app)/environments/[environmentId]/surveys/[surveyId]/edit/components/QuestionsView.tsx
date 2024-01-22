@@ -7,6 +7,7 @@ import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
 import { extractLanguageSymbols, translateQuestion } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -53,6 +54,12 @@ export default function QuestionsView({
 
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
+      if (question.headline[selectedLanguage].includes(`recall:${compareId}`)) {
+        question.headline = question.headline[selectedLanguage].replaceAll(
+          `recall:${compareId}`,
+          `recall:${updatedId}`
+        );
+      }
       if (!question.logic) return;
       question.logic.forEach((rule) => {
         if (rule.destination === compareId) {
@@ -81,7 +88,6 @@ export default function QuestionsView({
 
   const updateQuestion = (questionIdx: number, updatedAttributes: any) => {
     let updatedSurvey = { ...localSurvey };
-
     if ("id" in updatedAttributes) {
       // if the survey whose id is to be changed is linked to logic of any other survey then changing it
       const initialQuestionId = updatedSurvey.questions[questionIdx].id;
@@ -117,6 +123,16 @@ export default function QuestionsView({
     const questionId = localSurvey.questions[questionIdx].id;
     const activeQuestionIdTemp = activeQuestionId ?? localSurvey.questions[0].id;
     let updatedSurvey: TSurvey = { ...localSurvey };
+
+    // check if we are recalling from this question
+    updatedSurvey.questions.forEach((question) => {
+      if (question.headline[selectedLanguage].includes(`recall:${questionId}`)) {
+        const recallInfo = extractRecallInfo(question.headline[selectedLanguage]);
+        if (recallInfo) {
+          question.headline = question.headline[selectedLanguage].replace(recallInfo, "");
+        }
+      }
+    });
     updatedSurvey.questions.splice(questionIdx, 1);
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
 
@@ -235,6 +251,17 @@ export default function QuestionsView({
     setInvalidQuestions(updatedQuestionsEnd);
   }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
 
+  useEffect(() => {
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
+    if (questionWithEmptyFallback) {
+      setActiveQuestionId(questionWithEmptyFallback.id);
+      if (activeQuestionId === questionWithEmptyFallback.id) {
+        toast.error("Fallback missing");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeQuestionId, setActiveQuestionId]);
+
   return (
     <div className="px-5 py-4">
       <div className="mb-5 flex flex-col gap-5">
@@ -243,7 +270,7 @@ export default function QuestionsView({
           setLocalSurvey={setLocalSurvey}
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
-          isInValid={invalidQuestions ? invalidQuestions.includes("start") : false}
+          isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
           languages={languages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}
@@ -253,7 +280,7 @@ export default function QuestionsView({
         <div className="mb-5 grid grid-cols-1 gap-5 ">
           <StrictModeDroppable droppableId="questionsList">
             {(provided) => (
-              <div className="grid gap-5" ref={provided.innerRef} {...provided.droppableProps}>
+              <div className="grid w-full gap-5" ref={provided.innerRef} {...provided.droppableProps}>
                 {localSurvey.questions.map((question, questionIdx) => (
                   // display a question form
                   <QuestionCard
@@ -270,8 +297,8 @@ export default function QuestionsView({
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
-                    isInValid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
                     languages={languages}
+                    isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
                   />
                 ))}
                 {provided.placeholder}
@@ -287,7 +314,7 @@ export default function QuestionsView({
           setLocalSurvey={setLocalSurvey}
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
-          isInValid={invalidQuestions ? invalidQuestions.includes("end") : false}
+          isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
           languages={languages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}

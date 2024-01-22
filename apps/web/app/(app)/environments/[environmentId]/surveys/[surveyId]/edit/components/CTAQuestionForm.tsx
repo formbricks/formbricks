@@ -1,7 +1,6 @@
 "use client";
 
 import { BackButtonInput } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionCard";
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
@@ -10,6 +9,7 @@ import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface CTAQuestionFormProps {
@@ -18,10 +18,10 @@ interface CTAQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   languages: string[][];
+  isInvalid: boolean;
 }
 
 export default function CTAQuestionForm({
@@ -29,7 +29,7 @@ export default function CTAQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
@@ -44,14 +44,16 @@ export default function CTAQuestionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
-        question={question}
+        isInvalid={isInvalid}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
         languages={languages}
+        type="headline"
       />
 
       <div className="mt-3">
@@ -61,7 +63,7 @@ export default function CTAQuestionForm({
             id="subheader"
             value={question.html as TI18nString}
             languages={languages}
-            isInValid={isInValid}
+            isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
@@ -103,7 +105,7 @@ export default function CTAQuestionForm({
                 maxLength={48}
                 placeholder={lastQuestion ? "Finish" : "Next"}
                 languages={languages}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 onChange={(e) => {
                   let translatedNextButtonLabel = {
                     ...(question.buttonLabel as TI18nString),
@@ -127,7 +129,7 @@ export default function CTAQuestionForm({
                 updateQuestion(questionIdx, { backButtonLabel: translatedBackButtonLabel });
               }}
               languages={languages}
-              isInValid={isInValid}
+              isInvalid={isInvalid}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
             />
@@ -160,7 +162,7 @@ export default function CTAQuestionForm({
               value={question.dismissButtonLabel as TI18nString}
               placeholder="Skip"
               languages={languages}
-              isInValid={isInValid}
+              isInvalid={isInvalid}
               onChange={(e) => {
                 let translatedDismissButtonLabel = {
                   ...(question.dismissButtonLabel as TI18nString),

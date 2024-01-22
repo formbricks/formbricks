@@ -17,8 +17,7 @@ import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
@@ -299,7 +298,7 @@ export default function SingleResponseCard({
                     className={`h-4 w-4 ${
                       canResponseBeDeleted
                         ? "text-slate-500 hover:text-red-700"
-                        : "cursor-not-allowed text-gray-400"
+                        : "cursor-not-allowed text-slate-400"
                     } `}
                   />
                 </TooltipRenderer>

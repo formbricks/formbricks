@@ -6,9 +6,8 @@ import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TI18nString, TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
-
-import QuestionFormInput from "./QuestionFormInput";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;
@@ -16,10 +15,10 @@ interface IDateQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   languages: string[][];
+  isInvalid: boolean;
 }
 
 const dateOptions = [
@@ -41,7 +40,7 @@ export default function DateQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
@@ -53,15 +52,17 @@ export default function DateQuestionForm({
     <form>
       <QuestionFormInput
         environmentId={localSurvey.environmentId}
-        isInValid={isInValid}
-        question={question}
+        isInvalid={isInvalid}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
         languages={languages}
+        localSurvey={localSurvey}
+        type="headline"
       />
-      <div className="mt-3">
+      <div>
         {showSubheader && (
           <>
             <Label htmlFor="subheader">Description</Label>
@@ -72,7 +73,7 @@ export default function DateQuestionForm({
                   name="subheader"
                   value={question.subheader as TI18nString}
                   languages={languages}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                   onChange={(e) => {
                     let translatedSubheader = {
                       ...(question.subheader as TI18nString),
@@ -86,7 +87,7 @@ export default function DateQuestionForm({
               </div>
 
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
                   updateQuestion(questionIdx, { subheader: createI18nString("") });
@@ -97,7 +98,12 @@ export default function DateQuestionForm({
         )}
 
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            className="mt-3"
+            variant="minimal"
+            type="button"
+            onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

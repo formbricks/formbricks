@@ -188,7 +188,7 @@ export default function AddIntegrationModal({
                   <span>{selectedItem ? selectedItem.name : `${label}`}</span>
                 </span>
                 <span className="flex h-full items-center border-l pl-3">
-                  <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                  <ChevronDownIcon className="h-4 w-4 text-slate-500" />
                 </span>
               </button>
             </DropdownMenu.Trigger>
@@ -202,7 +202,7 @@ export default function AddIntegrationModal({
                     items.map((item) => (
                       <DropdownMenu.Item
                         key={item.id}
-                        className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                        className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
                         onSelect={() => setSelectedItem(item)}>
                         {item.name}
                       </DropdownMenu.Item>

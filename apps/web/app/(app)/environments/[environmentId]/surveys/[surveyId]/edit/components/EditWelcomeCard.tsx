@@ -18,7 +18,7 @@ interface EditWelcomeCardProps {
   setLocalSurvey: (survey: TSurvey) => void;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
-  isInValid: boolean;
+  isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   languages: string[][];
@@ -29,7 +29,7 @@ export default function EditWelcomeCard({
   setLocalSurvey,
   setActiveQuestionId,
   activeQuestionId,
-  isInValid,
+  isInvalid,
   selectedLanguage,
   setSelectedLanguage,
   languages,
@@ -64,13 +64,12 @@ export default function EditWelcomeCard({
     <div
       className={cn(
         open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
-        "flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
+        "group flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div
         className={cn(
-          open ? "bg-slate-700" : "bg-slate-400",
-          "flex w-10 items-center justify-center rounded-l-lg hover:bg-slate-600 group-aria-expanded:rounded-bl-none",
-          isInValid && "bg-red-400  hover:bg-red-600"
+          open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
         <p>✋</p>
       </div>
@@ -121,7 +120,6 @@ export default function EditWelcomeCard({
                   updateSurvey({ fileUrl: url[0] });
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
-                imageFit="contain"
               />
             </div>
             <div className="mt-3">
@@ -132,7 +130,7 @@ export default function EditWelcomeCard({
                   name="headline"
                   value={localSurvey?.welcomeCard?.headline as TI18nString}
                   languages={languages}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                   onChange={(e) => {
                     let translatedHeadline = {
                       ...(localSurvey?.welcomeCard?.headline as TI18nString),
@@ -152,7 +150,7 @@ export default function EditWelcomeCard({
                   id="subheader"
                   value={localSurvey.welcomeCard.html as TI18nString}
                   languages={languages}
-                  isInValid={isInValid}
+                  isInvalid={isInvalid}
                   updateQuestion={updateSurvey}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
@@ -176,7 +174,7 @@ export default function EditWelcomeCard({
                       placeholder={"Next"}
                       defaultValue="Next"
                       languages={languages}
-                      isInValid={isInValid}
+                      isInvalid={isInvalid}
                       onChange={(e) => {
                         let translatedNextButtonLabel = {
                           ...(localSurvey.welcomeCard.buttonLabel as TI18nString),
@@ -206,7 +204,7 @@ export default function EditWelcomeCard({
                 <Label htmlFor="timeToFinish" className="">
                   Time to Finish
                 </Label>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-slate-500 dark:text-slate-400">
                   Display an estimate of completion time for survey
                 </div>
               </div>
@@ -227,7 +225,7 @@ export default function EditWelcomeCard({
                   <Label htmlFor="showResponseCount" className="">
                     Show Response Count
                   </Label>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
                     Display number of responses for survey
                   </div>
                 </div>

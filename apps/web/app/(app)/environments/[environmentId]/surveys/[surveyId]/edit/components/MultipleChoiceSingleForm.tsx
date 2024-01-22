@@ -1,6 +1,5 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { isLabelValidForAllLanguages } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Validation";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
@@ -12,6 +11,7 @@ import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface OpenQuestionFormProps {
@@ -20,17 +20,17 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   languages: string[][];
+  isInvalid: boolean;
 }
 
 export default function MultipleChoiceSingleForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
@@ -39,7 +39,7 @@ export default function MultipleChoiceSingleForm({
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
+  const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
   const questionRef = useRef<HTMLInputElement>(null);
 
   const shuffleOptionsTypes = {
@@ -142,7 +142,7 @@ export default function MultipleChoiceSingleForm({
 
     const choiceValue = question.choices[choiceIdx].label;
     if (isInvalidValue === choiceValue) {
-      setIsInvalidValue(null);
+      setisInvalidValue(null);
     }
     let newLogic: any[] = [];
     question.logic?.forEach((logic) => {
@@ -176,18 +176,20 @@ export default function MultipleChoiceSingleForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         ref={questionRef}
-        question={question}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
         languages={languages}
+        type="headline"
       />
 
-      <div className="mt-3">
+      <div>
         {showSubheader && (
           <>
             <Label htmlFor="subheader">Description</Label>
@@ -197,7 +199,7 @@ export default function MultipleChoiceSingleForm({
                 name="subheader"
                 languages={languages}
                 value={question.subheader as TI18nString}
-                isInValid={isInValid}
+                isInvalid={isInvalid}
                 onChange={(e) => {
                   let translatedSubheader = {
                     ...(question.subheader as TI18nString),
@@ -209,7 +211,7 @@ export default function MultipleChoiceSingleForm({
                 setSelectedLanguage={setSelectedLanguage}
               />
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
                   updateQuestion(questionIdx, { subheader: createI18nString("") });
@@ -219,7 +221,12 @@ export default function MultipleChoiceSingleForm({
           </>
         )}
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            variant="minimal"
+            className="mt-3"
+            type="button"
+            onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -240,11 +247,11 @@ export default function MultipleChoiceSingleForm({
                   onBlur={() => {
                     const duplicateLabel = findDuplicateLabel();
                     if (duplicateLabel) {
-                      setIsInvalidValue(duplicateLabel);
+                      setisInvalidValue(duplicateLabel);
                     } else if (findEmptyLabel()) {
-                      setIsInvalidValue("");
+                      setisInvalidValue("");
                     } else {
-                      setIsInvalidValue(null);
+                      setisInvalidValue(null);
                     }
                   }}
                   onChange={(e) => {
@@ -256,8 +263,8 @@ export default function MultipleChoiceSingleForm({
                   }}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  isInValid={
-                    isInValid &&
+                  isInvalid={
+                    isInvalid &&
                     !isLabelValidForAllLanguages(
                       question.choices[choiceIdx].label,
                       extractLanguageSymbols(languages)

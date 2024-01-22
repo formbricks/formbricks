@@ -1,4 +1,3 @@
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
@@ -8,6 +7,7 @@ import { TI18nString, TSurvey, TSurveyCalQuestion } from "@formbricks/types/surv
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;
@@ -15,10 +15,10 @@ interface CalQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   languages: string[][];
+  isInvalid: boolean;
 }
 
 export default function CalQuestionForm({
@@ -26,27 +26,28 @@ export default function CalQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
   selectedLanguage,
   setSelectedLanguage,
   languages,
+  isInvalid,
 }: CalQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const environmentId = localSurvey.environmentId;
 
   return (
     <form>
       <QuestionFormInput
-        environmentId={environmentId}
-        isInValid={isInValid}
-        question={question}
+        localSurvey={localSurvey}
+        environmentId={localSurvey.environmentId}
+        isInvalid={isInvalid}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
         languages={languages}
+        type="headline"
       />
-      <div className="mt-3">
+      <div>
         {showSubheader && (
           <>
             <Label htmlFor="subheader">Description</Label>
@@ -57,7 +58,7 @@ export default function CalQuestionForm({
                   name="subheader"
                   value={question.subheader as TI18nString}
                   languages={languages}
-                  isInValid={isInValid}
+                  isInValid={isInvalid}
                   onChange={(e) => {
                     let translatedSubheader = {
                       ...(question.subheader as TI18nString),
@@ -71,7 +72,7 @@ export default function CalQuestionForm({
               </div>
 
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
                   updateQuestion(questionIdx, { subheader: createI18nString("") });
@@ -81,7 +82,12 @@ export default function CalQuestionForm({
           </>
         )}
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            className="mt-3"
+            variant="minimal"
+            type="button"
+            onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

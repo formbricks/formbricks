@@ -1,6 +1,6 @@
 "use client";
 
-import { getUpdatedLanguages } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -54,17 +54,7 @@ export default function SurveyEditor({
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
   const surveyEditorRef = useRef(null);
 
-  async function refetchLanguages() {
-    try {
-      const updatedLanguages = await getUpdatedLanguages(product.id);
-      if (updatedLanguages) {
-        setAllLanguages(Object.entries(updatedLanguages));
-      }
-    } catch (error) {
-      console.error("Failed to fetch languages:", error);
-    }
-  }
-
+  const [localProduct, setLocalProduct] = useState<TProduct>(product);
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
@@ -93,6 +83,24 @@ export default function SurveyEditor({
       return translateSurvey(localSurvey, Object.keys(languages));
     }
   }, [i18n, localSurvey, selectedLanguage, languages]);
+  useEffect(() => {
+    const listener = () => {
+      if (document.visibilityState === "visible") {
+        const fetchLatestProduct = async () => {
+          const latestProduct = await refetchProduct(localProduct.id);
+          if (latestProduct) {
+            setLocalProduct(latestProduct);
+            setAllLanguages(Object.entries(latestProduct.languages));
+          }
+        };
+        fetchLatestProduct();
+      }
+    };
+    document.addEventListener("visibilitychange", listener);
+    return () => {
+      document.removeEventListener("visibilitychange", listener);
+    };
+  }, [localProduct.id]);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
@@ -109,18 +117,6 @@ export default function SurveyEditor({
     }
   }, [languages]);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        refetchLanguages();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
   if (!localSurvey) {
     return <Loading />;
   }
@@ -136,7 +132,7 @@ export default function SurveyEditor({
           activeId={activeView}
           setActiveId={setActiveView}
           setInvalidQuestions={setInvalidQuestions}
-          product={product}
+          product={localProduct}
           responseCount={responseCount}
           languages={Object.keys(languages)}
           selectedLanguage={selectedLanguage}
@@ -189,7 +185,7 @@ export default function SurveyEditor({
               survey={translatedSurvey ? translatedSurvey : localSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}
-              product={product}
+              product={localProduct}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
               language={selectedLanguage}

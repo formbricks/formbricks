@@ -101,22 +101,22 @@ export default function AppPage({}) {
         </div>
 
         <div className="md:grid md:grid-cols-3">
-          <div className="col-span-3 rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-gray-600 dark:bg-gray-800">
+          <div className="col-span-3 rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-800">
             <h3 className="text-lg font-semibold dark:text-white">
               Reset person / pull data from Formbricks app
             </h3>
-            <p className="text-slate-700 dark:text-gray-300">
+            <p className="text-slate-700 dark:text-slate-300">
               On formbricks.reset() a few things happen: <strong>New person is created</strong> and{" "}
               <strong>surveys & no-code actions are pulled from Formbricks:</strong>.
             </p>
             <button
-              className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
+              className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               onClick={() => {
                 formbricks.reset();
               }}>
               Reset
             </button>
-            <p className="text-xs text-slate-700 dark:text-gray-300">
+            <p className="text-xs text-slate-700 dark:text-slate-300">
               If you made a change in Formbricks app and it does not seem to work, hit &apos;Reset&apos; and
               try again.
             </p>
@@ -125,7 +125,7 @@ export default function AppPage({}) {
           <div className="p-6">
             <div>
               <button
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-gray-700 dark:hover:bg-gray-600"
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
                 onClick={() => {
                   formbricks.track("Code Action");
                 }}>
@@ -133,7 +133,7 @@ export default function AppPage({}) {
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
+              <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sends a{" "}
                 <a href="https://formbricks.com/docs/actions/code" className="underline" target="_blank">
                   Code Action
@@ -144,12 +144,12 @@ export default function AppPage({}) {
           </div>
           <div className="p-6">
             <div>
-              <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
+              <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 No-Code Action
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
+              <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sends a{" "}
                 <a
                   href="https://formbricks.com/docs/actions/no-code"
@@ -173,12 +173,12 @@ export default function AppPage({}) {
                 onClick={() => {
                   formbricks.setAttribute("Plan", "Free");
                 }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Free&apos;
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
+              <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
                   href="https://formbricks.com/docs/attributes/custom-attributes"
@@ -196,12 +196,12 @@ export default function AppPage({}) {
                 onClick={() => {
                   formbricks.setAttribute("Plan", "Paid");
                 }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Paid&apos;
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
+              <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
                   href="https://formbricks.com/docs/attributes/custom-attributes"
@@ -219,12 +219,12 @@ export default function AppPage({}) {
                 onClick={() => {
                   formbricks.setEmail("test@web.com");
                 }}
-                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Email
               </button>
             </div>
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
+              <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
                   href="https://formbricks.com/docs/attributes/identify-users"
@@ -243,7 +243,7 @@ export default function AppPage({}) {
                   onClick={() => {
                     window.location.href = "/app";
                   }}
-                  className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
+                  className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                   Deactivate User Identification
                 </button>
               </div>
@@ -253,13 +253,13 @@ export default function AppPage({}) {
                   onClick={() => {
                     window.location.href = "/app?userId=true";
                   }}
-                  className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-gray-700 dark:hover:bg-gray-600">
+                  className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700  dark:bg-slate-700 dark:hover:bg-slate-600">
                   Activate User Identification
                 </button>
               </div>
             )}
             <div>
-              <p className="text-xs text-slate-700 dark:text-gray-300">
+              <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button activates/deactivates{" "}
                 <a
                   href="https://formbricks.com/docs/attributes/identify-users"

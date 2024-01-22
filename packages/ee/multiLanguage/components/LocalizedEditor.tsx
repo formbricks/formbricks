@@ -11,7 +11,7 @@ import LanguageIndicator from "./LanguageIndicator";
 interface LocalizedEditorProps {
   id: string;
   value: TI18nString;
-  isInValid: boolean;
+  isInvalid: boolean;
   updateQuestion: any;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
@@ -23,7 +23,7 @@ interface LocalizedEditorProps {
 export const LocalizedEditor = ({
   id,
   value,
-  isInValid,
+  isInvalid,
   updateQuestion,
   selectedLanguage,
   setSelectedLanguage,
@@ -36,10 +36,10 @@ export const LocalizedEditor = ({
   const isInComplete =
     id === "subheader"
       ? value.en.trim() !== "" &&
-        isInValid &&
+        isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
         selectedLanguage === "en"
-      : isInValid &&
+      : isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
         selectedLanguage === "en";
   return (

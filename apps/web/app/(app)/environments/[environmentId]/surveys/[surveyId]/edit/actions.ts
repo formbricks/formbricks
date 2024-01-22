@@ -9,6 +9,7 @@ import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/surve
 import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export async function updateSurveyAction(survey: TSurvey): Promise<TSurvey> {
@@ -43,7 +44,7 @@ export const deleteSurveyAction = async (surveyId: string) => {
   await deleteSurvey(surveyId);
 };
 
-export const getUpdatedLanguages = async (productId: string) => {
+export const refetchProduct = async (productId: string): Promise<TProduct | null> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -51,6 +52,5 @@ export const getUpdatedLanguages = async (productId: string) => {
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const product = await getProduct(productId);
-  const languages = product?.languages;
-  return languages;
+  return product;
 };

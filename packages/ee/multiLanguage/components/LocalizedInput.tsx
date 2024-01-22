@@ -8,7 +8,7 @@ interface LocalizedInputProps {
   id: string;
   name: string;
   value: TI18nString;
-  isInValid: boolean;
+  isInvalid: boolean;
   onChange: React.ChangeEventHandler<HTMLInputElement>;
   placeholder?: string;
   selectedLanguage: string;
@@ -22,7 +22,7 @@ const LocalizedInput = ({
   id,
   name,
   value,
-  isInValid,
+  isInvalid,
   onChange,
   placeholder,
   selectedLanguage,
@@ -41,17 +41,17 @@ const LocalizedInput = ({
     id === "placeholder" ||
     id === "backButtonLabel"
       ? value.en?.trim() !== "" &&
-        isInValid &&
+        isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
         selectedLanguage === "en"
-      : isInValid &&
+      : isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
         selectedLanguage === "en";
   return (
     <div className="relative w-full">
       <Input
         id={id}
-        isInvalid={isInValid && isInComplete}
+        isInvalid={isInvalid && isInComplete}
         name={name}
         value={value[selectedLanguage] ?? ""}
         onChange={onChange}
