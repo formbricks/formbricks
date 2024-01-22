@@ -17,6 +17,8 @@ import { TSurvey } from "@formbricks/types/surveys";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
+let setIsError = (_: boolean) => {};
+
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
@@ -44,11 +46,13 @@ export default function LinkSurvey({
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
+
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
+
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
@@ -62,8 +66,8 @@ export default function LinkSurvey({
           apiHost: webAppUrl,
           environmentId: survey.environmentId,
           retryAttempts: 2,
-          onResponseSendingFailed: (response) => {
-            alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
+          onResponseSendingFailed: () => {
+            setIsError(true);
           },
           setSurveyState: setSurveyState,
         },
@@ -138,6 +142,13 @@ export default function LinkSurvey({
           survey={survey}
           brandColor={brandColor}
           isBrandingEnabled={product.linkSurveyBranding}
+          getSetIsError={(f: (value: boolean) => void) => {
+            setIsError = f;
+          }}
+          onRetry={() => {
+            setIsError(false);
+            responseQueue.processQueue();
+          }}
           onDisplay={async () => {
             if (!isPreview) {
               const api = new FormbricksAPI({
