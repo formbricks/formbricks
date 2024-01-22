@@ -452,8 +452,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(eslint@8.56.0)
       eslint-config-turbo:
-        specifier: latest
-        version: 1.11.2(eslint@8.56.0)
+        specifier: ^1.11.3
+        version: 1.11.3(eslint@8.56.0)
       terser:
         specifier: ^5.26.0
         version: 5.26.0
@@ -535,7 +535,7 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(eslint@8.56.0)
       eslint-config-turbo:
-        specifier: 1.11.3
+        specifier: ^1.11.3
         version: 1.11.3(eslint@8.56.0)
       eslint-plugin-react:
         specifier: 7.33.2
@@ -595,8 +595,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(eslint@8.56.0)
       eslint-config-turbo:
-        specifier: latest
-        version: 1.11.2(eslint@8.56.0)
+        specifier: ^1.11.3
+        version: 1.11.3(eslint@8.56.0)
       isomorphic-fetch:
         specifier: ^3.0.0
         version: 3.0.0
@@ -746,8 +746,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(eslint@8.56.0)
       eslint-config-turbo:
-        specifier: latest
-        version: 1.11.2(eslint@8.56.0)
+        specifier: ^1.11.3
+        version: 1.11.3(eslint@8.56.0)
       postcss:
         specifier: ^8.4.33
         version: 8.4.33
@@ -11944,15 +11944,6 @@ packages:
       eslint: 8.56.0
     dev: true
 
-  /eslint-config-turbo@1.11.2(eslint@8.56.0):
-    resolution: {integrity: sha512-vqbyCH6kCHFoIAWUmGL61c0BfUQNz0XAl2RzAnEkSQ+PLXvEvuV2HsvL51UOzyyElfJlzZuh9T4BvUqb5KR9Eg==}
-    peerDependencies:
-      eslint: '>6.6.0'
-    dependencies:
-      eslint: 8.56.0
-      eslint-plugin-turbo: 1.11.2(eslint@8.56.0)
-    dev: true
-
   /eslint-config-turbo@1.11.3(eslint@8.56.0):
     resolution: {integrity: sha512-v7CHpAHodBKlj+r+R3B2DJlZbCjpZLnK7gO/vCRk/Lc+tlD/f04wM6rmHlerevOlchtmwARilRLBnmzNLffTyQ==}
     peerDependencies:
@@ -12134,15 +12125,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
       - typescript
-    dev: true
-
-  /eslint-plugin-turbo@1.11.2(eslint@8.56.0):
-    resolution: {integrity: sha512-U6DX+WvgGFiwEAqtOjm4Ejd9O4jsw8jlFNkQi0ywxbMnbiTie+exF4Z0F/B1ajtjjeZkBkgRnlU+UkoraBN+bw==}
-    peerDependencies:
-      eslint: '>6.6.0'
-    dependencies:
-      dotenv: 16.0.3
-      eslint: 8.56.0
     dev: true
 
   /eslint-plugin-turbo@1.11.3(eslint@8.56.0):

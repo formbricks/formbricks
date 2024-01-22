@@ -39,7 +39,7 @@
     "@preact/preset-vite": "^2.8.1",
     "autoprefixer": "^10.4.16",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "latest",
+    "eslint-config-turbo": "^1.11.3",
     "postcss": "^8.4.33",
     "preact": "^10.19.3",
     "react-date-picker": "^10.6.0",
