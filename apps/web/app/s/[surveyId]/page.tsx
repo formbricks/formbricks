@@ -8,7 +8,7 @@ import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
+import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -184,6 +184,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         webAppUrl={WEBAPP_URL}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
+        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       />
     );
   }
@@ -207,6 +208,8 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         bgColor={survey.styling?.background?.bg || "#ffff"}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
+        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+        surveyUrl={WEBAPP_URL + "/s/" + survey.id}
       />
     </div>
   ) : null;

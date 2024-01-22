@@ -25,6 +25,7 @@ interface LinkSurveyPinScreenProps {
   webAppUrl: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  IS_FORMBRICKS_CLOUD: boolean;
 }
 
 const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
@@ -39,6 +40,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     singleUseResponse,
     IMPRINT_URL,
     PRIVACY_URL,
+    IS_FORMBRICKS_CLOUD,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -124,6 +126,8 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
         bgColor={survey.styling?.background?.bg || "#ffff"}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
+        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+        surveyUrl={webAppUrl + "/s/" + survey.id}
       />
     </div>
   );

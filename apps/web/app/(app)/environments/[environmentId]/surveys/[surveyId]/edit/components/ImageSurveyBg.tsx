@@ -1,12 +1,12 @@
-import { TSurvey } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 
 interface ImageSurveyBgBgProps {
-  localSurvey?: TSurvey;
+  environmentId: string;
   handleBgChange: (url: string, bgType: string) => void;
+  background: string;
 }
 
-export default function ImageSurveyBg({ localSurvey, handleBgChange }: ImageSurveyBgBgProps) {
+export default function ImageSurveyBg({ environmentId, handleBgChange, background }: ImageSurveyBgBgProps) {
   const isUrl = (str: string) => {
     try {
       new URL(str);
@@ -16,22 +16,20 @@ export default function ImageSurveyBg({ localSurvey, handleBgChange }: ImageSurv
     }
   };
 
-  const fileUrl = isUrl(localSurvey?.styling?.background?.bg ?? "")
-    ? localSurvey?.styling?.background?.bg ?? ""
-    : "";
+  const fileUrl = isUrl(background ?? "") ? background ?? "" : "";
 
   return (
-    <div className="mb-2 mt-4 w-full rounded-lg border bg-slate-50 p-4">
+    <div className="mt-2 w-full">
       <div className="flex w-full items-center justify-center">
         <FileInput
           id="survey-bg-file-input"
           allowedFileExtensions={["png", "jpeg", "jpg"]}
-          environmentId={localSurvey?.environmentId}
+          environmentId={environmentId}
           onFileUpload={(url: string[]) => {
             if (url.length > 0) {
               handleBgChange(url[0], "image");
             } else {
-              handleBgChange("#ffff", "color");
+              handleBgChange("", "image");
             }
           }}
           fileUrl={fileUrl}

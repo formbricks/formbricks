@@ -247,7 +247,7 @@ export default function AddNoCodeActionModal({
                   <AlertTitle>How do Code Actions work?</AlertTitle>
                   <AlertDescription>
                     You can track code action anywhere in your app using{" "}
-                    <span className="rounded bg-gray-100 px-2 py-1 text-xs">
+                    <span className="rounded bg-slate-100 px-2 py-1 text-xs">
                       formbricks.track(&quot;{watch("name")}&quot;)
                     </span>{" "}
                     in your code. Read more in our{" "}
