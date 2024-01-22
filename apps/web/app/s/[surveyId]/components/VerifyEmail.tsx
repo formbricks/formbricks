@@ -22,9 +22,11 @@ const StackedCardsContainer = ({ children }) => (
 export default function VerifyEmail({
   survey,
   isErrorComponent,
+  singleUseId,
 }: {
   survey: TSurvey;
   isErrorComponent?: boolean;
+  singleUseId?: string;
 }) {
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
@@ -44,6 +46,7 @@ export default function VerifyEmail({
       surveyId: survey.id,
       email: email,
       surveyData: survey.verifyEmail,
+      suId: singleUseId ?? "",
     };
     try {
       await sendLinkSurveyEmailAction(data);

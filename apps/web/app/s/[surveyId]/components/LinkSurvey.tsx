@@ -44,6 +44,8 @@ export default function LinkSurvey({
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
+  const suId = searchParams?.get("suId");
+
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
@@ -115,7 +117,7 @@ export default function LinkSurvey({
       return <VerifyEmail survey={survey} isErrorComponent={true} />;
     }
     //emailVerificationStatus === "not-verified"
-    return <VerifyEmail survey={survey} />;
+    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} />;
   }
 
   return (

@@ -157,50 +157,39 @@ export const getResponseBySingleUseId = async (
   surveyId: string,
   singleUseId: string
 ): Promise<TResponse | null> => {
-  const response = await unstable_cache(
-    async () => {
-      validateInputs([surveyId, ZId], [singleUseId, ZString]);
+  validateInputs([surveyId, ZId], [singleUseId, ZString]);
 
-      try {
-        const responsePrisma = await prisma.response.findUnique({
-          where: {
-            surveyId_singleUseId: { surveyId, singleUseId },
-          },
-          select: responseSelection,
-        });
+  try {
+    const responsePrisma = await prisma.response.findUnique({
+      where: {
+        surveyId_singleUseId: { surveyId, singleUseId },
+      },
+      select: responseSelection,
+    });
 
-        if (!responsePrisma) {
-          return null;
-        }
-
-        const response: TResponse = {
-          ...responsePrisma,
-          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-        };
-
-        return response;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError(error.message);
-        }
-
-        throw error;
-      }
-    },
-    [`getResponseBySingleUseId-${surveyId}-${singleUseId}`],
-    {
-      tags: [responseCache.tag.bySingleUseId(surveyId, singleUseId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    if (!responsePrisma) {
+      return null;
     }
-  )();
 
-  return response
-    ? {
-        ...formatDateFields(response, ZResponse),
-        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-      }
-    : null;
+    const response: TResponse = {
+      ...responsePrisma,
+      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+    };
+
+    return response
+      ? {
+          ...formatDateFields(response, ZResponse),
+          notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
+        }
+      : null;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
