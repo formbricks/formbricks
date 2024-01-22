@@ -6,12 +6,9 @@ import GitpodPorts from "./gitpod/ports.webp";
 import GitpodPreparing from "./gitpod/preparing.webp";
 import GitpodRunning from "./gitpod/running.webp";
 
-import GithubCodespaceEnvFile from "./github-codespaces/env.webp";
 import GithubCodespaceLoading from "./github-codespaces/loading.webp";
 import GithubCodespaceNew from "./github-codespaces/new.webp";
 import GithubCodespacePorts from "./github-codespaces/ports.webp";
-import GithubCodespaceRun from "./github-codespaces/run.webp";
-import GithubCodespaceTerminal from "./github-codespaces/terminal.webp";
 
 export const metadata = {
   title: "Formbricks Development Setup: Complete Guide to Local Environment Configuration for Dev",
@@ -38,7 +35,7 @@ This will open a fully configured workspace in your browser with all the necessa
 
 ### [Github Codespaces](#Github-codespaces)
 
-This will open a Github VSCode Interface on the cloud for you. This setup will have the Formbricks codebase and all the dependencies installed. Click the button below to configure your instance and open the project in Github Codespaces. For a detailed guide, visit the [Github Codespaces Setup Guide](#github-codespaces-guide) section below.
+This will open a Github VSCode Interface on the cloud for you. This setup will have the Formbricks codebase, all the dependencies installed & Formbricks running. Click the button below to configure your instance and open the project in Github Codespaces. For a detailed guide, visit the [Github Codespaces Setup Guide](#github-codespaces-guide) section below.
 
 [![Open in Github Codespaces](https://img.shields.io/badge/Open%20in-Github%20Codespaces-blue?logo=Github)](https://Github.com/codespaces/new?machine=standardLinux32gb&repo=500289888&ref=main&devcontainer_path=.devcontainer%2Fdevcontainer.json&location=EastUs2)
 
@@ -66,7 +63,7 @@ This will install the Formbricks codebase and all the dependencies on your local
         1. Wait for the web and demo apps to launch on Gitpod. This automatically opens the `apps/demo/.env` file. Utilize dynamic localhost URLs (e.g., `localhost:3000` for signup and `localhost:8025` for email confirmation) to configure `NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID`. After creating your account and finding the `ID` in the URL at `localhost:3000`, replace `YOUR_ENVIRONMENT_ID` in the `.env` file located in `app/demo`.
 
     **Web Component Initialization:**
-     - we initialize the @formbricks/web component during prebuilds. This involves:
+     - We initialize the @formbricks/web component during prebuilds. This involves:
         1. Installing build dependencies for the `@formbricks/web#go` task from turbo.json in prebuilds to save time.
         2. Starting PostgreSQL and Mailhog containers for running migrations in prebuilds.
         3. To prevent the "Init" task from running indefinitely due to prebuild rules, a cleanup `docker compose down` step i.e. `db:down` is added to `turbo.json`. This step is designed to halt the execution of containers that are currently running.
@@ -96,8 +93,8 @@ After clicking the one-click setup button, Gitpod will open a new tab or window.
 
 ### 2. Authorizing in Gitpod
 
-<Image src={GitpodAuth} alt="Gitpod Auth Page" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />-
-This is the Gitpod Authentication Page. It appears when you click the "Open in GitPod" button and Gitpod needs
+<Image src={GitpodAuth} alt="Gitpod Auth Page" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+- This is the Gitpod Authentication Page. It appears when you click the "Open in GitPod" button and Gitpod needs
 to authenticate your access to the workspace. Click on 'Continue With Github' to authorize your GitPod session.
 
 ### 3. Creating a New Workspace
@@ -162,7 +159,7 @@ Here are the ports and corresponding URLs for the services within your Gitpod en
 
 - **Port 1025**:
 
-  - **Service**: SMPT server
+  - **Service**: SMTP server
   - **Description**: SMTP Server for sending and receiving email messages. This server is responsible for handling email communication.
 
 - **Port 8025**:
@@ -225,44 +222,7 @@ These URLs and port numbers represent various services and endpoints within your
 
 3. Once the Codespace is loaded, you will be redirected to the VSCode editor. You can start working on your project in this environment.
 
-4. Make the changes you want to, and now, to run the app, we first need to configure the .env file. Copy the .env.example and edit the variables as mentioned in the file itself.
-
-<Image
-  src={GithubCodespaceEnvFile}
-  alt="Github Codespace Env File"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl"
-/>
-
-5. Once you have configured the .env, it's now time to run the app and see the changes. Lets open the terminal first
-
-<Image
-  src={GithubCodespaceTerminal}
-  alt="Github Codespace Open Terminal"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl"
-/>
-
-6. Now, run the following command to run the app
-
-<Col>
-<CodeGroup title="Run the entire Formbricks Stack">
-
-```bash
-pnpm dev
-```
-
-</CodeGroup>
-</Col>
-
-<Image
-  src={GithubCodespaceRun}
-  alt="Run on Github Codespace"
-  quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl"
-/>
-
-7. Monitor the logs in the terminal and once you see the following, you are good to go!
+4. Monitor the logs in the terminal and once you see the following, you are good to go!
 
 <Col>
 <CodeGroup title="The WebApp is running">
@@ -280,7 +240,7 @@ pnpm dev
 </CodeGroup>
 </Col>
 
-8. Right next to the Terminal, you will see a **Ports** tab, click on it to see the ports and their respective URLs. Now access the Forwarded Address for port 3000 and you should be able to visit your Formbricks App!
+5. Right next to the Terminal, you will see a **Ports** tab, click on it to see the ports and their respective URLs. Now access the Forwarded Address for port 3000 and you should be able to visit your Formbricks App!
 
 <Image
   src={GithubCodespacePorts}
@@ -344,7 +304,7 @@ cp .env.example .env
    </CodeGroup>
 </Col>
 
-4. Generate & set some secret values mandatory for the ENCRYPTION_KEY & NEXTAUTH_SECRET in the .env file. You can use the following command to generate the random string of required length:
+4. Generate & set some secret values mandatory for the `ENCRYPTION_KEY` & `NEXTAUTH_SECRET` in the .env file. You can use the following command to generate the random string of required length:
 
 <Col>
    <CodeGroup title="Set value of ENCRYPTION_KEY">
@@ -370,8 +330,8 @@ pnpm go
 </Col>
    This starts the Formbricks main app (plus all its dependencies) as well as the following services using Docker:
 
-- a `postgres` container for hosting your database,
-- a `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
+- A `postgres` container for hosting your database,
+- A `mailhog` container that acts as a mock SMTP server and shows received mails in a web UI (forwarded to your host's `localhost:8025`)
 - Demo App at [http://localhost:3002](http://localhost:3002)
 - Landing Page at [http://localhost:3001](http://localhost:3001)
 
@@ -401,4 +361,4 @@ pnpm build
 
 ---
 
-Still can’t figure it out? Join our [Discord](https://discord.com/invite/3YFcABF2Ts)!
+Can’t figure it out? Join our [Discord](https://discord.com/invite/3YFcABF2Ts)!

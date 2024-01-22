@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default async function EnvironmentLayout({ children }) {
   return (
-    <div className="flex-1">
+    <div className="flex-1 bg-slate-50">
       <ResponseFilterProvider>{children}</ResponseFilterProvider>
     </div>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +9,7 @@ import { TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface OpenQuestionFormProps {
@@ -18,20 +18,20 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function MultipleChoiceSingleForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const [isInvalidValue, setIsInvalidValue] = useState<string | null>(null);
+  const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
   const questionRef = useRef<HTMLInputElement>(null);
 
   const shuffleOptionsTypes = {
@@ -131,7 +131,7 @@ export default function MultipleChoiceSingleForm({
 
     const choiceValue = question.choices[choiceIdx].label;
     if (isInvalidValue === choiceValue) {
-      setIsInvalidValue(null);
+      setisInvalidValue(null);
     }
     let newLogic: any[] = [];
     question.logic?.forEach((logic) => {
@@ -165,27 +165,31 @@ export default function MultipleChoiceSingleForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
+        isInvalid={isInvalid}
         ref={questionRef}
-        question={question}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        type="headline"
       />
 
-      <div className="mt-3">
+      <div>
         {showSubheader && (
           <>
-            <Label htmlFor="subheader">Description</Label>
-            <div className="mt-2 inline-flex w-full items-center">
-              <Input
-                id="subheader"
-                name="subheader"
-                value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+            <div className="flex w-full items-center">
+              <QuestionFormInput
+                localSurvey={localSurvey}
+                environmentId={environmentId}
+                isInvalid={isInvalid}
+                questionId={question.id}
+                questionIdx={questionIdx}
+                updateQuestion={updateQuestion}
+                type="subheader"
               />
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
                   updateQuestion(questionIdx, { subheader: "" });
@@ -195,7 +199,12 @@ export default function MultipleChoiceSingleForm({
           </>
         )}
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            variant="minimal"
+            className="mt-3"
+            type="button"
+            onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -218,11 +227,11 @@ export default function MultipleChoiceSingleForm({
                   onBlur={() => {
                     const duplicateLabel = findDuplicateLabel();
                     if (duplicateLabel) {
-                      setIsInvalidValue(duplicateLabel);
+                      setisInvalidValue(duplicateLabel);
                     } else if (findEmptyLabel()) {
-                      setIsInvalidValue("");
+                      setisInvalidValue("");
                     } else {
-                      setIsInvalidValue(null);
+                      setisInvalidValue(null);
                     }
                   }}
                   onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
