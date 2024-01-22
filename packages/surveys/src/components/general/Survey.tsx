@@ -6,7 +6,10 @@ import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
 import { useEffect, useRef, useState } from "preact/hooks";
 
+import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
+import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
@@ -35,6 +38,7 @@ export function Survey({
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const showProgressBar = !survey.styling?.hideProgressBar;
   const [ttc, setTtc] = useState<TResponseTtc>({});
   useEffect(() => {
     if (activeQuestionId === "hidden") return;
@@ -79,7 +83,18 @@ export function Survey({
     if (currQues?.logic && currQues?.logic.length > 0) {
       for (let logic of currQues.logic) {
         if (!logic.destination) continue;
-
+        if (
+          currentQuestion.type === "multipleChoiceSingle" ||
+          currentQuestion.type === "multipleChoiceMulti"
+        ) {
+          const choice = currentQuestion.choices.find((choice) => choice.label === responseValue);
+          // if choice is undefined we can determine that, "other" option is selected
+          if (!choice) {
+            if (evaluateCondition(logic, "Other")) {
+              return logic.destination;
+            }
+          }
+        }
         if (evaluateCondition(logic, responseValue)) {
           return logic.destination;
         }
@@ -107,6 +122,37 @@ export function Survey({
     setHistory([...history, questionId]);
     setLoadingElement(false);
     onActiveQuestionChange(nextQuestionId);
+  };
+
+  const replaceRecallInfo = (text: string) => {
+    while (text.includes("recall:")) {
+      const recallInfo = extractRecallInfo(text);
+      if (recallInfo) {
+        const questionId = extractId(recallInfo);
+        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+        let value = questionId && responseData[questionId] ? (responseData[questionId] as string) : fallback;
+
+        if (isValidDateString(value)) {
+          value = formatDateWithOrdinal(new Date(value));
+        }
+        if (Array.isArray(value)) {
+          value = value.join(", ");
+        }
+        text = text.replace(recallInfo, value);
+      }
+    }
+    return text;
+  };
+
+  const parseRecallInformation = (question: TSurveyQuestion) => {
+    const modifiedQuestion = { ...question };
+    if (question.headline.includes("recall:")) {
+      modifiedQuestion.headline = replaceRecallInfo(modifiedQuestion.headline);
+    }
+    if (question.subheader && question.subheader.includes("recall:")) {
+      modifiedQuestion.subheader = replaceRecallInfo(modifiedQuestion.subheader as string);
+    }
+    return modifiedQuestion;
   };
 
   const onBack = (): void => {
@@ -141,8 +187,16 @@ export function Survey({
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
       return (
         <ThankYouCard
-          headline={survey.thankYouCard.headline}
-          subheader={survey.thankYouCard.subheader}
+          headline={
+            typeof survey.thankYouCard.headline === "string"
+              ? replaceRecallInfo(survey.thankYouCard.headline)
+              : ""
+          }
+          subheader={
+            typeof survey.thankYouCard.subheader === "string"
+              ? replaceRecallInfo(survey.thankYouCard.subheader)
+              : ""
+          }
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
         />
@@ -153,7 +207,7 @@ export function Survey({
         currQues && (
           <QuestionConditional
             surveyId={survey.id}
-            question={currQues}
+            question={parseRecallInformation(currQues)}
             value={responseData[currQues.id]}
             onChange={onChange}
             onSubmit={onSubmit}
@@ -187,7 +241,7 @@ export function Survey({
           </div>
           <div className="mt-8">
             {isBrandingEnabled && <FormbricksBranding />}
-            <ProgressBar survey={survey} questionId={questionId} />
+            {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>
         </div>
       </AutoCloseWrapper>

@@ -5,13 +5,11 @@ import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid"
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useCallback, useEffect, useState } from "react";
 
-import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import {
@@ -27,7 +25,7 @@ interface WhenToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   environmentId: string;
-  actionClasses: TActionClass[];
+  propActionClasses: TActionClass[];
   membershipRole?: TMembershipRole;
 }
 
@@ -35,13 +33,13 @@ export default function WhenToSendCard({
   environmentId,
   localSurvey,
   setLocalSurvey,
-  actionClasses,
+  propActionClasses,
   membershipRole,
 }: WhenToSendCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "web" ? true : false);
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [actionClassArray, setActionClassArray] = useState<TActionClass[]>(actionClasses);
+  const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const { isViewer } = getAccessFlags(membershipRole);
 
   const autoClose = localSurvey.autoClose !== null;
@@ -55,7 +53,7 @@ export default function WhenToSendCard({
   const setTriggerEvent = useCallback(
     (idx: number, actionClassName: string) => {
       const updatedSurvey = { ...localSurvey };
-      const newActionClass = actionClassArray!.find((actionClass) => {
+      const newActionClass = actionClasses!.find((actionClass) => {
         return actionClass.name === actionClassName;
       });
       if (!newActionClass) {
@@ -64,7 +62,7 @@ export default function WhenToSendCard({
       updatedSurvey.triggers[idx] = newActionClass.name;
       setLocalSurvey(updatedSurvey);
     },
-    [actionClassArray, localSurvey, setLocalSurvey]
+    [actionClasses, localSurvey, setLocalSurvey]
   );
 
   const removeTriggerEvent = (idx: number) => {
@@ -101,7 +99,7 @@ export default function WhenToSendCard({
   useEffect(() => {
     if (isAddEventModalOpen) return;
     if (activeIndex !== null) {
-      const newActionClass = actionClassArray[actionClassArray.length - 1].name;
+      const newActionClass = actionClasses[actionClasses.length - 1].name;
       const currentActionClass = localSurvey.triggers[activeIndex];
 
       if (newActionClass !== currentActionClass) {
@@ -110,7 +108,7 @@ export default function WhenToSendCard({
 
       setActiveIndex(null);
     }
-  }, [actionClassArray, activeIndex, setTriggerEvent, isAddEventModalOpen, localSurvey.triggers]);
+  }, [actionClasses, activeIndex, setTriggerEvent, isAddEventModalOpen, localSurvey.triggers]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -125,6 +123,10 @@ export default function WhenToSendCard({
     }
   }, [addTriggerEvent, localSurvey.triggers.length]);
 
+  if (localSurvey.type === "link") {
+    return null; // Hide card completely
+  }
+
   return (
     <>
       <Collapsible.Root
@@ -137,30 +139,13 @@ export default function WhenToSendCard({
         className="w-full rounded-lg border border-slate-300 bg-white">
         <Collapsible.CollapsibleTrigger
           asChild
-          className={cn(
-            localSurvey.type !== "link"
-              ? "cursor-pointer hover:bg-slate-50"
-              : "cursor-not-allowed bg-slate-50",
-            "h-full w-full rounded-lg "
-          )}>
+          className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
               {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
-                <div
-                  className={cn(
-                    localSurvey.type !== "link"
-                      ? "border-amber-500 bg-amber-50"
-                      : "border-slate-300 bg-slate-100",
-                    "h-7 w-7 rounded-full border "
-                  )}
-                />
+                <div className="h-8 w-8 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
-                <CheckCircleIcon
-                  className={cn(
-                    localSurvey.type !== "link" ? "text-green-400" : "text-slate-300",
-                    "h-8 w-8 "
-                  )}
-                />
+                <CheckCircleIcon className="h-8 w-8 text-green-400" />
               )}
             </div>
 
@@ -168,11 +153,6 @@ export default function WhenToSendCard({
               <p className="font-semibold text-slate-800">Survey Trigger</p>
               <p className="mt-1 text-sm text-slate-500">Choose the actions which trigger the survey.</p>
             </div>
-            {localSurvey.type === "link" && (
-              <div className="flex w-full items-center justify-end pr-2">
-                <Badge size="normal" text="In-app survey settings" type="gray" />
-              </div>
-            )}
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="">
@@ -200,7 +180,7 @@ export default function WhenToSendCard({
                         Add Action
                       </button>
                       <SelectSeparator />
-                      {actionClassArray.map((actionClass) => (
+                      {actionClasses.map((actionClass) => (
                         <SelectItem
                           value={actionClass.name}
                           key={actionClass.name}
@@ -228,28 +208,26 @@ export default function WhenToSendCard({
             </Button>
           </div>
 
-          {localSurvey.type !== "link" && (
-            <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
-              <label
-                htmlFor="triggerDelay"
-                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-                <div className="">
-                  <p className="text-sm font-semibold text-slate-700">
-                    Wait
-                    <Input
-                      type="number"
-                      min="0"
-                      id="triggerDelay"
-                      value={localSurvey.delay.toString()}
-                      onChange={(e) => handleTriggerDelay(e)}
-                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
-                    />
-                    seconds before showing the survey.
-                  </p>
-                </div>
-              </label>
-            </div>
-          )}
+          <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
+            <label
+              htmlFor="triggerDelay"
+              className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+              <div className="">
+                <p className="text-sm font-semibold text-slate-700">
+                  Wait
+                  <Input
+                    type="number"
+                    min="0"
+                    id="triggerDelay"
+                    value={localSurvey.delay.toString()}
+                    onChange={(e) => handleTriggerDelay(e)}
+                    className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
+                  />
+                  seconds before showing the survey.
+                </p>
+              </div>
+            </label>
+          </div>
 
           <AdvancedOptionToggle
             htmlId="autoClose"
@@ -279,7 +257,8 @@ export default function WhenToSendCard({
         environmentId={environmentId}
         open={isAddEventModalOpen}
         setOpen={setAddEventModalOpen}
-        setActionClassArray={setActionClassArray}
+        actionClasses={actionClasses}
+        setActionClasses={setActionClasses}
         isViewer={isViewer}
       />
     </>

@@ -218,6 +218,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
       { title: "Identify Users", href: "/docs/link-surveys/user-identification" },
       { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
+      { title: "Source Tracking", href: "/docs/link-surveys/source-tracking" },
     ],
   },
   {
@@ -240,6 +241,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Notion", href: "/docs/integrations/notion" },
       { title: "Make.com", href: "/docs/integrations/make" },
       { title: "n8n", href: "/docs/integrations/n8n" },
+      { title: "Wordpress", href: "/docs/integrations/wordpress" },
       { title: "Zapier", href: "/docs/integrations/zapier" },
     ],
   },
@@ -251,6 +253,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Advanced Setup", href: "/docs/self-hosting/docker" },
       { title: "Configure", href: "/docs/self-hosting/external-auth-providers" },
       { title: "Migration Guide", href: "/docs/self-hosting/migration-guide" },
+      { title: "Self-hosting License", href: "/docs/self-hosting/license" },
     ],
   },
   {
@@ -283,6 +286,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Attribute Classes", href: "/docs/api/management/attribute-classes" },
       { title: "Me", href: "/docs/api/management/me" },
       { title: "People", href: "/docs/api/management/people" },
+      { title: "Responses", href: "/docs/api/management/responses" },
       { title: "Surveys", href: "/docs/api/management/surveys" },
       { title: "Webhooks", href: "/docs/api/management/webhooks" },
     ],

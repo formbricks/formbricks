@@ -17,7 +17,7 @@ export const signUpAndLogin = async (
   await page.getByPlaceholder("work@email.com").press("Tab");
   await page.getByPlaceholder("*******").fill(password);
   await page.press('input[name="password"]', "Enter");
-  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByText("Login").click();
   await page.getByRole("button", { name: "Login with Email" }).click();
   await page.getByPlaceholder("work@email.com").fill(email);
   await page.getByPlaceholder("*******").click();
@@ -64,7 +64,7 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
   await page.getByPlaceholder("work@email.com").press("Tab");
   await page.getByPlaceholder("*******").fill(password);
   await page.press('input[name="password"]', "Enter");
-  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByText("Login").click();
   await page.getByRole("button", { name: "Login with Email" }).click();
   await page.getByPlaceholder("work@email.com").fill(email);
   await page.getByPlaceholder("*******").click();

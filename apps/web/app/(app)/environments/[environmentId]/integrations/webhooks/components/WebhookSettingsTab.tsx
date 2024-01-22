@@ -154,7 +154,7 @@ export default function WebhookSettingsTab({
               }}
               readOnly={webhook.source !== "user"}
               className={clsx(
-                webhook.source === "user" ? null : "cursor-not-allowed bg-gray-100 text-gray-500",
+                webhook.source === "user" ? null : "cursor-not-allowed bg-slate-100 text-slate-500",
                 endpointAccessible === true
                   ? "border-green-500 bg-green-50"
                   : endpointAccessible === false

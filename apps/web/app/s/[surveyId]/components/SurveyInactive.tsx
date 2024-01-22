@@ -34,7 +34,7 @@ const SurveyInactive = ({
         <h1 className="text-4xl font-bold text-slate-800">
           {status === "completed" && surveyClosedMessage ? surveyClosedMessage.heading : `Survey ${status}.`}
         </h1>
-        <p className="text-lg leading-10 text-gray-500">
+        <p className="text-lg leading-10 text-slate-500">
           {status === "completed" && surveyClosedMessage
             ? surveyClosedMessage.subheading
             : descriptions[status]}

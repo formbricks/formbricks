@@ -1,7 +1,6 @@
 "use client";
 
 import { BackButtonInput } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionCard";
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { useState } from "react";
 
 import { md } from "@formbricks/lib/markdownIt";
@@ -9,6 +8,7 @@ import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface CTAQuestionFormProps {
@@ -17,7 +17,7 @@ interface CTAQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function CTAQuestionForm({
@@ -25,7 +25,7 @@ export default function CTAQuestionForm({
   questionIdx,
   updateQuestion,
   lastQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
@@ -34,11 +34,13 @@ export default function CTAQuestionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
-        question={question}
+        isInvalid={isInvalid}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        type="headline"
       />
 
       <div className="mt-3">

@@ -98,7 +98,7 @@ export default function SurveyDropDownMenu({
   };
   if (loading) {
     return (
-      <div className="opacity-0.2 absolute left-0 top-0 h-full w-full bg-gray-100">
+      <div className="opacity-0.2 absolute left-0 top-0 h-full w-full bg-slate-100">
         <LoadingSpinner />
       </div>
     );
