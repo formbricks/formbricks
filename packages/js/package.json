@@ -57,7 +57,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "jest-fetch-mock": "^3.0.3",
     "terser": "^5.26.0",
-    "vite": "^5.0.11",
+    "vite": "^5.0.12",
     "vite-plugin-dts": "^3.7.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-turbo": "latest"

@@ -8,16 +8,18 @@ export function SurveyModal({
   survey,
   isBrandingEnabled,
   activeQuestionId,
+  getSetIsError,
   placement,
   clickOutside,
   darkOverlay,
   highlightBorderColor,
-  onDisplay = () => {},
-  onActiveQuestionChange = () => {},
-  onResponse = () => {},
-  onClose = () => {},
+  onDisplay,
+  onActiveQuestionChange,
+  onResponse,
+  onClose,
   onFinished = () => {},
   onFileUpload,
+  onRetry,
   isRedirectDisabled = false,
   responseCount,
 }: SurveyModalProps) {
@@ -26,7 +28,9 @@ export function SurveyModal({
   const close = () => {
     setIsOpen(false);
     setTimeout(() => {
-      onClose();
+      if (onClose) {
+        onClose();
+      }
     }, 1000); // wait for animation to finish}
   };
 
@@ -53,8 +57,10 @@ export function SurveyModal({
               if (!survey.redirectUrl) {
                 close();
               }
-            }, 4000); // close modal automatically after 4 seconds
+            }, 3000); // close modal automatically after 3 seconds
           }}
+          onRetry={onRetry}
+          getSetIsError={getSetIsError}
           onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
           responseCount={responseCount}
