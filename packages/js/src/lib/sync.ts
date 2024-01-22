@@ -80,7 +80,8 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
       surveys: syncResult.value.surveys,
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
-      attributes: oldState?.attributes || {},
+      attributes: syncResult.value.person?.attributes || {},
+      // attributes: oldState?.attributes || {},
     };
 
     if (!params.userId) {
