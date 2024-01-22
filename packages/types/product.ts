@@ -18,7 +18,6 @@ export const ZProduct = z.object({
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
   environments: z.array(ZEnvironment),
-  supportEmail: z.string().email().nullable(),
 });
 
 export type TProduct = z.infer<typeof ZProduct>;
@@ -35,7 +34,6 @@ export const ZProductUpdateInput = z.object({
   clickOutsideClose: z.boolean().optional(),
   darkOverlay: z.boolean().optional(),
   environments: z.array(ZEnvironment).optional(),
-  supportEmail: z.string().email().nullish(),
 });
 
 export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;

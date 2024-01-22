@@ -16,10 +16,8 @@ export interface SurveyBaseProps {
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
-  brandColor: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
-  supportEmail?: string | null;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

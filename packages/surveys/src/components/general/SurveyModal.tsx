@@ -8,7 +8,6 @@ export function SurveyModal({
   survey,
   isBrandingEnabled,
   activeQuestionId,
-  brandColor,
   getSetIsError,
   placement,
   clickOutside,
@@ -47,7 +46,6 @@ export function SurveyModal({
         <Survey
           survey={survey}
           isBrandingEnabled={isBrandingEnabled}
-          brandColor={brandColor}
           activeQuestionId={activeQuestionId}
           onDisplay={onDisplay}
           onActiveQuestionChange={onActiveQuestionChange}

@@ -412,7 +412,6 @@ model Product {
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
-  supportEmail         String?
 
   @@unique([teamId, name])
   @@index([teamId])

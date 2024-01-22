@@ -31,8 +31,6 @@ export function Survey({
   getSetIsError,
   onFileUpload,
   responseCount,
-  supportEmail,
-  brandColor,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -191,13 +189,7 @@ export function Survey({
   function getCardContent() {
     if (showError) {
       return (
-        <ResponseErrorComponent
-          responseData={responseData}
-          brandColor={brandColor}
-          questions={survey.questions}
-          supportEmail={supportEmail}
-          onRetry={onRetry}
-        />
+        <ResponseErrorComponent responseData={responseData} questions={survey.questions} onRetry={onRetry} />
       );
     }
     if (questionId === "start" && survey.welcomeCard.enabled) {

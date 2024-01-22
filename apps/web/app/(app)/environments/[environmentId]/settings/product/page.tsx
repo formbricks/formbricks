@@ -13,7 +13,6 @@ import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
 import DeleteProduct from "./components/DeleteProduct";
 import EditProductName from "./components/EditProductName";
-import EditTeamSupportEmail from "./components/EditTeamSupportEmail";
 import EditWaitingTime from "./components/EditWaitingTime";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
@@ -51,11 +50,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           product={product}
           isProductNameEditDisabled={isProductNameEditDisabled}
         />
-      </SettingsCard>
-      <SettingsCard
-        title="Support Email"
-        description="Add an email we share with respondents when response submissions fail.">
-        <EditTeamSupportEmail product={product} environmentId={params.environmentId} />
       </SettingsCard>
       <SettingsCard
         title="Recontact Waiting Time"

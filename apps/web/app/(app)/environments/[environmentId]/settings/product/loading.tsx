@@ -26,11 +26,6 @@ export default function Loading() {
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
-      title: "Public Support Email",
-      description: "Add an email we share with respondents when response submissions fail.",
-      skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
-    },
-    {
       title: "Recontact Waiting Time",
       description: "Control how frequently users can be surveyed across all surveys.",
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],

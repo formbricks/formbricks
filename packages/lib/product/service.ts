@@ -34,7 +34,6 @@ const selectProduct = {
   clickOutsideClose: true,
   darkOverlay: true,
   environments: true,
-  supportEmail: true,
 };
 
 export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> => {

@@ -62,7 +62,6 @@ export const renderWidget = (survey: TSurvey) => {
       darkOverlay,
       highlightBorderColor,
       placement,
-      supportEmail: product.supportEmail,
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
       },
