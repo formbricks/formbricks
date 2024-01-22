@@ -20,6 +20,7 @@ test.describe("Invite, accept and remove team member", async () => {
     await expect(dropdownContentWrapper).toBeVisible();
 
     await page.getByRole("link", { name: "Team" }).click();
+    await page.waitForURL(/\/environments\/[^/]+\/settings\/members/);
 
     // Add member button
     await expect(page.getByRole("button", { name: "Add Member" })).toBeVisible();
@@ -108,5 +109,7 @@ test.describe("Invite, accept and remove team member", async () => {
 
     await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Delete", exact: true }).click();
+
+    await expect(page.getByText("team2@formbricks.com")).not.toBeVisible();
   });
 });
