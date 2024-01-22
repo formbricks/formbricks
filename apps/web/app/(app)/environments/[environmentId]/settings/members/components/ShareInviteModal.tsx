@@ -37,9 +37,9 @@ export default function ShareInviteModal({ inviteToken, open, setOpen }: ShareIn
           <CheckIcon className="h-6 w-6 text-teal-600" aria-hidden="true" />
         </div>
         <div className="mt-3 text-center sm:mt-5">
-          <h3 className="text-lg font-semibold leading-6 text-gray-900">Your team invite link is ready!</h3>
+          <h3 className="text-lg font-semibold leading-6 text-slate-900">Your team invite link is ready!</h3>
           <div className="mt-4">
-            <p className="text-sm text-gray-500">Share this link to let your team member join your team:</p>
+            <p className="text-sm text-slate-500">Share this link to let your team member join your team:</p>
             <p
               ref={linkTextRef}
               className="relative mt-3 w-full truncate rounded-lg border border-slate-300 bg-slate-50 p-3 text-center text-slate-800"

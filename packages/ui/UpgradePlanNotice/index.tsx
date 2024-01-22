@@ -14,9 +14,9 @@ export const UpgradePlanNotice = ({
 }) => {
   return (
     <Alert className="flex items-center">
-      <LightBulbIcon className="h-5 w-5 text-gray-500" />
+      <LightBulbIcon className="h-5 w-5 text-slate-500" />
       <AlertDescription>
-        <span className="mr-2 text-sm text-gray-500">{message}</span>
+        <span className="mr-2 text-sm text-slate-500">{message}</span>
         <span className="underline">
           <Link href={url}>{textForUrl}</Link>
         </span>

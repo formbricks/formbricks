@@ -8,6 +8,7 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import SettingsTitle from "../components/SettingsTitle";
 import EditAlerts from "./components/EditAlerts";
 import EditWeeklySummary from "./components/EditWeeklySummary";
+import IntegrationsTip from "./components/IntegrationsTip";
 import type { Membership, User } from "./types";
 
 async function getUser(userId: string | undefined): Promise<User> {
@@ -110,6 +111,7 @@ export default async function ProfileSettingsPage({ params }) {
         description="Set up an alert to get an email on new responses.">
         <EditAlerts memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>
+      <IntegrationsTip environmentId={params.environmentId} />
       <SettingsCard
         beta
         title="Weekly summary (Products)"

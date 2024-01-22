@@ -84,6 +84,7 @@ export default function ActionClassesTable({
       <AddNoCodeActionModal
         environmentId={environmentId}
         open={isAddActionModalOpen}
+        actionClasses={actionClasses}
         setOpen={setAddActionModalOpen}
         isViewer={isViewer}
       />

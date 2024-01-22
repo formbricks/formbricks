@@ -1,3 +1,4 @@
+import HowToAddPeopleButton from "@/app/(app)/environments/[environmentId]/components/HowToAddPeopleButton";
 import Link from "next/link";
 
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
@@ -41,6 +42,11 @@ export default async function PeoplePage({
 
   return (
     <>
+      <div className="mb-6 text-right">
+        <div className="mb-6 flex items-center justify-end text-right">
+          <HowToAddPeopleButton />
+        </div>
+      </div>
       {people.length === 0 ? (
         <EmptySpaceFiller
           type="table"
