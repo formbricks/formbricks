@@ -83,10 +83,11 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
   await sendEmail({
     to: user.email,
     subject: "Please verify your email to use Formbricks",
-    html: withEmailTemplate(`<h1>Welcome!</h1>
-    To start using Formbricks please verify your email by clicking the button below:<br/><br/>
-    <a class="button" href="${verifyLink}">Confirm email</a><br/>
-    <br/>
+    html: withEmailTemplate(`<h1>Almost there!</h1>
+    To start using Formbricks please verify your email below:<br/><br/>
+    <a class="button" href="${verifyLink}">Verify email</a><br/><br/>
+    You can also click on this link:<br/>
+    <a href="${verifyLink}" style="word-break: break-all; color: #1e293b;">${verifyLink}</a><br/><br/>
     <strong>The link is valid for 24h.</strong><br/><br/>If it has expired please request a new token here:
     <a href="${verificationRequestLink}">Request new verification</a><br/>
     <br/>
