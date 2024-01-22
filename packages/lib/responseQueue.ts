@@ -2,6 +2,7 @@ import { FormbricksAPI } from "@formbricks/api";
 import { TResponseUpdate } from "@formbricks/types/responses";
 
 import SurveyState from "./surveyState";
+import { delay } from "./utils";
 
 interface QueueConfig {
   apiHost: string;
@@ -54,7 +55,7 @@ export class ResponseQueue {
         break; // exit the retry loop
       }
       console.error("Formbricks: Failed to send response. Retrying...", attempts);
-      await setTimeout(() => {}, 3000); // wait for 1 second before retrying
+      await delay(1000); // wait for 1 second before retrying
       attempts++;
     }
 

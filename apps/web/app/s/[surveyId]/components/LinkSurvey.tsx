@@ -17,6 +17,8 @@ import { TSurvey } from "@formbricks/types/surveys";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
+let setIsError = (_: boolean) => {};
+
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
@@ -50,7 +52,6 @@ export default function LinkSurvey({
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
-  const [isError, setIsError] = useState(false);
 
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
@@ -142,6 +143,13 @@ export default function LinkSurvey({
           brandColor={brandColor}
           supportEmail={product.supportEmail}
           isBrandingEnabled={product.linkSurveyBranding}
+          getSetIsError={(f: (value: boolean) => void) => {
+            setIsError = f;
+          }}
+          onRetry={() => {
+            setIsError(false);
+            responseQueue.processQueue();
+          }}
           onDisplay={async () => {
             if (!isPreview) {
               const api = new FormbricksAPI({
@@ -190,7 +198,6 @@ export default function LinkSurvey({
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
           responseCount={responseCount}
-          isError={isError}
         />
       </ContentWrapper>
     </>

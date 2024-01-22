@@ -12,7 +12,8 @@ interface SurveyProps {
   brandColor: string;
   isBrandingEnabled: boolean;
   activeQuestionId?: string;
-  isError?: boolean;
+  getSetIsError?: (getSetError: (value: boolean) => void) => void;
+  onRetry?: () => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;

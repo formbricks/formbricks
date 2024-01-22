@@ -16,7 +16,7 @@ const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
-let setIsError = (value: boolean) => {};
+let setIsError = (_: boolean) => {};
 
 export const renderWidget = (survey: TSurvey) => {
   if (surveyRunning) {

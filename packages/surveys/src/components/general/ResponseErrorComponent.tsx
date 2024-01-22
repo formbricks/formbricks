@@ -1,4 +1,3 @@
-import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import { cn, isLight } from "@/lib/utils";
 
@@ -60,13 +59,6 @@ export const ResponseErrorComponent = ({
         </div>
       </div>
       <div className={"mt-4 flex flex-1 flex-row items-center justify-end space-x-2"}>
-        {/*         <BackButton
-          tabIndex={3}
-          backButtonLabel="Copy Response"
-          onClick={() => {
-            navigator.clipboard.writeText(transformResponses());
-          }}
-        /> */}
         <SubmitButton tabIndex={2} buttonLabel="Retry" isLastQuestion={false} onClick={() => onRetry()} />
         {supportEmail && (
           <>
