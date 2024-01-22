@@ -720,10 +720,6 @@ importers:
         version: 0.5.11(@trivago/prettier-plugin-sort-imports@4.3.0)(prettier@3.2.1)
 
   packages/surveys:
-    dependencies:
-      '@types/dompurify':
-        specifier: ^3.0.5
-        version: 3.0.5
     devDependencies:
       '@calcom/embed-snippet':
         specifier: 1.1.2
@@ -740,6 +736,9 @@ importers:
       '@preact/preset-vite':
         specifier: ^2.8.1
         version: 2.8.1(@babel/core@7.23.7)(preact@10.19.3)(vite@5.0.11)
+      '@types/dompurify':
+        specifier: ^3.0.5
+        version: 3.0.5
       autoprefixer:
         specifier: ^10.4.16
         version: 10.4.16(postcss@8.4.33)
@@ -8733,7 +8732,6 @@ packages:
     resolution: {integrity: sha512-1Wg0g3BtQF7sSb27fJQAKck1HECM6zV1EB66j8JH9i3LCjYabJa0FSdiSgsD5K/RbrsR0SiraKacLB+T8ZVYAg==}
     dependencies:
       '@types/trusted-types': 2.0.7
-    dev: false
 
   /@types/escodegen@0.0.6:
     resolution: {integrity: sha512-AjwI4MvWx3HAOaZqYsjKWyEObT9lcVV0Y0V8nXo6cXzN8ZiMxVhf6F3d/UNvXVGKrEzL/Dluc5p+y9GkzlTWig==}
@@ -9071,7 +9069,6 @@ packages:
 
   /@types/trusted-types@2.0.7:
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
-    dev: false
 
   /@types/unist@2.0.10:
     resolution: {integrity: sha512-IfYcSBWE3hLpBg8+X2SEa8LVkJdJEkT2Ese2aaLs3ptGdVtABxndrMaxuFlQ1qdFf9Q5rDvDpxI3WwgvKFAsQA==}

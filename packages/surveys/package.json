@@ -52,8 +52,5 @@
     "vite-plugin-dts": "^3.7.0",
     "vite-tsconfig-paths": "^4.2.3",
     "@types/dompurify": "^3.0.5"
-  },
-  "dependencies": {
-    "@types/dompurify": "^3.0.5"
   }
 }
