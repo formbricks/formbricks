@@ -1,6 +1,6 @@
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Option = {
   label: string;
@@ -41,7 +41,7 @@ const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: Dropdow
             <span>{selectedOption ? selectedOption.label : "Select an option"}</span>
           </span>
           <span className="flex h-full items-center border-l pl-3">
-            <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+            <ChevronDownIcon className="h-4 w-4 text-slate-500" />
           </span>
         </button>
       </DropdownMenu.Trigger>
@@ -53,7 +53,7 @@ const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: Dropdow
           {options.map((option) => (
             <DropdownMenu.Item
               key={option.value}
-              className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+              className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
               disabled={disabled || option.disabled}
               onSelect={() => handleSelect(option)}>
               {option.icon && <option.icon className="mr-3 h-5 w-5" />}

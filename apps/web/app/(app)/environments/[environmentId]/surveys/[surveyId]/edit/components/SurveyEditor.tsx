@@ -1,5 +1,6 @@
 "use client";
 
+import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import React from "react";
 import { useEffect, useState } from "react";
@@ -42,7 +43,7 @@ export default function SurveyEditor({
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
-
+  const [localProduct, setLocalProduct] = useState<TProduct>(product);
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
@@ -53,6 +54,24 @@ export default function SurveyEditor({
       }
     }
   }, [survey, localSurvey]);
+
+  useEffect(() => {
+    const listener = () => {
+      if (document.visibilityState === "visible") {
+        const fetchLatestProduct = async () => {
+          const latestProduct = await refetchProduct(localProduct.id);
+          if (latestProduct) {
+            setLocalProduct(latestProduct);
+          }
+        };
+        fetchLatestProduct();
+      }
+    };
+    document.addEventListener("visibilitychange", listener);
+    return () => {
+      document.removeEventListener("visibilitychange", listener);
+    };
+  }, [localProduct.id]);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
@@ -78,7 +97,7 @@ export default function SurveyEditor({
           activeId={activeView}
           setActiveId={setActiveView}
           setInvalidQuestions={setInvalidQuestions}
-          product={product}
+          product={localProduct}
           responseCount={responseCount}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
@@ -90,7 +109,7 @@ export default function SurveyEditor({
                 setLocalSurvey={setLocalSurvey}
                 activeQuestionId={activeQuestionId}
                 setActiveQuestionId={setActiveQuestionId}
-                product={product}
+                product={localProduct}
                 invalidQuestions={invalidQuestions}
                 setInvalidQuestions={setInvalidQuestions}
               />
@@ -112,7 +131,7 @@ export default function SurveyEditor({
               survey={localSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}
-              product={product}
+              product={localProduct}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
               onFileUpload={async (file) => file.name}
