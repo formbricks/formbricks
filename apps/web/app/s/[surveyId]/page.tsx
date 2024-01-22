@@ -184,6 +184,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         webAppUrl={WEBAPP_URL}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
+        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       />
     );
   }
