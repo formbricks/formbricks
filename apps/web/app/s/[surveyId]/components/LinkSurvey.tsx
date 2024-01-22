@@ -178,13 +178,8 @@ export default function LinkSurvey({
               environmentId: survey.environmentId,
             });
 
-            try {
-              const uploadedUrl = await api.client.storage.uploadFile(file, params);
-              return uploadedUrl;
-            } catch (err) {
-              console.error(err);
-              return "";
-            }
+            const uploadedUrl = await api.client.storage.uploadFile(file, params);
+            return uploadedUrl;
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}

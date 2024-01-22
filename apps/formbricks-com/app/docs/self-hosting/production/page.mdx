@@ -29,7 +29,7 @@ Copy and paste the following command into your terminal:
 <CodeGroup title="Single Command to deploy Formbricks">
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/production.sh -o formbricks.sh && chmod +x formbricks.sh && ./formbricks.sh install
+curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/formbricks.sh -o formbricks.sh && chmod +x formbricks.sh && ./formbricks.sh install
 ```
 
 </CodeGroup>
@@ -219,18 +219,16 @@ The script will automatically stop all the Formbricks related containers, remove
 
 ## Debugging
 
-If you encounter any issues, you can check the logs of the container with:
+If you encounter any issues, you can check the logs of the containers with:
 <Col>
 <CodeGroup title="Check logs of the container">
 
 ```bash
-cd formbricks && docker compose logs -f
+./formbricks.sh logs
 ```
 
 </CodeGroup>
 </Col>
-You can close the logs again with `CTRL + C`.
-
 
 ## Troubleshooting
 
@@ -244,4 +242,4 @@ If you encounter any issues, consider the following steps:
 
 - **Check Formbricks Logs**: Run `cd formbricks && docker compose logs` to check the logs of the Formbricks stack.
 
-**Still can’t figure it out?**: [Join our Discord!](https://formbricks.com/discord)
+**Can’t figure it out?**: [Join our Discord!](https://formbricks.com/discord)

@@ -32,6 +32,8 @@ import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 
+const RESPONSES_PER_PAGE = 10;
+
 export const responseSelection = {
   id: true,
   createdAt: true,
@@ -382,11 +384,15 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
   } as TResponse;
 };
 
-export const getResponses = async (surveyId: string, page?: number): Promise<TResponse[]> => {
+export const getResponses = async (
+  surveyId: string,
+  page?: number,
+  batchSize?: number
+): Promise<TResponse[]> => {
   const responses = await unstable_cache(
     async () => {
       validateInputs([surveyId, ZId], [page, ZOptionalNumber]);
-
+      batchSize = batchSize ?? RESPONSES_PER_PAGE;
       try {
         const responses = await prisma.response.findMany({
           where: {
@@ -398,8 +404,8 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
               createdAt: "desc",
             },
           ],
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          take: page ? batchSize : undefined,
+          skip: page ? batchSize * (page - 1) : undefined,
         });
 
         const transformedResponses: TResponse[] = await Promise.all(
@@ -421,7 +427,7 @@ export const getResponses = async (surveyId: string, page?: number): Promise<TRe
         throw error;
       }
     },
-    [`getResponses-${surveyId}`],
+    [`getResponses-${surveyId}-${page}-${batchSize}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

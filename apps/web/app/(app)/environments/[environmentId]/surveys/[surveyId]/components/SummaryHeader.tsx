@@ -1,11 +1,12 @@
 "use client";
 
-import SurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
+import ResultsShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { EllipsisHorizontalIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
+import { EllipsisHorizontalIcon, PencilSquareIcon, ShareIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -29,6 +30,8 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
+
+import ShareEmbedSurvey from "../(analysis)/summary/components/ShareEmbedSurvey";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -54,23 +57,33 @@ const SummaryHeader = ({
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled = (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date()) ?? false;
   const { isViewer } = getAccessFlags(membershipRole);
+  const [showShareSurveyModal, setShowShareSurveyModal] = useState(false);
 
   return (
     <div className="mb-11 mt-6 flex flex-wrap items-center justify-between">
       <div>
         <div className="flex gap-4">
           <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
-          {survey.resultShareKey && <Badge text="Public Results" type="success" size="normal"></Badge>}
+          {survey.resultShareKey && <Badge text="Results are public" type="warning" size="normal"></Badge>}
         </div>
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        <SurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+        {/*  <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} /> */}
         {!isViewer &&
         (environment?.widgetSetupCompleted || survey.type === "link") &&
         survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
         ) : null}
+        {survey.type === "link" && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setShowShareSurveyModal(true);
+            }}>
+            <ShareIcon className="h-5 w-5" />
+          </Button>
+        )}
         {!isViewer && (
           <Button
             variant="darkCTA"
@@ -91,7 +104,7 @@ const SummaryHeader = ({
           <DropdownMenuContent align="end" className="p-2">
             {survey.type === "link" && (
               <>
-                <SurveyShareButton
+                <ResultsShareButton
                   className="flex w-full justify-center p-1"
                   survey={survey}
                   webAppUrl={webAppUrl}
@@ -183,6 +196,16 @@ const SummaryHeader = ({
         product={product}
         user={user}
       />
+      {showShareSurveyModal && (
+        <ShareEmbedSurvey
+          survey={survey}
+          open={showShareSurveyModal}
+          setOpen={setShowShareSurveyModal}
+          product={product}
+          webAppUrl={webAppUrl}
+          user={user}
+        />
+      )}
     </div>
   );
 };

@@ -16,8 +16,7 @@ import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
@@ -53,7 +52,7 @@ function TooltipRenderer(props: TooltipRendererProps) {
   const { children, shouldRender, tooltipContent } = props;
   if (shouldRender) {
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger>{children}</TooltipTrigger>
           <TooltipContent>{tooltipContent}</TooltipContent>
@@ -209,6 +208,7 @@ export default function SingleResponseCard({
             </p>
           )}
           {response.meta?.source && <p>Source: {response.meta.source}</p>}
+          {response.meta?.country && <p>Country: {response.meta.country}</p>}
         </div>
       )}
     </>
@@ -297,7 +297,7 @@ export default function SingleResponseCard({
                     className={`h-4 w-4 ${
                       canResponseBeDeleted
                         ? "text-slate-500 hover:text-red-700"
-                        : "cursor-not-allowed text-gray-400"
+                        : "cursor-not-allowed text-slate-400"
                     } `}
                   />
                 </TooltipRenderer>
