@@ -1,6 +1,5 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { useState } from "react";
 
 import { md } from "@formbricks/lib/markdownIt";
@@ -8,20 +7,21 @@ import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyConsentQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function ConsentQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
@@ -30,11 +30,13 @@ export default function ConsentQuestionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
-        question={question}
+        isInvalid={isInvalid}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        type="headline"
       />
 
       <div className="mt-3">
@@ -66,7 +68,7 @@ export default function ConsentQuestionForm({
           value={question.label}
           placeholder="I agree to the terms and conditions"
           onChange={(e) => updateQuestion(questionIdx, { label: e.target.value })}
-          isInvalid={isInValid && question.label.trim() === ""}
+          isInvalid={isInvalid && question.label.trim() === ""}
         />
       </div>
       {/* <div className="mt-3">
