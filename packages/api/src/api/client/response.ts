@@ -7,9 +7,11 @@ import { makeRequest } from "../../utils/makeRequest";
 type TResponseUpdateInputWithResponseId = TResponseUpdateInput & { responseId: string };
 
 export class ResponseAPI {
+  private apiHost: string;
   private environmentId: string;
 
-  constructor(_apiHost: string, environmentId: string) {
+  constructor(apiHost: string, environmentId: string) {
+    this.apiHost = apiHost;
     this.environmentId = environmentId;
   }
 
@@ -17,8 +19,10 @@ export class ResponseAPI {
     responseInput: Omit<TResponseInput, "environmentId">
   ): Promise<Result<{ id: string }, NetworkError | Error>> {
     return makeRequest(
-      "https://bbqabiq6jdvj5nwcg2mbf5vhdu0ewkrk.lambda-url.eu-central-1.on.aws/",
-      "/",
+      // "https://bbqabiq6jdvj5nwcg2mbf5vhdu0ewkrk.lambda-url.eu-central-1.on.aws/",
+      // "/",
+      this.apiHost,
+      `/api/v1/client/${this.environmentId}/responses`,
       "POST",
       {
         ...responseInput,
@@ -36,8 +40,10 @@ export class ResponseAPI {
     ttc,
   }: TResponseUpdateInputWithResponseId): Promise<Result<{}, NetworkError | Error>> {
     return makeRequest(
-      "https://bbqabiq6jdvj5nwcg2mbf5vhdu0ewkrk.lambda-url.eu-central-1.on.aws/",
-      "/",
+      // "https://bbqabiq6jdvj5nwcg2mbf5vhdu0ewkrk.lambda-url.eu-central-1.on.aws/",
+      // "/",
+      this.apiHost,
+      `/api/v1/client/${this.environmentId}/responses/${responseId}`,
       "PUT",
       {
         finished,
