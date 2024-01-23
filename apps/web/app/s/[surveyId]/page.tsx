@@ -18,7 +18,7 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 
-import { getEmailVerificationStatus } from "./lib/helpers";
+import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
   params: {
@@ -142,7 +142,9 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   // verify email: Check if the survey requires email verification
-  let emailVerificationStatus: string | undefined = undefined;
+  let emailVerificationStatus: string = "";
+  let verifiedEmail: string | undefined = undefined;
+
   if (survey.verifyEmail) {
     const token =
       searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("verify")
@@ -150,7 +152,9 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         : undefined;
 
     if (token) {
-      emailVerificationStatus = await getEmailVerificationStatus(survey.id, token);
+      const emailVerificationDetails = await getEmailVerificationDetails(survey.id, token);
+      emailVerificationStatus = emailVerificationDetails.status;
+      verifiedEmail = emailVerificationDetails.email;
     }
   }
 
@@ -185,6 +189,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+        verifiedEmail={verifiedEmail}
       />
     );
   }
@@ -202,6 +207,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
           webAppUrl={WEBAPP_URL}
           responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
+          verifiedEmail={verifiedEmail}
         />
       </MediaBackground>
       <LegalFooter
