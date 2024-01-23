@@ -61,13 +61,14 @@ export default function ActionClassesTable({
       </LoadingWrapper>
       <div className="rounded-lg border border-slate-200">
         {TableHeading}
-        <div className="grid-cols-7">
+        <div className="grid-cols-7" id="actionClassesWrapper">
           {actionClasses.map((actionClass, index) => (
             <button
               onClick={(e) => {
                 handleOpenActionDetailModalClick(e, actionClass);
               }}
               className="w-full"
+              title={actionClass.name}
               key={actionClass.id}>
               {actionRows[index]}
             </button>

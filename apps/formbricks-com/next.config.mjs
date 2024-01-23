@@ -1,6 +1,6 @@
 import nextMDX from "@next/mdx";
-
 import { withPlausibleProxy } from "next-plausible";
+
 import { recmaPlugins } from "./mdx/recma.mjs";
 import { rehypePlugins } from "./mdx/rehype.mjs";
 import { remarkPlugins } from "./mdx/remark.mjs";
@@ -168,6 +168,11 @@ const nextConfig = {
       {
         source: "/formtribe",
         destination: "/community",
+        permanent: true,
+      },
+      {
+        source: "/signup",
+        destination: "https://app.formbricks.com/auth/signup",
         permanent: true,
       },
     ];
