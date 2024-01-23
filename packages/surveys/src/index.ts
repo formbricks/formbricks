@@ -36,7 +36,9 @@ export const renderSurveyModal = (props: SurveyModalProps & { brandColor: string
   render(h(SurveyModal, props), element);
 };
 
-window.formbricksSurveys = {
-  renderSurveyInline,
-  renderSurveyModal,
-};
+if (typeof window !== "undefined") {
+  window.formbricksSurveys = {
+    renderSurveyInline,
+    renderSurveyModal,
+  };
+}
