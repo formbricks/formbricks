@@ -38,6 +38,7 @@
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "^2.8.1",
+    "isomorphic-dompurify": "^2.2.0",
     "autoprefixer": "^10.4.16",
     "concurrently": "8.2.2",
     "eslint-config-prettier": "^9.1.0",
@@ -50,7 +51,6 @@
     "terser": "^5.26.0",
     "vite": "^5.0.12",
     "vite-plugin-dts": "^3.7.0",
-    "vite-tsconfig-paths": "^4.2.3",
-    "@types/dompurify": "^3.0.5"
+    "vite-tsconfig-paths": "^4.2.3"
   }
 }

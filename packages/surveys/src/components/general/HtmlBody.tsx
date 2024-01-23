@@ -10,7 +10,7 @@ export default function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
 
   useEffect(() => {
     if (htmlString) {
-      import("dompurify").then((DOMPurify) => {
+      import("isomorphic-dompurify").then((DOMPurify) => {
         setSafeHtml(DOMPurify.sanitize(htmlString));
       });
     }
