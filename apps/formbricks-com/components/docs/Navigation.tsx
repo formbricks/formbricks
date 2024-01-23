@@ -197,19 +197,10 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: "Attributes",
+    title: "In-App Surveys",
     links: [
-      { title: "Why Attributes?", href: "/docs/attributes/why" },
-      { title: "Custom Attributes", href: "/docs/attributes/custom-attributes" },
-      { title: "Identify users", href: "/docs/attributes/identify-users" },
-    ],
-  },
-  {
-    title: "Actions",
-    links: [
-      { title: "Why Actions?", href: "/docs/actions/why" },
-      { title: "No-Code Actions", href: "/docs/actions/no-code" },
-      { title: "Code Actions", href: "/docs/actions/code" },
+      { title: "Actions", href: "/docs/in-app-surveys/actions" },
+      { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
     ],
   },
   {
