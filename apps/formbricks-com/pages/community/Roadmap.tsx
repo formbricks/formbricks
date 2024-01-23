@@ -1,4 +1,5 @@
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import Link from "next/link";
 import { FaGithub } from "react-icons/fa6";
 
@@ -7,6 +8,7 @@ import { Button } from "@formbricks/ui/Button";
 interface Event {
   name: string;
   link?: string;
+  contributorAvatarUrl?: string;
 }
 
 interface EventBlock {
@@ -37,9 +39,23 @@ export const Roadmap: React.FC<RoadmapProps> = ({ data }) => {
                 <Link
                   href={event.link}
                   target="_blank"
-                  className="group mb-2 flex max-w-fit justify-between rounded-xl border border-slate-200 bg-slate-100 px-6 py-3 text-slate-700 transition-all hover:scale-105 hover:border-slate-300 hover:bg-slate-200">
+                  className="group mb-2 flex max-w-fit items-center justify-between rounded-xl border border-slate-200 bg-slate-100 px-6 py-3 text-slate-700 transition-all hover:scale-105 hover:border-slate-300 hover:bg-slate-200">
                   {event.name}
-                  <FaGithub className="ml-0 inline-block h-6 w-0 text-slate-800 opacity-0 transition-all group-hover:ml-6 group-hover:w-6 group-hover:opacity-100" />
+                  <div className="relative inline-block">
+                    {event.contributorAvatarUrl && (
+                      <Image
+                        src={event.contributorAvatarUrl}
+                        alt="contributor power"
+                        width={32}
+                        height={32}
+                        className="ml-2 transform rounded-full transition-all delay-200 group-hover:scale-0 "
+                      />
+                    )}
+                    <FaGithub
+                      className="absolute left-2 top-0 h-8 w-8 scale-0 transform text-slate-800 opacity-0 transition-all group-hover:scale-100 group-hover:opacity-100"
+                      style={{ transitionDelay: "0.2s" }}
+                    />
+                  </div>
                 </Link>
               ) : (
                 <div className="mb-2 block max-w-fit rounded-xl border border-slate-200 bg-slate-100 px-6 py-3 text-slate-700 transition-all">
