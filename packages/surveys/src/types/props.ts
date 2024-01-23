@@ -6,11 +6,13 @@ export interface SurveyBaseProps {
   survey: TSurvey;
   isBrandingEnabled: boolean;
   activeQuestionId?: string;
+  getSetIsError?: (getSetError: (value: boolean) => void) => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
   onClose?: () => void;
   onActiveQuestionChange?: (questionId: string) => void;
+  onRetry?: () => void;
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;

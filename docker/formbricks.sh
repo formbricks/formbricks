@@ -248,6 +248,12 @@ restart_formbricks() {
   echo "🎉 Formbricks restarted successfully!"
 }
 
+get_logs() {
+  echo "📃 Getting Formbricks logs..."
+  cd formbricks
+  sudo docker compose logs
+}
+
 case "$1" in
 install)
   install_formbricks
@@ -260,6 +266,9 @@ stop)
   ;;
 restart)
   restart_formbricks
+  ;;
+logs)
+  get_logs
   ;;
 uninstall)
   uninstall_formbricks
