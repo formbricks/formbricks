@@ -192,13 +192,14 @@ export const addWidgetContainer = (): void => {
 };
 
 const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {
+  const formbricksSurveysScriptSrc = import.meta.env.FORMBRICKS_SURVEYS_SCRIPT_SRC;
+
   return new Promise((resolve, reject) => {
     if (window.formbricksSurveys) {
       resolve(window.formbricksSurveys);
     } else {
       const script = document.createElement("script");
-      script.src =
-        "https://fb-surveys-test.s3.eu-north-1.amazonaws.com/index.umd.js?response-content-disposition=inline&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJz%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCmFwLXNvdXRoLTEiRjBEAiBQPjf%2BMh5v%2FrGa8%2BcMFSNrkkBBy6Celzif7hdGlH3PoQIgMNpznRyHad6VX8tmgcH5D9diU6dNk7JSvZp4nU2i8k0q5AIIVRAAGgw1NzY3NzU0Mzg2MjUiDL%2FBWHhF36XKpAd%2FqSrBArU4RUN4IlghGOx2dIBK3lGU1m40n9GH4LOkW8LczGgPF4jaDfGERrIM7HdIo8VlTxMR8NUmtkAXtmstU%2Bk%2FXX7Mm36RczYX0JeI9ckPbvw1Ua0Q9fSAMkQ2JhjTNAukBSXuYJxxsvQksxXlVtRfyrXQWaLcIJU6HIRELGCAGcq4R4AOcG6ed2ReBbLGaWBpdppMzxxT47G4k%2Bb77qZeISpvwVyf%2Fd7Aj47MiNUL%2FV3HLy3T7Qd%2FR%2FnR4xOWcOM7Yld%2FrqHF67Cgjliksen6YIoMVyP4JIW03MSa8P%2BRwVt0W7j2uh8M1Ys2TpZ7p0o%2FFD45uU%2BUUwxab7VVFE%2FV1zWF4sT6SGuvHdavhXwHQfIi1qfXms9UNWLU3BP40RbY44u%2FCGOIDVFwhfmpIXdVHjzyZbAZnd1W1RZE4Xz3bXM8rzC%2B57ytBjq0Ar30GOtjBxhDsRLXk1T%2Bp0%2BGXKRS22JPq%2BPfCCfSTi4fkQMxWaLBkGWNbBLlbwzLu0oA8gC2cZD3AZczV9qPIkA%2Bq4JK2yNoyXoA6WgB8OEw2Fddl4kESoJlbh6nWjQj30KRdOV6Uj22Tly%2FyMxxkBLEbeJELhXP%2FCNtKL3j1aD4l0UVOtsvJluxpi0EVfJuAN1Xq852eV4ToREqdO4oAcQx7Jk8ny9Rr9pX5qLB3cj5Um%2FDlXekYcYytaGuS0TrBKZemlo%2FSgTM2y6vwoZ9J478xbMJB1n8x8yKpjCiL89%2BEnNLDu4yv%2BAr6udFbSUwYAl7MkxYmBDk%2BcCu0syai9SDDMrwuZ%2B6TVdUq6ySx69rtP4LKU3QDDt7W7x8T%2FvXPVnP%2Fv8jLVbs34MW21UHh0725NST&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20240123T035840Z&X-Amz-SignedHeaders=host&X-Amz-Expires=43200&X-Amz-Credential=ASIAYMST6YEQRWPLI2GU%2F20240123%2Feu-north-1%2Fs3%2Faws4_request&X-Amz-Signature=47553220246b7a22c4511850d5bc2f71e5ef1ce74fedf2d47c859c845508922b"; // Replace with actual CDN URL
+      script.src = formbricksSurveysScriptSrc;
       script.async = true;
       script.onload = () => resolve(window.formbricksSurveys);
       script.onerror = (error) => {
