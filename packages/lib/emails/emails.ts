@@ -118,7 +118,7 @@ export const sendGettingStartedEmail = async (user: TEmailUserWithName) => {
     </ul>
     <p>All on one, open source platform ✅</p>
     <a class="button" style="margin-bottom:12px; margin-top:0px;" href="https://app.formbricks.com?utm_source=drip_campaign&utm_medium=email&utm_campaign=first_drip_mail&utm_content=second_button">Create your survey</a><br/>
-    <p style="margin-bottom:0px; margin-top:40px; text-align:center;"><b>Life is short, craft something irresistable!</b><br/>The Formbricks Team 🤍</p>   
+    <p style="margin-bottom:0px; margin-top:40px; text-align:center;"><b>Life is short, craft something irresistible!</b><br/>The Formbricks Team 🤍</p>   
     `),
   });
 };
