@@ -16,6 +16,7 @@ const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
+let setIsError = (_: boolean) => {};
 
 export const renderWidget = (survey: TSurvey) => {
   if (surveyRunning) {
@@ -37,8 +38,8 @@ export const renderWidget = (survey: TSurvey) => {
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
       retryAttempts: 2,
-      onResponseSendingFailed: (response) => {
-        alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
+      onResponseSendingFailed: () => {
+        setIsError(true);
       },
     },
     surveyState
@@ -61,6 +62,9 @@ export const renderWidget = (survey: TSurvey) => {
       darkOverlay,
       highlightBorderColor,
       placement,
+      getSetIsError: (f: (value: boolean) => void) => {
+        setIsError = f;
+      },
       onDisplay: async () => {
         const { userId } = config.get();
         // if config does not have a person, we store the displays in local storage
@@ -141,6 +145,10 @@ export const renderWidget = (survey: TSurvey) => {
         });
 
         return await api.client.storage.uploadFile(file, params);
+      },
+      onRetry: () => {
+        setIsError(false);
+        responseQueue.processQueue();
       },
     });
   }, survey.delay * 1000);

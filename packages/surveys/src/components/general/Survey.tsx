@@ -1,5 +1,6 @@
 import FormbricksBranding from "@/components/general/FormbricksBranding";
 import ProgressBar from "@/components/general/ProgressBar";
+import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
@@ -24,22 +25,27 @@ export function Survey({
   onResponse = () => {},
   onClose = () => {},
   onFinished = () => {},
+  onRetry = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
+  getSetIsError,
   onFileUpload,
   responseCount,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
+  const [showError, setShowError] = useState(false);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
+  const [ttc, setTtc] = useState<TResponseTtc>({});
+
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = survey.questions[currentQuestionIndex];
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !survey.styling?.hideProgressBar;
-  const [ttc, setTtc] = useState<TResponseTtc>({});
+
   useEffect(() => {
     if (activeQuestionId === "hidden") return;
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
@@ -64,8 +70,18 @@ export function Survey({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (getSetIsError) {
+      getSetIsError((value: boolean) => {
+        setShowError(value);
+      });
+    }
+  });
+
   let currIdx = currentQuestionIndex;
   let currQues = currentQuestion;
+
   function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
     const questions = survey.questions;
     const responseValue = data[questionId];
@@ -79,7 +95,6 @@ export function Survey({
       }
     }
     if (currIdx === -1) throw new Error("Question not found");
-
     if (currQues?.logic && currQues?.logic.length > 0) {
       for (let logic of currQues.logic) {
         if (!logic.destination) continue;
@@ -172,6 +187,11 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
   function getCardContent() {
+    if (showError) {
+      return (
+        <ResponseErrorComponent responseData={responseData} questions={survey.questions} onRetry={onRetry} />
+      );
+    }
     if (questionId === "start" && survey.welcomeCard.enabled) {
       return (
         <WelcomeCard
