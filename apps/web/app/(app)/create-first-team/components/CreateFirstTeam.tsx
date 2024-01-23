@@ -74,7 +74,6 @@ export default function CreateFirstTeam() {
               className="w-full justify-center"
               variant="darkCTA"
               type="submit"
-              size="sm"
               loading={loading}
               disabled={!isTeamNameValid}>
               Create team
