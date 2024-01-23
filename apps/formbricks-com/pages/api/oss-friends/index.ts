@@ -110,6 +110,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://infisical.com",
         },
         {
+          name: "Impler",
+          description: "Readymade spreadsheet import experience for products to save cost and onboard customer data faster.",
+          href: "https://impler.io"
+        },
+        {
           name: "Langfuse",
           description: "Open source LLM engineering platform. Debug, analyze and iterate together.",
           href: "https://langfuse.com",
