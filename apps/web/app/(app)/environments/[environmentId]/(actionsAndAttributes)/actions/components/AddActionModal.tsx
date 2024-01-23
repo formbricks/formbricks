@@ -182,12 +182,16 @@ export default function AddNoCodeActionModal({
               <div className="w-full space-y-4">
                 <div className="grid w-full grid-cols-2 gap-x-4">
                   <div className="col-span-1">
-                    <Label>What did your user do?</Label>
-                    <Input placeholder="E.g. Clicked Download" {...register("name")} />
+                    <Label htmlFor="actionNameInput">What did your user do?</Label>
+                    <Input id="actionNameInput" placeholder="E.g. Clicked Download" {...register("name")} />
                   </div>
                   <div className="col-span-1">
-                    <Label>Description</Label>
-                    <Input placeholder="User clicked Download Button " {...register("description")} />
+                    <Label htmlFor="actionDescriptionInput">Description</Label>
+                    <Input
+                      id="actionDescriptionInput"
+                      placeholder="User clicked Download Button "
+                      {...register("description")}
+                    />
                   </div>
                 </div>
                 <div>
@@ -233,12 +237,20 @@ export default function AddNoCodeActionModal({
               <div className="w-full space-y-4">
                 <div className="grid w-full grid-cols-2 gap-x-4">
                   <div className="col-span-1">
-                    <Label>Identifier</Label>
-                    <Input placeholder="E.g. clicked-download" {...register("name", { required: true })} />
+                    <Label htmlFor="codeActionNameInput">Identifier</Label>
+                    <Input
+                      id="codeActionNameInput"
+                      placeholder="E.g. clicked-download"
+                      {...register("name", { required: true })}
+                    />
                   </div>
                   <div className="col-span-1">
-                    <Label>Description</Label>
-                    <Input placeholder="User clicked Download Button " {...register("description")} />
+                    <Label htmlFor="codeActionDescriptionInput">Description</Label>
+                    <Input
+                      id="codeActionDescriptionInput"
+                      placeholder="User clicked Download Button"
+                      {...register("description")}
+                    />
                   </div>
                 </div>
                 <hr />
