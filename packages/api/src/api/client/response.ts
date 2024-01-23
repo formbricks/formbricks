@@ -22,7 +22,9 @@ export class ResponseAPI {
       "POST",
       {
         ...responseInput,
-        environmentId: this.environmentId,
+      },
+      {
+        "x-environment-id": this.environmentId,
       }
     );
   }
@@ -38,11 +40,13 @@ export class ResponseAPI {
       "/",
       "PUT",
       {
-        environmentId: this.environmentId,
-        responseId,
         finished,
         data,
         ttc,
+      },
+      {
+        "x-environment-id": this.environmentId,
+        "x-response-id": responseId,
       }
     );
   }
