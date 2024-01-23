@@ -122,8 +122,8 @@ function NoCodeFormPublic() {
   const getDisclaimerMessage = (timer) => {
     return (
       <>
-        Tu es sur le point de commencer un formulaire chronométré
-        <li>Tu disposes de <b>{timer} minutes</b> pour remplir ce formulaire</li>
+        Tu es sur le point de commencer un test chronométré
+        <li>Tu disposes de <b>{timer} minutes</b> pour finir ce test</li>
         <li>
           Une fois commencé, <b>tu ne peux plus quitter le formulaire</b>, sous peine
           de voir tes réponses considérées comme soumises.
