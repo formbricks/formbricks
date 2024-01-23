@@ -29,6 +29,7 @@ interface LinkSurveyProps {
   singleUseResponse?: TResponse;
   webAppUrl: string;
   responseCount?: number;
+  verifiedEmail?: string;
 }
 
 export default function LinkSurvey({
@@ -41,6 +42,7 @@ export default function LinkSurvey({
   singleUseResponse,
   webAppUrl,
   responseCount,
+  verifiedEmail,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -106,6 +108,14 @@ export default function LinkSurvey({
     // Only return the record if at least one field was set.
     return fieldsSet ? fieldsRecord : null;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
+
+  const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
+    if (survey.verifyEmail && verifiedEmail) {
+      return { verifiedEmail: verifiedEmail };
+    } else {
+      return null;
+    }
+  }, [survey.verifyEmail, verifiedEmail]);
 
   useEffect(() => {
     responseQueue.updateSurveyState(surveyState);
@@ -174,6 +184,7 @@ export default function LinkSurvey({
                 data: {
                   ...responseUpdate.data,
                   ...hiddenFieldsRecord,
+                  ...getVerifiedEmail,
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
