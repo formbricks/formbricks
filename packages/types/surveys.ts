@@ -7,6 +7,9 @@ export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
   headline: z.optional(z.string()),
   subheader: z.optional(z.string()),
+  buttonLabel: z.optional(z.string()),
+  buttonLink: z.optional(z.string()),
+  imageUrl: z.string().optional(),
 });
 
 export enum TSurveyQuestionType {
