@@ -184,12 +184,6 @@ test.describe("Create and Edit No Code Action by Page URL", async () => {
       actions.create.noCode.pageURL.matcher,
       actions.create.noCode.pageURL.testURL
     );
-
-    // await page.waitForURL(/\/environments\/[^/]+\/actions/);
-
-    // await page.waitForResponse(async (response) => {
-    //   return response.url().includes("/actions") && response.status() === 200;
-    // });
   });
 
   test("Edit No Code Action by Page URL", async ({ page }) => {

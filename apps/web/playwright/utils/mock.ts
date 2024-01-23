@@ -54,8 +54,8 @@ export const users = {
       password: "XpP%X9UU3efj8vJa",
     },
     {
-      name: "Action User 4",
-      email: "action4@formbricks.com",
+      name: "Action User 5",
+      email: "action5@formbricks.com",
       password: "XpP%X9UU3efj8vJa",
     },
   ],
