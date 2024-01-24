@@ -147,11 +147,11 @@ export function Survey({
 
   const parseRecallInformation = (question: TSurveyQuestion) => {
     const modifiedQuestion = { ...question };
-    if ((question.headline as TI18nString)[language].includes("recall:")) {
+    if (question.headline && (question.headline as TI18nString)[language]?.includes("recall:")) {
       modifiedQuestion.headline = replaceRecallInfo((modifiedQuestion.headline as TI18nString)[language]);
     }
-    if (question.subheader && (question.subheader as TI18nString)[language].includes("recall:")) {
-      modifiedQuestion.subheader = replaceRecallInfo(modifiedQuestion.subheader as string);
+    if (question.subheader && (question.subheader as TI18nString)[language]?.includes("recall:")) {
+      modifiedQuestion.subheader = replaceRecallInfo((modifiedQuestion.subheader as TI18nString)[language]);
     }
     return modifiedQuestion;
   };

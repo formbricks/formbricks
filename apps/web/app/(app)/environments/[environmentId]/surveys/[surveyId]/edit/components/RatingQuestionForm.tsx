@@ -8,7 +8,6 @@ import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 import Dropdown from "./RatingTypeDropdown";
 
@@ -28,7 +27,6 @@ export default function RatingQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  lastQuestion,
   isInvalid,
   localSurvey,
   selectedLanguage,
@@ -36,53 +34,48 @@ export default function RatingQuestionForm({
   languages,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const environmentId = localSurvey.environmentId;
 
   return (
     <form>
-      <QuestionFormInput
+      <LocalizedInput
+        id="headline"
+        name="headline"
+        value={question.headline as TI18nString}
         localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
         questionIdx={questionIdx}
+        languages={languages}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        languages={languages}
-        type="headline"
       />
 
       <div>
         {showSubheader && (
-          <>
-            <Label htmlFor="subheader">Description</Label>
-            <div className="mt-2 inline-flex w-full items-center">
+          <div className="mt-2 inline-flex w-full items-center">
+            <div className="w-full">
               <LocalizedInput
                 id="subheader"
                 name="subheader"
                 value={question.subheader as TI18nString}
-                isInvalid={isInvalid}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
                 languages={languages}
-                onChange={(e) => {
-                  let translatedSubheader = {
-                    ...(question.subheader as TI18nString),
-                    [selectedLanguage]: e.target.value,
-                  };
-                  updateQuestion(questionIdx, { subheader: translatedSubheader });
-                }}
+                isInvalid={isInvalid}
+                updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
               />
-              <TrashIcon
-                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: createI18nString("") });
-                }}
-              />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: createI18nString("") });
+              }}
+            />
+          </div>
         )}
         {!showSubheader && (
           <Button
@@ -133,74 +126,51 @@ export default function RatingQuestionForm({
 
       <div className="mt-3 flex justify-between gap-8">
         <div className="flex-1">
-          <Label htmlFor="lowerLabel">Lower label</Label>
-          <div className="mt-2">
-            <LocalizedInput
-              id="lowerLabel"
-              name="lowerLabel"
-              value={question.lowerLabel as TI18nString}
-              placeholder="Not good"
-              languages={languages}
-              isInvalid={isInvalid}
-              onChange={(e) => {
-                let translatedLowerLabel = {
-                  ...(question.lowerLabel as TI18nString),
-                  [selectedLanguage]: e.target.value,
-                };
-                updateQuestion(questionIdx, { lowerLabel: translatedLowerLabel });
-              }}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
-            />
-          </div>
+          <LocalizedInput
+            id="lowerLabel"
+            name="lowerLabel"
+            value={question.lowerLabel as TI18nString}
+            localSurvey={localSurvey}
+            questionIdx={questionIdx}
+            languages={languages}
+            isInvalid={isInvalid}
+            updateQuestion={updateQuestion}
+            selectedLanguage={selectedLanguage}
+            setSelectedLanguage={setSelectedLanguage}
+          />
         </div>
         <div className="flex-1">
-          <Label htmlFor="upperLabel">Upper label</Label>
-          <div className="mt-2">
-            <LocalizedInput
-              id="upperLabel"
-              name="upperLabel"
-              value={question.upperLabel as TI18nString}
-              placeholder="Very satisfied"
-              languages={languages}
-              isInvalid={isInvalid}
-              onChange={(e) => {
-                let translatedUpperLabel = {
-                  ...(question.upperLabel as TI18nString),
-                  [selectedLanguage]: e.target.value,
-                };
-                updateQuestion(questionIdx, { upperLabel: translatedUpperLabel });
-              }}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
-            />
-          </div>
+          <LocalizedInput
+            id="upperLabel"
+            name="upperLabel"
+            value={question.upperLabel as TI18nString}
+            localSurvey={localSurvey}
+            questionIdx={questionIdx}
+            languages={languages}
+            isInvalid={isInvalid}
+            updateQuestion={updateQuestion}
+            selectedLanguage={selectedLanguage}
+            setSelectedLanguage={setSelectedLanguage}
+          />
         </div>
       </div>
 
       <div className="mt-3">
         {!question.required && (
           <div className="flex-1">
-            <Label htmlFor="buttonLabel">Dismiss Button Label</Label>
-            <div className="mt-2">
-              <LocalizedInput
-                id="dismissButtonLabel"
-                name="dismissButtonLabel"
-                value={question.buttonLabel as TI18nString}
-                placeholder={lastQuestion ? "Finish" : "Next"}
-                languages={languages}
-                isInvalid={isInvalid}
-                onChange={(e) => {
-                  let translatedButtonLabel = {
-                    ...(question.buttonLabel as TI18nString),
-                    [selectedLanguage]: e.target.value,
-                  };
-                  updateQuestion(questionIdx, { buttonLabel: translatedButtonLabel });
-                }}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
-              />
-            </div>
+            <LocalizedInput
+              id="dismissButtonLabel"
+              name="dismissButtonLabel"
+              value={question.dismissButtonLabel as TI18nString}
+              localSurvey={localSurvey}
+              questionIdx={questionIdx}
+              placeholder={"skip"}
+              languages={languages}
+              isInvalid={isInvalid}
+              updateQuestion={updateQuestion}
+              selectedLanguage={selectedLanguage}
+              setSelectedLanguage={setSelectedLanguage}
+            />
           </div>
         )}
       </div>

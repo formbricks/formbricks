@@ -59,42 +59,6 @@ interface QuestionCardProps {
   isInvalid: boolean;
 }
 
-export function BackButtonInput({
-  value,
-  onChange,
-  languages,
-  isInvalid,
-  selectedLanguage,
-  setSelectedLanguage,
-}: {
-  value: TI18nString;
-  onChange: (e: any) => void;
-  languages: string[][];
-  isInvalid: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
-}) {
-  return (
-    <div className="w-full">
-      <Label htmlFor="backButtonLabel">&quot;Back&quot; Button Label</Label>
-      <div className="mt-2">
-        <LocalizedInput
-          id="backButtonLabel"
-          name="backButtonLabel"
-          value={value}
-          maxLength={48}
-          placeholder="Back"
-          languages={languages}
-          isInvalid={isInvalid}
-          onChange={onChange}
-          selectedLanguage={selectedLanguage}
-          setSelectedLanguage={setSelectedLanguage}
-        />
-      </div>
-    </div>
-  );
-}
-
 export default function QuestionCard({
   localSurvey,
   product,
@@ -134,7 +98,7 @@ export default function QuestionCard({
     });
   };
 
-  const updateEmptyNextButtonLabels = (labelValue: string) => {
+  const updateEmptyNextButtonLabels = (labelValue: TI18nString) => {
     localSurvey.questions.forEach((q, index) => {
       if (index === localSurvey.questions.length - 1) return;
       if (!q.buttonLabel || q.buttonLabel[selectedLanguage]?.trim() === "") {
@@ -204,9 +168,11 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {recallToHeadline(question.headline[selectedLanguage], localSurvey, true)
+                      {recallToHeadline(question.headline, localSurvey, true, selectedLanguage)
                         ? formatTextWithSlashes(
-                            recallToHeadline(question.headline[selectedLanguage], localSurvey, true)
+                            recallToHeadline(question.headline, localSurvey, true, selectedLanguage)[
+                              selectedLanguage
+                            ]
                           )
                         : getTSurveyQuestionTypeName(question.type)}
                     </p>
@@ -378,50 +344,43 @@ export default function QuestionCard({
                     {question.type !== TSurveyQuestionType.NPS &&
                     question.type !== TSurveyQuestionType.Rating &&
                     question.type !== TSurveyQuestionType.CTA ? (
-                      <div className="mt-4 flex space-x-2">
+                      <div className="mt-2 flex space-x-2">
                         <div className="w-full">
-                          <Label htmlFor="buttonLabel">&quot;Next&quot; Button Label</Label>
-                          <div className="mt-2">
-                            <LocalizedInput
-                              id="buttonLabel"
-                              name="buttonLabel"
-                              value={question.buttonLabel as TI18nString}
-                              maxLength={48}
-                              placeholder={lastQuestion ? "Finish" : "Next"}
-                              languages={languages}
-                              isInvalid={isInvalid}
-                              onChange={(e) => {
-                                let translatedNextButtonLabel = {
-                                  ...(question.buttonLabel as TI18nString),
-                                  [selectedLanguage]: e.target.value,
-                                };
-                                updateQuestion(questionIdx, { buttonLabel: translatedNextButtonLabel });
-                              }}
-                              selectedLanguage={selectedLanguage}
-                              setSelectedLanguage={setSelectedLanguage}
-                              onBlur={(e) => {
-                                let translatedNextButtonLabel = {
-                                  ...(question.buttonLabel as TI18nString),
-                                  [selectedLanguage]: e.target.value,
-                                };
-                                if (questionIdx === localSurvey.questions.length - 1) return;
-                                updateEmptyNextButtonLabels(translatedNextButtonLabel);
-                              }}
-                            />
-                          </div>
-                        </div>
-                        {questionIdx !== 0 && (
-                          <BackButtonInput
-                            value={question.backButtonLabel as TI18nString}
-                            onChange={(e) => {
-                              let translatedBackButtonLabel = {
-                                ...(question.backButtonLabel as TI18nString),
-                                [selectedLanguage]: e.target.value,
-                              };
-                              updateQuestion(questionIdx, { backButtonLabel: translatedBackButtonLabel });
-                            }}
+                          <LocalizedInput
+                            id="buttonLabel"
+                            name="buttonLabel"
+                            value={question.buttonLabel as TI18nString}
+                            localSurvey={localSurvey}
+                            questionIdx={questionIdx}
+                            maxLength={48}
+                            placeholder={lastQuestion ? "Finish" : "Next"}
                             languages={languages}
                             isInvalid={isInvalid}
+                            updateQuestion={updateQuestion}
+                            selectedLanguage={selectedLanguage}
+                            setSelectedLanguage={setSelectedLanguage}
+                            onBlur={(e) => {
+                              let translatedNextButtonLabel = {
+                                ...(question.buttonLabel as TI18nString),
+                                [selectedLanguage]: e.target.value,
+                              };
+                              if (questionIdx === localSurvey.questions.length - 1) return;
+                              updateEmptyNextButtonLabels(translatedNextButtonLabel);
+                            }}
+                          />
+                        </div>
+                        {questionIdx !== 0 && (
+                          <LocalizedInput
+                            id="backButtonLabel"
+                            name="backButtonLabel"
+                            value={question.backButtonLabel as TI18nString}
+                            localSurvey={localSurvey}
+                            questionIdx={questionIdx}
+                            maxLength={48}
+                            placeholder={"Back"}
+                            languages={languages}
+                            isInvalid={isInvalid}
+                            updateQuestion={updateQuestion}
                             selectedLanguage={selectedLanguage}
                             setSelectedLanguage={setSelectedLanguage}
                           />
@@ -432,17 +391,17 @@ export default function QuestionCard({
                       question.type === TSurveyQuestionType.NPS) &&
                       questionIdx !== 0 && (
                         <div className="mt-4">
-                          <BackButtonInput
+                          <LocalizedInput
+                            id="backButtonLabel"
+                            name="backButtonLabel"
                             value={question.backButtonLabel as TI18nString}
-                            onChange={(e) => {
-                              let translatedBackButtonLabel = {
-                                ...(question.buttonLabel as TI18nString),
-                                [selectedLanguage]: e.target.value,
-                              };
-                              updateQuestion(questionIdx, { backButtonLabel: translatedBackButtonLabel });
-                            }}
+                            localSurvey={localSurvey}
+                            questionIdx={questionIdx}
+                            maxLength={48}
+                            placeholder={"Back"}
                             languages={languages}
                             isInvalid={isInvalid}
+                            updateQuestion={updateQuestion}
                             selectedLanguage={selectedLanguage}
                             setSelectedLanguage={setSelectedLanguage}
                           />

@@ -6,7 +6,6 @@ import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/Localiz
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { TI18nString, TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;
@@ -30,24 +29,24 @@ export default function ConsentQuestionForm({
   languages,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
-  const environmentId = localSurvey.environmentId;
+
   useEffect(() => {
     setFirstRender(true);
   }, [selectedLanguage]);
 
   return (
     <form>
-      <QuestionFormInput
+      <LocalizedInput
+        id="headline"
+        name="headline"
+        value={question.headline as TI18nString}
         localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
         questionIdx={questionIdx}
+        languages={languages}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        languages={languages}
-        type="headline"
       />
 
       <div className="mt-3">
@@ -56,8 +55,9 @@ export default function ConsentQuestionForm({
           <LocalizedEditor
             id="subheader"
             value={question.html as TI18nString}
+            localSurvey={localSurvey}
             languages={languages}
-            isInValid={isInvalid}
+            isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
@@ -69,21 +69,15 @@ export default function ConsentQuestionForm({
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="label">Checkbox Label</Label>
         <LocalizedInput
           id="label"
           name="label"
           value={question.label as TI18nString}
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
           languages={languages}
           isInvalid={isInvalid}
-          onChange={(e) => {
-            let translatedLabel = {
-              ...(question.label as TI18nString),
-              [selectedLanguage]: e.target.value,
-            };
-            updateQuestion(questionIdx, { label: translatedLabel });
-          }}
-          placeholder="I agree to the terms and conditions"
+          updateQuestion={updateQuestion}
           selectedLanguage={selectedLanguage}
           setSelectedLanguage={setSelectedLanguage}
         />

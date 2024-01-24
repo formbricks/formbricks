@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { RefObject, useEffect, useMemo, useState } from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -30,6 +31,7 @@ interface RecallQuestionSelectProps {
   showQuestionSelect: boolean;
   inputRef: RefObject<HTMLInputElement>;
   recallQuestions: TSurveyQuestion[];
+  selectedLanguage: string;
 }
 
 export default function RecallQuestionSelect({
@@ -40,6 +42,7 @@ export default function RecallQuestionSelect({
   showQuestionSelect,
   inputRef,
   recallQuestions,
+  selectedLanguage,
 }: RecallQuestionSelectProps) {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
   const isNotAllowedQuestionType = (question: TSurveyQuestion) => {
@@ -74,7 +77,7 @@ export default function RecallQuestionSelect({
   // function to modify headline (recallInfo to corresponding headline)
   const getRecallHeadline = (question: TSurveyQuestion): TSurveyQuestion => {
     let questionTemp = { ...question };
-    questionTemp = replaceRecallInfoWithUnderline(questionTemp);
+    questionTemp = replaceRecallInfoWithUnderline(questionTemp, selectedLanguage);
     return questionTemp;
   };
 
@@ -91,6 +94,7 @@ export default function RecallQuestionSelect({
             prevIdx === 0 ? filteredRecallQuestions.length - 1 : prevIdx - 1
           );
         } else if (event.key === "Enter") {
+          console.log("running");
           event.preventDefault();
           event.stopPropagation();
           const selectedQuestion = filteredRecallQuestions[focusedQuestionIdx];
@@ -110,7 +114,7 @@ export default function RecallQuestionSelect({
   }, [showQuestionSelect, localSurvey.questions, focusedQuestionIdx]);
 
   return (
-    <div className="absolute z-30 mt-1 flex max-h-[50%] max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
+    <div className="absolute z-30 mt-1 flex max-w-[85%] flex-col overflow-y-auto rounded-md border border-slate-300 bg-slate-50 p-3  text-xs ">
       {filteredRecallQuestions.length === 0 ? (
         <p className="font-medium text-slate-900">There is no information to recall yet 🤷</p>
       ) : (
@@ -132,7 +136,7 @@ export default function RecallQuestionSelect({
               }}>
               <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
               <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                {getRecallHeadline(q).headline}
+                {getLocalizedValue(getRecallHeadline(q).headline, selectedLanguage)}
               </div>
             </div>
           );

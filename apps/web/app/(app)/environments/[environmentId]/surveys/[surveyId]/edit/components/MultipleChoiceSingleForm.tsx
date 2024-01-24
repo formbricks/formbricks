@@ -11,7 +11,6 @@ import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface OpenQuestionFormProps {
@@ -171,54 +170,47 @@ export default function MultipleChoiceSingleForm({
     }
   }, [isNew]);
 
-  const environmentId = localSurvey.environmentId;
-
   return (
     <form>
-      <QuestionFormInput
+      <LocalizedInput
+        id="headline"
+        name="headline"
+        value={question.headline as TI18nString}
         localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        ref={questionRef}
-        questionId={question.id}
         questionIdx={questionIdx}
+        languages={languages}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        languages={languages}
-        type="headline"
       />
 
       <div>
         {showSubheader && (
-          <>
-            <Label htmlFor="subheader">Description</Label>
-            <div className="mt-2 inline-flex w-full items-center">
+          <div className="mt-2 inline-flex w-full items-center">
+            <div className="w-full">
               <LocalizedInput
                 id="subheader"
                 name="subheader"
-                languages={languages}
                 value={question.subheader as TI18nString}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                languages={languages}
                 isInvalid={isInvalid}
-                onChange={(e) => {
-                  let translatedSubheader = {
-                    ...(question.subheader as TI18nString),
-                    [selectedLanguage]: e.target.value,
-                  };
-                  updateQuestion(questionIdx, { subheader: translatedSubheader });
-                }}
+                updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
               />
-              <TrashIcon
-                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: createI18nString("") });
-                }}
-              />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: createI18nString("") });
+              }}
+            />
+          </div>
         )}
         {!showSubheader && (
           <Button
@@ -242,8 +234,9 @@ export default function MultipleChoiceSingleForm({
                 <LocalizedInput
                   id={`choice-${choiceIdx}`}
                   name={`choice-${choiceIdx}`}
+                  localSurvey={localSurvey}
+                  questionIdx={questionIdx}
                   value={choice.label as TI18nString}
-                  languages={languages}
                   onBlur={() => {
                     const duplicateLabel = findDuplicateLabel();
                     if (duplicateLabel) {
@@ -254,13 +247,8 @@ export default function MultipleChoiceSingleForm({
                       setisInvalidValue(null);
                     }
                   }}
-                  onChange={(e) => {
-                    let translatedChoiceLabel = {
-                      ...(question.choices[choiceIdx].label as TI18nString),
-                      [selectedLanguage]: e.target.value,
-                    };
-                    updateChoice(choiceIdx, { label: translatedChoiceLabel });
-                  }}
+                  languages={languages}
+                  updateChoice={updateChoice}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
                   isInvalid={

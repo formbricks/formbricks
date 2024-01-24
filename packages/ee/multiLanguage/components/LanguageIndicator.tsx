@@ -6,7 +6,7 @@ interface LanguageIndicatorProps {
   languages: string[][];
   setSelectedLanguage: (language: string) => void;
 }
-export default function LanguageIndicator({
+export function LanguageIndicator({
   selectedLanguage,
   languages,
   setSelectedLanguage,
@@ -20,7 +20,7 @@ export default function LanguageIndicator({
     setShowLanguageDropdown(false);
   };
   return (
-    <div className="absolute right-2 top-2">
+    <div className="absolute right-2 top-2 z-50">
       <button
         type="button"
         className="flex items-center justify-center rounded-lg bg-black p-1 px-2 text-xs text-white"
@@ -31,14 +31,14 @@ export default function LanguageIndicator({
         <LanguageIcon className="ml-1 h-3 w-3" />
       </button>
       {showLanguageDropdown && (
-        <div className="absolute right-0 z-10 mt-1 space-y-2 rounded-lg bg-black p-2 text-xs text-white">
+        <div className="absolute right-0 mt-1 space-y-2 rounded-lg bg-black p-2 text-xs text-white">
           {languages.map(
             (language) =>
               language[0] !== selectedLanguage && (
                 <button
                   key={language[0]}
                   type="button"
-                  className="block w-full text-left"
+                  className="m-0 block w-full text-left"
                   onClick={() => changeLanguage(language)}>
                   {language[1]}
                 </button>

@@ -20,7 +20,6 @@ import {
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
 
 const questionTypes = [
@@ -65,56 +64,47 @@ export default function OpenQuestionForm({
     updateQuestion(questionIdx, updatedAttributes);
   };
 
-  const environmentId = localSurvey.environmentId;
-
   return (
     <form>
-      <QuestionFormInput
+      <LocalizedInput
+        id="headline"
+        name="headline"
+        value={question.headline as TI18nString}
         localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
         questionIdx={questionIdx}
+        languages={languages}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        languages={languages}
-        type="headline"
       />
 
       <div>
         {showSubheader && (
-          <>
-            <Label htmlFor="subheader">Description</Label>
-            <div className="mt-2 inline-flex w-full items-center">
-              <div className="w-full">
-                <LocalizedInput
-                  id="subheader"
-                  name="subheader"
-                  value={question.subheader as TI18nString}
-                  languages={languages}
-                  isInvalid={isInvalid}
-                  onChange={(e) => {
-                    let translatedSubheader = {
-                      ...(question.subheader as TI18nString),
-                      [selectedLanguage]: e.target.value,
-                    };
-                    updateQuestion(questionIdx, { subheader: translatedSubheader });
-                  }}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
-                />
-              </div>
-
-              <TrashIcon
-                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: createI18nString("") });
-                }}
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
+              <LocalizedInput
+                id="subheader"
+                name="subheader"
+                value={question.subheader as TI18nString}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                languages={languages}
+                isInvalid={isInvalid}
+                updateQuestion={updateQuestion}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
               />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: createI18nString("") });
+              }}
+            />
+          </div>
         )}
         {!showSubheader && (
           <Button
@@ -129,26 +119,19 @@ export default function OpenQuestionForm({
         )}
       </div>
 
-      <div className="mt-3">
-        <Label htmlFor="placeholder">Placeholder</Label>
-        <div className="mt-2">
-          <LocalizedInput
-            id="placeholder"
-            name="placeholder"
-            value={(question.placeholder as TI18nString) ?? defaultPlaceholder}
-            languages={languages}
-            isInvalid={isInvalid}
-            onChange={(e) => {
-              let translatedPlaceholder = {
-                ...(question.placeholder as TI18nString),
-                [selectedLanguage]: e.target.value,
-              };
-              updateQuestion(questionIdx, { placeholder: translatedPlaceholder });
-            }}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
-          />
-        </div>
+      <div className="mt-2">
+        <LocalizedInput
+          id="placeholder"
+          name="placeholder"
+          value={(question.placeholder as TI18nString) ?? defaultPlaceholder}
+          languages={languages}
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          isInvalid={isInvalid}
+          updateQuestion={updateQuestion}
+          selectedLanguage={selectedLanguage}
+          setSelectedLanguage={setSelectedLanguage}
+        />
       </div>
 
       {/* Add a dropdown to select the question type */}

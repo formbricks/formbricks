@@ -1,6 +1,5 @@
 "use client";
 
-import { BackButtonInput } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionCard";
 import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
@@ -9,7 +8,6 @@ import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface CTAQuestionFormProps {
@@ -36,24 +34,24 @@ export default function CTAQuestionForm({
   languages,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
-  const environmentId = localSurvey.environmentId;
+
   useEffect(() => {
     setFirstRender(true);
   }, [selectedLanguage]);
 
   return (
     <form>
-      <QuestionFormInput
+      <LocalizedInput
+        id="headline"
+        name="headline"
+        value={question.headline as TI18nString}
         localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
         questionIdx={questionIdx}
+        languages={languages}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        languages={languages}
-        type="headline"
       />
 
       <div className="mt-3">
@@ -62,6 +60,7 @@ export default function CTAQuestionForm({
           <LocalizedEditor
             id="subheader"
             value={question.html as TI18nString}
+            localSurvey={localSurvey}
             languages={languages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
@@ -93,43 +92,35 @@ export default function CTAQuestionForm({
         </div>
       </RadioGroup>
 
-      <div className="mt-3 flex justify-between gap-8">
+      <div className="mt-2 flex justify-between gap-8">
         <div className="flex w-full space-x-2">
-          <div className="w-full">
-            <Label htmlFor="buttonLabel">Button Label</Label>
-            <div className="mt-2">
-              <LocalizedInput
-                id="buttonLabel"
-                name="buttonLabel"
-                value={question.buttonLabel as TI18nString}
-                maxLength={48}
-                placeholder={lastQuestion ? "Finish" : "Next"}
-                languages={languages}
-                isInvalid={isInvalid}
-                onChange={(e) => {
-                  let translatedNextButtonLabel = {
-                    ...(question.buttonLabel as TI18nString),
-                    [selectedLanguage]: e.target.value,
-                  };
-                  updateQuestion(questionIdx, { buttonLabel: translatedNextButtonLabel });
-                }}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
-              />
-            </div>
-          </div>
+          <LocalizedInput
+            id="buttonLabel"
+            name="buttonLabel"
+            value={question.buttonLabel as TI18nString}
+            localSurvey={localSurvey}
+            questionIdx={questionIdx}
+            maxLength={48}
+            placeholder={lastQuestion ? "Finish" : "Next"}
+            languages={languages}
+            isInvalid={isInvalid}
+            updateQuestion={updateQuestion}
+            selectedLanguage={selectedLanguage}
+            setSelectedLanguage={setSelectedLanguage}
+          />
+
           {questionIdx !== 0 && (
-            <BackButtonInput
+            <LocalizedInput
+              id="backButtonLabel"
+              name="backButtonLabel"
               value={question.backButtonLabel as TI18nString}
-              onChange={(e) => {
-                let translatedBackButtonLabel = {
-                  ...(question.buttonLabel as TI18nString),
-                  [selectedLanguage]: e.target.value,
-                };
-                updateQuestion(questionIdx, { backButtonLabel: translatedBackButtonLabel });
-              }}
+              localSurvey={localSurvey}
+              questionIdx={questionIdx}
+              maxLength={48}
+              placeholder={"Back"}
               languages={languages}
               isInvalid={isInvalid}
+              updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
             />
@@ -160,16 +151,12 @@ export default function CTAQuestionForm({
               id="dismissButtonLabel"
               name="dismissButtonLabel"
               value={question.dismissButtonLabel as TI18nString}
-              placeholder="Skip"
+              localSurvey={localSurvey}
+              questionIdx={questionIdx}
+              placeholder={"skip"}
               languages={languages}
               isInvalid={isInvalid}
-              onChange={(e) => {
-                let translatedDismissButtonLabel = {
-                  ...(question.dismissButtonLabel as TI18nString),
-                  [selectedLanguage]: e.target.value,
-                };
-                updateQuestion(questionIdx, { dismissButtonLabel: translatedDismissButtonLabel });
-              }}
+              updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
             />

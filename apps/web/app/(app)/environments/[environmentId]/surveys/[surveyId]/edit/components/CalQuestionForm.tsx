@@ -7,7 +7,6 @@ import { TI18nString, TSurvey, TSurveyCalQuestion } from "@formbricks/types/surv
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;
@@ -35,51 +34,44 @@ export default function CalQuestionForm({
 
   return (
     <form>
-      <QuestionFormInput
+      <LocalizedInput
+        id="headline"
+        name="headline"
+        value={question.headline as TI18nString}
         localSurvey={localSurvey}
-        environmentId={localSurvey.environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
         questionIdx={questionIdx}
+        languages={languages}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        languages={languages}
-        type="headline"
       />
       <div>
         {showSubheader && (
-          <>
-            <Label htmlFor="subheader">Description</Label>
-            <div className="mt-2 inline-flex w-full items-center">
-              <div className="w-full">
-                <LocalizedInput
-                  id="subheader"
-                  name="subheader"
-                  value={question.subheader as TI18nString}
-                  languages={languages}
-                  isInValid={isInvalid}
-                  onChange={(e) => {
-                    let translatedSubheader = {
-                      ...(question.subheader as TI18nString),
-                      [selectedLanguage]: e.target.value,
-                    };
-                    updateQuestion(questionIdx, { subheader: translatedSubheader });
-                  }}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
-                />
-              </div>
-
-              <TrashIcon
-                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: createI18nString("") });
-                }}
+          <div className="mt-2 inline-flex w-full items-center">
+            <div className="w-full">
+              <LocalizedInput
+                id="subheader"
+                name="subheader"
+                value={question.subheader as TI18nString}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                languages={languages}
+                isInvalid={isInvalid}
+                updateQuestion={updateQuestion}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
               />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: createI18nString("") });
+              }}
+            />
+          </div>
         )}
         {!showSubheader && (
           <Button

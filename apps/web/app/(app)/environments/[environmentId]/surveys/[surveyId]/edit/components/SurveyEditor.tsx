@@ -78,11 +78,10 @@ export default function SurveyEditor({
 
   const translatedSurvey = useMemo(() => {
     if (!localSurvey || localSurvey.questions.length === 0) return;
-    if ((localSurvey.questions[0]?.headline as TI18nString)._i18n_) return localSurvey;
     if (localSurvey) {
       return translateSurvey(localSurvey, Object.keys(languages));
     }
-  }, [i18n, localSurvey, selectedLanguage, languages]);
+  }, [i18n, localSurvey?.id, localSurvey?.questions.length, selectedLanguage, languages]);
   useEffect(() => {
     const listener = () => {
       if (document.visibilityState === "visible") {

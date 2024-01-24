@@ -2,7 +2,8 @@ import type { Dispatch, SetStateAction } from "react";
 
 import { cleanHtml } from "@formbricks/lib/cleanHtml";
 import { md } from "@formbricks/lib/markdownIt";
-import { TI18nString } from "@formbricks/types/surveys";
+import { recallToHeadline } from "@formbricks/lib/utils/recall";
+import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 
 import { extractLanguageSymbols, isLabelValidForAllLanguages } from "../utils/i18n";
@@ -11,6 +12,7 @@ import LanguageIndicator from "./LanguageIndicator";
 interface LocalizedEditorProps {
   id: string;
   value: TI18nString;
+  localSurvey: TSurvey;
   isInvalid: boolean;
   updateQuestion: any;
   selectedLanguage: string;
@@ -23,6 +25,7 @@ interface LocalizedEditorProps {
 export const LocalizedEditor = ({
   id,
   value,
+  localSurvey,
   isInvalid,
   updateQuestion,
   selectedLanguage,
@@ -77,7 +80,9 @@ export const LocalizedEditor = ({
               <strong>Translate:</strong>
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css
-                dangerouslySetInnerHTML={{ __html: cleanHtml(value.en) }}></label>
+                dangerouslySetInnerHTML={{
+                  __html: cleanHtml(recallToHeadline(value, localSurvey, false, "en")["en"]),
+                }}></label>
             </div>
           )}
         </div>
