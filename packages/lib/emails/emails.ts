@@ -100,7 +100,7 @@ export const sendGettingStartedEmail = async (user: TEmailUserWithName) => {
     to: user.email,
     subject: "Get started with Formbricks 🤸",
     html: withEmailTemplate(`
-    <h1 style="text-align: center; line-height: 1.2; padding-top: 16px; padding-bottom:8px;">Turn customer insights into irresistable experiences</h1>
+    <h1 style="text-align: center; line-height: 1.2; padding-top: 16px; padding-bottom:8px;">Turn customer insights into irresistible experiences</h1>
     <a href="https://app.formbricks.com?utm_source=drip_campaign&utm_medium=email&utm_campaign=first_drip_mail&utm_content=top_image"><img src="https://formbricks-cdn.s3.eu-central-1.amazonaws.com/getting-started-with-formbricks-v5.png" alt="Formbricks can do it all" /></a>
     <h3 style="text-align:center;">Welcome to Formbricks! 🤗</h3>
     <p style="text-align:center;">We're the fastest growing Experience Management platform! Gracefully collect feedback without survey fatigue. Are you ready?</p>
@@ -118,7 +118,7 @@ export const sendGettingStartedEmail = async (user: TEmailUserWithName) => {
     </ul>
     <p>All on one, open source platform ✅</p>
     <a class="button" style="margin-bottom:12px; margin-top:0px;" href="https://app.formbricks.com?utm_source=drip_campaign&utm_medium=email&utm_campaign=first_drip_mail&utm_content=second_button">Create your survey</a><br/>
-    <p style="margin-bottom:0px; margin-top:40px; text-align:center;"><b>Life is short, craft something irresistable!</b><br/>The Formbricks Team 🤍</p>   
+    <p style="margin-bottom:0px; margin-top:40px; text-align:center;"><b>Life is short, craft something irresistible!</b><br/>The Formbricks Team 🤍</p>   
     `),
   });
 };
