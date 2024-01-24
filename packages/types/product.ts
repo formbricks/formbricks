@@ -27,10 +27,18 @@ export const ZProduct = z.object({
 
 export type TProduct = z.infer<typeof ZProduct>;
 
-export const ZProductUpdateInput = ZProduct.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const ZProductUpdateInput = z.object({
+  name: z.string().optional(),
+  teamId: z.string().optional(),
+  brandColor: ZColor.optional(),
+  highlightBorderColor: ZColor.nullish(),
+  recontactDays: z.number().int().optional(),
+  inAppSurveyBranding: z.boolean().optional(),
+  linkSurveyBranding: z.boolean().optional(),
+  placement: ZPlacement.optional(),
+  clickOutsideClose: z.boolean().optional(),
+  darkOverlay: z.boolean().optional(),
+  environments: z.array(ZEnvironment).optional(),
 });
 
 export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;

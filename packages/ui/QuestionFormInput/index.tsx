@@ -112,7 +112,11 @@ const QuestionFormInput = ({
   const fallbackInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
-    questionId === "end" ? false : !!(question as TSurveyQuestion).imageUrl && id === "headline"
+    questionId === "end"
+      ? localSurvey.thankYouCard.imageUrl
+        ? true
+        : false
+      : !!(question as TSurveyQuestion).imageUrl
   );
   const [showQuestionSelect, setShowQuestionSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
@@ -351,11 +355,15 @@ const QuestionFormInput = ({
             allowedFileExtensions={["png", "jpeg", "jpg"]}
             environmentId={environmentId}
             onFileUpload={(url: string[] | undefined) => {
-              if (updateQuestion && url) {
+              if (isThankYouCard && updateSurvey && url) {
+                updateSurvey({ imageUrl: url[0] });
+              } else if (updateQuestion && url) {
                 updateQuestion(questionIdx, { imageUrl: url[0] });
               }
             }}
-            fileUrl={isThankYouCard ? "" : (question as TSurveyQuestion).imageUrl}
+            fileUrl={
+              isThankYouCard ? localSurvey.thankYouCard.imageUrl : (question as TSurveyQuestion).imageUrl
+            }
           />
         )}
         <div className="flex items-center space-x-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { EnvelopeIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
@@ -53,7 +53,7 @@ function TooltipRenderer(props: TooltipRendererProps) {
   const { children, shouldRender, tooltipContent } = props;
   if (shouldRender) {
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger>{children}</TooltipTrigger>
           <TooltipContent>{tooltipContent}</TooltipContent>
@@ -316,6 +316,18 @@ export default function SingleResponseCard({
             />
           )}
           <div className="space-y-6">
+            {survey.verifyEmail && response.data["verifiedEmail"] && (
+              <div>
+                <p className="flex items-center space-x-2 text-sm text-slate-500">
+                  <EnvelopeIcon className="h-4 w-4" />
+
+                  <span>Verified Email</span>
+                </p>
+                <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                  {response.data["verifiedEmail"]}
+                </p>
+              </div>
+            )}
             {survey.questions.map((question) => {
               const skipped = skippedQuestions.find((skippedQuestionElement) =>
                 skippedQuestionElement.includes(question.id)

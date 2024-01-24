@@ -1,7 +1,11 @@
+import Button from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import RedirectCountDown from "@/components/general/RedirectCountdown";
 import Subheader from "@/components/general/Subheader";
 import { getLocalizedValue } from "@/lib/utils";
+import { useEffect } from "preact/hooks";
+
 import { TI18nString } from "@formbricks/types/surveys";
 
 interface ThankYouCardProps {
@@ -10,6 +14,9 @@ interface ThankYouCardProps {
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
   language: string;
+  buttonLabel?: string;
+  buttonLink?: string;
+  imageUrl?: string;
 }
 
 export default function ThankYouCard({
@@ -18,9 +25,27 @@ export default function ThankYouCard({
   redirectUrl,
   isRedirectDisabled,
   language,
+  buttonLabel,
+  buttonLink,
+  imageUrl,
 }: ThankYouCardProps) {
+  useEffect(() => {
+    if (!buttonLink) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Enter") {
+        window.location.href = buttonLink;
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [buttonLink]);
+
   return (
     <div className="text-center">
+      {imageUrl && <QuestionImage imgUrl={imageUrl} />}
+
       <div className="text-brand flex items-center justify-center">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -47,6 +72,19 @@ export default function ThankYouCard({
         />
         <Subheader subheader={getLocalizedValue(subheader, language)} questionId="thankYouCard" />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
+        {buttonLabel && (
+          <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
+            <Button
+              buttonLabel={buttonLabel}
+              isLastQuestion={false}
+              onClick={() => {
+                if (!buttonLink) return;
+                window.location.href = buttonLink;
+              }}
+            />
+            <p class="text-xs">Press Enter ↵</p>
+          </div>
+        )}
       </div>
     </div>
   );

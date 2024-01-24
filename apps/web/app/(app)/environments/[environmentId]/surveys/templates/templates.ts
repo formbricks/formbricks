@@ -3,15 +3,17 @@ import { createId } from "@paralleldrive/cuid2";
 import { TSurvey, TSurveyHiddenFields, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 
+const thankYouCardDefault = {
+  enabled: true,
+  headline: "Thank you!",
+  subheader: "We appreciate your feedback.",
+  buttonLabel: "Create your own Survey",
+  buttonLink: "https://formbricks.com/signup",
+};
+
 const hiddenFieldsDefault: TSurveyHiddenFields = {
   enabled: true,
   fieldIds: [],
-};
-
-const thankYouCardDefault = {
-  enabled: true,
-  headline: "Thank You",
-  subheader: "We appreciate your feedback.",
 };
 
 const welcomeCardDefault = {

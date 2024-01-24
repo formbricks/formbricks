@@ -1,8 +1,7 @@
 "use client";
 
 import { replacePresetPlaceholders } from "@/app/lib/templates";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
 import type { TEnvironment } from "@formbricks/types/environment";

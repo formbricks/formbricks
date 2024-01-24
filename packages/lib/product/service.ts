@@ -108,7 +108,7 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
 
 export const updateProduct = async (
   productId: string,
-  inputProduct: Partial<TProductUpdateInput>
+  inputProduct: TProductUpdateInput
 ): Promise<TProduct> => {
   validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
   const { environments, ...data } = inputProduct;

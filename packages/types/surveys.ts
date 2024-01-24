@@ -18,6 +18,9 @@ export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
   headline: z.union([z.string(), ZI18nObject]).optional(),
   subheader: z.union([z.string(), ZI18nObject]).optional(),
+  buttonLabel: z.optional(z.string()),
+  buttonLink: z.optional(z.string()),
+  imageUrl: z.string().optional(),
 });
 
 export enum TSurveyQuestionType {
