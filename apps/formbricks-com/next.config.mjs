@@ -200,6 +200,11 @@ const nextConfig = {
         destination: "/docs/in-app-surveys/attributes#identifying-users",
         permanent: true,
       },
+      {
+        source: "/signup",
+        destination: "https://app.formbricks.com/auth/signup",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

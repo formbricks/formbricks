@@ -1,0 +1,442 @@
+import AuthorBox from "@/components/shared/AuthorBox";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import Image from "next/image";
+
+import Header from "./header.webp";
+import Container from "./container.webp";
+import Docker from "./docker.webp";
+import DockerCompose from "./docker-compose.webp";
+import SmartestPersonGif from "./smartest-person.gif";
+import SelfHostGif from "./self-host.gif";
+import SuperSonicGif from "./supersonic.gif";
+import EndingGif from "./ending.gif";
+
+export const meta = {
+  title: "Understand Formbricks Self Hosting",
+  description:"We explain how we internally built Formbricks self hosting architecture with Docker, Docker Compose, and Bash Script. It's easy and to-the-point!",
+  date: "2024-01-23",
+  publishedTime: "2024-01-23T12:00:00",
+  authors: ["Shubham Palriwala"],
+  section: "Infrastructure",
+  tags: ["Infrastructure", "Docker", "Docker Compose", "Bash Script", "Self Hosting"],
+};
+
+<Image src={Header} alt="How to effectively self host Formbricks" className="w-full rounded-lg" />
+
+<AuthorBox
+  name="Shubham Palriwala"
+  title="Open Source Engineer"
+  date="January 23rd, 2024"
+  duration="20"
+  author={"Shubham"}
+/>
+
+_Embracing the open-source ethos of sharing knowledge, we're unveiling the inner workings of self-hosting a Formbricks instance. This initiative is designed to share & learn with [our community](https://formbricks.com/discord), providing deep insights into Formbricks' features for all, from developers to end-users._
+
+## What is Self Hosting?
+
+Self-hosting allows you to manage our Formbricks app **on your own server infrastructure**, providing complete control over its environment. This contrasts with relying on external cloud services. At Formbricks, we facilitate a swift and straightforward self-hosting process, enabling quick setup of your instance. For those who prefer a quicker way to get things going rather than managing it on your own, our cloud-based solution is readily accessible at [app.formbricks.com](https://app.formbricks.com).
+
+<Image
+  src={SelfHostGif}
+  alt="Self Host Formbricks with ease with our Docker, Docker Compose and Bash Script setup on your own Infrastructure"
+  className="w-full rounded-lg"
+/>
+
+### When should one self-host?
+
+Deciding to self-host is particularly advantageous in certain scenarios:
+
+1. **Deeper Customizations:** Self-hosting provides the flexibility to modify and tailor the application according to specific needs, which is crucial for bespoke workflows and functionalities.
+2. **Hosting on Internal Enterprise Networks:** For organizations that prioritize data security and operational control, self-hosting on their own networks ensures that sensitive data and resources remain within their secure perimeter.
+3. **Data Sovereignty:** When there's a need to keep data in-house for privacy, security, or regulatory reasons, self-hosting is the ideal solution.
+4. **Policy Compliance:** Certain industries are governed by strict policies and regulations that mandate how and where data is stored and processed. Self-hosting enables adherence to these specific compliance requirements.
+
+In these situations, self-hosting offers an unmatched level of control and customization.
+
+
+### What to expect from this guide?
+
+Embark on an insightful journey into the world of Formbricks self-hosting. We'll dive deep into two key methods: the [Advanced Docker Setup](https://formbricks.com/docs/self-hosting/docker) and the [Single Script Setup](https://formbricks.com/docs/self-hosting/production). Along the way, we'll demystify several core concepts:
+
+1. **Containerization:** Discover how software is encapsulated in containers, a crucial step for efficient deployment and scaling, and fundamental to understanding Formbricks in various environments.
+2. **Docker:** Explore Docker, a vital element of our containerization approach, and learn how it streamlines the creation, deployment, and management of applications.
+3. **Docker Compose:** Understand the role of Docker Compose in managing multi-container Docker applications, enhancing the orchestration and deployment process.
+4. **Advanced Setup Breakdown:** Delve into the details of our Advanced Setup method, examining the intricacies of Dockerfile and Docker-Compose files & apply the concepts learned in the previous step.
+5. **Server Concepts:** Grasp essential concepts like Proxies, Reverse Proxies, SSL, and Cronjobs, key to comprehending Formbricks' server interactions.
+6. **Single Shell Script Breakdown:** Conclude with an in-depth analysis of the Formbricks self-hosting script, illustrating how these concepts unite to forge a powerful, self-hosted Formbricks environment.
+
+Each of these topics is carefully chosen to give you a holistic understanding of the technical foundations of Formbricks, allowing you to leverage its full potential, whether you're a developer, administrator, or end-user.
+
+### 1. What is Containerisation
+
+Containerisation involves packaging all your project's dependencies and essentials into a single, portable unit.
+
+<Image
+  src={Container}
+  alt="Containerization is the process of packaging software code, its dependencies, configurations, and other essentials into a single, portable unit."
+  className="w-full rounded-lg"
+/>
+
+Think of software containerisation as placing your application in a compact, self-sufficient unit. Like a standardized box that's indifferent to the truck carrying it or the journey it takes, each container focuses solely on preserving its contents — the application and its dependencies. This ensures the application operates reliably, no matter the underlying infrastructure it’s deployed on.
+
+If you want to dive deep into the internal workings of a container runtime, do check this really [cool talk](https://youtu.be/sK5i-N34im8?feature=shared) from Jérôme Petazzoni on Youtube!
+
+### 2. What is Docker
+
+Docker is a container runtime that enables you to abstract your projects into resharable instances. In the context of our earlier analogy, if containerization is about securely packing your application (like goods in a container), Docker is the truck that carries these containers.
+
+<Image
+  src={Docker}
+  alt="Docker is a container runtime that enables you to abstract your projects into resharable instances."
+  className="w-full rounded-lg"
+/>
+
+Building on the earlier analogy, Docker can be seen as the fleet of trucks that transport these secure boxes (containers). Each truck (Docker) is equipped to carry a container, ensuring it reaches its destination intact and operates smoothly. Docker takes care of the driving, navigating through different environments (operating systems), and making sure each container is running as it should, regardless of where it's deployed.
+
+<Note>
+  It's important to note that Docker is a **runtime environment** — it's responsible for running the containers, rather than being a technology that creates them. While Docker is widely used, there are other alternatives in the field, such as Podman and Containerd, which also offer container runtime capabilities.
+</Note>
+
+### Understanding Formbricks Dockerfile
+
+The Dockerfile for our Formbricks application is structured into two key stages - the Builder and Runner stages. It’s currently hosted [here](https://github.com/formbricks/formbricks/blob/main/apps/web/Dockerfile). 
+
+<CodeGroup title="Dockerfile">
+
+```{{ title: 'Builder Stage' }}
+# Installer stage: Building the application
+FROM node:20-alpine AS installer
+
+# Enable corepack and prepare pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Install necessary build tools and compilers
+RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev
+
+# Install Supercronic (cron for containers without super user privileges)
+RUN apk add --no-cache curl \
+    && curl -fsSLo /tmp/supercronic \
+       "https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64" \
+    && chmod +x /tmp/supercronic
+
+# Set environment variables
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+ARG NEXTAUTH_SECRET
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+
+ARG ENCRYPTION_KEY
+ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the application files
+COPY . .
+
+# Create a .env file
+RUN touch /app/apps/web/.env
+
+# Install the dependencies
+RUN pnpm install
+
+
+# Build the project
+RUN pnpm post-install --filter=web...
+RUN pnpm turbo run build --filter=web...
+```
+
+```{{ title: 'Runner Stage' }}
+# Runner stage: Setting up the runtime environment
+FROM node:20-alpine AS runner
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+RUN apk add --no-cache curl \
+    # && addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
+
+WORKDIR /home/nextjs
+
+COPY --from=installer /tmp/supercronic /usr/local/bin/supercronic
+COPY --from=installer /app/apps/web/next.config.mjs .
+COPY --from=installer /app/apps/web/package.json .
+# Leverage output traces to reduce image size
+COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
+COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./packages/database/migrations
+COPY --from=installer /app/docker/cronjobs /app/docker/cronjobs
+
+EXPOSE 3000
+ENV HOSTNAME "0.0.0.0"
+USER nextjs
+
+# Prepare volume for uploads
+RUN mkdir -p /home/nextjs/apps/web/uploads/
+VOLUME /home/nextjs/apps/web/uploads/
+
+CMD supercronic -quiet /app/docker/cronjobs & \
+    if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
+        pnpm dlx prisma migrate deploy && \
+        exec node apps/web/server.js; \
+    else \
+        echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!" >&2; \
+        exit 1; \
+    fi
+```
+
+</CodeGroup>
+
+**Builder Stage:**
+
+1. **Base Image:** Uses **`node:20-alpine`**, a lightweight Node.js environment as a base.
+2. **Setup:** Installs **`corepack`** and **`pnpm`** for package management, along with necessary build tools.
+3. **Supercronic Installation:** Adds Supercronic for cron job management.
+4. **Environment Prep:** Sets up essential environment variables.
+5. **File Copy and Build:** Transfers application files, installs dependencies, compiles & builds the Formbricks app.
+
+**Runner Stage:**
+
+1. **Base Image and Setup:** Similar to the builder stage, but for the runtime environment.
+2. **User Configuration:** Creates a non-root **`nextjs`** user for security.
+3. **File Transfer:** Copies only necessary build files from the builder stage.
+4. **Port and Volume:** Exposes port 3000 and sets up a persistent volume mapping for uploads.
+5. **Application Launch:** Uses a command sequence to run
+
+
+### 3. What is Docker Compose
+
+Docker Compose is a tool designed to manage multiple containers, streamlining the process of running multi-container Docker applications. It allows for the configuration of how these containers interact, including mapping ports, creating, and sharing data volumes. This orchestration is crucial when your application comprises several interconnected containers, each with its specific role.
+
+<Image
+  src={DockerCompose}
+  alt="Docker Compose is a tool designed to manage multiple containers, streamlining the process of running multi-container Docker applications."
+  className="w-full rounded-lg"
+/>
+
+Extending our base analogy to Docker Compose, think of it as the logistics coordinator for a fleet of trucks (Docker). Docker Compose manages the entire fleet, directing which truck goes where, how they interact, and ensuring they are all synchronized in their operations. It's like planning the routes for multiple trucks, deciding which container gets loaded onto which truck, and how they share the road (network and data volumes). Docker Compose simplifies the complexity of coordinating multiple containers (trucks), ensuring they work together harmoniously as a unified system.
+
+### 4. Advanced Setup Breakdown: Understanding Formbricks Docker Compose
+
+<CodeGroup title="Docker Compose">
+
+```yml {{ title: 'docker-compose.yml' }}
+version: "3.3"
+x-environment: &environment
+  environment:
+    # The url of your Formbricks instance used in the admin panel
+    WEBAPP_URL:
+
+    # PostgreSQL DB for Formbricks to connect to
+    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+
+    # NextJS Auth
+    # @see: https://next-auth.js.org/configuration/options#nextauth_secret
+    # You can use: `openssl rand -hex 32` to generate one
+    NEXTAUTH_SECRET:
+
+    # Set this to your public-facing URL, e.g., https://example.com
+    # You do not need the NEXTAUTH_URL environment variable in Vercel.
+    NEXTAUTH_URL: http://localhost:3000
+
+    # Encryption Key is used for 2FA & Single use URLs for Link Surveys
+    # You can use: $(openssl rand -hex 32) to generate one
+    ENCRYPTION_KEY:
+
+    # PostgreSQL password
+    POSTGRES_PASSWORD: postgres
+
+    # Enterprise License Key
+    # Required to access Enterprise-only features
+    # ENTERPRISE_LICENSE_KEY:
+
+    # Email Configuration
+    # MAIL_FROM:
+    # SMTP_HOST:
+    # SMTP_PORT:
+    # SMTP_SECURE_ENABLED:
+    # SMTP_USER:
+    # SMTP_PASSWORD:
+
+    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
+    # SHORT_URL_BASE:
+
+    # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
+    EMAIL_VERIFICATION_DISABLED: 1
+
+    # Set the below to 0 to enable Password Reset (will required Email Configuration)
+    PASSWORD_RESET_DISABLED: 1
+
+    # Uncomment the below and set it to 1 to disable Signups
+    # SIGNUP_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Invites
+    # INVITE_DISABLED:
+
+    # Uncomment the below and set a value to have your own Privacy Page URL on the signup & login page
+    # PRIVACY_URL:
+
+    # Uncomment the below and set a value to have your own Terms Page URL on the auth and the surveys page
+    # TERMS_URL:
+
+    # Uncomment the below and set a value to have your own Imprint Page URL on the auth and the surveys page
+    # IMPRINT_URL:
+
+    # Uncomment the below and set to 1 if you want to enable GitHub OAuth
+    # GITHUB_AUTH_ENABLED:
+    # GITHUB_ID:
+    # GITHUB_SECRET:
+
+    # Uncomment the below and set to 1 if you want to enable Google OAuth
+    # GOOGLE_AUTH_ENABLED:
+    # GOOGLE_CLIENT_ID:
+    # GOOGLE_CLIENT_SECRET:
+
+    # Uncomment the below to automatically assign new users to a specific team and role within that team
+    # Insert an existing team id or generate a valid CUID for a new one at https://www.getuniqueid.com/cuid (e.g. cjld2cjxh0000qzrmn831i7rn)
+    # (Role Management is an Enterprise feature)
+    # DEFAULT_TEAM_ID:
+    # DEFAULT_TEAM_ROLE: admin
+
+    # Uncomment and set to 1 to skip onboarding for new users
+    # ONBOARDING_DISABLED: 1
+
+services:
+  postgres:
+    restart: always
+    image: postgres:15-alpine
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    <<: *environment
+
+  formbricks:
+    restart: always
+    image: ghcr.io/formbricks/formbricks:latest
+    depends_on:
+      - postgres
+    ports:
+      - 3000:3000
+    volumes:
+      - uploads:/home/nextjs/apps/web/uploads/
+    <<: *environment
+
+volumes:
+  postgres:
+    driver: local
+  uploads:
+```
+
+</CodeGroup>
+
+- Version Specification:
+    - **`version: "3.3"`**: Specifies the Docker Compose file version, which determines the syntax and functionalities available.
+- Environment Variables Setup (x-environment):
+    - **`x-environment: &environment`**: A reusable anchor for environment variables, detailing settings for the Formbricks instance, database connections, authentication, and optional configurations like email, OAuth, and URLs for terms/privacy.
+- Services Configuration:
+    1. **Postgres Service**:
+        - **`postgres:`**: Defines the PostgreSQL service.
+        - **`restart: always`**: Ensures the container restarts automatically if it stops.
+        - **`image: postgres:15-alpine`**: Uses the Postgres 15 image on Alpine Linux, a lightweight version.
+        - **`volumes: - postgres:/var/lib/postgresql/data`**: Maps a named volume **`postgres`** to persist database data.
+        - **`<<: *environment`**: Inherits the environment settings defined earlier.
+    2. **Formbricks Service**:
+        - **`formbricks:`**: Defines the Formbricks application service.
+        - **`restart: always`**: Similar to Postgres, configures the container to restart automatically.
+        - **`image: ghcr.io/formbricks/formbricks:latest`**: Pulls the latest Formbricks image from GitHub Container Registry.
+        - **`depends_on: - postgres`**: Specifies that Formbricks depends on the PostgreSQL service.
+        - **`ports: - 3000:3000`**: Maps port 3000 from the container to the host, allowing web access to the application.
+        - **`volumes: - uploads:/home/nextjs/apps/web/uploads/`**: Sets a volume for uploads.
+        - **`<<: *environment`**: Inherits environment settings.
+- Volumes Definition:
+    - **`volumes:`**
+        - **`postgres: { driver: local }`**: Defines a local volume for PostgreSQL data, ensuring data persistence.
+        - **`uploads:`**: Sets up a volume for storing uploads in the Formbricks application.
+
+This Docker Compose file orchestrates the Formbricks application and its database, providing a harmonized and efficient deployment setup. It highlights the ease of configuring and running a multi-container application, where each service is finely tuned and interconnected.
+
+<Image
+  src={SmartestPersonGif}
+  alt="Explained Formbricks Docker Compose line by line"
+  className="w-full rounded-lg"
+/>
+
+
+That’s it! **You’ve understood our Advanced Docker Setup** in the Self Hosting Stack! Congratulations! Now lets go a step further and understand our cool Single Script Setup too!
+
+
+### Quick Server Concepts before we understand our Single Script Setup
+
+1. **Proxy**:
+A proxy server acts as an intermediary between a user's computer and the internet. It's used to request resources from other servers, offering benefits like improved security and performance, and controlled access.
+2. **Reverse Proxy**:
+A reverse proxy sits in front of web servers and forwards client requests to those web servers. It's key for load balancing, providing SSL termination, and ensuring secure and anonymous browsing.
+3. **SSL (Secure Sockets Layer)**:
+SSL is a standard security technology for establishing an encrypted link between a web server and a browser. It ensures that all data passed between the web server and browsers remain private and integral, a must-have for securing online transactions.
+4. **Cronjobs**:
+Cronjobs are scheduled tasks that automate scripts at specified times. They're crucial for routine tasks like backups and system updates. However, managing cronjobs in Docker can be challenging due to its isolated environment.
+
+### Struggles with running Cronjobs in Docker env
+
+Cronjobs are typically straightforward to write and administer, but we encountered challenges when trying to run them inside our Docker container without root permissions and with a limited view of system environment variables. This issue is common in Docker's isolated environment, where running containers as root is considered a security risk.
+
+<Image
+  src={SuperSonicGif}
+  alt="Formbricks uses Supercronic to run cronjobs in Docker without root permissions and with a limited view of system environment variables."
+  className="w-full rounded-lg"
+/>
+
+After much deliberation and exploring various workarounds, we discovered [Supercronic](https://github.com/aptible/supercronic). This open-source job scheduler is tailor-made for Docker, providing a reliable solution for executing cronjobs without needing superuser privileges. Additionally, it effectively accesses the full environment context, making it an ideal fit for our setup.
+
+### Understanding our shell script:
+
+This shell script is designed to streamline the setup and management of a Formbricks instance using Docker. It’s hosted [here](https://github.com/formbricks/formbricks/blob/main/docker/production.sh) currently for you to take a look. It's divided into various functions, each handling a specific aspect of the setup or maintenance process:
+
+**Initial Setup**:
+
+- The script begins with a shebang line (**`#!/bin/env bash`**) specifying that it should run in a Bash environment.
+- **`set -e`** ensures the script exits if any command fails.
+- The script then determines the Ubuntu version for contextual messages.
+
+**Function: install_formbricks**:
+
+- **Welcome Message**: Begins with a friendly greeting and info about the setup process.
+- **Remove Old Docker Installations**: Safely removes any existing Docker installations.
+- **Install Dependencies**: Updates package lists and installs necessary dependencies.
+- **Docker Setup**: Adds Docker's GPG key and sets up its stable repository, followed by installing Docker and its related components.
+- **Docker Installation Test**: Verifies Docker installation.
+- **User Configuration**: Adds the current user to the Docker group to avoid using sudo for Docker commands.
+- **Traefik Configuration**: Sets up Traefik for reverse proxy and SSL with user-provided email and domain name.
+- **Optional Email Service Setup**: If the user opts in, gathers SMTP details for email services.
+- **Download and Configure docker-compose.yml**: Downloads the Formbricks Docker Compose file and modifies it with custom settings.
+- **Final Setup Steps**: Creates a new group, brings up Docker containers, and provides final instructions.
+
+**Function: uninstall_formbricks**:
+
+- Prompts for confirmation and, if affirmed, stops and removes the Formbricks Docker containers and associated data.
+
+**Additional Utility Functions**:
+
+- **stop_formbricks**: Stops the running Formbricks instance.
+- **update_formbricks**: Pulls the latest Docker images and updates the Formbricks instance.
+- **restart_formbricks**: Restarts the Formbricks containers.
+
+**Control Flow**:
+
+- The script ends with a case statement allowing users to call specific functions based on the command-line argument `install, update, stop, restart, uninstall`
+
+This script encapsulates all necessary steps for a user-friendly setup and maintenance of Formbricks, making it easy for users to deploy and manage their self-hosted Formbricks instance.
+
+<Image
+  src={EndingGif}
+  alt="Explained Formbricks Self Hosting Setup in an easy to understand way"
+  className="w-full rounded-lg"
+/>
+
+That’s it amigo! If you’re reading this, we hope you’ve understood our Self Hosting stack inside out now! Thank you for taking the time to read through this comprehensive guide on Formbricks self-hosting. Don't forget to check out the [Slides](https://pitch.com/v/understanding-Formbricks-e2e-tests-i54auf) for this session.
+
+Your participation and feedback are vital in shaping our community and its resources. So, [join us on Discord](https://formbricks.com/discord), to be a part of the next session, engage in lively discussions, connect with fellow enthusiasts and Formbricks team!
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
