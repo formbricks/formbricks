@@ -31,7 +31,7 @@ export const createTagAction = async (environmentId: string, tagName: string) =>
   return await createTag(environmentId, tagName);
 };
 
-export const createTagToResponeAction = async (responseId: string, tagId: string, surveyId: string) => {
+export const createTagToResponeAction = async (responseId: string, tagId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -42,10 +42,10 @@ export const createTagToResponeAction = async (responseId: string, tagId: string
   const { hasDeleteAccess } = await verifyUserRoleAccess(tag!.environmentId, session.user!.id);
   if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
-  return await addTagToRespone(responseId, tagId, surveyId);
+  return await addTagToRespone(responseId, tagId);
 };
 
-export const deleteTagOnResponseAction = async (responseId: string, tagId: string, surveyId: string) => {
+export const deleteTagOnResponseAction = async (responseId: string, tagId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -56,7 +56,7 @@ export const deleteTagOnResponseAction = async (responseId: string, tagId: strin
   const { hasDeleteAccess } = await verifyUserRoleAccess(tag!.environmentId, session.user!.id);
   if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
-  return await deleteTagOnResponse(responseId, tagId, surveyId);
+  return await deleteTagOnResponse(responseId, tagId);
 };
 
 export const deleteResponseAction = async (responseId: string) => {

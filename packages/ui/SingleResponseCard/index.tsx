@@ -430,7 +430,6 @@ export default function SingleResponseCard({
             {!isViewer && (
               <ResponseTagsWrapper
                 environmentId={environmentId}
-                surveyId={survey.id}
                 responseId={response.id}
                 tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
                 environmentTags={environmentTags}

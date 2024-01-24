@@ -31,7 +31,7 @@ export default function ResponseTimeline({
 
   useEffect(() => {
     setSortedResponses(responsesAscending ? [...responses].reverse() : responses);
-  }, [responsesAscending, responses]);
+  }, [responsesAscending]);
 
   return (
     <div className="md:col-span-2">

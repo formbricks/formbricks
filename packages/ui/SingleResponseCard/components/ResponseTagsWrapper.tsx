@@ -18,7 +18,6 @@ interface ResponseTagsWrapperProps {
     tagName: string;
   }[];
   environmentId: string;
-  surveyId: string;
   responseId: string;
   environmentTags: TTag[];
   updateFetchedResponses: () => void;
@@ -27,7 +26,6 @@ interface ResponseTagsWrapperProps {
 const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   tags,
   environmentId,
-  surveyId,
   responseId,
   environmentTags,
   updateFetchedResponses,
@@ -40,7 +38,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const onDelete = async (tagId: string) => {
     try {
-      await deleteTagOnResponseAction(responseId, tagId, surveyId);
+      await deleteTagOnResponseAction(responseId, tagId);
       updateFetchedResponses();
     } catch (e) {
       toast.error("An error occurred deleting the tag");
@@ -98,7 +96,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                     tagName: tag.name,
                   },
                 ]);
-                createTagToResponeAction(responseId, tag.id, surveyId).then(() => {
+                createTagToResponeAction(responseId, tag.id).then(() => {
                   updateFetchedResponses();
                   setSearchValue("");
                   setOpen(false);
@@ -129,7 +127,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
               },
             ]);
 
-            createTagToResponeAction(responseId, tagId, surveyId).then(() => {
+            createTagToResponeAction(responseId, tagId).then(() => {
               updateFetchedResponses();
               setSearchValue("");
               setOpen(false);
