@@ -32,7 +32,7 @@ jobs:
 
       - name: Build App in dev mode without external dependencies
         run: |
-          pnpm build:dev
+          pnpm build:dev --filter=web...
 
       - name: Run App
         run: |

@@ -23,9 +23,17 @@
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
     },
+    "@formbricks/js#build:dev": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build:dev"]
+    },
     "@formbricks/surveys#build": {
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
+    },
+    "@formbricks/surveys#build:dev": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build:dev"]
     },
     "@formbricks/surveys#go": {
       "cache": false,
@@ -125,6 +133,10 @@
         "WEBAPP_URL"
       ]
     },
+    "build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**", ".next/**"]
+    },
     "post-install": {
       "cache": false,
       "dependsOn": [],
@@ -165,9 +177,6 @@
     "dev": {
       "cache": false,
       "persistent": true
-    },
-    "build:dev": {
-      "outputs": []
     },
     "start": {
       "outputs": []
