@@ -153,7 +153,7 @@ export default function TemplateList({
           ? [...filteredTemplates, testTemplate]
           : filteredTemplates
         ).map((template: TTemplate) => (
-          <button
+          <div
             onClick={() => {
               const newTemplate = replacePresetPlaceholders(template, product);
               onTemplateClick(newTemplate);
@@ -208,7 +208,7 @@ export default function TemplateList({
                 </Button>
               </div>
             )}
-          </button>
+          </div>
         ))}
       </div>
     </main>
