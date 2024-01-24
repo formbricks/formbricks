@@ -22,9 +22,13 @@ jobs:
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
 
-      - name: Setup Spring Boot App
+      - name: Run App
         run: |
           pnpm go &
+          for attempt in {1..20}; do sleep 10; if curl http://localhost:3004/health; then echo ready; break; fi; echo waiting...; done
+
+      - name: Run E2E Tests
+        run: |
           pnpm test:e2e
 
       - uses: actions/upload-artifact@v3
