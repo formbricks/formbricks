@@ -19,22 +19,22 @@ export const createTagAction = async (environmentId: string, tagName: string) =>
   return await createTag(environmentId, tagName);
 };
 
-export const createTagToResponeAction = async (responseId: string, tagId: string) => {
+export const createTagToResponeAction = async (responseId: string, tagId: string, surveyId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessTagOnResponse(session.user.id, tagId, responseId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  return await addTagToRespone(responseId, tagId);
+  return await addTagToRespone(responseId, tagId, surveyId);
 };
 
-export const deleteTagOnResponseAction = async (responseId: string, tagId: string) => {
+export const deleteTagOnResponseAction = async (responseId: string, tagId: string, surveyId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await canUserAccessTagOnResponse(session.user.id, tagId, responseId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  return await deleteTagOnResponse(responseId, tagId);
+  return await deleteTagOnResponse(responseId, tagId, surveyId);
 };

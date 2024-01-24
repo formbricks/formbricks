@@ -41,7 +41,7 @@ export interface SingleResponseCardProps {
   pageType: string;
   environmentTags: TTag[];
   environment: TEnvironment;
-  setFetchedResponses: React.Dispatch<React.SetStateAction<TResponse[]>>;
+  setFetchedResponses?: React.Dispatch<React.SetStateAction<TResponse[]>>;
 }
 
 interface TooltipRendererProps {
@@ -154,7 +154,9 @@ export default function SingleResponseCard({
         throw new Error("You are not authorized to perform this action.");
       }
       await deleteResponseAction(response.id);
-      setFetchedResponses((prevResponses) => prevResponses.filter((r) => r.id !== response.id));
+      if (setFetchedResponses) {
+        setFetchedResponses((prevResponses) => prevResponses.filter((r) => r.id !== response.id));
+      }
       router.refresh();
       toast.success("Submission deleted successfully.");
       setDeleteDialogOpen(false);
@@ -224,7 +226,7 @@ export default function SingleResponseCard({
 
   const updateFetchedResponses = async () => {
     const updatedResponse = await getResponseAction(response.id);
-    if (updatedResponse !== null) {
+    if (updatedResponse !== null && setFetchedResponses) {
       setFetchedResponses((prevResponses) =>
         prevResponses.map((response) => (response.id === updatedResponse.id ? updatedResponse : response))
       );
