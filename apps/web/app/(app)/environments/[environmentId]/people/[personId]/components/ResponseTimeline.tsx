@@ -31,6 +31,7 @@ export default function ResponseTimeline({
 
   useEffect(() => {
     setSortedResponses(responsesAscending ? [...responses].reverse() : responses);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [responsesAscending]);
 
   return (
