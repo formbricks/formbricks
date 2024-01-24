@@ -1,13 +1,13 @@
+import * as DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 
-import { cleanHtml } from "@formbricks/lib/cleanHtml";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 
 import { extractLanguageSymbols, isLabelValidForAllLanguages } from "../utils/i18n";
-import LanguageIndicator from "./LanguageIndicator";
+import { LanguageIndicator } from "./LanguageIndicator";
 
 interface LocalizedEditorProps {
   id: string;
@@ -81,7 +81,7 @@ export const LocalizedEditor = ({
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
-                  __html: cleanHtml(recallToHeadline(value, localSurvey, false, "en")["en"]),
+                  __html: DOMPurify.sanitize(recallToHeadline(value, localSurvey, false, "en")["en"]),
                 }}></label>
             </div>
           )}
