@@ -189,18 +189,14 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: "Getting Started",
-    links: [
-      { title: "Quickstart: In app", href: "/docs/getting-started/quickstart-in-app-survey" },
-      { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
-      { title: "Troubleshooting", href: "/docs/getting-started/troubleshooting" },
-    ],
-  },
-  {
     title: "In-App Surveys",
     links: [
+      { title: "Quickstart", href: "/docs/getting-started/quickstart-in-app-survey" },
+      { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
       { title: "Actions", href: "/docs/in-app-surveys/actions" },
       { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
+      { title: "Troubleshooting", href: "/docs/getting-started/troubleshooting" },
+      { title: "Identify Users", href: "/docs/in-app-surveys/user-identification" },
     ],
   },
   {

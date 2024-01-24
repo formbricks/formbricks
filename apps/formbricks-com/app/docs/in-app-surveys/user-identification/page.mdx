@@ -1,0 +1,66 @@
+export const metadata = {
+  title: "Identifying Users in Formbricks In-App Surveys",
+  description:
+    "Dive into the importance of user identification in surveys. Boost your survey response rates and target the right users with Formbricks.",
+};
+
+#### In-App Surveys
+
+# User Identification
+
+User Identification helps you to not only segment your users but also to see more information about the user who responded to a survey. This helps you to target surveys to specific user segments and see more information about the user who responded to a survey.
+
+### Understanding Identified vs Unidentified Users
+
+In Formbricks, understanding the distinction between identified and unidentified users is crucial for effective survey segmentation and targeted feedback collection.
+
+| Feature                                                    | Unidentified Users | Identified Users |
+| ---------------------------------------------------------- | ---------------- | ------------------ |
+| Can be targeted with surveys                               | ✅               | ✅                 |
+| Have **Personification** of the user                       | ❌               | ✅                 |
+| Can have **custom attributes**                             | ❌               | ✅                 |
+| Can be **specifically targeted** based on their attributes | ❌               | ✅                 |
+| Can be filtered by userId                                  | ❌               | ✅                 |
+| Can be filtered by custom attributes                       | ❌               | ✅                 |
+
+
+## Identified Users
+Identified users are those for whom specific information has been set, notably the userId. This identification allows for more precise targeting of surveys and a deeper understanding of the feedback provided.
+
+**Setting the User ID:**
+To identify a user, set the `userId` in the Formbricks initialization call. The userId should be a unique string, such as a database ID or an email address. This is essential for the user to be visible on the Formbricks dashboard.
+
+<Col>
+<CodeGroup title="Setting User ID">
+
+```javascript
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user_id>",
+});
+```
+
+</CodeGroup>
+</Col>
+
+**Logging Out Users:**
+When a user logs out of your application, ensure they are also logged out of Formbricks. This prevents the association of their activities with the wrong user profile.
+
+<Col>
+<CodeGroup title="Logging out User">
+
+```javascript
+formbricks.logout();
+```
+
+</CodeGroup>
+</Col>
+
+<Note>
+    To set other custom attributes for a user, view our <a href="/docs/in-app-surveys/attributes#setting-custom-user-attributes">Setting Custom Attributes</a> documentation.
+</Note>
+
+## Unidentified Users
+Unidentified users are those without a specific userId set. Surveys can still be presented to these users, but without the granularity of user-specific targeting.
+
