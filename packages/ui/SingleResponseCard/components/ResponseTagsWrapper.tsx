@@ -18,15 +18,19 @@ interface ResponseTagsWrapperProps {
     tagName: string;
   }[];
   environmentId: string;
+  surveyId: string;
   responseId: string;
   environmentTags: TTag[];
+  updateFetchedResponses: () => void;
 }
 
 const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   tags,
   environmentId,
+  surveyId,
   responseId,
   environmentTags,
+  updateFetchedResponses,
 }) => {
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
@@ -36,12 +40,10 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const onDelete = async (tagId: string) => {
     try {
-      await deleteTagOnResponseAction(responseId, tagId);
-
-      router.refresh();
+      await deleteTagOnResponseAction(responseId, tagId, surveyId);
+      updateFetchedResponses();
     } catch (e) {
       toast.error("An error occurred deleting the tag");
-      router.refresh();
     }
   };
 
@@ -96,10 +98,10 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                     tagName: tag.name,
                   },
                 ]);
-                createTagToResponeAction(responseId, tag.id).then(() => {
+                createTagToResponeAction(responseId, tag.id, surveyId).then(() => {
+                  updateFetchedResponses();
                   setSearchValue("");
                   setOpen(false);
-                  router.refresh();
                 });
               })
               .catch((err) => {
@@ -116,7 +118,6 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
                 setSearchValue("");
                 setOpen(false);
-                router.refresh();
               });
           }}
           addTag={(tagId) => {
@@ -128,10 +129,10 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
               },
             ]);
 
-            createTagToResponeAction(responseId, tagId).then(() => {
+            createTagToResponeAction(responseId, tagId, surveyId).then(() => {
+              updateFetchedResponses();
               setSearchValue("");
               setOpen(false);
-              router.refresh();
             });
           }}
         />

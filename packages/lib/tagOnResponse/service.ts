@@ -19,7 +19,11 @@ const selectTagsOnResponse = {
   },
 };
 
-export const addTagToRespone = async (responseId: string, tagId: string): Promise<TTagsOnResponses> => {
+export const addTagToRespone = async (
+  responseId: string,
+  tagId: string,
+  surveyId: string
+): Promise<TTagsOnResponses> => {
   try {
     const tagOnResponse = await prisma.tagsOnResponses.create({
       data: {
@@ -31,6 +35,7 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
 
     responseCache.revalidate({
       id: responseId,
+      surveyId: surveyId,
     });
 
     tagOnResponseCache.revalidate({
@@ -48,7 +53,11 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
   }
 };
 
-export const deleteTagOnResponse = async (responseId: string, tagId: string): Promise<TTagsOnResponses> => {
+export const deleteTagOnResponse = async (
+  responseId: string,
+  tagId: string,
+  surveyId: string
+): Promise<TTagsOnResponses> => {
   try {
     const deletedTag = await prisma.tagsOnResponses.delete({
       where: {
@@ -62,6 +71,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
 
     responseCache.revalidate({
       id: responseId,
+      surveyId: surveyId,
     });
 
     tagOnResponseCache.revalidate({

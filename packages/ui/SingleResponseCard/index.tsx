@@ -29,6 +29,7 @@ import { RatingResponse } from "../RatingResponse";
 import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 import { deleteResponseAction } from "./actions";
+import { getResponseAction } from "./actions";
 import QuestionSkip from "./components/QuestionSkip";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
@@ -40,6 +41,7 @@ export interface SingleResponseCardProps {
   pageType: string;
   environmentTags: TTag[];
   environment: TEnvironment;
+  setFetchedResponses: React.Dispatch<React.SetStateAction<TResponse[]>>;
 }
 
 interface TooltipRendererProps {
@@ -78,6 +80,7 @@ export default function SingleResponseCard({
   pageType,
   environmentTags,
   environment,
+  setFetchedResponses,
 }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
@@ -151,6 +154,7 @@ export default function SingleResponseCard({
         throw new Error("You are not authorized to perform this action.");
       }
       await deleteResponseAction(response.id);
+      setFetchedResponses((prevResponses) => prevResponses.filter((r) => r.id !== response.id));
       router.refresh();
       toast.success("Submission deleted successfully.");
       setDeleteDialogOpen(false);
@@ -217,6 +221,15 @@ export default function SingleResponseCard({
   const hasHiddenFieldsEnabled = survey.hiddenFields?.enabled;
   const fieldIds = survey.hiddenFields?.fieldIds || [];
   const hasFieldIds = !!fieldIds.length;
+
+  const updateFetchedResponses = async () => {
+    const updatedResponse = await getResponseAction(response.id);
+    if (updatedResponse !== null) {
+      setFetchedResponses((prevResponses) =>
+        prevResponses.map((response) => (response.id === updatedResponse.id ? updatedResponse : response))
+      );
+    }
+  };
 
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
@@ -415,9 +428,11 @@ export default function SingleResponseCard({
             {!isViewer && (
               <ResponseTagsWrapper
                 environmentId={environmentId}
+                surveyId={survey.id}
                 responseId={response.id}
                 tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
                 environmentTags={environmentTags}
+                updateFetchedResponses={updateFetchedResponses}
               />
             )}
           </LoadingWrapper>
@@ -438,6 +453,7 @@ export default function SingleResponseCard({
           notes={response.notes}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
+          updateFetchedResponses={updateFetchedResponses}
         />
       )}
     </div>
