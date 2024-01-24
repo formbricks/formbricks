@@ -32,6 +32,7 @@
   "scripts": {
     "dev": "vite build --watch --mode dev",
     "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --mode dev",
     "go": "vite build --watch --mode dev",
     "lint": "eslint ./src --fix",
     "test": "jest --coverage --no-cache",

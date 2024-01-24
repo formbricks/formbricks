@@ -30,14 +30,23 @@ jobs:
           SECRET=$(openssl rand -hex 32)
           echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
 
+      - name: Build App in dev mode without external dependencies
+        run: |
+          pnpm build:dev
+
       - name: Run App
         run: |
-          pnpm go &
+          pnpm start --filter=web &
+          cd packages/surveys && pnpm serve &
           for attempt in {1..20}; do sleep 10; if curl http://localhost:3000/health; then echo ready; break; fi; echo waiting...; done
 
-      - name: Test Endpoint
+      - name: Test Endpoint app
         run: |
           curl http://localhost:3000/health
+
+      - name: Test Endpoint serve
+        run: |
+          curl http://localhost:3003
 
       - name: Run E2E Tests
         run: |

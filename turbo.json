@@ -166,6 +166,9 @@
       "cache": false,
       "persistent": true
     },
+    "build:dev": {
+      "outputs": []
+    },
     "start": {
       "outputs": []
     },
