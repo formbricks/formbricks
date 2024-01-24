@@ -1,0 +1,26 @@
+{
+  "name": "@formbricks/mobile-demo",
+  "version": "1.0.0",
+  "main": "./index.js",
+  "scripts": {
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "eject": "expo eject",
+    "clean": "rimraf .turbo node_modules .expo"
+  },
+  "dependencies": {
+    "@formbricks/react-native-sdk": "workspace:*",
+    "expo": "~50.0.3",
+    "expo-status-bar": "~1.11.1",
+    "react": "18.2.0",
+    "react-native": "0.73.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@types/react": "~18.2.45",
+    "typescript": "^5.1.3"
+  },
+  "private": true
+}

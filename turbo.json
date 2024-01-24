@@ -23,6 +23,10 @@
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
     },
+    "@formbricks/react-native-sdk#build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build"]
+    },
     "@formbricks/surveys#build": {
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
