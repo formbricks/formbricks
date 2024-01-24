@@ -5,7 +5,7 @@ import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
 import { SurveyBaseProps } from "@/types/props";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
@@ -186,6 +186,15 @@ export function Survey({
     setQuestionId(prevQuestionId);
     onActiveQuestionChange(prevQuestionId);
   };
+
+  const question = useMemo(() => {
+    if (questionId === "end" && !survey.thankYouCard.enabled) {
+      return survey.questions.slice(-1)[0];
+    } else {
+      return survey.questions.find((q) => q.id === questionId);
+    }
+  }, [questionId, survey]);
+
   function getCardContent() {
     if (showError) {
       return (
@@ -225,13 +234,12 @@ export function Survey({
         />
       );
     } else {
-      const currQues = survey.questions.find((q) => q.id === questionId);
       return (
-        currQues && (
+        question && (
           <QuestionConditional
             surveyId={survey.id}
-            question={parseRecallInformation(currQues)}
-            value={responseData[currQues.id]}
+            question={parseRecallInformation(question)}
+            value={responseData[question.id]}
             onChange={onChange}
             onSubmit={onSubmit}
             onBack={onBack}
@@ -241,9 +249,9 @@ export function Survey({
             isFirstQuestion={
               history && prefillResponseData
                 ? history[history.length - 1] === survey.questions[0].id
-                : currQues.id === survey?.questions[0]?.id
+                : question.id === survey?.questions[0]?.id
             }
-            isLastQuestion={currQues.id === survey.questions[survey.questions.length - 1].id}
+            isLastQuestion={question.id === survey.questions[survey.questions.length - 1].id}
           />
         )
       );
