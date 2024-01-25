@@ -33,7 +33,7 @@ jobs:
 
       - name: Start PostgreSQL
         run: |
-          pnpm db:start
+          pnpm db:start &
 
       - name: Build App in dev mode without external dependencies
         run: |
