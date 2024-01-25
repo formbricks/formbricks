@@ -41,7 +41,7 @@ jobs:
 
       - name: Run App
         run: |
-          pnpm start --filter=web &
+          NODE_ENV=test pnpm start --filter=web &
           cd packages/surveys && pnpm serve &
           for attempt in {1..20}; do
             if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
