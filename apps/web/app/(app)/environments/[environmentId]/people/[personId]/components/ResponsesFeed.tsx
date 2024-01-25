@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -19,17 +21,19 @@ export default async function ResponseFeed({
   user: TUser;
   environmentTags: TTag[];
 }) {
+  const [fetchedResponses, setFetchedResponses] = useState(responses);
+
   return (
     <>
-      {responses.length === 0 ? (
+      {fetchedResponses.length === 0 ? (
         <EmptySpaceFiller type="response" environment={environment} />
       ) : (
-        responses.map((response, idx) => {
+        fetchedResponses.map((response) => {
           const survey = surveys.find((survey) => {
             return survey.id === response.surveyId;
           });
           return (
-            <div key={idx}>
+            <div key={response.id}>
               {survey && (
                 <SingleResponseCard
                   response={response}
@@ -38,6 +42,7 @@ export default async function ResponseFeed({
                   pageType="people"
                   environmentTags={environmentTags}
                   environment={environment}
+                  setFetchedResponses={setFetchedResponses}
                 />
               )}
             </div>
