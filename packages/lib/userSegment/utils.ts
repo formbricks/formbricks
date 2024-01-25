@@ -4,8 +4,8 @@ import {
   TActionMetric,
   TAllOperators,
   TAttributeOperator,
-  TBaseFilterGroup,
-  TBaseFilterGroupItem,
+  TBaseFilter,
+  TBaseFilters,
   TDeviceOperator,
   TSegmentOperator,
   TUserSegment,
@@ -19,7 +19,7 @@ import {
 
 // type guard to check if a resource is a filter
 export const isResourceFilter = (
-  resource: TUserSegmentFilter | TBaseFilterGroup
+  resource: TUserSegmentFilter | TBaseFilters
 ): resource is TUserSegmentFilter => {
   return (resource as TUserSegmentFilter).root !== undefined;
 };
@@ -109,7 +109,7 @@ export const convertMetricToText = (metric: TActionMetric) => {
   }
 };
 
-export const addFilterBelow = (group: TBaseFilterGroup, resourceId: string, filter: TBaseFilterGroupItem) => {
+export const addFilterBelow = (group: TBaseFilters, resourceId: string, filter: TBaseFilter) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
@@ -129,17 +129,17 @@ export const addFilterBelow = (group: TBaseFilterGroup, resourceId: string, filt
   }
 };
 
-export const createGroupFromResource = (group: TBaseFilterGroup, resourceId: string) => {
+export const createGroupFromResource = (group: TBaseFilters, resourceId: string) => {
   for (let i = 0; i < group.length; i++) {
-    const filterGroup = group[i];
-    if (isResourceFilter(filterGroup.resource)) {
-      if (filterGroup.resource.id === resourceId) {
-        const newGroupToAdd: TBaseFilterGroupItem = {
+    const filters = group[i];
+    if (isResourceFilter(filters.resource)) {
+      if (filters.resource.id === resourceId) {
+        const newGroupToAdd: TBaseFilter = {
           id: createId(),
-          connector: filterGroup.connector,
+          connector: filters.connector,
           resource: [
             {
-              ...filterGroup,
+              ...filters,
               connector: null,
             },
           ],
@@ -153,7 +153,7 @@ export const createGroupFromResource = (group: TBaseFilterGroup, resourceId: str
       if (group[i].id === resourceId) {
         // make an outer group, wrap the current group in it and add a filter below it
 
-        const newFilter: TBaseFilterGroupItem = {
+        const newFilter: TBaseFilter = {
           id: createId(),
           connector: "and",
           resource: {
@@ -164,23 +164,23 @@ export const createGroupFromResource = (group: TBaseFilterGroup, resourceId: str
           },
         };
 
-        const outerGroup: TBaseFilterGroupItem = {
-          connector: filterGroup.connector,
+        const outerGroup: TBaseFilter = {
+          connector: filters.connector,
           id: createId(),
-          resource: [{ ...filterGroup, connector: null }, newFilter],
+          resource: [{ ...filters, connector: null }, newFilter],
         };
 
         group.splice(i, 1, outerGroup);
 
         break;
       } else {
-        createGroupFromResource(filterGroup.resource, resourceId);
+        createGroupFromResource(filters.resource, resourceId);
       }
     }
   }
 };
 
-export const moveResourceUp = (group: TBaseFilterGroup, i: number) => {
+export const moveResourceUp = (group: TBaseFilters, i: number) => {
   if (i === 0) {
     return;
   }
@@ -198,7 +198,7 @@ export const moveResourceUp = (group: TBaseFilterGroup, i: number) => {
   }
 };
 
-export const moveResourceDown = (group: TBaseFilterGroup, i: number) => {
+export const moveResourceDown = (group: TBaseFilters, i: number) => {
   if (i === group.length - 1) {
     return;
   }
@@ -216,7 +216,7 @@ export const moveResourceDown = (group: TBaseFilterGroup, i: number) => {
   }
 };
 
-export const moveResource = (group: TBaseFilterGroup, resourceId: string, direction: "up" | "down") => {
+export const moveResource = (group: TBaseFilters, resourceId: string, direction: "up" | "down") => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
@@ -246,7 +246,7 @@ export const moveResource = (group: TBaseFilterGroup, resourceId: string, direct
   }
 };
 
-export const deleteResource = (group: TBaseFilterGroup, resourceId: string) => {
+export const deleteResource = (group: TBaseFilters, resourceId: string) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
@@ -272,7 +272,7 @@ export const deleteResource = (group: TBaseFilterGroup, resourceId: string) => {
   }
 };
 
-export const deleteEmptyGroups = (group: TBaseFilterGroup) => {
+export const deleteEmptyGroups = (group: TBaseFilters) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
@@ -284,7 +284,7 @@ export const deleteEmptyGroups = (group: TBaseFilterGroup) => {
   }
 };
 
-export const addFilterInGroup = (group: TBaseFilterGroup, groupId: string, filter: TBaseFilterGroupItem) => {
+export const addFilterInGroup = (group: TBaseFilters, groupId: string, filter: TBaseFilter) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
@@ -314,7 +314,7 @@ export const addFilterInGroup = (group: TBaseFilterGroup, groupId: string, filte
 };
 
 export const toggleGroupConnector = (
-  group: TBaseFilterGroup,
+  group: TBaseFilters,
   groupId: string,
   newConnectorValue: TUserSegmentConnector
 ) => {
@@ -332,7 +332,7 @@ export const toggleGroupConnector = (
 };
 
 export const toggleFilterConnector = (
-  group: TBaseFilterGroup,
+  group: TBaseFilters,
   filterId: string,
   newConnectorValue: TUserSegmentConnector
 ) => {
@@ -350,7 +350,7 @@ export const toggleFilterConnector = (
 };
 
 export const updateOperatorInFilter = (
-  group: TBaseFilterGroup,
+  group: TBaseFilters,
   filterId: string,
   newOperator: TAttributeOperator | TSegmentOperator | TDeviceOperator
 ) => {
@@ -369,7 +369,7 @@ export const updateOperatorInFilter = (
 };
 
 export const updateAttributeClassNameInFilter = (
-  group: TBaseFilterGroup,
+  group: TBaseFilters,
   filterId: string,
   newAttributeClassName: string
 ) => {
@@ -388,7 +388,7 @@ export const updateAttributeClassNameInFilter = (
 };
 
 export const updateActionClassIdInFilter = (
-  group: TBaseFilterGroup,
+  group: TBaseFilters,
   filterId: string,
   newActionClassId: string
 ) => {
@@ -406,7 +406,7 @@ export const updateActionClassIdInFilter = (
   }
 };
 
-export const updateMetricInFilter = (group: TBaseFilterGroup, filterId: string, newMetric: TActionMetric) => {
+export const updateMetricInFilter = (group: TBaseFilters, filterId: string, newMetric: TActionMetric) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
@@ -421,7 +421,7 @@ export const updateMetricInFilter = (group: TBaseFilterGroup, filterId: string, 
   }
 };
 
-export const updateSegmentIdInFilter = (group: TBaseFilterGroup, filterId: string, newSegmentId: string) => {
+export const updateSegmentIdInFilter = (group: TBaseFilters, filterId: string, newSegmentId: string) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
@@ -437,7 +437,7 @@ export const updateSegmentIdInFilter = (group: TBaseFilterGroup, filterId: strin
   }
 };
 
-export const updateFilterValue = (group: TBaseFilterGroup, filterId: string, newValue: string | number) => {
+export const updateFilterValue = (group: TBaseFilters, filterId: string, newValue: string | number) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
@@ -454,7 +454,7 @@ export const updateFilterValue = (group: TBaseFilterGroup, filterId: string, new
 };
 
 export const updateDeviceTypeInFilter = (
-  group: TBaseFilterGroup,
+  group: TBaseFilters,
   filterId: string,
   newDeviceType: "phone" | "desktop"
 ) => {

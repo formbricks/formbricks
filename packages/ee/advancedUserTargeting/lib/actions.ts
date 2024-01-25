@@ -11,9 +11,9 @@ import {
 } from "@formbricks/lib/userSegment/service";
 import { formatDateFields } from "@formbricks/lib/utils/datetime";
 import {
-  TBaseFilterGroup,
+  TBaseFilters,
   TUserSegmentUpdateInput,
-  ZUserSegmentFilterGroup,
+  ZUserSegmentFilters,
   ZUserSegmentUpdateInput,
 } from "@formbricks/types/userSegment";
 
@@ -30,9 +30,9 @@ export const createUserSegmentAction = async ({
   title: string;
   description: string;
   isPrivate: boolean;
-  filters: TBaseFilterGroup;
+  filters: TBaseFilters;
 }) => {
-  const parsedFilters = ZUserSegmentFilterGroup.safeParse(filters);
+  const parsedFilters = ZUserSegmentFilters.safeParse(filters);
 
   if (!parsedFilters.success) {
     const errMsg =
@@ -56,7 +56,7 @@ export const createUserSegmentAction = async ({
 export const updateUserSegmentAction = async (segmentId: string, data: TUserSegmentUpdateInput) => {
   const { filters } = data;
   if (filters) {
-    const parsedFilters = ZUserSegmentFilterGroup.safeParse(filters);
+    const parsedFilters = ZUserSegmentFilters.safeParse(filters);
 
     if (!parsedFilters.success) {
       throw new Error("Invalid filters");

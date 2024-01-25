@@ -15,7 +15,7 @@ import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/con
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/userSegment";
+import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 
@@ -96,7 +96,7 @@ export default function WhoToSendCard({
     }
   }, [localSurvey.type]);
 
-  const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
+  const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedUserSegment = structuredClone(userSegment);
     if (updatedUserSegment?.filters?.length === 0) {
       updatedUserSegment.filters.push({

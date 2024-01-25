@@ -6,7 +6,7 @@ import React, { useMemo, useState } from "react";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/userSegment";
+import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
 import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
 import { Input } from "@formbricks/ui/Input";
 import { TabBar } from "@formbricks/ui/TabBar";
@@ -14,7 +14,7 @@ import { TabBar } from "@formbricks/ui/TabBar";
 type TAddFilterModalProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
-  onAddFilter: (filter: TBaseFilterGroupItem) => void;
+  onAddFilter: (filter: TBaseFilter) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   userSegments: TUserSegment[];
@@ -116,7 +116,7 @@ const AddFilterModal = ({
     if (type === "action") {
       if (!actionClassId) return;
 
-      const newFilter: TBaseFilterGroupItem = {
+      const newFilter: TBaseFilter = {
         id: createId(),
         connector: "and",
         resource: {
@@ -140,7 +140,7 @@ const AddFilterModal = ({
     if (type === "attribute") {
       if (!attributeClassName) return;
 
-      const newFilter: TBaseFilterGroupItem = {
+      const newFilter: TBaseFilter = {
         id: createId(),
         connector: "and",
         resource: {
@@ -163,7 +163,7 @@ const AddFilterModal = ({
     if (type === "segment") {
       if (!userSegmentId) return;
 
-      const newFilter: TBaseFilterGroupItem = {
+      const newFilter: TBaseFilter = {
         id: createId(),
         connector: "and",
         resource: {
@@ -186,7 +186,7 @@ const AddFilterModal = ({
     if (type === "device") {
       if (!deviceType) return;
 
-      const newFilter: TBaseFilterGroupItem = {
+      const newFilter: TBaseFilter = {
         id: createId(),
         connector: "and",
         resource: {
@@ -219,10 +219,10 @@ const AddFilterModal = ({
         <div className="flex max-h-80 flex-col gap-1 overflow-y-auto">
           {activeTabId === "all" && (
             <>
-              {allFiltersFiltered.map((filterGroup) => {
+              {allFiltersFiltered.map((filters) => {
                 return (
                   <>
-                    {filterGroup.actions.map((actionClass) => {
+                    {filters.actions.map((actionClass) => {
                       return (
                         <div
                           onClick={() => {
@@ -238,7 +238,7 @@ const AddFilterModal = ({
                       );
                     })}
 
-                    {filterGroup.attributes.map((attributeClass) => {
+                    {filters.attributes.map((attributeClass) => {
                       return (
                         <div
                           onClick={() => {
@@ -254,7 +254,7 @@ const AddFilterModal = ({
                       );
                     })}
 
-                    {filterGroup.segments.map((userSegment) => {
+                    {filters.segments.map((userSegment) => {
                       return (
                         <div
                           onClick={() => {
@@ -270,7 +270,7 @@ const AddFilterModal = ({
                       );
                     })}
 
-                    {filterGroup.devices.map((deviceType) => (
+                    {filters.devices.map((deviceType) => (
                       <div
                         key={deviceType.id}
                         className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"

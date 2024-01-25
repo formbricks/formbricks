@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilterGroupItem, TUserSegment } from "@formbricks/types/userSegment";
+import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
@@ -54,7 +54,7 @@ const CreateSegmentModal = ({
     setOpen(false);
   };
 
-  const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
+  const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedUserSegment = structuredClone(userSegment);
     if (updatedUserSegment?.filters?.length === 0) {
       updatedUserSegment.filters.push({

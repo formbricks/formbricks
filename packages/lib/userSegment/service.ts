@@ -7,7 +7,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TActionMetric,
   TAllOperators,
-  TBaseFilterGroup,
+  TBaseFilters,
   TUserSegment,
   TUserSegmentActionFilter,
   TUserSegmentAttributeFilter,
@@ -17,7 +17,7 @@ import {
   TUserSegmentSegmentFilter,
   TUserSegmentUpdateInput,
   ZUserSegmentCreateInput,
-  ZUserSegmentFilterGroup,
+  ZUserSegmentFilters,
   ZUserSegmentUpdateInput,
 } from "@formbricks/types/userSegment";
 
@@ -357,7 +357,7 @@ export const cloneUserSegment = async (userSegmentId: string, surveyId: string):
 
     if (clonedUserSegment.id) {
       // parse the filters and update the user segment
-      const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+      const parsedFilters = ZUserSegmentFilters.safeParse(userSegment.filters);
       if (!parsedFilters.success) {
         throw new Error("Invalid filters");
       }
@@ -478,7 +478,7 @@ const evaluateSegmentFilter = async (
     return false;
   }
 
-  const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+  const parsedFilters = ZUserSegmentFilters.safeParse(userSegment.filters);
   if (!parsedFilters.success) {
     return false;
   }
@@ -539,10 +539,10 @@ type ResultConnectorPair = {
   connector: TUserSegmentConnector;
 };
 
-export async function evaluateSegment(userData: UserData, filterGroup: TBaseFilterGroup): Promise<boolean> {
+export async function evaluateSegment(userData: UserData, filters: TBaseFilters): Promise<boolean> {
   let resultPairs: ResultConnectorPair[] = [];
 
-  for (let filterItem of filterGroup) {
+  for (let filterItem of filters) {
     const { resource } = filterItem;
 
     let result: boolean;

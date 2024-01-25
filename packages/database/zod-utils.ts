@@ -23,6 +23,6 @@ export {
   ZSurveySingleUse,
 } from "@formbricks/types/surveys";
 
-export { ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
+export { ZUserSegmentFilters } from "@formbricks/types/userSegment";
 export { ZTeamBilling } from "@formbricks/types/teams";
 export { ZUserNotificationSettings } from "@formbricks/types/user";

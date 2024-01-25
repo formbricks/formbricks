@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilterGroupItem, TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
+import { TBaseFilter, TUserSegment, ZUserSegmentFilters } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
@@ -55,7 +55,7 @@ const SegmentSettingsTab = ({
     router.refresh();
   };
 
-  const handleAddFilterInGroup = (filter: TBaseFilterGroupItem) => {
+  const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedUserSegment = structuredClone(userSegment);
     if (updatedUserSegment?.filters?.length === 0) {
       updatedUserSegment.filters.push({
@@ -119,7 +119,7 @@ const SegmentSettingsTab = ({
 
   useEffect(() => {
     // parse the filters to check if they are valid
-    const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+    const parsedFilters = ZUserSegmentFilters.safeParse(userSegment.filters);
     if (!parsedFilters.success) {
       setIsSaveDisabled(true);
     } else {

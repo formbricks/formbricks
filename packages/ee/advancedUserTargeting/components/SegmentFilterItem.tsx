@@ -37,7 +37,7 @@ import {
   TActionMetric,
   TArithmeticOperator,
   TAttributeOperator,
-  TBaseFilterGroupItem,
+  TBaseFilter,
   TBaseOperator,
   TDeviceOperator,
   TSegmentOperator,
@@ -69,7 +69,7 @@ type SegmentFilterItemProps = {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   setUserSegment: (userSegment: TUserSegment) => void;
-  handleAddFilterBelow: (resourceId: string, filter: TBaseFilterGroupItem) => void;
+  handleAddFilterBelow: (resourceId: string, filter: TBaseFilter) => void;
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;

@@ -588,11 +588,13 @@ model UserSegment {
   title         String
   description   String?
   isPrivate     Boolean     @default(true)
-  /// @zod.custom(imports.ZUserSegmentFilterGroup)
-  /// @zod.custom(imports.ZUserSegmentFilterGroup)
+  /// @zod.custom(imports.ZUserSegmentFilters)
+  /// @zod.custom(imports.ZUserSegmentFilters)
   /// [UserSegmentFilter]
   filters       Json        @default("[]")
   environmentId String
   environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   surveys       Survey[]
+
+  @@index([environmentId])
 }

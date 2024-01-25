@@ -14,7 +14,7 @@ import {
 } from "@formbricks/types/surveys";
 import { TTeamBilling } from "@formbricks/types/teams";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-import { TBaseFilterGroup } from "@formbricks/types/userSegment";
+import { TBaseFilters } from "@formbricks/types/userSegment";
 
 declare global {
   namespace PrismaJson {
@@ -35,6 +35,6 @@ declare global {
     export type SurveyVerifyEmail = TSurveyVerifyEmail;
     export type TeamBilling = TTeamBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
-    export type UserSegmentFilter = TBaseFilterGroup;
+    export type UserSegmentFilter = TBaseFilters;
   }
 }

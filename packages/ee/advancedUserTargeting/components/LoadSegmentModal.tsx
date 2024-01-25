@@ -2,7 +2,7 @@
 
 import toast from "react-hot-toast";
 
-import { TUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
+import { TUserSegment, ZUserSegmentFilters } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { Modal } from "@formbricks/ui/Modal";
 
@@ -47,7 +47,7 @@ const SegmentDetails = ({
         throw new Error("Error loading segment");
       }
 
-      const parsedFilters = ZUserSegmentFilterGroup.safeParse(updatedSurvey?.userSegment?.filters);
+      const parsedFilters = ZUserSegmentFilters.safeParse(updatedSurvey?.userSegment?.filters);
 
       if (!parsedFilters.success) {
         throw new Error("Invalid segment filters");

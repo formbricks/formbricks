@@ -15,8 +15,8 @@ import {
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
-  TBaseFilterGroup,
-  TBaseFilterGroupItem,
+  TBaseFilter,
+  TBaseFilters,
   TUserSegment,
   TUserSegmentConnector,
 } from "@formbricks/types/userSegment";
@@ -32,7 +32,7 @@ import AddFilterModal from "./AddFilterModal";
 import SegmentFilterItem from "./SegmentFilterItem";
 
 type TSegmentFilterProps = {
-  group: TBaseFilterGroup;
+  group: TBaseFilters;
   environmentId: string;
   userSegment: TUserSegment;
   userSegments: TUserSegment[];
@@ -53,7 +53,7 @@ const SegmentFilters = ({
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
 
-  const handleAddFilterBelow = (resourceId: string, filter: TBaseFilterGroupItem) => {
+  const handleAddFilterBelow = (resourceId: string, filter: TBaseFilter) => {
     const localSegmentCopy = structuredClone(userSegment);
 
     if (localSegmentCopy.filters) {
@@ -113,7 +113,7 @@ const SegmentFilters = ({
     }
   };
 
-  const handleAddFilterInGroup = (groupId: string, filter: TBaseFilterGroupItem) => {
+  const handleAddFilterInGroup = (groupId: string, filter: TBaseFilter) => {
     const localSegmentCopy = structuredClone(userSegment);
 
     if (localSegmentCopy.filters) {

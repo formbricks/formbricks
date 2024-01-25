@@ -10,7 +10,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
-import { TUserSegment, ZUserSegment, ZUserSegmentFilterGroup } from "@formbricks/types/userSegment";
+import { TUserSegment, ZUserSegment, ZUserSegmentFilters } from "@formbricks/types/userSegment";
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
@@ -469,7 +469,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
   if (userSegment) {
     // parse the segment filters:
-    const parsedFilters = ZUserSegmentFilterGroup.safeParse(userSegment.filters);
+    const parsedFilters = ZUserSegmentFilters.safeParse(userSegment.filters);
     if (!parsedFilters.success) {
       throw new InvalidInputError("Invalid user segment filters");
     }

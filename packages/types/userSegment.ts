@@ -216,21 +216,21 @@ export const ZUserSegmentConnector = z.enum(["and", "or"]).nullable();
 
 export type TUserSegmentConnector = z.infer<typeof ZUserSegmentConnector>;
 
-export type TBaseFilterGroupItem = {
+export type TBaseFilter = {
   id: string;
   connector: TUserSegmentConnector;
-  resource: TUserSegmentFilter | TBaseFilterGroup;
+  resource: TUserSegmentFilter | TBaseFilters;
 };
-export type TBaseFilterGroup = TBaseFilterGroupItem[];
+export type TBaseFilters = TBaseFilter[];
 
-const refineFilterGroup = (filterGroup: TBaseFilterGroup): boolean => {
+const refineFilters = (filters: TBaseFilters): boolean => {
   let result = true;
 
-  for (let i = 0; i < filterGroup.length; i++) {
-    const group = filterGroup[i];
+  for (let i = 0; i < filters.length; i++) {
+    const group = filters[i];
 
     if (Array.isArray(group.resource)) {
-      result = refineFilterGroup(group.resource);
+      result = refineFilters(group.resource);
     } else {
       // if the connector for a "first" group is not null, it's invalid
       if (i === 0 && group.connector !== null) {
@@ -243,17 +243,17 @@ const refineFilterGroup = (filterGroup: TBaseFilterGroup): boolean => {
   return result;
 };
 
-export const ZUserSegmentFilterGroup: z.ZodType<TBaseFilterGroup> = z
+export const ZUserSegmentFilters: z.ZodType<TBaseFilters> = z
   .lazy(() =>
     z.array(
       z.object({
         id: z.string().cuid2(),
         connector: ZUserSegmentConnector,
-        resource: z.union([ZUserSegmentFilter, ZUserSegmentFilterGroup]),
+        resource: z.union([ZUserSegmentFilter, ZUserSegmentFilters]),
       })
     )
   )
-  .refine(refineFilterGroup, {
+  .refine(refineFilters, {
     message: "Invalid filters applied",
   });
 
@@ -262,7 +262,7 @@ export const ZUserSegment = z.object({
   title: z.string(),
   description: z.string().nullable(),
   isPrivate: z.boolean().default(true),
-  filters: ZUserSegmentFilterGroup,
+  filters: ZUserSegmentFilters,
   environmentId: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -274,7 +274,7 @@ export const ZUserSegmentCreateInput = z.object({
   title: z.string(),
   description: z.string().nullable(),
   isPrivate: z.boolean().default(true),
-  filters: ZUserSegmentFilterGroup,
+  filters: ZUserSegmentFilters,
   surveyId: z.string(),
 });
 
@@ -287,7 +287,7 @@ export const ZUserSegmentUpdateInput = z
     title: z.string(),
     description: z.string().nullable(),
     isPrivate: z.boolean().default(true),
-    filters: ZUserSegmentFilterGroup,
+    filters: ZUserSegmentFilters,
     surveys: z.array(z.string()),
   })
   .partial();
