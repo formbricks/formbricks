@@ -40,7 +40,14 @@ export const createUserSegmentAction = async ({
     throw new Error(errMsg);
   }
 
-  const segment = await createUserSegment(environmentId, surveyId, title, description, isPrivate, filters);
+  const segment = await createUserSegment({
+    environmentId,
+    surveyId,
+    title,
+    description,
+    isPrivate,
+    filters,
+  });
   surveyCache.revalidate({ id: surveyId });
 
   return segment;

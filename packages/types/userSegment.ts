@@ -35,7 +35,7 @@ export const ACTION_METRICS = [
 
 export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
 export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
-export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS, ...DEVICE_OPERATORS] as const;
+export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS] as const;
 
 export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
 export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
@@ -266,10 +266,19 @@ export const ZUserSegment = z.object({
   environmentId: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
-
-  // describes which surveys is this segment applicable to
   surveys: z.array(z.string()),
 });
+
+export const ZUserSegmentCreateInput = z.object({
+  environmentId: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  isPrivate: z.boolean().default(true),
+  filters: ZUserSegmentFilterGroup,
+  surveyId: z.string(),
+});
+
+export type TUserSegmentCreateInput = z.infer<typeof ZUserSegmentCreateInput>;
 
 export type TUserSegment = z.infer<typeof ZUserSegment>;
 

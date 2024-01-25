@@ -429,7 +429,6 @@ export const ZSurvey = z.object({
   productOverwrites: ZSurveyProductOverwrites.nullable(),
   styling: ZSurveyStyling.nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
-  // userSegmentId: ZId.nullable(),
   userSegment: ZUserSegment.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),

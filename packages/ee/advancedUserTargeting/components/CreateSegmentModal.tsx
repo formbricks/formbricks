@@ -118,7 +118,7 @@ const CreateSegmentModal = ({
         }}
         noPadding
         closeOnOutsideClick={false}
-        rootClassName="md:w-full md:max-w-5xl">
+        className="md:w-full md:max-w-5xl">
         <div className="rounded-lg bg-slate-50">
           <div className="rounded-t-lg bg-slate-100">
             <div className="flex w-full items-center gap-4 p-6">

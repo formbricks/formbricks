@@ -14,7 +14,7 @@ type Modal = {
   noPadding?: boolean;
   blur?: boolean;
   closeOnOutsideClick?: boolean;
-  rootClassName?: string;
+  className?: string;
   size?: "md" | "lg";
 };
 
@@ -26,7 +26,7 @@ export const Modal: React.FC<Modal> = ({
   noPadding,
   blur = true,
   closeOnOutsideClick = true,
-  rootClassName,
+  className,
   size = "md",
 }) => {
   const sizeClassName = {
@@ -68,7 +68,7 @@ export const Modal: React.FC<Modal> = ({
                   className={cn(
                     "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl ",
                     `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`,
-                    rootClassName,
+                    className,
                     sizeClassName[size]
                   )}>
                   <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">

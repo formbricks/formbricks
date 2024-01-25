@@ -12,9 +12,11 @@ import {
   TUserSegmentActionFilter,
   TUserSegmentAttributeFilter,
   TUserSegmentConnector,
+  TUserSegmentCreateInput,
   TUserSegmentDeviceFilter,
   TUserSegmentSegmentFilter,
   TUserSegmentUpdateInput,
+  ZUserSegmentCreateInput,
   ZUserSegmentFilterGroup,
   ZUserSegmentUpdateInput,
 } from "@formbricks/types/userSegment";
@@ -51,13 +53,11 @@ export const transformPrismaUserSegment = (userSegment: PrismaUserSegment) => {
 };
 
 export const createUserSegment = async (
-  environmentId: string,
-  surveyId: string,
-  title: string,
-  description: string,
-  isPrivate: boolean,
-  filters: TBaseFilterGroup
+  userSegmentCreateInput: TUserSegmentCreateInput
 ): Promise<TUserSegment> => {
+  validateInputs([userSegmentCreateInput, ZUserSegmentCreateInput]);
+
+  const { description, environmentId, filters, isPrivate, surveyId, title } = userSegmentCreateInput;
   const userSegment = await prisma.userSegment.create({
     data: {
       environmentId,
