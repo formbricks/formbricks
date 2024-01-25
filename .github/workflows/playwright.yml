@@ -51,14 +51,6 @@ jobs:
             sleep 10
           done
 
-      - name: Test Endpoint app
-        run: |
-          curl http://localhost:3000/health
-
-      - name: Test Endpoint serve
-        run: |
-          curl http://localhost:3003
-
       - name: Run E2E Tests
         run: |
           pnpm test:e2e
