@@ -20,6 +20,7 @@ interface ResponseTagsWrapperProps {
   environmentId: string;
   responseId: string;
   environmentTags: TTag[];
+  updateFetchedResponses: () => void;
 }
 
 const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
@@ -27,6 +28,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   environmentId,
   responseId,
   environmentTags,
+  updateFetchedResponses,
 }) => {
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
@@ -37,11 +39,9 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   const onDelete = async (tagId: string) => {
     try {
       await deleteTagOnResponseAction(responseId, tagId);
-
-      router.refresh();
+      updateFetchedResponses();
     } catch (e) {
       toast.error("An error occurred deleting the tag");
-      router.refresh();
     }
   };
 
@@ -97,9 +97,9 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                   },
                 ]);
                 createTagToResponeAction(responseId, tag.id).then(() => {
+                  updateFetchedResponses();
                   setSearchValue("");
                   setOpen(false);
-                  router.refresh();
                 });
               })
               .catch((err) => {
@@ -116,7 +116,6 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
                 setSearchValue("");
                 setOpen(false);
-                router.refresh();
               });
           }}
           addTag={(tagId) => {
@@ -129,9 +128,9 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
             ]);
 
             createTagToResponeAction(responseId, tagId).then(() => {
+              updateFetchedResponses();
               setSearchValue("");
               setOpen(false);
-              router.refresh();
             });
           }}
         />
