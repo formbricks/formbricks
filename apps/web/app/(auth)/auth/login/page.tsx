@@ -9,6 +9,7 @@ import {
   GOOGLE_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
   SIGNUP_ENABLED,
+  WEBAPP_URL,
 } from "@formbricks/lib/constants";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function SignInPage() {
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
           <SigninForm
+            webAppUrl={WEBAPP_URL}
             publicSignUpEnabled={SIGNUP_ENABLED}
             passwordResetEnabled={!PASSWORD_RESET_DISABLED}
             googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
