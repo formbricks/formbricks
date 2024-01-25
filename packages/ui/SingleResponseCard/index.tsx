@@ -38,7 +38,7 @@ export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
   user?: TUser;
-  pageType: string;
+  pageType: "people" | "response";
   environmentTags: TTag[];
   environment: TEnvironment;
   setFetchedResponses?: React.Dispatch<React.SetStateAction<TResponse[]>>;
@@ -147,7 +147,7 @@ export default function SingleResponseCard({
     }
   }
 
-  const handleDeleteSubmission = async () => {
+  const handleDeleteResponse = async () => {
     setIsDeleting(true);
     try {
       if (isViewer) {
@@ -158,7 +158,7 @@ export default function SingleResponseCard({
         setFetchedResponses((prevResponses) => prevResponses.filter((r) => r.id !== response.id));
       }
       router.refresh();
-      toast.success("Submission deleted successfully.");
+      toast.success("Response deleted successfully.");
       setDeleteDialogOpen(false);
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);
@@ -241,7 +241,7 @@ export default function SingleResponseCard({
           pageType === "response" &&
             (isOpen
               ? "w-3/4"
-              : response.notes.length
+              : user && response.notes.length
                 ? "w-[96.5%]"
                 : cn("w-full", user ? "group-hover:w-[96.5%]" : ""))
         )}>
@@ -444,7 +444,7 @@ export default function SingleResponseCard({
           open={deleteDialogOpen}
           setOpen={setDeleteDialogOpen}
           deleteWhat="response"
-          onDelete={handleDeleteSubmission}
+          onDelete={handleDeleteResponse}
           isDeleting={isDeleting}
         />
       </div>
