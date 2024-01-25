@@ -170,6 +170,7 @@ export default function WhenToSendCard({
                     </SelectTrigger>
                     <SelectContent>
                       <button
+                        type="button"
                         className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
                         value="none"
                         onClick={() => {
@@ -191,7 +192,7 @@ export default function WhenToSendCard({
                     </SelectContent>
                   </Select>
                   <p className="mx-2 text-sm">action is performed</p>
-                  <button onClick={() => removeTriggerEvent(idx)}>
+                  <button type="button" onClick={() => removeTriggerEvent(idx)}>
                     <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
                   </button>
                 </div>
