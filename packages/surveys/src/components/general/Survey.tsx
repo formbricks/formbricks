@@ -103,9 +103,16 @@ export function Survey({
           currentQuestion.type === "multipleChoiceSingle" ||
           currentQuestion.type === "multipleChoiceMulti"
         ) {
-          const choice = currentQuestion.choices.find((choice) => choice.label === responseValue);
+          const choice = currentQuestion.choices.find(
+            (choice) => getLocalizedValue(choice.label, language) === responseValue
+          );
+          if (choice) {
+            if (evaluateCondition(logic, getLocalizedValue(choice.label, "en"))) {
+              return logic.destination;
+            }
+          }
           // if choice is undefined we can determine that, "other" option is selected
-          if (!choice) {
+          else {
             if (evaluateCondition(logic, "Other")) {
               return logic.destination;
             }
@@ -140,7 +147,7 @@ export function Survey({
     onActiveQuestionChange(nextQuestionId);
   };
 
-  const replaceRecallInfo = (text: string) => {
+  const replaceRecallInfo = (text: string): string => {
     while (text.includes("recall:")) {
       const recallInfo = extractRecallInfo(text);
       if (recallInfo) {
@@ -161,12 +168,20 @@ export function Survey({
   };
 
   const parseRecallInformation = (question: TSurveyQuestion) => {
-    const modifiedQuestion = { ...question };
+    const modifiedQuestion = JSON.parse(JSON.stringify(question));
     if (question.headline && (question.headline as TI18nString)[language]?.includes("recall:")) {
-      modifiedQuestion.headline = replaceRecallInfo((modifiedQuestion.headline as TI18nString)[language]);
+      modifiedQuestion.headline[language] = replaceRecallInfo(
+        getLocalizedValue(modifiedQuestion.headline, language)
+      );
     }
-    if (question.subheader && (question.subheader as TI18nString)[language]?.includes("recall:")) {
-      modifiedQuestion.subheader = replaceRecallInfo((modifiedQuestion.subheader as TI18nString)[language]);
+    if (
+      question.subheader &&
+      (question.subheader as TI18nString)[language]?.includes("recall:") &&
+      modifiedQuestion.subheader
+    ) {
+      modifiedQuestion.subheader[language] = replaceRecallInfo(
+        getLocalizedValue(modifiedQuestion.subheader, language)
+      );
     }
     return modifiedQuestion;
   };
@@ -217,6 +232,7 @@ export function Survey({
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
           language={language}
+          replaceRecallInfo={replaceRecallInfo}
         />
       );
     } else {

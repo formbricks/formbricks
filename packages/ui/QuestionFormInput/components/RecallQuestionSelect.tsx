@@ -76,7 +76,7 @@ export default function RecallQuestionSelect({
 
   // function to modify headline (recallInfo to corresponding headline)
   const getRecallHeadline = (question: TSurveyQuestion): TSurveyQuestion => {
-    let questionTemp = { ...question };
+    let questionTemp = JSON.parse(JSON.stringify(question));
     questionTemp = replaceRecallInfoWithUnderline(questionTemp, selectedLanguage);
     return questionTemp;
   };
@@ -94,7 +94,6 @@ export default function RecallQuestionSelect({
             prevIdx === 0 ? filteredRecallQuestions.length - 1 : prevIdx - 1
           );
         } else if (event.key === "Enter") {
-          console.log("running");
           event.preventDefault();
           event.stopPropagation();
           const selectedQuestion = filteredRecallQuestions[focusedQuestionIdx];

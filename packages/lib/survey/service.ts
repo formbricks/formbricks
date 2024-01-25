@@ -271,7 +271,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
 };
 
 export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
-  // validateInputs([updatedSurvey, ZSurvey]);
+  validateInputs([updatedSurvey, ZSurvey]);
 
   const surveyId = updatedSurvey.id;
   let data: any = {};

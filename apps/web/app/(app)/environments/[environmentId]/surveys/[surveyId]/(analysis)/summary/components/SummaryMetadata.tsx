@@ -115,7 +115,7 @@ export default function SummaryMetadata({
         </div>
         <div className="flex flex-col justify-between gap-2 lg:col-span-1">
           <div className="text-right text-xs text-slate-400">
-            Last updated: {timeSinceConditionally(survey.updatedAt.toISOString())}
+            Last updated: {timeSinceConditionally(survey.updatedAt.toString())}
           </div>
           <Button
             variant="minimal"

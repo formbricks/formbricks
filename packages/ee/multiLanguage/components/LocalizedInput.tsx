@@ -24,7 +24,6 @@ interface LocalizedInputProps {
 }
 const LocalizedInput = ({
   id,
-  name,
   value,
   isInvalid,
   localSurvey,
@@ -38,10 +37,16 @@ const LocalizedInput = ({
   onBlur,
   languages,
   maxLength,
-  defaultValue,
 }: LocalizedInputProps) => {
-  const question = localSurvey.questions[questionIdx];
-  const hasi18n = value._i18n_;
+  const isThankYouCard = questionIdx === localSurvey.questions.length;
+  const isWelcomeCard = questionIdx === -1;
+
+  const questionId = () => {
+    if (isThankYouCard) return "end";
+    else if (isWelcomeCard) return "start";
+    else return localSurvey.questions[questionIdx].id;
+  };
+
   const isInComplete =
     id === "subheader" ||
     id === "lowerLabel" ||
@@ -62,8 +67,8 @@ const LocalizedInput = ({
         id={id}
         localSurvey={localSurvey}
         environmentId={localSurvey.environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
+        isInvalid={languages.length > 1 && isInComplete}
+        questionId={questionId()}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         updateSurvey={updateSurvey}
@@ -73,13 +78,16 @@ const LocalizedInput = ({
         languages={languages}
         maxLength={maxLength}
         placeholder={placeholder}
+        onBlur={onBlur}
       />
       {selectedLanguage !== "en" && value.en && (
         <div className="mt-1 text-xs text-gray-500">
           <strong>Translate:</strong> {recallToHeadline(value, localSurvey, false, "en")["en"]}
         </div>
       )}
-      {isInComplete && <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>}
+      {languages.length > 1 && isInComplete && (
+        <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
+      )}
     </div>
   );
 };

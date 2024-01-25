@@ -57,7 +57,7 @@ export const LocalizedEditor = ({
           };
           if (questionIdx === -1) {
             // welcome card
-            updateQuestion({ html: value });
+            updateQuestion({ html: translatedHtml });
             return;
           }
           updateQuestion(questionIdx, { html: translatedHtml });

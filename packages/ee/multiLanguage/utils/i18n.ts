@@ -1,3 +1,4 @@
+import { TProduct } from "@formbricks/types/product";
 import {
   TI18nString,
   TSurveyCTAQuestion,
@@ -15,7 +16,7 @@ import { TSurvey, TSurveyMultipleChoiceMultiQuestion, TSurveyQuestion } from "@f
 export const createI18nString = (text: string | TI18nString, languages?: string[]): TI18nString => {
   if (typeof text === "object" && "_i18n_" in text) {
     // It's already an i18n object, so clone it
-    const i18nString: TI18nString = { ...text };
+    const i18nString: TI18nString = JSON.parse(JSON.stringify(text));
     i18nString._i18n_ = true;
     // Add new language keys with empty strings if they don't exist
     languages?.forEach((language) => {
@@ -66,7 +67,7 @@ export const translateWelcomeCard = (
   welcomeCard: TSurveyWelcomeCard,
   languages?: string[]
 ): TSurveyWelcomeCard => {
-  const clonedWelcomeCard = { ...welcomeCard };
+  const clonedWelcomeCard = JSON.parse(JSON.stringify(welcomeCard));
   clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages);
   clonedWelcomeCard.html = createI18nString(welcomeCard.html ?? "", languages);
   clonedWelcomeCard.buttonLabel = createI18nString(welcomeCard.buttonLabel ?? "", languages);
@@ -78,7 +79,7 @@ export const translateThankYouCard = (
   thankYouCard: TSurveyThankYouCard,
   languages?: string[]
 ): TSurveyThankYouCard => {
-  const clonedThankYouCard = { ...thankYouCard };
+  const clonedThankYouCard = JSON.parse(JSON.stringify(thankYouCard));
   clonedThankYouCard.headline = createI18nString(
     thankYouCard.headline ? thankYouCard.headline : "",
     languages
@@ -93,7 +94,7 @@ export const translateThankYouCard = (
 // Function that will translate a single question
 export const translateQuestion = (question: TSurveyQuestion, languages?: string[]) => {
   // Clone the question to avoid mutating the original
-  const clonedQuestion = { ...question };
+  const clonedQuestion = JSON.parse(JSON.stringify(question));
   // Translate headline and subheader
   clonedQuestion.headline = createI18nString(question.headline, languages);
   clonedQuestion.subheader = createI18nString(question.subheader ?? "", languages);
@@ -101,7 +102,7 @@ export const translateQuestion = (question: TSurveyQuestion, languages?: string[
   clonedQuestion.backButtonLabel = createI18nString(question.backButtonLabel ?? "", languages);
   if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
     (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
-      question.choices.map((choice) => translateChoice({ ...choice }, languages));
+      question.choices.map((choice) => translateChoice(JSON.parse(JSON.stringify(choice)), languages));
   }
   if (question.type === "openText") {
     (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(
@@ -140,18 +141,17 @@ export const translateQuestion = (question: TSurveyQuestion, languages?: string[
       languages
     );
   }
-
   return clonedQuestion;
 };
 
 // Function to translate an entire survey
 export const translateSurvey = (survey: TSurvey, languages?: string[]): TSurvey => {
   const translatedQuestions = survey.questions.map((question) => {
-    return translateQuestion(question, languages); // Added return here
+    return translateQuestion(question, languages);
   });
-  const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard);
-  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard);
-  const translatedSurvey = { ...survey };
+  const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languages);
+  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languages);
+  const translatedSurvey = JSON.parse(JSON.stringify(survey));
   return {
     ...translatedSurvey,
     questions: translatedQuestions,
@@ -200,4 +200,10 @@ export const isSurveyAvailableInSelectedLanguage = (languageSymbol: string, surv
     return true;
   }
   return false;
+};
+
+export const getSurveyLanguages = (product: TProduct, survey: TSurvey) => {
+  return Object.entries(product.languages)
+    .filter(([langCode]) => survey.questions[0].headline[langCode])
+    .map((lang) => lang);
 };

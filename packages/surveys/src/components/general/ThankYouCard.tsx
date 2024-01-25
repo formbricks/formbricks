@@ -17,6 +17,7 @@ interface ThankYouCardProps {
   buttonLabel?: string;
   buttonLink?: string;
   imageUrl?: string;
+  replaceRecallInfo: (text: string) => string;
 }
 
 export default function ThankYouCard({
@@ -28,6 +29,7 @@ export default function ThankYouCard({
   buttonLabel,
   buttonLink,
   imageUrl,
+  replaceRecallInfo,
 }: ThankYouCardProps) {
   useEffect(() => {
     if (!buttonLink) return;
@@ -67,10 +69,13 @@ export default function ThankYouCard({
       <div>
         <Headline
           alignTextCenter={true}
-          headline={getLocalizedValue(headline, language)}
+          headline={replaceRecallInfo(getLocalizedValue(headline, language))}
           questionId="thankYouCard"
         />
-        <Subheader subheader={getLocalizedValue(subheader, language)} questionId="thankYouCard" />
+        <Subheader
+          subheader={replaceRecallInfo(getLocalizedValue(subheader, language))}
+          questionId="thankYouCard"
+        />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
         {buttonLabel && (
           <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">

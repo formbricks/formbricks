@@ -16,6 +16,7 @@ interface NPSQuestionProps {
 
 export default function NPSQuestion({ question, onSubmit, lastQuestion, brandColor }: NPSQuestionProps) {
   const [selectedChoice, setSelectedChoice] = useState<number | null>(null);
+  const defaultLanguage = "en";
 
   const handleSelect = (number: number) => {
     setSelectedChoice(number);
@@ -38,7 +39,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
         onSubmit(data);
         // reset form
       }}>
-      <Headline headline={getLocalizedValue(question.headline, "en")} questionId={question.id} />
+      <Headline headline={getLocalizedValue(question.headline, defaultLanguage)} questionId={question.id} />
       <Subheader subheader={question.subheader as string} questionId={question.id} />
       <div className="my-4">
         <fieldset>
@@ -66,8 +67,8 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
             ))}
           </div>
           <div className="flex justify-between px-1.5 text-xs leading-6 text-slate-500">
-            <p>{getLocalizedValue(question.lowerLabel, "en")}</p>
-            <p>{getLocalizedValue(question.upperLabel, "en")}</p>
+            <p>{getLocalizedValue(question.lowerLabel, defaultLanguage)}</p>
+            <p>{getLocalizedValue(question.upperLabel, defaultLanguage)}</p>
           </div>
         </fieldset>
       </div>
@@ -78,7 +79,7 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
             type="submit"
             className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
             style={{ backgroundColor: brandColor }}>
-            {getLocalizedValue(question.buttonLabel, "en") || (lastQuestion ? "Finish" : "Next")}
+            {getLocalizedValue(question.buttonLabel, defaultLanguage) || (lastQuestion ? "Finish" : "Next")}
           </button>
         </div>
       )}

@@ -68,8 +68,9 @@ export default function EditWelcomeCard({
       )}>
       <div
         className={cn(
-          open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
+          open ? "bg-slate-50" : "",
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
+          isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <p>✋</p>
       </div>
@@ -123,32 +124,26 @@ export default function EditWelcomeCard({
               />
             </div>
             <div className="mt-3">
-              <Label htmlFor="headline">Headline</Label>
-              <div className="mt-2">
-                <LocalizedInput
-                  id="headline"
-                  name="headline"
-                  value={localSurvey?.welcomeCard?.headline as TI18nString}
-                  languages={languages}
-                  isInvalid={isInvalid}
-                  onChange={(e) => {
-                    let translatedHeadline = {
-                      ...(localSurvey?.welcomeCard?.headline as TI18nString),
-                      [selectedLanguage]: e.target.value,
-                    };
-                    updateSurvey({ headline: translatedHeadline });
-                  }}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
-                />
-              </div>
+              <LocalizedInput
+                id="headline"
+                name="headline"
+                value={localSurvey.welcomeCard.headline as TI18nString}
+                localSurvey={localSurvey}
+                questionIdx={-1}
+                languages={languages}
+                isInvalid={isInvalid}
+                updateSurvey={updateSurvey}
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
+              />
             </div>
             <div className="mt-3">
               <Label htmlFor="subheader">Welcome Message</Label>
               <div className="mt-2">
                 <LocalizedEditor
-                  id="subheader"
+                  id="html"
                   value={localSurvey.welcomeCard.html as TI18nString}
+                  localSurvey={localSurvey}
                   languages={languages}
                   isInvalid={isInvalid}
                   updateQuestion={updateSurvey}
@@ -164,28 +159,20 @@ export default function EditWelcomeCard({
             <div className="mt-3 flex justify-between gap-8">
               <div className="flex w-full space-x-2">
                 <div className="w-full">
-                  <Label htmlFor="buttonLabel">Button Label</Label>
-                  <div className="mt-2">
-                    <LocalizedInput
-                      id="buttonLabel"
-                      name="buttonLabel"
-                      value={localSurvey?.welcomeCard?.buttonLabel as TI18nString}
-                      maxLength={48}
-                      placeholder={"Next"}
-                      defaultValue="Next"
-                      languages={languages}
-                      isInvalid={isInvalid}
-                      onChange={(e) => {
-                        let translatedNextButtonLabel = {
-                          ...(localSurvey.welcomeCard.buttonLabel as TI18nString),
-                          [selectedLanguage]: e.target.value,
-                        };
-                        updateSurvey({ buttonLabel: translatedNextButtonLabel });
-                      }}
-                      selectedLanguage={selectedLanguage}
-                      setSelectedLanguage={setSelectedLanguage}
-                    />
-                  </div>
+                  <LocalizedInput
+                    id="buttonLabel"
+                    name="buttonLabel"
+                    value={localSurvey.welcomeCard.buttonLabel as TI18nString}
+                    localSurvey={localSurvey}
+                    questionIdx={-1}
+                    maxLength={48}
+                    placeholder={"Next"}
+                    languages={languages}
+                    isInvalid={isInvalid}
+                    updateSurvey={updateSurvey}
+                    selectedLanguage={selectedLanguage}
+                    setSelectedLanguage={setSelectedLanguage}
+                  />
                 </div>
               </div>
             </div>

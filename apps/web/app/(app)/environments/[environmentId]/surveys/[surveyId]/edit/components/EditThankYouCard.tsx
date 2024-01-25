@@ -46,13 +46,14 @@ export default function EditThankYouCard({
   };
 
   const updateSurvey = (data) => {
-    setLocalSurvey({
+    const updatedSurvey = {
       ...localSurvey,
       thankYouCard: {
         ...localSurvey.thankYouCard,
         ...data,
       },
-    });
+    };
+    setLocalSurvey(updatedSurvey);
   };
 
   return (
@@ -63,8 +64,9 @@ export default function EditThankYouCard({
       )}>
       <div
         className={cn(
-          open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
-          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
+          open ? "bg-slate-50" : "",
+          "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
+          isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <p>🙏</p>
       </div>
@@ -105,49 +107,31 @@ export default function EditThankYouCard({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <form>
-            <div className="mt-3">
-              <Label htmlFor="headline">Headline</Label>
-              <div className="mt-2">
-                <LocalizedInput
-                  id="headline"
-                  name="headline"
-                  value={localSurvey?.thankYouCard?.headline as TI18nString}
-                  languages={languages}
-                  isInvalid={isInvalid}
-                  onChange={(e) => {
-                    let translatedHeadline = {
-                      ...(localSurvey?.thankYouCard?.headline as TI18nString),
-                      [selectedLanguage]: e.target.value,
-                    };
-                    updateSurvey({ headline: translatedHeadline });
-                  }}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
-                />
-              </div>
-            </div>
+            <LocalizedInput
+              id="headline"
+              name="headline"
+              value={localSurvey?.thankYouCard?.headline as TI18nString}
+              localSurvey={localSurvey}
+              questionIdx={localSurvey.questions.length}
+              languages={languages}
+              isInvalid={isInvalid}
+              updateSurvey={updateSurvey}
+              selectedLanguage={selectedLanguage}
+              setSelectedLanguage={setSelectedLanguage}
+            />
 
-            <div className="mt-3">
-              <Label htmlFor="subheader">Description</Label>
-              <div className="mt-2">
-                <LocalizedInput
-                  id="subheader"
-                  name="subheader"
-                  value={localSurvey?.thankYouCard?.subheader as TI18nString}
-                  languages={languages}
-                  isInvalid={isInvalid}
-                  onChange={(e) => {
-                    let translatedSubheader = {
-                      ...(localSurvey?.thankYouCard?.subheader as TI18nString),
-                      [selectedLanguage]: e.target.value,
-                    };
-                    updateSurvey({ subheader: translatedSubheader });
-                  }}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
-                />
-              </div>
-            </div>
+            <LocalizedInput
+              id="subheader"
+              name="subheader"
+              value={localSurvey.thankYouCard.subheader as TI18nString}
+              localSurvey={localSurvey}
+              questionIdx={localSurvey.questions.length}
+              languages={languages}
+              isInvalid={isInvalid}
+              updateSurvey={updateSurvey}
+              selectedLanguage={selectedLanguage}
+              setSelectedLanguage={setSelectedLanguage}
+            />
             <div className="mt-4">
               <div className="flex items-center space-x-1">
                 <Switch

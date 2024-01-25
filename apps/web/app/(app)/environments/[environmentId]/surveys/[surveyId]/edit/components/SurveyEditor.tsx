@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRef } from "react";
 
 import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
-import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { extractLanguageSymbols, translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -58,7 +58,7 @@ export default function SurveyEditor({
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
-      setLocalSurvey(JSON.parse(JSON.stringify(survey)));
+      setLocalSurvey(translateSurvey(JSON.parse(JSON.stringify(survey))));
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
@@ -76,12 +76,11 @@ export default function SurveyEditor({
     }
   }, [survey, localSurvey]);
 
-  const translatedSurvey = useMemo(() => {
-    if (!localSurvey || localSurvey.questions.length === 0) return;
-    if (localSurvey) {
-      return translateSurvey(localSurvey, Object.keys(languages));
-    }
+  useEffect(() => {
+    if (!localSurvey) return;
+    setLocalSurvey(translateSurvey(localSurvey, extractLanguageSymbols(Object.entries(languages))));
   }, [i18n, localSurvey?.id, localSurvey?.questions.length, selectedLanguage, languages]);
+
   useEffect(() => {
     const listener = () => {
       if (document.visibilityState === "visible") {
@@ -125,7 +124,7 @@ export default function SurveyEditor({
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
-          localSurvey={translatedSurvey ? translatedSurvey : localSurvey}
+          localSurvey={localSurvey}
           survey={survey}
           environment={environment}
           activeId={activeView}
@@ -154,7 +153,7 @@ export default function SurveyEditor({
                   />
                 </div>
                 <QuestionsView
-                  localSurvey={translatedSurvey ? translatedSurvey : localSurvey}
+                  localSurvey={localSurvey}
                   setLocalSurvey={setLocalSurvey}
                   activeQuestionId={activeQuestionId}
                   setActiveQuestionId={setActiveQuestionId}
@@ -169,7 +168,7 @@ export default function SurveyEditor({
             ) : (
               <SettingsView
                 environment={environment}
-                localSurvey={i18n && translatedSurvey ? translatedSurvey : localSurvey}
+                localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
@@ -181,7 +180,7 @@ export default function SurveyEditor({
           </main>
           <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
             <PreviewSurvey
-              survey={translatedSurvey ? translatedSurvey : localSurvey}
+              survey={localSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}
               product={localProduct}

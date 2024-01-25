@@ -7,6 +7,7 @@ import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
 import { extractLanguageSymbols, translateQuestion } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
@@ -55,7 +56,7 @@ export default function QuestionsView({
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
       if (question.headline[selectedLanguage].includes(`recall:${compareId}`)) {
-        question.headline = question.headline[selectedLanguage].replaceAll(
+        question.headline[selectedLanguage] = question.headline[selectedLanguage].replaceAll(
           `recall:${compareId}`,
           `recall:${updatedId}`
         );
@@ -127,9 +128,9 @@ export default function QuestionsView({
     // check if we are recalling from this question
     updatedSurvey.questions.forEach((question) => {
       if (question.headline[selectedLanguage].includes(`recall:${questionId}`)) {
-        const recallInfo = extractRecallInfo(question.headline[selectedLanguage]);
+        const recallInfo = extractRecallInfo(getLocalizedValue(question.headline, selectedLanguage));
         if (recallInfo) {
-          question.headline = question.headline[selectedLanguage].replace(recallInfo, "");
+          question.headline[selectedLanguage] = question.headline[selectedLanguage].replace(recallInfo, "");
         }
       }
     });

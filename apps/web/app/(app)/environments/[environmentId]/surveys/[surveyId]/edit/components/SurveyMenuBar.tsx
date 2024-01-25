@@ -121,7 +121,7 @@ export default function SurveyMenuBar({
     }
     if (survey.thankYouCard.enabled) {
       if (
-        !isLabelValidForAllLanguages(survey.thankYouCard.headline, languages) ||
+        !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", languages) ||
         (survey.thankYouCard.subheader &&
           survey.thankYouCard.subheader["en"] !== "" &&
           !isLabelValidForAllLanguages(survey.thankYouCard.subheader, languages))
@@ -165,7 +165,6 @@ export default function SurveyMenuBar({
       }
     }
 
-    faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
       const isValid = validateQuestion(question, languages);

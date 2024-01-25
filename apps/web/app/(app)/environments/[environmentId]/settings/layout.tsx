@@ -21,9 +21,11 @@ export default async function SettingsLayout({ children, params }) {
     getServerSession(authOptions),
     getIsEnterpriseEdition(),
   ]);
+
   if (!team) {
     throw new Error("Team not found");
   }
+
   if (!product) {
     throw new Error("Product not found");
   }

@@ -22,6 +22,7 @@ export default function MultipleChoiceMultiQuestion({
 }: MultipleChoiceMultiProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
+  const defaultLanguage = "en";
 
   useEffect(() => {
     setIsAtLeastOneChecked(selectedChoices.length > 0);
@@ -42,7 +43,7 @@ export default function MultipleChoiceMultiQuestion({
         onSubmit(data);
         setSelectedChoices([]); // reset value
       }}>
-      <Headline headline={getLocalizedValue(question.headline, "en")} questionId={question.id} />
+      <Headline headline={getLocalizedValue(question.headline, defaultLanguage)} questionId={question.id} />
       <Subheader subheader={question.subheader as string} questionId={question.id} />
       <div className="mt-4">
         <fieldset>
@@ -102,7 +103,7 @@ export default function MultipleChoiceMultiQuestion({
           type="submit"
           className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           style={{ backgroundColor: brandColor }}>
-          {getLocalizedValue(question.buttonLabel, "en") || (lastQuestion ? "Finish" : "Next")}
+          {getLocalizedValue(question.buttonLabel, defaultLanguage) || (lastQuestion ? "Finish" : "Next")}
         </button>
       </div>
     </form>

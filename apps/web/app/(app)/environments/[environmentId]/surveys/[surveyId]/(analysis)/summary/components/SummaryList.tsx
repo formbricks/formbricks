@@ -45,13 +45,15 @@ interface SummaryListProps {
   languages: TLanguages;
 }
 
+const defaultLanguage = "en";
+
 function getLanguageSymbol(languages, language) {
   for (let languageSymbol in languages) {
     if (languages.hasOwnProperty(languageSymbol) && languages[languageSymbol] === language) {
       return languageSymbol;
     }
   }
-  return "en";
+  return defaultLanguage;
 }
 
 export default function SummaryList({
@@ -62,24 +64,28 @@ export default function SummaryList({
   languages,
 }: SummaryListProps) {
   const checkForI18n = (response: TResponse, id, survey: TSurvey) => {
-    const language = getLanguageSymbol(languages, response.language);
+    const languageSymbol = getLanguageSymbol(languages, response.language);
     const question = survey.questions.find((question) => question.id === id);
     if (question?.type === "multipleChoiceMulti") {
       let choiceValues = [] as string[];
       (response.data[id] as string[]).forEach((data) => {
         choiceValues.push(
-          getLocalizedValue(question.choices.find((choice) => choice.label[language] === data)?.label, "en")
+          getLocalizedValue(
+            question.choices.find((choice) => choice.label[languageSymbol] === data)?.label,
+            defaultLanguage
+          )
         );
       });
       return choiceValues;
     }
     return getLocalizedValue(
       (question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion)?.choices.find(
-        (choice) => choice.label[language] === response.data[id]
+        (choice) => choice.label[languageSymbol] === response.data[id]
       )?.label,
-      "en"
+      defaultLanguage
     );
   };
+
   const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
       const questionResponses = responses

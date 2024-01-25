@@ -11,7 +11,7 @@ import {
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { createI18nString, extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TI18nString } from "@formbricks/types/surveys";
 import {
   TSurvey,
@@ -123,7 +123,11 @@ export default function OpenQuestionForm({
         <LocalizedInput
           id="placeholder"
           name="placeholder"
-          value={(question.placeholder as TI18nString) ?? defaultPlaceholder}
+          value={
+            question.placeholder && question.placeholder[selectedLanguage]
+              ? (question.placeholder as TI18nString)
+              : createI18nString(defaultPlaceholder, extractLanguageSymbols(languages))
+          }
           languages={languages}
           localSurvey={localSurvey}
           questionIdx={questionIdx}

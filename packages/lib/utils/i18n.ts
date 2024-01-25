@@ -10,7 +10,7 @@ export const getLocalizedValue = (value: string | TI18nString | undefined, langu
     }
     return "";
   }
-  return value; // If it's a string, return it as-is
+  return value; // If it's a string, return as it is
 };
 
 function isI18nString(object: any): object is TI18nString {

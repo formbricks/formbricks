@@ -4,6 +4,7 @@ import { isLabelValidForAllLanguages } from "@/app/(app)/environments/[environme
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { createI18nString, extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
@@ -73,13 +74,6 @@ export default function MultipleChoiceSingleForm({
     return null;
   };
 
-  const findEmptyLabel = () => {
-    for (let i = 0; i < question.choices.length; i++) {
-      if (getLocalizedValue(question.choices[i].label, selectedLanguage).trim() === "") return true;
-    }
-    return false;
-  };
-
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
     const newLabel = updatedAttributes.label.en;
     const oldLabel = question.choices[choiceIdx].label;
@@ -97,7 +91,7 @@ export default function MultipleChoiceSingleForm({
       if (Array.isArray(logic.value)) {
         newL = logic.value.map((value) => (value === oldLabel ? newLabel : value));
       } else {
-        newL = logic.value === oldLabel ? newLabel : logic.value;
+        newL = logic.value === getLocalizedValue(oldLabel, selectedLanguage) ? newLabel : logic.value;
       }
       newLogic.push({ ...logic, value: newL });
     });
@@ -138,8 +132,7 @@ export default function MultipleChoiceSingleForm({
 
   const deleteChoice = (choiceIdx: number) => {
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
-
-    const choiceValue = question.choices[choiceIdx].label;
+    const choiceValue = question.choices[choiceIdx].label[selectedLanguage];
     if (isInvalidValue === choiceValue) {
       setisInvalidValue(null);
     }
@@ -187,7 +180,7 @@ export default function MultipleChoiceSingleForm({
 
       <div>
         {showSubheader && (
-          <div className="mt-2 inline-flex w-full items-center">
+          <div className="inline-flex w-full items-center">
             <div className="w-full">
               <LocalizedInput
                 id="subheader"
@@ -227,11 +220,12 @@ export default function MultipleChoiceSingleForm({
 
       <div className="mt-3">
         <Label htmlFor="choices">Options</Label>
-        <div className="mt-2 space-y-2" id="choices">
+        <div className="mt-2 space-y-1" id="choices">
           {question.choices &&
             question.choices.map((choice, choiceIdx) => (
-              <div key={choiceIdx} className="inline-flex w-full items-center">
+              <div className="inline-flex w-full items-center">
                 <LocalizedInput
+                  key={choice.id}
                   id={`choice-${choiceIdx}`}
                   name={`choice-${choiceIdx}`}
                   localSurvey={localSurvey}
@@ -240,9 +234,8 @@ export default function MultipleChoiceSingleForm({
                   onBlur={() => {
                     const duplicateLabel = findDuplicateLabel();
                     if (duplicateLabel) {
+                      toast.error("Duplicate choices");
                       setisInvalidValue(duplicateLabel);
-                    } else if (findEmptyLabel()) {
-                      setisInvalidValue("");
                     } else {
                       setisInvalidValue(null);
                     }

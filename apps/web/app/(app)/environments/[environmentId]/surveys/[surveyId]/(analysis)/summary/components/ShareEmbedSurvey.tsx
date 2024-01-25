@@ -1,13 +1,20 @@
 "use client";
 
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { ArrowLeftIcon, CodeBracketIcon, EnvelopeIcon, LinkIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowLeftIcon,
+  CodeBracketIcon,
+  EnvelopeIcon,
+  LanguageIcon,
+  LinkIcon,
+} from "@heroicons/react/24/outline";
 import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
 import { BellRing, BlocksIcon, Code2Icon, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
+import { getSurveyLanguages } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -39,10 +46,6 @@ export default function ShareEmbedSurvey({
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
 
-  const surveyLanguages = Object.entries(product.languages)
-    .filter(([langCode]) => survey.questions[0].headline[langCode])
-    .map((lang) => lang);
-
   const tabs = [
     { id: "email", label: "Embed in an Email", icon: EnvelopeIcon },
     { id: "webpage", label: "Embed in a Web Page", icon: CodeBracketIcon },
@@ -53,6 +56,9 @@ export default function ShareEmbedSurvey({
   const [showInitialPage, setShowInitialPage] = useState(true);
   const linkTextRef = useRef(null);
   const [surveyUrl, setSurveyUrl] = useState("");
+  const surveyLanguages = getSurveyLanguages(product, survey);
+  const [language, setLanguage] = useState<string>("en");
+  const [showLanguageSelect, setShowLanguageSelect] = useState(false);
 
   const getUrl = useCallback(async () => {
     let url = webAppUrl + "/s/" + survey.id;
@@ -60,12 +66,15 @@ export default function ShareEmbedSurvey({
       const singleUseId = await generateSingleUseIdAction(survey.id, survey.singleUse.isEncrypted);
       url += "?suId=" + singleUseId;
     }
+    if (language !== "en") {
+      url += "?lang=" + language;
+    }
     setSurveyUrl(url);
-  }, [survey, webAppUrl]);
+  }, [survey, webAppUrl, language]);
 
   useEffect(() => {
     getUrl();
-  }, [survey, webAppUrl, getUrl]);
+  }, [survey, webAppUrl, getUrl, language]);
 
   const handleTextSelection = () => {
     if (linkTextRef.current) {
@@ -123,6 +132,37 @@ export default function ShareEmbedSurvey({
                     EndIcon={DocumentDuplicateIcon}>
                     Copy Link
                   </Button>
+                  {surveyLanguages.length > 1 && (
+                    <div className="relative">
+                      {showLanguageSelect && (
+                        <div className="absolute left-0 right-0 top-12 rounded-lg border bg-slate-900 p-2 text-sm text-white">
+                          {surveyLanguages.map((language) => {
+                            return (
+                              <div
+                                className="rounded-lg p-2 px-4 hover:cursor-pointer hover:bg-slate-700"
+                                onClick={() => {
+                                  setLanguage(language[0]);
+                                  setShowLanguageSelect(false);
+                                }}>
+                                {language[1]}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <Button
+                        variant="darkCTA"
+                        className={cn(" rounded-lg border border-slate-200 bg-white ")}
+                        EndIcon={LanguageIcon}
+                        title="Select Language"
+                        aria-label="Select Language"
+                        endIconClassName="h-4 w-4 "
+                        onClick={() => setShowLanguageSelect(!showLanguageSelect)}
+                        target="_blank">
+                        Select Language
+                      </Button>
+                    </div>
+                  )}
                   {survey.singleUse?.enabled && (
                     <Button
                       variant="darkCTA"

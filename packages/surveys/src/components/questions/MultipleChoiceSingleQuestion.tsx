@@ -144,7 +144,7 @@ export default function MultipleChoiceSingleQuestion({
               <label
                 tabIndex={questionChoices.length + 1}
                 className={cn(
-                  value === otherOption.label
+                  value === getLocalizedValue(otherOption.label, language)
                     ? "border-border-highlight bg-accent-selected-bg z-10"
                     : "border-border",
                   "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"

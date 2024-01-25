@@ -23,6 +23,7 @@ export default function PreviewSurvey({
   brandColor,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const defaultLanguage = "en";
 
   const gotoNextQuestion = () => {
     const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
@@ -68,8 +69,8 @@ export default function PreviewSurvey({
         {activeQuestionId == "thank-you-card" ? (
           <ThankYouCard
             brandColor={brandColor}
-            headline={getLocalizedValue(localSurvey?.thankYouCard?.headline, "en") || ""}
-            subheader={getLocalizedValue(localSurvey?.thankYouCard?.subheader, "en") || ""}
+            headline={getLocalizedValue(localSurvey?.thankYouCard?.headline, defaultLanguage) || ""}
+            subheader={getLocalizedValue(localSurvey?.thankYouCard?.subheader, defaultLanguage) || ""}
           />
         ) : (
           questions.map(
