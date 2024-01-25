@@ -9,6 +9,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -19,13 +20,17 @@ jobs:
       - name: Install dependencies
         run: npm install -g pnpm && pnpm install
 
+      - name: Build Formricks JS package
+        run: pnpm build --filter=js
+
+      - name: Build Formbricks Image & Run
+        run: docker-compose up -d
+
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
 
-      - name: Setup Spring Boot App
-        run: |
-          pnpm go &
-          pnpm test:e2e
+      - name: Run Playwright tests
+        run: pnpm test:e2e
 
       - uses: actions/upload-artifact@v3
         if: always()
