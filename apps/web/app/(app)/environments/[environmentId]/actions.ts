@@ -51,9 +51,6 @@ export async function createTeamAction(teamName: string): Promise<Team> {
 
   const updatedNotificationSettings = {
     ...session.user.notificationSettings,
-    alert: {
-      ...session.user.notificationSettings?.alert,
-    },
     weeklySummary: {
       ...session.user.notificationSettings?.weeklySummary,
       [product.id]: true,
@@ -262,9 +259,6 @@ export const createProductAction = async (environmentId: string, productName: st
   });
   const updatedNotificationSettings = {
     ...session.user.notificationSettings,
-    alert: {
-      ...session.user.notificationSettings?.alert,
-    },
     weeklySummary: {
       ...session.user.notificationSettings?.weeklySummary,
       [product.id]: true,
