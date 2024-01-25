@@ -10,10 +10,17 @@ import {
   shareUrlRoute,
   signupRoute,
 } from "@/app/middleware/endpointValidator";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request });
+  const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
+  if (token && callbackUrl) {
+    return NextResponse.redirect(callbackUrl);
+  }
+
   if (process.env.NODE_ENV !== "production") {
     return NextResponse.next();
   }
@@ -54,5 +61,6 @@ export const config = {
     "/api/v1/js/actions",
     "/api/v1/client/storage",
     "/share/(.*)/:path",
+    "/auth/login",
   ],
 };

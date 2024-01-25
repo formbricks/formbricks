@@ -1,18 +1,10 @@
 import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
 import { RequestVerificationEmail } from "@/app/(auth)/auth/verification-requested/components/RequestVerificationEmail";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import { z } from "zod";
-
-import { authOptions } from "@formbricks/lib/authOptions";
 
 const VerificationPageSchema = z.string().email();
 
 export default async function VerificationPage(params) {
-  const session = await getServerSession(authOptions);
-  if (session) {
-    redirect(`/`);
-  }
   const email = params.searchParams.email;
   try {
     const parsedEmail = VerificationPageSchema.parse(email).toLowerCase();

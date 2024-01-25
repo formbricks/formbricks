@@ -1,16 +1,7 @@
 import BackToLoginButton from "@/app/(auth)/auth/components/BackToLoginButton";
 import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-
-import { authOptions } from "@formbricks/lib/authOptions";
 
 const SignInPage: React.FC = async () => {
-  const session = await getServerSession(authOptions);
-  if (session) {
-    redirect(`/`);
-  }
-
   return (
     <FormWrapper>
       <div>
