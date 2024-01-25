@@ -22,6 +22,10 @@ jobs:
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
 
+      - name: Start PostgreSQL
+        run: |
+          pnpm db:start
+
       - name: create .env
         run: cp .env.example .env
 
