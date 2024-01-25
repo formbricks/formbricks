@@ -180,6 +180,7 @@ export default function ShareEmbedSurvey({
               <p className="-mt-8 text-sm text-slate-500">What&apos;s next?</p>
               <div className="grid grid-cols-3 gap-2">
                 <button
+                  type="button"
                   onClick={handleInitialPageButton}
                   className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm  text-slate-500 hover:border-slate-200 md:p-8">
                   <Code2Icon className="h-6 w-6 text-slate-700" />

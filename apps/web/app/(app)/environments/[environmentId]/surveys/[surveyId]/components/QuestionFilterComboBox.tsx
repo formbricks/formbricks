@@ -123,6 +123,7 @@ const QuestionFilterComboBox = ({
                 {typeof filterComboBoxValue !== "string" &&
                   filterComboBoxValue?.map((o) => (
                     <button
+                      type="button"
                       onClick={() => handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o))}
                       className="w-30 flex items-center whitespace-nowrap bg-slate-100 px-2 text-slate-600">
                       {o}

@@ -1,4 +1,4 @@
-import { SurveyInlineProps } from "@/types/props";
+import { SurveyInlineProps } from "@formbricks/types/formbricksSurveys";
 
 import { Survey } from "./Survey";
 

@@ -15,6 +15,7 @@ interface SurveyBgSelectorTabProps {
 
 const TabButton = ({ isActive, onClick, children }) => (
   <button
+    type="button"
     className={`w-1/3 rounded-md p-3 text-sm font-medium leading-none text-slate-800 ${
       isActive ? "bg-white shadow-sm" : ""
     }`}

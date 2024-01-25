@@ -23,9 +23,17 @@
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
     },
+    "@formbricks/js#build:dev": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build:dev"]
+    },
     "@formbricks/surveys#build": {
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
+    },
+    "@formbricks/surveys#build:dev": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build:dev"]
     },
     "@formbricks/surveys#go": {
       "cache": false,
@@ -124,6 +132,10 @@
         "VERCEL_URL",
         "WEBAPP_URL"
       ]
+    },
+    "build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**", ".next/**"]
     },
     "post-install": {
       "cache": false,

@@ -32,6 +32,7 @@ export default function QuestionsAudienceTabs({ activeId, setActiveId }: Questio
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabs.map((tab) => (
           <button
+            type="button"
             key={tab.id}
             onClick={() => setActiveId(tab.id)}
             className={cn(

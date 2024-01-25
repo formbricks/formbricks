@@ -112,6 +112,9 @@ export const getResponsesByPersonId = async (
           select: responseSelection,
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          orderBy: {
+            updatedAt: "asc",
+          },
         });
 
         if (!responsePrisma) {

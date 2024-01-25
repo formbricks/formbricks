@@ -89,6 +89,7 @@ export default function OpenTextSummary({
         {displayCount < questionSummary.responses.length && (
           <div className="flex justify-center py-1">
             <button
+              type="button"
               onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
               className="my-2 flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700">
               Show more
