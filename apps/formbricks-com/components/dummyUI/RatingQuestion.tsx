@@ -47,7 +47,10 @@ export default function RatingQuestion({
         onSubmit(data);
       }}>
       <Headline headline={getLocalizedValue(question.headline, defaultLanguage)} questionId={question.id} />
-      <Subheader subheader={question.subheader as string} questionId={question.id} />
+      <Subheader
+        subheader={getLocalizedValue(question.subheader, defaultLanguage)}
+        questionId={question.id}
+      />
       <div className="my-4">
         <fieldset>
           <legend className="sr-only">Options</legend>

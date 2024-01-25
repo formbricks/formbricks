@@ -40,7 +40,10 @@ export default function NPSQuestion({ question, onSubmit, lastQuestion, brandCol
         // reset form
       }}>
       <Headline headline={getLocalizedValue(question.headline, defaultLanguage)} questionId={question.id} />
-      <Subheader subheader={question.subheader as string} questionId={question.id} />
+      <Subheader
+        subheader={getLocalizedValue(question.subheader, defaultLanguage)}
+        questionId={question.id}
+      />
       <div className="my-4">
         <fieldset>
           <legend className="sr-only">Options</legend>

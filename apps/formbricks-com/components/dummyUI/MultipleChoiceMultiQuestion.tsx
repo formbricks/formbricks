@@ -44,7 +44,10 @@ export default function MultipleChoiceMultiQuestion({
         setSelectedChoices([]); // reset value
       }}>
       <Headline headline={getLocalizedValue(question.headline, defaultLanguage)} questionId={question.id} />
-      <Subheader subheader={question.subheader as string} questionId={question.id} />
+      <Subheader
+        subheader={getLocalizedValue(question.subheader, defaultLanguage)}
+        questionId={question.id}
+      />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
@@ -54,7 +57,7 @@ export default function MultipleChoiceMultiQuestion({
                 <label
                   key={choice.id}
                   className={cn(
-                    selectedChoices.includes(choice.label as string)
+                    selectedChoices.includes(getLocalizedValue(choice.label, defaultLanguage))
                       ? "z-10 border-slate-400 bg-slate-50 dark:border-slate-400 dark:bg-slate-600"
                       : "border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600",
                     "relative flex cursor-pointer flex-col rounded-md border p-4  focus:outline-none"
@@ -64,10 +67,10 @@ export default function MultipleChoiceMultiQuestion({
                       type="checkbox"
                       id={choice.id}
                       name={question.id}
-                      value={choice.label as string}
+                      value={getLocalizedValue(choice.label, defaultLanguage)}
                       className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0 dark:border-slate-600 dark:bg-slate-500"
                       aria-labelledby={`${choice.id}-label`}
-                      checked={selectedChoices.includes(choice.label as string)}
+                      checked={selectedChoices.includes(getLocalizedValue(choice.label, defaultLanguage))}
                       onChange={(e) => {
                         if (e.currentTarget.checked) {
                           setSelectedChoices([...selectedChoices, e.currentTarget.value]);
@@ -82,7 +85,7 @@ export default function MultipleChoiceMultiQuestion({
                     <span
                       id={`${choice.id}-label`}
                       className="ml-3 font-medium text-slate-900 dark:text-slate-200">
-                      {choice.label as string}
+                      {getLocalizedValue(choice.label, defaultLanguage)}
                     </span>
                   </span>
                 </label>

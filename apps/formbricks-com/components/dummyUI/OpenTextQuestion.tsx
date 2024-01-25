@@ -34,7 +34,10 @@ export default function OpenTextQuestion({
         onSubmit(data);
       }}>
       <Headline headline={getLocalizedValue(question.headline, defaultLanguage)} questionId={question.id} />
-      <Subheader subheader={question.subheader as string} questionId={question.id} />
+      <Subheader
+        subheader={getLocalizedValue(question.subheader, defaultLanguage)}
+        questionId={question.id}
+      />
       <div className="mt-4">
         <textarea
           rows={3}
