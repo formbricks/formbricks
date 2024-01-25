@@ -32,6 +32,33 @@ export const users = {
       password: "XpP%X9UU3efj8vJa",
     },
   ],
+  action: [
+    {
+      name: "Action User 1",
+      email: "action1@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+    {
+      name: "Action User 2",
+      email: "action2@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+    {
+      name: "Action User 3",
+      email: "action3@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+    {
+      name: "Action User 4",
+      email: "action4@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+    {
+      name: "Action User 5",
+      email: "action5@formbricks.com",
+      password: "XpP%X9UU3efj8vJa",
+    },
+  ],
   team: [
     {
       name: "Team User 1",
@@ -106,6 +133,73 @@ export const surveys = {
     thankYouCard: {
       headline: "This is my Thank You Card Headline!",
       description: "This is my Thank you Card Description!",
+    },
+  },
+};
+
+export const actions = {
+  create: {
+    noCode: {
+      cssSelector: {
+        name: "Create Action (CSS Selector)",
+        description: "This is my Create Action (CSS Selector)",
+        selector: ".my-custom-class",
+      },
+      pageURL: {
+        name: "Create Action (Page URL)",
+        description: "This is my Create Action (Page URL)",
+        matcher: {
+          label: "Starts with",
+          value: "custom-url",
+        },
+        testURL: "http://localhost:3000/custom-url",
+      },
+      innerText: {
+        name: "Create Action (Inner Text)",
+        description: "This is my Create Action (Inner Text)",
+        innerText: "Download",
+      },
+    },
+    code: {
+      name: "Create Action (Code)",
+      description: "This is my Create Action (Code)",
+    },
+  },
+  edit: {
+    noCode: {
+      cssSelector: {
+        name: "Edit Action (CSS Selector)",
+        description: "This is my Edit Action (CSS Selector)",
+        selector: ".my-custom-class-edited",
+      },
+      pageURL: {
+        name: "Edit Action (Page URL)",
+        description: "This is my Edit Action (Page URL)",
+        matcher: {
+          label: "Starts with",
+          value: "custom-url0-edited",
+        },
+        testURL: "http://localhost:3000/custom-url",
+      },
+      innerText: {
+        name: "Edit Action (Inner Text)",
+        description: "This is my Edit Action (Inner Text)",
+        innerText: "Download Edited",
+      },
+    },
+    code: {
+      description: "This is my Edit Action (Code)",
+    },
+  },
+  delete: {
+    noCode: {
+      name: "Delete Action (CSS Selector)",
+      description: "This is my Delete Action (CSS Selector)",
+      selector: ".my-custom-class-deleted",
+    },
+    code: {
+      name: "Delete Action (Code)",
+      description: "This is my Delete Action (Code)",
     },
   },
 };

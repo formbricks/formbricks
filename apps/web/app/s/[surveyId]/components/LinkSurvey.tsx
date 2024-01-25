@@ -17,6 +17,8 @@ import { TSurvey } from "@formbricks/types/surveys";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
+let setIsError = (_: boolean) => {};
+
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
@@ -27,6 +29,7 @@ interface LinkSurveyProps {
   singleUseResponse?: TResponse;
   webAppUrl: string;
   responseCount?: number;
+  verifiedEmail?: string;
 }
 
 export default function LinkSurvey({
@@ -39,16 +42,19 @@ export default function LinkSurvey({
   singleUseResponse,
   webAppUrl,
   responseCount,
+  verifiedEmail,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
+
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
+
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
@@ -62,8 +68,8 @@ export default function LinkSurvey({
           apiHost: webAppUrl,
           environmentId: survey.environmentId,
           retryAttempts: 2,
-          onResponseSendingFailed: (response) => {
-            alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
+          onResponseSendingFailed: () => {
+            setIsError(true);
           },
           setSurveyState: setSurveyState,
         },
@@ -103,6 +109,14 @@ export default function LinkSurvey({
     return fieldsSet ? fieldsRecord : null;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
+  const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
+    if (survey.verifyEmail && verifiedEmail) {
+      return { verifiedEmail: verifiedEmail };
+    } else {
+      return null;
+    }
+  }, [survey.verifyEmail, verifiedEmail]);
+
   useEffect(() => {
     responseQueue.updateSurveyState(surveyState);
   }, [responseQueue, surveyState]);
@@ -126,6 +140,7 @@ export default function LinkSurvey({
             <div />
             Survey Preview 👀
             <button
+              type="button"
               className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
               onClick={() =>
                 setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -138,6 +153,13 @@ export default function LinkSurvey({
           survey={survey}
           brandColor={brandColor}
           isBrandingEnabled={product.linkSurveyBranding}
+          getSetIsError={(f: (value: boolean) => void) => {
+            setIsError = f;
+          }}
+          onRetry={() => {
+            setIsError(false);
+            responseQueue.processQueue();
+          }}
           onDisplay={async () => {
             if (!isPreview) {
               const api = new FormbricksAPI({
@@ -163,6 +185,7 @@ export default function LinkSurvey({
                 data: {
                   ...responseUpdate.data,
                   ...hiddenFieldsRecord,
+                  ...getVerifiedEmail,
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,

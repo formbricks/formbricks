@@ -17,11 +17,12 @@ enum MembershipRole {
   Viewer = "viewer",
 }
 
-type AddMemberRole = {
+type AddMemberRoleProps = {
   control: Control<{ name: string; email: string; role: MembershipRole }, any>;
+  canDoRoleManagement: boolean;
 };
 
-export const AddMemberRole = ({ control }: AddMemberRole) => {
+export const AddMemberRole = ({ control, canDoRoleManagement }: AddMemberRoleProps) => {
   return (
     <Controller
       name="role"
@@ -29,9 +30,18 @@ export const AddMemberRole = ({ control }: AddMemberRole) => {
       render={({ field: { onChange, value } }) => (
         <div>
           <Label>Role</Label>
-          <Select value={value} onValueChange={(v) => onChange(v as MembershipRole)}>
+          <Select
+            value={value}
+            onValueChange={(v) => onChange(v as MembershipRole)}
+            disabled={!canDoRoleManagement}>
             <SelectTrigger className="capitalize">
-              <SelectValue placeholder={<span className="text-slate-400">Select role</span>} />
+              <SelectValue
+                placeholder={
+                  <span className="text-slate-400">
+                    {canDoRoleManagement ? "Select role" : "Select role (Pro Feature)"}
+                  </span>
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
