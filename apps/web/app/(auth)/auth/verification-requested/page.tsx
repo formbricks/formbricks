@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const VerificationPageSchema = z.string().email();
 
-export default async function VerificationPage(params) {
+export default function VerificationPage(params) {
   const email = params.searchParams.email;
   try {
     const parsedEmail = VerificationPageSchema.parse(email).toLowerCase();

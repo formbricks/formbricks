@@ -16,7 +16,7 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 
-export default async function SignUpPage({
+export default function SignUpPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };

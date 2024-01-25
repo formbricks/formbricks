@@ -1,7 +1,7 @@
 import BackToLoginButton from "@/app/(auth)/auth/components/BackToLoginButton";
 import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
 
-const SignInPage: React.FC = async () => {
+const SignInPage: React.FC = () => {
   return (
     <FormWrapper>
       <div>

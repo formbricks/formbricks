@@ -1,7 +1,7 @@
 import BackToLoginButton from "@/app/(auth)/auth/components/BackToLoginButton";
 import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
 
-export default async function SignupWithoutVerificationSuccess() {
+export default function SignupWithoutVerificationSuccess() {
   return (
     <FormWrapper>
       <h1 className="leading-2 mb-4 text-center font-bold">User successfully created</h1>

@@ -258,9 +258,6 @@ export const authOptions: NextAuthOptions = {
               [product.id]: true,
             },
           };
-          console.log("updatedNotificationSettings", updatedNotificationSettings);
-          console.log("user", userProfile);
-          console.log("product", product);
 
           await updateUser(userProfile.id, {
             notificationSettings: updatedNotificationSettings,
