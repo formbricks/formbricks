@@ -39,10 +39,13 @@ jobs:
         run: |
           pnpm build:dev --filter=web...
 
+      - name: Serve packages for lazy loading
+        run: |
+          cd packages/surveys && pnpm serve &
+
       - name: Run App
         run: |
           NODE_ENV=test pnpm start --filter=web &
-          cd packages/surveys && pnpm serve &
           for attempt in {1..20}; do
             if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
               echo "Ready"
@@ -51,6 +54,10 @@ jobs:
             echo "Waiting..."
             sleep 10
           done
+
+      - name: Test Serve endpoints
+        run: |
+          curl -s http://localhost:3003
 
       - name: Run E2E Tests
         run: |
