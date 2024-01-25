@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -8,7 +10,7 @@ import { TUser } from "@formbricks/types/user";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
 
-export default async function ResponseFeed({
+export default function ResponseFeed({
   responses,
   environment,
   surveys,

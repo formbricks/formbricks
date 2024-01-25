@@ -30,14 +30,12 @@ export default async function ResponseSection({
   }
 
   return (
-    <>
-      <ResponseTimeline
-        user={session.user}
-        surveys={surveys}
-        responses={responses}
-        environment={environment}
-        environmentTags={environmentTags}
-      />
-    </>
+    <ResponseTimeline
+      user={session.user}
+      surveys={surveys}
+      responses={responses}
+      environment={environment}
+      environmentTags={environmentTags}
+    />
   );
 }
