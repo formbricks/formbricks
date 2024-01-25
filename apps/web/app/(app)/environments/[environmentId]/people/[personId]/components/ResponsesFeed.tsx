@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
@@ -22,6 +22,10 @@ export default async function ResponseFeed({
   environmentTags: TTag[];
 }) {
   const [fetchedResponses, setFetchedResponses] = useState(responses);
+
+  useEffect(() => {
+    setFetchedResponses(responses);
+  }, [responses]);
 
   return (
     <>

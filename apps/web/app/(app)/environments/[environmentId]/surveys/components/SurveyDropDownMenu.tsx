@@ -127,6 +127,7 @@ export default function SurveyDropDownMenu({
 
                 <DropdownMenuItem>
                   <button
+                    type="button"
                     className="flex w-full items-center"
                     onClick={async () => {
                       duplicateSurveyAndRefresh(survey.id);
@@ -142,6 +143,7 @@ export default function SurveyDropDownMenu({
                 {environment.type === "development" ? (
                   <DropdownMenuItem>
                     <button
+                      type="button"
                       className="flex w-full items-center"
                       onClick={() => {
                         copyToOtherEnvironment(survey.id);
@@ -153,6 +155,7 @@ export default function SurveyDropDownMenu({
                 ) : environment.type === "production" ? (
                   <DropdownMenuItem>
                     <button
+                      type="button"
                       className="flex w-full items-center"
                       onClick={() => {
                         copyToOtherEnvironment(survey.id);
@@ -181,6 +184,7 @@ export default function SurveyDropDownMenu({
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <button
+                    type="button"
                     className="flex w-full items-center"
                     onClick={() => {
                       navigator.clipboard.writeText(
@@ -198,6 +202,7 @@ export default function SurveyDropDownMenu({
             {!isSurveyCreationDeletionDisabled && (
               <DropdownMenuItem>
                 <button
+                  type="button"
                   className="flex w-full  items-center"
                   onClick={() => {
                     setDeleteDialogOpen(true);

@@ -295,7 +295,7 @@ export default function SingleResponseCard({
               </div>
             )}
 
-            <div className="flex cursor-pointer space-x-4 text-sm">
+            <div className="flex space-x-4 text-sm">
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
@@ -311,7 +311,7 @@ export default function SingleResponseCard({
                     }}
                     className={`h-4 w-4 ${
                       canResponseBeDeleted
-                        ? "text-slate-500 hover:text-red-700"
+                        ? "cursor-pointer text-slate-500 hover:text-red-700"
                         : "cursor-not-allowed text-slate-400"
                     } `}
                   />

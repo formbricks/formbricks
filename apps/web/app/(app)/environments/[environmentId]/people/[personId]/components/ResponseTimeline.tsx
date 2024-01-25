@@ -23,16 +23,14 @@ export default function ResponseTimeline({
   environment: TEnvironment;
   environmentTags: TTag[];
 }) {
-  const [responsesAscending, setResponsesAscending] = useState(false);
   const [sortedResponses, setSortedResponses] = useState(responses);
   const toggleSortResponses = () => {
-    setResponsesAscending(!responsesAscending);
+    setSortedResponses([...sortedResponses].reverse());
   };
 
   useEffect(() => {
-    setSortedResponses(responsesAscending ? [...responses].reverse() : responses);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [responsesAscending]);
+    setSortedResponses(responses);
+  }, [responses]);
 
   return (
     <div className="md:col-span-2">
@@ -40,6 +38,7 @@ export default function ResponseTimeline({
         <h2 className="text-lg font-bold text-slate-700">Responses</h2>
         <div className="text-right">
           <button
+            type="button"
             onClick={toggleSortResponses}
             className="hover:text-brand-dark flex items-center px-1 text-slate-800">
             <ArrowsUpDownIcon className="inline h-4 w-4" />
