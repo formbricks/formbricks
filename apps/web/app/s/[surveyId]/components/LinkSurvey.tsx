@@ -140,6 +140,7 @@ export default function LinkSurvey({
             <div />
             Survey Preview 👀
             <button
+              type="button"
               className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
               onClick={() =>
                 setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)

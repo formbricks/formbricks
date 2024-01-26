@@ -97,7 +97,7 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
   return (
     <>
       {showDeleteButton && (
-        <button id="deleteMemberButton" onClick={() => setDeleteMemberModalOpen(true)}>
+        <button type="button" id="deleteMemberButton" onClick={() => setDeleteMemberModalOpen(true)}>
           <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
         </button>
       )}
@@ -107,6 +107,7 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
           <Tooltip>
             <TooltipTrigger asChild>
               <button
+                type="button"
                 onClick={() => {
                   handleShareInvite();
                 }}
@@ -121,6 +122,7 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
           <Tooltip>
             <TooltipTrigger asChild>
               <button
+                type="button"
                 onClick={() => {
                   handleResendInvite();
                 }}
