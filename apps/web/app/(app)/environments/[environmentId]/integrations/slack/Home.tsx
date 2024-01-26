@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@react-email/components";
 import { useState } from "react";
 
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
+import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 

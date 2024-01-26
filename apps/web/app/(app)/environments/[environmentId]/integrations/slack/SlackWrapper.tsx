@@ -43,24 +43,24 @@ export default function SlackWrapper({
 
   return isConnected && slackIntegration ? (
     <>
-      <AddSlackConnectionModal
-        environmentId={environment.id}
-        surveys={surveys}
-        open={isModalOpen}
-        setOpen={setModalOpen}
-        channels={channels}
-        slackIntegration={slackIntegration}
-        selectedIntegration={selectedIntegration}
-      />
-      <Home
-        environment={environment}
-        slackIntegration={slackIntegration}
-        setOpenAddIntegrationModal={setModalOpen}
-        setIsConnected={setIsConnected}
-        setSelectedIntegration={setSelectedIntegration}
-        refreshSheet={refreshSheet}
-      />
-      {/* <Connect enabled={enabled} environmentId={environmentId} webAppUrl={webAppUrl} /> */}
+      {/* <AddSlackConnectionModal */}
+      {/*   environmentId={environment.id} */}
+      {/*   surveys={surveys} */}
+      {/*   open={isModalOpen} */}
+      {/*   setOpen={setModalOpen} */}
+      {/*   channels={channels} */}
+      {/*   slackIntegration={slackIntegration} */}
+      {/*   selectedIntegration={selectedIntegration} */}
+      {/* /> */}
+      {/* <Home */}
+      {/*   environment={environment} */}
+      {/*   slackIntegration={slackIntegration} */}
+      {/*   setOpenAddIntegrationModal={setModalOpen} */}
+      {/*   setIsConnected={setIsConnected} */}
+      {/*   setSelectedIntegration={setSelectedIntegration} */}
+      {/*   refreshSheet={refreshSheet} */}
+      {/* /> */}
+      <Connect enabled={enabled} environmentId={environmentId} webAppUrl={webAppUrl} />
     </>
   ) : (
     <Connect enabled={enabled} environmentId={environmentId} webAppUrl={webAppUrl} />

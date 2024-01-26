@@ -152,9 +152,9 @@ export const authOptions: NextAuthOptions = {
                 access_token: data.access_token,
                 refresh_token: data.refresh_token,
                 expires_at: data.expires_in,
-                user_id: data.user_id,
-                team_id: data.team_id,
-                team_name: data.team_name,
+                user_id: data.bot_user_id,
+                team_id: data.team.id,
+                team_name: data.team.name,
               },
             };
           } catch (error) {
@@ -188,26 +188,57 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token }) {
+    async jwt({ token, account }) {
+      console.log("in jwt", token, account);
       const existingUser = await getUserByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
       }
 
+      let accountAttributes = {};
+
+      if (account && account.provider && account.provider === "slack") {
+        accountAttributes = {
+          accessToken: account.access_token,
+          refreshToken: account.refresh_token,
+          expiresAt: account.expires_at,
+        };
+      }
+
       return {
         ...token,
         profile: existingUser || null,
+        ...accountAttributes,
       };
     },
     async session({ session, token }) {
+      console.log("sees", token);
+      if (token.accountAttributes) {
+        // @ts-ignore
+        session.user.accessToken = token.accountAttributes.accessToken;
+        // @ts-ignore
+        session.user.refreshToken = token.accountAttributes.refreshToken;
+        // @ts-ignore
+        session.user.expiresAt = token.accountAttributes.expiresAt;
+      }
       // @ts-expect-error
       session.user.id = token?.id;
       // @ts-expect-error
       session.user = token.profile;
+      console.log("sessioN", session);
 
       return session;
     },
+    // async session({ session, token }) {
+    //   console.log("in session", token);
+    //   // @ts-expect-error
+    //   session.user.id = token?.id;
+    //   // @ts-expect-error
+    //   session.user = token.profile;
+    //
+    //   return session;
+    // },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
@@ -220,12 +251,11 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
-      if (account.provider === "slack") {
-        console.log("chaaaaaaaaaaaaaaaaaaaa");
-        return true;
-      }
-
       if (account.provider) {
+        if (account.provider === "slack") {
+          console.log("chaaaaaaaaaaaaaaaaaaaa");
+          return true;
+        }
         const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
         // check if accounts for this provider / account Id already exists
         const existingUserWithAccount = await prisma.user.findFirst({

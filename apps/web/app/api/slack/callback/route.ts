@@ -35,8 +35,6 @@ export async function GET(req: NextRequest, res: NextResponse) {
   const slackCredentials: TSlackCredential = {
     token_type: "Bearer",
     // @ts-ignore
-    id_token: user.idToken,
-    // @ts-ignore
     access_token: user.accessToken,
     // @ts-ignore
     refresh_token: user.refreshToken,
