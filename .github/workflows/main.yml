@@ -120,4 +120,19 @@ jobs:
       - name: Download task definition
         run: |
           aws ecs describe-task-definition --task-definition prod-webapp-ecs-service --query taskDefinition > task-definition.json
-          cat task-definition.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: prod-webapp-container
+          image: formbricks/formbricks
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: prod-webapp-ecs-service
+          cluster: prod-core-infra-ecs-cluster
+          wait-for-service-stability: true
