@@ -1,4 +1,4 @@
-import * as DOMPurify from "dompurify";
+import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 
 import { md } from "@formbricks/lib/markdownIt";
@@ -38,7 +38,7 @@ export const LocalizedEditor = ({
   const hasi18n = value._i18n_;
   const isInComplete =
     id === "subheader"
-      ? value.en.trim() !== "" &&
+      ? value.en?.trim() !== "" &&
         isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
         selectedLanguage === "en"
@@ -81,7 +81,7 @@ export const LocalizedEditor = ({
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(recallToHeadline(value, localSurvey, false, "en")["en"]),
+                  __html: DOMPurify.sanitize(recallToHeadline(value, localSurvey, false, "en")["en"] ?? ""),
                 }}></label>
             </div>
           )}

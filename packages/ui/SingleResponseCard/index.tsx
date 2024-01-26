@@ -1,7 +1,7 @@
 "use client";
 
 import { EnvelopeIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, LanguageIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -248,53 +248,61 @@ export default function SingleResponseCard({
         )}>
         <div className="space-y-2 px-6 pb-5 pt-6">
           <div className="flex items-center justify-between">
-            {pageType === "response" && (
-              <div>
-                {response.person?.id ? (
-                  user ? (
-                    <Link
-                      className="group flex items-center"
-                      href={`/environments/${environmentId}/people/${response.person.id}`}>
-                      <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                        <PersonAvatar personId={response.person.id} />
-                      </TooltipRenderer>
-                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
-                        {displayIdentifier}
-                      </h3>
-                    </Link>
+            <div className="flex items-center justify-center space-x-4">
+              {pageType === "response" && (
+                <div>
+                  {response.person?.id ? (
+                    user ? (
+                      <Link
+                        className="group flex items-center"
+                        href={`/environments/${environmentId}/people/${response.person.id}`}>
+                        <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                          <PersonAvatar personId={response.person.id} />
+                        </TooltipRenderer>
+                        <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+                          {displayIdentifier}
+                        </h3>
+                      </Link>
+                    ) : (
+                      <div className="group flex items-center">
+                        <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
+                          <PersonAvatar personId={response.person.id} />
+                        </TooltipRenderer>
+                        <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
+                          {displayIdentifier}
+                        </h3>
+                      </div>
+                    )
                   ) : (
                     <div className="group flex items-center">
                       <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                        <PersonAvatar personId={response.person.id} />
+                        <PersonAvatar personId="anonymous" />
                       </TooltipRenderer>
-                      <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
-                        {displayIdentifier}
-                      </h3>
+                      <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
                     </div>
-                  )
-                ) : (
-                  <div className="group flex items-center">
-                    <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
-                      <PersonAvatar personId="anonymous" />
-                    </TooltipRenderer>
-                    <h3 className="ml-4 pb-1 font-semibold text-slate-600">Anonymous</h3>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
 
-            {pageType === "people" && (
-              <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
-                {(survey.type === "link" || environment.widgetSetupCompleted) && (
-                  <SurveyStatusIndicator status={survey.status} />
-                )}
-                <Link
-                  className="hover:underline"
-                  href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
-                  {survey.name}
-                </Link>
-              </div>
-            )}
+              {pageType === "people" && (
+                <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
+                  {(survey.type === "link" || environment.widgetSetupCompleted) && (
+                    <SurveyStatusIndicator status={survey.status} />
+                  )}
+                  <Link
+                    className="hover:underline"
+                    href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
+                    {survey.name}
+                  </Link>
+                </div>
+              )}
+              {response.language && (
+                <div className="flex space-x-2 rounded-lg bg-slate-900 p-2 text-xs text-white">
+                  <div>{response.language}</div>
+                  <LanguageIcon className="h-4 w-4" />
+                </div>
+              )}
+            </div>
 
             <div className="flex space-x-4 text-sm">
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>

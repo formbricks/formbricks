@@ -3,7 +3,7 @@
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRef } from "react";
 
 import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
@@ -146,7 +146,7 @@ export default function SurveyEditor({
                     allLanguages={allLanguages}
                     languages={languages}
                     setLanguages={setLanguages}
-                    i18n={i18n}
+                    i18n={Object.entries(languages).length > 1}
                     setI18n={setI18n}
                     environmentId={environment.id}
                     isEnterpriseEdition={isEnterpriseEdition}

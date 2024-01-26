@@ -48,7 +48,7 @@ export default function CalQuestionForm({
       />
       <div>
         {showSubheader && (
-          <div className="mt-2 inline-flex w-full items-center">
+          <div className="inline-flex w-full items-center">
             <div className="w-full">
               <LocalizedInput
                 id="subheader"

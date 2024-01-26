@@ -67,7 +67,11 @@ export default function ShareEmbedSurvey({
       url += "?suId=" + singleUseId;
     }
     if (language !== "en") {
-      url += "?lang=" + language;
+      if (survey.singleUse?.enabled) {
+        url += "&lang=" + language;
+      } else {
+        url += "?lang=" + language;
+      }
     }
     setSurveyUrl(url);
   }, [survey, webAppUrl, language]);
@@ -111,7 +115,8 @@ export default function ShareEmbedSurvey({
           <div className="h-full max-w-full overflow-hidden">
             <div className="flex h-[200px] w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
               <p className="pt-2 text-xl font-semibold text-slate-800">Your survey is public 🎉</p>
-              <div className="flex max-w-full flex-col items-center justify-center space-x-2 lg:flex-row">
+              <div
+                className={`flex max-w-full flex-col items-center justify-center space-x-2  ${survey.singleUse?.enabled ? "flex-col" : "lg:flex-row"}`}>
                 <div
                   ref={linkTextRef}
                   className="mt-2 max-w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
@@ -156,7 +161,7 @@ export default function ShareEmbedSurvey({
                         EndIcon={LanguageIcon}
                         title="Select Language"
                         aria-label="Select Language"
-                        endIconClassName="h-4 w-4 "
+                        endIconClassName="h-5 w-5 "
                         onClick={() => setShowLanguageSelect(!showLanguageSelect)}
                         target="_blank">
                         Select Language

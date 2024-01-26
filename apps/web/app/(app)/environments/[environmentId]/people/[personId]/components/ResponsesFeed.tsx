@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -28,7 +29,6 @@ export default function ResponseFeed({
   useEffect(() => {
     setFetchedResponses(responses);
   }, [responses]);
-
   return (
     <>
       {fetchedResponses.length === 0 ? (
@@ -43,7 +43,7 @@ export default function ResponseFeed({
               {survey && (
                 <SingleResponseCard
                   response={response}
-                  survey={survey}
+                  survey={checkForRecallInHeadline(survey)}
                   user={user}
                   pageType="people"
                   environmentTags={environmentTags}

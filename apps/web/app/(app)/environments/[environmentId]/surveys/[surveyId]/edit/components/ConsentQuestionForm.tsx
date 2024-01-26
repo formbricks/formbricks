@@ -67,21 +67,22 @@ export default function ConsentQuestionForm({
           />
         </div>
       </div>
-
-      <div className="mt-3">
-        <LocalizedInput
-          id="label"
-          name="label"
-          value={question.label as TI18nString}
-          localSurvey={localSurvey}
-          questionIdx={questionIdx}
-          languages={languages}
-          isInvalid={isInvalid}
-          updateQuestion={updateQuestion}
-          selectedLanguage={selectedLanguage}
-          setSelectedLanguage={setSelectedLanguage}
-        />
+      <div className="mb-2 mt-3">
+        <Label>Checkbox Label</Label>
       </div>
+
+      <LocalizedInput
+        id="label"
+        name="label"
+        value={question.label as TI18nString}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+        languages={languages}
+        isInvalid={isInvalid}
+        updateQuestion={updateQuestion}
+        selectedLanguage={selectedLanguage}
+        setSelectedLanguage={setSelectedLanguage}
+      />
       {/* <div className="mt-3">
         <Label htmlFor="buttonLabel">Button Label</Label>
         <Input
