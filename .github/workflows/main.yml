@@ -32,107 +32,107 @@ jobs:
           SECRET=$(openssl rand -hex 32)
           echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
 
-      # - name: Generate Random ENCRYPTION_KEY
-      #   run: |
-      #     SECRET=$(openssl rand -hex 32)
-      #     echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
-
-      # - name: Checkout repository
-      #   uses: actions/checkout@v3
-
-      # - name: Set up Depot CLI
-      #   uses: depot/setup-action@v1
-
-      # # Install the cosign tool except on PR
-      # # https://github.com/sigstore/cosign-installer
-      # - name: Install cosign
-      #   if: github.event_name != 'pull_request'
-      #   uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
-      #   with:
-      #     cosign-release: "v2.1.1"
-
-      # # Login against a Docker registry except on PR
-      # # https://github.com/docker/login-action
-      # - name: Log into registry
-      #   if: github.event_name != 'pull_request'
-      #   uses: docker/login-action@v3 # v3.0.0
-      #   with:
-      #     registry: ${{ env.REGISTRY }}
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
-
-      # # Extract metadata (tags, labels) for Docker
-      # # https://github.com/docker/metadata-action
-      # - name: Extract Docker metadata
-      #   id: meta
-      #   uses: docker/metadata-action@v5 # v5.0.0
-      #   with:
-      #     images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
-      # # Build and push Docker image with Buildx (don't push on PR)
-      # # https://github.com/docker/build-push-action
-      # - name: Build and push Docker image
-      #   id: build-and-push
-      #   uses: depot/build-push-action@v1
-      #   with:
-      #     project: tw0fqmsx3c
-      #     token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-      #     context: .
-      #     file: ./apps/web/Dockerfile
-      #     platforms: linux/amd64,linux/arm64
-      #     push: ${{ github.event_name != 'pull_request' }}
-      #     tags: ${{ steps.meta.outputs.tags }}
-      #     labels: ${{ steps.meta.outputs.labels }}
-      #     cache-from: type=gha
-      #     cache-to: type=gha,mode=max
-      #     build-args: |
-      #       NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
-      #       DATABASE_URL=${{ env.DATABASE_URL }}
-      #       ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
-      #       NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
-
-      # # Sign the resulting Docker image digest except on PRs.
-      # # This will only write to the public Rekor transparency log when the Docker
-      # # repository is public to avoid leaking data.  If you would like to publish
-      # # transparency data even for private images, pass --force to cosign below.
-      # # https://github.com/sigstore/cosign
-      # - name: Sign the published Docker image
-      #   if: ${{ github.event_name != 'pull_request' }}
-      #   env:
-      #     # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-      #     TAGS: ${{ steps.meta.outputs.tags }}
-      #     DIGEST: ${{ steps.build-and-push.outputs.digest }}
-      #   # This step uses the identity token to provision an ephemeral certificate
-      #   # against the sigstore community Fulcio instance.
-      #   run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-          
-      - name: Download task definition
+      - name: Generate Random ENCRYPTION_KEY
         run: |
-          aws ecs describe-task-definition --task-definition prod-webapp-ecs-service --query taskDefinition > task-definition.json
+          SECRET=$(openssl rand -hex 32)
+          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
 
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: prod-webapp-container
-          image: formbricks/formbricks
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      - name: Set up Depot CLI
+        uses: depot/setup-action@v1
+
+      # Install the cosign tool except on PR
+      # https://github.com/sigstore/cosign-installer
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: prod-webapp-ecs-service
-          cluster: prod-core-infra-ecs-cluster
-          wait-for-service-stability: true
+          cosign-release: "v2.1.1"
+
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - name: Log into registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3 # v3.0.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5 # v5.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: depot/build-push-action@v1
+        with:
+          project: tw0fqmsx3c
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }} # Use the single project token
+          context: .
+          file: ./apps/web/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: unstable # TODO verify
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
+            DATABASE_URL=${{ env.DATABASE_URL }}
+            ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+
+      # Sign the resulting Docker image digest except on PRs.
+      # This will only write to the public Rekor transparency log when the Docker
+      # repository is public to avoid leaking data.  If you would like to publish
+      # transparency data even for private images, pass --force to cosign below.
+      # https://github.com/sigstore/cosign
+      - name: Sign the published Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push.outputs }} # TODO update
+        # This step uses the identity token to provision an ephemeral certificate
+        # against the sigstore community Fulcio instance.
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+  # deploy:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: us-east-1
+          
+  #     - name: Download task definition
+  #       run: |
+  #         aws ecs describe-task-definition --task-definition prod-webapp-ecs-service --query taskDefinition > task-definition.json
+
+  #     - name: Fill in the new image ID in the Amazon ECS task definition
+  #       id: task-def
+  #       uses: aws-actions/amazon-ecs-render-task-definition@v1
+  #       with:
+  #         task-definition: task-definition.json
+  #         container-name: prod-webapp-container
+  #         image: formbricks/formbricks # TODO Make this dynamic
+
+  #     - name: Deploy Amazon ECS task definition
+  #       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+  #       with:
+  #         task-definition: ${{ steps.task-def.outputs.task-definition }}
+  #         service: prod-webapp-ecs-service
+  #         cluster: prod-core-infra-ecs-cluster
+  #         wait-for-service-stability: true
