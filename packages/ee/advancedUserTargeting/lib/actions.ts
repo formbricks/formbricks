@@ -28,7 +28,7 @@ export const createUserSegmentAction = async ({
   environmentId: string;
   surveyId: string;
   title: string;
-  description: string;
+  description?: string;
   isPrivate: boolean;
   filters: TBaseFilters;
 }) => {
@@ -44,7 +44,7 @@ export const createUserSegmentAction = async ({
     environmentId,
     surveyId,
     title,
-    description,
+    description: description || "",
     isPrivate,
     filters,
   });

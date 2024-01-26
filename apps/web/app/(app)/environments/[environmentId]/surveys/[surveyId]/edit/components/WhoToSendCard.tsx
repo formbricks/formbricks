@@ -186,8 +186,20 @@ export default function WhoToSendCard({
               {isSegmentEditorOpen ? (
                 <div className="w-full">
                   <div className="mb-4">
-                    <p className="text-sm font-semibold">Send survey to audience who match...</p>
-                    <p className="text-sm">Without a filter, all of your users can be surveyed.</p>
+                    {!userSegment?.isPrivate ? (
+                      <div className="mb-2 flex items-center gap-6">
+                        <UserGroupIcon className="h-6 w-6 text-slate-700" />
+                        <div className="flex flex-col">
+                          <h3 className="font-medium text-slate-900">{localSurvey.userSegment?.title}</h3>
+                          <p className="text-sm text-slate-500">{localSurvey.userSegment?.description}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm font-semibold">Send survey to audience who match...</p>
+                        <p className="text-sm">Without a filter, all of your users can be surveyed.</p>
+                      </div>
+                    )}
                   </div>
                   {!!userSegment?.filters?.length && (
                     <div className="w-full">
@@ -216,6 +228,28 @@ export default function WhoToSendCard({
                         className="flex items-center gap-2"
                         onClick={() => setResetAllFiltersModalOpen(true)}>
                         <p className="text-sm">Reset all filters</p>
+                      </Button>
+                    )}
+
+                    {isSegmentEditorOpen && !userSegment?.isPrivate && !!userSegment?.filters?.length && (
+                      <Button
+                        variant="minimal"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={() => {
+                          setIsSegmentEditorOpen(false);
+                          setSegmentEditorViewOnly(false);
+
+                          const segmentFromApi = userSegments.find(
+                            (segment) => segment.id === userSegment.id
+                          );
+
+                          // reset the state changes:
+                          if (segmentFromApi) {
+                            setUserSegment(segmentFromApi);
+                          }
+                        }}>
+                        Cancel
                       </Button>
                     )}
                   </div>

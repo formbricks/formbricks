@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
@@ -47,10 +48,10 @@ const CreateSegmentModal = ({
   const [isCreatingSegment, setIsCreatingSegment] = useState(false);
 
   const [titleError, setTitleError] = useState("");
-  const [descriptionError, setDescriptionError] = useState("");
 
   const handleResetState = () => {
     setUserSegment(initialSegmentState);
+    setTitleError("");
     setOpen(false);
   };
 
@@ -71,11 +72,6 @@ const CreateSegmentModal = ({
   const handleCreateSegment = async () => {
     if (!userSegment.title) {
       setTitleError("Title is required");
-      return;
-    }
-
-    if (!userSegment.description) {
-      setDescriptionError("Description is required");
       return;
     }
 
@@ -118,7 +114,8 @@ const CreateSegmentModal = ({
         }}
         noPadding
         closeOnOutsideClick={false}
-        className="md:w-full md:max-w-5xl">
+        className="md:w-full"
+        size="lg">
         <div className="rounded-lg bg-slate-50">
           <div className="rounded-t-lg bg-slate-100">
             <div className="flex w-full items-center gap-4 p-6">
@@ -140,21 +137,28 @@ const CreateSegmentModal = ({
             <div className="flex w-full items-center gap-4">
               <div className="flex w-1/2 flex-col gap-2">
                 <label className="text-sm font-medium text-slate-900">Title</label>
-                {titleError && <div className="text-sm text-red-500">{titleError}</div>}
-                <Input
-                  placeholder="Ex. Power Users"
-                  onChange={(e) => {
-                    setUserSegment((prev) => ({
-                      ...prev,
-                      title: e.target.value,
-                    }));
-                  }}
-                />
+                <div className="relative flex flex-col gap-1">
+                  <Input
+                    placeholder="Ex. Power Users"
+                    onChange={(e) => {
+                      setUserSegment((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }));
+                    }}
+                    className={cn(titleError && "border border-red-500 focus:border-red-500")}
+                  />
+
+                  {titleError && (
+                    <p className="absolute right-1 bg-white text-xs text-red-500" style={{ top: "-8px" }}>
+                      {titleError}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="flex w-1/2 flex-col gap-2">
                 <label className="text-sm font-medium text-slate-900">Description</label>
-                {descriptionError && <div className="text-sm text-red-500">{descriptionError}</div>}
                 <Input
                   placeholder="Ex. Fully activated recurring users"
                   onChange={(e) => {

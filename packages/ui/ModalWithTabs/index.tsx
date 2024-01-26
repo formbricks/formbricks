@@ -39,7 +39,7 @@ export default function ModalWithTabs({
   }, [open]);
 
   return (
-    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={closeOnOutsideClick}>
+    <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={closeOnOutsideClick} size="lg">
       <div className="flex h-full flex-col rounded-lg">
         <div className="rounded-t-lg bg-slate-100">
           <div className="mr-20 flex items-center justify-between truncate p-6">

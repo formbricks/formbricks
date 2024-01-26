@@ -539,7 +539,7 @@ type ResultConnectorPair = {
   connector: TUserSegmentConnector;
 };
 
-export async function evaluateSegment(userData: UserData, filters: TBaseFilters): Promise<boolean> {
+export const evaluateSegment = async (userData: UserData, filters: TBaseFilters): Promise<boolean> => {
   let resultPairs: ResultConnectorPair[] = [];
 
   for (let filterItem of filters) {
@@ -618,4 +618,4 @@ export async function evaluateSegment(userData: UserData, filters: TBaseFilters)
   }
 
   return finalResult;
-}
+};

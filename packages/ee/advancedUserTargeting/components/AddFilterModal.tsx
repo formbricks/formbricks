@@ -207,92 +207,26 @@ const AddFilterModal = ({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
-      <DialogContent className="w-[600px] bg-white sm:max-w-2xl" hideCloseButton>
-        <div className="flex w-auto flex-col">
-          <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
+  const getAllTabContent = () => {
+    return (
+      <>
+        {allFiltersFiltered?.every((filterArr) => {
+          return (
+            filterArr.actions.length === 0 &&
+            filterArr.attributes.length === 0 &&
+            filterArr.segments.length === 0 &&
+            filterArr.devices.length === 0
+          );
+        }) && (
+          <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
+            <p>There are no filters yet!</p>
+          </div>
+        )}
 
-          <TabBar className="bg-white" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />
-        </div>
-
-        <div className="flex max-h-80 flex-col gap-1 overflow-y-auto">
-          {activeTabId === "all" && (
+        {allFiltersFiltered.map((filters) => {
+          return (
             <>
-              {allFiltersFiltered.map((filters) => {
-                return (
-                  <>
-                    {filters.actions.map((actionClass) => {
-                      return (
-                        <div
-                          onClick={() => {
-                            handleAddFilter({
-                              type: "action",
-                              actionClassId: actionClass.id,
-                            });
-                          }}
-                          className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
-                          <MousePointerClick className="h-4 w-4" />
-                          <p>{actionClass.name}</p>
-                        </div>
-                      );
-                    })}
-
-                    {filters.attributes.map((attributeClass) => {
-                      return (
-                        <div
-                          onClick={() => {
-                            handleAddFilter({
-                              type: "attribute",
-                              attributeClassName: attributeClass.name,
-                            });
-                          }}
-                          className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
-                          <TagIcon className="h-4 w-4" />
-                          <p>{attributeClass.name}</p>
-                        </div>
-                      );
-                    })}
-
-                    {filters.segments.map((userSegment) => {
-                      return (
-                        <div
-                          onClick={() => {
-                            handleAddFilter({
-                              type: "segment",
-                              userSegmentId: userSegment.id,
-                            });
-                          }}
-                          className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
-                          <Users2Icon className="h-4 w-4" />
-                          <p>{userSegment.title}</p>
-                        </div>
-                      );
-                    })}
-
-                    {filters.devices.map((deviceType) => (
-                      <div
-                        key={deviceType.id}
-                        className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
-                        onClick={() => {
-                          handleAddFilter({
-                            type: "device",
-                            deviceType: deviceType.id,
-                          });
-                        }}>
-                        <MonitorSmartphoneIcon className="h-4 w-4" />
-                        <span>{deviceType.name}</span>
-                      </div>
-                    ))}
-                  </>
-                );
-              })}
-            </>
-          )}
-
-          {activeTabId === "actions" && (
-            <>
-              {actionClassesFiltered.map((actionClass) => {
+              {filters.actions.map((actionClass) => {
                 return (
                   <div
                     onClick={() => {
@@ -307,12 +241,8 @@ const AddFilterModal = ({
                   </div>
                 );
               })}
-            </>
-          )}
 
-          {activeTabId === "attributes" && (
-            <>
-              {attributeClassesFiltered.map((attributeClass) => {
+              {filters.attributes.map((attributeClass) => {
                 return (
                   <div
                     onClick={() => {
@@ -327,34 +257,24 @@ const AddFilterModal = ({
                   </div>
                 );
               })}
-            </>
-          )}
 
-          {activeTabId === "segments" && (
-            <>
-              {userSegmentsFiltered
-                ?.filter((segment) => !segment.isPrivate)
-                ?.map((userSegment) => {
-                  return (
-                    <div
-                      onClick={() => {
-                        handleAddFilter({
-                          type: "segment",
-                          userSegmentId: userSegment.id,
-                        });
-                      }}
-                      className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
-                      <Users2Icon className="h-4 w-4" />
-                      <p>{userSegment.title}</p>
-                    </div>
-                  );
-                })}
-            </>
-          )}
+              {filters.segments.map((userSegment) => {
+                return (
+                  <div
+                    onClick={() => {
+                      handleAddFilter({
+                        type: "segment",
+                        userSegmentId: userSegment.id,
+                      });
+                    }}
+                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+                    <Users2Icon className="h-4 w-4" />
+                    <p>{userSegment.title}</p>
+                  </div>
+                );
+              })}
 
-          {activeTabId === "devices" && (
-            <div className="flex flex-col">
-              {deviceTypesFiltered.map((deviceType) => (
+              {filters.devices.map((deviceType) => (
                 <div
                   key={deviceType.id}
                   className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
@@ -368,8 +288,151 @@ const AddFilterModal = ({
                   <span>{deviceType.name}</span>
                 </div>
               ))}
+            </>
+          );
+        })}
+      </>
+    );
+  };
+
+  const getActionsTabContent = () => {
+    return (
+      <>
+        {actionClassesFiltered?.length === 0 && (
+          <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
+            <p>There are no actions yet!</p>
+          </div>
+        )}
+        {actionClassesFiltered.map((actionClass) => {
+          return (
+            <div
+              onClick={() => {
+                handleAddFilter({
+                  type: "action",
+                  actionClassId: actionClass.id,
+                });
+              }}
+              className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+              <MousePointerClick className="h-4 w-4" />
+              <p>{actionClass.name}</p>
             </div>
-          )}
+          );
+        })}
+      </>
+    );
+  };
+
+  const getAttributesTabContent = () => {
+    return (
+      <>
+        {attributeClassesFiltered?.length === 0 && (
+          <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
+            <p>There are no attributes available</p>
+          </div>
+        )}
+        {attributeClassesFiltered.map((attributeClass) => {
+          return (
+            <div
+              onClick={() => {
+                handleAddFilter({
+                  type: "attribute",
+                  attributeClassName: attributeClass.name,
+                });
+              }}
+              className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+              <TagIcon className="h-4 w-4" />
+              <p>{attributeClass.name}</p>
+            </div>
+          );
+        })}
+      </>
+    );
+  };
+
+  const getSegmentsTabContent = () => {
+    return (
+      <>
+        {userSegmentsFiltered?.length === 0 && (
+          <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
+            <p>You currently have no saved segments.</p>
+          </div>
+        )}
+        {userSegmentsFiltered
+          ?.filter((segment) => !segment.isPrivate)
+          ?.map((userSegment) => {
+            return (
+              <div
+                onClick={() => {
+                  handleAddFilter({
+                    type: "segment",
+                    userSegmentId: userSegment.id,
+                  });
+                }}
+                className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+                <Users2Icon className="h-4 w-4" />
+                <p>{userSegment.title}</p>
+              </div>
+            );
+          })}
+      </>
+    );
+  };
+
+  const getDevicesTabContent = () => {
+    return (
+      <div className="flex flex-col">
+        {deviceTypesFiltered.map((deviceType) => (
+          <div
+            key={deviceType.id}
+            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50"
+            onClick={() => {
+              handleAddFilter({
+                type: "device",
+                deviceType: deviceType.id,
+              });
+            }}>
+            <MonitorSmartphoneIcon className="h-4 w-4" />
+            <span>{deviceType.name}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const TabContent = (): JSX.Element => {
+    switch (activeTabId) {
+      case "all": {
+        return getAllTabContent();
+      }
+      case "actions": {
+        return getActionsTabContent();
+      }
+      case "attributes": {
+        return getAttributesTabContent();
+      }
+      case "segments": {
+        return getSegmentsTabContent();
+      }
+      case "devices": {
+        return getDevicesTabContent();
+      }
+      default: {
+        return getAllTabContent();
+      }
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+      <DialogContent className="w-[600px] bg-white sm:max-w-2xl" hideCloseButton>
+        <div className="flex w-auto flex-col">
+          <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
+
+          <TabBar className="bg-white" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />
+        </div>
+
+        <div className="flex max-h-80 flex-col gap-1 overflow-y-auto">
+          <TabContent />
         </div>
       </DialogContent>
     </Dialog>

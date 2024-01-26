@@ -24,7 +24,7 @@ type SaveAsNewSegmentModalProps = {
 
 type SaveAsNewSegmentModalForm = {
   title: string;
-  description: string;
+  description?: string;
 };
 
 const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
@@ -146,12 +146,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
                   Description
                 </label>
                 <Input
-                  {...register("description", {
-                    required: {
-                      value: true,
-                      message: "Description is required",
-                    },
-                  })}
+                  {...register("description")}
                   type="text"
                   placeholder="Most active users in the last 30 days"
                   className="w-full p-2"
