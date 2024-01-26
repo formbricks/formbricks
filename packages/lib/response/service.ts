@@ -157,39 +157,50 @@ export const getResponseBySingleUseId = async (
   surveyId: string,
   singleUseId: string
 ): Promise<TResponse | null> => {
-  validateInputs([surveyId, ZId], [singleUseId, ZString]);
+  const response = await unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId], [singleUseId, ZString]);
 
-  try {
-    const responsePrisma = await prisma.response.findUnique({
-      where: {
-        surveyId_singleUseId: { surveyId, singleUseId },
-      },
-      select: responseSelection,
-    });
+      try {
+        const responsePrisma = await prisma.response.findUnique({
+          where: {
+            surveyId_singleUseId: { surveyId, singleUseId },
+          },
+          select: responseSelection,
+        });
 
-    if (!responsePrisma) {
-      return null;
-    }
-
-    const response: TResponse = {
-      ...responsePrisma,
-      person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response
-      ? {
-          ...formatDateFields(response, ZResponse),
-          notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
+        if (!responsePrisma) {
+          return null;
         }
-      : null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
 
-    throw error;
-  }
+        const response: TResponse = {
+          ...responsePrisma,
+          person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
+          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+        };
+
+        return response;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getResponseBySingleUseId-${surveyId}-${singleUseId}`],
+    {
+      tags: [responseCache.tag.bySingleUseId(surveyId, singleUseId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return response
+    ? {
+        ...formatDateFields(response, ZResponse),
+        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
+      }
+    : null;
 };
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
@@ -242,6 +253,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       id: response.id,
       personId: response.person?.id,
       surveyId: response.surveyId,
+      singleUseId: singleUseId ? singleUseId : undefined,
     });
 
     responseNoteCache.revalidate({
