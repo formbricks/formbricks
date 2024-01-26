@@ -207,7 +207,19 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
             hiddenFieldResponse[hiddenFieldId] = response.data[hiddenFieldId] ?? "";
           });
         }
-        const fileResponse = { ...basicInfo, ...metaData, ...personAttributes, ...hiddenFieldResponse };
+        const tags = { Tags: response.tags.map((tag) => tag.name).join(", ") };
+        const notes = {
+          Notes: response.notes.map((note) => `${note.user.name}: ${note.text}`).join("\n"),
+        };
+
+        const fileResponse = {
+          ...basicInfo,
+          ...metaData,
+          ...personAttributes,
+          ...hiddenFieldResponse,
+          ...tags,
+          ...notes,
+        };
         // Map each question name to its corresponding answer
         questionNames.forEach((questionName: string) => {
           const matchingQuestion = response.responses.find((question) => question.question === questionName);
@@ -233,6 +245,8 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
         "Finished",
         "Survey ID",
         "Formbricks User ID",
+        "Notes",
+        "Tags",
         ...metaDataFields,
         ...questionNames,
         ...(hiddenFieldIds ?? []),
