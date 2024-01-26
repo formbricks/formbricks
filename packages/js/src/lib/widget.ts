@@ -1,7 +1,6 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
-import { renderSurveyModal } from "@formbricks/surveys";
 import { TJSStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -18,7 +17,7 @@ const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 let setIsError = (_: boolean) => {};
 
-export const renderWidget = (survey: TSurvey) => {
+export const renderWidget = async (survey: TSurvey) => {
   if (surveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -53,8 +52,10 @@ export const renderWidget = (survey: TSurvey) => {
   const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;
 
+  const formbricksSurveys = await loadFormbricksSurveysExternally();
+
   setTimeout(() => {
-    renderSurveyModal({
+    formbricksSurveys.renderSurveyModal({
       survey: survey,
       brandColor,
       isBrandingEnabled: isBrandingEnabled,
@@ -188,4 +189,24 @@ export const addWidgetContainer = (): void => {
   const containerElement = document.createElement("div");
   containerElement.id = containerId;
   document.body.appendChild(containerElement);
+};
+
+const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {
+  const formbricksSurveysScriptSrc = import.meta.env.FORMBRICKS_SURVEYS_SCRIPT_SRC;
+
+  return new Promise((resolve, reject) => {
+    if (window.formbricksSurveys) {
+      resolve(window.formbricksSurveys);
+    } else {
+      const script = document.createElement("script");
+      script.src = formbricksSurveysScriptSrc;
+      script.async = true;
+      script.onload = () => resolve(window.formbricksSurveys);
+      script.onerror = (error) => {
+        console.error("Failed to load Formbricks Surveys library:", error);
+        reject(error);
+      };
+      document.head.appendChild(script);
+    }
+  });
 };

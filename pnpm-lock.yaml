@@ -411,6 +411,9 @@ importers:
       react-icons:
         specifier: ^5.0.1
         version: 5.0.1(react@18.2.0)
+      sharp:
+        specifier: ^0.33.1
+        version: 0.33.1
       ua-parser-js:
         specifier: ^1.0.37
         version: 1.0.37

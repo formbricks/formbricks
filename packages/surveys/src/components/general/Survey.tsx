@@ -4,11 +4,11 @@ import { ResponseErrorComponent } from "@/components/general/ResponseErrorCompon
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn } from "@/lib/utils";
-import { SurveyBaseProps } from "@/types/props";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
+import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
