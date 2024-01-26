@@ -25,3 +25,6 @@ export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
 
   return survey;
 };
+
+export const anySurveyHasFilters = (surveys: TSurvey[]) =>
+  !surveys.every((survey) => !survey.userSegment?.filters?.length);

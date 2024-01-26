@@ -26,6 +26,7 @@ import { evaluateSegment, updateUserSegment } from "../userSegment/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
+import { anySurveyHasFilters } from "./util";
 
 export const selectSurvey = {
   id: true,
@@ -77,7 +78,6 @@ export const selectSurvey = {
       value: true,
     },
   },
-  // userSegmentId: true,
   userSegment: {
     include: {
       surveys: {
@@ -663,7 +663,6 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : Prisma.JsonNull,
-      // userSegmentId: undefined, // userSegmentId is set below
       userSegment: existingSurvey.userSegment
         ? { connect: { id: existingSurvey.userSegment.id } }
         : undefined,
@@ -729,12 +728,31 @@ export const getSyncSurveys = async (
         }
       });
 
+      const latestDisplay = displays[0];
+
+      // filter surveys that meet the recontactDays criteria
+      surveys = surveys.filter((survey) => {
+        if (!latestDisplay) {
+          return true;
+        } else if (survey.recontactDays !== null) {
+          const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
+          if (!lastDisplaySurvey) {
+            return true;
+          }
+          return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
+        } else if (product.recontactDays !== null) {
+          return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
+        } else {
+          return true;
+        }
+      });
+
       const personActions = await getActionsByPersonId(person.id);
       const personActionClassIds = Array.from(
         new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
       );
 
-      if (!surveys.every((survey) => !survey.userSegment?.filters?.length)) {
+      if (anySurveyHasFilters(surveys)) {
         const surveyPromises = surveys.map(async (survey) => {
           const { userSegment } = survey;
 
@@ -763,25 +781,6 @@ export const getSyncSurveys = async (
 
         surveys = filteredResult as TSurvey[];
       }
-
-      const latestDisplay = displays[0];
-
-      // filter surveys that meet the recontactDays criteria
-      surveys = surveys.filter((survey) => {
-        if (!latestDisplay) {
-          return true;
-        } else if (survey.recontactDays !== null) {
-          const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
-          if (!lastDisplaySurvey) {
-            return true;
-          }
-          return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
-        } else if (product.recontactDays !== null) {
-          return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
-        } else {
-          return true;
-        }
-      });
 
       if (!surveys) {
         throw new ResourceNotFoundError("Survey", environmentId);
