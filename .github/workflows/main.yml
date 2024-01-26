@@ -81,7 +81,7 @@ jobs:
           file: ./apps/web/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }} # TODO verify
+          tags: unstable # TODO verify
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
