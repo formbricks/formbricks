@@ -19,7 +19,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 import { deleteSurveyAction, updateSurveyAction } from "../actions";
-import { validateQuestion } from "./Validation";
+import { isValidUrl, validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
@@ -121,6 +121,26 @@ export default function SurveyMenuBar({
     if (pin !== null && pin!.toString().length !== 4) {
       toast.error("PIN must be a four digit number.");
       return;
+    }
+
+    const { thankYouCard } = localSurvey;
+    if (thankYouCard.enabled) {
+      const { buttonLabel, buttonLink } = thankYouCard;
+
+      if (buttonLabel && !buttonLink) {
+        toast.error("Button Link missing on Thank you card.");
+        return;
+      }
+
+      if (!buttonLabel && buttonLink) {
+        toast.error("Button Label missing on Thank you card.");
+        return;
+      }
+
+      if (buttonLink && !isValidUrl(buttonLink)) {
+        toast.error("Invalid URL on Thank You card.");
+        return;
+      }
     }
 
     faultyQuestions = [];

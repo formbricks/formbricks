@@ -1,6 +1,6 @@
 import nextMDX from "@next/mdx";
-
 import { withPlausibleProxy } from "next-plausible";
+
 import { recmaPlugins } from "./mdx/recma.mjs";
 import { rehypePlugins } from "./mdx/rehype.mjs";
 import { remarkPlugins } from "./mdx/remark.mjs";
@@ -168,6 +168,41 @@ const nextConfig = {
       {
         source: "/formtribe",
         destination: "/community",
+        permanent: true,
+      },
+      {
+        source: "/docs/actions/why",
+        destination: "/docs/in-app-surveys/actions",
+        permanent: true,
+      },
+      {
+        source: "/docs/actions/no-code",
+        destination: "/docs/in-app-surveys/actions#no-code-actions",
+        permanent: true,
+      },
+      {
+        source: "/docs/actions/code",
+        destination: "/docs/in-app-surveys/actions#code-actions",
+        permanent: true,
+      },
+      {
+        source: "/docs/attributes/why",
+        destination: "/docs/in-app-surveys/attributes",
+        permanent: true,
+      },
+      {
+        source: "/docs/attributes/custom-attributes",
+        destination: "/docs/in-app-surveys/attributes#setting-custom-user-attributes",
+        permanent: true,
+      },
+      {
+        source: "/docs/attributes/identify-users",
+        destination: "/docs/in-app-surveys/attributes#identifying-users",
+        permanent: true,
+      },
+      {
+        source: "/signup",
+        destination: "https://app.formbricks.com/auth/signup",
         permanent: true,
       },
     ];

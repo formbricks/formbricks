@@ -8,7 +8,7 @@ import { getProduct, updateProduct } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TProductUpdateInput } from "@formbricks/types/product";
 
-export async function updateProductAction(productId: string, inputProduct: Partial<TProductUpdateInput>) {
+export async function updateProductAction(productId: string, inputProduct: TProductUpdateInput) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 

@@ -578,13 +578,16 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     const actionClasses = await getActionClasses(environmentId);
     revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
   }
-
   // TODO: Create with triggers & attributeFilters
   delete surveyBody.triggers;
   delete surveyBody.attributeFilters;
   const data: Omit<TSurveyInput, "triggers" | "attributeFilters"> = {
     ...surveyBody,
   };
+  if (surveyBody.type === "web" && data.thankYouCard) {
+    data.thankYouCard.buttonLabel = "";
+    data.thankYouCard.buttonLink = "";
+  }
 
   const survey = await prisma.survey.create({
     data: {

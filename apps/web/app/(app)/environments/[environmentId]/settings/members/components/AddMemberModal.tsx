@@ -56,25 +56,6 @@ export default function AddMemberModal({
             </div>
           </div>
         </div>
-        {!canDoRoleManagement &&
-          (isFormbricksCloud ? (
-            <div className="mx-6 mt-2">
-              <UpgradePlanNotice
-                message="To manage access roles for your team"
-                url={`/environments/${environmentId}/settings/billing`}
-                textForUrl="Upgrade to the App Surveys plan."
-              />
-            </div>
-          ) : (
-            <div className="mx-6 mt-2">
-              <UpgradePlanNotice
-                message="To manage access roles for your team,"
-                url="mailto:hola@formbricks.com"
-                textForUrl="get a self-hosted license (free to get started)."
-              />
-            </div>
-          ))}
-
         <form onSubmit={handleSubmit(submitEventClass)}>
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
@@ -95,7 +76,23 @@ export default function AddMemberModal({
                   {...register("email", { required: true })}
                 />
               </div>
-              {canDoRoleManagement && <AddMemberRole control={control} />}
+              <div>
+                <AddMemberRole control={control} canDoRoleManagement={canDoRoleManagement} />
+                {!canDoRoleManagement &&
+                  (!isFormbricksCloud ? (
+                    <UpgradePlanNotice
+                      message="To manage access roles,"
+                      url={`/environments/${environmentId}/settings/billing`}
+                      textForUrl="please add your credit card (free)."
+                    />
+                  ) : (
+                    <UpgradePlanNotice
+                      message="To manage access roles for your team,"
+                      url="https://formbricks.com/docs/self-hosting/license"
+                      textForUrl="get a self-hosting license (free)."
+                    />
+                  ))}
+              </div>
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">

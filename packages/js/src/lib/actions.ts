@@ -62,7 +62,7 @@ export const trackAction = async (
   const activeSurveys = config.get().state?.surveys;
 
   if (!!activeSurveys && activeSurveys.length > 0) {
-    triggerSurvey(name, activeSurveys);
+    await triggerSurvey(name, activeSurveys);
   } else {
     logger.debug("No active surveys to display");
   }
@@ -70,12 +70,12 @@ export const trackAction = async (
   return okVoid();
 };
 
-export const triggerSurvey = (actionName: string, activeSurveys: TSurvey[]): void => {
+export const triggerSurvey = async (actionName: string, activeSurveys: TSurvey[]): Promise<void> => {
   for (const survey of activeSurveys) {
     for (const trigger of survey.triggers) {
       if (trigger === actionName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);
-        renderWidget(survey);
+        await renderWidget(survey);
         return;
       }
     }

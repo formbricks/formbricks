@@ -1,12 +1,18 @@
+import Button from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import RedirectCountDown from "@/components/general/RedirectCountdown";
 import Subheader from "@/components/general/Subheader";
+import { useEffect } from "preact/hooks";
 
 interface ThankYouCardProps {
   headline?: string;
   subheader?: string;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
+  buttonLabel?: string;
+  buttonLink?: string;
+  imageUrl?: string;
 }
 
 export default function ThankYouCard({
@@ -14,9 +20,27 @@ export default function ThankYouCard({
   subheader,
   redirectUrl,
   isRedirectDisabled,
+  buttonLabel,
+  buttonLink,
+  imageUrl,
 }: ThankYouCardProps) {
+  useEffect(() => {
+    if (!buttonLink) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Enter") {
+        window.location.href = buttonLink;
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [buttonLink]);
+
   return (
     <div className="text-center">
+      {imageUrl && <QuestionImage imgUrl={imageUrl} />}
+
       <div className="text-brand flex items-center justify-center">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -39,6 +63,19 @@ export default function ThankYouCard({
         <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
+        {buttonLabel && (
+          <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
+            <Button
+              buttonLabel={buttonLabel}
+              isLastQuestion={false}
+              onClick={() => {
+                if (!buttonLink) return;
+                window.location.href = buttonLink;
+              }}
+            />
+            <p class="text-xs">Press Enter ↵</p>
+          </div>
+        )}
       </div>
     </div>
   );
