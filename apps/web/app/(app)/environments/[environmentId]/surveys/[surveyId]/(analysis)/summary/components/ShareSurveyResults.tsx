@@ -53,7 +53,7 @@ export default function ShareSurveyResults({
                 className="hover:cursor-pointer"
                 onClick={() => {
                   navigator.clipboard.writeText(surveyUrl);
-                  toast.success("URL copied to clipboard!");
+                  toast.success("Link copied to clipboard!");
                 }}>
                 <Clipboard />
               </Button>
