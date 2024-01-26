@@ -40,7 +40,7 @@ jobs:
               break
             fi
             echo "Waiting..."
-            sleep 2
+            sleep 5
           done
           pnpm db:migrate:dev
 
