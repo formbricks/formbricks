@@ -9,8 +9,6 @@ on:
   push:
     branches:
       - main
-
-
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
@@ -83,7 +81,7 @@ jobs:
           file: ./apps/web/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }} # TODO resolve tagging image as unstable
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -102,8 +100,8 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         env:
           # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs }} # TODO update
+          TAGS: ${{ steps.meta.outputs.tags }} # TODO resolve tagging image as unstable
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
@@ -115,7 +113,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # TODO generate restricted access token
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
           
@@ -139,4 +137,4 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: prod-webapp-ecs-service
           cluster: prod-core-infra-ecs-cluster
-          wait-for-service-stability: false # TODO
+          wait-for-service-stability: false # TODO enable it after fixing the health issue
