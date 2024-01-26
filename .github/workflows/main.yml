@@ -30,7 +30,8 @@ jobs:
       - name: Generate Random NEXTAUTH_SECRET
         run: |
           SECRET=$(openssl rand -hex 32)
-          echo $(IMAGE_NAME)
+          echo "$IMAGE_NAME"
+          echo "######### HOLA ########"
           echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
 
       - name: Generate Random ENCRYPTION_KEY
