@@ -1,14 +1,21 @@
-import { TResponseUpdate } from "@formbricks/types/v1/responses";
+import { TResponseUpdate } from "@formbricks/types/responses";
 
 export class SurveyState {
   responseId: string | null = null;
   displayId: string | null = null;
+  userId: string | null = null;
   surveyId: string;
-  responseAcc: TResponseUpdate = { finished: false, data: {} };
+  responseAcc: TResponseUpdate = { finished: false, data: {}, ttc: {} };
   singleUseId: string | null;
 
-  constructor(surveyId: string, singleUseId?: string, responseId?: string) {
+  constructor(
+    surveyId: string,
+    singleUseId?: string | null,
+    responseId?: string | null,
+    userId?: string | null
+  ) {
     this.surveyId = surveyId;
+    this.userId = userId ?? null;
     this.singleUseId = singleUseId ?? null;
     this.responseId = responseId ?? null;
   }
@@ -28,7 +35,8 @@ export class SurveyState {
     const copyInstance = new SurveyState(
       this.surveyId,
       this.singleUseId ?? undefined,
-      this.responseId ?? undefined
+      this.responseId ?? undefined,
+      this.userId ?? undefined
     );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
@@ -52,12 +60,21 @@ export class SurveyState {
   }
 
   /**
+   * Update the user ID
+   * @param id - The user ID
+   */
+  updateUserId(id: string) {
+    this.userId = id;
+  }
+
+  /**
    * Accumulate the responses
    * @param responseUpdate - The new response data to add
    */
   accumulateResponse(responseUpdate: TResponseUpdate) {
     this.responseAcc = {
       finished: responseUpdate.finished,
+      ttc: responseUpdate.ttc,
       data: { ...this.responseAcc.data, ...responseUpdate.data },
     };
   }
@@ -74,7 +91,7 @@ export class SurveyState {
    */
   clear() {
     this.responseId = null;
-    this.responseAcc = { finished: false, data: {} };
+    this.responseAcc = { finished: false, data: {}, ttc: {} };
   }
 }
 

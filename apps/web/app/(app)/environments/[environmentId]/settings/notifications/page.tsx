@@ -1,11 +1,14 @@
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/SettingsCard";
-import { prisma } from "@formbricks/database";
-import { NotificationSettings } from "@formbricks/types/users";
+import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getServerSession } from "next-auth";
-import SettingsTitle from "../SettingsTitle";
-import EditAlerts from "./EditAlerts";
-import EditWeeklySummary from "./EditWeeklySummary";
+
+import { prisma } from "@formbricks/database";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { TUserNotificationSettings } from "@formbricks/types/user";
+
+import SettingsTitle from "../components/SettingsTitle";
+import EditAlerts from "./components/EditAlerts";
+import EditWeeklySummary from "./components/EditWeeklySummary";
+import IntegrationsTip from "./components/IntegrationsTip";
 import type { Membership, User } from "./types";
 
 async function getUser(userId: string | undefined): Promise<User> {
@@ -31,7 +34,10 @@ async function getUser(userId: string | undefined): Promise<User> {
   return user;
 }
 
-function cleanNotificationSettings(notificationSettings: NotificationSettings, memberships: Membership[]) {
+function cleanNotificationSettings(
+  notificationSettings: TUserNotificationSettings,
+  memberships: Membership[]
+) {
   const newNotificationSettings = { alert: {}, weeklySummary: {} };
   for (const membership of memberships) {
     for (const product of membership.team.products) {
@@ -105,6 +111,7 @@ export default async function ProfileSettingsPage({ params }) {
         description="Set up an alert to get an email on new responses.">
         <EditAlerts memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>
+      <IntegrationsTip environmentId={params.environmentId} />
       <SettingsCard
         beta
         title="Weekly summary (Products)"

@@ -1,7 +1,8 @@
-import { getSessionUser, hashApiKey } from "@/lib/api/apiHelper";
-import { prisma } from "@formbricks/database";
+import { getSessionUser, hashApiKey } from "@/app/lib/api/apiHelper";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+
+import { prisma } from "@formbricks/database";
 
 export async function GET() {
   const headersList = headers();

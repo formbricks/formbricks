@@ -1,26 +1,27 @@
-import type { InitConfig } from "../../types/js";
+import { TJsConfigInput } from "@formbricks/types/js";
+
+import { trackAction } from "./lib/actions";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
-import { trackAction } from "./lib/actions";
-import { initialize } from "./lib/init";
+import { initialize } from "./lib/initialize";
 import { Logger } from "./lib/logger";
-import { checkPageUrl } from "./lib/noCodeEvents";
-import { resetPerson, setPersonAttribute, setPersonUserId, getPerson, logoutPerson } from "./lib/person";
+import { checkPageUrl } from "./lib/noCodeActions";
+import { logoutPerson, resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
 
 const logger = Logger.getInstance();
 
 logger.debug("Create command queue");
 const queue = new CommandQueue();
 
-const init = async (initConfig: InitConfig) => {
+const init = async (initConfig: TJsConfigInput) => {
   ErrorHandler.init(initConfig.errorHandler);
   queue.add(false, initialize, initConfig);
   await queue.wait();
 };
 
-const setUserId = async (userId: string | number): Promise<void> => {
-  queue.add(true, setPersonUserId, userId);
+const setUserId = async (): Promise<void> => {
+  queue.add(true, setPersonUserId);
   await queue.wait();
 };
 
@@ -64,7 +65,7 @@ const formbricks = {
   reset,
   registerRouteChange,
   getApi,
-  getPerson,
 };
 
-export { formbricks as default };
+export type FormbricksType = typeof formbricks;
+export default formbricks as FormbricksType;

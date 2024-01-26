@@ -3,10 +3,15 @@
 import AddSlackConnectionModal from "@/app/(app)/environments/[environmentId]/integrations/slack/AddIntegrationModal";
 import Connect from "@/app/(app)/environments/[environmentId]/integrations/slack/Connect";
 import Home from "@/app/(app)/environments/[environmentId]/integrations/slack/Home";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+// import { TEnvironment } from "@formbricks/types/v1/environment";
+// import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
+// import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useState } from "react";
+
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
+import { TSurvey } from "@formbricks/types/surveys";
+
 interface SlackWrapperProps {
   enabled: boolean;
   environment: TEnvironment;

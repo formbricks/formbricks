@@ -1,5 +1,9 @@
-import ConfirmationPage from "./ConfirmationPage";
+import ConfirmationPage from "./components/ConfirmationPage";
 
-export default function BillingConfirmation({}) {
-  return <ConfirmationPage />;
+export const dynamic = "force-dynamic";
+
+export default function BillingConfirmation({ searchParams }) {
+  const { environmentId } = searchParams;
+
+  return <ConfirmationPage environmentId={environmentId?.toString()} />;
 }

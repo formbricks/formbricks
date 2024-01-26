@@ -1,20 +1,18 @@
 "use server";
 
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
-import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
-import { TGoogleSheetIntegration } from "@formbricks/types/v1/integrations";
-
-export async function upsertIntegrationAction(
-  environmentId: string,
-  integrationData: Partial<TGoogleSheetIntegration>
-) {
-  return await createOrUpdateIntegration(environmentId, integrationData);
-}
-
-export async function deleteIntegrationAction(integrationId: string) {
-  return await deleteIntegration(integrationId);
-}
+import { AuthorizationError } from "@formbricks/types/errors";
 
 export async function refreshSheetAction(environmentId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
   return await getSpreadSheets(environmentId);
 }

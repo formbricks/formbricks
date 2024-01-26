@@ -9,7 +9,7 @@ function LoadingCard({ title, description, skeletonLines }) {
         <div className="rounded-lg px-6 py-5 hover:bg-slate-100">
           {skeletonLines.map((line, index) => (
             <div key={index} className="mt-4">
-              <div className={`animate-pulse rounded-full bg-gray-200 ${line.classes}`}></div>
+              <div className={`animate-pulse rounded-full bg-slate-200 ${line.classes}`}></div>
             </div>
           ))}
         </div>
@@ -35,6 +35,11 @@ export default function Loading() {
       title: "Avatar",
       description: "Assist your team in identifying you on Formbricks.",
       skeletonLines: [{ classes: "h-10 w-10" }, { classes: "h-8 w-24" }],
+    },
+    {
+      title: "Security",
+      description: "Manage your password and other security settings.",
+      skeletonLines: [{ classes: "h-4 w-60" }, { classes: "h-8 w-24" }],
     },
     {
       title: "Delete account",

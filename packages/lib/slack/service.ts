@@ -1,8 +1,9 @@
-import { DatabaseError } from "@formbricks/types/v1/errors";
-import { TSlackChannel, TSlackCredential, TSlackIntegration } from "@formbricks/types/v1/integrations";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@formbricks/database";
 import { cache } from "react";
+
+import { prisma } from "@formbricks/database";
+import { DatabaseError } from "@formbricks/types/errors";
+import { TSlackChannel, TSlackCredential, TSlackIntegration } from "@formbricks/types/integration/slack";
 
 export const fetchChannels = async (key: TSlackCredential): Promise<TSlackChannel[]> => {
   const response = await fetch("https://slack.com/api/conversations.list", {

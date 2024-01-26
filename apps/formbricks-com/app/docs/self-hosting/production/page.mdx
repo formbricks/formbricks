@@ -1,4 +1,4 @@
-export const meta = {
+export const metadata = {
   title: "Step by Step Guide on Deploying Formbricks to Production on Ubuntu",
   description:
     "Master the swift deployment of Formbricks on an Ubuntu server with our step-by-step guide. Use a single command to automate Docker, Postgres DB, SSL certificate configuration, and more. Encounter issues? Dive into our troubleshooting steps or join our community on Discord for assistance.",
@@ -6,7 +6,7 @@ export const meta = {
 
 #### Self-Hosting
 
-# Deploying Formbricks to Production
+# One-Click Setup
 
 If you want to quickly set up a production instance of Formbricks on a server running Ubuntu, we've got you covered! This method utilizes a convenient shell script that takes care of everything, including Docker, Postgres DB, and SSL certificate configuration. The shell script will automatically install all the required dependencies and configure your server, making the process a breeze.
 
@@ -25,19 +25,19 @@ Before you proceed, make sure you have the following:
 ## Single Command Setup
 
 Copy and paste the following command into your terminal:
-
+<Col>
 <CodeGroup title="Single Command to deploy Formbricks">
 
 ```bash
-/bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/production.sh)"
+curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/production.sh -o formbricks.sh && chmod +x formbricks.sh && ./formbricks.sh install
 ```
 
 </CodeGroup>
-
+</Col>
 The script will prompt you for the following information:
 
 1. **Overwriting Docker GPG Keys**: If Docker GPG keys already exist, the script will ask if you want to overwrite them.
-
+<Col>
    <CodeGroup title="Docker GPG Keys Overwrite Prompt">
 
    ```bash
@@ -53,9 +53,9 @@ The script will prompt you for the following information:
    ```
 
    </CodeGroup>
-
+</Col>
 2. **Email Address**: Provide your email address for SSL certificate registration with Let's Encrypt.
-
+<Col>
    <CodeGroup title="Email Prompt">
 
    ```bash
@@ -80,9 +80,9 @@ The script will prompt you for the following information:
    ```
 
     </CodeGroup>
-
+</Col>
 3. **Domain Name**: Enter the domain name that Traefik will use to create the SSL certificate and forward requests to Formbricks.
-
+<Col>
    <CodeGroup title="Domain Name for SSL certificate Prompt">
 
    ```bash
@@ -111,9 +111,9 @@ The script will prompt you for the following information:
    ```
 
    </CodeGroup>
-
+</Col>
 **That's it**! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
-
+<Col>
 <CodeGroup title="Successfully setup Formbricks on your Ubuntu machine">
 
 ```bash
@@ -153,11 +153,74 @@ my.hosted.url.com
 ```
 
 </CodeGroup>
+</Col>
+
+## Update Formbricks
+
+To update Formbricks, simply run the following command:
+
+<Col>
+<CodeGroup title="Update Formbricks">
+
+```bash
+./formbricks.sh update
+```
+
+</CodeGroup>
+</Col>
+The script will automatically pull the latest version of Formbricks from GitHub Container Registry and restart the containers.
+
+## Stop Formbricks Instance
+
+To stop Formbricks, simply run the following command:
+
+<Col>
+<CodeGroup title="Stop Formbricks">
+
+```bash
+./formbricks.sh stop
+```
+
+</CodeGroup>
+</Col>
+The script will automatically stop all the Formbricks related containers and brings the entire stack down.
+
+## Restart Formbricks Instance
+
+To restart Formbricks, simply run the following command:
+
+<Col>
+<CodeGroup title="Restart Formbricks">
+
+```bash
+./formbricks.sh restart
+```
+
+</CodeGroup>
+</Col>
+
+The script will automatically restart all the Formbricks related containers and brings the entire stack up with the previous configuration.
+
+
+## Uninstall Formbricks
+
+To uninstall Formbricks, simply run the following command, but keep in mind that this will delete all your data!
+
+<Col>
+<CodeGroup title="Uninstall Formbricks">
+
+```bash
+./formbricks.sh uninstall
+```
+
+</CodeGroup>
+</Col>
+The script will automatically stop all the Formbricks related containers, remove the Formbricks directory, and delete the Docker network.
 
 ## Debugging
 
 If you encounter any issues, you can check the logs of the container with:
-
+<Col>
 <CodeGroup title="Check logs of the container">
 
 ```bash
@@ -165,16 +228,9 @@ cd formbricks && docker compose logs -f
 ```
 
 </CodeGroup>
-
+</Col>
 You can close the logs again with `CTRL + C`.
 
-<Note>
-## Customizing the Build Time variables
-
-To edit any of the variables that start with `NEXT_PUBLIC_`, you need to rebuild the Formbricks Docker from source! It is just one
-more added step and is not as much of a hassle as you think! Please check the [Building from Source](/docs/self-hosting/from-source) section!
-
-</Note>
 
 ## Troubleshooting
 
@@ -188,4 +244,4 @@ If you encounter any issues, consider the following steps:
 
 - **Check Formbricks Logs**: Run `cd formbricks && docker compose logs` to check the logs of the Formbricks stack.
 
-**Still can’t figure it out?**: [Join our Discord!](https://formbricks.com/discord)
+**Can’t figure it out?**: [Join our Discord!](https://formbricks.com/discord)

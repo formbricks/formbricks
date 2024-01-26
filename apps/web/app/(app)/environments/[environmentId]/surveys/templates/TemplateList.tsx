@@ -1,31 +1,27 @@
 "use client";
 
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useProfile } from "@/lib/profile";
-import { replacePresetPlaceholders } from "@/lib/templates";
-import { cn } from "@formbricks/lib/cn";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
-import type { TProduct } from "@formbricks/types/v1/product";
-import { TTemplate } from "@formbricks/types/v1/templates";
-import {
-  Button,
-  ErrorComponent,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbricks/ui";
+import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { PlusCircleIcon } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createSurveyAction } from "./actions";
-import { customSurvey, templates } from "./templates";
-import { TSurveyInput } from "@formbricks/types/v1/surveys";
+
+import { cn } from "@formbricks/lib/cn";
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import { TSurveyInput } from "@formbricks/types/surveys";
+import { TTemplate } from "@formbricks/types/templates";
+import { TUser } from "@formbricks/types/user";
+import { Button } from "@formbricks/ui/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+
+import { createSurveyAction } from "../actions";
+import { customSurvey, templates, testTemplate } from "./templates";
 
 type TemplateList = {
   environmentId: string;
+  user: TUser;
   onTemplateClick: (template: TTemplate) => void;
   environment: TEnvironment;
   product: TProduct;
@@ -36,6 +32,7 @@ const ALL_CATEGORY_NAME = "All";
 const RECOMMENDED_CATEGORY_NAME = "For you";
 export default function TemplateList({
   environmentId,
+  user,
   onTemplateClick,
   product,
   environment,
@@ -45,7 +42,6 @@ export default function TemplateList({
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(RECOMMENDED_CATEGORY_NAME);
-  const { profile, isLoadingProfile, isErrorProfile } = useProfile();
 
   const [categories, setCategories] = useState<Array<string>>([]);
 
@@ -56,7 +52,7 @@ export default function TemplateList({
     ];
 
     const fullCategories =
-      !!profile?.objective && profile.objective !== "other"
+      !!user?.objective && user.objective !== "other"
         ? [RECOMMENDED_CATEGORY_NAME, ALL_CATEGORY_NAME, ...defaultCategories]
         : [ALL_CATEGORY_NAME, ...defaultCategories];
 
@@ -64,11 +60,11 @@ export default function TemplateList({
 
     const activeFilter = templateSearch
       ? ALL_CATEGORY_NAME
-      : !!profile?.objective && profile.objective !== "other"
-      ? RECOMMENDED_CATEGORY_NAME
-      : ALL_CATEGORY_NAME;
+      : !!user?.objective && user.objective !== "other"
+        ? RECOMMENDED_CATEGORY_NAME
+        : ALL_CATEGORY_NAME;
     setSelectedFilter(activeFilter);
-  }, [profile, templateSearch]);
+  }, [user, templateSearch]);
 
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
@@ -78,19 +74,18 @@ export default function TemplateList({
       ...activeTemplate.preset,
       type: surveyType,
       autoComplete,
-    } as Partial<TSurveyInput>;
+    } as TSurveyInput;
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };
-
-  if (isLoadingProfile) return <LoadingSpinner />;
-  if (isErrorProfile) return <ErrorComponent />;
 
   const filteredTemplates = templates.filter((template) => {
     const matchesCategory =
       selectedFilter === ALL_CATEGORY_NAME ||
       template.category === selectedFilter ||
-      (selectedFilter === RECOMMENDED_CATEGORY_NAME && template.objectives?.includes(profile.objective));
+      (user.objective &&
+        selectedFilter === RECOMMENDED_CATEGORY_NAME &&
+        template.objectives?.includes(user.objective));
 
     const templateName = template.name?.toLowerCase();
     const templateDescription = template.description?.toLowerCase();
@@ -116,8 +111,8 @@ export default function TemplateList({
             className={cn(
               selectedFilter === category
                 ? " bg-slate-800 font-semibold text-white"
-                : " bg-white text-slate-700 hover:bg-slate-100",
-              "mt-2 rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150 "
+                : " bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:outline-none focus:ring-0",
+              "mt-2 rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
             )}>
             {category}
             {category === RECOMMENDED_CATEGORY_NAME && <SparklesIcon className="ml-1 inline h-5 w-5" />}
@@ -154,8 +149,11 @@ export default function TemplateList({
             </div>
           )}
         </button>
-        {filteredTemplates.map((template: TTemplate) => (
-          <div
+        {(process.env.NODE_ENV === "development"
+          ? [...filteredTemplates, testTemplate]
+          : filteredTemplates
+        ).map((template: TTemplate) => (
+          <button
             onClick={() => {
               const newTemplate = replacePresetPlaceholders(template, product);
               onTemplateClick(newTemplate);
@@ -172,23 +170,23 @@ export default function TemplateList({
                   template.category === "Product Experience"
                     ? "border-blue-300 bg-blue-50 text-blue-500"
                     : template.category === "Exploration"
-                    ? "border-pink-300 bg-pink-50 text-pink-500"
-                    : template.category === "Growth"
-                    ? "border-orange-300 bg-orange-50 text-orange-500"
-                    : template.category === "Increase Revenue"
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-500"
-                    : template.category === "Customer Success"
-                    ? "border-violet-300 bg-violet-50 text-violet-500"
-                    : "border-slate-300 bg-slate-50 text-slate-500" // default color
+                      ? "border-pink-300 bg-pink-50 text-pink-500"
+                      : template.category === "Growth"
+                        ? "border-orange-300 bg-orange-50 text-orange-500"
+                        : template.category === "Increase Revenue"
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-500"
+                          : template.category === "Customer Success"
+                            ? "border-violet-300 bg-violet-50 text-violet-500"
+                            : "border-slate-300 bg-slate-50 text-slate-500" // default color
                 }`}>
                 {template.category}
               </div>
               {template.preset.questions.some((question) => question.logic && question.logic.length > 0) && (
                 <TooltipProvider delayDuration={80}>
                   <Tooltip>
-                    <TooltipTrigger>
+                    <TooltipTrigger tabIndex={-1}>
                       <div>
-                        <SplitIcon className="ml-1.5 h-5 w-5  rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+                        <SplitIcon className="ml-1.5 h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>This survey uses branching logic.</TooltipContent>
@@ -199,16 +197,18 @@ export default function TemplateList({
             <h3 className="text-md mb-1 mt-3 text-left font-bold text-slate-700">{template.name}</h3>
             <p className="text-left text-xs text-slate-600">{template.description}</p>
             {activeTemplate?.name === template.name && (
-              <Button
-                variant="darkCTA"
-                className="mt-6 px-6 py-3"
-                disabled={activeTemplate === null}
-                loading={loading}
-                onClick={() => addSurvey(activeTemplate)}>
-                Use this template
-              </Button>
+              <div className="flex justify-start">
+                <Button
+                  variant="darkCTA"
+                  className="mt-6 px-6 py-3"
+                  disabled={activeTemplate === null}
+                  loading={loading}
+                  onClick={() => addSurvey(activeTemplate)}>
+                  Use this template
+                </Button>
+              </div>
             )}
-          </div>
+          </button>
         ))}
       </div>
     </main>

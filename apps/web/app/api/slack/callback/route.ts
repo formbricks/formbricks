@@ -1,18 +1,17 @@
-import { prisma } from "@formbricks/database";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { NextRequest, NextResponse } from "next/server";
-import { TSlackConfig, TSlackCredential, TSlackIntegration } from "@formbricks/types/v1/integrations";
+
+import { prisma } from "@formbricks/database";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { TSlackConfig } from "@formbricks/types/integration/slack";
 
 export async function GET(req: NextRequest, res: NextResponse) {
   const url = req.url;
-  // __AUTO_GENERATED_PRINT_VAR_START__
-  console.log("RANN GET url: %s", url); // __AUTO_GENERATED_PRINT_VAR_END__
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("environment"); // Get the value of the 'state' parameter
 
-  console.log(environmentId);
+  console.log("yooooooo", environmentId);
 
   const session = await getServerSession(authOptions);
 
@@ -26,8 +25,11 @@ export async function GET(req: NextRequest, res: NextResponse) {
     };
   }
 
+  console.log(session, session.user);
   console.log("================HERE's the Session===================");
   const { user } = session;
+  // __AUTO_GENERATED_PRINT_VAR_START__
+  console.log("GET user: %s", user); // __AUTO_GENERATED_PRINT_VAR_END__
 
   // @ts-ignore
   const slackCredentials: TSlackCredential = {
@@ -47,9 +49,9 @@ export async function GET(req: NextRequest, res: NextResponse) {
     key: slackCredentials,
     user: {
       id: user.id,
-      name: user.name,
-      email: user.email,
-      avatar: user.image,
+      name: user.name as string,
+      email: user.email as string,
+      avatar: user.imageUrl as string,
     },
   };
 

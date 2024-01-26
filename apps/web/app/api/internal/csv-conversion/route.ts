@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { responses } from "@/app/lib/api/response";
 import { AsyncParser } from "@json2csv/node";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { responses } from "@/lib/api/response";
+import { NextRequest, NextResponse } from "next/server";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -15,6 +16,11 @@ export async function POST(request: NextRequest) {
   let csv: string = "";
 
   const { json, fields, fileName } = data;
+
+  const fallbackFileName = fileName.replace(/[^A-Za-z0-9_.-]/g, "_");
+  const encodedFileName = encodeURIComponent(fileName)
+    .replace(/['()]/g, (match) => "%" + match.charCodeAt(0).toString(16))
+    .replace(/\*/g, "%2A");
 
   const parser = new AsyncParser({
     fields,
@@ -29,7 +35,10 @@ export async function POST(request: NextRequest) {
 
   const headers = new Headers();
   headers.set("Content-Type", "text/csv;charset=utf-8;");
-  headers.set("Content-Disposition", `attachment; filename=${fileName ?? "converted"}.csv`);
+  headers.set(
+    "Content-Disposition",
+    `attachment; filename="${fallbackFileName}"; filename*=UTF-8''${encodedFileName}`
+  );
 
   return NextResponse.json(
     {

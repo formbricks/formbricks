@@ -1,10 +1,11 @@
-import { responses } from "@/lib/api/response";
 import { authenticateRequest } from "@/app/api/v1/auth";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextResponse } from "next/server";
-import { transformErrorToDetails } from "@/lib/api/validator";
+
 import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
-import { ZSurveyInput } from "@formbricks/types/v1/surveys";
-import { DatabaseError } from "@formbricks/types/v1/errors";
+import { DatabaseError } from "@formbricks/types/errors";
+import { ZSurveyInput } from "@formbricks/types/surveys";
 
 export async function GET(request: Request) {
   try {

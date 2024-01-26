@@ -1,7 +1,11 @@
-import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/SettingsCard";
-import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/SettingsTitle";
+import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
+
 import { cn } from "@formbricks/lib/cn";
-import { Button, Label, RadioGroup, RadioGroupItem, Switch } from "@formbricks/ui";
+import { Button } from "@formbricks/ui/Button";
+import { Label } from "@formbricks/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
+import { Switch } from "@formbricks/ui/Switch";
 
 const placements = [
   { name: "Bottom Right", value: "bottomRight", disabled: false },
@@ -25,7 +29,7 @@ export default function Loading() {
           </div>
           <Button
             variant="darkCTA"
-            className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-gray-200">
+            className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
             Loading
           </Button>
         </div>
@@ -60,7 +64,7 @@ export default function Loading() {
           </div>
           <Button
             variant="darkCTA"
-            className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-gray-200">
+            className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
             Loading
           </Button>
         </div>

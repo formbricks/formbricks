@@ -1,10 +1,11 @@
 "use client";
 
-import { SlackButton } from "@/components/auth/SlackButton";
-import SlackLogo from "@/images/slacklogo.png";
+import { SlackButton } from "@/app/(auth)/auth/components/SlackButton";
+// import { SlackButton } from "@/components/auth/SlackButton";
 import FormbricksLogo from "@/images/logo.svg";
-import { authorize } from "@formbricks/lib/client/google";
-import { Button } from "@formbricks/ui";
+import SlackLogo from "@/images/slacklogo.png";
+// import { authorize } from "@formbricks/lib/client/google";
+// import { Button } from "@formbricks/ui";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";

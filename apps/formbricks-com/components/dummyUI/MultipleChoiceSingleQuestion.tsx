@@ -1,11 +1,13 @@
-import { cn } from "@formbricks/lib/cn";
-import type { MultipleChoiceSingleQuestion } from "@formbricks/types/questions";
 import { useState } from "react";
+
+import { cn } from "@formbricks/lib/cn";
+import { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
+
 import Headline from "./Headline";
 import Subheader from "./Subheader";
 
 interface MultipleChoiceSingleProps {
-  question: MultipleChoiceSingleQuestion;
+  question: TSurveyMultipleChoiceSingleQuestion;
   onSubmit: (data: { [x: string]: any }) => void;
   lastQuestion: boolean;
   brandColor: string;

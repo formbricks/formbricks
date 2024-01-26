@@ -1,4 +1,4 @@
-import { TSurveyLogic } from "@formbricks/types/v1/surveys";
+import { TSurveyLogic } from "@formbricks/types/surveys";
 
 export function evaluateCondition(logic: TSurveyLogic, responseValue: any): boolean {
   switch (logic.condition) {
@@ -47,7 +47,21 @@ export function evaluateCondition(logic: TSurveyLogic, responseValue: any): bool
         (Array.isArray(responseValue) && responseValue.length === 0) ||
         responseValue === "" ||
         responseValue === null ||
+        responseValue === undefined ||
         responseValue === "dismissed"
+      );
+    case "uploaded":
+      if (Array.isArray(responseValue)) {
+        return responseValue.length > 0;
+      } else {
+        return responseValue !== "skipped" && responseValue !== "" && responseValue !== null;
+      }
+    case "notUploaded":
+      return (
+        (Array.isArray(responseValue) && responseValue.length === 0) ||
+        responseValue === "" ||
+        responseValue === null ||
+        responseValue === "skipped"
       );
     default:
       return false;

@@ -1,6 +1,7 @@
-import { sendEmail } from "@/lib/email";
-import { withEmailTemplate } from "@/lib/email-template";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { withEmailTemplate } from "@formbricks/lib/emails/email-template";
+import { sendEmail } from "@formbricks/lib/emails/emails";
+
 import { Insights, NotificationResponse, Survey, SurveyResponse } from "./types";
 
 const getEmailSubject = (productName: string) => {
@@ -118,11 +119,11 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
               : createSurveyFields(survey.responses)
           }
           ${
-            survey.responsesCount >= 0
+            survey.responseCount >= 0
               ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
                   survey.id
                 }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA">
-                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responsesCount)}
+                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
               </a>`
               : ""
           }
@@ -131,11 +132,11 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
     .join("");
 };
 
-const createSurveyFields = (surveryResponses: SurveyResponse[]) => {
+const createSurveyFields = (surveyResponses: SurveyResponse[]) => {
   let surveyFields = "";
-  const responseCount = surveryResponses.length;
+  const responseCount = surveyResponses.length;
 
-  surveryResponses.forEach((response, index) => {
+  surveyResponses.forEach((response, index) => {
     if (!response) {
       return;
     }

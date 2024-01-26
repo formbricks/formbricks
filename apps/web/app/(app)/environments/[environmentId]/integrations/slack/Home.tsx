@@ -1,15 +1,24 @@
 "use client";
 
-import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
-import DeleteDialog from "@/components/shared/DeleteDialog";
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import { timeSince } from "@formbricks/lib/time";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
-import { Button } from "@formbricks/ui";
+import { Button } from "@react-email/components";
 import { useState } from "react";
-import toast from "react-hot-toast";
 
+import { timeSince } from "@formbricks/lib/time";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+
+// import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
+// import DeleteDialog from "@/components/shared/DeleteDialog";
+// import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
+// import { timeSince } from "@formbricks/lib/time";
+// import { TEnvironment } from "@formbricks/types/v1/environment";
+// import { TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
+// import { Button } from "@formbricks/ui";
+// import { useState } from "react";
+// import toast from "react-hot-toast";
+//
 interface HomeProps {
   environment: TEnvironment;
   slackIntegration: TSlackIntegration;

@@ -1,0 +1,65 @@
+import Image from "next/image";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import AuthorBox from "@/components/shared/AuthorBox";
+import EmailGIF from "./email-embed.gif";
+import FigmaMock from "./figma-mock.webp";
+import PiyushPR from "./pr-merged.webp";
+
+export const meta = {
+  title: "The first end-to-end community developed feature is live 🚢",
+  description:
+    "We are super excited to share the first end-to-end feature build by the community: From request, over design to code implementation!",
+  date: "2023-10-11",
+  publishedTime: "2023-10-11T12:00:00",
+  authors: ["Johannes"],
+  section: "Open Source Design",
+  tags: ["Open Source Surveys", "Open Source Design", "Design", "Community Design"],
+};
+
+<AuthorBox name="Johannes" title="Co-Founder" date="October 11th, 2023" duration="4" author={"Johannes"} />
+
+<p className="text-lg font-semibold">We are super excited to share the first end-to-end feature built by the community: From request, over design to code implementation ✅</p>
+
+Over the past months, several users requested an easy way to embed Formbricks surveys in an email. The embed should mock the first question and, dependent on the question type, wire the first answer through to the survey:
+
+<Image
+  src={EmailGIF}
+  alt="Email embedding XP"
+  className="rounded-lg w-full"
+/>
+
+### Our Design Repository on GitHub
+
+Since this wasn't a priority for Formbricks, we opened an <a href="https://github.com/formbricks/design/issues/19" target="_blank">issue in our GitHub design repo</a>. Shortly after Aryan reached out and took over the user research and design. Here is the <a href="https://www.figma.com/file/6gtywfMneiONru4A5egbwi/Embedding-Experience?type=design&node-id=82%3A829&mode=design&t=mCsVx1VPtm1vPqgf-1">Figma file</a> he has been working in.
+
+Over a few iterations, we provided Aryan with feedback until we got to a solution which was scoped properly to ship as a community contribution.
+
+<Image
+  src={FigmaMock}
+  alt="Mock up embedding XP"
+  className="rounded-lg w-full"
+/>
+
+### Core contributor chiming in
+
+After the design was done, we wrote up the ticket and reached out to Piyush, one of our most cherished community members. Piyush already built the Link Prefilling so he is familiar with the in's and out's of this feature. Additionally, working with Piyush has been a pleasure: Clear and prompt communication, clean code and quick turnaround!
+
+And so he shipped it! 🚢🚢🚢
+
+<Image
+  src={PiyushPR}
+  alt="Mock up embedding XP"
+  className="rounded-lg w-full"
+/>
+
+### It's merged!
+
+After a final review from our end, we merged the PR and with it the first end-to-end community driven feature!
+
+Open source design isn't really a thing yet. We're super happy to pioneer looping product designers into the Open Source WIN WIN Loop: Young, aspiring designers get the chance to build their portfolio not with mock projects, but solving real problems for real users 😍 
+
+
+### Wanna try it out? 
+<a href="https://app.formbricks.com" target="_blank">Go here!</a>
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;

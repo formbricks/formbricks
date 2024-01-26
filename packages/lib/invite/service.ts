@@ -1,12 +1,28 @@
 import "server-only";
 
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { TInvite, TInviteUpdateInput } from "@formbricks/types/v1/invites";
-import { cache } from "react";
-import { ResourceNotFoundError, ValidationError } from "@formbricks/types/v1/errors";
+import { unstable_cache } from "next/cache";
+
+import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  TCurrentUser,
+  TInvite,
+  TInviteUpdateInput,
+  TInvitee,
+  ZCurrentUser,
+  ZInvite,
+  ZInviteUpdateInput,
+  ZInvitee,
+} from "@formbricks/types/invites";
+
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { sendInviteMemberEmail } from "../emails/emails";
-import { TMembershipRole } from "@formbricks/types/v1/memberships";
+import { getMembershipByUserIdTeamId } from "../membership/service";
+import { formatDateFields } from "../utils/datetime";
+import { validateInputs } from "../utils/validate";
+import { inviteCache } from "./cache";
 
 const inviteSelect = {
   id: true,
@@ -20,26 +36,50 @@ const inviteSelect = {
   expiresAt: true,
   role: true,
 };
+interface InviteWithCreator extends TInvite {
+  creator: {
+    name: string | null;
+    email: string;
+  };
+}
+export const getInvitesByTeamId = async (teamId: string, page?: number): Promise<TInvite[]> => {
+  const invites = await unstable_cache(
+    async () => {
+      validateInputs([teamId, ZString], [page, ZOptionalNumber]);
 
-export const getInvitesByTeamId = cache(async (teamId: string): Promise<TInvite[] | null> => {
-  const invites = await prisma.invite.findMany({
-    where: { teamId },
-    select: inviteSelect,
-  });
+      return prisma.invite.findMany({
+        where: { teamId },
+        select: inviteSelect,
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+      });
+    },
+    [`getInvitesByTeamId-${teamId}-${page}`],
+    {
+      tags: [inviteCache.tag.byTeamId(teamId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+  return invites.map((invite: TInvite) => formatDateFields(invite, ZInvite));
+};
 
-  if (!invites) {
-    return null;
-  }
+export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite | null> => {
+  validateInputs([inviteId, ZString], [data, ZInviteUpdateInput]);
 
-  return invites;
-});
-
-export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<TInvite> => {
   try {
     const invite = await prisma.invite.update({
       where: { id: inviteId },
       data,
       select: inviteSelect,
+    });
+
+    if (invite === null) {
+      throw new ResourceNotFoundError("Invite", inviteId);
+    }
+
+    inviteCache.revalidate({
+      id: invite.id,
+      teamId: invite.teamId,
     });
 
     return invite;
@@ -53,36 +93,69 @@ export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): 
 };
 
 export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
-  const deletedInvite = await prisma.invite.delete({
-    where: {
-      id: inviteId,
-    },
-  });
+  validateInputs([inviteId, ZString]);
 
-  return deletedInvite;
+  try {
+    const invite = await prisma.invite.delete({
+      where: {
+        id: inviteId,
+      },
+    });
+
+    if (invite === null) {
+      throw new ResourceNotFoundError("Invite", inviteId);
+    }
+
+    inviteCache.revalidate({
+      id: invite.id,
+      teamId: invite.teamId,
+    });
+
+    return invite;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
-export const getInviteToken = cache(async (inviteId: string) => {
-  const invite = await prisma.invite.findUnique({
-    where: {
-      id: inviteId,
-    },
-    select: {
-      email: true,
-    },
-  });
+export const getInvite = async (inviteId: string): Promise<InviteWithCreator> => {
+  const invite = await unstable_cache(
+    async () => {
+      validateInputs([inviteId, ZString]);
 
-  if (!invite) {
-    throw new ResourceNotFoundError("Invite", inviteId);
-  }
+      const invite = await prisma.invite.findUnique({
+        where: {
+          id: inviteId,
+        },
+        include: {
+          creator: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
 
+      if (!invite) {
+        throw new ResourceNotFoundError("Invite", inviteId);
+      }
+      return invite;
+    },
+    [`getInvite-${inviteId}`],
+    { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
+  )();
   return {
-    inviteId,
-    email: invite.email,
+    ...formatDateFields(invite, ZInvite),
+    creator: invite.creator,
   };
-});
+};
 
-export const resendInvite = async (inviteId: string) => {
+export const resendInvite = async (inviteId: string): Promise<TInvite> => {
+  validateInputs([inviteId, ZString]);
   const invite = await prisma.invite.findUnique({
     where: {
       id: inviteId,
@@ -109,6 +182,11 @@ export const resendInvite = async (inviteId: string) => {
     },
   });
 
+  inviteCache.revalidate({
+    id: updatedInvite.id,
+    teamId: updatedInvite.teamId,
+  });
+
   return updatedInvite;
 };
 
@@ -118,9 +196,11 @@ export const inviteUser = async ({
   teamId,
 }: {
   teamId: string;
-  invitee: { name: string; email: string; role: TMembershipRole };
-  currentUser: { id: string; name: string };
-}) => {
+  invitee: TInvitee;
+  currentUser: TCurrentUser;
+}): Promise<TInvite> => {
+  validateInputs([teamId, ZString], [invitee, ZInvitee], [currentUser, ZCurrentUser]);
+
   const { name, email, role } = invitee;
   const { id: currentUserId, name: currentUserName } = currentUser;
   const existingInvite = await prisma.invite.findFirst({ where: { email, teamId } });
@@ -132,11 +212,8 @@ export const inviteUser = async ({
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (user) {
-    const member = await prisma.membership.findUnique({
-      where: {
-        userId_teamId: { teamId, userId: user.id },
-      },
-    });
+    const member = await getMembershipByUserIdTeamId(user.id, teamId);
+
     if (member) {
       throw new ValidationError("User is already a member of this team");
     }
@@ -157,7 +234,11 @@ export const inviteUser = async ({
     },
   });
 
-  await sendInviteMemberEmail(invite.id, currentUserName, name, email);
+  inviteCache.revalidate({
+    id: invite.id,
+    teamId: invite.teamId,
+  });
 
+  await sendInviteMemberEmail(invite.id, email, currentUserName, name);
   return invite;
 };

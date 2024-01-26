@@ -1,5 +1,5 @@
-import clsx from "clsx";
 import { Icon } from "@/components/shared/Icon";
+import clsx from "clsx";
 
 const styles = {
   note: {

@@ -1,6 +1,7 @@
-import { getSessionUser } from "@/lib/api/apiHelper";
-import { prisma } from "@formbricks/database";
+import { getSessionUser } from "@/app/lib/api/apiHelper";
 import { NextResponse } from "next/server";
+
+import { prisma } from "@formbricks/database";
 
 export async function GET() {
   const sessionUser = await getSessionUser();

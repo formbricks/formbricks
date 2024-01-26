@@ -1,11 +1,14 @@
-import GoBackButton from "@/components/shared/GoBackButton";
-import { getIntegrations } from "@formbricks/lib/integration/service";
-import { getSurveys } from "@formbricks/lib/survey/service";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getSlackChannels } from "@formbricks/lib/slack/service";
-import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { TSlackChannel, TSlackIntegration } from "@formbricks/types/v1/integrations";
+// import GoBackButton from "@/components/shared/GoBackButton";
+// import { TSlackChannel, TSlackIntegration } from "@formbricks/types/v1/integrations";
 import SlackWrapper from "@/app/(app)/environments/[environmentId]/integrations/slack/SlackWrapper";
+
+import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getSlackChannels } from "@formbricks/lib/slack/service";
+import { getSurveys } from "@formbricks/lib/survey/service";
+import { TSlackChannel, TSlackIntegration } from "@formbricks/types/integration/slack";
+import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function Slack({ params }) {
   const enabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);

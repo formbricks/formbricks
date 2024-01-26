@@ -1,15 +1,21 @@
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
-import { Button, Checkbox, Label } from "@formbricks/ui";
+// import { TSurvey } from "@formbricks/types/v1/surveys";
+// import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
+// import { Button, Checkbox, Label } from "@formbricks/ui";
+import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/slack/actions";
 import SlackLogo from "@/images/slacklogo.png";
-import { useState, useEffect } from "react";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+// import Modal from "@/components/shared/Modal";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Button } from "@react-email/components";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import Image from "next/image";
-import Modal from "@/components/shared/Modal";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/slack/actions";
+
+import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
+import { TSurvey } from "@formbricks/types/surveys";
+import { Checkbox } from "@formbricks/ui/Checkbox";
+import { Modal } from "@formbricks/ui/Modal";
 
 interface AddWebhookModalProps {
   environmentId: string;
@@ -159,7 +165,7 @@ export default function AddSlackConnectionModal({
   const DropdownSelector = ({ label, items, selectedItem, setSelectedItem, disabled }) => {
     return (
       <div className="col-span-1">
-        <Label htmlFor={label}>{label}</Label>
+        <DropdownMenu.Label htmlFor={label}>{label}</DropdownMenu.Label>
         <div className="mt-1 flex">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
@@ -247,7 +253,7 @@ export default function AddSlackConnectionModal({
               </div>
               {selectedSurvey && (
                 <div>
-                  <Label htmlFor="Surveys">Questions</Label>
+                  <DropdownMenu.Label htmlFor="Surveys">Questions</DropdownMenu.Label>
                   <div className="mt-1 rounded-lg border border-slate-200">
                     <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                       {selectedSurvey?.questions.map((question) => (

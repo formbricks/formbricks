@@ -1,80 +1,77 @@
 "use client";
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { createId } from "@paralleldrive/cuid2";
-import { useMemo } from "react";
-import SingleResponse from "./SingleResponse";
+
+import { getMoreResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TTag } from "@formbricks/types/v1/tags";
+import React, { useEffect, useRef, useState } from "react";
+
+import { TEnvironment } from "@formbricks/types/environment";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
+import { TUser } from "@formbricks/types/user";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
 
 interface ResponseTimelineProps {
   environment: TEnvironment;
   surveyId: string;
   responses: TResponse[];
   survey: TSurvey;
+  user: TUser;
   environmentTags: TTag[];
+  responsesPerPage: number;
 }
 
 export default function ResponseTimeline({
   environment,
-  surveyId,
   responses,
   survey,
+  user,
   environmentTags,
+  responsesPerPage,
 }: ResponseTimelineProps) {
-  const matchQandA = useMemo(() => {
-    if (survey && responses) {
-      // Create a mapping of question IDs to their headlines
-      const questionIdToHeadline = {};
-      survey.questions.forEach((question) => {
-        questionIdToHeadline[question.id] = question.headline;
-      });
+  const loadingRef = useRef(null);
+  const [fetchedResponses, setFetchedResponses] = useState<TResponse[]>(responses);
+  const [page, setPage] = useState(2);
+  const [hasMoreResponses, setHasMoreResponses] = useState<boolean>(responses.length > 0);
 
-      // Replace question IDs with question headlines in response data
-      const updatedResponses = responses.map((response) => {
-        const updatedResponse: Array<{
-          id: string;
-          question: string;
-          answer: string;
-          type: string;
-          scale?: "number" | "star" | "smiley";
-          range?: number;
-        }> = []; // Specify the type of updatedData
-        // iterate over survey questions and build the updated response
-        for (const question of survey.questions) {
-          const answer = response.data[question.id];
-          if (answer !== null && answer !== undefined) {
-            updatedResponse.push({
-              id: createId(),
-              question: question.headline,
-              type: question.type,
-              scale: question.scale,
-              range: question.range,
-              answer: answer as string,
-            });
-          }
+  useEffect(() => {
+    const currentLoadingRef = loadingRef.current;
+
+    const loadResponses = async () => {
+      const newResponses = await getMoreResponses(survey.id, page);
+      if (newResponses.length === 0) {
+        setHasMoreResponses(false);
+      } else {
+        setPage(page + 1);
+      }
+      setFetchedResponses((prevResponses) => [...prevResponses, ...newResponses]);
+    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          if (hasMoreResponses) loadResponses();
         }
-        return { ...response, responses: updatedResponse };
-      });
+      },
+      { threshold: 0.8 }
+    );
 
-      const updatedResponsesWithTags = updatedResponses.map((response) => ({
-        ...response,
-        tags: response.tags?.map((tag) => tag),
-      }));
-
-      return updatedResponsesWithTags;
+    if (currentLoadingRef) {
+      observer.observe(currentLoadingRef);
     }
-    return [];
-  }, [survey, responses]);
+
+    return () => {
+      if (currentLoadingRef) {
+        observer.unobserve(currentLoadingRef);
+      }
+    };
+  }, [responses, responsesPerPage, page, survey.id, fetchedResponses.length, hasMoreResponses]);
 
   return (
     <div className="space-y-4">
-      {survey.type === "web" && responses.length === 0 && (
-        <EmptyInAppSurveys environmentId={environment.id} />
-      )}
-      {survey.type !== "web" && responses.length === 0 ? (
+      {survey.type === "web" && fetchedResponses.length === 0 && !environment.widgetSetupCompleted ? (
+        <EmptyInAppSurveys environment={environment} />
+      ) : fetchedResponses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}
@@ -82,17 +79,21 @@ export default function ResponseTimeline({
         />
       ) : (
         <div>
-          {matchQandA.map((updatedResponse) => {
+          {fetchedResponses.map((response) => {
             return (
-              <SingleResponse
-                key={updatedResponse.id}
-                data={updatedResponse}
-                surveyId={surveyId}
-                environmentId={environment.id}
-                environmentTags={environmentTags}
-              />
+              <div key={response.id}>
+                <SingleResponseCard
+                  survey={survey}
+                  response={response}
+                  user={user}
+                  environmentTags={environmentTags}
+                  pageType="response"
+                  environment={environment}
+                />
+              </div>
             );
           })}
+          <div ref={loadingRef}></div>
         </div>
       )}
     </div>

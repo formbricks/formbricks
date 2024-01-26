@@ -1,19 +1,25 @@
 import "server-only";
 
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@prisma/client";
-import { DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
-import { cache } from "react";
+import { z } from "zod";
+
+import { ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { TIntegrationItem } from "@formbricks/types/integration";
 import {
-  TGoogleCredential,
-  TGoogleSheetIntegration,
-  TGoogleSpreadsheet,
-} from "@formbricks/types/v1/integrations";
+  TIntegrationGoogleSheets,
+  TIntegrationGoogleSheetsCredential,
+  ZIntegrationGoogleSheetsCredential,
+} from "@formbricks/types/integration/googleSheet";
+
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "../constants";
+import { getIntegrationByType } from "../integration/service";
+import { validateInputs } from "../utils/validate";
 
 const { google } = require("googleapis");
 
@@ -31,50 +37,37 @@ async function fetchSpreadsheets(auth: any) {
   }
 }
 
-export const getGoogleSheetIntegration = cache(
-  async (environmentId: string): Promise<TGoogleSheetIntegration | null> => {
-    try {
-      const result = await prisma.integration.findUnique({
-        where: {
-          type_environmentId: {
-            environmentId,
-            type: "googleSheets",
-          },
-        },
-      });
-      // Type Guard
-      if (result && isGoogleSheetIntegration(result)) {
-        return result as TGoogleSheetIntegration; // Explicit casting
-      }
-      return null;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError("Database operation failed");
-      }
-      throw error;
-    }
-  }
-);
-function isGoogleSheetIntegration(integration: any): integration is TGoogleSheetIntegration {
-  return integration.type === "googleSheets";
-}
+export const getSpreadSheets = async (environmentId: string): Promise<TIntegrationItem[]> => {
+  validateInputs([environmentId, ZId]);
 
-export const getSpreadSheets = async (environmentId: string): Promise<TGoogleSpreadsheet[]> => {
-  let spreadsheets: TGoogleSpreadsheet[] = [];
+  let spreadsheets: TIntegrationItem[] = [];
   try {
-    const googleIntegration = await getGoogleSheetIntegration(environmentId);
+    const googleIntegration = (await getIntegrationByType(
+      environmentId,
+      "googleSheets"
+    )) as TIntegrationGoogleSheets;
     if (googleIntegration && googleIntegration.config?.key) {
       spreadsheets = await fetchSpreadsheets(googleIntegration.config?.key);
     }
     return spreadsheets;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }
 };
-export async function writeData(credentials: TGoogleCredential, spreadsheetId: string, values: string[][]) {
+export async function writeData(
+  credentials: TIntegrationGoogleSheetsCredential,
+  spreadsheetId: string,
+  values: string[][]
+) {
+  validateInputs(
+    [credentials, ZIntegrationGoogleSheetsCredential],
+    [spreadsheetId, ZString],
+    [values, z.array(z.array(ZString))]
+  );
+
   try {
     const authClient = authorize(credentials);
     const sheets = google.sheets({ version: "v4", auth: authClient });
@@ -109,7 +102,7 @@ export async function writeData(credentials: TGoogleCredential, spreadsheetId: s
     );
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
     throw error;
   }

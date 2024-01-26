@@ -1,15 +1,18 @@
-export const meta = {
+export const metadata = {
   title: "Implementing Code Actions in Formbricks | Real-time User Action Tracking",
   description:
-    "Dive into the world of Formbricks' code actions. Learn how to seamlessly integrate formbricks.track() method into your codebase, enabling real-time tracking of user actions like button clicks, visiting a specfic URL. Up your survey game with precise and exact triggers.",
+    "Dive into the world of Formbricks' code actions. Learn how to seamlessly integrate formbricks.track() method into your codebase, enabling real-time tracking of user actions like button clicks, visiting a specific URL. Up your survey game with precise and exact triggers.",
 };
 
 #### Actions
 
 # Code Actions
 
-Actions can also be set in the code base. You can fire an action using `formbricks.track()`
+Actions can also be set in the codebase to trigger surveys. Please add the code action first in the Formbricks web interface to be able to configure your surveys to use this action.
 
+After that you can fire an action using `formbricks.track()`
+
+<Col>
 <CodeGroup title="Track an action">
 
 ```javascript
@@ -17,9 +20,9 @@ formbricks.track("Action Name");
 ```
 
 </CodeGroup>
-
+</Col>
 Here is an example of how to fire an action when a user clicks a button:
-
+<Col>
 <CodeGroup title="Track Button Click">
 
 ```javascript
@@ -31,3 +34,4 @@ return <button onClick={handleClick}>Click Me</button>;
 ```
 
 </CodeGroup>
+</Col>

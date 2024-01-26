@@ -1,15 +1,16 @@
-import type { QuestionSummary } from "@formbricks/types/responses";
-import { ProgressBar } from "@formbricks/ui";
+import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
-import { QuestionType } from "@formbricks/types/questions";
-import { TSurveyRatingQuestion } from "@formbricks/types/v1/surveys";
-import { RatingResponse } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/RatingResponse";
-import { questionTypes } from "@/lib/questions";
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyRatingQuestion } from "@formbricks/types/surveys";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
+import { RatingResponse } from "@formbricks/ui/RatingResponse";
 
 interface RatingSummaryProps {
-  questionSummary: QuestionSummary<TSurveyRatingQuestion>;
+  questionSummary: TSurveyQuestionSummary<TSurveyRatingQuestion>;
 }
 
 interface ChoiceResult {
@@ -22,7 +23,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   const results: ChoiceResult[] = useMemo(() => {
-    if (questionSummary.question.type !== QuestionType.Rating) return [];
+    if (questionSummary.question.type !== TSurveyQuestionType.Rating) return [];
     // build a dictionary of choices
     const resultsDict: { [key: string]: ChoiceResult } = {};
     for (let i = 1; i <= questionSummary.question.range; i++) {
@@ -81,7 +82,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
+        <Headline headline={questionSummary.question.headline} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
@@ -92,9 +93,12 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {totalResponses} responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
-      <div className="space-y-5 bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+      <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result: any) => (
           <div key={result.label}>
             <div className="text flex justify-between px-2 pb-2">

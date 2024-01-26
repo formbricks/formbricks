@@ -1,19 +1,25 @@
 "use server";
+
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
+
 import { prisma } from "@formbricks/database";
-import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/v1/actionClasses";
-import { ZId } from "@formbricks/types/v1/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { revalidateTag, unstable_cache } from "next/cache";
+import {
+  TActionClass,
+  TActionClassInput,
+  ZActionClass,
+  ZActionClassInput,
+} from "@formbricks/types/actionClasses";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/environment";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
-
-export const getActionClassCacheTag = (name: string, environmentId: string): string =>
-  `environments-${environmentId}-actionClass-${name}`;
-
-const getActionClassesCacheTag = (environmentId: string): string =>
-  `environments-${environmentId}-actionClasses`;
+import { actionClassCache } from "./cache";
 
 const select = {
   id: true,
@@ -26,47 +32,93 @@ const select = {
   environmentId: true,
 };
 
-export const getActionClasses = (environmentId: string): Promise<TActionClass[]> =>
-  unstable_cache(
+export const getActionClasses = async (environmentId: string, page?: number): Promise<TActionClass[]> => {
+  const actionClasses = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
       try {
-        let actionClasses = await prisma.eventClass.findMany({
+        const actionClasses = await prisma.actionClass.findMany({
           where: {
             environmentId: environmentId,
           },
           select,
+          take: page ? ITEMS_PER_PAGE : undefined,
+          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           orderBy: {
             createdAt: "asc",
           },
         });
-
-        return actionClasses;
+        return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
       } catch (error) {
         throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
       }
     },
-    [`environments-${environmentId}-actionClasses`],
+    [`getActionClasses-${environmentId}-${page}`],
     {
-      tags: [getActionClassesCacheTag(environmentId)],
+      tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+  return actionClasses.map((actionClass) => formatDateFields(actionClass, ZActionClass));
+};
+
+export const getActionClassByEnvironmentIdAndName = async (
+  environmentId: string,
+  name: string
+): Promise<TActionClass | null> => {
+  const actionClass = await unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId], [name, ZString]);
+
+      try {
+        const actionClass = await prisma.actionClass.findFirst({
+          where: {
+            name,
+            environmentId,
+          },
+          select,
+        });
+
+        return actionClass;
+      } catch (error) {
+        throw new DatabaseError(`Database error when fetching action`);
+      }
+    },
+    [`getActionClass-${environmentId}-${name}`],
+    {
+      tags: [actionClassCache.tag.byNameAndEnvironmentId(environmentId, name)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+  return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
+};
 
 export const getActionClass = async (actionClassId: string): Promise<TActionClass | null> => {
-  validateInputs([actionClassId, ZId]);
-  try {
-    let actionClass = await prisma.eventClass.findUnique({
-      where: {
-        id: actionClassId,
-      },
-      select,
-    });
+  const actionClass = await unstable_cache(
+    async () => {
+      validateInputs([actionClassId, ZId]);
 
-    return actionClass;
-  } catch (error) {
-    throw new DatabaseError(`Database error when fetching action`);
-  }
+      try {
+        const actionClass = await prisma.actionClass.findUnique({
+          where: {
+            id: actionClassId,
+          },
+          select,
+        });
+
+        return actionClass;
+      } catch (error) {
+        throw new DatabaseError(`Database error when fetching action`);
+      }
+    },
+    [`getActionClass-${actionClassId}`],
+    {
+      tags: [actionClassCache.tag.byId(actionClassId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+  return actionClass ? formatDateFields(actionClass, ZActionClass) : null;
 };
 
 export const deleteActionClass = async (
@@ -74,8 +126,9 @@ export const deleteActionClass = async (
   actionClassId: string
 ): Promise<TActionClass> => {
   validateInputs([environmentId, ZId], [actionClassId, ZId]);
+
   try {
-    const result = await prisma.eventClass.delete({
+    const result = await prisma.actionClass.delete({
       where: {
         id: actionClassId,
       },
@@ -83,8 +136,10 @@ export const deleteActionClass = async (
     });
     if (result === null) throw new ResourceNotFoundError("Action", actionClassId);
 
-    // revalidate cache
-    revalidateTag(getActionClassesCacheTag(result.environmentId));
+    actionClassCache.revalidate({
+      environmentId,
+      id: actionClassId,
+    });
 
     return result;
   } catch (error) {
@@ -99,8 +154,9 @@ export const createActionClass = async (
   actionClass: TActionClassInput
 ): Promise<TActionClass> => {
   validateInputs([environmentId, ZId], [actionClass, ZActionClassInput]);
+
   try {
-    const result = await prisma.eventClass.create({
+    const actionClassPrisma = await prisma.actionClass.create({
       data: {
         name: actionClass.name,
         description: actionClass.description,
@@ -113,10 +169,13 @@ export const createActionClass = async (
       select,
     });
 
-    // revalidate cache
-    revalidateTag(getActionClassesCacheTag(environmentId));
+    actionClassCache.revalidate({
+      name: actionClassPrisma.name,
+      environmentId: actionClassPrisma.environmentId,
+      id: actionClassPrisma.id,
+    });
 
-    return result;
+    return actionClassPrisma;
   } catch (error) {
     throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
   }
@@ -128,8 +187,9 @@ export const updateActionClass = async (
   inputActionClass: Partial<TActionClassInput>
 ): Promise<TActionClass> => {
   validateInputs([environmentId, ZId], [actionClassId, ZId], [inputActionClass, ZActionClassInput.partial()]);
+
   try {
-    const result = await prisma.eventClass.update({
+    const result = await prisma.actionClass.update({
       where: {
         id: actionClassId,
       },
@@ -145,28 +205,17 @@ export const updateActionClass = async (
     });
 
     // revalidate cache
-    revalidateTag(getActionClassCacheTag(result.name, result.environmentId));
-    revalidateTag(getActionClassesCacheTag(result.environmentId));
+    actionClassCache.revalidate({
+      environmentId: result.environmentId,
+      name: result.name,
+      id: result.id,
+    });
 
     return result;
   } catch (error) {
-    throw new DatabaseError(`Database error when updating an action for environment ${environmentId}`);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 };
-
-export const getActionClassCached = async (name: string, environmentId: string) =>
-  unstable_cache(
-    async () => {
-      return await prisma.eventClass.findFirst({
-        where: {
-          name,
-          environmentId,
-        },
-      });
-    },
-    [`environments-${environmentId}-actionClasses-${name}`],
-    {
-      tags: [getActionClassesCacheTag(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();

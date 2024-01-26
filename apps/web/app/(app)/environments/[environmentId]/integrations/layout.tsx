@@ -1,5 +1,6 @@
-import ContentWrapper from "@/components/shared/ContentWrapper";
 import { Metadata } from "next";
+
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
 export const metadata: Metadata = {
   title: "Integrations",

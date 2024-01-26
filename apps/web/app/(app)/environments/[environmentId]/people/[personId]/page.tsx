@@ -1,14 +1,14 @@
-export const revalidate = REVALIDATION_INTERVAL;
+import ActivitySection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivitySection";
+import AttributesSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/AttributesSection";
+import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/HeadingSection";
+import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponseSection";
 
-import ActivitySection from "@/app/(app)/environments/[environmentId]/people/[personId]/(activitySection)/ActivitySection";
-import AttributesSection from "@/app/(app)/environments/[environmentId]/people/[personId]/(attributeSection)/AttributesSection";
-import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/(responseSection)/ResponseSection";
-import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[personId]/HeadingSection";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 export default async function PersonPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
+  const environmentTags = await getTagsByEnvironmentId(params.environmentId);
   if (!environment) {
     throw new Error("Environment not found");
   }
@@ -20,7 +20,11 @@ export default async function PersonPage({ params }) {
           <section className="pb-24 pt-6">
             <div className="grid grid-cols-1 gap-x-8  md:grid-cols-4">
               <AttributesSection personId={params.personId} />
-              <ResponseSection environment={environment} personId={params.personId} />
+              <ResponseSection
+                environment={environment}
+                personId={params.personId}
+                environmentTags={environmentTags}
+              />
               <ActivitySection environmentId={params.environmentId} personId={params.personId} />
             </div>
           </section>

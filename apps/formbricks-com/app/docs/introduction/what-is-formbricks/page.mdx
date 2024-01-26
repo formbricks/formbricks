@@ -1,5 +1,4 @@
 import { GettingStarted } from "@/components/docs/GettingStarted";
-import BestPractices from "@/components/docs/BestPractices";
 import { HeroPattern } from "@/components/docs/HeroPattern";
 import { Button } from "@/components/docs/Button";
 
@@ -9,10 +8,7 @@ export const metadata = {
     "Enhance your product with Formbricks – the leading open-source solution for in-product micro-surveys. Dive deep into user research, amplify product-market fit, and uncover the 'why' behind your analytics.",
 };
 
-export const sections = [
-  { title: "Getting Started", id: "getting-started" },
-  { title: "Best Practices", id: "best-practices" },
-];
+export const sections = [];
 
 <HeroPattern />
 
@@ -20,7 +16,7 @@ export const sections = [
 
 Welcome to Formbricks, your go-to solution for in-product micro-surveys that will supercharge your product experience! 🚀 {{ className: 'lead' }}
 
-<div className="not-prose mb-16 mt-6 flex gap-3">
+<div className="mb-16 mt-6 flex gap-3" id="why-formbricks">
   <Button href="/docs/getting-started/quickstart-in-app-survey" arrow="right" children="Quickstart" />
 </div>
 
@@ -34,7 +30,7 @@ Natively embed qualitative user research into your B2B SaaS. Leverage Best Pract
 - 🧪 **Smart triggering**: Show the right survey at the right time with event-based triggers for accurate research and well-defined priorities.
 - 🎉 **Open-source and self-hosted**: Enjoy full control over your data and infrastructure with our AGPL-licensed solution, and stay tuned for our upcoming cloud version!
 
-<div className="not-prose">
+<div>
   <Button
     href="https://app.formbricks.com/"
     variant="text"

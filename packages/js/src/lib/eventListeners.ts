@@ -9,13 +9,13 @@ import {
   addPageUrlEventListeners,
   removeClickEventListener,
   removePageUrlEventListeners,
-} from "./noCodeEvents";
-import { addSyncEventListener, removeSyncEventListener } from "./sync";
+} from "./noCodeActions";
+import { addExpiryCheckListener, removeExpiryCheckListener } from "./sync";
 
 let areRemoveEventListenersAdded = false;
 
-export const addEventListeners = (debug: boolean = false): void => {
-  addSyncEventListener(debug);
+export const addEventListeners = (): void => {
+  addExpiryCheckListener();
   addPageUrlEventListeners();
   addClickEventListener();
   addExitIntentListener();
@@ -25,11 +25,32 @@ export const addEventListeners = (debug: boolean = false): void => {
 export const addCleanupEventListeners = (): void => {
   if (areRemoveEventListenersAdded) return;
   window.addEventListener("beforeunload", () => {
-    removeSyncEventListener();
+    removeExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
     removeExitIntentListener();
     removeScrollDepthListener();
   });
   areRemoveEventListenersAdded = true;
+};
+
+export const removeCleanupEventListeners = (): void => {
+  if (!areRemoveEventListenersAdded) return;
+  window.removeEventListener("beforeunload", () => {
+    removeExpiryCheckListener();
+    removePageUrlEventListeners();
+    removeClickEventListener();
+    removeExitIntentListener();
+    removeScrollDepthListener();
+  });
+  areRemoveEventListenersAdded = false;
+};
+
+export const removeAllEventListeners = (): void => {
+  removeExpiryCheckListener();
+  removePageUrlEventListeners();
+  removeClickEventListener();
+  removeExitIntentListener();
+  removeScrollDepthListener();
+  removeCleanupEventListeners();
 };

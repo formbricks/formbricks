@@ -1,35 +1,33 @@
 "use client";
 
-import { TSurvey } from "@formbricks/types/v1/surveys";
-import { Confetti } from "@formbricks/ui";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+
+import { TEnvironment } from "@formbricks/types/environment";
+import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TUser } from "@formbricks/types/user";
+import { Confetti } from "@formbricks/ui/Confetti";
+
 import ShareEmbedSurvey from "./ShareEmbedSurvey";
-import { TProduct } from "@formbricks/types/v1/product";
-import LinkSingleUseSurveyModal from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkSingleUseSurveyModal";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProfile } from "@formbricks/types/v1/profile";
 
 interface SummaryMetadataProps {
   environment: TEnvironment;
   survey: TSurvey;
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
   singleUseIds?: string[];
 }
 
 export default function SuccessMessage({
   environment,
   survey,
-  surveyBaseUrl,
+  webAppUrl,
   product,
-  profile,
-  singleUseIds,
+  user,
 }: SummaryMetadataProps) {
-  const isSingleUse = survey.singleUse?.enabled ?? false;
-
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [confetti, setConfetti] = useState(false);
@@ -60,23 +58,14 @@ export default function SuccessMessage({
 
   return (
     <>
-      {showLinkModal && isSingleUse && singleUseIds ? (
-        <LinkSingleUseSurveyModal
-          survey={survey}
-          open={showLinkModal}
-          setOpen={setShowLinkModal}
-          singleUseIds={singleUseIds}
-        />
-      ) : (
-        <ShareEmbedSurvey
-          survey={survey}
-          open={showLinkModal}
-          setOpen={setShowLinkModal}
-          surveyBaseUrl={surveyBaseUrl}
-          product={product}
-          profile={profile}
-        />
-      )}
+      <ShareEmbedSurvey
+        survey={survey}
+        open={showLinkModal}
+        setOpen={setShowLinkModal}
+        webAppUrl={webAppUrl}
+        product={product}
+        user={user}
+      />
       {confetti && <Confetti />}
     </>
   );

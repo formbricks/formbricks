@@ -1,8 +1,10 @@
 "use client";
 
-import { Button } from "@formbricks/ui";
 import type { Session } from "next-auth";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
+
+import { Button } from "@formbricks/ui/Button";
 
 type Greeting = {
   next: () => void;
@@ -13,6 +15,27 @@ type Greeting = {
 
 const Greeting: React.FC<Greeting> = ({ next, skip, name, session }) => {
   const legacyUser = !session ? false : new Date(session?.user?.createdAt) < new Date("2023-05-03T00:00:00"); // if user is created before onboarding deployment
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        next();
+      }
+    };
+    const button = buttonRef.current;
+    if (button) {
+      button.focus();
+      button.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      if (button) {
+        button.removeEventListener("keydown", handleKeyDown);
+      }
+    };
+  }, [next]);
 
   return (
     <div className="flex h-full w-full max-w-xl flex-col justify-around gap-8 px-8">
@@ -30,7 +53,7 @@ const Greeting: React.FC<Greeting> = ({ next, skip, name, session }) => {
           <Button size="lg" variant="minimal" onClick={skip}>
             I&apos;ll do it later
           </Button>
-          <Button size="lg" variant="darkCTA" onClick={next}>
+          <Button size="lg" variant="darkCTA" onClick={next} ref={buttonRef} tabIndex={0}>
             Begin (1 min)
           </Button>
         </div>

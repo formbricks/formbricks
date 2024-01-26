@@ -1,10 +1,12 @@
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import DashboardMockupDark from "@/images/dashboard-mockup-dark.png";
 import DashboardMockup from "@/images/dashboard-mockup.png";
-import { Button } from "@formbricks/ui";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useState } from "react";
+
+import { Button } from "@formbricks/ui/Button";
+
 import AddEventDummy from "../dummyUI/AddEventDummy";
 import AddNoCodeEventModalDummy from "../dummyUI/AddNoCodeEventModalDummy";
 import HeadingCentered from "../shared/HeadingCentered";
@@ -21,9 +23,9 @@ export const Steps: React.FC = () => {
         heading="Set Formbricks up in minutes"
         subheading="Formbricks is designed for as little dev attention as possible. Here’s how:"
       />
-      <div id="howitworks" className="mx-auto mb-12 mt-16 max-w-lg md:mb-0 md:mt-8 md:max-w-none">
+      <div id="howitworks" className="xs:m-auto mb-12 mt-16 max-w-lg md:mb-0 md:mt-8 md:max-w-none">
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
-          <div className="grid md:grid-cols-2 md:items-center md:gap-16">
+          <div className="xs:grid md:grid-cols-2 md:items-center md:gap-16">
             <div className="pb-8 sm:pl-10 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 1</h4>
               <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200">
@@ -43,7 +45,7 @@ export const Steps: React.FC = () => {
       <div className="mx-auto mb-12 mt-8 max-w-lg md:mb-0 md:mt-32  md:max-w-none">
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
-            <div className="order-last w-full rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:py-8 md:order-first">
+            <div className="order-last w-full rounded-lg bg-slate-100 p-4 sm:py-8 md:order-first dark:bg-slate-800">
               <div className="flex h-40 items-center justify-center">
                 <Button
                   variant="primary"
@@ -58,7 +60,7 @@ export const Steps: React.FC = () => {
             </div>
             <div className="pb-8 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 2</h4>
-              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl dark:text-slate-100">
                 No-Code: Track User Actions
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">
@@ -74,7 +76,7 @@ export const Steps: React.FC = () => {
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
             <div className="pb-8 sm:pl-10 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 3</h4>
-              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-3xl">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl dark:text-slate-200">
                 Create your survey
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">
@@ -82,7 +84,7 @@ export const Steps: React.FC = () => {
                 adjust the look and feel of your survey.
               </p>
             </div>
-            <div className="relative w-full rounded-lg p-1 dark:bg-slate-800 sm:p-8">
+            <div className="relative w-full rounded-lg p-1 sm:p-8 dark:bg-slate-800">
               <DemoPreview template="Product Market Fit Survey (short)" />
             </div>
           </div>
@@ -91,14 +93,14 @@ export const Steps: React.FC = () => {
       <div className="mx-auto mb-12 mt-8 max-w-lg md:mb-0 md:mt-32  md:max-w-none">
         <div className="px-4 sm:max-w-4xl sm:px-6 lg:max-w-7xl lg:px-8">
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
-            <div className="order-last w-full rounded-lg bg-slate-100 p-4 dark:bg-slate-800 sm:py-8 md:order-first">
-              <div className="mx-auto md:w-3/4">
+            <div className="order-last w-full rounded-lg bg-slate-100 p-4 sm:py-8 md:order-first dark:bg-slate-800">
+              <div className="mx-auto flex flex-col items-center justify-center md:w-3/4">
                 <AddEventDummy />
               </div>
             </div>
             <div className="pb-8 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 4</h4>
-              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-3xl">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl dark:text-slate-100">
                 Set segment and trigger
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">
@@ -114,7 +116,7 @@ export const Steps: React.FC = () => {
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
             <div className="pb-8 sm:pl-10 md:pb-0">
               <h4 className="text-brand-dark font-bold">Step 5</h4>
-              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 sm:text-3xl">
+              <h2 className="xs:text-3xl text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl dark:text-slate-200">
                 Make better decisions
               </h2>
               <p className="text-md mt-6 max-w-lg leading-7 text-slate-500 dark:text-slate-400">

@@ -1,17 +1,35 @@
 "use server";
 
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { prisma } from "@formbricks/database";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createProduct } from "@formbricks/lib/product/service";
-import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { deleteSurvey, getSurvey } from "@formbricks/lib/survey/service";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
 import { Team } from "@prisma/client";
 import { Prisma as prismaClient } from "@prisma/client/";
 import { getServerSession } from "next-auth";
+
+import { prisma } from "@formbricks/database";
+import { authOptions } from "@formbricks/lib/authOptions";
+import { SHORT_URL_BASE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { createMembership } from "@formbricks/lib/membership/service";
+import { createProduct } from "@formbricks/lib/product/service";
+import { createShortUrl } from "@formbricks/lib/shortUrl/service";
+import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
+import { surveyCache } from "@formbricks/lib/survey/cache";
+import { deleteSurvey, duplicateSurvey, getSurvey } from "@formbricks/lib/survey/service";
+import { createTeam, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+
+export const createShortUrlAction = async (url: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthenticationError("Not authenticated");
+
+  const regexPattern = new RegExp("^" + WEBAPP_URL);
+  const isValidUrl = regexPattern.test(url);
+
+  if (!isValidUrl) throw new Error("Only Formbricks survey URLs are allowed");
+
+  const shortUrl = await createShortUrl(url);
+  const fullShortUrl = SHORT_URL_BASE + "/" + shortUrl.id;
+  return fullShortUrl;
+};
 
 export async function createTeamAction(teamName: string): Promise<Team> {
   const session = await getServerSession(authOptions);
@@ -40,54 +58,8 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const existingSurvey = await getSurvey(surveyId);
-
-  if (!existingSurvey) {
-    throw new ResourceNotFoundError("Survey", surveyId);
-  }
-
-  // create new survey with the data of the existing survey
-  const newSurvey = await prisma.survey.create({
-    data: {
-      ...existingSurvey,
-      id: undefined, // id is auto-generated
-      environmentId: undefined, // environmentId is set below
-      name: `${existingSurvey.name} (copy)`,
-      status: "draft",
-      questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
-      thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
-      triggers: {
-        create: existingSurvey.triggers.map((trigger) => ({
-          eventClassId: trigger.id,
-        })),
-      },
-      attributeFilters: {
-        create: existingSurvey.attributeFilters.map((attributeFilter) => ({
-          attributeClassId: attributeFilter.attributeClassId,
-          condition: attributeFilter.condition,
-          value: attributeFilter.value,
-        })),
-      },
-      environment: {
-        connect: {
-          id: environmentId,
-        },
-      },
-      surveyClosedMessage: existingSurvey.surveyClosedMessage
-        ? JSON.parse(JSON.stringify(existingSurvey.surveyClosedMessage))
-        : prismaClient.JsonNull,
-      singleUse: existingSurvey.singleUse
-        ? JSON.parse(JSON.stringify(existingSurvey.singleUse))
-        : prismaClient.JsonNull,
-      productOverwrites: existingSurvey.productOverwrites
-        ? JSON.parse(JSON.stringify(existingSurvey.productOverwrites))
-        : prismaClient.JsonNull,
-      verifyEmail: existingSurvey.verifyEmail
-        ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
-        : prismaClient.JsonNull,
-    },
-  });
-  return newSurvey;
+  const duplicatedSurvey = await duplicateSurvey(environmentId, surveyId);
+  return duplicatedSurvey;
 }
 
 export async function copyToOtherEnvironmentAction(
@@ -121,7 +93,7 @@ export async function copyToOtherEnvironmentAction(
     include: {
       triggers: {
         include: {
-          eventClass: true,
+          actionClass: true,
         },
       },
       attributeFilters: {
@@ -139,9 +111,9 @@ export async function copyToOtherEnvironmentAction(
   let targetEnvironmentTriggers: string[] = [];
   // map the local triggers to the target environment
   for (const trigger of existingSurvey.triggers) {
-    const targetEnvironmentTrigger = await prisma.eventClass.findFirst({
+    const targetEnvironmentTrigger = await prisma.actionClass.findFirst({
       where: {
-        name: trigger.eventClass.name,
+        name: trigger.actionClass.name,
         environment: {
           id: targetEnvironmentId,
         },
@@ -149,18 +121,18 @@ export async function copyToOtherEnvironmentAction(
     });
     if (!targetEnvironmentTrigger) {
       // if the trigger does not exist in the target environment, create it
-      const newTrigger = await prisma.eventClass.create({
+      const newTrigger = await prisma.actionClass.create({
         data: {
-          name: trigger.eventClass.name,
+          name: trigger.actionClass.name,
           environment: {
             connect: {
               id: targetEnvironmentId,
             },
           },
-          description: trigger.eventClass.description,
-          type: trigger.eventClass.type,
-          noCodeConfig: trigger.eventClass.noCodeConfig
-            ? JSON.parse(JSON.stringify(trigger.eventClass.noCodeConfig))
+          description: trigger.actionClass.description,
+          type: trigger.actionClass.type,
+          noCodeConfig: trigger.actionClass.noCodeConfig
+            ? JSON.parse(JSON.stringify(trigger.actionClass.noCodeConfig))
             : undefined,
         },
       });
@@ -213,8 +185,8 @@ export async function copyToOtherEnvironmentAction(
       questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
       thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
       triggers: {
-        create: targetEnvironmentTriggers.map((eventClassId) => ({
-          eventClassId: eventClassId,
+        create: targetEnvironmentTriggers.map((actionClassId) => ({
+          actionClassId: actionClassId,
         })),
       },
       attributeFilters: {
@@ -233,7 +205,13 @@ export async function copyToOtherEnvironmentAction(
       singleUse: existingSurvey.singleUse ?? prismaClient.JsonNull,
       productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
+      styling: existingSurvey.styling ?? prismaClient.JsonNull,
     },
+  });
+
+  surveyCache.revalidate({
+    id: newSurvey.id,
+    environmentId: targetEnvironmentId,
   });
   return newSurvey;
 }
@@ -244,6 +222,11 @@ export const deleteSurveyAction = async (surveyId: string) => {
 
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  const survey = await getSurvey(surveyId);
+
+  const { hasDeleteAccess } = await verifyUserRoleAccess(survey!.environmentId, session.user.id);
+  if (!hasDeleteAccess) throw new AuthorizationError("Not authorized");
 
   await deleteSurvey(surveyId);
 };

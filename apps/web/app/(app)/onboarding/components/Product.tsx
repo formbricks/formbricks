@@ -1,11 +1,17 @@
 "use client";
 
 import { updateProductAction } from "@/app/(app)/onboarding/actions";
-import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { TProduct } from "@formbricks/types/v1/product";
-import { Button, ColorPicker, ErrorComponent, Input, Label } from "@formbricks/ui";
+import { isLight } from "@/app/lib/utils";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+
+import { TProduct } from "@formbricks/types/product";
+import { Button } from "@formbricks/ui/Button";
+import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
+import { Input } from "@formbricks/ui/Input";
+import { Label } from "@formbricks/ui/Label";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
 type Product = {
   done: () => void;
@@ -69,6 +75,10 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
   if (!product) {
     return <ErrorComponent />;
   }
+  const buttonStyle = {
+    backgroundColor: color,
+    color: isLight(color) ? "black" : "white",
+  };
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
@@ -92,6 +102,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
                 placeholder="e.g. Formbricks"
                 value={name}
                 onChange={handleNameChange}
+                aria-label="Your product name"
               />
             </div>
           </div>
@@ -124,7 +135,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
                             checked
                             readOnly
                             type="radio"
-                            className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                            className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                             style={{ borderColor: "brandColor", color: "brandColor" }}
                           />
                           <span className="ml-3 font-medium">{choice}</span>
@@ -135,7 +146,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
                 </fieldset>
               </div>
               <div className="mt-4 flex w-full justify-end">
-                <Button className="pointer-events-none" style={{ backgroundColor: color }}>
+                <Button className="pointer-events-none" style={buttonStyle}>
                   Next
                 </Button>
               </div>

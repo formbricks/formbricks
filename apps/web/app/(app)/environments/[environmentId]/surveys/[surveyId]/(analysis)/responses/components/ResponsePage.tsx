@@ -1,29 +1,37 @@
 "use client";
-import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/CustomFilter";
-import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SummaryHeader";
+
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
-import ContentWrapper from "@/components/shared/ContentWrapper";
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
-import { getFilterResponses } from "@/lib/surveys/surveys";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurvey } from "@formbricks/types/v1/surveys";
+import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
+import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
+import { getFilterResponses } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TTag } from "@formbricks/types/v1/tags";
-import { TProfile } from "@formbricks/types/v1/profile";
+
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProduct } from "@formbricks/types/product";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
+import { TUser } from "@formbricks/types/user";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+
+import ResultsShareButton from "../../../components/ResultsShareButton";
 
 interface ResponsePageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
-  surveyBaseUrl: string;
+  webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
   environmentTags: TTag[];
+  responsesPerPage: number;
+  membershipRole?: TMembershipRole;
 }
 
 const ResponsePage = ({
@@ -31,20 +39,23 @@ const ResponsePage = ({
   survey,
   surveyId,
   responses,
-  surveyBaseUrl,
+  webAppUrl,
   product,
-  profile,
+  user,
   environmentTags,
+  responsesPerPage,
+  membershipRole,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
-
   const searchParams = useSearchParams();
-
+  survey = useMemo(() => {
+    return checkForRecallInHeadline(survey);
+  }, [survey]);
   useEffect(() => {
     if (!searchParams?.get("referer")) {
       resetState();
     }
-  }, [searchParams]);
+  }, [searchParams, resetState]);
 
   // get the filtered array when the selected filter value changes
   const filterResponses: TResponse[] = useMemo(() => {
@@ -56,23 +67,29 @@ const ResponsePage = ({
         environment={environment}
         survey={survey}
         surveyId={surveyId}
-        surveyBaseUrl={surveyBaseUrl}
+        webAppUrl={webAppUrl}
         product={product}
-        profile={profile}
+        user={user}
+        membershipRole={membershipRole}
       />
-      <CustomFilter
-        environmentTags={environmentTags}
-        responses={filterResponses}
-        survey={survey}
-        totalResponses={responses}
-      />
+      <div className="flex gap-1.5">
+        <CustomFilter
+          environmentTags={environmentTags}
+          responses={filterResponses}
+          survey={survey}
+          totalResponses={responses}
+        />
+        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+      </div>
       <SurveyResultsTabs activeId="responses" environmentId={environment.id} surveyId={surveyId} />
       <ResponseTimeline
         environment={environment}
         surveyId={surveyId}
         responses={filterResponses}
         survey={survey}
+        user={user}
         environmentTags={environmentTags}
+        responsesPerPage={responsesPerPage}
       />
     </ContentWrapper>
   );

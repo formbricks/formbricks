@@ -1,8 +1,6 @@
-export const meta = {
-  title: "Formbricks Webhook API Documentation - List, Retrieve, Create, and Delete Webhooks",
-  description:
-    "Explore the comprehensive guide to the Formbricks Webhooks API. This is all you need to interact and play with the Formbricks Webhooks and integrate them into any third party app of your choice",
-};
+import {generateManagementApiMetadata} from "@/lib/utils"
+
+export const metadata = generateManagementApiMetadata("Webhook",["Fetch","Create","Delete"])
 
 #### Management API
 
@@ -20,7 +18,7 @@ This set of API can be used to
 - [Create Webhook](#create-webhook)
 - [Delete Webhook](#delete-webhook-by-id)
 
-And the detailed Webhook Paylod is elaborated [here](#webhook-payload).
+And the detailed Webhook Payload is elaborated [here](#webhook-payload).
 
 These APIs are designed to facilitate seamless integration of Formbricks with third-party systems. By making use of our webhook API, you can automate the process of sending data to these systems whenever significant events occur within your Formbricks environment.
 

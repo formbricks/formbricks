@@ -1,26 +1,31 @@
 "use client";
 
+import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { useState } from "react";
-import type { TTemplate } from "@formbricks/types/v1/templates";
 import { useEffect } from "react";
-import { replacePresetPlaceholders } from "@/lib/templates";
-import { minimalSurvey, templates } from "./templates";
-import PreviewSurvey from "../PreviewSurvey";
+
+import type { TEnvironment } from "@formbricks/types/environment";
+import type { TProduct } from "@formbricks/types/product";
+import type { TTemplate } from "@formbricks/types/templates";
+import { TUser } from "@formbricks/types/user";
+import { SearchBox } from "@formbricks/ui/SearchBox";
+
+import PreviewSurvey from "../components/PreviewSurvey";
 import TemplateList from "./TemplateList";
-import type { TProduct } from "@formbricks/types/v1/product";
-import type { TEnvironment } from "@formbricks/types/v1/environment";
-import { SearchBox } from "@formbricks/ui";
+import { minimalSurvey, templates } from "./templates";
 
 type TemplateContainerWithPreviewProps = {
   environmentId: string;
   product: TProduct;
   environment: TEnvironment;
+  user: TUser;
 };
 
 export default function TemplateContainerWithPreview({
   environmentId,
   product,
   environment,
+  user,
 }: TemplateContainerWithPreviewProps) {
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -56,6 +61,7 @@ export default function TemplateContainerWithPreview({
             environmentId={environmentId}
             environment={environment}
             product={product}
+            user={user}
             templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {
               setActiveQuestionId(template.preset.questions[0].id);
@@ -65,14 +71,14 @@ export default function TemplateContainerWithPreview({
         </div>
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
           {activeTemplate && (
-            <div className="my-6 flex h-full w-full flex-col items-center justify-center">
-              <p className="pb-2 text-center text-sm font-normal text-slate-400">Preview</p>
+            <div className="my-6 flex h-[90%] w-full flex-col items-center justify-center">
               <PreviewSurvey
                 survey={{ ...minimalSurvey, ...activeTemplate.preset }}
                 activeQuestionId={activeQuestionId}
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
+                onFileUpload={async (file) => file.name}
               />
             </div>
           )}

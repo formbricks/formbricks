@@ -1,13 +1,14 @@
-export const revalidate = REVALIDATION_INTERVAL;
+import HowToAddPeopleButton from "@/app/(app)/environments/[environmentId]/components/HowToAddPeopleButton";
+import Link from "next/link";
 
-import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-import { truncateMiddle } from "@/lib/utils";
-import { PEOPLE_PER_PAGE, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getPeople, getPeopleCount } from "@formbricks/lib/person/service";
-import { TPerson } from "@formbricks/types/v1/people";
-import { Pagination, PersonAvatar } from "@formbricks/ui";
-import Link from "next/link";
+import { truncateMiddle } from "@formbricks/lib/strings";
+import { TPerson } from "@formbricks/types/people";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
+import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { Pagination } from "@formbricks/ui/Pagination";
 
 const getAttributeValue = (person: TPerson, attributeName: string) =>
   person.attributes[attributeName]?.toString();
@@ -27,7 +28,7 @@ export default async function PeoplePage({
   if (!environment) {
     throw new Error("Environment not found");
   }
-  const maxPageNumber = Math.ceil(totalPeople / PEOPLE_PER_PAGE);
+  const maxPageNumber = Math.ceil(totalPeople / ITEMS_PER_PAGE);
   let hidePagination = false;
 
   let people: TPerson[] = [];
@@ -41,6 +42,11 @@ export default async function PeoplePage({
 
   return (
     <>
+      <div className="mb-6 text-right">
+        <div className="mb-6 flex items-center justify-end text-right">
+          <HowToAddPeopleButton />
+        </div>
+      </div>
       {people.length === 0 ? (
         <EmptySpaceFiller
           type="table"
@@ -78,7 +84,7 @@ export default async function PeoplePage({
                 </div>
                 <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
                   <div className="ph-no-capture text-slate-900">
-                    {truncateMiddle(getAttributeValue(person, "userId"), 24)}
+                    {truncateMiddle(getAttributeValue(person, "userId"), 24) || person.userId}
                   </div>
                 </div>
                 <div className="col-span-2 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
@@ -94,7 +100,7 @@ export default async function PeoplePage({
           baseUrl={`/environments/${params.environmentId}/people`}
           currentPage={pageNumber}
           totalItems={totalPeople}
-          itemsPerPage={PEOPLE_PER_PAGE}
+          itemsPerPage={ITEMS_PER_PAGE}
         />
       )}
     </>

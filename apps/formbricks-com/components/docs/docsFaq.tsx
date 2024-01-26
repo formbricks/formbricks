@@ -1,4 +1,5 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@formbricks/ui";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@formbricks/ui/Accordion";
+
 import FaqJsonLdComponent from "./faQJsonLD";
 
 const FAQ_DATA = [
@@ -42,6 +43,15 @@ const FAQ_DATA = [
           here
         </a>
         .
+      </>
+    ),
+  },
+  {
+    question: "How can I change Button texts in my survey?",
+    answer: () => (
+      <>
+        For the question that you want to change the button text, click on the <b>Show Advanced Settings</b>{" "}
+        toggle and change the button label in the <b>Button Text</b> field.
       </>
     ),
   },

@@ -42,3 +42,6 @@ next-env.d.ts
 token.json
 
 certificates
+
+# Local Uploads
+uploads/

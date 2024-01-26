@@ -1,72 +1,123 @@
 import "server-only";
 
-import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError, DatabaseError, UnknownError } from "@formbricks/types/v1/errors";
-import { TMember, TMembership, TMembershipUpdateInput } from "@formbricks/types/v1/memberships";
 import { Prisma } from "@prisma/client";
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
-export const getMembersByTeamId = cache(async (teamId: string): Promise<TMember[]> => {
-  const membersData = await prisma.membership.findMany({
-    where: { teamId },
-    select: {
-      user: {
+import { prisma } from "@formbricks/database";
+import { ZOptionalNumber, ZString } from "@formbricks/types/common";
+import { DatabaseError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
+import {
+  TMember,
+  TMembership,
+  TMembershipUpdateInput,
+  ZMembership,
+  ZMembershipUpdateInput,
+} from "@formbricks/types/memberships";
+
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { teamCache } from "../team/cache";
+import { validateInputs } from "../utils/validate";
+import { membershipCache } from "./cache";
+
+export const getMembersByTeamId = async (teamId: string, page?: number): Promise<TMember[]> =>
+  unstable_cache(
+    async () => {
+      validateInputs([teamId, ZString], [page, ZOptionalNumber]);
+
+      const membersData = await prisma.membership.findMany({
+        where: { teamId },
         select: {
-          name: true,
-          email: true,
+          user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          userId: true,
+          accepted: true,
+          role: true,
         },
-      },
-      userId: true,
-      accepted: true,
-      role: true,
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+      });
+
+      const members = membersData.map((member) => {
+        return {
+          name: member.user?.name || "",
+          email: member.user?.email || "",
+          userId: member.userId,
+          accepted: member.accepted,
+          role: member.role,
+        };
+      });
+
+      return members;
     },
-  });
+    [`getMembersByTeamId-${teamId}-${page}`],
+    {
+      tags: [membershipCache.tag.byTeamId(teamId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
 
-  const members = membersData.map((member) => {
-    return {
-      name: member.user?.name || "",
-      email: member.user?.email || "",
-      userId: member.userId,
-      accepted: member.accepted,
-      role: member.role,
-    };
-  });
+export const getMembershipByUserIdTeamId = async (
+  userId: string,
+  teamId: string
+): Promise<TMembership | null> =>
+  unstable_cache(
+    async () => {
+      validateInputs([userId, ZString], [teamId, ZString]);
 
-  return members;
-});
+      const membership = await prisma.membership.findUnique({
+        where: {
+          userId_teamId: {
+            userId,
+            teamId,
+          },
+        },
+      });
 
-export const getMembershipByUserIdTeamId = cache(
-  async (userId: string, teamId: string): Promise<TMembership | null> => {
-    const membership = await prisma.membership.findUnique({
-      where: {
-        userId_teamId: {
+      if (!membership) return null;
+
+      return membership;
+    },
+    [`getMembershipByUserIdTeamId-${userId}-${teamId}`],
+    {
+      tags: [membershipCache.tag.byUserId(userId), membershipCache.tag.byTeamId(teamId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+export const getMembershipsByUserId = async (userId: string, page?: number): Promise<TMembership[]> =>
+  unstable_cache(
+    async () => {
+      validateInputs([userId, ZString], [page, ZOptionalNumber]);
+
+      const memberships = await prisma.membership.findMany({
+        where: {
           userId,
-          teamId,
         },
-      },
-    });
+        take: page ? ITEMS_PER_PAGE : undefined,
+        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+      });
 
-    if (!membership) return null;
-
-    return membership;
-  }
-);
-
-export const getMembershipsByUserId = cache(async (userId: string): Promise<TMembership[]> => {
-  const memberships = await prisma.membership.findMany({
-    where: {
-      userId,
+      return memberships;
     },
-  });
-
-  return memberships;
-});
+    [`getMembershipsByUserId-${userId}-${page}`],
+    {
+      tags: [membershipCache.tag.byUserId(userId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
 
 export const createMembership = async (
   teamId: string,
   userId: string,
   data: Partial<TMembership>
 ): Promise<TMembership> => {
+  validateInputs([teamId, ZString], [userId, ZString], [data, ZMembership.partial()]);
+  console.log("createMembership", teamId, userId, data);
+
   try {
     const membership = await prisma.membership.create({
       data: {
@@ -76,17 +127,28 @@ export const createMembership = async (
         role: data.role as TMembership["role"],
       },
     });
+    teamCache.revalidate({
+      userId,
+    });
+
+    membershipCache.revalidate({
+      userId,
+      teamId,
+    });
 
     return membership;
   } catch (error) {
     throw error;
   }
 };
+
 export const updateMembership = async (
   userId: string,
   teamId: string,
   data: TMembershipUpdateInput
 ): Promise<TMembership> => {
+  validateInputs([userId, ZString], [teamId, ZString], [data, ZMembershipUpdateInput]);
+
   try {
     const membership = await prisma.membership.update({
       where: {
@@ -96,6 +158,15 @@ export const updateMembership = async (
         },
       },
       data,
+    });
+
+    teamCache.revalidate({
+      userId,
+    });
+
+    membershipCache.revalidate({
+      userId,
+      teamId,
     });
 
     return membership;
@@ -109,6 +180,8 @@ export const updateMembership = async (
 };
 
 export const deleteMembership = async (userId: string, teamId: string): Promise<TMembership> => {
+  validateInputs([userId, ZString], [teamId, ZString]);
+
   const deletedMembership = await prisma.membership.delete({
     where: {
       userId_teamId: {
@@ -118,12 +191,27 @@ export const deleteMembership = async (userId: string, teamId: string): Promise<
     },
   });
 
+  teamCache.revalidate({
+    userId,
+  });
+
+  membershipCache.revalidate({
+    userId,
+    teamId,
+  });
+
   return deletedMembership;
 };
 
-export const transferOwnership = async (currentOwnerId: string, newOwnerId: string, teamId: string) => {
+export const transferOwnership = async (
+  currentOwnerId: string,
+  newOwnerId: string,
+  teamId: string
+): Promise<TMembership[]> => {
+  validateInputs([currentOwnerId, ZString], [newOwnerId, ZString], [teamId, ZString]);
+
   try {
-    await prisma.$transaction([
+    const memberships = await prisma.$transaction([
       prisma.membership.update({
         where: {
           userId_teamId: {
@@ -147,9 +235,22 @@ export const transferOwnership = async (currentOwnerId: string, newOwnerId: stri
         },
       }),
     ]);
+
+    memberships.forEach((membership) => {
+      teamCache.revalidate({
+        userId: membership.userId,
+      });
+
+      membershipCache.revalidate({
+        userId: membership.userId,
+        teamId: membership.teamId,
+      });
+    });
+
+    return memberships;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
+      throw new DatabaseError(error.message);
     }
 
     const message = error instanceof Error ? error.message : "";

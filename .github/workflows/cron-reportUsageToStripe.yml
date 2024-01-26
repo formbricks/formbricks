@@ -1,0 +1,23 @@
+name: Cron - reportUsageToStripe
+
+on:
+  # "Scheduled workflows run on the latest commit on the default or base branch."
+  # — https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#schedule
+  schedule:
+    # This will run the job at 20:00 UTC every day of every month.
+    - cron: "0 20 * * *"
+jobs:
+  cron-reportUsageToStripe:
+    env:
+      APP_URL: ${{ secrets.APP_URL }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: cURL request
+        if: ${{ env.APP_URL && env.CRON_SECRET }}
+        run: |
+          curl ${{ env.APP_URL }}/api/cron/report-usage \
+            -X POST \
+            -H 'x-api-key: ${{ env.CRON_SECRET }}' \
+            -H 'Cache-Control: no-cache' \
+            --fail

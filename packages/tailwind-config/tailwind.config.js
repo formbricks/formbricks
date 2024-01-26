@@ -3,10 +3,8 @@ module.exports = {
     // app content
     "./app/**/*.{js,ts,jsx,tsx}", // Note the addition of the `app` directory.
     "./pages/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
-    "./lib/**/*.{js,ts,jsx,tsx}",
     // include packages if not transpiling
-    "../../packages/ui/components/**/*.{js,ts,jsx,tsx}",
+    "../../packages/ui/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
@@ -15,6 +13,10 @@ module.exports = {
         shake: "shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      blur: {
+        xxs: "0.33px",
+        xs: "2px",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
@@ -25,8 +27,26 @@ module.exports = {
           light: "#00E6CA",
           dark: "#00C4B8",
         },
-        black: {
-          DEFAULT: "#0F172A",
+        focus: "var(--formbricks-focus, #1982fc)",
+        error: "var(--formbricks-error, #d13a3a)",
+        brandnew: "var(--formbricks-brand, #038178)",
+        borderColor: {
+          primary: "var(--formbricks-border-primary, #e0e0e0)",
+          secondary: "var(--formbricks-border-secondary, #0f172a)",
+          disabled: "var(--formbricks-border-disabled, #ececec)",
+          error: "var(--formbricks-error, #d13a3a)",
+        },
+        labelColor: {
+          primary: "var(--formbricks-label-primary, #0f172a)",
+          secondary: "var(--formbricks-label-secondary, #384258)",
+          disabled: "var(--formbricks-label-disabled, #bdbdbd)",
+          error: "var(--formbricks-error, #d13a3a)",
+        },
+        fill: {
+          primary: "var(--formbricks-fill-primary, #fefefe)",
+          secondary: "var(--formbricks-fill-secondary, #0f172a)",
+          disabled: "var(--formbricks-fill-disabled, #e0e0e0)",
+          error: "var(--formbricks-error, #d13a3a)",
         },
       },
       keyframes: {
@@ -74,5 +94,7 @@ module.exports = {
       },
     },
   },
+  safelist: [{ pattern: /max-w-./, variants: "sm" }],
+  darkMode: "class", // Set dark mode to use the 'class' strategy
   plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
 };

@@ -1,21 +1,23 @@
 "use server";
 
-import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/product/service";
-import { TProduct, TProductUpdateInput } from "@formbricks/types/v1/product";
 import { getServerSession } from "next-auth";
-import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/v1/errors";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+
+import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
+import { deleteProduct, getProducts, updateProduct } from "@formbricks/lib/product/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { TEnvironment } from "@formbricks/types/environment";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 
 export const updateProductAction = async (
   environmentId: string,
   productId: string,
   data: Partial<TProductUpdateInput>
 ): Promise<TProduct> => {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     throw new AuthenticationError("Not authenticated");
@@ -43,7 +45,7 @@ export const updateProductAction = async (
 };
 
 export const deleteProductAction = async (environmentId: string, userId: string, productId: string) => {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     throw new AuthenticationError("Not authenticated");

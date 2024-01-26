@@ -1,98 +1,172 @@
-import { Question } from "./questions";
-import { ThankYouCard } from "./surveys";
+import z from "zod";
 
-export interface ResponseCreateRequest {
-  surveyId: string;
-  personId?: string;
-  response: {
-    finished?: boolean;
-    data: {
-      [name: string]: string | number | string[] | number[] | undefined;
-    };
-  };
-}
+import { ZActionClass } from "./actionClasses";
+import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
+import { ZProduct } from "./product";
+import { ZSurvey } from "./surveys";
 
-export interface ResponseUpdateRequest {
-  response: {
-    finished?: boolean;
-    data: {
-      [name: string]: string | number | string[] | number[] | undefined;
-    };
-  };
-}
+const ZSurveyWithTriggers = ZSurvey.extend({
+  triggers: z.array(ZActionClass).or(z.array(z.string())),
+});
 
-export interface DisplayCreateRequest {
-  surveyId: string;
-  personId?: string;
-}
+export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 
-export interface Response {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  organisationId: string;
-  formId: string;
-  customerId: string;
-  data: {
-    [name: string]: string | number | string[] | number[] | undefined | null;
-  };
-}
+export const ZJSStateDisplay = z.object({
+  createdAt: z.date(),
+  surveyId: z.string().cuid(),
+  responded: z.boolean(),
+});
 
-export interface InitConfig {
-  environmentId: string;
-  apiHost: string;
-  debug?: boolean;
-  errorHandler?: ErrorHandler;
-}
+export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
 
-//TODO: add type to error
-export type ErrorHandler = (error: any) => void;
+export const ZJsStateSync = z.object({
+  person: ZPersonClient.nullish(),
+  surveys: z.array(ZSurvey),
+  noCodeActionClasses: z.array(ZActionClass),
+  product: ZProduct,
+});
 
-export interface Settings {
-  surveys?: Survey[];
-  noCodeEvents?: any[];
-  brandColor?: string;
-  formbricksSignature?: boolean;
-  placement?: PlacementType;
-  clickOutsideClose?: boolean;
-  darkOverlay?: boolean;
-}
+export type TJsStateSync = z.infer<typeof ZJsStateSync>;
 
-export interface JsConfig {
-  environmentId: string;
-  apiHost: string;
-  person?: Person;
-  session?: Session;
-  settings?: Settings;
-}
+export const ZJsState = z.object({
+  attributes: ZPersonAttributes,
+  surveys: z.array(ZSurvey),
+  noCodeActionClasses: z.array(ZActionClass),
+  product: ZProduct,
+  displays: z.array(ZJSStateDisplay).optional(),
+});
 
-export interface Session {
-  id: string;
-  expiresAt?: number;
-}
+export type TJsState = z.infer<typeof ZJsState>;
 
-export interface Person {
-  id: string;
-  attributes?: any;
-  environmentId: string;
-}
+export const ZJsLegacyState = z.object({
+  person: ZPerson.nullable().or(z.object({})),
+  session: z.object({}),
+  surveys: z.array(ZSurveyWithTriggers),
+  noCodeActionClasses: z.array(ZActionClass),
+  product: ZProduct,
+  displays: z.array(ZJSStateDisplay).optional(),
+});
 
-export interface Survey {
-  id: string;
-  questions: Question[];
-  triggers: Trigger[];
-  thankYouCard: ThankYouCard;
-  autoClose?: number | null;
-  delay: number;
-}
+export type TJsLegacyState = z.infer<typeof ZJsLegacyState>;
 
-export interface Trigger {
-  id: string;
-  eventClass: {
-    id: string;
-    name: string;
-  };
-}
+export const ZJsPublicSyncInput = z.object({
+  environmentId: z.string().cuid(),
+});
 
-export type MatchType = "exactMatch" | "contains" | "startsWith" | "endsWith" | "notMatch" | "notContains";
-export type PlacementType = "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
+export type TJsPublicSyncInput = z.infer<typeof ZJsPublicSyncInput>;
+
+export const ZJsSyncInput = z.object({
+  environmentId: z.string().cuid(),
+  userId: z.string().optional().optional(),
+  jsVersion: z.string().optional(),
+});
+
+export type TJsSyncInput = z.infer<typeof ZJsSyncInput>;
+
+export const ZJsSyncLegacyInput = z.object({
+  environmentId: z.string().cuid(),
+  personId: z.string().cuid().optional().or(z.literal("legacy")),
+  sessionId: z.string().cuid().optional(),
+  jsVersion: z.string().optional(),
+});
+
+export type TJsSyncLegacyInput = z.infer<typeof ZJsSyncLegacyInput>;
+
+export const ZJsConfig = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  userId: z.string().optional(),
+  state: ZJsState,
+  expiresAt: z.date(),
+});
+
+export type TJsConfig = z.infer<typeof ZJsConfig>;
+
+export const ZJsConfigUpdateInput = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  userId: z.string().optional(),
+  state: ZJsState,
+});
+
+export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
+
+export const ZJsConfigInput = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  debug: z.boolean().optional(),
+  errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
+  userId: z.string().optional(),
+  attributes: ZPersonAttributes.optional(),
+});
+
+export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
+
+export const ZJsPeopleUserIdInput = z.object({
+  environmentId: z.string().cuid(),
+  userId: z.string().min(1).max(255),
+});
+
+export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
+
+export const ZJsPeopleAttributeInput = z.object({
+  key: z.string(),
+  value: z.string(),
+});
+
+export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
+
+export const ZJsPeopleLegacyAttributeInput = z.object({
+  environmentId: z.string().cuid(),
+  key: z.string(),
+  value: z.string(),
+});
+
+export type TJsPeopleLegacyAttributeInput = z.infer<typeof ZJsPeopleLegacyAttributeInput>;
+
+export const ZJsActionInput = z.object({
+  environmentId: z.string().cuid(),
+  userId: z.string().optional(),
+  name: z.string(),
+  properties: z.record(z.string()),
+});
+
+export type TJsActionInput = z.infer<typeof ZJsActionInput>;
+
+export const ZJsSyncParams = z.object({
+  environmentId: z.string().cuid(),
+  apiHost: z.string(),
+  userId: z.string().optional(),
+});
+
+export type TJsSyncParams = z.infer<typeof ZJsSyncParams>;
+
+const ZJsSettingsSurvey = ZSurvey.pick({
+  id: true,
+  welcomeCard: true,
+  questions: true,
+  triggers: true,
+  thankYouCard: true,
+  autoClose: true,
+  delay: true,
+});
+
+export const ZJsSettings = z.object({
+  surveys: z.optional(z.array(ZJsSettingsSurvey)),
+  noCodeEvents: z.optional(z.array(z.any())), // You might want to further refine this.
+  brandColor: z.optional(z.string()),
+  formbricksSignature: z.optional(z.boolean()),
+  placement: z.optional(
+    z.union([
+      z.literal("bottomLeft"),
+      z.literal("bottomRight"),
+      z.literal("topLeft"),
+      z.literal("topRight"),
+      z.literal("center"),
+    ])
+  ),
+  clickOutsideClose: z.optional(z.boolean()),
+  darkOverlay: z.optional(z.boolean()),
+});
+
+export type TSettings = z.infer<typeof ZJsSettings>;

@@ -1,32 +1,40 @@
 "use client";
 
-import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/CustomFilter";
-import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/SummaryHeader";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
+import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
 import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
-import ContentWrapper from "@/components/shared/ContentWrapper";
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/ResponseFilterContext";
-import { getFilterResponses } from "@/lib/surveys/surveys";
-import { TResponse } from "@formbricks/types/v1/responses";
-import { TSurveyWithAnalytics } from "@formbricks/types/v1/surveys";
+import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
+import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
+import { getFilterResponses } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
-import { TEnvironment } from "@formbricks/types/v1/environment";
-import { TProduct } from "@formbricks/types/v1/product";
-import { TTag } from "@formbricks/types/v1/tags";
-import { TProfile } from "@formbricks/types/v1/profile";
+import { useEffect, useMemo, useState } from "react";
+
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
+import { TProduct } from "@formbricks/types/product";
+import { TResponse } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+import { TTag } from "@formbricks/types/tags";
+import { TUser } from "@formbricks/types/user";
+import ContentWrapper from "@formbricks/ui/ContentWrapper";
+
+import ResultsShareButton from "../../../components/ResultsShareButton";
 
 interface SummaryPageProps {
   environment: TEnvironment;
-  survey: TSurveyWithAnalytics;
+  survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
-  surveyBaseUrl: string;
-  singleUseIds?: string[];
+  webAppUrl: string;
   product: TProduct;
-  profile: TProfile;
+  user: TUser;
   environmentTags: TTag[];
+  displayCount: number;
+  responsesPerPage: number;
+  membershipRole?: TMembershipRole;
 }
 
 const SummaryPage = ({
@@ -34,20 +42,25 @@ const SummaryPage = ({
   survey,
   surveyId,
   responses,
-  surveyBaseUrl,
-  singleUseIds,
+  webAppUrl,
   product,
-  profile,
+  user,
   environmentTags,
+  displayCount,
+  responsesPerPage,
+  membershipRole,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
+  const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
-
+  survey = useMemo(() => {
+    return checkForRecallInHeadline(survey);
+  }, [survey]);
   useEffect(() => {
     if (!searchParams?.get("referer")) {
       resetState();
     }
-  }, [searchParams]);
+  }, [searchParams, resetState]);
 
   // get the filtered array when the selected filter value changes
   const filterResponses: TResponse[] = useMemo(() => {
@@ -60,20 +73,35 @@ const SummaryPage = ({
         environment={environment}
         survey={survey}
         surveyId={surveyId}
-        surveyBaseUrl={surveyBaseUrl}
-        singleUseIds={singleUseIds}
+        webAppUrl={webAppUrl}
         product={product}
-        profile={profile}
+        user={user}
+        membershipRole={membershipRole}
       />
-      <CustomFilter
-        environmentTags={environmentTags}
+      <div className="flex gap-1.5">
+        <CustomFilter
+          environmentTags={environmentTags}
+          responses={filterResponses}
+          survey={survey}
+          totalResponses={responses}
+        />
+        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+      </div>
+      <SurveyResultsTabs activeId="summary" environmentId={environment.id} surveyId={surveyId} />
+      <SummaryMetadata
         responses={filterResponses}
         survey={survey}
-        totalResponses={responses}
+        displayCount={displayCount}
+        showDropOffs={showDropOffs}
+        setShowDropOffs={setShowDropOffs}
       />
-      <SurveyResultsTabs activeId="summary" environmentId={environment.id} surveyId={surveyId} />
-      <SummaryMetadata responses={filterResponses} survey={survey} />
-      <SummaryList responses={filterResponses} survey={survey} environment={environment} />
+      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
+      <SummaryList
+        responses={filterResponses}
+        survey={survey}
+        environment={environment}
+        responsesPerPage={responsesPerPage}
+      />
     </ContentWrapper>
   );
 };

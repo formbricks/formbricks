@@ -1,8 +1,10 @@
-import { SigninForm } from "@/components/auth/SigninForm";
-import Testimonial from "@/components/auth/Testimonial";
-import FormWrapper from "@/components/auth/FormWrapper";
+import FormWrapper from "@/app/(auth)/auth/components/FormWrapper";
+import Testimonial from "@/app/(auth)/auth/components/Testimonial";
+import { SigninForm } from "@/app/(auth)/auth/login/components/SigninForm";
 import { Metadata } from "next";
+
 import {
+  AZURE_OAUTH_ENABLED,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
@@ -27,6 +29,7 @@ export default function SignInPage() {
             passwordResetEnabled={!PASSWORD_RESET_DISABLED}
             googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
             githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
+            azureOAuthEnabled={AZURE_OAUTH_ENABLED}
           />
         </FormWrapper>
       </div>

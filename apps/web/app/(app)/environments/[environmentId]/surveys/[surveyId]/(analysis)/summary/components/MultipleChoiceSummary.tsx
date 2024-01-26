@@ -1,21 +1,26 @@
-import { QuestionType } from "@formbricks/types/questions";
-import type { QuestionSummary } from "@formbricks/types/responses";
-import { PersonAvatar, ProgressBar } from "@formbricks/ui";
+import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
-import { useMemo } from "react";
 import Link from "next/link";
-import { truncate } from "@/lib/utils";
+import { useMemo, useState } from "react";
+
+import { getPersonIdentifier } from "@formbricks/lib/person/util";
+import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import {
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
-} from "@formbricks/types/v1/surveys";
-import { questionTypes } from "@/lib/questions";
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+  TSurveyQuestionType,
+} from "@formbricks/types/surveys";
+import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 interface MultipleChoiceSummaryProps {
-  questionSummary: QuestionSummary<TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion>;
+  questionSummary: TSurveyQuestionSummary<
+    TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
+  >;
   environmentId: string;
   surveyType: string;
+  responsesPerPage: number;
 }
 
 interface ChoiceResult {
@@ -37,9 +42,10 @@ export default function MultipleChoiceSummary({
   questionSummary,
   environmentId,
   surveyType,
+  responsesPerPage,
 }: MultipleChoiceSummaryProps) {
-  const isSingleChoice = questionSummary.question.type === QuestionType.MultipleChoiceSingle;
-
+  const isSingleChoice = questionSummary.question.type === TSurveyQuestionType.MultipleChoiceSingle;
+  const [otherDisplayCount, setOtherDisplayCount] = useState(responsesPerPage);
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   const results: ChoiceResult[] = useMemo(() => {
@@ -57,20 +63,15 @@ export default function MultipleChoiceSummary({
       };
     }
 
-    function findEmail(person) {
-      return person.attributes?.email || null;
-    }
-
     const addOtherChoice = (response, value) => {
       for (const key in resultsDict) {
         if (resultsDict[key].id === "other" && value !== "") {
-          const email = response.person && findEmail(response.person);
-          const displayIdentifier = email || truncate(response.personId, 16);
+          const displayIdentifier = getPersonIdentifier(response.person);
           resultsDict[key].otherValues?.push({
             value,
             person: {
               id: response.personId,
-              email: displayIdentifier,
+              email: typeof displayIdentifier === "string" ? displayIdentifier : undefined,
             },
           });
           resultsDict[key].count += 1;
@@ -129,7 +130,7 @@ export default function MultipleChoiceSummary({
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} required={questionSummary.question.required} />
+        <Headline headline={questionSummary.question.headline} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
@@ -140,6 +141,9 @@ export default function MultipleChoiceSummary({
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {totalResponses} responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
           {/*           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <ArrowTrendingUpIcon className="mr-2 h-4 w-4" />
             2.8 average
@@ -173,6 +177,7 @@ export default function MultipleChoiceSummary({
                 </div>
                 {result.otherValues
                   .filter((otherValue) => otherValue !== "")
+                  .slice(0, otherDisplayCount)
                   .map((otherValue, idx) => (
                     <div key={idx}>
                       {surveyType === "link" && (
@@ -196,12 +201,21 @@ export default function MultipleChoiceSummary({
                           </div>
                           <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
                             {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                            <span>{otherValue.person.email}</span>
+                            <span>{getPersonIdentifier(otherValue.person)}</span>
                           </div>
                         </Link>
                       )}
                     </div>
                   ))}
+                {otherDisplayCount < result.otherValues.length && (
+                  <div className="flex w-full items-center justify-center">
+                    <button
+                      onClick={() => setOtherDisplayCount(otherDisplayCount + responsesPerPage)}
+                      className="my-2 flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700">
+                      Show more
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
