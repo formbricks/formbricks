@@ -29,8 +29,7 @@ import { PictureSelectionResponse } from "../PictureSelectionResponse";
 import { RatingResponse } from "../RatingResponse";
 import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
-import { deleteResponseAction } from "./actions";
-import { getResponseAction } from "./actions";
+import { deleteResponseAction, getResponseAction } from "./actions";
 import QuestionSkip from "./components/QuestionSkip";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
@@ -297,7 +296,7 @@ export default function SingleResponseCard({
                 </div>
               )}
               {response.language && (
-                <div className="flex space-x-2 rounded-lg bg-slate-900 p-2 text-xs text-white">
+                <div className="flex space-x-2 rounded-full bg-slate-900 px-2 py-1 text-xs text-white">
                   <div>{response.language}</div>
                   <LanguageIcon className="h-4 w-4" />
                 </div>

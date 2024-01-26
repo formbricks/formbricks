@@ -116,7 +116,7 @@ export default function EditLanguage({ product }: { product: TProduct }) {
         </div>
       </div>
       {isEditing && (
-        <p className="pt-1 text-sm text-slate-500">
+        <p className="pt-1 text-sm text-amber-600">
           Unsaved changes <ExclamationTriangleIcon className="inline h-3 w-3" />{" "}
         </p>
       )}
