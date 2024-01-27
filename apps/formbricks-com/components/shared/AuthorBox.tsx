@@ -1,5 +1,6 @@
 import AuthorJohannes from "@/images/blog/johannes-co-founder-formbricks-small.jpg";
 import AuthorOla from "@/images/blog/ola-content-writer.jpg";
+import AuthorShubham from "@/images/blog/shubham-engineer.png";
 import Image from "next/image";
 
 interface AuthorBoxProps {
@@ -10,12 +11,18 @@ interface AuthorBoxProps {
   author: string;
 }
 
+const authorImages = {
+  Johannes: AuthorJohannes,
+  Ola: AuthorOla,
+  Shubham: AuthorShubham,
+};
+
 export default function AuthorBox({ name, title, date, duration, author }: AuthorBoxProps) {
   return (
     <div className="mb-8 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 px-6 py-3 dark:border-slate-700 dark:bg-slate-800">
       <Image
         className="m-0 rounded-full"
-        src={author === "Johannes" ? AuthorJohannes : AuthorOla}
+        src={authorImages[author]}
         alt={name}
         width={45}
         height={45}

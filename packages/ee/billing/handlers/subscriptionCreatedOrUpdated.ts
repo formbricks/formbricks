@@ -18,6 +18,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
   const teamId = stripeSubscriptionObject.metadata.teamId;
+
+  if (stripeSubscriptionObject.status !== "active") {
+    return;
+  }
+
   if (!teamId) {
     console.error("No teamId found in subscription");
     return { status: 400, message: "skipping, no teamId found" };

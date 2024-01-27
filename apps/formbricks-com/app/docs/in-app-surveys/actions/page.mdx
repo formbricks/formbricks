@@ -1,0 +1,73 @@
+export const metadata = {
+  title: "Using Actions in Formbricks | Fine-tuning User Moments",
+  description:
+    "Dive deep into how actions in Formbricks help products and teams to engage users at precise moments in their journey. Discover the power of actions, from coding to no-code setups, to refine user targeting and generate richer, more detailed user insights.",
+};
+
+#### In-App Surveys
+
+# Actions
+
+You want to understand what your users think and feel during specific moments in the user journey. To be able to ask at exactly the right point in time, you need actions.
+
+## How do Actions work?
+
+Actions are a little notification sent from your application to Formbricks. When a predefined action happens in your app, the Formbricks widget notices. This action can then trigger a survey to be shown to the user and is stored in the database.
+You decide which actions are sent either in your [Code](#code-actions) or by setting up a [No-Code](#no-code-actions) action within Formbricks.
+
+### Why are actions useful?
+
+Actions help you to display your surveys at the right time. Later on, you will be able to segment your users based on the actions they have triggered in the past. This way, you can create much more granular user segments, e.g. only target users that already have used a specific feature.
+
+## No-Code Actions
+
+No-Code actions can be set up within Formbricks with just a few clicks. There are three types of No-Code actions:
+
+1. **Page URL Action**
+
+The page URL action is triggered, when a user visits a specific page in your application. There are several match conditions:
+
+- `exactMatch`: The URL should exactly match the provided string.
+- `contains`: The URL should contain the specified string as a substring.
+- `startsWith`: The URL should start with the specified string.
+- `endsWith`: The URL should end with the specified string.
+- `notMatch`: The URL should not match the specified condition.
+- `notContains`: The URL should not contain the specified string as a substring.
+
+2. **innerText Action**
+
+The innerText action checks if the `innerText` of a clicked HTML element matches a specific text, e.g. the label of a button. Display a survey on any button click!
+
+3. **CSS Selector Action**
+
+The CSS Selector action checks if the provided CSS selector matches the selector of a clicked HTML element. The CSS selector can be a class, id or any other CSS selector within your website. Display a survey on any element click!
+
+## Code Actions
+
+Actions can also be set in the codebase to trigger surveys. Please add the code action first in the Formbricks web interface to be able to configure your surveys to use this action.
+
+After that you can fire an action using `formbricks.track()`
+
+<Col>
+<CodeGroup title="Track an action">
+
+```javascript
+formbricks.track("Action Name");
+```
+
+</CodeGroup>
+</Col>
+Here is an example of how to fire an action when a user clicks a button:
+<Col>
+<CodeGroup title="Track Button Click">
+
+```javascript
+const handleClick = () => {
+  formbricks.track("Button Clicked");
+};
+
+return <button onClick={handleClick}>Click Me</button>;
+```
+
+</CodeGroup>
+</Col>

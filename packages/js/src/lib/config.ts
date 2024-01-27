@@ -10,6 +10,7 @@ export class Config {
 
   private constructor() {
     const localConfig = this.loadFromLocalStorage();
+
     if (localConfig.ok) {
       this.config = localConfig.value;
     }
