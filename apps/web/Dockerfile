@@ -1,6 +1,8 @@
 # Installer stage: Building the application
 FROM node:20-alpine AS installer
 
+RUN echo "$(NEXT_PUBLIC_SENTRY_DSN) $$$$$$$$$$$$$$$$$$$$$$$$$$$"
+
 # Enable corepack and prepare pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
