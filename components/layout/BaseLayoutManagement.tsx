@@ -122,15 +122,15 @@ export default function BaseLayoutManagement({
               </Link>
               <p className="text-center py-4 lg:text-left text-white">
                 {
-                  "Si vous avez des questions, n'hésitez pas à contacter l'équipe chargée des admissions par courrier électronique"
+                  "Si tu as des questions, n'hésites pas à contacter l'équipe chargée des admissions par courrier électronique"
                 }
               </p>
               <address>
                 <a
                   className="text-center py-4 lg:text-left text-white"
-                  href="mailto:admissions@kadea.academy"
+                  href="mailto:admissions@kadea.co"
                 >
-                  admissions@kadea.academy
+                  admissions@kadea.co
                 </a>
               </address>
             </div>
