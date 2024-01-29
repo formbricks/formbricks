@@ -168,8 +168,8 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
           "Response ID": response.id,
           Timestamp: response.createdAt,
           Finished: response.finished,
+          "User ID": response.person?.userId,
           "Survey ID": response.surveyId,
-          "Formbricks User ID": response.person?.id ?? "",
         };
         const metaDataKeys = extracMetadataKeys(response.meta);
         let metaData = {};
@@ -216,7 +216,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
         "Timestamp",
         "Finished",
         "Survey ID",
-        "Formbricks User ID",
+        "User ID",
         ...metaDataFields,
         ...questionNames,
         ...(hiddenFieldIds ?? []),
