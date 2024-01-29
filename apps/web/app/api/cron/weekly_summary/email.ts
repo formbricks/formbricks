@@ -182,7 +182,7 @@ const createReminderNotificationBody = (notificationData: NotificationResponse) 
     <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
     <p style="margin-top:0px;">The Formbricks Team</p>
    
-    <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:99px; margin:1em; padding:0.01em 1.6em; text-align:center;"><p><i>To halt Weekly Updates, <a href="${WEBAPP_URL}/auth/login?callbackUrl=/environments/${notificationData.environmentId}/settings/notifications">please turn them off</a> in your settings 🙏</i></p></div>
+    <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; margin:1em; padding:0.01em 1.6em; text-align:center;"><p><i>To halt Weekly Updates, <a href="${WEBAPP_URL}/auth/login?callbackUrl=/environments/${notificationData.environmentId}/settings/notifications">please turn them off</a> in your settings 🙏</i></p></div>
   `;
 };
 
