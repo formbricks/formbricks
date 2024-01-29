@@ -33,7 +33,16 @@ jobs:
 
       - name: Start PostgreSQL
         run: |
-          pnpm db:start
+          cd packages/database && pnpm db:up &
+          for attempt in {1..20}; do
+            if nc -zv localhost 5432; then
+              echo "Ready"
+              break
+            fi
+            echo "Waiting..."
+            sleep 5
+          done
+          pnpm db:migrate:dev
 
       - name: Build App in dev mode without external dependencies
         run: |
