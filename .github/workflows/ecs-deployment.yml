@@ -124,13 +124,13 @@ jobs:
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
-        env: 
-          # IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}/formbricks-experimental
-          image: ${{ needs.build.steps.build-and-push.outputs.tags }}
+        # env: 
+        #   # IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}/formbricks-experimental
+        #   # image: ${{ needs.build.steps.build-and-push.outputs.tags }}
         with:
           task-definition: task-definition.json
           container-name: prod-webapp-container
-          # image: ${{ env.IMAGE }}
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
