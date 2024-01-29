@@ -1,3 +1,5 @@
+import EnableUserTargetingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/EnableUserTargetingCard";
+
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -41,7 +43,7 @@ export default function SettingsView({
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
-      {isUserTargetingAllowed && (
+      {isUserTargetingAllowed ? (
         <WhoToSendCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
@@ -50,6 +52,8 @@ export default function SettingsView({
           actionClasses={actionClasses}
           userSegments={userSegments}
         />
+      ) : (
+        <EnableUserTargetingCard />
       )}
 
       <WhenToSendCard

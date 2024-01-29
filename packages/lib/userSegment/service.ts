@@ -379,6 +379,50 @@ export const cloneUserSegment = async (userSegmentId: string, surveyId: string):
   }
 };
 
+export const getUserSegmentsByAttributeClassName = async (
+  environmentId: string,
+  attributeClassName: string
+) => {
+  const userSegments = await prisma.userSegment.findMany({
+    where: {
+      environmentId,
+    },
+  });
+
+  // search for attributeClassName in the filters
+  const clonedUserSegments = structuredClone(userSegments);
+  function searchForAttributeClassName(filters: TBaseFilters): boolean {
+    for (let filter of filters) {
+      const { resource } = filter;
+
+      if (isResourceFilter(resource)) {
+        const { root } = resource;
+        const { type } = root;
+
+        if (type === "attribute") {
+          const { attributeClassName: className } = root;
+          if (className === attributeClassName) {
+            return true;
+          }
+        }
+      } else {
+        const found = searchForAttributeClassName(resource);
+        if (found) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  const filteredUserSegments = clonedUserSegments.filter((userSegment) => {
+    return searchForAttributeClassName(userSegment.filters);
+  });
+
+  return filteredUserSegments;
+};
+
 const evaluateAttributeFilter = (
   attributes: TEvaluateSegmentUserAttributeData,
   filter: TUserSegmentAttributeFilter

@@ -326,11 +326,11 @@ export default function WhoToSendCard({
                         size="sm"
                         className="flex items-center gap-2"
                         onClick={() => handleCloneSegment()}>
-                        <p className="text-sm">Clone segment</p>
+                        <p className="text-sm">Clone & Edit Segment</p>
                       </Button>
                     )}
                     <Button
-                      variant="secondary"
+                      variant="minimal"
                       size="sm"
                       className="flex items-center gap-2"
                       onClick={() => {
@@ -341,7 +341,7 @@ export default function WhoToSendCard({
                           setSegmentEditorViewOnly(false);
                         }
                       }}>
-                      <p className="text-sm">Edit Segment</p>
+                      <p className="text-sm">Go to Segment View</p>
                     </Button>
                   </div>
                 </div>
