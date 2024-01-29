@@ -372,27 +372,6 @@ export default function QuestionCard({
                           />
                         </div>
                       )}
-                    {(question.type === TSurveyQuestionType.MultipleChoiceSingle ||
-                      question.type === TSurveyQuestionType.MultipleChoiceMulti) &&
-                      question.choices[question.choices.length - 1].id === "other" && (
-                        <div className="mt-4 flex space-x-2">
-                          <div className="w-full">
-                            <Label htmlFor="buttonLabel">Other Placholder Label</Label>
-                            <div className="mt-2">
-                              <Input
-                                id="otherInputLabel"
-                                name="otherInputLabel"
-                                value={question.otherOptionPlaceholder ?? "Please specify"}
-                                placeholder={question.otherOptionPlaceholder ?? "Please specify"}
-                                onChange={(e) => {
-                                  if (e.target.value.trim() == "") e.target.value = "";
-                                  updateQuestion(questionIdx, { otherOptionPlaceholder: e.target.value });
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
 
                     <AdvancedSettings
                       question={question}
