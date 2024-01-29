@@ -8,6 +8,8 @@ import {
   TActionMetric,
   TAllOperators,
   TBaseFilters,
+  TEvaluateSegmentUserAttributeData,
+  TEvaluateSegmentUserData,
   TUserSegment,
   TUserSegmentActionFilter,
   TUserSegmentAttributeFilter,
@@ -377,20 +379,8 @@ export const cloneUserSegment = async (userSegmentId: string, surveyId: string):
   }
 };
 
-type UserAttributeData = {
-  [attributeClassName: string]: string | number;
-};
-
-type UserData = {
-  personId: string;
-  environmentId: string;
-  attributes: UserAttributeData;
-  actionIds: string[];
-  deviceType: "phone" | "desktop";
-};
-
 const evaluateAttributeFilter = (
-  attributes: UserAttributeData,
+  attributes: TEvaluateSegmentUserAttributeData,
   filter: TUserSegmentAttributeFilter
 ): boolean => {
   const { value, qualifier, root } = filter;
@@ -406,34 +396,34 @@ const evaluateAttributeFilter = (
   return attResult;
 };
 
-const getResolvedActionValue = async (actiondClassId: string, personId: string, metric: TActionMetric) => {
+const getResolvedActionValue = async (actionClassId: string, personId: string, metric: TActionMetric) => {
   if (metric === "lastQuarterCount") {
-    const lastQuarterCount = await getActionCountInLastQuarter(actiondClassId, personId);
+    const lastQuarterCount = await getActionCountInLastQuarter(actionClassId, personId);
     return lastQuarterCount;
   }
 
   if (metric === "lastMonthCount") {
-    const lastMonthCount = await getActionCountInLastMonth(actiondClassId, personId);
+    const lastMonthCount = await getActionCountInLastMonth(actionClassId, personId);
     return lastMonthCount;
   }
 
   if (metric === "lastWeekCount") {
-    const lastWeekCount = await getActionCountInLastWeek(actiondClassId, personId);
+    const lastWeekCount = await getActionCountInLastWeek(actionClassId, personId);
     return lastWeekCount;
   }
 
   if (metric === "lastOccurranceDaysAgo") {
-    const lastOccurranceDaysAgo = await getLastOccurrenceDaysAgo(actiondClassId, personId);
+    const lastOccurranceDaysAgo = await getLastOccurrenceDaysAgo(actionClassId, personId);
     return lastOccurranceDaysAgo;
   }
 
   if (metric === "firstOccurranceDaysAgo") {
-    const firstOccurranceDaysAgo = await getFirstOccurrenceDaysAgo(actiondClassId, personId);
+    const firstOccurranceDaysAgo = await getFirstOccurrenceDaysAgo(actionClassId, personId);
     return firstOccurranceDaysAgo;
   }
 
   if (metric === "occuranceCount") {
-    const occuranceCount = await getTotalOccurrencesForAction(actiondClassId, personId);
+    const occuranceCount = await getTotalOccurrencesForAction(actionClassId, personId);
     return occuranceCount;
   }
 };
@@ -465,7 +455,7 @@ const evaluateActionFilter = async (
 };
 
 const evaluateSegmentFilter = async (
-  userData: UserData,
+  userData: TEvaluateSegmentUserData,
   filter: TUserSegmentSegmentFilter
 ): Promise<boolean> => {
   const { qualifier, root } = filter;
@@ -539,7 +529,10 @@ type ResultConnectorPair = {
   connector: TUserSegmentConnector;
 };
 
-export const evaluateSegment = async (userData: UserData, filters: TBaseFilters): Promise<boolean> => {
+export const evaluateSegment = async (
+  userData: TEvaluateSegmentUserData,
+  filters: TBaseFilters
+): Promise<boolean> => {
   let resultPairs: ResultConnectorPair[] = [];
 
   for (let filterItem of filters) {

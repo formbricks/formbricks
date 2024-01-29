@@ -293,3 +293,15 @@ export const ZUserSegmentUpdateInput = z
   .partial();
 
 export type TUserSegmentUpdateInput = z.infer<typeof ZUserSegmentUpdateInput>;
+
+export type TEvaluateSegmentUserAttributeData = {
+  [attributeClassName: string]: string | number;
+};
+
+export type TEvaluateSegmentUserData = {
+  personId: string;
+  environmentId: string;
+  attributes: TEvaluateSegmentUserAttributeData;
+  actionIds: string[];
+  deviceType: "phone" | "desktop";
+};
