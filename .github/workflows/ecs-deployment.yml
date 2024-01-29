@@ -36,6 +36,7 @@ jobs:
         run: |
           SECRET=$(openssl rand -hex 32)
           echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+          echo "${{secrets.NEXT_PUBLIC_SENTRY_DSN}}"
 
       - name: Checkout repository
         uses: actions/checkout@v3
