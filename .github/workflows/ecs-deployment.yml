@@ -29,12 +29,9 @@ jobs:
 
     steps:
       - name: Generate Random NEXTAUTH_SECRET
-        env:
-          GITHUB_CONTEXT: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
         run: |
           SECRET=$(openssl rand -hex 32)
           echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
-          echo "$GITHUB_CONTEXT"
 
       - name: Generate Random ENCRYPTION_KEY
         run: |
