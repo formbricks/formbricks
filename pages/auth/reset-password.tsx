@@ -46,8 +46,7 @@ export default function ResetPasswordPage() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
-                    Une erreur s&apos;est produite lors de la {emailVerified ? "création " : "réinitialisation "}
-                    de votre mot de passe{" "}
+                    Une erreur s&apos;est produite lors de la {emailVerified ? "création de ton compte" : "réinitialisation de ton mot de passe"}
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p className="space-y-1 whitespace-pre-wrap">{error}</p>
@@ -71,7 +70,7 @@ export default function ResetPasswordPage() {
               <div className="mt-8">
                 <div className="mt-6">
                   {emailVerified &&
-                    <p className="my-4 text-center">Bienvenu, crée ton compte pour passer les tests a KADEA Academy</p>
+                    <p className="my-4 text-center">Bienvenu(e), crée un compte pour passer les tests à Kadea Academy</p>
                   }
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
@@ -79,7 +78,7 @@ export default function ResetPasswordPage() {
                         htmlFor="email"
                         className="block text-sm font-medium text-ui-gray-dark"
                       >
-                        {emailVerified ? "Créer un mot de passe" : "Nouveau mot de passe"}
+                        {emailVerified ? "Entrer un mot de passe" : "Nouveau mot de passe"}
                       </label>
                       <div className="mt-1">
                         <input
@@ -96,7 +95,7 @@ export default function ResetPasswordPage() {
                         htmlFor="email"
                         className="block text-sm font-medium text-ui-gray-dark"
                       >
-                        Confirmer votre mot de passe
+                        Confirmer le mot de passe
                       </label>
                       <div className="mt-1">
                         <input
@@ -113,7 +112,7 @@ export default function ResetPasswordPage() {
                         type="submit"
                         className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
-                        {emailVerified ? "Créer votre compte" : "Réinitialiser le mot de passe"}
+                        {emailVerified ? "Créer un compte" : "Réinitialiser le mot de passe"}
                       </button>
                     </div>
                   </form>
