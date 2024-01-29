@@ -150,6 +150,11 @@ const sentryConfig = {
   disableLogger: true,
 };
 
+if (process.env.NEXT_PUBLIC_SENTRY_DSN){
+  console.log(process.env.NEXT_PUBLIC_SENTRY_DSN);
+  console.log("@@@@@@@@@@@@@@@@@@@@@");
+}
+
 const exportConfig = process.env.NEXT_PUBLIC_SENTRY_DSN
   ? withSentryConfig(nextConfig, sentryOptions, sentryConfig)
   : nextConfig;
