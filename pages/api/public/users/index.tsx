@@ -20,7 +20,7 @@ export default async function handle(
   // Optional fields in body: firstname, lastname
   if (req.method === "POST") {
     let { user, trainingSession, callbackUrl } = req.body;
-    const password = await hashPassword(`${publicRuntimeConfig.nextauthSecret}`);
+    const password = await hashPassword(`${user.password}` || `${publicRuntimeConfig.nextauthSecret}`);
     user = { ...user, ...{ email: user.email.toLowerCase(), password, profileIsValid: true } };
 
     const { emailVerificationDisabled } = publicRuntimeConfig;
