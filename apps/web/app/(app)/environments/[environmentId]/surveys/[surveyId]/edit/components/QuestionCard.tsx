@@ -377,7 +377,7 @@ export default function QuestionCard({
                       question.choices[question.choices.length - 1].id === "other" && (
                         <div className="mt-4 flex space-x-2">
                           <div className="w-full">
-                            <Label htmlFor="buttonLabel">Other Input Label</Label>
+                            <Label htmlFor="buttonLabel">Other Placholder Label</Label>
                             <div className="mt-2">
                               <Input
                                 id="otherInputLabel"
