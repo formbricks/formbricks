@@ -17,21 +17,7 @@ const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 let setIsError = (_: boolean) => {};
 
-const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
-  const randomNum = Math.floor(Math.random() * 100) + 1;
-  return randomNum <= displayPercentage;
-};
-
 export const renderWidget = async (survey: TSurvey) => {
-  // Check if the survey should be displayed based on displayPercentage
-  if (survey.displayPercentage) {
-    const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
-    if (!shouldDisplaySurvey) {
-      logger.debug("Survey display skipped based on displayPercentage.");
-      return;
-    }
-  }
-
   if (surveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
