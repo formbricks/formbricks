@@ -1,50 +1,50 @@
-name: ECS
+# name: ECS
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# # This workflow uses actions that are not certified by GitHub.
+# # They are provided by a third-party and are governed by
+# # separate terms of service, privacy policy, and support
+# # documentation.
 
-on:
-  push:
-    branches:
-      - main
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}/formbricks-experimental
-  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
+# on:
+#   push:
+#     branches:
+#       - main
+# env:
+#   # Use docker.io for Docker Hub if empty
+#   REGISTRY: ghcr.io
+#   # github.repository as <account>/<repo>
+#   IMAGE_NAME: ${{ github.repository }}/formbricks-experimental
+#   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # TODO generate restricted access token
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v1
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # TODO generate restricted access token
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: us-east-1
           
-      - name: Download task definition
-        run: |
-          aws ecs describe-task-definition --task-definition prod-webapp-ecs-service --query taskDefinition > task-definition.json
+#       - name: Download task definition
+#         run: |
+#           aws ecs describe-task-definition --task-definition prod-webapp-ecs-service --query taskDefinition > task-definition.json
 
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        env: 
-          IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}/formbricks-experimental
-        with:
-          task-definition: task-definition.json
-          container-name: prod-webapp-container
-          image: ${{ env.IMAGE_NAME }}
+#       - name: Fill in the new image ID in the Amazon ECS task definition
+#         id: task-def
+#         uses: aws-actions/amazon-ecs-render-task-definition@v1
+#         env: 
+#           IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}/formbricks-experimental
+#         with:
+#           task-definition: task-definition.json
+#           container-name: prod-webapp-container
+#           image: ${{ env.IMAGE_NAME }}
 
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: prod-webapp-ecs-service
-          cluster: prod-core-infra-ecs-cluster
-          wait-for-service-stability: false # TODO enable it after fixing the health issue
+#       - name: Deploy Amazon ECS task definition
+#         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+#         with:
+#           task-definition: ${{ steps.task-def.outputs.task-definition }}
+#           service: prod-webapp-ecs-service
+#           cluster: prod-core-infra-ecs-cluster
+#           wait-for-service-stability: false # TODO enable it after fixing the health issue
