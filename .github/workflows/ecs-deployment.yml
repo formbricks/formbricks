@@ -126,11 +126,11 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         env: 
           # IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}/formbricks-experimental
-          IMAGE: ${{ needs.build.steps.build-and-push.outputs.tags }}
+          image: ${{ needs.build.steps.build-and-push.outputs.tags }}
         with:
           task-definition: task-definition.json
           container-name: prod-webapp-container
-          image: ${{ env.IMAGE }}
+          # image: ${{ env.IMAGE }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
