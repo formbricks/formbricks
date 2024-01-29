@@ -388,14 +388,6 @@ export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 
-export const ZSurveyAttributeFilter = z.object({
-  attributeClassId: z.string().cuid2(),
-  condition: z.enum(["equals", "notEquals"]),
-  value: z.string(),
-});
-
-export type TSurveyAttributeFilter = z.infer<typeof ZSurveyAttributeFilter>;
-
 const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
 
 export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
@@ -416,7 +408,6 @@ export const ZSurvey = z.object({
   type: ZSurveyType,
   environmentId: z.string(),
   status: ZSurveyStatus,
-  attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
   triggers: z.array(z.string()),
@@ -456,7 +447,6 @@ export const ZSurveyInput = z.object({
   closeOnDate: z.date().optional(),
   surveyClosedMessage: ZSurveyClosedMessage.optional(),
   verifyEmail: ZSurveyVerifyEmail.optional(),
-  attributeFilters: z.array(ZSurveyAttributeFilter).optional(),
   triggers: z.array(z.string()).optional(),
 });
 

@@ -254,11 +254,6 @@ export default function SurveyMenuBar({
         const { isDraft, ...rest } = question;
         return rest;
       }),
-      attributeFilters: localSurvey.attributeFilters.filter((attributeFilter) => {
-        if (attributeFilter.attributeClassId && attributeFilter.value) {
-          return true;
-        }
-      }),
     };
 
     if (!validateSurvey(localSurvey)) {

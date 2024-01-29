@@ -96,11 +96,6 @@ export async function copyToOtherEnvironmentAction(
           actionClass: true,
         },
       },
-      attributeFilters: {
-        include: {
-          attributeClass: true,
-        },
-      },
     },
   });
 
@@ -142,37 +137,8 @@ export async function copyToOtherEnvironmentAction(
     }
   }
 
-  let targetEnvironmentAttributeFilters: string[] = [];
+  // let targetEnvironmentAttributeFilters: string[] = [];
   // map the local attributeFilters to the target env
-  for (const attributeFilter of existingSurvey.attributeFilters) {
-    // check if attributeClass exists in target env.
-    // if not, create it
-    const targetEnvironmentAttributeClass = await prisma.attributeClass.findFirst({
-      where: {
-        name: attributeFilter.attributeClass.name,
-        environment: {
-          id: targetEnvironmentId,
-        },
-      },
-    });
-    if (!targetEnvironmentAttributeClass) {
-      const newAttributeClass = await prisma.attributeClass.create({
-        data: {
-          name: attributeFilter.attributeClass.name,
-          description: attributeFilter.attributeClass.description,
-          type: attributeFilter.attributeClass.type,
-          environment: {
-            connect: {
-              id: targetEnvironmentId,
-            },
-          },
-        },
-      });
-      targetEnvironmentAttributeFilters.push(newAttributeClass.id);
-    } else {
-      targetEnvironmentAttributeFilters.push(targetEnvironmentAttributeClass.id);
-    }
-  }
 
   // if the userSegment exists in the target environment, connect it
   // otherwise, create it
@@ -247,13 +213,6 @@ export async function copyToOtherEnvironmentAction(
       triggers: {
         create: targetEnvironmentTriggers.map((actionClassId) => ({
           actionClassId: actionClassId,
-        })),
-      },
-      attributeFilters: {
-        create: existingSurvey.attributeFilters.map((attributeFilter, idx) => ({
-          attributeClassId: targetEnvironmentAttributeFilters[idx],
-          condition: attributeFilter.condition,
-          value: attributeFilter.value,
         })),
       },
       environment: {
