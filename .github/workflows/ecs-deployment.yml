@@ -125,8 +125,8 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         env: 
-          IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}/formbricks-experimental
-          # IMAGE: {{ needs.build.steps.build-and-push.outputs.tags }}
+          # IMAGE: ${{ env.REGISTRY }}/${{ github.repository }}/formbricks-experimental
+          IMAGE: ${{ needs.build.steps.build-and-push.outputs.tags }}
         with:
           task-definition: task-definition.json
           container-name: prod-webapp-container
