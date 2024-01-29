@@ -15,6 +15,7 @@ env:
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}/formbricks-experimental
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
+  NEXT_PUBLIC_SENTRY_DSN : ${{secrets.NEXT_PUBLIC_SENTRY_DSN}}
 
 jobs:
   build:
@@ -36,7 +37,6 @@ jobs:
         run: |
           SECRET=$(openssl rand -hex 32)
           echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
-          echo "${{secrets.NEXT_PUBLIC_SENTRY_DSN}}"
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -89,7 +89,7 @@ jobs:
             NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
             DATABASE_URL=${{ env.DATABASE_URL }}
             ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
-            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }} # Confirm DNS setup
+            NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }} # Confirm DNS setup
 
       - name: Sign the published Docker image
         env:
