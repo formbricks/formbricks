@@ -1,10 +1,6 @@
 # Installer stage: Building the application
 FROM node:20-alpine AS installer
 
-RUN echo $NEXT_PUBLIC_SENTRY_DSN
-
-RUN echo "$$$$$$$$$$$$$$$$$$$$$$$$$$$"
-
 # Enable corepack and prepare pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -28,7 +24,7 @@ ARG ENCRYPTION_KEY
 ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
 
 ARG NEXT_PUBLIC_SENTRY_DSN
-ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
+# ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 
 # Set the working directory
 WORKDIR /app
