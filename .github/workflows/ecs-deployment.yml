@@ -15,7 +15,7 @@ env:
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}/formbricks-experimental
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
-  NEXT_PUBLIC_SENTRY_DSN : ${{secrets.NEXT_PUBLIC_SENTRY_DSN}}
+  NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
 
 jobs:
   build:
@@ -32,6 +32,7 @@ jobs:
         run: |
           SECRET=$(openssl rand -hex 32)
           echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
+          echo "$(env.NEXT_PUBLIC_SENTRY_DSN)"
 
       - name: Generate Random ENCRYPTION_KEY
         run: |
