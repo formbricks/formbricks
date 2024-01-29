@@ -76,7 +76,7 @@ jobs:
         uses: depot/build-push-action@v1
         with:
           project: tw0fqmsx3c
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }} # TODO Use single project token
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
           file: ./apps/web/Dockerfile
           platforms: linux/amd64,linux/arm64
@@ -89,7 +89,7 @@ jobs:
             NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
             DATABASE_URL=${{ env.DATABASE_URL }}
             ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
-            NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }} # Confirm DNS setup
+            NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }}
 
       - name: Sign the published Docker image
         env:
@@ -107,9 +107,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # TODO generate restricted IAM access token 
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }} # TODO add secret
+          aws-region: ${{ secrets.AWS_REGION }}
           
       - name: Download task definition
         run: |
@@ -129,4 +129,4 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: prod-webapp-ecs-service
           cluster: prod-core-infra-ecs-cluster
-          wait-for-service-stability: false # TODO enable it after fixing the health issue
+          wait-for-service-stability: true
