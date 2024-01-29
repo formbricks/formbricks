@@ -9,10 +9,15 @@ import { signIn } from "next-auth/react";
 export default function ResetPasswordPage() {
   const router = useRouter();
   const token = router.query.token?.toString();
+  const emailVerified = router.query.emailVerified?.toString();
   const [error, setError] = useState<string>("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (e.target.elements.password !== e.target.elements.confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
+      return;
+    }
     try {
       const resetedPassword = await resetPassword(token, e.target.elements.password.value);
 
@@ -41,8 +46,7 @@ export default function ResetPasswordPage() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
-                    Une erreur s&apos;est produite lors de la réinitialisation
-                    de votre mot de passe{" "}
+                    Une erreur s&apos;est produite lors de la {emailVerified ? "création de ton compte" : "réinitialisation de ton mot de passe"}
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p className="space-y-1 whitespace-pre-wrap">{error}</p>
@@ -65,13 +69,16 @@ export default function ResetPasswordPage() {
 
               <div className="mt-8">
                 <div className="mt-6">
+                  {emailVerified &&
+                    <p className="my-4 text-center">Bienvenu(e), crée un compte pour passer les tests à Kadea Academy</p>
+                  }
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                       <label
                         htmlFor="email"
                         className="block text-sm font-medium text-ui-gray-dark"
                       >
-                        Nouveau mot de passe
+                        {emailVerified ? "Entrer un mot de passe" : "Nouveau mot de passe"}
                       </label>
                       <div className="mt-1">
                         <input
@@ -83,13 +90,29 @@ export default function ResetPasswordPage() {
                         />
                       </div>
                     </div>
-
+                    {emailVerified && <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-ui-gray-dark"
+                      >
+                        Confirmer le mot de passe
+                      </label>
+                      <div className="mt-1">
+                        <input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type="password"
+                          required
+                          className="block w-full px-3 py-2 border rounded-md shadow-sm appearance-none placeholder-ui-gray-medium border-ui-gray-medium focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm ph-no-capture"
+                        />
+                      </div>
+                    </div>}
                     <div>
                       <button
                         type="submit"
                         className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-red hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
-                        Réinitialiser le mot de passe
+                        {emailVerified ? "Créer un compte" : "Réinitialiser le mot de passe"}
                       </button>
                     </div>
                   </form>
