@@ -40,6 +40,7 @@ interface TEmailUserWithName extends TEmailUser {
 export interface LinkSurveyEmailData {
   surveyId: string;
   email: string;
+  suId: string;
   surveyData?: {
     name?: string;
     subheading?: string;
@@ -249,8 +250,14 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
   const surveyId = data.surveyId;
   const email = data.email;
   const surveyData = data.surveyData;
+  const singleUseId = data.suId ?? null;
   const token = createTokenForLinkSurvey(surveyId, email);
-  const surveyLink = `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+  const getSurveyLink = () => {
+    if (singleUseId) {
+      return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+    }
+    return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+  };
   await sendEmail({
     to: data.email,
     subject: "Your Formbricks Survey",
@@ -258,7 +265,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
     Thanks for validating your email. Here is your Survey.<br/><br/>
     <strong>${surveyData?.name}</strong>
     <p>${surveyData?.subheading}</p>
-    <a class="button" href="${surveyLink}">Take survey</a><br/>
+    <a class="button" href="${getSurveyLink()}">Take survey</a><br/>
     <br/>
     All the best,<br/>
     Your Formbricks Team 🤍`),
