@@ -54,7 +54,6 @@ jobs:
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3 # v3.0.0
         with:
           registry: ${{ env.REGISTRY }}
@@ -76,12 +75,12 @@ jobs:
         uses: depot/build-push-action@v1
         with:
           project: tw0fqmsx3c
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }} # Use the single project token
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }} # TODO Use single project token
           context: .
           file: ./apps/web/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }} # TODO resolve tagging image as unstable
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -89,22 +88,16 @@ jobs:
             NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
             DATABASE_URL=${{ env.DATABASE_URL }}
             ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
-            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }} # Confirm DNS setup
 
-      # Sign the resulting Docker image digest except on PRs.
-      # This will only write to the public Rekor transparency log when the Docker
-      # repository is public to avoid leaking data.  If you would like to publish
-      # transparency data even for private images, pass --force to cosign below.
-      # https://github.com/sigstore/cosign
       - name: Sign the published Docker image
-        if: ${{ github.event_name != 'pull_request' }}
         env:
           # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: ${{ steps.meta.outputs.tags }} # TODO resolve tagging image as unstable
+          TAGS: ${{ steps.meta.outputs.tags }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
-        run: echo "${TAGS}" | "${HERERERERER}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
   deploy:
     needs: build
@@ -113,9 +106,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # TODO generate restricted access token
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # TODO generate restricted IAM access token 
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ secrets.AWS_REGION }} # TODO add secret
           
       - name: Download task definition
         run: |
