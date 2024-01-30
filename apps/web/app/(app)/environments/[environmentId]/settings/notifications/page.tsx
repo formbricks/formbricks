@@ -3,42 +3,24 @@ import { getServerSession } from "next-auth";
 
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 import SettingsTitle from "../components/SettingsTitle";
 import EditAlerts from "./components/EditAlerts";
 import EditWeeklySummary from "./components/EditWeeklySummary";
 import IntegrationsTip from "./components/IntegrationsTip";
-import type { Membership, User } from "./types";
+import type { Membership } from "./types";
 
-async function getUser(userId: string | undefined): Promise<User> {
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
-  const userData = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-    select: {
-      id: true,
-      notificationSettings: true,
-    },
-  });
-
-  if (!userData) {
-    throw new Error("Unauthorized");
-  }
-
-  const user = JSON.parse(JSON.stringify(userData)); // hack to remove the JsonValue type from the notificationSettings
-
-  return user;
-}
-
-function cleanNotificationSettings(
+function setCompleteNotificationSettings(
   notificationSettings: TUserNotificationSettings,
   memberships: Membership[]
-) {
-  const newNotificationSettings = { alert: {}, weeklySummary: {} };
+): TUserNotificationSettings {
+  const newNotificationSettings = {
+    alert: {},
+    weeklySummary: {},
+    doNotSubscribeToTeams: notificationSettings.doNotSubscribeToTeams || [],
+  };
   for (const membership of memberships) {
     for (const product of membership.team.products) {
       // set default values for weekly summary
@@ -95,13 +77,22 @@ async function getMemberships(userId: string): Promise<Membership[]> {
   return memberships;
 }
 
-export default async function ProfileSettingsPage({ params }) {
+export default async function ProfileSettingsPage({ params, searchParams }) {
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error("Unauthorized");
   }
+  const autoDisableNotificationType = searchParams["type"];
+  const autoDisableNotificationElementId = searchParams["elementId"];
+
   const [user, memberships] = await Promise.all([getUser(session.user.id), getMemberships(session.user.id)]);
-  user.notificationSettings = cleanNotificationSettings(user.notificationSettings, memberships);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user?.notificationSettings) {
+    user.notificationSettings = setCompleteNotificationSettings(user.notificationSettings, memberships);
+  }
 
   return (
     <div>
@@ -109,7 +100,13 @@ export default async function ProfileSettingsPage({ params }) {
       <SettingsCard
         title="Email alerts (Surveys)"
         description="Set up an alert to get an email on new responses.">
-        <EditAlerts memberships={memberships} user={user} environmentId={params.environmentId} />
+        <EditAlerts
+          memberships={memberships}
+          user={user}
+          environmentId={params.environmentId}
+          autoDisableNotificationType={autoDisableNotificationType}
+          autoDisableNotificationElementId={autoDisableNotificationElementId}
+        />
       </SettingsCard>
       <IntegrationsTip environmentId={params.environmentId} />
       <SettingsCard

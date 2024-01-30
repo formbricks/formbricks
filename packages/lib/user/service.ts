@@ -29,6 +29,7 @@ const responseSelection = {
   twoFactorEnabled: true,
   identityProvider: true,
   objective: true,
+  notificationSettings: true,
 };
 
 // function to retrive basic information about a user's user
@@ -224,4 +225,21 @@ export const deleteUser = async (id: string): Promise<TUser> => {
 
     throw error;
   }
+};
+
+export const getUsersWithTeam = async (teamId: string): Promise<TUser[]> => {
+  validateInputs([teamId, ZId]);
+
+  const users = await prisma.user.findMany({
+    where: {
+      memberships: {
+        some: {
+          teamId,
+        },
+      },
+    },
+    select: responseSelection,
+  });
+
+  return users;
 };

@@ -7,6 +7,7 @@ import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { sendResponseFinishedEmail } from "@formbricks/lib/emails/emails";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
@@ -125,6 +126,9 @@ export async function POST(request: Request) {
       return false;
     });
 
+    // Exclude current response
+    const numberOfExistingResponses = (await getResponseCountBySurveyId(surveyId)) - 1;
+
     if (usersWithNotifications.length > 0) {
       // get survey
       if (!surveyData) {
@@ -155,7 +159,13 @@ export async function POST(request: Request) {
       // send email to all users
       await Promise.all(
         usersWithNotifications.map(async (user) => {
-          await sendResponseFinishedEmail(user.email, environmentId, survey, response);
+          await sendResponseFinishedEmail(
+            user.email,
+            environmentId,
+            survey,
+            response,
+            numberOfExistingResponses
+          );
         })
       );
     }

@@ -20,6 +20,7 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
+import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -515,6 +516,8 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     ...survey,
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
+
+  await subscribeTeamMembersToSurveyResponses(environmentId, survey.id);
 
   surveyCache.revalidate({
     id: survey.id,
