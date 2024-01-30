@@ -15,7 +15,6 @@ env:
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}/formbricks-experimental
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
-  NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
 
 jobs:
   build:
@@ -74,6 +73,8 @@ jobs:
       - name: Build and push Docker image
         id: build-and-push
         uses: depot/build-push-action@v1
+        env: 
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
         with:
           project: tw0fqmsx3c
           token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
