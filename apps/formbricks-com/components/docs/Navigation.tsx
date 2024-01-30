@@ -189,27 +189,14 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: "Getting Started",
+    title: "In-App Surveys",
     links: [
-      { title: "Quickstart: In app", href: "/docs/getting-started/quickstart-in-app-survey" },
+      { title: "Quickstart", href: "/docs/getting-started/quickstart-in-app-survey" },
       { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
       { title: "Troubleshooting", href: "/docs/getting-started/troubleshooting" },
-    ],
-  },
-  {
-    title: "Attributes",
-    links: [
-      { title: "Why Attributes?", href: "/docs/attributes/why" },
-      { title: "Custom Attributes", href: "/docs/attributes/custom-attributes" },
-      { title: "Identify users", href: "/docs/attributes/identify-users" },
-    ],
-  },
-  {
-    title: "Actions",
-    links: [
-      { title: "Why Actions?", href: "/docs/actions/why" },
-      { title: "No-Code Actions", href: "/docs/actions/no-code" },
-      { title: "Code Actions", href: "/docs/actions/code" },
+      { title: "Identify Users", href: "/docs/in-app-surveys/user-identification" },
+      { title: "Actions", href: "/docs/in-app-surveys/actions" },
+      { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
     ],
   },
   {
@@ -231,6 +218,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
       { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
       { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
+      { title: "Improve Email Content", href: "/docs/best-practices/improve-email-content" },
     ],
   },
   {

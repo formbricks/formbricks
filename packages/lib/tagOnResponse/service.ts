@@ -8,6 +8,7 @@ import { TTagsCount, TTagsOnResponses } from "@formbricks/types/tags";
 
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "../response/cache";
+import { getResponse } from "../response/service";
 import { validateInputs } from "../utils/validate";
 import { tagOnResponseCache } from "./cache";
 
@@ -21,6 +22,7 @@ const selectTagsOnResponse = {
 
 export const addTagToRespone = async (responseId: string, tagId: string): Promise<TTagsOnResponses> => {
   try {
+    const response = await getResponse(responseId);
     const tagOnResponse = await prisma.tagsOnResponses.create({
       data: {
         responseId,
@@ -31,6 +33,8 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
 
     responseCache.revalidate({
       id: responseId,
+      surveyId: response?.surveyId,
+      personId: response?.person?.id,
     });
 
     tagOnResponseCache.revalidate({
@@ -50,6 +54,7 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
 
 export const deleteTagOnResponse = async (responseId: string, tagId: string): Promise<TTagsOnResponses> => {
   try {
+    const response = await getResponse(responseId);
     const deletedTag = await prisma.tagsOnResponses.delete({
       where: {
         responseId_tagId: {
@@ -62,6 +67,8 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
 
     responseCache.revalidate({
       id: responseId,
+      surveyId: response?.surveyId,
+      personId: response?.person?.id,
     });
 
     tagOnResponseCache.revalidate({

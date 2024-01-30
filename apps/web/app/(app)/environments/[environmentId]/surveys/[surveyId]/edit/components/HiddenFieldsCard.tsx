@@ -50,7 +50,7 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
     <div
       className={cn(
         open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
-        "group flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
+        "group z-10 flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
       )}>
       <div
         className={cn(
@@ -173,7 +173,7 @@ const validateHiddenField = (
   }
   // no key words -- userId & suid & existing question ids
   if (
-    ["userId", "source", "suid", "end", "start", "welcomeCard", "hidden"].includes(field) ||
+    ["userId", "source", "suid", "end", "start", "welcomeCard", "hidden", "verifiedEmail"].includes(field) ||
     existingQuestions.findIndex((q) => q.id === field) !== -1
   ) {
     return "Question not allowed";

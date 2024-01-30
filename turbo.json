@@ -23,9 +23,17 @@
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
     },
+    "@formbricks/js#build:dev": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build:dev"]
+    },
     "@formbricks/surveys#build": {
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
+    },
+    "@formbricks/surveys#build:dev": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^build:dev"]
     },
     "@formbricks/surveys#go": {
       "cache": false,
@@ -58,6 +66,8 @@
         "DEFAULT_TEAM_ROLE",
         "ONBOARDING_DISABLED",
         "CRON_SECRET",
+        "CUSTOMER_IO_API_KEY",
+        "CUSTOMER_IO_SITE_ID",
         "DEBUG",
         "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",
@@ -124,6 +134,10 @@
         "VERCEL_URL",
         "WEBAPP_URL"
       ]
+    },
+    "build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**", ".next/**"]
     },
     "post-install": {
       "cache": false,

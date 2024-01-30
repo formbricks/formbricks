@@ -20,6 +20,7 @@ interface ResponseTagsWrapperProps {
   environmentId: string;
   responseId: string;
   environmentTags: TTag[];
+  updateFetchedResponses: () => void;
 }
 
 const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
@@ -27,6 +28,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   environmentId,
   responseId,
   environmentTags,
+  updateFetchedResponses,
 }) => {
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
@@ -37,11 +39,9 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   const onDelete = async (tagId: string) => {
     try {
       await deleteTagOnResponseAction(responseId, tagId);
-
-      router.refresh();
+      updateFetchedResponses();
     } catch (e) {
       toast.error("An error occurred deleting the tag");
-      router.refresh();
     }
   };
 
@@ -56,7 +56,16 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   }, [tagIdToHighlight]);
 
   return (
-    <div className="flex items-center justify-between gap-3 p-6">
+    <div className="flex items-center gap-3 p-6">
+      <Button
+        variant="minimal"
+        size="sm"
+        className="cursor-pointer p-0"
+        onClick={() => {
+          router.push(`/environments/${environmentId}/settings/tags`);
+        }}>
+        <Cog6ToothIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" />
+      </Button>
       <div className="flex flex-wrap items-center gap-2">
         {tagsState?.map((tag) => (
           <Tag
@@ -88,9 +97,9 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                   },
                 ]);
                 createTagToResponeAction(responseId, tag.id).then(() => {
+                  updateFetchedResponses();
                   setSearchValue("");
                   setOpen(false);
-                  router.refresh();
                 });
               })
               .catch((err) => {
@@ -107,7 +116,6 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
                 setSearchValue("");
                 setOpen(false);
-                router.refresh();
               });
           }}
           addTag={(tagId) => {
@@ -120,23 +128,13 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
             ]);
 
             createTagToResponeAction(responseId, tagId).then(() => {
+              updateFetchedResponses();
               setSearchValue("");
               setOpen(false);
-              router.refresh();
             });
           }}
         />
       </div>
-
-      <Button
-        variant="minimal"
-        size="sm"
-        className="cursor-pointer p-0"
-        onClick={() => {
-          router.push(`/environments/${environmentId}/settings/tags`);
-        }}>
-        <Cog6ToothIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" />
-      </Button>
     </div>
   );
 };

@@ -36,6 +36,7 @@ interface TEmailUser {
 export interface LinkSurveyEmailData {
   surveyId: string;
   email: string;
+  suId: string;
   surveyData?: {
     name?: string;
     subheading?: string;
@@ -78,11 +79,12 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
   )}`;
   await sendEmail({
     to: user.email,
-    subject: "Welcome to Formbricks 🤍",
-    html: withEmailTemplate(`<h1>Welcome!</h1>
-    To start using Formbricks please verify your email by clicking the button below:<br/><br/>
-    <a class="button" href="${verifyLink}">Confirm email</a><br/>
-    <br/>
+    subject: "Please verify your email to use Formbricks",
+    html: withEmailTemplate(`<h1>Almost there!</h1>
+    To start using Formbricks please verify your email below:<br/><br/>
+    <a class="button" href="${verifyLink}">Verify email</a><br/><br/>
+    You can also click on this link:<br/>
+    <a href="${verifyLink}" style="word-break: break-all; color: #1e293b;">${verifyLink}</a><br/><br/>
     <strong>The link is valid for 24h.</strong><br/><br/>If it has expired please request a new token here:
     <a href="${verificationRequestLink}">Request new verification</a><br/>
     <br/>
@@ -187,7 +189,7 @@ export const sendResponseFinishedEmail = async (
 
     <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
       survey.id
-    }/responses?utm_source=emailnotification&utm_medium=email&utm_content=ViewResponsesCTA">View all responses</a>
+    }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">View all responses</a>
 
     <div class="tooltip">
     <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
@@ -216,8 +218,14 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
   const surveyId = data.surveyId;
   const email = data.email;
   const surveyData = data.surveyData;
+  const singleUseId = data.suId ?? null;
   const token = createTokenForLinkSurvey(surveyId, email);
-  const surveyLink = `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+  const getSurveyLink = () => {
+    if (singleUseId) {
+      return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+    }
+    return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+  };
   await sendEmail({
     to: data.email,
     subject: "Your Formbricks Survey",
@@ -225,7 +233,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
     Thanks for validating your email. Here is your Survey.<br/><br/>
     <strong>${surveyData?.name}</strong>
     <p>${surveyData?.subheading}</p>
-    <a class="button" href="${surveyLink}">Take survey</a><br/>
+    <a class="button" href="${getSurveyLink()}">Take survey</a><br/>
     <br/>
     All the best,<br/>
     Your Formbricks Team 🤍`),

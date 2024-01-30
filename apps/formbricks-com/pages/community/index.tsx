@@ -11,6 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 
+import { Button } from "@formbricks/ui/Button";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
@@ -230,19 +231,56 @@ const roadmapDates = [
     description: "Hackathon Kick-Off 🔥",
     period: "1st October 2023",
     events: [
-      { name: "✅ Email Embeds", link: "https://github.com/formbricks/formbricks/pull/873" },
-      { name: "✅ Hidden Fields", link: "https://github.com/formbricks/formbricks/pull/1144" },
+      {
+        name: "✅ Email Embeds",
+        link: "https://github.com/formbricks/formbricks/pull/873",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/56182734?v=4",
+      },
+      {
+        name: "✅ Hidden Fields",
+        link: "https://github.com/formbricks/formbricks/pull/1144",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/72537293?v=4",
+      },
       {
         name: "✅ Question Type: Picture Choice",
         link: "https://github.com/formbricks/formbricks/pull/1388",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/56182734?v=4",
       },
-      { name: "✅ Question Type: Welcome Card", link: "https://github.com/formbricks/formbricks/pull/1073" },
-      { name: "✅ Add Image to Question", link: "https://github.com/formbricks/formbricks/pull/1305" },
-      { name: "✅ Dynamic Link Previews", link: "https://github.com/formbricks/formbricks/pull/1093" },
-      { name: "✅ Fullscreen Previews", link: "https://github.com/formbricks/formbricks/pull/898" },
-      { name: "✅ PIN protected surveys", link: "https://github.com/formbricks/formbricks/pull/1142" },
-      { name: "✅ Source Tracking", link: "https://github.com/formbricks/formbricks/pull/1486" },
-      { name: "✅ Time To Complete Indicator", link: "https://github.com/formbricks/formbricks/pull/1461" },
+      {
+        name: "✅ Question Type: Welcome Card",
+        link: "https://github.com/formbricks/formbricks/pull/1073",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/88614335?v=4",
+      },
+      {
+        name: "✅ Add Image to Question",
+        link: "https://github.com/formbricks/formbricks/pull/1305",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/72537293?v=4",
+      },
+      {
+        name: "✅ Dynamic Link Previews",
+        link: "https://github.com/formbricks/formbricks/pull/1093",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/92802904?v=4",
+      },
+      {
+        name: "✅ Fullscreen Previews",
+        link: "https://github.com/formbricks/formbricks/pull/898",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/32243289?v=4",
+      },
+      {
+        name: "✅ PIN protected surveys",
+        link: "https://github.com/formbricks/formbricks/pull/1142",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/44976328?v=4",
+      },
+      {
+        name: "✅ Source Tracking",
+        link: "https://github.com/formbricks/formbricks/pull/1486",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/67850763?v=4",
+      },
+      {
+        name: "✅ Time To Complete Indicator",
+        link: "https://github.com/formbricks/formbricks/pull/1461",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/67850763?v=4",
+      },
     ],
   },
   {
@@ -250,15 +288,36 @@ const roadmapDates = [
     description: "Product Hunt Launch 🚀",
     period: "31st October 2023",
     events: [
-      { name: "✅ Question Type: File Upload", link: "https://github.com/formbricks/formbricks/pull/1277" },
-      { name: "✅ Notion Integration", link: "https://github.com/formbricks/formbricks/pull/1197" },
-      { name: "✅ Media Backgrounds", link: "https://github.com/formbricks/formbricks/pull/1515" },
-      { name: "🚧 Custom Styling", link: "https://github.com/formbricks/formbricks/pull/916" },
-      { name: "🚧 Recall Information", link: "https://github.com/formbricks/formbricks/issues/884" },
+      {
+        name: "✅ Question Type: File Upload",
+        link: "https://github.com/formbricks/formbricks/pull/1277",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/88614335?v=4",
+      },
+      {
+        name: "✅ Notion Integration",
+        link: "https://github.com/formbricks/formbricks/pull/1197",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/54103265?v=4",
+      },
+      {
+        name: "✅ Media Backgrounds",
+        link: "https://github.com/formbricks/formbricks/pull/1515",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/92802904?v=4",
+      },
+      {
+        name: "✅ Question Type: Schedule a call (Powered by Cal.com)",
+        link: "https://github.com/formbricks/formbricks/pull/1722",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/88614335?v=4",
+      },
+      {
+        name: "✅ Recall Information",
+        link: "https://github.com/formbricks/formbricks/pull/1789",
+        contributorAvatarUrl: "https://avatars.githubusercontent.com/u/67850763?v=4",
+      },
+      { name: "🚧 Custom Styling" },
       { name: "⏳ Unsplash Backgrounds" },
       { name: "⏳ Question Type: Matrix" },
       { name: "⏳ Question Type: Collect payment" },
-      { name: "⏳Question Type: Schedule a call (Powered by Cal.com)" },
+
       { name: "⏳ Question Type: Signature (Powered by Documenso)" },
     ],
   },
@@ -442,8 +501,8 @@ export default function FormTribeHackathon() {
   }, []);
   return (
     <LayoutTribe
-      title="Join the FormTribe"
-      description="We build an Open Source Typeform alternative together and give it to the world. Join us!">
+      title="Formbricks Community - Surveys for Millions built by our Community."
+      description="Join us building the fastest growing survey platform for the web - free and open source.">
       {/* Header */}
 
       <div className="flex h-full w-full flex-col items-center justify-center overflow-clip text-center">
@@ -703,6 +762,10 @@ export default function FormTribeHackathon() {
             </div>
           ))}
         </div>
+        <Button href="https://formbricks.com/discord" className="mt-6" target="_blank" variant="darkCTA">
+          {" "}
+          Join Discord{" "}
+        </Button>
       </div>
     </LayoutTribe>
   );

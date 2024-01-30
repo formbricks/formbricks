@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircleIcon, GlobeEuropeAfricaIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
 import { Clipboard } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -53,7 +53,7 @@ export default function ShareSurveyResults({
                 className="hover:cursor-pointer"
                 onClick={() => {
                   navigator.clipboard.writeText(surveyUrl);
-                  toast.success("URL copied to clipboard!");
+                  toast.success("Link copied to clipboard!");
                 }}>
                 <Clipboard />
               </Button>
@@ -69,7 +69,7 @@ export default function ShareSurveyResults({
               </Button>
 
               <Button variant="darkCTA" className=" text-center" href={surveyUrl} target="_blank">
-                View Site
+                View site
               </Button>
             </div>
           </div>
@@ -77,21 +77,22 @@ export default function ShareSurveyResults({
       ) : (
         <DialogContent className="flex flex-col rounded-2xl bg-white p-8">
           <div className="flex flex-col items-center gap-y-6 text-center">
-            <GlobeEuropeAfricaIcon className="h-20 w-20 text-slate-300" />
+            <ExclamationCircleIcon className="h-20 w-20 text-slate-300" />
             <div>
-              <p className="text-lg font-medium text-slate-600">Publish Results to web</p>
+              <p className="text-lg font-medium text-slate-600">
+                You are about to release these survey results to the public.
+              </p>
               <p className="text-balanced mt-2 text-sm text-slate-500">
-                Your survey results are shared with anyone who has the link. The results will not be indexed
-                by search engines.
+                Your survey results will be public. Anyone outside your team can access them if they have the
+                link.
               </p>
             </div>
-
             <Button
               type="submit"
               variant="darkCTA"
               className="h-full text-center"
               onClick={() => handlePublish()}>
-              Publish to web
+              Publish to public web
             </Button>
           </div>
         </DialogContent>

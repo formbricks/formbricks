@@ -1,16 +1,15 @@
 import { useState } from "react";
 
-import { TSurvey } from "@formbricks/types/surveys";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 
 interface ColorSurveyBgBgProps {
-  localSurvey?: TSurvey;
   handleBgChange: (bg: string, bgType: string) => void;
   colours: string[];
+  background: string;
 }
 
-export default function ColorSurveyBg({ localSurvey, handleBgChange, colours }: ColorSurveyBgBgProps) {
-  const [color, setColor] = useState(localSurvey?.styling?.background?.bg || "#ffff");
+export default function ColorSurveyBg({ handleBgChange, colours, background }: ColorSurveyBgBgProps) {
+  const [color, setColor] = useState(background || "#ffff");
 
   const handleBg = (x: string) => {
     setColor(x);

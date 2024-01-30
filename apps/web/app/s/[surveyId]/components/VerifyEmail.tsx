@@ -22,9 +22,11 @@ const StackedCardsContainer = ({ children }) => (
 export default function VerifyEmail({
   survey,
   isErrorComponent,
+  singleUseId,
 }: {
   survey: TSurvey;
   isErrorComponent?: boolean;
+  singleUseId?: string;
 }) {
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
@@ -44,6 +46,7 @@ export default function VerifyEmail({
       surveyId: survey.id,
       email: email,
       surveyData: survey.verifyEmail,
+      suId: singleUseId ?? "",
     };
     try {
       await sendLinkSurveyEmailAction(data);
@@ -71,7 +74,7 @@ export default function VerifyEmail({
 
   if (isErrorComponent) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center bg-slate-50">
+      <div className="flex h-[100vh] w-[100vw] flex-col items-center justify-center bg-slate-50">
         <span className="h-24 w-24 rounded-full bg-slate-300 p-6 text-5xl">🤔</span>
         <p className="mt-8 text-4xl font-bold">This looks fishy.</p>
         <p className="mt-4 cursor-pointer text-sm text-slate-400" onClick={handleGoBackClick}>

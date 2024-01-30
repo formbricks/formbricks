@@ -51,7 +51,7 @@ export default function FileInput({
             }
           } catch (err: any) {
             setIsUploading(false);
-            if (err.message === "File size exceeds the 10 MB limit") {
+            if (err.name === "FileTooLargeError") {
               alert(err.message);
             } else {
               alert("Upload failed! Please try again.");
@@ -73,7 +73,7 @@ export default function FileInput({
           }
         } catch (err: any) {
           setIsUploading(false);
-          if (err.message === "File size exceeds the 10 MB limit") {
+          if (err.name === "FileTooLargeError") {
             alert(err.message);
           } else {
             alert("Upload failed! Please try again.");
@@ -135,7 +135,7 @@ export default function FileInput({
                 uploadedUrls.push(response);
               } catch (err: any) {
                 setIsUploading(false);
-                if (err.message === "File size exceeds the 10 MB limit") {
+                if (err.name === "FileTooLargeError") {
                   alert(err.message);
                 } else {
                   alert("Upload failed! Please try again.");
@@ -151,7 +151,7 @@ export default function FileInput({
               uploadedUrls.push(response);
             } catch (err: any) {
               setIsUploading(false);
-              if (err.message === "File size exceeds the 10 MB limit") {
+              if (err.name === "FileTooLargeError") {
                 alert(err.message);
               } else {
                 alert("Upload failed! Please try again.");

@@ -221,6 +221,7 @@ export const authOptions: NextAuthOptions = {
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
+
         // Default team assignment if env variable is set
         if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
           // check if team exists
