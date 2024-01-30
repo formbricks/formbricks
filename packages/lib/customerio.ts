@@ -7,11 +7,11 @@ export const createCustomerIoCustomer = async (user: TUser) => {
     return;
   }
   try {
-    const auth = Buffer.from(`${env.CUSTOMER_IO_SITE_ID}:${env.CUSTOMER_IO_API_KEY}`).toString("base64");
-    const res = await fetch(`https://track-eu.customer.io/api/v1/customers/${user.id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Basic ${auth}`,
+    // existing code...
+  } catch (error) {
+    console.error("Error sending user to CustomerIO:", error);
+    throw error;
+  }
       },
       body: JSON.stringify({
         id: user.id,
