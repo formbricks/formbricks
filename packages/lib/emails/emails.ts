@@ -33,10 +33,6 @@ interface TEmailUser {
   email: string;
 }
 
-interface TEmailUserWithName extends TEmailUser {
-  name: string | null;
-}
-
 export interface LinkSurveyEmailData {
   surveyId: string;
   email: string;
