@@ -218,7 +218,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
       { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
       { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
-      { title: "Improve Newsletter Content", href: "/docs/best-practices/improve-newsletter-content" },
+      { title: "Improve Email Content", href: "/docs/best-practices/improve-email-content" },
     ],
   },
   {
