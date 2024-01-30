@@ -1,5 +1,7 @@
 import {
+  TActionMetric,
   TBaseFilters,
+  TBaseOperator,
   TEvaluateSegmentUserAttributeData,
   TEvaluateSegmentUserData,
   TUserSegment,
@@ -25,7 +27,7 @@ export const mockFilter3Resource1Id = "evvoaniy0hn7srea7x0yn4vv";
 export const mockActionClassId = "zg7lojfwnk9ipajgeumfz96t";
 export const mockEmailValue = "example@example.com";
 export const mockUserId = "random user id";
-export const mockDeviceTypeValue = "Phone";
+export const mockDeviceTypeValue = "phone";
 
 // mock data for service input:
 export const mockPersonId = "sb776r0uvt8m8puffe1hlhjn";
@@ -41,7 +43,11 @@ export const mockEvaluateSegmentUserData: TEvaluateSegmentUserData = {
   deviceType: "phone",
 };
 
-export const mockUserSegmentFilters: TBaseFilters = [
+export const getMockUserSegmentFilters = (
+  actionMetric: TActionMetric,
+  actionValue: string | number,
+  actionOperator: TBaseOperator
+): TBaseFilters => [
   {
     id: mockFilterGroupId,
     connector: null,
@@ -95,17 +101,17 @@ export const mockUserSegmentFilters: TBaseFilters = [
   },
   {
     id: mockFilter3Id,
-    connector: "or",
+    connector: "and",
     resource: {
       id: mockFilter3Resource1Id,
       root: {
         type: "action",
         actionClassId: mockActionClassId,
       },
-      value: 5,
+      value: actionValue,
       qualifier: {
-        metric: "lastMonthCount",
-        operator: "greaterThan",
+        metric: actionMetric,
+        operator: actionOperator,
       },
     },
   },
@@ -116,7 +122,7 @@ export const mockUserSegment: TUserSegment = {
   title: "Engaged Users with Specific Interests",
   description: "Segment targeting engaged users interested in specific topics and using mobile",
   isPrivate: false,
-  filters: mockUserSegmentFilters,
+  filters: getMockUserSegmentFilters("lastMonthCount", 5, "equals"),
   environmentId: mockEnvironmentId,
   createdAt: new Date(),
   updatedAt: new Date(),
