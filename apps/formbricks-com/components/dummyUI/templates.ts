@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyHiddenFields, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import {
   AppPieChartIcon,
@@ -36,6 +36,11 @@ const welcomeCardDefault = {
   enabled: true,
   timeToFinish: false,
   showResponseCount: false,
+};
+
+const hiddenFieldsDefault: TSurveyHiddenFields = {
+  enabled: true,
+  fieldIds: [],
 };
 
 export const customSurvey: TTemplate = {
@@ -1222,6 +1227,58 @@ export const templates: TTemplate[] = [
       hiddenFields: {
         enabled: false,
       },
+    },
+  },
+  {
+    name: "Improve Newsletter Content",
+    category: "Growth",
+    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
+    description: "Find out how your subscribers like your newsletter content.",
+    preset: {
+      name: "Improve Newsletter Content",
+      welcomeCard: welcomeCardDefault,
+      questions: [
+        {
+          id: createId(),
+          type: TSurveyQuestionType.Rating,
+          logic: [
+            { value: "5", condition: "equals", destination: "l2q1chqssong8n0xwaagyl8g" },
+            { value: "5", condition: "lessThan", destination: "k3s6gm5ivkc5crpycdbpzkpa" },
+          ],
+          range: 5,
+          scale: "smiley",
+          headline: "How would you rate this weeks newsletter?",
+          required: true,
+          subheader: "",
+          lowerLabel: "Meh",
+          upperLabel: "Great",
+        },
+        {
+          id: "k3s6gm5ivkc5crpycdbpzkpa",
+          type: TSurveyQuestionType.OpenText,
+          logic: [
+            { condition: "submitted", destination: "end" },
+            { condition: "skipped", destination: "end" },
+          ],
+          headline: "What would have made this weeks newsletter more helpful?",
+          required: false,
+          placeholder: "Type your answer here...",
+          inputType: "text",
+        },
+        {
+          id: "l2q1chqssong8n0xwaagyl8g",
+          html: '<p class="fb-editor-paragraph" dir="ltr"><span>Who thinks like you? You\'d do us a huge favor if you\'d share this weeks episode with your brain friend!</span></p>',
+          type: TSurveyQuestionType.CTA,
+          headline: "Thanks! ❤️ Spread the love with ONE friend.",
+          required: false,
+          buttonUrl: "https://formbricks.com",
+          buttonLabel: "Happy to help!",
+          buttonExternal: true,
+          dismissButtonLabel: "Find your own friends",
+        },
+      ],
+      thankYouCard: thankYouCardDefault,
+      hiddenFields: hiddenFieldsDefault,
     },
   },
 ];
