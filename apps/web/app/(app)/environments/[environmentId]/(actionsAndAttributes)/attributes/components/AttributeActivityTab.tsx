@@ -1,6 +1,6 @@
 "use client";
 
-import { GetActiveInactiveSurveysAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
+import { getUserSegmentsByAttributeClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
 import { TagIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 
@@ -29,16 +29,20 @@ export default function AttributeActivityTab({ attributeClass }: EventActivityTa
     async function getSurveys() {
       try {
         setLoading(true);
-        const activeInactive = await GetActiveInactiveSurveysAction(attributeClass.id);
-        setActiveSurveys(activeInactive.activeSurveys);
-        setInactiveSurveys(activeInactive.inactiveSurveys);
+        const segmentsWithAttributeClassName = await getUserSegmentsByAttributeClassAction(
+          attributeClass.environmentId,
+          attributeClass
+        );
+
+        setActiveSurveys(segmentsWithAttributeClassName.activeSurveys);
+        setInactiveSurveys(segmentsWithAttributeClassName.inactiveSurveys);
       } catch (err) {
         setError(err);
       } finally {
         setLoading(false);
       }
     }
-  }, [attributeClass.id]);
+  }, [attributeClass, attributeClass.environmentId, attributeClass.id, attributeClass.name]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorComponent />;

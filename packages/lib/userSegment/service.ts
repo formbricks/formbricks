@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurvey } from "@formbricks/types/surveys";
 import {
   TActionMetric,
   TAllOperators,
@@ -383,44 +384,67 @@ export const getUserSegmentsByAttributeClassName = async (
   environmentId: string,
   attributeClassName: string
 ) => {
-  const userSegments = await prisma.userSegment.findMany({
-    where: {
-      environmentId,
-    },
-  });
+  const segments = await unstable_cache(
+    async () => {
+      const userSegments = await prisma.userSegment.findMany({
+        where: {
+          environmentId,
+        },
+        include: {
+          surveys: {
+            select: {
+              id: true,
+              name: true,
+              status: true,
+            },
+          },
+        },
+      });
 
-  // search for attributeClassName in the filters
-  const clonedUserSegments = structuredClone(userSegments);
-  function searchForAttributeClassName(filters: TBaseFilters): boolean {
-    for (let filter of filters) {
-      const { resource } = filter;
+      // search for attributeClassName in the filters
+      const clonedUserSegments = structuredClone(userSegments);
+      function searchForAttributeClassName(filters: TBaseFilters): boolean {
+        for (let filter of filters) {
+          const { resource } = filter;
 
-      if (isResourceFilter(resource)) {
-        const { root } = resource;
-        const { type } = root;
+          if (isResourceFilter(resource)) {
+            const { root } = resource;
+            const { type } = root;
 
-        if (type === "attribute") {
-          const { attributeClassName: className } = root;
-          if (className === attributeClassName) {
-            return true;
+            if (type === "attribute") {
+              const { attributeClassName: className } = root;
+              if (className === attributeClassName) {
+                return true;
+              }
+            }
+          } else {
+            const found = searchForAttributeClassName(resource);
+            if (found) {
+              return true;
+            }
           }
         }
-      } else {
-        const found = searchForAttributeClassName(resource);
-        if (found) {
-          return true;
-        }
+
+        return false;
       }
+
+      const filteredUserSegments = clonedUserSegments.filter((userSegment) => {
+        return searchForAttributeClassName(userSegment.filters);
+      });
+
+      return filteredUserSegments;
+    },
+    [`getUserSegmentsByAttributeClassName-${environmentId}-${attributeClassName}`],
+    {
+      tags: [
+        userSegmentCache.tag.byEnvironmentId(environmentId),
+        userSegmentCache.tag.byAttributeClassName(attributeClassName),
+      ],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
+  )();
 
-    return false;
-  }
-
-  const filteredUserSegments = clonedUserSegments.filter((userSegment) => {
-    return searchForAttributeClassName(userSegment.filters);
-  });
-
-  return filteredUserSegments;
+  return segments;
 };
 
 const evaluateAttributeFilter = (
