@@ -1,5 +1,10 @@
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import Image from "next/image";
+import NewsletterSurvey from './improve-newsletter-content-survey-location.webp'
+import NewsletterSurveyEditor from './improve-newsletter-content-editor-formbricks.webp'
+import NewsletterSurveyType from './choose-survey-type.webp'
+import NewsletterSurveyEmbedPrompt from './embed-survey-prompt.webp'
+import NewsletterSurveyEmbedCode from './embed-survey-code-in-your-email.webp'
 
 export const metadata = {
   title: "Improve your newsletter content with Formbricks",
@@ -9,11 +14,11 @@ export const metadata = {
 
 #### Best Practices
 
-# Improve Newsletter Content Survey
+# Improve Newsletter Content
 
 ## Purpose
 
-Newsletters are a form of email marketing which has the highest ROI of all marketing channels. To convert, you need to know if you are conneting with your readers.
+Newsletters are a form of email marketing which has the highest ROI of all marketing channels. However, before you can reap this sweet, juciy ROI, you need to know if your content to truly resonates with your readers.
 
 ## Preview
 
@@ -39,25 +44,45 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Then, create a new survey and look for the "Improve Newsletter Content" template:
 
-image Here
+<Image
+  src={NewsletterSurvey}
+  alt="Create Improve Newsletter Content by template"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ### 2. Customize Survey questions
 
 Customize survey questions, emojis or smileys, however you like:
 
-image here
+<Image
+  src={NewsletterSurveyEditor}
+  alt="Edit Improve Newsletter Content template"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ### 3. Configure Survey Settings
 
 When you are done customizing your survey questions, navigate to the Settings tab and choose the type of survey you want - whether a link survey or an in-app survey. Ideally, you should pick a link survey:
 
-image here
+<Image
+  src={NewsletterSurveyType}
+  alt="Choose survey type"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 ### 4. Choose how you want to embed your survey
 
 After publishing your survey, a modal that prompts you to embed your survey will pop up.
 
-image here
+<Image
+  src={NewsletterSurveyEmbedPrompt}
+  alt="Embed newsletter survey"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
 Select the Embed Survey card and you will be directed to another modal, where the first embed option displayed will be to embed the survey in an email.
 
@@ -65,17 +90,21 @@ Select the Embed Survey card and you will be directed to another modal, where th
 
 Click the button with the “View Embed Code” text at the top right corner of the modal and simply paste the HTML code for your survey anywhere you want it in your newsletter. You can see the preview in the below image.
 
-image here
+<Image
+  src={NewsletterSurveyEmbedCode}
+  alt="Embed survey code"
+  quality="100"
+  className="rounded-lg max-w-full sm:max-w-3xl"
+/>
 
-### 6. You’re ready publish your survey!
+And you’re ready publish your survey!
 
-image here
 
 ## Learn about data prefilling 
 
 <Note>
   ## How does data prefilling work?
-  Learn about how data prefilling works with this survey in [this detailed guide](/blog/how-smart-writers-use-formbricks-open-source-tool-to-measure-the-quality-of-their-newsletter-content).
+  Learn about how link prefilling and user identification maximize your insights in [this detailed guide](/blog/how-smart-writers-use-formbricks-open-source-tool-to-measure-the-quality-of-their-newsletter-content).
 </Note>
 
 ### &nbsp;
