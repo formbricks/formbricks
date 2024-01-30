@@ -10,28 +10,29 @@ inputs:
     default: v18.x
 
 jobs:
-  using: "composite"
-  steps:
-    - name: Cache production build
-      uses: actions/cache@v3
-      id: cache-build
-      env:
-        cache-name: prod-build
-        key-1: ${{ inputs.node_version }}-${{ hashFiles('yarn.lock') }}
-        key-2: ${{ hashFiles('apps/**/**.[jt]s', 'apps/**/**.[jt]sx', 'packages/**/**.[jt]s', 'packages/**/**.[jt]sx', '!**/node_modules') }}
-        key-3: ${{ github.event.pull_request.number || github.ref }}
-      with:
-        path: |
-          ${{ github.workspace }}/apps/web/.next
-          **/.turbo/**
-          **/dist/**
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}-${{ env.key-3 }}
-    - run: |
-        pnpm install --config.platform=linux --config.architecture=x64
-        cp .env.example .env
-        SECRET=$(openssl rand -hex 32)
-        echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
-        pnpm build --filter=web...
+  build:
+    name: Cache Formbricks-web
+    steps:
+      - name: Cache production build
+        uses: actions/cache@v3
+        id: cache-build
+        env:
+          cache-name: prod-build
+          key-1: ${{ inputs.node_version }}-${{ hashFiles('yarn.lock') }}
+          key-2: ${{ hashFiles('apps/**/**.[jt]s', 'apps/**/**.[jt]sx', 'packages/**/**.[jt]s', 'packages/**/**.[jt]sx', '!**/node_modules') }}
+          key-3: ${{ github.event.pull_request.number || github.ref }}
+        with:
+          path: |
+            ${{ github.workspace }}/apps/web/.next
+            **/.turbo/**
+            **/dist/**
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}-${{ env.key-3 }}
+      - run: |
+          pnpm install --config.platform=linux --config.architecture=x64
+          cp .env.example .env
+          SECRET=$(openssl rand -hex 32)
+          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+          pnpm build --filter=web...
 
-      if: steps.cache-build.outputs.cache-hit != 'true'
-      shell: bash
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        shell: bash
