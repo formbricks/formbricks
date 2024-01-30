@@ -40,9 +40,11 @@ export default function WhenToSendCard({
   const [isAddEventModalOpen, setAddEventModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
+  const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
   const { isViewer } = getAccessFlags(membershipRole);
 
   const autoClose = localSurvey.autoClose !== null;
+  const delay = localSurvey.delay !== 0;
 
   const addTriggerEvent = useCallback(() => {
     const updatedSurvey = { ...localSurvey };
@@ -71,7 +73,7 @@ export default function WhenToSendCard({
     setLocalSurvey(updatedSurvey);
   };
 
-  const handleCheckMark = () => {
+  const handleAutoCloseToggle = () => {
     if (autoClose) {
       const updatedSurvey = { ...localSurvey, autoClose: null };
       setLocalSurvey(updatedSurvey);
@@ -79,6 +81,27 @@ export default function WhenToSendCard({
       const updatedSurvey = { ...localSurvey, autoClose: 10 };
       setLocalSurvey(updatedSurvey);
     }
+  };
+
+  const handleDelayToggle = () => {
+    if (delay) {
+      const updatedSurvey = { ...localSurvey, delay: 0 };
+      setLocalSurvey(updatedSurvey);
+    } else {
+      const updatedSurvey = { ...localSurvey, delay: 5 };
+      setLocalSurvey(updatedSurvey);
+    }
+  };
+
+  const handleDisplayPercentageToggle = () => {
+    if (localSurvey.displayPercentage) {
+      const updatedSurvey = { ...localSurvey, displayPercentage: null };
+      setLocalSurvey(updatedSurvey);
+    } else {
+      const updatedSurvey = { ...localSurvey, displayPercentage: 50 };
+      setLocalSurvey(updatedSurvey);
+    }
+    setRandomizerToggle(!randomizerToggle);
   };
 
   const handleInputSeconds = (e: any) => {
@@ -93,6 +116,11 @@ export default function WhenToSendCard({
   const handleTriggerDelay = (e: any) => {
     let value = parseInt(e.target.value);
     const updatedSurvey = { ...localSurvey, delay: value };
+    setLocalSurvey(updatedSurvey);
+  };
+
+  const handleRandomizerInput = (e) => {
+    const updatedSurvey = { ...localSurvey, displayPercentage: parseInt(e.target.value) };
     setLocalSurvey(updatedSurvey);
   };
 
@@ -156,8 +184,9 @@ export default function WhenToSendCard({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <Collapsible.CollapsibleContent className="">
-          <hr className="py-1 text-slate-600" />
+        <hr className="py-1 text-slate-600" />
+
+        <Collapsible.CollapsibleContent className="p-3">
           {!isAddEventModalOpen &&
             localSurvey.triggers?.map((triggerEventClass, idx) => (
               <div className="mt-2" key={idx}>
@@ -210,7 +239,14 @@ export default function WhenToSendCard({
             </Button>
           </div>
 
-          <div className="ml-2 flex items-center space-x-1 px-4 pb-4">
+          <div className="ml-2 flex items-center space-x-1 px-4 pb-4"></div>
+          <AdvancedOptionToggle
+            htmlId="delay"
+            isChecked={delay}
+            onToggle={handleDelayToggle}
+            title="Add delay before showing survey"
+            description="Wait a few seconds after the trigger before showing the survey"
+            childBorder={true}>
             <label
               htmlFor="triggerDelay"
               className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
@@ -229,12 +265,11 @@ export default function WhenToSendCard({
                 </p>
               </div>
             </label>
-          </div>
-
+          </AdvancedOptionToggle>
           <AdvancedOptionToggle
             htmlId="autoClose"
             isChecked={autoClose}
-            onToggle={handleCheckMark}
+            onToggle={handleAutoCloseToggle}
             title="Auto close on inactivity"
             description="Automatically close the survey if the user does not respond after certain number of seconds"
             childBorder={true}>
@@ -252,6 +287,30 @@ export default function WhenToSendCard({
                 seconds with no initial interaction.
               </p>
             </label>
+          </AdvancedOptionToggle>
+          <AdvancedOptionToggle
+            htmlId="randomizer"
+            isChecked={randomizerToggle}
+            onToggle={handleDisplayPercentageToggle}
+            title="Show survey to % of users"
+            description="Only display the survey to a subset of the users"
+            childBorder={true}>
+            <div className="w-full">
+              <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
+                <h3 className="mb-4 text-sm font-semibold text-slate-700">
+                  Show to {localSurvey.displayPercentage}% of targeted users
+                </h3>
+                <input
+                  id="small-range"
+                  type="range"
+                  min="1"
+                  max="100"
+                  value={localSurvey.displayPercentage ?? 50}
+                  onChange={handleRandomizerInput}
+                  className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 dark:bg-slate-700"
+                />
+              </div>
+            </div>
           </AdvancedOptionToggle>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

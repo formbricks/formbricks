@@ -13,6 +13,11 @@ const config = Config.getInstance();
 
 const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
 
+const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
+  const randomNum = Math.floor(Math.random() * 100) + 1;
+  return randomNum <= displayPercentage;
+};
+
 export const trackAction = async (
   name: string,
   properties: TJsActionInput["properties"] = {}
@@ -72,6 +77,14 @@ export const trackAction = async (
 
 export const triggerSurvey = async (actionName: string, activeSurveys: TSurvey[]): Promise<void> => {
   for (const survey of activeSurveys) {
+    // Check if the survey should be displayed based on displayPercentage
+    if (survey.displayPercentage) {
+      const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
+      if (!shouldDisplaySurvey) {
+        logger.debug("Survey display skipped based on displayPercentage.");
+        continue;
+      }
+    }
     for (const trigger of survey.triggers) {
       if (trigger === actionName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);

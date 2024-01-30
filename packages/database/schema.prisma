@@ -303,9 +303,10 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
-  verifyEmail    Json?
-  pin            String?
-  resultShareKey String? @unique
+  verifyEmail       Json?
+  pin               String?
+  resultShareKey    String? @unique
+  displayPercentage Int?
 
   @@index([environmentId])
 }
