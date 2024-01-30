@@ -213,6 +213,7 @@ export default function PreviewSurvey({
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
+                    isResponseSubmitted={true}
                   />
                 </Modal>
               ) : (
@@ -226,6 +227,7 @@ export default function PreviewSurvey({
                       onActiveQuestionChange={setActiveQuestionId}
                       onFileUpload={onFileUpload}
                       responseCount={42}
+                      isResponseSubmitted={true}
                     />
                   </div>
                 </div>
@@ -282,6 +284,7 @@ export default function PreviewSurvey({
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
+                  isResponseSubmitted={true}
                 />
               </Modal>
             ) : (
@@ -296,6 +299,7 @@ export default function PreviewSurvey({
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
                     responseCount={42}
+                    isResponseSubmitted={true}
                   />
                 </div>
               </MediaBackground>

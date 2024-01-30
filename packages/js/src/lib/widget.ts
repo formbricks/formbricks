@@ -51,7 +51,7 @@ export const renderWidget = async (survey: TSurvey) => {
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;
-
+  const isResponseSubmitted = surveyState.isResponseFinished();
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
   setTimeout(() => {
@@ -63,6 +63,7 @@ export const renderWidget = async (survey: TSurvey) => {
       darkOverlay,
       highlightBorderColor,
       placement,
+      isResponseSubmitted,
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
       },

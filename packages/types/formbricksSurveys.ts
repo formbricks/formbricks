@@ -18,6 +18,7 @@ export interface SurveyBaseProps {
   prefillResponseData?: TResponseData;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
+  isResponseSubmitted: boolean;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

@@ -210,6 +210,7 @@ export default function LinkSurvey({
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
           responseCount={responseCount}
+          isResponseSubmitted={surveyState.isResponseFinished()}
         />
       </ContentWrapper>
     </>

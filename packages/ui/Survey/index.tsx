@@ -25,6 +25,7 @@ interface SurveyProps {
   isRedirectDisabled?: boolean;
   responseCount?: number;
   supportEmail?: string | null;
+  isResponseSubmitted: boolean;
 }
 
 interface SurveyModalProps extends SurveyProps {
