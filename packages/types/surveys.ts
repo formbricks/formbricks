@@ -437,6 +437,7 @@ export const ZSurvey = z.object({
   verifyEmail: ZSurveyVerifyEmail.nullable(),
   pin: z.string().nullable().optional(),
   resultShareKey: z.string().nullable(),
+  displayPercentage: z.number().min(1).max(100).nullable(),
 });
 
 export const ZSurveyInput = z.object({
