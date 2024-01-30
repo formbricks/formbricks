@@ -9,7 +9,7 @@ inputs:
     required: false
     default: v18.x
 
-runs:
+jobs:
   using: "composite"
   steps:
     - name: Cache production build
