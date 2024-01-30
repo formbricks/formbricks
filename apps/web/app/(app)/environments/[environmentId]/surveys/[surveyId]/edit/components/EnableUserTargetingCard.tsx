@@ -1,10 +1,16 @@
+"use client";
+
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@formbricks/ui/Button";
 
 export default function EnableUserTargetingCard() {
+  const router = useRouter();
+  const params = useParams();
+
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,14 +35,24 @@ export default function EnableUserTargetingCard() {
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="min-w-full overflow-auto">
         <hr className="py-1 text-slate-600" />
+
         <div className="flex flex-col gap-2 p-6">
-          <p className="text-base">
-            User targeting is only available on paid plans. You can upgrade your plan to enable user
-            targeting.
+          <h3 className="text-xl font-medium leading-6 text-gray-900">Unlock Advanced User Targeting</h3>
+          <p className="mt-2 text-sm">
+            Take your user engagement to the next level with advanced targeting features. Utilize attributes,
+            actions, and devices to tailor your surveys with precision.
           </p>
-          <Button variant="darkCTA" size="sm" className="w-fit">
-            <span className="text-sm font-medium text-white">Enable User Targeting</span>
-          </Button>
+          <p className="mt-2 text-sm">
+            These features are exclusive to our paid plans, providing you with more control and insights to
+            drive your strategy forward.
+          </p>
+          <div className="mt-4">
+            <Button
+              variant="darkCTA"
+              onClick={() => router.push(`/environments/${params?.environmentId}/settings/billing`)}>
+              Enable User Targeting
+            </Button>
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
