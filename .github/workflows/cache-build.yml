@@ -4,11 +4,6 @@ on:
     branches:
       - shubham/for-1607-use-cache-in-e2e-docker-build
 
-inputs:
-  node_version:
-    required: false
-    default: v18.x
-
 jobs:
   build:
     name: Cache Formbricks-web
@@ -16,9 +11,10 @@ jobs:
       - name: Cache production build
         uses: actions/cache@v3
         id: cache-build
+        # Add node version in cache key later
         env:
           cache-name: prod-build
-          key-1: ${{ inputs.node_version }}-${{ hashFiles('yarn.lock') }}
+          key-1: ${{ hashFiles('yarn.lock') }}
           key-2: ${{ hashFiles('apps/**/**.[jt]s', 'apps/**/**.[jt]sx', 'packages/**/**.[jt]s', 'packages/**/**.[jt]sx', '!**/node_modules') }}
           key-3: ${{ github.event.pull_request.number || github.ref }}
         with:
