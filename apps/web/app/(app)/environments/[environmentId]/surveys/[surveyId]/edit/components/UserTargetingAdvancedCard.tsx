@@ -19,7 +19,7 @@ import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 
-interface WhoToSendCardProps {
+interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
@@ -28,14 +28,14 @@ interface WhoToSendCardProps {
   userSegments: TUserSegment[];
 }
 
-export default function WhoToSendCard({
+export default function UserTargetingAdvancedCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
   actionClasses: actionClassesProps,
   attributeClasses,
   userSegments,
-}: WhoToSendCardProps) {
+}: UserTargetingAdvancedCardProps) {
   const [open, setOpen] = useState(false);
   const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment ?? null);
 

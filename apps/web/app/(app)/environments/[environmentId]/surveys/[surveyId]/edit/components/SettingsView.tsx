@@ -1,4 +1,4 @@
-import EnableUserTargetingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/EnableUserTargetingCard";
+import UserTargetingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/UserTargetingCard";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -11,8 +11,8 @@ import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
 import StylingCard from "./StylingCard";
+import UserTargetingAdvancedCard from "./UserTargetingAdvancedCard";
 import WhenToSendCard from "./WhenToSendCard";
-import WhoToSendCard from "./WhoToSendCard";
 
 interface SettingsViewProps {
   environment: TEnvironment;
@@ -44,7 +44,7 @@ export default function SettingsView({
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
       {isUserTargetingAllowed ? (
-        <WhoToSendCard
+        <UserTargetingAdvancedCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
           environmentId={environment.id}
@@ -53,7 +53,7 @@ export default function SettingsView({
           userSegments={userSegments}
         />
       ) : (
-        <EnableUserTargetingCard />
+        <UserTargetingCard localSurvey={localSurvey} environmentId={environment.id} />
       )}
 
       <WhenToSendCard
