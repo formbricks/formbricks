@@ -1,17 +1,17 @@
 import AuthorBox from "@/components/shared/AuthorBox";
+import { Callout } from "@/components/shared/Callout";
 import LayoutMdx from "@/components/shared/LayoutMdx";
 import Image from "next/image";
-
-import YourSurveys from './your-surveys-formbricks.png'
-import NewsletterSurvey from './improve-newsletter-content-editor-formbricks.png'
-import NewsletterSurveyModal from './improve-newsletter-content-modal-formbricks.png'
-import NewsletterSurveyCode from './code-for-embedding-newsletter-survey-formbricks.png'
-import SurveyResponses from './survey-responses.png'
-
+import NewsletterSurveyCode from './code-for-embedding-newsletter-survey-formbricks.png';
+import Header from './header-newsletter-survey-content-open-source-kpi.webp';
+import NewsletterSurvey from './improve-newsletter-content-editor-formbricks.png';
+import NewsletterSurveyModal from './improve-newsletter-content-modal-formbricks.png';
+import SurveyResponses from './survey-responses.png';
+import YourSurveys from './your-surveys-formbricks.png';
 export const meta = {
-  title: "How Smart Writers Use Formbricks Open Source Tool To Measure The Quality Of Their Newsletter Content",
+  title: "How to measure the quality of your newsletter content with Formbricks",
   description:
-    "Newsletters boast the highest ROI in email marketing but grasping your audience's resonance is key. Formbricks steps in to empower you with tools to effortlessly measure your content quality and explore reader engagement in newsletters.",
+    "Newsletters boast the highest ROI in email marketing but grasping your audience's resonance is key. Formbricks steps in to empower you with tools to measure your content quality and explore reader engagement in newsletters.",
   date: "2024-01-24",
   publishedTime: "2024-01-24T12:00:00",
   authors: ["Olasunkanmi Balogun"],
@@ -19,7 +19,7 @@ export const meta = {
   tags: ["Improve Newsletter Content"],
 };
 
-{/* <Image src={Header} alt="Gather in app feedback for free with these 6 tools." className="w-full rounded-lg" /> */}
+<Image src={Header} alt="Gather in app feedback for free with these 6 tools." className="w-full rounded-lg" />
 
 <AuthorBox
   name="Olasunkanmi Balogun"
@@ -29,46 +29,39 @@ export const meta = {
   author={"Ola"}
 />
 
-Newsletters are a form of email marketing which has the highest ROI of all marketing channels. According to the [Omnisend blog,](https://www.omnisend.com/blog/email-marketing-roi/#:~:text=What's%20an%20average%20email%20marketing,%2440%20for%20every%20dollar%20spent.) for every dollar spent, you can get a return of $36 to $40.
+_Newsletters are a form of email marketing which has the highest ROI of all marketing channels. According to the research (source below), for every dollar spent you can get a return of $36 to $40._
 
-However, to take advantage of this, understanding how your audience resonates with your content plays a crucial role.
+You reap this sweet, juciy ROI if your content resonates with your audience. You can only manage what you measure, so here is a quick, free and easy way to measure the quality of your newsletter content.
 
-Smart writers acknowledge that if they are not aware of what their readers think about their newsletter content, they are not going to convert: a futile effort. Well, that’s where Formbricks comes in.
-
-After reading this article, you will have the tools they need to easily measure the quality of their content. We will further explore how you can leverage the Formbricks platform to gauge readers’ engagement and satisfaction with your newsletters.
+After this article, you have everything you need to easily measure the quality of your emails. We walk through you the setup, how to embed it in your email and what to do with the insights.
 
 Here’s what we’ll cover:
 
-1. **What is Formbricks?**
-2. **How to measure your newsletter quality with Formbricks**
-- How to create and embed surveys seamlessly in your newsletter with Formbricks.
-- Personalized responses: How data prefilling works for you
+1. **How link prefilling and user identification maximize your insights**
+2. **How to create the right survey with Formbricks**
+3. **Embeddung the survey in your email**
+4. **How to improve the analysis by identifying users**
+5. **How to enrich the response with hidden fields**
+6. **Auto-create surveys via API**
 
-3. **Conclusion**
+Toes are in the water, let’s dive deep 🏊
 
-Toes are in the water; let’s dive deep.
+<Callout title="What Is Formbricks" type="note">
+Formbricks is an experience management suite built on the **largest open source survey stack** worldwide. It’s easy to use and packs all integrations you'd need.
+When you communicate via email, Formbricks bridges the gap between you and your readers. It packs everything you need to measure how happy users are with your newsletter content.
+</Callout>
 
-## What Is Formbricks?
+## How link prefilling and user identification maximize your insights
 
-Formbricks is an experience management suite built on the largest open source survey stack worldwide. It’s easy to use and integrates with any web or desktop application.
+To effectively measure the quality of your newsletter, you need:
 
-If you are sending content through newsletters, Formbricks bridges the gap between you and your readers. It packs everything you need to measure how happy users are with your newsletter content.
-
-Read on to see how Formbricks helps you measure the quality of your newsletter content.
-
-## How To Measure Your Newsletter’s Quality With Formbricks
-
-Ideally, to effectively measure the quality of your newsletter, you need:
-
-- **Survey Embed:** To embed the survey into your email so it’s part of the newsletter.
+- **Survey Embed Code:** A code snippet to embed the survey in the email (provided by Formbricks)
 - **Link Prefilling**: So that if a reader clicks on one of the stars or smileys in your rating survey, the data is stored and the first question is skipped (more on this later).
-- **Dynamic user identification:** You can append the email of the reader dynamically to the survey to automatically create a personal profile for the reader. Hence, if this person provides any other feedback, it is gathered in the person's view.
+- **Dynamic User Identification:** You can append the email of the reader dynamically to the survey to automatically create a personal profile for the reader. Hence, if this person provides any other feedback in their customer lifetime, it is gathered in the person's view.
 
-Utilizing Formbricks, you don’t have to do all this by yourself. Starting in the next section, we’ll see how Formbricks streamlines these features for you.
+Let's see how to stack these features to get what you're looking for 🤓
 
-### How To Create And Embed Surveys Seamlessly In Your Newsletter With Formbricks
-
-In these five steps, we will see how this can be achieved easily with Formbicks.
+## How to create the right survey with Formbricks
 
 1. After signing up on the Formbricks platform, you’ll be navigated to your dashboard. To create a survey for your newsletter, select the **Growth** filter and choose the “**Improve Newsletter Content**” survey template.
 
@@ -78,7 +71,11 @@ In these five steps, we will see how this can be achieved easily with Formbicks.
   className="w-full rounded-lg"
 />
 
-2. You’ll be directed to a page that will be your canvas for customizing your survey questions. For your survey’s first question, you can display smileys, stars, or even numbers for your survey rating; in the image below, we used a smiley. You also have the flexibility to implement logic jumps for each survey question.
+2. You’ll be directed to a page that will be your canvas for customizing your survey questions. For your survey’s first question, you can display smileys, stars, or even numbers for your survey rating; in the image below, we used a smiley. 
+
+<Callout title="Dynamic Follow-up Questions with Logic Jumps" type="note">
+You want to ask different follow up questions based on the rating? No problem with Logic Jumps!
+</Callout>
 
 <Image
   src={NewsletterSurvey}
@@ -86,16 +83,19 @@ In these five steps, we will see how this can be achieved easily with Formbicks.
   className="w-full rounded-lg"
 />
 
-3. When you are done customizing your survey questions, navigate to the **Settings** tab and choose the type of survey you want - whether a link survey or an in-app survey. Ideally, you should pick a link survey.
+3. When you are done customizing your survey questions, navigate to the **Settings** tab and choose the type of survey you want. Here, you have to pick Link Survey.
 
 4. After configuring the survey settings however you like, click the **Publish** button on the top right corner of the page, and a modal should pop up once this is successful.
 
+
+## Embedding the survey in your email
 <Image
   src={NewsletterSurveyModal}
   alt="Formbricks newsletter survey modal"
   className="w-full rounded-lg"
 />
-Since you would traditionally want to embed this survey in your email, select the **Embed Survey** card. You will be directed to another modal, where the first embed option displayed will be to embed the survey in an email.
+
+Since you would traditionally want to embed this survey in your email, select the **Embed Survey** card. You will be directed to another window, where you'll find **Embed in Email**.
 
 <Image
   src={NewsletterSurveyCode}
@@ -105,17 +105,23 @@ Since you would traditionally want to embed this survey in your email, select th
 
 5. Finally, click the button with the “**View Embed Code**” text at the top right corner of the modal and simply copy the HTML code for your survey anywhere you want it in your newsletter. You can see the preview in the above image.
 
-So, how does this work under the hood? In the next section, we’ll see how Formbricks utilizes data prefilling technology to create personalized responses for you.
+So, how does this work under the hood? In the next section, we’ll see how Formbricks utilizes link prefilling to create personalized responses for you.
 
-### Personalized Responses: How Data Prefilling Works For You
+## How to improve the analysis by identifying users
 
-As your readers answer your survey, Formbricks uses the [data prefilling](https://formbricks.com/docs/link-surveys/data-prefilling) technology to prefill each of your users’ responses.
+Apart from the [data prefilling](https://formbricks.com/docs/link-surveys/data-prefilling) needed to store which rating a user clicked on in an email, we use Formbricks link identification.
 
-For example, if a reader named Johannes with the email address [johannes@formbricks.com](https://app.formbricks.com/s/clrgp68g2569g1225h3f5ayql?rating=5&userId=johannes@formbricks.com) gives your newsletter a rating of 5, he will be navigated to a special URL where he will be prompted to continue the other questions in the survey. The URL will look like this:
+Link identification lets you link a response to a person. Whenever you set a `userId` in the URL, the Formbricks backend will create a new person profile.
 
-[https://app.formbricks.com/s/clrgp68g2569g1225h3f5ayql?rating=5&userId=johannes@formbricks.com](https://app.formbricks.com/s/clrgp68g2569g1225h3f5ayql?rating=5&userId=johannes@formbricks.com)
+This is what the link looks like: 
 
-As you can see, the rating Johannes gave your survey has been prefilled in the URL along with his email address.
+`https://formbricks.com/s/clrgp68g2569g1225h3f5ayql?rating=5&userId=johannes@formbricks.com`
+
+### When do I need identified users?
+
+This is mostly useful if you know that you will collect more feedback from this one person. For example, if you run an in-app or website survey, you can also pass the userId to Formbricks and both responses will be attributed to the same user.
+
+This obiously also works for surveys sent to the same user over the customer lifetime.
 
 In your dashboard on Formbricks, here’s how it will look:
 
@@ -125,15 +131,35 @@ In your dashboard on Formbricks, here’s how it will look:
   className="w-full rounded-lg"
 />
 
+As Johannes completes the survey, you'll see a personalized, full response from him.
 
-From the image above, it neatly organizes this information. As Johannes completes the survey, you'll see a personalized, full response from him.
+## How to use Hidden Fields to attach more info to responses
 
-Also, depending on how technical you want to get, for each newsletter, you can create a new survey via the API. It's a clever way to get feedback tailored to each reader's experience.
+There might be more information you already have and want to use in the analysis of your survey results. A good way to facilitate that is using Hidden Fields.
+
+Hidden Fields - as you can tell from the name - do not appear in the survey flow. They can be filled via URL as follows:
+
+`?fieldId=Content`
+
+So for example: `?job=Founder`. Or combinbed with the rating and identification parameters:
+
+`https://formbricks.com/s/clrgp68g2569g1225h3f5ayql?rating=5&userId=johannes@formbricks.com&fieldId=Founder`
+
+As you see, the survey URL is powerful ally when it comes to getting the most out of your survey respondents 😎 
+
+<Callout title="Auto-create surveys via API" type="note">
+If you send out a lot of emails periodically, it might be worth creating your surveys automatically. Formbricks has an API for it!
+
+Going through that in detail would lead to far, but here is all the [documentation you need.](https://formbricks.com/docs/api/management/surveys#create-survey) We're also more than happy helping you set it up in our [Discord](https://formbricks.com/discord)
+</Callout>
 
 ## In Conclusion
 
 Understanding what resonates with your readers is the compass that points toward growth, and so far, we’ve seen how Formbricks can help you achieve this. Formbricks not only provides actionable insights but also serves as a bridge, closing the gap between your content and reader satisfaction.
 
 Formbricks is free and easy to get started with. All you have to do is [create an account](http://formbricks.com/) and you are good to go 🚀
+
+Source for ROI figure: 
+[Omnisend Blog](https://www.omnisend.com/blog/email-marketing-roi/#:~:text=What's%20an%20average%20email%20marketing,%2440%20for%20every%20dollar%20spent.) 
 
 export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
