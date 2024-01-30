@@ -173,9 +173,9 @@ export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
   });
 
   // send new user customer.io to customer.io
-  createCustomerIoCustomer(user);
-
-  return user;
+  createCustomerIoCustomer(user).catch(error => {
+    console.error("Error sending user to CustomerIO:", error);
+  });
 };
 
 // function to delete a user's user including teams
