@@ -1,0 +1,80 @@
+import Image from "next/image";
+
+import HomePage from "./home-page.webp";
+import SurveyQuestions from "./survey-questions.webp";
+import SurveySettings from "./survey-settings.webp";
+import SurveyResponseOptions from "./survey-response-options.webp";
+import SurveyPublished from "./survey-published.webp";
+
+export const metadata = {
+  title: "Formbricks Quickstart Guide: Link Surveys Made Easier & Faster",
+  description:
+    "Formbricks is the easiest way to create and manage link surveys. This quickstart guide will show you how to create your first link survey in under 5 minutes.",
+};
+
+#### Getting Started
+
+# Quickstart
+
+Link Surveys make it easy for your users to give you feedback. They are a great way to get feedback from your users, without interrupting their workflow. This quickstart guide will show you how to create your first link survey in under 5 minutes.
+
+## Create a free Formbricks Cloud account
+
+While you can [self-host](/docs/self-hosting/deployment) Formbricks, the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and click through the onboarding, until you’re here:
+
+<Image
+  src={HomePage}
+  alt="Choose a link survey template"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl "
+/>
+
+Choose one of the pre-created templates to get started. We’ll choose the **Product Market Fit** template for this quickstart guide.
+
+## Create your first survey
+
+On clicking the template, you’ll be forwarded to the survey editor. Here you can edit the survey questions and settings. For the sake of simplicity, we'll keep the questions as they are and move to the survey settings.
+
+<Image
+  src={SurveyQuestions}
+  alt="Survey Editor opens up in the Formbricks App"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+Click on the **Settings** tab to edit the survey settings.
+
+## (Optional) Configure your survey settings
+
+Configure the Response Options such as closing survey on a date or on based on number of responses, redirecting users to a URL after they complete the survey, protecting survey with a Pin, and many more options!
+
+<Image
+  src={SurveyResponseOptions}
+  alt="Survey response configuration for link survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+Configure the styling of your link survey such as background color, branding colors, progress bar visibility, etc.
+
+<Image
+  src={SurveySettings}
+  alt="UI & View configuration for link survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+## Publish your survey
+
+Once you’re happy with the survey settings, hit **Publish** and you’ll be forwarded to the Summary Page. This is where you’ll find the responses to this survey.
+
+<Image
+  src={SurveyPublished}
+  alt="Survey published successfully and received link to share with users"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+## Share your survey
+
+Congratulations! Your survey is now published and ready to be shared with your users. You can share the survey link via email, SMS, or any other channel.
