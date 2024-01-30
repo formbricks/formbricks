@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircleIcon, ExclamationCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -19,7 +19,7 @@ import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 
-interface WhoToSendCardProps {
+interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
@@ -28,14 +28,14 @@ interface WhoToSendCardProps {
   userSegments: TUserSegment[];
 }
 
-export default function WhoToSendCard({
+export default function UserTargetingAdvancedCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
   actionClasses: actionClassesProps,
   attributeClasses,
   userSegments,
-}: WhoToSendCardProps) {
+}: UserTargetingAdvancedCardProps) {
   const [open, setOpen] = useState(false);
   const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment ?? null);
 
@@ -138,16 +138,16 @@ export default function WhoToSendCard({
 
           <div className="flex flex-col gap-2 p-6">
             {!userSegment?.filters?.length && (
-              <div className="mb-4 flex w-full items-center gap-4 rounded-lg border border-amber-200 bg-amber-50 px-6 py-4 text-amber-800">
-                <ExclamationCircleIcon className="h-6 w-6 text-amber-500" />
+              <div className="mb-2 flex w-full items-center gap-4 rounded-lg border border-slate-200 bg-slate-50 px-5 py-3 text-slate-700">
+                <span className="text-2xl">🎯</span>
                 <div className="flex flex-col">
-                  <h3 className="text-base font-medium">Currently, all users are targeted.</h3>
-                  <p className="text-sm">Without a filter, all of your users can be surveyed.</p>
+                  <h3 className="text-sm font-medium">Currently, all users are targeted.</h3>
+                  <p className="text-xs">Without a filter, all of your users can be surveyed.</p>
                 </div>
               </div>
             )}
 
-            <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border-2 border-slate-300 bg-white p-4">
+            <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-white p-4">
               <SegmentAlreadyUsedModal
                 open={segmentUsedModalOpen}
                 setOpen={setSegmentUsedModalOpen}
@@ -322,18 +322,13 @@ export default function WhoToSendCard({
                     </div>
 
                     {isSegmentUsedInOtherSurveys && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="flex items-center gap-2"
-                        onClick={() => handleCloneSegment()}>
-                        <p className="text-sm">Clone & Edit Segment</p>
+                      <Button variant="secondary" size="sm" onClick={() => handleCloneSegment()}>
+                        Clone & Edit Segment
                       </Button>
                     )}
                     <Button
                       variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
                       size="sm"
-                      className="flex items-center gap-2"
                       onClick={() => {
                         if (isSegmentUsedInOtherSurveys) {
                           setSegmentUsedModalOpen(true);
@@ -342,9 +337,7 @@ export default function WhoToSendCard({
                           setSegmentEditorViewOnly(false);
                         }
                       }}>
-                      <p className="text-sm">
-                        {isSegmentUsedInOtherSurveys ? "Go to Segment View" : "Edit Segment"}
-                      </p>
+                      {isSegmentUsedInOtherSurveys ? "Go to Segment View" : "Edit Segment"}
                     </Button>
                   </div>
                 </div>
@@ -352,11 +345,7 @@ export default function WhoToSendCard({
             </div>
 
             <div className="mt-4 flex w-full gap-4">
-              <Button
-                variant="secondary"
-                size="sm"
-                className="flex items-center gap-2 text-sm"
-                onClick={() => setLoadSegmentModalOpen(true)}>
+              <Button variant="secondary" size="sm" onClick={() => setLoadSegmentModalOpen(true)}>
                 Load Segment
               </Button>
 

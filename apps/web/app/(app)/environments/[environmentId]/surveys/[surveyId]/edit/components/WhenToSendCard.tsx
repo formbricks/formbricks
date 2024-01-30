@@ -184,134 +184,136 @@ export default function WhenToSendCard({
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>
-        <hr className="py-1 text-slate-600" />
 
-        <Collapsible.CollapsibleContent className="p-3">
-          {!isAddEventModalOpen &&
-            localSurvey.triggers?.map((triggerEventClass, idx) => (
-              <div className="mt-2" key={idx}>
-                <div className="inline-flex items-center">
-                  <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
-                  <Select
-                    value={triggerEventClass}
-                    onValueChange={(actionClassName) => setTriggerEvent(idx, actionClassName)}>
-                    <SelectTrigger className="w-[240px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <button
-                        type="button"
-                        className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
-                        value="none"
-                        onClick={() => {
-                          setAddEventModalOpen(true);
-                          setActiveIndex(idx);
-                        }}>
-                        <PlusIcon className="mr-1 h-5 w-5" />
-                        Add Action
-                      </button>
-                      <SelectSeparator />
-                      {actionClasses.map((actionClass) => (
-                        <SelectItem
-                          value={actionClass.name}
-                          key={actionClass.name}
-                          title={actionClass.description ? actionClass.description : ""}>
-                          {actionClass.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="mx-2 text-sm">action is performed</p>
-                  <button type="button" onClick={() => removeTriggerEvent(idx)}>
-                    <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
-                  </button>
+        <Collapsible.CollapsibleContent>
+          <hr className="py-1 text-slate-600" />
+          <div className="p-3">
+            {!isAddEventModalOpen &&
+              localSurvey.triggers?.map((triggerEventClass, idx) => (
+                <div className="mt-2" key={idx}>
+                  <div className="inline-flex items-center">
+                    <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
+                    <Select
+                      value={triggerEventClass}
+                      onValueChange={(actionClassName) => setTriggerEvent(idx, actionClassName)}>
+                      <SelectTrigger className="w-[240px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <button
+                          type="button"
+                          className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
+                          value="none"
+                          onClick={() => {
+                            setAddEventModalOpen(true);
+                            setActiveIndex(idx);
+                          }}>
+                          <PlusIcon className="mr-1 h-5 w-5" />
+                          Add Action
+                        </button>
+                        <SelectSeparator />
+                        {actionClasses.map((actionClass) => (
+                          <SelectItem
+                            value={actionClass.name}
+                            key={actionClass.name}
+                            title={actionClass.description ? actionClass.description : ""}>
+                            {actionClass.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="mx-2 text-sm">action is performed</p>
+                    <button type="button" onClick={() => removeTriggerEvent(idx)}>
+                      <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          <div className="px-6 py-4">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                addTriggerEvent();
-              }}>
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Add condition
-            </Button>
-          </div>
+              ))}
+            <div className="px-6 py-4">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  addTriggerEvent();
+                }}>
+                <PlusIcon className="mr-2 h-4 w-4" />
+                Add condition
+              </Button>
+            </div>
 
-          <div className="ml-2 flex items-center space-x-1 px-4 pb-4"></div>
-          <AdvancedOptionToggle
-            htmlId="delay"
-            isChecked={delay}
-            onToggle={handleDelayToggle}
-            title="Add delay before showing survey"
-            description="Wait a few seconds after the trigger before showing the survey"
-            childBorder={true}>
-            <label
-              htmlFor="triggerDelay"
-              className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
-              <div className="">
+            <div className="ml-2 flex items-center space-x-1 px-4 pb-4"></div>
+            <AdvancedOptionToggle
+              htmlId="delay"
+              isChecked={delay}
+              onToggle={handleDelayToggle}
+              title="Add delay before showing survey"
+              description="Wait a few seconds after the trigger before showing the survey"
+              childBorder={true}>
+              <label
+                htmlFor="triggerDelay"
+                className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                <div className="">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Wait
+                    <Input
+                      type="number"
+                      min="0"
+                      id="triggerDelay"
+                      value={localSurvey.delay.toString()}
+                      onChange={(e) => handleTriggerDelay(e)}
+                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
+                    />
+                    seconds before showing the survey.
+                  </p>
+                </div>
+              </label>
+            </AdvancedOptionToggle>
+            <AdvancedOptionToggle
+              htmlId="autoClose"
+              isChecked={autoClose}
+              onToggle={handleAutoCloseToggle}
+              title="Auto close on inactivity"
+              description="Automatically close the survey if the user does not respond after certain number of seconds"
+              childBorder={true}>
+              <label htmlFor="autoCloseSeconds" className="cursor-pointer p-4">
                 <p className="text-sm font-semibold text-slate-700">
-                  Wait
+                  Automatically close survey after
                   <Input
                     type="number"
-                    min="0"
-                    id="triggerDelay"
-                    value={localSurvey.delay.toString()}
-                    onChange={(e) => handleTriggerDelay(e)}
-                    className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
+                    min="1"
+                    id="autoCloseSeconds"
+                    value={localSurvey.autoClose?.toString()}
+                    onChange={(e) => handleInputSeconds(e)}
+                    className="mx-2 inline w-16 bg-white text-center text-sm"
                   />
-                  seconds before showing the survey.
+                  seconds with no initial interaction.
                 </p>
+              </label>
+            </AdvancedOptionToggle>
+            <AdvancedOptionToggle
+              htmlId="randomizer"
+              isChecked={randomizerToggle}
+              onToggle={handleDisplayPercentageToggle}
+              title="Show survey to % of users"
+              description="Only display the survey to a subset of the users"
+              childBorder={true}>
+              <div className="w-full">
+                <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
+                  <h3 className="mb-4 text-sm font-semibold text-slate-700">
+                    Show to {localSurvey.displayPercentage}% of targeted users
+                  </h3>
+                  <input
+                    id="small-range"
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={localSurvey.displayPercentage ?? 50}
+                    onChange={handleRandomizerInput}
+                    className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 dark:bg-slate-700"
+                  />
+                </div>
               </div>
-            </label>
-          </AdvancedOptionToggle>
-          <AdvancedOptionToggle
-            htmlId="autoClose"
-            isChecked={autoClose}
-            onToggle={handleAutoCloseToggle}
-            title="Auto close on inactivity"
-            description="Automatically close the survey if the user does not respond after certain number of seconds"
-            childBorder={true}>
-            <label htmlFor="autoCloseSeconds" className="cursor-pointer p-4">
-              <p className="text-sm font-semibold text-slate-700">
-                Automatically close survey after
-                <Input
-                  type="number"
-                  min="1"
-                  id="autoCloseSeconds"
-                  value={localSurvey.autoClose?.toString()}
-                  onChange={(e) => handleInputSeconds(e)}
-                  className="mx-2 inline w-16 bg-white text-center text-sm"
-                />
-                seconds with no initial interaction.
-              </p>
-            </label>
-          </AdvancedOptionToggle>
-          <AdvancedOptionToggle
-            htmlId="randomizer"
-            isChecked={randomizerToggle}
-            onToggle={handleDisplayPercentageToggle}
-            title="Show survey to % of users"
-            description="Only display the survey to a subset of the users"
-            childBorder={true}>
-            <div className="w-full">
-              <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-                <h3 className="mb-4 text-sm font-semibold text-slate-700">
-                  Show to {localSurvey.displayPercentage}% of targeted users
-                </h3>
-                <input
-                  id="small-range"
-                  type="range"
-                  min="1"
-                  max="100"
-                  value={localSurvey.displayPercentage ?? 50}
-                  onChange={handleRandomizerInput}
-                  className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 dark:bg-slate-700"
-                />
-              </div>
-            </div>
-          </AdvancedOptionToggle>
+            </AdvancedOptionToggle>
+          </div>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
       <AddNoCodeActionModal
