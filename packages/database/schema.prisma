@@ -257,6 +257,8 @@ model Survey {
   type                SurveyType              @default(web)
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId       String
+  creator             User?                   @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdBy           String?
   status              SurveyStatus            @default(draft)
   /// @zod.custom(imports.ZSurveyWelcomeCard)
   /// [SurveyWelcomeCard]
@@ -563,6 +565,7 @@ model User {
   /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
+  surveys                   Survey[]
 
   @@index([email])
 }

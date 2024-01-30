@@ -2506,6 +2506,7 @@ export const minimalSurvey: TSurvey = {
   name: "Minimal Survey",
   type: "web",
   environmentId: "someEnvId1",
+  createdBy: null,
   status: "draft",
   attributeFilters: [],
   displayOption: "displayOnce",

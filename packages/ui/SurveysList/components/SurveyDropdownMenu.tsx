@@ -1,19 +1,14 @@
 "use client";
 
 import {
-  copyToOtherEnvironmentAction,
-  deleteSurveyAction,
-  duplicateSurveyAction,
-} from "@/app/(app)/environments/[environmentId]/actions";
-import {
   ArrowUpOnSquareStackIcon,
   DocumentDuplicateIcon,
-  EllipsisHorizontalIcon,
   EyeIcon,
   LinkIcon,
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
+import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -21,15 +16,17 @@ import toast from "react-hot-toast";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TSurvey } from "@formbricks/types/surveys";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+
+import { DeleteDialog } from "../../DeleteDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+} from "../../DropdownMenu";
+import LoadingSpinner from "../../LoadingSpinner";
+import { copyToOtherEnvironmentAction, deleteSurveyAction, duplicateSurveyAction } from "../actions";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -56,7 +53,7 @@ export default function SurveyDropDownMenu({
 
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
 
-  const handleDeleteSurvey = async (survey) => {
+  const handleDeleteSurvey = async (survey: TSurvey) => {
     setLoading(true);
     try {
       await deleteSurveyAction(survey.id);
@@ -69,7 +66,7 @@ export default function SurveyDropDownMenu({
     setLoading(false);
   };
 
-  const duplicateSurveyAndRefresh = async (surveyId) => {
+  const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
       await duplicateSurveyAction(environmentId, surveyId);
@@ -81,7 +78,7 @@ export default function SurveyDropDownMenu({
     setLoading(false);
   };
 
-  const copyToOtherEnvironment = async (surveyId) => {
+  const copyToOtherEnvironment = async (surveyId: string) => {
     setLoading(true);
     try {
       await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id);
@@ -107,9 +104,9 @@ export default function SurveyDropDownMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-          <div>
+          <div className="rounded-lg border p-2">
             <span className="sr-only">Open options</span>
-            <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
+            <MoreVertical className="h-5 w-5" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-40">
