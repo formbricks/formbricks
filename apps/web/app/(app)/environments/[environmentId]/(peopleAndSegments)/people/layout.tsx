@@ -17,14 +17,11 @@ export default async function PeopleLayout({ params, children }) {
   }
 
   const isUserTargetingAllowed = getUserTargetingPermission(team);
-  console.log("isUserTargetingAllowed", isUserTargetingAllowed);
   return (
     <>
-      <PeopleSegmentsTabs
-        activeId="people"
-        environmentId={params.environmentId}
-        isUserTargetingAllowed={isUserTargetingAllowed}
-      />
+      {isUserTargetingAllowed && (
+        <PeopleSegmentsTabs activeId="people" environmentId={params.environmentId} />
+      )}
       <ContentWrapper>{children}</ContentWrapper>
     </>
   );

@@ -7,11 +7,7 @@ interface PeopleSegmentsTabsProps {
   isUserTargetingAllowed?: boolean;
 }
 
-export default function PeopleSegmentsTabs({
-  activeId,
-  environmentId,
-  isUserTargetingAllowed = false,
-}: PeopleSegmentsTabsProps) {
+export default function PeopleSegmentsTabs({ activeId, environmentId }: PeopleSegmentsTabsProps) {
   let tabs = [
     {
       id: "people",
@@ -19,16 +15,12 @@ export default function PeopleSegmentsTabs({
       icon: <UserIcon />,
       href: `/environments/${environmentId}/people`,
     },
-    ...(isUserTargetingAllowed
-      ? [
-          {
-            id: "segments",
-            label: "Segments",
-            icon: <UserGroupIcon />,
-            href: `/environments/${environmentId}/segments`,
-          },
-        ]
-      : []),
+    {
+      id: "segments",
+      label: "Segments",
+      icon: <UserGroupIcon />,
+      href: `/environments/${environmentId}/segments`,
+    },
   ];
 
   return <SecondNavbar tabs={tabs} activeId={activeId} environmentId={environmentId} />;
