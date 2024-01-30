@@ -43,15 +43,12 @@ jobs:
       - name: Set up Depot CLI
         uses: depot/setup-action@v1
 
-      # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
-        if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
         with:
           cosign-release: "v2.1.1"
 
-      # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry
         uses: docker/login-action@v3 # v3.0.0
@@ -68,7 +65,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      # Build and push Docker image with Buildx (don't push on PR)
+      # Build and push Docker image with Buildx
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
@@ -81,8 +78,7 @@ jobs:
           context: .
           file: ./apps/web/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -122,7 +118,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: prod-webapp-container
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
