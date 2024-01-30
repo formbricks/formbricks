@@ -2,7 +2,6 @@
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
-import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -54,8 +53,9 @@ export default function SurveyEditor({
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
 
   useEffect(() => {
-    // no localSurvey, but survey exists
-    if (!localSurvey && survey) {
+    if (survey) {
+      if (localSurvey) return;
+
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
 
@@ -63,25 +63,7 @@ export default function SurveyEditor({
         setActiveQuestionId(survey.questions[0].id);
       }
     }
-
-    // if survey updates, we update the local survey
-    if (survey && localSurvey) {
-      // compare the local survey to the survey from the server
-      // if same, do nothing
-      // if different, update the local survey
-
-      if (!isEqual(localSurvey, survey)) {
-        const surveyClone = structuredClone(survey);
-        setLocalSurvey(surveyClone);
-
-        if (survey.questions.length > 0) {
-          setActiveQuestionId(survey.questions[0].id);
-        }
-      }
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [survey]);
+  }, [localSurvey, survey]);
 
   useEffect(() => {
     const listener = () => {
@@ -127,7 +109,7 @@ export default function SurveyEditor({
     }
 
     const createSegment = async () => {
-      await createUserSegmentAction({
+      const createdSegment = await createUserSegmentAction({
         title: "",
         description: "",
         environmentId: environment.id,
@@ -135,12 +117,17 @@ export default function SurveyEditor({
         filters: [],
         isPrivate: true,
       });
+
+      setLocalSurvey({
+        ...localSurvey,
+        userSegment: createdSegment,
+      });
     };
 
+    // console.log("localSurvey.userSegment?.id", localSurvey.userSegment?.id);
     if (!localSurvey.userSegment?.id) {
       try {
         createSegment();
-        router.refresh();
       } catch (err) {
         throw new Error("Error creating segment");
       }

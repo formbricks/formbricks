@@ -43,18 +43,21 @@ export default function SettingsView({
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
-      {!isUserTargetingAllowed ? (
-        <UserTargetingAdvancedCard
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          environmentId={environment.id}
-          attributeClasses={attributeClasses}
-          actionClasses={actionClasses}
-          userSegments={userSegments}
-        />
-      ) : (
-        <UserTargetingCard localSurvey={localSurvey} environmentId={environment.id} />
-      )}
+      {localSurvey.type === "web" ? (
+        !isUserTargetingAllowed ? (
+          <UserTargetingCard localSurvey={localSurvey} environmentId={environment.id} />
+        ) : (
+          <UserTargetingAdvancedCard
+            key={localSurvey.userSegment?.id}
+            localSurvey={localSurvey}
+            setLocalSurvey={setLocalSurvey}
+            environmentId={environment.id}
+            attributeClasses={attributeClasses}
+            actionClasses={actionClasses}
+            userSegments={userSegments}
+          />
+        )
+      ) : null}
 
       <WhenToSendCard
         localSurvey={localSurvey}

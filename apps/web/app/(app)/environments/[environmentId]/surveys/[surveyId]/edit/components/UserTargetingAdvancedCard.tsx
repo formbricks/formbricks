@@ -37,7 +37,7 @@ export default function UserTargetingAdvancedCard({
   userSegments,
 }: UserTargetingAdvancedCardProps) {
   const [open, setOpen] = useState(false);
-  const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment ?? null);
+  const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment);
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
