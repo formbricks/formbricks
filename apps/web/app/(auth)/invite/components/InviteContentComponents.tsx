@@ -21,7 +21,7 @@ export const NotLoggedInContent = ({ email, token, redirectUrl }) => {
       <Button variant="secondary" href={`/auth/signup?inviteToken=${token}&email=${email}`}>
         Create account
       </Button>
-      <Button variant="darkCTA" href={`/auth/login?callbackUrl=${redirectUrl}&email=${email}`}>
+      <Button variant="darkCTA" href={`${redirectUrl}&email=${email}`}>
         Login
       </Button>
     </ContentLayout>

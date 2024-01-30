@@ -6,6 +6,7 @@ import {
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
+  isWebAppRoute,
   loginRoute,
   shareUrlRoute,
   signupRoute,
@@ -18,6 +19,13 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
+
+  if (isWebAppRoute(request.nextUrl.pathname) && !token) {
+    return NextResponse.redirect(
+      WEBAPP_URL + "/auth/login?callbackUrl=" + WEBAPP_URL + request.nextUrl.pathname
+    );
+  }
+
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
   if (token && callbackUrl) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
@@ -63,6 +71,7 @@ export const config = {
     "/api/v1/js/actions",
     "/api/v1/client/storage",
     "/share/(.*)/:path",
-    "/auth/login",
+    "/environments/:path*",
+    "/api/auth/signout",
   ],
 };

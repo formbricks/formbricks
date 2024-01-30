@@ -24,14 +24,12 @@ type TSigninFormState = {
 };
 
 export const SigninForm = ({
-  webAppUrl,
   publicSignUpEnabled,
   passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
 }: {
-  webAppUrl: string;
   publicSignUpEnabled: boolean;
   passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
@@ -92,7 +90,7 @@ export const SigninForm = ({
   const formRef = useRef<HTMLFormElement>(null);
   const error = searchParams?.get("error");
   const callbackUrl = searchParams?.get("callbackUrl");
-  const inviteToken = callbackUrl ? new URL(webAppUrl + callbackUrl).searchParams.get("token") : null;
+  const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
 
   useEffect(() => {
     if (error) {

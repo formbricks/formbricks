@@ -504,7 +504,7 @@ export default function Navigation({
                       )}
                       <DropdownMenuItem
                         onClick={async () => {
-                          await signOut();
+                          await signOut({ callbackUrl: "/auth/login" });
                           await formbricksLogout();
                         }}>
                         <div className="flex h-full w-full items-center">
