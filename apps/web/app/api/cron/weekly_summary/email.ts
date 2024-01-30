@@ -176,7 +176,7 @@ const createReminderNotificationBody = (notificationData: NotificationResponse) 
     <p style="font-weight: bold; padding-top:1em;">Don’t let a week pass without learning about your users:</p>
 
     <a class="button" href="${WEBAPP_URL}/environments/${notificationData.environmentId}/surveys?utm_source=weekly&utm_medium=email&utm_content=SetupANewSurveyCTA">Setup a new survey</a>
-    
+
     <br/>
     <p style="padding-top:1em;">Need help finding the right survey for your product? Pick a 15-minute slot <a href="https://cal.com/johannes/15">in our CEOs calendar</a> or reply to this email :)</p>
     ${notificationFooter(notificationData.environmentId)}
