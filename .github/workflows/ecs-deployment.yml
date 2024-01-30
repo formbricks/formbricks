@@ -6,9 +6,9 @@ name: ECS
 # documentation.
 
 on:
-  pull_request:
-    types:
-      - closed
+  push:
+    branches:
+      - main
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
