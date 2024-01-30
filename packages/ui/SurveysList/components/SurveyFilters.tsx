@@ -146,25 +146,24 @@ export default function SurveyFilters({
       onClick={() => {
         setSortBy(option);
       }}>
-      <div className="flex h-full w-full items-center space-x-2 p-3 hover:bg-slate-700">
+      <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
         <span
-          className={`h-4 w-4 rounded-full border border-white ${sortBy === option ? "bg-brand-dark outline-brand-dark border-slate-900 outline" : ""}`}></span>
-        <p className="text-white">{option.label}</p>
+          className={`h-4 w-4 rounded-full border ${sortBy === option ? "bg-brand-dark outline-brand-dark border-slate-900 outline" : "border-white"}`}></span>
+        <p className="font-normal text-white">{option.label}</p>
       </div>
     </DropdownMenuItem>
   );
 
   const FilterDropdown = ({ title, options, selectedOptions, setSelectedOptions }: FilterDropdownProps) => {
+    const triggerClasses = `surveyFilterDropdown min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-none 
+    ${selectedOptions.length > 0 ? "bg-slate-900 text-white" : "hover:bg-slate-900"}`;
+
     return (
       <DropdownMenu>
-        <DropdownMenuTrigger
-          asChild
-          className={`surveyFilterDropdown cursor-pointer border border-slate-700 outline-none hover:bg-slate-900 ${selectedOptions.length > 0 ? "bg-slate-900 text-white" : ""}`}>
-          <div className="min-w-auto h-10 rounded-md border sm:flex sm:min-w-[7rem] sm:px-6">
-            <div className="hidden w-full items-center justify-between hover:text-white sm:flex">
-              <span className="text-sm">{title}</span>
-              <ChevronDownIcon className="ml-2 h-4 w-4" />
-            </div>
+        <DropdownMenuTrigger asChild className={triggerClasses}>
+          <div className="flex w-full items-center justify-between">
+            <span className="text-sm">{title}</span>
+            <ChevronDownIcon className="ml-2 h-4 w-4" />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="bg-slate-900">
@@ -173,12 +172,12 @@ export default function SurveyFilters({
               key={option.value}
               className="m-0 p-0"
               onClick={() => handleFilterChange(option.value, selectedOptions, setSelectedOptions)}>
-              <div className="flex h-full w-full space-x-2 p-3 hover:bg-slate-700">
+              <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
                 <Checkbox
                   checked={selectedOptions.includes(option.value)}
                   className={`bg-white ${selectedOptions.includes(option.value) ? "bg-brand-dark border-none" : ""}`}
                 />
-                <p className="text-white">{option.label}</p>
+                <p className="font-normal text-white">{option.label}</p>
               </div>
             </DropdownMenuItem>
           ))}
@@ -190,11 +189,11 @@ export default function SurveyFilters({
   return (
     <div className="flex justify-between">
       <div className="flex space-x-2">
-        <div className="flex h-10 items-center rounded-lg border border-slate-300 bg-white px-4">
+        <div className="flex h-8 items-center rounded-lg border border-slate-300 bg-white px-4">
           <Search className="h-4 w-4" />
           <input
             type="text"
-            className="border-none bg-transparent"
+            className="border-none bg-transparent placeholder:text-sm"
             placeholder="Search by survey name"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -228,14 +227,16 @@ export default function SurveyFilters({
         {(createdByFilter.length > 0 || statusFilters.length > 0 || typeFilters.length > 0) && (
           <Button
             variant="darkCTA"
+            size="sm"
             onClick={() => {
               setCreatedByFilter([]);
               setStatusFilters([]);
               setTypeFilters([]);
             }}
-            className="flex h-10  cursor-pointer items-center space-x-2">
-            <span> Clear Filters</span>
-            <X className="h-4 w-4" />
+            className="h-8"
+            EndIcon={X}
+            endIconClassName="h-4 w-4">
+            Clear Filters
           </Button>
         )}
       </div>
@@ -245,7 +246,7 @@ export default function SurveyFilters({
           tooltipContent={getToolTipContent("List")}
           className="bg-slate-900 text-white">
           <div
-            className={`flex  h-10 w-10  items-center justify-center  rounded-lg border  p-1 ${orientation === "list" ? "bg-slate-900 text-white" : "bg-white"}`}
+            className={`flex  h-8 w-8  items-center justify-center  rounded-lg border  p-1 ${orientation === "list" ? "bg-slate-900 text-white" : "bg-white"}`}
             onClick={() => setOrientation("list")}>
             <Equal className="h-5 w-5" />
           </div>
@@ -256,7 +257,7 @@ export default function SurveyFilters({
           tooltipContent={getToolTipContent("Grid")}
           className="bg-slate-900 text-white">
           <div
-            className={`flex h-10 w-10  items-center justify-center rounded-lg border  p-1 ${orientation === "grid" ? "bg-slate-900 text-white" : "bg-white"}`}
+            className={`flex h-8 w-8  items-center justify-center rounded-lg border  p-1 ${orientation === "grid" ? "bg-slate-900 text-white" : "bg-white"}`}
             onClick={() => setOrientation("grid")}>
             <Grid2X2 className="h-5 w-5" />
           </div>
@@ -266,7 +267,7 @@ export default function SurveyFilters({
           <DropdownMenuTrigger
             asChild
             className="surveyFilterDropdown h-full cursor-pointer border border-slate-700 outline-none hover:bg-slate-900">
-            <div className="min-w-auto h-10 rounded-md border sm:flex sm:min-w-[7rem] sm:px-6">
+            <div className="min-w-auto h-8 rounded-md border sm:flex sm:px-2">
               <div className="hidden w-full items-center justify-between hover:text-white sm:flex">
                 <span className="text-sm ">Sort by: {sortBy.label}</span>
                 <ChevronDownIcon className="ml-2 h-4 w-4" />

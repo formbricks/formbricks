@@ -1,5 +1,6 @@
 "use client";
 
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -35,9 +36,10 @@ export default function SurveysList({
         <h1 className="my-2 text-3xl font-bold text-slate-800">Surveys</h1>
         <Button
           href={`/environments/${environment.id}/surveys/templates`}
-          variant="primary"
-          className="text-md">
-          New survey +
+          variant="darkCTA"
+          size="lg"
+          EndIcon={PlusIcon}>
+          New survey
         </Button>
       </div>
       <SurveyFilters
@@ -51,7 +53,7 @@ export default function SurveysList({
         <div>
           {orientation === "list" && (
             <div className="flex flex-col space-y-4">
-              <div className="mt-4 flex w-full px-4">
+              <div className="mt-4 flex w-full px-4 text-sm text-slate-800">
                 <div className="w-[60%]">Name</div>
                 <div className="flex w-[40%] justify-between">
                   <div>Created at</div>
@@ -90,9 +92,9 @@ export default function SurveysList({
         </div>
       ) : (
         <div className="flex h-full flex-col items-center justify-center">
-          <span className="mb-4 h-24 w-24 rounded-full bg-slate-300 p-6 text-5xl">🤔</span>
+          <span className="mb-4 h-24 w-24 rounded-full bg-slate-100 p-6 text-5xl">🕵️</span>
 
-          <div className="text-xl">No surveys with matching filter found !</div>
+          <div className="text-slate-600">No surveys found</div>
         </div>
       )}
     </div>
