@@ -11,6 +11,9 @@ import z from "zod";
 
 import { cn } from "@formbricks/lib/cn";
 import {
+  convertMetricToText,
+  convertOperatorToText,
+  convertOperatorToTitle,
   toggleFilterConnector,
   updateActionClassIdInFilter,
   updateAttributeClassNameInFilter,
@@ -20,14 +23,8 @@ import {
   updateOperatorInFilter,
   updateSegmentIdInFilter,
 } from "@formbricks/lib/userSegment/utils";
-import {
-  convertMetricToText,
-  convertOperatorToText,
-  convertOperatorToTitle,
-} from "@formbricks/lib/userSegment/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TUserSegmentFilterValue } from "@formbricks/types/userSegment";
 import {
   ACTION_METRICS,
   ARITHMETIC_OPERATORS,
@@ -47,6 +44,7 @@ import {
   TUserSegmentConnector,
   TUserSegmentDeviceFilter,
   TUserSegmentFilter,
+  TUserSegmentFilterValue,
   TUserSegmentSegmentFilter,
 } from "@formbricks/types/userSegment";
 import {
@@ -145,11 +143,11 @@ const SegmentFilterItemContextMenu = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => onAddFilterBelow()}>add filter below</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAddFilterBelow()}>Add filter below</DropdownMenuItem>
 
-          <DropdownMenuItem onClick={() => onCreateGroup(filterId)}>create group</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onMoveFilter(filterId, "up")}>move up</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onMoveFilter(filterId, "down")}>move down</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onCreateGroup(filterId)}>Create group</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onMoveFilter(filterId, "up")}>Move up</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onMoveFilter(filterId, "down")}>Move down</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -279,7 +277,7 @@ const AttributeSegmentFilter = ({
         }}
         disabled={viewOnly}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
           <SelectValue hidden />
           <div className="flex items-center gap-1">
@@ -305,7 +303,7 @@ const AttributeSegmentFilter = ({
           updateOperatorInLocalSurvey(resource.id, operator);
         }}
         disabled={viewOnly}>
-        <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
+        <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
           <SelectValue className="hidden" />
           <p>{operatorText}</p>
         </SelectTrigger>
@@ -328,11 +326,13 @@ const AttributeSegmentFilter = ({
               if (viewOnly) return;
               checkValueAndUpdate(e);
             }}
-            className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
+            className={cn("w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
           />
 
           {valueError && (
-            <p className="absolute -bottom-1.5 right-1 bg-white text-xs text-red-500">{valueError}</p>
+            <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">
+              {valueError}
+            </p>
           )}
         </div>
       )}
@@ -449,7 +449,9 @@ const ActionSegmentFilter = ({
           updateActionClassIdInUserSegment(resource.id, value);
         }}
         disabled={viewOnly}>
-        <SelectTrigger className="w-auto items-center justify-center whitespace-nowrap capitalize" hideArrow>
+        <SelectTrigger
+          className="w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
+          hideArrow>
           <SelectValue />
           <div className="flex items-center gap-1">
             <MousePointerClick className="h-4 w-4 text-sm" />
@@ -470,7 +472,7 @@ const ActionSegmentFilter = ({
         }}
         disabled={viewOnly}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
           <SelectValue />
         </SelectTrigger>
@@ -488,7 +490,9 @@ const ActionSegmentFilter = ({
           updateOperatorInUserSegment(resource.id, operator);
         }}
         disabled={viewOnly}>
-        <SelectTrigger className="flex w-full max-w-[40px] items-center justify-center text-center" hideArrow>
+        <SelectTrigger
+          className="flex w-full max-w-[40px] items-center justify-center bg-white text-center"
+          hideArrow>
           <SelectValue />
           <p>{operatorText}</p>
         </SelectTrigger>
@@ -510,11 +514,11 @@ const ActionSegmentFilter = ({
             if (viewOnly) return;
             checkValueAndUpdate(e);
           }}
-          className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
+          className={cn("w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
         />
 
         {valueError && (
-          <p className="absolute -bottom-1.5 right-1 bg-white text-xs text-red-500">{valueError}</p>
+          <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">{valueError}</p>
         )}
       </div>
 
@@ -609,7 +613,7 @@ const UserSegmentFilter = ({
         }}
         disabled={viewOnly}>
         <SelectTrigger
-          className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
           <div className="flex items-center gap-1">
             <Users2Icon className="h-4 w-4 text-sm" />
@@ -688,7 +692,7 @@ const DeviceFilter = ({
         viewOnly={viewOnly}
       />
 
-      <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2">
+      <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2">
         <MonitorSmartphoneIcon className="h-4 w-4" />
         <p>Device</p>
       </div>
@@ -699,7 +703,9 @@ const DeviceFilter = ({
           updateOperatorInUserSegment(resource.id, operator);
         }}
         disabled={viewOnly}>
-        <SelectTrigger className="flex w-full max-w-[40px] items-center justify-center text-center" hideArrow>
+        <SelectTrigger
+          className="flex w-full max-w-[40px] items-center justify-center bg-white text-center"
+          hideArrow>
           <SelectValue />
           <p>{operatorText}</p>
         </SelectTrigger>
@@ -717,7 +723,7 @@ const DeviceFilter = ({
           updateValueInUserSegment(resource.id, value);
         }}
         disabled={viewOnly}>
-        <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
+        <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
           <SelectValue />
         </SelectTrigger>
 

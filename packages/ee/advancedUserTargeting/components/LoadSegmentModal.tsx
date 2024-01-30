@@ -118,7 +118,7 @@ const LoadSegmentModal = ({
       title="Load Segment">
       {step === "initial" && (
         <div>
-          <p className="text-slate-600">Loading a Segment overwrites all current filters.</p>
+          <p className="text-slate-600">Loading a segment overwrites all current filters. Are you sure?</p>
           <div className="mt-3 space-x-2 text-right">
             <Button
               variant="minimal"

@@ -125,7 +125,7 @@ const SegmentFilters = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg bg-white">
+    <div className="flex flex-col gap-4 rounded-lg">
       {group?.map((groupItem) => {
         const { connector, resource, id: groupId } = groupItem;
 

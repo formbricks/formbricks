@@ -1,7 +1,14 @@
 "use client";
 
-import { CheckCircleIcon, UserGroupIcon } from "@heroicons/react/24/solid";
+import {
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  PencilIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { HardDriveDownloadIcon, HardDriveUploadIcon } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -46,7 +53,7 @@ export default function UserTargetingAdvancedCard({
   const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.userSegment?.isPrivate);
   const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
-  const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(false);
+  const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
 
   const actionClasses = actionClassesProps.filter((actionClass) => {
     if (actionClass.type === "automatic") {
@@ -147,7 +154,7 @@ export default function UserTargetingAdvancedCard({
               </div>
             )}
 
-            <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-white p-4">
+            <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
               <SegmentAlreadyUsedModal
                 open={segmentUsedModalOpen}
                 setOpen={setSegmentUsedModalOpen}
@@ -168,7 +175,7 @@ export default function UserTargetingAdvancedCard({
                 />
               )}
 
-              {segmentEditorViewOnly && userSegment && (
+              {/*              {segmentEditorViewOnly && userSegment && (
                 <div className="opacity-60">
                   <SegmentFilters
                     key={userSegment.filters.toString()}
@@ -182,7 +189,7 @@ export default function UserTargetingAdvancedCard({
                     viewOnly={segmentEditorViewOnly}
                   />
                 </div>
-              )}
+              )} */}
 
               {isSegmentEditorOpen ? (
                 <div className="w-full">
@@ -197,8 +204,9 @@ export default function UserTargetingAdvancedCard({
                       </div>
                     ) : (
                       <div>
-                        <p className="text-sm font-semibold">Send survey to audience who match...</p>
-                        <p className="text-sm">Without a filter, all of your users can be surveyed.</p>
+                        <p className="text-sm font-semibold text-slate-800">
+                          Send survey to audience who match...
+                        </p>
                       </div>
                     )}
                   </div>
@@ -286,7 +294,7 @@ export default function UserTargetingAdvancedCard({
                       onDecline={() => {
                         setResetAllFiltersModalOpen(false);
                       }}
-                      confirmBtnLabel="Ok"
+                      confirmBtnLabel="Remove all filters"
                       onConfirm={() => {
                         const updatedUserSegment = structuredClone(userSegment);
                         if (updatedUserSegment?.filters) {
@@ -300,7 +308,7 @@ export default function UserTargetingAdvancedCard({
                   </>
                 </div>
               ) : (
-                <div className="flex flex-col gap-4 rounded-lg p-2">
+                <div className="flex flex-col gap-2 rounded-lg">
                   <div className="mb-2 flex items-center gap-6">
                     <UserGroupIcon className="h-6 w-6 text-slate-700" />
                     <div className="flex flex-col">
@@ -309,17 +317,36 @@ export default function UserTargetingAdvancedCard({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setSegmentEditorViewOnly(!segmentEditorViewOnly);
-                        }}>
-                        {segmentEditorViewOnly ? "Hide" : "View"} Filters
-                      </Button>
+                  {segmentEditorViewOnly && userSegment && (
+                    <div className="opacity-60">
+                      <SegmentFilters
+                        key={userSegment.filters.toString()}
+                        group={userSegment.filters}
+                        environmentId={environmentId}
+                        userSegment={userSegment}
+                        actionClasses={actionClasses}
+                        attributeClasses={attributeClasses}
+                        userSegments={userSegments}
+                        setUserSegment={setUserSegment}
+                        viewOnly={segmentEditorViewOnly}
+                      />
                     </div>
+                  )}
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setSegmentEditorViewOnly(!segmentEditorViewOnly);
+                      }}>
+                      {segmentEditorViewOnly ? "Hide" : "View"} Filters{" "}
+                      {segmentEditorViewOnly ? (
+                        <ChevronDownIcon className="ml-2 h-3 w-3" />
+                      ) : (
+                        <ChevronUpIcon className="ml-2 h-3 w-3" />
+                      )}
+                    </Button>
 
                     {isSegmentUsedInOtherSurveys && (
                       <Button variant="secondary" size="sm" onClick={() => handleCloneSegment()}>
@@ -338,6 +365,7 @@ export default function UserTargetingAdvancedCard({
                         }
                       }}>
                       {isSegmentUsedInOtherSurveys ? "Go to Segment View" : "Edit Segment"}
+                      <PencilIcon className="ml-2 h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -346,7 +374,7 @@ export default function UserTargetingAdvancedCard({
 
             <div className="mt-4 flex w-full gap-4">
               <Button variant="secondary" size="sm" onClick={() => setLoadSegmentModalOpen(true)}>
-                Load Segment
+                Load Segment <HardDriveUploadIcon className="ml-2 h-4 w-4" />
               </Button>
 
               {isSegmentEditorOpen && !!userSegment?.filters?.length && (
@@ -355,7 +383,7 @@ export default function UserTargetingAdvancedCard({
                   size="sm"
                   className="flex items-center gap-2"
                   onClick={() => setSaveAsNewSegmentModalOpen(true)}>
-                  <p className="text-sm">Save as new Segment</p>
+                  Save as new Segment <HardDriveDownloadIcon className="h-4 w-4" />
                 </Button>
               )}
             </div>
