@@ -44,7 +44,7 @@ export default function WhoToSendCard({
   const [resetAllFiltersModalOpen, setResetAllFiltersModalOpen] = useState(false);
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
   const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
-  const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(localSurvey.userSegment?.isPrivate);
+  const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.userSegment?.isPrivate);
   const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(false);
 
@@ -169,7 +169,7 @@ export default function WhoToSendCard({
               )}
 
               {segmentEditorViewOnly && userSegment && (
-                <div className="pointer-events-none opacity-60">
+                <div className="opacity-60">
                   <SegmentFilters
                     key={userSegment.filters.toString()}
                     group={userSegment.filters}
@@ -179,6 +179,7 @@ export default function WhoToSendCard({
                     attributeClasses={attributeClasses}
                     userSegments={userSegments}
                     setUserSegment={setUserSegment}
+                    viewOnly={segmentEditorViewOnly}
                   />
                 </div>
               )}
@@ -330,7 +331,7 @@ export default function WhoToSendCard({
                       </Button>
                     )}
                     <Button
-                      variant="minimal"
+                      variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
                       size="sm"
                       className="flex items-center gap-2"
                       onClick={() => {
@@ -341,7 +342,9 @@ export default function WhoToSendCard({
                           setSegmentEditorViewOnly(false);
                         }
                       }}>
-                      <p className="text-sm">Go to Segment View</p>
+                      <p className="text-sm">
+                        {isSegmentUsedInOtherSurveys ? "Go to Segment View" : "Edit Segment"}
+                      </p>
                     </Button>
                   </div>
                 </div>

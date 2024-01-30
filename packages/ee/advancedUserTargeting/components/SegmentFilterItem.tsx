@@ -73,6 +73,7 @@ type SegmentFilterItemProps = {
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
+  viewOnly?: boolean;
 };
 
 const SegmentFilterItemConnector = ({
@@ -80,11 +81,13 @@ const SegmentFilterItemConnector = ({
   userSegment,
   setUserSegment,
   filterId,
+  viewOnly,
 }: {
   connector: TUserSegmentConnector;
   userSegment: TUserSegment;
   setUserSegment: (userSegment: TUserSegment) => void;
   filterId: string;
+  viewOnly?: boolean;
 }) => {
   const updateLocalSurvey = (newConnector: TUserSegmentConnector) => {
     const updatedUserSegment = structuredClone(userSegment);
@@ -107,7 +110,12 @@ const SegmentFilterItemConnector = ({
 
   return (
     <div className="w-[40px]">
-      <span className={cn(!!connector && "cursor-pointer underline")} onClick={onConnectorChange}>
+      <span
+        className={cn(!!connector && "cursor-pointer underline", viewOnly && "cursor-not-allowed")}
+        onClick={() => {
+          if (viewOnly) return;
+          onConnectorChange();
+        }}>
         {!!connector ? connector : "Where"}
       </span>
     </div>
@@ -120,17 +128,19 @@ const SegmentFilterItemContextMenu = ({
   onCreateGroup,
   onDeleteFilter,
   onMoveFilter,
+  viewOnly,
 }: {
   filterId: string;
   onAddFilterBelow: () => void;
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
+  viewOnly?: boolean;
 }) => {
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger disabled={viewOnly}>
           <MoreVertical className="h-4 w-4" />
         </DropdownMenuTrigger>
 
@@ -143,8 +153,14 @@ const SegmentFilterItemContextMenu = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <button onClick={() => onDeleteFilter(filterId)} className="mr-4">
-        <Trash2 className="h-4 w-4 cursor-pointer"></Trash2>
+      <button
+        disabled={viewOnly}
+        onClick={() => {
+          if (viewOnly) return;
+          onDeleteFilter(filterId);
+        }}
+        className="mr-4">
+        <Trash2 className={cn("h-4 w-4 cursor-pointer", viewOnly && "cursor-not-allowed")}></Trash2>
       </button>
     </div>
   );
@@ -167,6 +183,7 @@ const AttributeSegmentFilter = ({
   userSegment,
   setUserSegment,
   attributeClasses,
+  viewOnly,
 }: TAttributeSegmentFilterProps) => {
   const { attributeClassName } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
@@ -252,13 +269,15 @@ const AttributeSegmentFilter = ({
         filterId={resource.id}
         setUserSegment={setUserSegment}
         userSegment={userSegment}
+        viewOnly={viewOnly}
       />
 
       <Select
         value={attributeClass}
         onValueChange={(value) => {
           updateAttributeClassNameInLocalSurvey(resource.id, value);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
           hideArrow>
@@ -284,7 +303,8 @@ const AttributeSegmentFilter = ({
         value={operatorText}
         onValueChange={(operator: TAttributeOperator) => {
           updateOperatorInLocalSurvey(resource.id, operator);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
           <SelectValue className="hidden" />
           <p>{operatorText}</p>
@@ -302,8 +322,12 @@ const AttributeSegmentFilter = ({
       {resource.qualifier.operator !== "isSet" && (
         <div className="relative flex flex-col gap-1">
           <Input
+            disabled={viewOnly}
             value={resource.value}
-            onChange={checkValueAndUpdate}
+            onChange={(e) => {
+              if (viewOnly) return;
+              checkValueAndUpdate(e);
+            }}
             className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
           />
 
@@ -319,6 +343,7 @@ const AttributeSegmentFilter = ({
         onCreateGroup={onCreateGroup}
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
+        viewOnly={viewOnly}
       />
     </div>
   );
@@ -340,6 +365,7 @@ const ActionSegmentFilter = ({
   onMoveFilter,
   updateValueInLocalSurvey,
   actionClasses,
+  viewOnly,
 }: TActionSegmentFilterProps) => {
   const { actionClassId } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
@@ -414,13 +440,15 @@ const ActionSegmentFilter = ({
         filterId={resource.id}
         userSegment={userSegment}
         setUserSegment={setUserSegment}
+        viewOnly={viewOnly}
       />
 
       <Select
         value={actionClass}
         onValueChange={(value) => {
           updateActionClassIdInUserSegment(resource.id, value);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger className="w-auto items-center justify-center whitespace-nowrap capitalize" hideArrow>
           <SelectValue />
           <div className="flex items-center gap-1">
@@ -439,7 +467,8 @@ const ActionSegmentFilter = ({
         value={qualifierMetric}
         onValueChange={(value: TActionMetric) => {
           updateActionMetricInLocalSurvey(resource.id, value);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
           hideArrow>
@@ -457,7 +486,8 @@ const ActionSegmentFilter = ({
         value={operatorText}
         onValueChange={(operator: TBaseOperator) => {
           updateOperatorInUserSegment(resource.id, operator);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger className="flex w-full max-w-[40px] items-center justify-center text-center" hideArrow>
           <SelectValue />
           <p>{operatorText}</p>
@@ -474,8 +504,12 @@ const ActionSegmentFilter = ({
 
       <div className="relative flex flex-col gap-1">
         <Input
+          disabled={viewOnly}
           value={resource.value}
-          onChange={checkValueAndUpdate}
+          onChange={(e) => {
+            if (viewOnly) return;
+            checkValueAndUpdate(e);
+          }}
           className={cn("w-auto", valueError && "border border-red-500 focus:border-red-500")}
         />
 
@@ -490,6 +524,7 @@ const ActionSegmentFilter = ({
         onCreateGroup={onCreateGroup}
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
+        viewOnly={viewOnly}
       />
     </div>
   );
@@ -509,6 +544,7 @@ const UserSegmentFilter = ({
   userSegment,
   userSegments,
   setUserSegment,
+  viewOnly,
 }: TUserSegmentFilterProps) => {
   const { userSegmentId } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
@@ -552,12 +588,14 @@ const UserSegmentFilter = ({
         filterId={resource.id}
         userSegment={userSegment}
         setUserSegment={setUserSegment}
+        viewOnly={viewOnly}
       />
 
       <div>
         <span
-          className="cursor-pointer underline"
+          className={cn("cursor-pointer underline", viewOnly && "cursor-not-allowed")}
           onClick={() => {
+            if (viewOnly) return;
             toggleSegmentOperator();
           }}>
           {operatorText}
@@ -568,7 +606,8 @@ const UserSegmentFilter = ({
         value={currentUserSegment?.id}
         onValueChange={(value) => {
           updateSegmentIdInUserSegment(resource.id, value);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap capitalize"
           hideArrow>
@@ -591,6 +630,7 @@ const UserSegmentFilter = ({
         onCreateGroup={onCreateGroup}
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
+        viewOnly={viewOnly}
       />
     </div>
   );
@@ -609,6 +649,7 @@ const DeviceFilter = ({
   resource,
   userSegment,
   setUserSegment,
+  viewOnly,
 }: TDeviceFilterProps) => {
   const { value } = resource;
 
@@ -644,6 +685,7 @@ const DeviceFilter = ({
         filterId={resource.id}
         userSegment={userSegment}
         setUserSegment={setUserSegment}
+        viewOnly={viewOnly}
       />
 
       <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2">
@@ -655,7 +697,8 @@ const DeviceFilter = ({
         value={operatorText}
         onValueChange={(operator: TDeviceOperator) => {
           updateOperatorInUserSegment(resource.id, operator);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger className="flex w-full max-w-[40px] items-center justify-center text-center" hideArrow>
           <SelectValue />
           <p>{operatorText}</p>
@@ -672,7 +715,8 @@ const DeviceFilter = ({
         value={value as "phone" | "desktop"}
         onValueChange={(value: "phone" | "desktop") => {
           updateValueInUserSegment(resource.id, value);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger className="flex w-auto items-center justify-center text-center" hideArrow>
           <SelectValue />
         </SelectTrigger>
@@ -693,6 +737,7 @@ const DeviceFilter = ({
         onCreateGroup={onCreateGroup}
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
+        viewOnly={viewOnly}
       />
     </div>
   );
@@ -711,6 +756,7 @@ const SegmentFilterItem = ({
   onCreateGroup,
   onDeleteFilter,
   onMoveFilter,
+  viewOnly,
 }: SegmentFilterItemProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const updateFilterValueInUserSegment = (filterId: string, newValue: string | number) => {
@@ -756,6 +802,7 @@ const SegmentFilterItem = ({
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             updateValueInLocalSurvey={updateFilterValueInUserSegment}
+            viewOnly={viewOnly}
           />
 
           <RenderFilterModal />
@@ -780,6 +827,7 @@ const SegmentFilterItem = ({
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             updateValueInLocalSurvey={updateFilterValueInUserSegment}
+            viewOnly={viewOnly}
           />
 
           <RenderFilterModal />
@@ -803,6 +851,7 @@ const SegmentFilterItem = ({
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
+            viewOnly={viewOnly}
           />
 
           <RenderFilterModal />
@@ -826,6 +875,7 @@ const SegmentFilterItem = ({
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
+            viewOnly={viewOnly}
           />
 
           <RenderFilterModal />

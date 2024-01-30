@@ -39,6 +39,7 @@ type TSegmentFilterProps = {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   setUserSegment: React.Dispatch<React.SetStateAction<TUserSegment>>;
+  viewOnly?: boolean;
 };
 
 const SegmentFilters = ({
@@ -49,6 +50,7 @@ const SegmentFilters = ({
   actionClasses,
   attributeClasses,
   userSegments,
+  viewOnly,
 }: TSegmentFilterProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
@@ -145,6 +147,7 @@ const SegmentFilters = ({
               onMoveFilter={(filterId: string, direction: "up" | "down") =>
                 handleMoveResource(filterId, direction)
               }
+              viewOnly={viewOnly}
             />
           );
         } else {
@@ -153,8 +156,15 @@ const SegmentFilters = ({
               <div className="flex items-start gap-2">
                 <div key={connector} className="w-auto">
                   <span
-                    className={cn(!!connector && "cursor-pointer underline", "text-sm")}
-                    onClick={() => onConnectorChange(groupId, connector)}>
+                    className={cn(
+                      !!connector && "cursor-pointer underline",
+                      "text-sm",
+                      viewOnly && "cursor-not-allowed"
+                    )}
+                    onClick={() => {
+                      if (viewOnly) return;
+                      onConnectorChange(groupId, connector);
+                    }}>
                     {!!connector ? connector : "Where"}
                   </span>
                 </div>
@@ -168,10 +178,18 @@ const SegmentFilters = ({
                     actionClasses={actionClasses}
                     attributeClasses={attributeClasses}
                     userSegments={userSegments}
+                    viewOnly={viewOnly}
                   />
 
                   <div className="mt-4">
-                    <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        if (viewOnly) return;
+                        setAddFilterModalOpen(true);
+                      }}
+                      disabled={viewOnly}>
                       Add filter
                     </Button>
                   </div>
@@ -195,7 +213,7 @@ const SegmentFilters = ({
 
                 <div className="flex items-center gap-2 p-4">
                   <DropdownMenu>
-                    <DropdownMenuTrigger>
+                    <DropdownMenuTrigger disabled={viewOnly}>
                       <MoreVertical className="h-4 w-4" />
                     </DropdownMenuTrigger>
 
@@ -208,22 +226,36 @@ const SegmentFilters = ({
                         Add filter below
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem onClick={() => handleCreateGroup(groupId)}>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          handleCreateGroup(groupId);
+                        }}>
                         Create group
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem onClick={() => handleMoveResource(groupId, "up")}>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          handleMoveResource(groupId, "up");
+                        }}>
                         Move up
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem onClick={() => handleMoveResource(groupId, "down")}>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (viewOnly) return;
+                          handleMoveResource(groupId, "down");
+                        }}>
                         Move down
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <button onClick={() => handleDeleteResource(groupId)}>
-                    <Trash2 className="h-4 w-4 cursor-pointer" />
+                  <button
+                    onClick={() => {
+                      if (viewOnly) return;
+                      handleDeleteResource(groupId);
+                    }}>
+                    <Trash2 className={cn("h-4 w-4 cursor-pointer", viewOnly && "cursor-not-allowed")} />
                   </button>
                 </div>
               </div>

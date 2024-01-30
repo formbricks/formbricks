@@ -79,6 +79,8 @@ export default function SurveyEditor({
         }
       }
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
   useEffect(() => {
@@ -104,16 +106,23 @@ export default function SurveyEditor({
     if (localSurvey?.questions?.length && localSurvey.questions.length > 0) {
       setActiveQuestionId(localSurvey.questions[0].id);
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type, survey?.questions]);
 
   useEffect(() => {
-    // do nothing if the user targeting is not allowed
+    // if the localSurvey object has not been populated yet, do nothing
+    if (!localSurvey) {
+      return;
+    }
+
+    // do nothing if user targeting is not allowed
     if (!isUserTargetingAllowed) {
       return;
     }
 
     // do nothing if its not an in-app survey
-    if (survey.type !== "web") {
+    if (localSurvey.type !== "web") {
       return;
     }
 
@@ -122,15 +131,13 @@ export default function SurveyEditor({
         title: "",
         description: "",
         environmentId: environment.id,
-        surveyId: survey.id,
+        surveyId: localSurvey.id,
         filters: [],
         isPrivate: true,
       });
     };
 
-    const { userSegment } = survey;
-
-    if (!userSegment?.id) {
+    if (!localSurvey.userSegment?.id) {
       try {
         createSegment();
         router.refresh();
@@ -138,9 +145,7 @@ export default function SurveyEditor({
         throw new Error("Error creating segment");
       }
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environment.id, survey]);
+  }, [environment.id, isUserTargetingAllowed, localSurvey, router]);
 
   if (!localSurvey) {
     return <Loading />;
