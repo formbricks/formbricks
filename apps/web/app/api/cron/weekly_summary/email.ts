@@ -161,10 +161,12 @@ const createSurveyFields = (surveyResponses: SurveyResponse[]) => {
 
 const notificationFooter = (environmentId: string) => {
   return `
-  <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
-  <p style="margin-top:0px;">The Formbricks Team 🤍</p>
-  <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;"><p><i>To halt Weekly Updates, <a href="${WEBAPP_URL}/auth/login?callbackUrl=/environments/${environmentId}/settings/notifications">please turn them off</a> in your settings 🙏</i></p></div>
- `;
+    <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
+    <p style="margin-top:0px;">The Formbricks Team 🤍</p>
+    <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;">
+      <p><i>To halt Weekly Updates, <a href="${WEBAPP_URL}/auth/login?callbackUrl=/environments/${environmentId}/settings/notifications">please turn them off</a> in your settings 🙏</i></p>
+    </div>
+  `;
 };
 
 const createReminderNotificationBody = (notificationData: NotificationResponse) => {
@@ -177,12 +179,7 @@ const createReminderNotificationBody = (notificationData: NotificationResponse) 
     
     <br/>
     <p style="padding-top:1em;">Need help finding the right survey for your product? Pick a 15-minute slot <a href="https://cal.com/johannes/15">in our CEOs calendar</a> or reply to this email :)</p>
-     
-   
-    <p style="margin-bottom:0px; padding-top:1em; font-weight:500">All the best,</p>
-    <p style="margin-top:0px;">The Formbricks Team</p>
-   
-    <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:99px; margin:1em; padding:0.01em 1.6em; text-align:center;"><p><i>To halt Weekly Updates, <a href="${WEBAPP_URL}/auth/login?callbackUrl=/environments/${notificationData.environmentId}/settings/notifications">please turn them off</a> in your settings 🙏</i></p></div>
+    ${notificationFooter(notificationData.environmentId)}
   `;
 };
 
