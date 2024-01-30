@@ -4,7 +4,6 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurvey } from "@formbricks/types/surveys";
 import {
   TActionMetric,
   TAllOperators,

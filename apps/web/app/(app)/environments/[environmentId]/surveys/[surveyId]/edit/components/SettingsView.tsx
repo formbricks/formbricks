@@ -43,7 +43,7 @@ export default function SettingsView({
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
-      {isUserTargetingAllowed ? (
+      {!isUserTargetingAllowed ? (
         <UserTargetingAdvancedCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
