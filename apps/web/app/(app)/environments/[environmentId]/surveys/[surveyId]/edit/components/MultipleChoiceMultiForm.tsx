@@ -78,7 +78,9 @@ export default function MultipleChoiceMultiForm({
     question.logic?.forEach((logic) => {
       let newL: string | string[] | undefined = logic.value;
       if (Array.isArray(logic.value)) {
-        newL = logic.value.map((value) => (value === oldLabel[selectedLanguage] ? newLabel : value));
+        newL = logic.value.map((value) =>
+          newLabel && value === oldLabel[selectedLanguage] ? newLabel : value
+        );
       } else {
         newL = logic.value === oldLabel[selectedLanguage] ? newLabel : logic.value;
       }

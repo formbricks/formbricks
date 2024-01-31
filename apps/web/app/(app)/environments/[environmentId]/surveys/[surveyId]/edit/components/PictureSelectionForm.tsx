@@ -3,7 +3,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { createI18nString, extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { cn } from "@formbricks/lib/cn";
 import { TI18nString, TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
