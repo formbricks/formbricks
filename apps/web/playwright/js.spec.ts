@@ -68,8 +68,7 @@ test.describe("JS Package Test", async () => {
   test("Admin checks Display", async ({ page }) => {
     await login(page, email, password);
 
-    await page.locator("li").filter({ hasText: "In-Product SurveyProduct" }).getByRole("link").click();
-
+    await page.getByRole("link", { name: "In-app Open options Product" }).click();
     (await page.waitForSelector("text=Responses")).isVisible();
 
     // Survey should have 1 Display
