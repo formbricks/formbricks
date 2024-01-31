@@ -15,7 +15,11 @@ export default async function Home() {
     redirect("/auth/login");
   }
 
-  if (!ONBOARDING_DISABLED && session?.user && !session?.user?.onboardingCompleted) {
+  if (!session?.user) {
+    return <ClientLogout />;
+  }
+
+  if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {
     return redirect(`/onboarding`);
   }
 
