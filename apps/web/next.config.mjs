@@ -106,6 +106,7 @@ const nextConfig = {
     INSTANCE_ID: createId(),
     INTERNAL_SECRET: createId(),
   },
+  basePath: '/form',
 };
 
 // set actions allowed origins
