@@ -4,7 +4,7 @@ import { ResponseErrorComponent } from "@/components/general/ResponseErrorCompon
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
 import { cn, getLocalizedValue } from "@/lib/utils";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
@@ -43,7 +43,15 @@ export function Survey({
   const [ttc, setTtc] = useState<TResponseTtc>({});
 
   const currentQuestionIndex = survey.questions.findIndex((q) => q.id === questionId);
-  const currentQuestion = survey.questions[currentQuestionIndex];
+  const currentQuestion = useMemo(() => {
+    if (questionId === "end" && !survey.thankYouCard.enabled) {
+      const newHistory = [...history];
+      const prevQuestionId = newHistory.pop();
+      return survey.questions.find((q) => q.id === prevQuestionId);
+    } else {
+      return survey.questions.find((q) => q.id === questionId);
+    }
+  }, [questionId, survey]);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !survey.styling?.hideProgressBar;
 
@@ -80,8 +88,8 @@ export function Survey({
     }
   });
 
-  let currIdx = currentQuestionIndex;
-  let currQues = currentQuestion;
+  let currIdxTemp = currentQuestionIndex;
+  let currQuesTemp = currentQuestion;
 
   function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
     const questions = survey.questions;
@@ -91,13 +99,13 @@ export function Survey({
       if (!isFromPrefilling) {
         return questions[0]?.id || "end";
       } else {
-        currIdx = 0;
-        currQues = questions[0];
+        currIdxTemp = 0;
+        currQuesTemp = questions[0];
       }
     }
-    if (currIdx === -1) throw new Error("Question not found");
-    if (currQues?.logic && currQues?.logic.length > 0) {
-      for (let logic of currQues.logic) {
+    if (currIdxTemp === -1) throw new Error("Question not found");
+    if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
+      for (let logic of currQuesTemp.logic) {
         if (!logic.destination) continue;
         if (
           currentQuestion.type === "multipleChoiceSingle" ||
@@ -123,7 +131,7 @@ export function Survey({
         }
       }
     }
-    return questions[currIdx + 1]?.id || "end";
+    return questions[currIdxTemp + 1]?.id || "end";
   }
 
   const onChange = (responseDataUpdate: TResponseData) => {
@@ -196,12 +204,13 @@ export function Survey({
       setHistory(newHistory);
     } else {
       // otherwise go back to previous question in array
-      prevQuestionId = survey.questions[currIdx - 1]?.id;
+      prevQuestionId = survey.questions[currIdxTemp - 1]?.id;
     }
     if (!prevQuestionId) throw new Error("Question not found");
     setQuestionId(prevQuestionId);
     onActiveQuestionChange(prevQuestionId);
   };
+
   function getCardContent() {
     if (showError) {
       return (
@@ -236,13 +245,12 @@ export function Survey({
         />
       );
     } else {
-      const currQues = survey.questions.find((q) => q.id === questionId);
       return (
-        currQues && (
+        currentQuestion && (
           <QuestionConditional
             surveyId={survey.id}
-            question={parseRecallInformation(currQues)}
-            value={responseData[currQues.id]}
+            question={parseRecallInformation(currentQuestion)}
+            value={responseData[currentQuestion.id]}
             onChange={onChange}
             onSubmit={onSubmit}
             onBack={onBack}
@@ -252,9 +260,9 @@ export function Survey({
             isFirstQuestion={
               history && prefillResponseData
                 ? history[history.length - 1] === survey.questions[0].id
-                : currQues.id === survey?.questions[0]?.id
+                : currentQuestion.id === survey?.questions[0]?.id
             }
-            isLastQuestion={currQues.id === survey.questions[survey.questions.length - 1].id}
+            isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
             language={language}
           />
         )

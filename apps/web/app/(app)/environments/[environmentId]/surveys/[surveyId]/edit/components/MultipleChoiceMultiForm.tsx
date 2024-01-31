@@ -233,6 +233,7 @@ export default function MultipleChoiceMultiForm({
                   id={`choice-${choiceIdx}`}
                   name={`choice-${choiceIdx}`}
                   localSurvey={localSurvey}
+                  placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                   questionIdx={questionIdx}
                   value={choice.label as TI18nString}
                   onBlur={() => {
@@ -256,6 +257,32 @@ export default function MultipleChoiceMultiForm({
                     )
                   }
                 />
+                {choice.id === "other" && (
+                  <LocalizedInput
+                    id="otherInputLabel"
+                    name="otherInputLabel"
+                    localSurvey={localSurvey}
+                    placeholder={
+                      getLocalizedValue(question.otherOptionPlaceholder, selectedLanguage) ?? "Please specify"
+                    }
+                    questionIdx={questionIdx}
+                    value={
+                      question.otherOptionPlaceholder ??
+                      createI18nString("Please specify", extractLanguageSymbols(languages))
+                    }
+                    languages={languages}
+                    updateChoice={updateChoice}
+                    selectedLanguage={selectedLanguage}
+                    setSelectedLanguage={setSelectedLanguage}
+                    isInvalid={
+                      isInvalid &&
+                      !isLabelValidForAllLanguages(
+                        question.choices[choiceIdx].label,
+                        extractLanguageSymbols(languages)
+                      )
+                    }
+                  />
+                )}
                 {question.choices && question.choices.length > 2 && (
                   <TrashIcon
                     className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

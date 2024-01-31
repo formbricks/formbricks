@@ -202,6 +202,7 @@ export const navigation: Array<NavGroup> = [
   {
     title: "Link Surveys",
     links: [
+      { title: "Quickstart", href: "/docs/link-surveys/quickstart" },
       { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
       { title: "Identify Users", href: "/docs/link-surveys/user-identification" },
       { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
@@ -218,6 +219,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
       { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
       { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
+      { title: "Improve Email Content", href: "/docs/best-practices/improve-email-content" },
     ],
   },
   {

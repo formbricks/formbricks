@@ -301,6 +301,7 @@ model Survey {
   verifyEmail       Json?
   pin               String?
   resultShareKey    String? @unique
+  displayPercentage Int?
 
   @@index([environmentId])
 }

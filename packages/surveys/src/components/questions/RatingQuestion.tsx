@@ -135,7 +135,9 @@ export default function RatingQuestion({
                     }}
                     className={cn(
                       "flex h-full w-full justify-center focus:outline-none",
-                      number <= hoveredNumber ? "text-amber-400" : "text-slate-300",
+                      number <= hoveredNumber || number <= (value as number)
+                        ? "text-amber-400"
+                        : "text-slate-300",
                       "hover:text-amber-400"
                     )}
                     onFocus={() => setHoveredNumber(number)}
