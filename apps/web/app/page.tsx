@@ -11,7 +11,7 @@ import ClientLogout from "@formbricks/ui/ClientLogout";
 export default async function Home() {
   const session: Session | null = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session || !session?.user) {
     redirect("/auth/login");
   }
 
