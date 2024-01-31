@@ -286,7 +286,7 @@ export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
   choices: z.array(ZSurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceSingleLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
-  otherOptionPlaceholder: z.string().optional(),
+  otherOptionPlaceholder: ZI18nObject.optional(),
 });
 
 export type TSurveyMultipleChoiceSingleQuestion = z.infer<typeof ZSurveyMultipleChoiceSingleQuestion>;
@@ -296,7 +296,7 @@ export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
   choices: z.array(ZSurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceMultiLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
-  otherOptionPlaceholder: z.string().optional(),
+  otherOptionPlaceholder: ZI18nObject.optional(),
 });
 
 export type TSurveyMultipleChoiceMultiQuestion = z.infer<typeof ZSurveyMultipleChoiceMultiQuestion>;

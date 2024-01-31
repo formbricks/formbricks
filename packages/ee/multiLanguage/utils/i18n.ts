@@ -103,6 +103,9 @@ export const translateQuestion = (question: TSurveyQuestion, languages?: string[
   if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
     (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
       question.choices.map((choice) => translateChoice(JSON.parse(JSON.stringify(choice)), languages));
+    (
+      clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion
+    ).otherOptionPlaceholder = createI18nString(question.otherOptionPlaceholder ?? "", languages);
   }
   if (question.type === "openText") {
     (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(
