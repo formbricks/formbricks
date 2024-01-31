@@ -11,11 +11,15 @@ import ClientLogout from "@formbricks/ui/ClientLogout";
 export default async function Home() {
   const session: Session | null = await getServerSession(authOptions);
 
-  if (!session || !session?.user) {
+  if (!session) {
     redirect("/auth/login");
   }
 
-  if (!ONBOARDING_DISABLED && session?.user && !session?.user?.onboardingCompleted) {
+  if (!session?.user) {
+    return <ClientLogout />;
+  }
+
+  if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {
     return redirect(`/onboarding`);
   }
 
