@@ -29,7 +29,7 @@ export default function SurveyCard({
 }: SurveyCardProps) {
   const isSurveyCreationDeletionDisabled = isViewer;
 
-  const surveyStatus = useMemo(() => {
+  const surveyStatusLabel = useMemo(() => {
     if (survey.status === "inProgress") return "Active";
     else if (survey.status === "completed") return "Completed";
     else if (survey.status === "draft") return "Draft";
@@ -53,7 +53,7 @@ export default function SurveyCard({
   }, [survey.status, survey.id, environment.id]);
 
   const SurveyTypeIndicator = ({ type }: { type: string }) => (
-    <div className="flex items-center space-x-2 text-slate-500">
+    <div className="flex items-center space-x-2 text-sm text-slate-600">
       {type === "web" ? (
         <>
           <Code className="h-4 w-4" />
@@ -88,16 +88,16 @@ export default function SurveyCard({
           />
         </div>
         <div>
-          <div className="text-xl font-medium text-slate-900">{survey.name}</div>
+          <div className="text-sm font-medium text-slate-900">{survey.name}</div>
           <div
             className={cn(
-              "mt-3 flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
-              surveyStatus === "Active" && "bg-emerald-50",
-              surveyStatus === "Completed" && "bg-slate-200",
-              surveyStatus === "Draft" && "bg-slate-100",
-              surveyStatus === "Paused" && "bg-slate-100"
+              "mt-3 flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-xs text-slate-800",
+              surveyStatusLabel === "Active" && "bg-emerald-50",
+              surveyStatusLabel === "Completed" && "bg-slate-200",
+              surveyStatusLabel === "Draft" && "bg-slate-100",
+              surveyStatusLabel === "Paused" && "bg-slate-100"
             )}>
-            <SurveyStatusIndicator status={survey.status} /> {surveyStatus}
+            <SurveyStatusIndicator status={survey.status} /> {surveyStatusLabel}
           </div>
         </div>
       </Link>
@@ -111,18 +111,18 @@ export default function SurveyCard({
         key={survey.id}
         className="relative grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4
     shadow-sm transition-all ease-in-out hover:scale-[101%]">
-        <div className="col-span-2 flex items-center justify-self-start overflow-hidden text-ellipsis whitespace-nowrap text-lg font-medium text-slate-900">
+        <div className="col-span-2 flex items-center justify-self-start overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium text-slate-900">
           {survey.name}
         </div>
         <div
           className={cn(
             "flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
-            surveyStatus === "Active" && "bg-emerald-50",
-            surveyStatus === "Completed" && "bg-slate-200",
-            surveyStatus === "Draft" && "bg-slate-100",
-            surveyStatus === "Paused" && "bg-slate-100"
+            surveyStatusLabel === "Active" && "bg-emerald-50",
+            surveyStatusLabel === "Completed" && "bg-slate-200",
+            surveyStatusLabel === "Draft" && "bg-slate-100",
+            surveyStatusLabel === "Paused" && "bg-slate-100"
           )}>
-          <SurveyStatusIndicator status={survey.status} /> {surveyStatus}{" "}
+          <SurveyStatusIndicator status={survey.status} /> {surveyStatusLabel}{" "}
         </div>
         <div className="flex justify-between">
           <SurveyTypeIndicator type={survey.type} />

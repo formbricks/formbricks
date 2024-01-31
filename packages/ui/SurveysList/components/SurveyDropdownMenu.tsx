@@ -107,7 +107,7 @@ export default function SurveyDropDownMenu({
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
           <div className="rounded-lg border p-2 hover:bg-slate-50">
             <span className="sr-only">Open options</span>
-            <MoreVertical className="h-5 w-5" aria-hidden="true" />
+            <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-40">

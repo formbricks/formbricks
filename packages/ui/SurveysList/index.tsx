@@ -6,7 +6,7 @@ import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import { Button } from "../Button";
+import { Button } from "../v2/Button";
 import SurveyCard from "./components/SurveyCard";
 import SurveyFilters from "./components/SurveyFilters";
 
@@ -36,7 +36,6 @@ export default function SurveysList({
         <Button
           href={`/environments/${environment.id}/surveys/templates`}
           variant="darkCTA"
-          size="lg"
           EndIcon={PlusIcon}>
           New survey
         </Button>
