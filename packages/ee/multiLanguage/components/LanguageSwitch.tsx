@@ -2,7 +2,7 @@
 
 import { ArrowUpRightIcon, ChevronDownIcon, ChevronUpIcon, LanguageIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TLanguages } from "@formbricks/types/product";
@@ -40,7 +40,7 @@ export default function LanguageSwitch({
   });
 
   const toggleLanguage = (language: string[]) => {
-    const languageCode = language[0]; // Assuming the first element is a unique language code
+    const languageCode = language[0];
     if (languagesArray.some((lang) => lang[0] === languageCode)) {
       const updateArray = languagesArray.filter((lang) => lang[0] !== languageCode);
       setLanguagesArray(updateArray);
@@ -51,6 +51,18 @@ export default function LanguageSwitch({
       setLanguages(convertArrayToObject(updateArray));
     }
   };
+
+  // if there is a change in languages belonging to a particular product, then accordingly update the currently selected languages
+  useEffect(() => {
+    let updatedLanguagesArray = languagesArray.filter((lang) =>
+      allLanguages.some((allLang) => allLang[0] === lang[0])
+    );
+
+    if (updatedLanguagesArray.length !== languagesArray.length) {
+      setLanguagesArray(updatedLanguagesArray);
+      setLanguages(convertArrayToObject(updatedLanguagesArray));
+    }
+  }, [allLanguages, languagesArray]);
 
   return (
     <div className="flex justify-end">

@@ -248,6 +248,8 @@ export default function ShareEmbedSurvey({
                       webAppUrl={webAppUrl}
                       generateNewSingleUseLink={generateNewSingleUseLink}
                       isSingleUseLinkSurvey={isSingleUseLinkSurvey}
+                      surveyLanguages={surveyLanguages}
+                      setLanguage={setLanguage}
                     />
                   ) : null}
                 </div>

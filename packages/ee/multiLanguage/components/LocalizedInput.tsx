@@ -54,7 +54,7 @@ const LocalizedInput = ({
     id === "buttonLabel" ||
     id === "placeholder" ||
     id === "backButtonLabel"
-      ? value.en?.trim() !== "" &&
+      ? value?.en?.trim() !== "" &&
         isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
         selectedLanguage === "en"

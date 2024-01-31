@@ -71,7 +71,7 @@ export default function NPSQuestionForm({
               className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
               onClick={() => {
                 setShowSubheader(false);
-                updateQuestion(questionIdx, { subheader: createI18nString("") });
+                updateQuestion(questionIdx, { subheader: undefined });
               }}
             />
           </div>
@@ -82,7 +82,13 @@ export default function NPSQuestionForm({
             variant="minimal"
             className="mt-3"
             type="button"
-            onClick={() => setShowSubheader(true)}>
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                subheader: createI18nString("", extractLanguageSymbols(languages)),
+              });
+              setShowSubheader(true);
+            }}>
+            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

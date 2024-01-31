@@ -38,7 +38,7 @@ export const LocalizedEditor = ({
   const hasi18n = value._i18n_;
   const isInComplete =
     id === "subheader"
-      ? value.en?.trim() !== "" &&
+      ? value?.en?.trim() !== "" &&
         isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
         selectedLanguage === "en"

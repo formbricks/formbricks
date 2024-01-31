@@ -95,11 +95,14 @@ export const translateThankYouCard = (
 export const translateQuestion = (question: TSurveyQuestion, languages?: string[]) => {
   // Clone the question to avoid mutating the original
   const clonedQuestion = JSON.parse(JSON.stringify(question));
-  // Translate headline and subheader
+
   clonedQuestion.headline = createI18nString(question.headline, languages);
-  clonedQuestion.subheader = createI18nString(question.subheader ?? "", languages);
+  clonedQuestion.subheader = clonedQuestion.subheader
+    ? createI18nString(question.subheader ?? "", languages)
+    : undefined;
   clonedQuestion.buttonLabel = createI18nString(question.buttonLabel ?? "", languages);
   clonedQuestion.backButtonLabel = createI18nString(question.backButtonLabel ?? "", languages);
+
   if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
     (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
       question.choices.map((choice) => translateChoice(JSON.parse(JSON.stringify(choice)), languages));
