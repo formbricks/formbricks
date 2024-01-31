@@ -23,7 +23,7 @@ export function LanguageIndicator({
     <div className="absolute right-2 top-2 z-50">
       <button
         type="button"
-        className="flex items-center justify-center rounded-lg bg-black p-1 px-2 text-xs text-white"
+        className="flex items-center justify-center rounded-full bg-slate-900 p-1 px-2 text-xs text-white hover:bg-slate-700"
         onClick={toggleDropdown}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
@@ -31,7 +31,7 @@ export function LanguageIndicator({
         <LanguageIcon className="ml-1 h-3 w-3" />
       </button>
       {showLanguageDropdown && (
-        <div className="absolute right-0 mt-1 space-y-2 rounded-lg bg-black p-2 text-xs text-white">
+        <div className="absolute right-0 mt-1 space-y-2 rounded-lg bg-slate-900 p-2 text-xs text-white hover:bg-slate-700">
           {languages.map(
             (language) =>
               language[0] !== selectedLanguage && (

@@ -125,6 +125,34 @@ export default function ShareEmbedSurvey({
                   {surveyUrl}
                 </div>
                 <div className="mt-2 flex items-center justify-center space-x-2">
+                  {surveyLanguages.length > 1 && (
+                    <div className="relative">
+                      {showLanguageSelect && (
+                        <div className="absolute left-0 right-0 top-12 rounded-lg border bg-slate-900 p-1 text-sm text-white">
+                          {surveyLanguages.map((language) => {
+                            return (
+                              <div
+                                className="rounded-md px-1 py-2 hover:cursor-pointer hover:bg-slate-700"
+                                onClick={() => {
+                                  setLanguage(language[0]);
+                                  setShowLanguageSelect(false);
+                                }}>
+                                {language[1]}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <Button
+                        variant="secondary"
+                        className=""
+                        title="Select Language"
+                        aria-label="Select Language"
+                        onClick={() => setShowLanguageSelect(!showLanguageSelect)}>
+                        <LanguageIcon className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  )}
                   <Button
                     variant="darkCTA"
                     className="inline"
@@ -137,37 +165,7 @@ export default function ShareEmbedSurvey({
                     EndIcon={DocumentDuplicateIcon}>
                     Copy Link
                   </Button>
-                  {surveyLanguages.length > 1 && (
-                    <div className="relative">
-                      {showLanguageSelect && (
-                        <div className="absolute left-0 right-0 top-12 rounded-lg border bg-slate-900 p-2 text-sm text-white">
-                          {surveyLanguages.map((language) => {
-                            return (
-                              <div
-                                className="rounded-lg p-2 px-4 hover:cursor-pointer hover:bg-slate-700"
-                                onClick={() => {
-                                  setLanguage(language[0]);
-                                  setShowLanguageSelect(false);
-                                }}>
-                                {language[1]}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <Button
-                        variant="darkCTA"
-                        className={cn(" rounded-lg border border-slate-200 bg-white ")}
-                        EndIcon={LanguageIcon}
-                        title="Select Language"
-                        aria-label="Select Language"
-                        endIconClassName="h-5 w-5 "
-                        onClick={() => setShowLanguageSelect(!showLanguageSelect)}
-                        target="_blank">
-                        Select Language
-                      </Button>
-                    </div>
-                  )}
+
                   {survey.singleUse?.enabled && (
                     <Button
                       variant="darkCTA"

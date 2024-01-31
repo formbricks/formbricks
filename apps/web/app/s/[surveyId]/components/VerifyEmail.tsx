@@ -8,16 +8,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-
-const StackedCardsContainer = ({ children }) => (
-  <div className="relative">
-    <div className="absolute -left-2 h-[93%] w-[98%] -rotate-6 rounded-xl border border-slate-200 bg-white opacity-40 backdrop-blur-lg"></div>
-    <div className="absolute -left-1 h-[93%] w-[98%] -rotate-3 rounded-xl border border-slate-200 bg-white opacity-70 backdrop-blur-md"></div>
-    <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white bg-opacity-70 p-16 backdrop-blur-lg">
-      {children}
-    </div>
-  </div>
-);
+import { StackedCardsContainer } from "@formbricks/ui/StackedCardsContainer";
 
 export default function VerifyEmail({
   survey,
