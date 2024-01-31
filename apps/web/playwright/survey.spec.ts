@@ -1,6 +1,5 @@
 import { surveys, users } from "@/playwright/utils/mock";
 import { expect, test } from "@playwright/test";
-import path from "path";
 
 import { signUpAndLogin, skipOnboarding } from "./utils/helper";
 
@@ -69,7 +68,7 @@ test.describe("Survey Create & Submit Response", async () => {
       .click();
     await page.getByRole("button", { name: "Rating" }).click();
     await page.getByLabel("Question").fill(surveys.createAndSubmit.ratingQuestion.question);
-    await page.getByLabel("Scale").fill(surveys.createAndSubmit.ratingQuestion.description);
+    await page.getByLabel("Description").fill(surveys.createAndSubmit.ratingQuestion.description);
     await page.getByPlaceholder("Not good").fill(surveys.createAndSubmit.ratingQuestion.lowLabel);
     await page.getByPlaceholder("Very satisfied").fill(surveys.createAndSubmit.ratingQuestion.highLabel);
 
@@ -135,7 +134,7 @@ test.describe("Survey Create & Submit Response", async () => {
       .filter({ hasText: /^Thank You CardShown$/ })
       .nth(1)
       .click();
-    await page.getByLabel("Headline").fill(surveys.createAndSubmit.thankYouCard.headline);
+    await page.getByLabel("Question").fill(surveys.createAndSubmit.thankYouCard.headline);
     await page.getByLabel("Description").fill(surveys.createAndSubmit.thankYouCard.description);
 
     // Save & Publish Survey
@@ -246,7 +245,11 @@ test.describe("Survey Create & Submit Response", async () => {
     await expect(
       page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
     ).toBeVisible();
-    await page.locator("input[type=file]").setInputFiles(path.join(__dirname, "survey.spec.ts"));
+    await page.locator("input[type=file]").setInputFiles({
+      name: "file.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("this is test"),
+    });
     await page.getByText("Uploading...").waitFor({ state: "hidden" });
 
     await page.getByRole("button", { name: "Finish" }).click();

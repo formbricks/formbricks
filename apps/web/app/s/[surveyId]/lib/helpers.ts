@@ -1,21 +1,26 @@
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 
-export const getEmailVerificationStatus = async (
+interface emailVerificationDetails {
+  status: "not-verified" | "verified" | "fishy";
+  email?: string;
+}
+
+export const getEmailVerificationDetails = async (
   surveyId: string,
   token: string
-): Promise<"verified" | "not-verified" | "fishy"> => {
+): Promise<emailVerificationDetails> => {
   if (!token) {
-    return "not-verified";
+    return { status: "not-verified" };
   } else {
     try {
-      const validateToken = await verifyTokenForLinkSurvey(token, surveyId);
-      if (validateToken) {
-        return "verified";
+      const verifiedEmail = await verifyTokenForLinkSurvey(token, surveyId);
+      if (verifiedEmail) {
+        return { status: "verified", email: verifiedEmail };
       } else {
-        return "fishy";
+        return { status: "fishy" };
       }
     } catch (error) {
-      return "not-verified";
+      return { status: "not-verified" };
     }
   }
 };

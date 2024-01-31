@@ -1,7 +1,7 @@
-import { LightBulbIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 import { Alert, AlertDescription } from "../Alert";
+import { Badge } from "../Badge";
 
 export const UpgradePlanNotice = ({
   message,
@@ -13,12 +13,14 @@ export const UpgradePlanNotice = ({
   textForUrl: string;
 }) => {
   return (
-    <Alert className="flex items-center">
-      <LightBulbIcon className="h-5 w-5 text-gray-500" />
-      <AlertDescription>
-        <span className="mr-2 text-sm text-gray-500">{message}</span>
+    <Alert className="mt-1.5 flex items-center bg-slate-50">
+      <Badge size="tiny" text="Pro" type="success" />
+      <AlertDescription className="ml-2">
+        <span className="mr-1 text-slate-600">{message}</span>
         <span className="underline">
-          <Link href={url}>{textForUrl}</Link>
+          <Link href={url} target="_blank">
+            {textForUrl}
+          </Link>
         </span>
       </AlertDescription>
     </Alert>

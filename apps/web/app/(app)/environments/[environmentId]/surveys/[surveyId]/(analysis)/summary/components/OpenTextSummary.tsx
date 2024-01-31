@@ -2,7 +2,7 @@ import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId
 import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
@@ -86,8 +86,9 @@ export default function OpenTextSummary({
         {displayCount < questionSummary.responses.length && (
           <div className="flex justify-center py-1">
             <button
+              type="button"
               onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
-              className="my-2 flex h-8 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+              className="my-2 flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700">
               Show more
             </button>
           </div>

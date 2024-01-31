@@ -184,8 +184,8 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
           "Response ID": response.id,
           Timestamp: response.createdAt,
           Finished: response.finished,
+          "User ID": response.person?.userId,
           "Survey ID": response.surveyId,
-          "Formbricks User ID": response.person?.id ?? "",
         };
         const metaDataKeys = extracMetadataKeys(response.meta);
         let metaData = {};
@@ -207,7 +207,19 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
             hiddenFieldResponse[hiddenFieldId] = response.data[hiddenFieldId] ?? "";
           });
         }
-        const fileResponse = { ...basicInfo, ...metaData, ...personAttributes, ...hiddenFieldResponse };
+        const tags = { Tags: response.tags.map((tag) => tag.name).join(", ") };
+        const notes = {
+          Notes: response.notes.map((note) => `${note.user.name}: ${note.text}`).join("\n"),
+        };
+
+        const fileResponse = {
+          ...basicInfo,
+          ...metaData,
+          ...personAttributes,
+          ...hiddenFieldResponse,
+          ...tags,
+          ...notes,
+        };
         // Map each question name to its corresponding answer
         questionNames.forEach((questionName: string) => {
           const matchingQuestion = response.responses.find((question) => question.question === questionName);
@@ -232,7 +244,9 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
         "Timestamp",
         "Finished",
         "Survey ID",
-        "Formbricks User ID",
+        "User ID",
+        "Notes",
+        "Tags",
         ...metaDataFields,
         ...questionNames,
         ...(hiddenFieldIds ?? []),
@@ -362,7 +376,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
               setIsFilterDropDownOpen(value);
             }}>
             <DropdownMenuTrigger>
-              <div className="flex h-auto min-w-[8rem] items-center justify-between rounded-md border bg-white p-3 sm:min-w-[11rem] sm:px-6 sm:py-3">
+              <div className="flex h-auto min-w-[8rem] items-center justify-between rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
                 <span className="text-sm text-slate-700">
                   {filterRange === FilterDropDownLabels.CUSTOM_RANGE
                     ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
@@ -419,7 +433,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
               setIsDownloadDropDownOpen(value);
             }}>
             <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
-              <div className="min-w-auto h-auto rounded-md border bg-white p-3 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
+              <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
                 <div className="hidden w-full items-center justify-between sm:flex">
                   <span className="text-sm text-slate-700">Download</span>
                   {isDownloadDropDownOpen ? (

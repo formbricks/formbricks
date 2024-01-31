@@ -82,6 +82,7 @@ export async function POST(request: Request) {
     if (!EMAIL_VERIFICATION_DISABLED) {
       await sendVerificationEmail(user);
     }
+
     return NextResponse.json(user);
   } catch (e) {
     if (e.code === "P2002") {
