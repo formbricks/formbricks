@@ -2,6 +2,7 @@
 import BaseLayoutManagement from "../../../components/layout/BaseLayoutManagement";
 import { ClockIcon, CalendarDaysIcon } from "@heroicons/react/24/solid";
 import { HiOutlineLocationMarker } from "react-icons/hi";
+import { BsHourglass } from "react-icons/bs";
 import withAuthentication from "../../../components/layout/WithAuthentication";
 import Loading from "../../../components/Loading";
 import MessagePage from "../../../components/MessagePage";
@@ -238,7 +239,7 @@ function NoCodeFormPublic() {
                         ) : numberOfAnsweredQuestions > 0 ? (
                           <EllipsisHorizontalCircleIcon className="text-orange-600 w-7 mr-2" />
                         ) : (
-                          <XCircleIcon className="text-red-800 w-7 mr-2" />
+                          <BsHourglass className="text-red-800 w-7 text-[1.25rem] mr-2" />
                         )}
                       </div>
                       <div
