@@ -99,9 +99,9 @@ export default function SurveyEditor({
     }
 
     // do nothing if user targeting is not allowed
-    if (!isUserTargetingAllowed) {
-      return;
-    }
+    // if (!isUserTargetingAllowed) {
+    //   return;
+    // }
 
     // do nothing if its not an in-app survey
     if (localSurvey.type !== "web") {
@@ -124,7 +124,6 @@ export default function SurveyEditor({
       });
     };
 
-    // console.log("localSurvey.userSegment?.id", localSurvey.userSegment?.id);
     if (!localSurvey.userSegment?.id) {
       try {
         createSegment();

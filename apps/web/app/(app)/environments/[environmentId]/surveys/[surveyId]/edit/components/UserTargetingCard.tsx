@@ -2,23 +2,54 @@
 
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import AddFilterModal from "@formbricks/ee/advancedUserTargeting/components/AddFilterModal";
+import SegmentFilters from "@formbricks/ee/advancedUserTargeting/components/SegmentFilters";
 import { cn } from "@formbricks/lib/cn";
+import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";
+import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
+import { Button } from "@formbricks/ui/Button";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 interface UserTargetingCardProps {
   localSurvey: TSurvey;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
+  attributeClasses: TAttributeClass[];
 }
 
-export default function UserTargetingCard({ localSurvey, environmentId }: UserTargetingCardProps) {
+export default function UserTargetingCard({
+  localSurvey,
+  setLocalSurvey,
+  environmentId,
+  attributeClasses,
+}: UserTargetingCardProps) {
+  const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment);
   const [open, setOpen] = useState(false);
+  const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
 
-  if (localSurvey.type === "link") {
-    return null; // Hide card completely
-  }
+  const handleAddFilterInGroup = (filter: TBaseFilter) => {
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment?.filters?.length === 0) {
+      updatedUserSegment.filters.push({
+        ...filter,
+        connector: null,
+      });
+    } else {
+      updatedUserSegment?.filters.push(filter);
+    }
+
+    setUserSegment(updatedUserSegment);
+  };
+
+  useEffect(() => {
+    setLocalSurvey((localSurveyOld) => ({
+      ...localSurveyOld,
+      userSegment,
+    }));
+  }, [setLocalSurvey, userSegment]);
 
   return (
     <Collapsible.Root
@@ -43,16 +74,63 @@ export default function UserTargetingCard({ localSurvey, environmentId }: UserTa
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
-        <div className="p-3">
-          <div className="flex flex-col items-center justify-center rounded-md border border-slate-200 p-6 text-slate-700">
-            Placeholder for basic editor
+        <div className="flex flex-col gap-2 px-6 pt-6">
+          {!userSegment?.filters?.length && (
+            <div className="mb-2 flex w-full items-center gap-4 rounded-lg border border-slate-200 bg-slate-50 px-5 py-3 text-slate-700">
+              <span className="text-2xl">🎯</span>
+              <div className="flex flex-col">
+                <h3 className="text-sm font-medium">Currently, all users are targeted.</h3>
+                <p className="text-xs">Without a filter, all of your users can be surveyed.</p>
+              </div>
+            </div>
+          )}
+
+          <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
+            <div className="flex w-full flex-col gap-2">
+              <p className="text-sm font-semibold text-slate-800">Send survey to audience who match...</p>
+              {!!userSegment?.filters?.length && (
+                <div className="w-full">
+                  <SegmentFilters
+                    key={userSegment.filters.toString()}
+                    group={userSegment.filters}
+                    environmentId={environmentId}
+                    userSegment={userSegment}
+                    setUserSegment={setUserSegment}
+                    actionClasses={[]}
+                    attributeClasses={attributeClasses}
+                    userSegments={[]}
+                    isAdvancedUserTargetingAllowed={false}
+                  />
+                </div>
+              )}
+
+              <div className="mt-4 flex items-center gap-4">
+                <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
+                  Add filter
+                </Button>
+              </div>
+            </div>
           </div>
+        </div>
+        <div className="px-6 py-3">
           <UpgradePlanNotice
             message="For advanced user targeting,"
             url={`/environments/${environmentId}/settings/billing`}
             textForUrl="please use Pro (free to get started)."
           />
         </div>
+
+        <AddFilterModal
+          onAddFilter={(filter) => {
+            handleAddFilterInGroup(filter);
+          }}
+          open={addFilterModalOpen}
+          setOpen={setAddFilterModalOpen}
+          actionClasses={[]}
+          attributeClasses={attributeClasses}
+          userSegments={[]}
+          isAdvancedTargetingAllowed={false}
+        />
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
   );

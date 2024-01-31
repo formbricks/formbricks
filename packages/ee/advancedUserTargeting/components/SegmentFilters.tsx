@@ -6,7 +6,6 @@ import {
   addFilterBelow,
   addFilterInGroup,
   createGroupFromResource,
-  deleteEmptyGroups,
   deleteResource,
   isResourceFilter,
   moveResource,
@@ -29,7 +28,7 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 
 import AddFilterModal from "./AddFilterModal";
-import SegmentFilterItem from "./SegmentFilterItem";
+import SegmentFilter from "./SegmentFilter";
 
 type TSegmentFilterProps = {
   group: TBaseFilters;
@@ -40,6 +39,7 @@ type TSegmentFilterProps = {
   attributeClasses: TAttributeClass[];
   setUserSegment: React.Dispatch<React.SetStateAction<TUserSegment>>;
   viewOnly?: boolean;
+  isAdvancedUserTargetingAllowed?: boolean;
 };
 
 const SegmentFilters = ({
@@ -50,7 +50,8 @@ const SegmentFilters = ({
   actionClasses,
   attributeClasses,
   userSegments,
-  viewOnly,
+  viewOnly = false,
+  isAdvancedUserTargetingAllowed = false,
 }: TSegmentFilterProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
@@ -88,9 +89,6 @@ const SegmentFilters = ({
 
     if (localSegmentCopy.filters) {
       deleteResource(localSegmentCopy.filters, resourceId);
-
-      // check if there are any empty groups and delete them
-      deleteEmptyGroups(localSegmentCopy.filters);
     }
 
     setUserSegment(localSegmentCopy);
@@ -131,7 +129,7 @@ const SegmentFilters = ({
 
         if (isResourceFilter(resource)) {
           return (
-            <SegmentFilterItem
+            <SegmentFilter
               key={groupId}
               connector={connector}
               resource={resource}
@@ -148,6 +146,7 @@ const SegmentFilters = ({
                 handleMoveResource(filterId, direction)
               }
               viewOnly={viewOnly}
+              isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
             />
           );
         } else {
@@ -179,20 +178,23 @@ const SegmentFilters = ({
                     attributeClasses={attributeClasses}
                     userSegments={userSegments}
                     viewOnly={viewOnly}
+                    isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
                   />
 
-                  <div className="mt-4">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        if (viewOnly) return;
-                        setAddFilterModalOpen(true);
-                      }}
-                      disabled={viewOnly}>
-                      Add filter
-                    </Button>
-                  </div>
+                  {isAdvancedUserTargetingAllowed && (
+                    <div className="mt-4">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          if (viewOnly) return;
+                          setAddFilterModalOpen(true);
+                        }}
+                        disabled={viewOnly}>
+                        Add filter
+                      </Button>
+                    </div>
+                  )}
 
                   <AddFilterModal
                     open={addFilterModalOpen}
@@ -208,56 +210,62 @@ const SegmentFilters = ({
                     actionClasses={actionClasses}
                     attributeClasses={attributeClasses}
                     userSegments={userSegments}
+                    isAdvancedTargetingAllowed={isAdvancedUserTargetingAllowed}
                   />
                 </div>
 
-                <div className="flex items-center gap-2 p-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger disabled={viewOnly}>
-                      <MoreVertical className="h-4 w-4" />
-                    </DropdownMenuTrigger>
+                {isAdvancedUserTargetingAllowed && (
+                  <div className="flex items-center gap-2 p-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger disabled={viewOnly}>
+                        <MoreVertical className="h-4 w-4" />
+                      </DropdownMenuTrigger>
 
-                    <DropdownMenuContent>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setAddFilterModalOpenedFromBelow(true);
-                          setAddFilterModalOpen(true);
-                        }}>
-                        Add filter below
-                      </DropdownMenuItem>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setAddFilterModalOpenedFromBelow(true);
+                            setAddFilterModalOpen(true);
+                          }}>
+                          Add filter below
+                        </DropdownMenuItem>
 
-                      <DropdownMenuItem
-                        onClick={() => {
-                          handleCreateGroup(groupId);
-                        }}>
-                        Create group
-                      </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            handleCreateGroup(groupId);
+                          }}>
+                          Create group
+                        </DropdownMenuItem>
 
-                      <DropdownMenuItem
-                        onClick={() => {
-                          handleMoveResource(groupId, "up");
-                        }}>
-                        Move up
-                      </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            handleMoveResource(groupId, "up");
+                          }}>
+                          Move up
+                        </DropdownMenuItem>
 
-                      <DropdownMenuItem
-                        onClick={() => {
-                          if (viewOnly) return;
-                          handleMoveResource(groupId, "down");
-                        }}>
-                        Move down
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (viewOnly) return;
+                            handleMoveResource(groupId, "down");
+                          }}>
+                          Move down
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
-                  <button
-                    onClick={() => {
-                      if (viewOnly) return;
-                      handleDeleteResource(groupId);
-                    }}>
-                    <Trash2 className={cn("h-4 w-4 cursor-pointer", viewOnly && "cursor-not-allowed")} />
-                  </button>
-                </div>
+                    <Button
+                      variant="minimal"
+                      className="p-0"
+                      disabled={viewOnly}
+                      onClick={() => {
+                        if (viewOnly) return;
+                        handleDeleteResource(groupId);
+                      }}>
+                      <Trash2 className={cn("h-4 w-4 cursor-pointer", viewOnly && "cursor-not-allowed")} />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           );

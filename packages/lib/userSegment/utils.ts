@@ -153,21 +153,21 @@ export const createGroupFromResource = (group: TBaseFilters, resourceId: string)
       if (group[i].id === resourceId) {
         // make an outer group, wrap the current group in it and add a filter below it
 
-        const newFilter: TBaseFilter = {
-          id: createId(),
-          connector: "and",
-          resource: {
-            id: createId(),
-            root: { type: "attribute", attributeClassName: "" },
-            qualifier: { operator: "endsWith" },
-            value: "",
-          },
-        };
+        // const newFilter: TBaseFilter = {
+        //   id: createId(),
+        //   connector: "and",
+        //   resource: {
+        //     id: createId(),
+        //     root: { type: "attribute", attributeClassName: "" },
+        //     qualifier: { operator: "endsWith" },
+        //     value: "",
+        //   },
+        // };
 
         const outerGroup: TBaseFilter = {
           connector: filters.connector,
           id: createId(),
-          resource: [{ ...filters, connector: null }, newFilter],
+          resource: [{ ...filters, connector: null }],
         };
 
         group.splice(i, 1, outerGroup);
@@ -270,6 +270,9 @@ export const deleteResource = (group: TBaseFilters, resourceId: string) => {
       deleteResource(resource, resourceId);
     }
   }
+
+  // check and delete all empty groups
+  deleteEmptyGroups(group);
 };
 
 export const deleteEmptyGroups = (group: TBaseFilters) => {

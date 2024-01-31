@@ -175,22 +175,6 @@ export default function UserTargetingAdvancedCard({
                 />
               )}
 
-              {/*              {segmentEditorViewOnly && userSegment && (
-                <div className="opacity-60">
-                  <SegmentFilters
-                    key={userSegment.filters.toString()}
-                    group={userSegment.filters}
-                    environmentId={environmentId}
-                    userSegment={userSegment}
-                    actionClasses={actionClasses}
-                    attributeClasses={attributeClasses}
-                    userSegments={userSegments}
-                    setUserSegment={setUserSegment}
-                    viewOnly={segmentEditorViewOnly}
-                  />
-                </div>
-              )} */}
-
               {isSegmentEditorOpen ? (
                 <div className="w-full">
                   <div className="mb-4">
@@ -221,6 +205,7 @@ export default function UserTargetingAdvancedCard({
                         actionClasses={actionClasses}
                         attributeClasses={attributeClasses}
                         userSegments={userSegments}
+                        isAdvancedUserTargetingAllowed
                       />
                     </div>
                   )}
@@ -273,6 +258,7 @@ export default function UserTargetingAdvancedCard({
                       actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
                       userSegments={userSegments}
+                      isAdvancedTargetingAllowed
                     />
                     {!!userSegment && (
                       <SaveAsNewSegmentModal

@@ -45,7 +45,13 @@ export default function SettingsView({
 
       {localSurvey.type === "web" ? (
         !isUserTargetingAllowed ? (
-          <UserTargetingCard localSurvey={localSurvey} environmentId={environment.id} />
+          <UserTargetingCard
+            key={localSurvey.userSegment?.id}
+            localSurvey={localSurvey}
+            setLocalSurvey={setLocalSurvey}
+            environmentId={environment.id}
+            attributeClasses={attributeClasses}
+          />
         ) : (
           <UserTargetingAdvancedCard
             key={localSurvey.userSegment?.id}

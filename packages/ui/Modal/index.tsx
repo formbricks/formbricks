@@ -16,6 +16,7 @@ type Modal = {
   closeOnOutsideClick?: boolean;
   className?: string;
   size?: "md" | "lg";
+  hideCloseButton?: boolean;
 };
 
 export const Modal: React.FC<Modal> = ({
@@ -28,6 +29,7 @@ export const Modal: React.FC<Modal> = ({
   closeOnOutsideClick = true,
   className,
   size = "md",
+  hideCloseButton = false,
 }) => {
   const sizeClassName = {
     md: "sm:w-full sm:max-w-xl",
@@ -71,7 +73,11 @@ export const Modal: React.FC<Modal> = ({
                     sizeClassName[size],
                     className
                   )}>
-                  <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
+                  <div
+                    className={cn(
+                      "absolute right-0 top-0 hidden pr-4 pt-4 sm:block",
+                      hideCloseButton && "!hidden"
+                    )}>
                     <button
                       type="button"
                       className="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 focus:ring-offset-2"

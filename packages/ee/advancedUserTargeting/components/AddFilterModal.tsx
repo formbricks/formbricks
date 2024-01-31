@@ -4,11 +4,12 @@ import { createId } from "@paralleldrive/cuid2";
 import { MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
+import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
-import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
 import { Input } from "@formbricks/ui/Input";
+import { Modal } from "@formbricks/ui/Modal";
 import { TabBar } from "@formbricks/ui/TabBar";
 
 type TAddFilterModalProps = {
@@ -18,6 +19,7 @@ type TAddFilterModalProps = {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   userSegments: TUserSegment[];
+  isAdvancedTargetingAllowed?: boolean;
 };
 
 type TFilterType = "action" | "attribute" | "segment" | "device";
@@ -29,9 +31,9 @@ const AddFilterModal = ({
   actionClasses,
   attributeClasses,
   userSegments,
+  isAdvancedTargetingAllowed = false,
 }: TAddFilterModalProps) => {
-  const [activeTabId, setActiveTabId] = useState("actions");
-
+  const [activeTabId, setActiveTabId] = useState(isAdvancedTargetingAllowed ? "all" : "attributes");
   const [searchValue, setSearchValue] = useState("");
 
   const tabs: {
@@ -423,19 +425,19 @@ const AddFilterModal = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
-      <DialogContent className="w-[600px] bg-white sm:max-w-2xl" hideCloseButton>
-        <div className="flex w-auto flex-col">
-          <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
+    <Modal hideCloseButton open={open} setOpen={setOpen} closeOnOutsideClick>
+      <div className="flex w-auto flex-col">
+        <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
 
+        {isAdvancedTargetingAllowed && (
           <TabBar className="bg-white" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />
-        </div>
+        )}
+      </div>
 
-        <div className="flex max-h-80 flex-col gap-1 overflow-y-auto">
-          <TabContent />
-        </div>
-      </DialogContent>
-    </Dialog>
+      <div className={cn("mt-2 flex max-h-80 flex-col gap-1 overflow-y-auto")}>
+        <TabContent />
+      </div>
+    </Modal>
   );
 };
 
