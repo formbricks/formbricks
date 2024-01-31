@@ -11,6 +11,7 @@ import { TMembership } from "@formbricks/types/memberships";
 import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } from "@formbricks/types/user";
 
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { createCustomerIoCustomer } from "../customerio";
 import { updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
 import { formatDateFields } from "../utils/datetime";
@@ -170,6 +171,9 @@ export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
     email: user.email,
     id: user.id,
   });
+
+  // send new user customer.io to customer.io
+  createCustomerIoCustomer(user);
 
   return user;
 };

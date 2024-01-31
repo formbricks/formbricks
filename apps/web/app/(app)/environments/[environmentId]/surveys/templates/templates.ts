@@ -2200,7 +2200,6 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Improve Newsletter Content",
-
     category: "Growth",
     objectives: ["increase_conversion", "sharpen_marketing_messaging"],
     description: "Find out how your subscribers like your newsletter content.",
@@ -2522,6 +2521,7 @@ export const minimalSurvey: TSurvey = {
     enabled: false,
   },
   delay: 0, // No delay
+  displayPercentage: null,
   autoComplete: null,
   closeOnDate: null,
   surveyClosedMessage: {

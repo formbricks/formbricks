@@ -7,6 +7,9 @@ export const env = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
+    CUSTOMER_IO_API_KEY: z.string().optional(),
+    CUSTOMER_IO_SITE_ID: z.string().optional(),
+    NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
     ENCRYPTION_KEY: z.string().length(64).or(z.string().length(32)),
@@ -96,6 +99,8 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    CUSTOMER_IO_API_KEY: process.env.CUSTOMER_IO_API_KEY,
+    CUSTOMER_IO_SITE_ID: process.env.CUSTOMER_IO_SITE_ID,
     WEBAPP_URL: process.env.WEBAPP_URL,
     DATABASE_URL: process.env.DATABASE_URL,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
@@ -146,7 +151,7 @@ export const env = createEnv({
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
-    AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
+    AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     DEFAULT_TEAM_ID: process.env.DEFAULT_TEAM_ID,
     DEFAULT_TEAM_ROLE: process.env.DEFAULT_TEAM_ROLE,
     ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,

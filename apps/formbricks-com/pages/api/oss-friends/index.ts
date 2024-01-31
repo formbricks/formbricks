@@ -12,7 +12,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Aptabase",
-          description: "Analytics for Apps, open source, simple and privacy-friendly. SDKs for Swift, React Native, Electron, Flutter and many others.",
+          description:
+            "Analytics for Apps, open source, simple and privacy-friendly. SDKs for Swift, React Native, Electron, Flutter and many others.",
           href: "https://aptabase.com",
         },
         {
