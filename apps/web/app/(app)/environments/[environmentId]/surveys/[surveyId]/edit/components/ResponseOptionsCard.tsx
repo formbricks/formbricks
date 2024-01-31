@@ -257,7 +257,7 @@ export default function ResponseOptionsCard({
     surveyClosedMessage.subheading,
   ]);
 
-  const handleCheckMark = () => {
+  const toggleAutocomplete = () => {
     if (autoComplete) {
       const updatedSurvey = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
@@ -310,7 +310,7 @@ export default function ResponseOptionsCard({
           <AdvancedOptionToggle
             htmlId="closeOnNumberOfResponse"
             isChecked={autoComplete}
-            onToggle={handleCheckMark}
+            onToggle={toggleAutocomplete}
             title="Close survey on response limit"
             description="Automatically close the survey after a certain number of responses."
             childBorder={true}>
