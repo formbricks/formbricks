@@ -20,7 +20,7 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
   const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  const duplicatedSurvey = await duplicateSurvey(environmentId, surveyId);
+  const duplicatedSurvey = await duplicateSurvey(environmentId, surveyId, session.user.id);
   return duplicatedSurvey;
 }
 
@@ -166,7 +166,7 @@ export async function copyToOtherEnvironmentAction(
       },
       creator: {
         connect: {
-          id: existingSurvey.createdBy ?? undefined,
+          id: session.user.id,
         },
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage ?? prismaClient.JsonNull,

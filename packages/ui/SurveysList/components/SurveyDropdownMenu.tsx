@@ -49,6 +49,7 @@ export default function SurveyDropDownMenu({
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const router = useRouter();
 
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
@@ -102,7 +103,7 @@ export default function SurveyDropDownMenu({
   }
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
           <div className="rounded-lg border p-2 hover:bg-slate-50">
             <span className="sr-only">Open options</span>
@@ -126,7 +127,9 @@ export default function SurveyDropDownMenu({
                   <button
                     type="button"
                     className="flex w-full items-center"
-                    onClick={async () => {
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
                       duplicateSurveyAndRefresh(survey.id);
                     }}>
                     <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
@@ -142,7 +145,9 @@ export default function SurveyDropDownMenu({
                     <button
                       type="button"
                       className="flex w-full items-center"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsDropDownOpen(false);
                         copyToOtherEnvironment(survey.id);
                       }}>
                       <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
@@ -154,7 +159,9 @@ export default function SurveyDropDownMenu({
                     <button
                       type="button"
                       className="flex w-full items-center"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsDropDownOpen(false);
                         copyToOtherEnvironment(survey.id);
                       }}>
                       <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
@@ -167,23 +174,27 @@ export default function SurveyDropDownMenu({
             {survey.type === "link" && survey.status !== "draft" && (
               <>
                 <DropdownMenuItem>
-                  <Link
-                    className="flex w-full items-center"
-                    href={
-                      singleUseId
+                  <div
+                    className="flex w-full cursor-pointer items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      const previewUrl = singleUseId
                         ? `/s/${survey.id}?suId=${singleUseId}&preview=true`
-                        : `/s/${survey.id}?preview=true`
-                    }
-                    target="_blank">
+                        : `/s/${survey.id}?preview=true`;
+                      window.open(previewUrl, "_blank");
+                    }}>
                     <EyeIcon className="mr-2 h-4 w-4" />
                     Preview Survey
-                  </Link>
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <button
                     type="button"
                     className="flex w-full items-center"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
                       navigator.clipboard.writeText(
                         singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
                       );
@@ -201,7 +212,9 @@ export default function SurveyDropDownMenu({
                 <button
                   type="button"
                   className="flex w-full  items-center"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsDropDownOpen(false);
                     setDeleteDialogOpen(true);
                   }}>
                   <TrashIcon className="mr-2 h-4 w-4" />

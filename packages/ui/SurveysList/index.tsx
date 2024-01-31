@@ -7,7 +7,6 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { Button } from "../Button";
-import ListItem from "./components/ListItem";
 import SurveyCard from "./components/SurveyCard";
 import SurveyFilters from "./components/SurveyFilters";
 
@@ -52,10 +51,12 @@ export default function SurveysList({
       {filteredSurveys.length > 0 ? (
         <div>
           {orientation === "list" && (
-            <div className="flex flex-col space-y-4">
-              <div className="mt-4 flex w-full px-4 text-sm text-slate-800">
-                <div className="w-[60%]">Name</div>
-                <div className="flex w-[40%] justify-between">
+            <div className="flex-col space-y-4">
+              <div className="mt-4 grid w-full grid-cols-8 gap-4 px-4 text-sm text-slate-800">
+                <div className="col-span-2">Name</div>
+                <div className="col-span-2"></div>
+                <div className="col-span-1"></div>
+                <div className="col-span-3 flex justify-between">
                   <div>Created at</div>
                   <div>Updated at</div>
                   <div></div>
@@ -63,12 +64,13 @@ export default function SurveysList({
               </div>
               {filteredSurveys.map((survey) => {
                 return (
-                  <ListItem
+                  <SurveyCard
                     survey={survey}
                     environment={environment}
                     otherEnvironment={otherEnvironment}
                     isViewer={isViewer}
                     WEBAPP_URL={WEBAPP_URL}
+                    orientation={orientation}
                   />
                 );
               })}
@@ -84,6 +86,7 @@ export default function SurveysList({
                     otherEnvironment={otherEnvironment}
                     isViewer={isViewer}
                     WEBAPP_URL={WEBAPP_URL}
+                    orientation={orientation}
                   />
                 );
               })}

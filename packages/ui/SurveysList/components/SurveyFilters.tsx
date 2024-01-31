@@ -26,9 +26,11 @@ interface TSortOption {
 
 interface FilterDropdownProps {
   title: string;
+  id: string;
   options: TFilterOption[];
   selectedOptions: string[];
   setSelectedOptions: (options: string[]) => void;
+  isOpen: boolean;
 }
 
 const statusOptions = [
@@ -88,6 +90,11 @@ export default function SurveyFilters({
   const [typeFilters, setTypeFilters] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState(sortOptions[0]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());
+
+  const toggleDropdown = (id: string) => {
+    setDropdownOpenStates(new Map(dropdownOpenStates).set(id, !dropdownOpenStates.get(id)));
+  };
 
   const creatorOptions = [
     { label: "You", value: userId },
@@ -154,12 +161,19 @@ export default function SurveyFilters({
     </DropdownMenuItem>
   );
 
-  const FilterDropdown = ({ title, options, selectedOptions, setSelectedOptions }: FilterDropdownProps) => {
+  const FilterDropdown = ({
+    title,
+    id,
+    options,
+    selectedOptions,
+    setSelectedOptions,
+    isOpen,
+  }: FilterDropdownProps) => {
     const triggerClasses = `surveyFilterDropdown min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-none 
     ${selectedOptions.length > 0 ? "bg-slate-900 text-white" : "hover:bg-slate-900"}`;
 
     return (
-      <DropdownMenu>
+      <DropdownMenu open={isOpen} onOpenChange={() => toggleDropdown(id)}>
         <DropdownMenuTrigger asChild className={triggerClasses}>
           <div className="flex w-full items-center justify-between">
             <span className="text-sm">{title}</span>
@@ -171,7 +185,10 @@ export default function SurveyFilters({
             <DropdownMenuItem
               key={option.value}
               className="m-0 p-0"
-              onClick={() => handleFilterChange(option.value, selectedOptions, setSelectedOptions)}>
+              onClick={(e) => {
+                e.preventDefault();
+                handleFilterChange(option.value, selectedOptions, setSelectedOptions);
+              }}>
               <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
                 <Checkbox
                   checked={selectedOptions.includes(option.value)}
@@ -203,25 +220,31 @@ export default function SurveyFilters({
         <div>
           <FilterDropdown
             title="Created By"
+            id="creatorDropdown"
             options={creatorOptions}
             selectedOptions={createdByFilter}
             setSelectedOptions={setCreatedByFilter}
+            isOpen={dropdownOpenStates.get("creatorDropdown")}
           />
         </div>
         <div>
           <FilterDropdown
             title="Status"
+            id="statusDropdown"
             options={statusOptions}
             selectedOptions={statusFilters}
             setSelectedOptions={setStatusFilters}
+            isOpen={dropdownOpenStates.get("statusDropdown")}
           />
         </div>
         <div>
           <FilterDropdown
             title="Type"
+            id="typeDropdown"
             options={typeOptions}
             selectedOptions={typeFilters}
             setSelectedOptions={setTypeFilters}
+            isOpen={dropdownOpenStates.get("typeDropdown")}
           />
         </div>
         {(createdByFilter.length > 0 || statusFilters.length > 0 || typeFilters.length > 0) && (

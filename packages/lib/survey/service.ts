@@ -536,7 +536,7 @@ export const createSurvey = async (
   return transformedSurvey;
 };
 
-export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
+export const duplicateSurvey = async (environmentId: string, surveyId: string, userId: string) => {
   validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
 
@@ -577,7 +577,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       },
       creator: {
         connect: {
-          id: existingSurvey.createdBy ?? undefined,
+          id: userId,
         },
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage
