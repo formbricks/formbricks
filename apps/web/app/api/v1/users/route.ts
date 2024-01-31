@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED, INVITE_DISABLED, SIGNUP_ENABLED } from "@formbricks/lib/constants";
-import {
-  sendGettingStartedEmail,
-  sendInviteAcceptedEmail,
-  sendVerificationEmail,
-} from "@formbricks/lib/emails/emails";
+import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/emails/emails";
 import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
@@ -54,8 +50,6 @@ export async function POST(request: Request) {
 
       if (!EMAIL_VERIFICATION_DISABLED) {
         await sendVerificationEmail(user);
-      } else {
-        await sendGettingStartedEmail(user);
       }
 
       await sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
@@ -87,9 +81,8 @@ export async function POST(request: Request) {
     // send verification email amd return user
     if (!EMAIL_VERIFICATION_DISABLED) {
       await sendVerificationEmail(user);
-    } else {
-      await sendGettingStartedEmail(user);
     }
+
     return NextResponse.json(user);
   } catch (e) {
     if (e.code === "P2002") {

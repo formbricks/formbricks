@@ -66,6 +66,8 @@
         "DEFAULT_TEAM_ROLE",
         "ONBOARDING_DISABLED",
         "CRON_SECRET",
+        "CUSTOMER_IO_API_KEY",
+        "CUSTOMER_IO_SITE_ID",
         "DEBUG",
         "EMAIL_VERIFICATION_DISABLED",
         "ENCRYPTION_KEY",

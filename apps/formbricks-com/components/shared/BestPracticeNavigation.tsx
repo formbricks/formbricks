@@ -79,6 +79,15 @@ export default function BestPracticeNavigation() {
       description: "Give users the chance to share feedback in a single click.",
       category: "Boost Retention",
     },
+
+    {
+      name: "Improve Newsletter Cotent",
+      href: "/improve-newsletter-content",
+      status: true,
+      icon: FeedbackIcon,
+      description: "Improve your newsletter content by showing this survey to your readers.",
+      category: "Boost Retention",
+    },
   ];
 
   return (

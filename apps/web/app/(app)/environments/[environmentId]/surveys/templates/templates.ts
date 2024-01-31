@@ -2200,7 +2200,6 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Improve Newsletter Content",
-
     category: "Growth",
     objectives: ["increase_conversion", "sharpen_marketing_messaging"],
     description: "Find out how your subscribers like your newsletter content.",

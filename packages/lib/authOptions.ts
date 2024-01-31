@@ -10,7 +10,6 @@ import { prisma } from "@formbricks/database";
 import { createAccount } from "./account/service";
 import { verifyPassword } from "./auth/util";
 import { EMAIL_VERIFICATION_DISABLED } from "./constants";
-import { sendGettingStartedEmail } from "./emails/emails";
 import { env } from "./env.mjs";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
@@ -114,7 +113,6 @@ export const authOptions: NextAuthOptions = {
         }
 
         user = await updateUser(user.id, { emailVerified: new Date() });
-        await sendGettingStartedEmail(user);
 
         return user;
       },
@@ -223,7 +221,7 @@ export const authOptions: NextAuthOptions = {
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
-        await sendGettingStartedEmail(userProfile);
+
         // Default team assignment if env variable is set
         if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
           // check if team exists
