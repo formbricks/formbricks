@@ -9,6 +9,8 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch: # Add manual trigger support
+
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
@@ -18,7 +20,6 @@ env:
 
 jobs:
   build:
-    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: read
