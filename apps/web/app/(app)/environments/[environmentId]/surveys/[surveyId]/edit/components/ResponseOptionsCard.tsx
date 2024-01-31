@@ -262,7 +262,7 @@ export default function ResponseOptionsCard({
       const updatedSurvey = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey = { ...localSurvey, autoComplete: 25 };
+      const updatedSurvey = { ...localSurvey, autoComplete: Math.max(25, responseCount + 1) };
       setLocalSurvey(updatedSurvey);
     }
   };
