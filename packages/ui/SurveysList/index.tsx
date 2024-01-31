@@ -51,15 +51,12 @@ export default function SurveysList({
       {filteredSurveys.length > 0 ? (
         <div>
           {orientation === "list" && (
-            <div className="flex-col space-y-4">
-              <div className="mt-4 grid w-full grid-cols-8 gap-4 px-4 text-sm text-slate-800">
-                <div className="col-span-2">Name</div>
-                <div className="col-span-2"></div>
-                <div className="col-span-1"></div>
-                <div className="col-span-3 flex justify-between">
-                  <div>Created at</div>
-                  <div>Updated at</div>
-                  <div></div>
+            <div className="flex-col space-y-3">
+              <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 text-sm text-slate-800">
+                <div className="col-span-4 place-self-start">Name</div>
+                <div className="col-span-4 grid w-full grid-cols-5 place-items-center">
+                  <div className="col-span-2">Created at</div>
+                  <div className="col-span-2">Updated at</div>
                 </div>
               </div>
               {filteredSurveys.map((survey) => {
@@ -77,7 +74,7 @@ export default function SurveysList({
             </div>
           )}
           {orientation === "grid" && (
-            <div className="grid grid-cols-4 place-content-stretch gap-6 lg:grid-cols-6 ">
+            <div className="grid grid-cols-4 place-content-stretch gap-4 lg:grid-cols-6 ">
               {filteredSurveys.map((survey) => {
                 return (
                   <SurveyCard

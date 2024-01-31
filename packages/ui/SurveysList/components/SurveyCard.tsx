@@ -35,6 +35,7 @@ export default function SurveyCard({
     else if (survey.status === "draft") return "Draft";
     else if (survey.status === "paused") return "Paused";
   }, [survey]);
+
   const [singleUseId, setSingleUseId] = useState<string | undefined>();
 
   useEffect(() => {
@@ -45,10 +46,27 @@ export default function SurveyCard({
     }
   }, [survey]);
 
-  const linkHref =
-    survey.status === "draft"
+  const linkHref = useMemo(() => {
+    return survey.status === "draft"
       ? `/environments/${environment.id}/surveys/${survey.id}/edit`
       : `/environments/${environment.id}/surveys/${survey.id}/summary`;
+  }, [survey.status, survey.id, environment.id]);
+
+  const SurveyTypeIndicator = ({ type }: { type: string }) => (
+    <div className="flex items-center space-x-2 text-slate-500">
+      {type === "web" ? (
+        <>
+          <Code className="h-4 w-4" />
+          <span> In-app</span>
+        </>
+      ) : (
+        <>
+          <Link2Icon className="h-4 w-4" />
+          <span> Link</span>
+        </>
+      )}
+    </div>
+  );
 
   const renderGridContent = () => {
     return (
@@ -57,17 +75,7 @@ export default function SurveyCard({
         key={survey.id}
         className="relative col-span-2 flex h-44 flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all ease-in-out hover:scale-105 ">
         <div className="flex justify-between">
-          {survey.type === "web" ? (
-            <div className="flex items-center space-x-2 text-slate-500">
-              <Code className="h-4 w-4" />
-              <span> In-app</span>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-2 text-slate-500">
-              <Link2Icon className="h-4 w-4" />
-              <span> Link</span>
-            </div>
-          )}
+          <SurveyTypeIndicator type={survey.type} />
           <SurveyDropDownMenu
             survey={survey}
             key={`surveys-${survey.id}`}
@@ -101,43 +109,33 @@ export default function SurveyCard({
       <Link
         href={linkHref}
         key={survey.id}
-        className="relative grid w-full scale-[99%] grid-cols-8 gap-2 rounded-xl border border-slate-200 bg-white p-4
-    shadow-sm transition-all ease-in-out hover:scale-[100%]">
-        <div className="col-span-2 flex items-center overflow-hidden overflow-ellipsis whitespace-nowrap text-xl font-medium text-slate-900">
+        className="relative grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4
+    shadow-sm transition-all ease-in-out hover:scale-[101%]">
+        <div className="col-span-2 flex items-center justify-self-start overflow-hidden text-ellipsis whitespace-nowrap text-lg font-medium text-slate-900">
           {survey.name}
         </div>
-        <div className="col-span-2 ml-2 flex gap-4">
-          <div
-            className={cn(
-              "flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
-              surveyStatus === "Active" && "bg-emerald-50",
-              surveyStatus === "Completed" && "bg-slate-200",
-              surveyStatus === "Draft" && "bg-slate-100",
-              surveyStatus === "Paused" && "bg-slate-100"
-            )}>
-            <SurveyStatusIndicator status={survey.status} /> {surveyStatus}
-          </div>
-
-          <div className="flex justify-between">
-            {survey.type === "web" ? (
-              <div className="flex items-center space-x-2 text-slate-500">
-                <Code className="h-4 w-4" />
-                <span> In-app</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2 text-slate-500">
-                <Link2Icon className="h-4 w-4" />
-                <span> Link</span>
-              </div>
-            )}
-          </div>
+        <div
+          className={cn(
+            "flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
+            surveyStatus === "Active" && "bg-emerald-50",
+            surveyStatus === "Completed" && "bg-slate-200",
+            surveyStatus === "Draft" && "bg-slate-100",
+            surveyStatus === "Paused" && "bg-slate-100"
+          )}>
+          <SurveyStatusIndicator status={survey.status} /> {surveyStatus}{" "}
+        </div>
+        <div className="flex justify-between">
+          <SurveyTypeIndicator type={survey.type} />
         </div>
 
-        <div className="col-span-1"></div>
-        <div className="col-span-3 flex justify-between">
-          <div className="ml-1 flex items-center">{timeSince(survey.createdAt.toString())}</div>
-          <div className="ml-10 flex items-center">{timeSince(survey.updatedAt.toString())}</div>
-          <div className="flex items-center justify-end">
+        <div className="col-span-4 grid w-full grid-cols-5 place-items-center">
+          <div className="col-span-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+            {timeSince(survey.createdAt.toString())}
+          </div>
+          <div className="col-span-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
+            {timeSince(survey.updatedAt.toString())}
+          </div>
+          <div className="place-self-end">
             <SurveyDropDownMenu
               survey={survey}
               key={`surveys-${survey.id}`}
