@@ -126,8 +126,6 @@ Formbricks has a hosted cloud offering with a generous free plan to get you up a
 
 Formbricks is available Open-Source under AGPLv3 license. You can host Formbricks on your own servers using Docker without a subscription.
 
-(In the future we may develop additional features that aren't in the free Open-Source version).
-
 If you opt for self-hosting Formbricks, here are a few options to consider:
 
 #### Docker
