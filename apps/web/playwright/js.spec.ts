@@ -63,6 +63,8 @@ test.describe("JS Package Test", async () => {
 
     // Formbricks Modal is visible
     await expect(page.getByRole("link", { name: "Powered by Formbricks" })).toBeVisible();
+
+    await page.waitForTimeout(1000);
   });
 
   test("Admin checks Display", async ({ page }) => {
