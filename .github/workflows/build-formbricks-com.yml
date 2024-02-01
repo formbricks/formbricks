@@ -1,4 +1,4 @@
-name: Build
+name: Build formbricks-com
 on:
   workflow_call:
 jobs:
