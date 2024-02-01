@@ -17,6 +17,9 @@ jobs:
 
       - uses: ./.github/actions/cache-build-web
 
+      - name: Install dependencies
+        run: npm install -g pnpm && pnpm install
+
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
 
