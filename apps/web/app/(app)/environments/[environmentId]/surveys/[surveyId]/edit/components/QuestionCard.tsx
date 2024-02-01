@@ -168,13 +168,19 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {recallToHeadline(question.headline, localSurvey, true, selectedLanguage)[
+                      {recallToHeadline(
+                        question.headline as TI18nString,
+                        localSurvey,
+                        true,
                         selectedLanguage
-                      ]
+                      )[selectedLanguage]
                         ? formatTextWithSlashes(
-                            recallToHeadline(question.headline, localSurvey, true, selectedLanguage)[
+                            recallToHeadline(
+                              question.headline as TI18nString,
+                              localSurvey,
+                              true,
                               selectedLanguage
-                            ] ?? ""
+                            )[selectedLanguage] ?? ""
                           )
                         : getTSurveyQuestionTypeName(question.type)}
                     </p>

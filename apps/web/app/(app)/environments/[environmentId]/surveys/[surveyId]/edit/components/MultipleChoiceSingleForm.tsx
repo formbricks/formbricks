@@ -268,7 +268,7 @@ export default function MultipleChoiceSingleForm({
                     }
                     questionIdx={questionIdx}
                     value={
-                      question.otherOptionPlaceholder ??
+                      (question.otherOptionPlaceholder as TI18nString) ??
                       createI18nString("Please specify", extractLanguageSymbols(languages))
                     }
                     languages={languages}

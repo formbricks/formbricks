@@ -165,9 +165,9 @@ export default function RatingQuestionForm({
         {!question.required && (
           <div className="flex-1">
             <LocalizedInput
-              id="dismissButtonLabel"
-              name="dismissButtonLabel"
-              value={question.dismissButtonLabel as TI18nString}
+              id="buttonLabel"
+              name="buttonLabel"
+              value={question.buttonLabel as TI18nString}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               placeholder={"skip"}

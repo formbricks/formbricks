@@ -14,8 +14,8 @@ export type TI18nString = z.infer<typeof ZI18nObject>;
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
-  headline: ZI18nObject.optional(),
-  subheader: ZI18nObject.optional(),
+  headline: z.union([z.union([ZI18nObject, z.string()]), z.string()]).optional(),
+  subheader: z.union([ZI18nObject, z.string()]).optional(),
   buttonLabel: z.optional(z.string()),
   buttonLink: z.optional(z.string()),
   imageUrl: z.string().optional(),
@@ -37,10 +37,10 @@ export enum TSurveyQuestionType {
 
 export const ZSurveyWelcomeCard = z.object({
   enabled: z.boolean(),
-  headline: ZI18nObject,
-  html: ZI18nObject.optional(),
+  headline: z.union([ZI18nObject, z.string()]),
+  html: z.union([ZI18nObject, z.string()]).optional(),
   fileUrl: z.string().optional(),
-  buttonLabel: ZI18nObject.optional(),
+  buttonLabel: z.union([ZI18nObject, z.string()]).optional(),
   timeToFinish: z.boolean().default(true),
   showResponseCount: z.boolean().default(false),
 });
@@ -118,7 +118,7 @@ export type TSurveyClosedMessage = z.infer<typeof ZSurveyClosedMessage>;
 
 export const ZSurveyChoice = z.object({
   id: z.string(),
-  label: ZI18nObject,
+  label: z.union([ZI18nObject, z.string()]),
 });
 
 export const ZSurveyPictureChoice = z.object({
@@ -245,12 +245,12 @@ export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 const ZSurveyQuestionBase = z.object({
   id: z.string(),
   type: z.string(),
-  headline: ZI18nObject,
-  subheader: ZI18nObject.optional(),
+  headline: z.union([ZI18nObject, z.string()]),
+  subheader: z.union([ZI18nObject, z.string()]).optional(),
   imageUrl: z.string().optional(),
   required: z.boolean(),
-  buttonLabel: ZI18nObject.optional(),
-  backButtonLabel: ZI18nObject.optional(),
+  buttonLabel: z.union([ZI18nObject, z.string()]).optional(),
+  backButtonLabel: z.union([ZI18nObject, z.string()]).optional(),
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
@@ -262,7 +262,7 @@ export type TSurveyOpenTextQuestionInputType = z.infer<typeof ZSurveyOpenTextQue
 
 export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.OpenText),
-  placeholder: ZI18nObject.optional(),
+  placeholder: z.union([ZI18nObject, z.string()]).optional(),
   longAnswer: z.boolean().optional(),
   logic: z.array(ZSurveyOpenTextLogic).optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
@@ -272,8 +272,8 @@ export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
 
 export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Consent),
-  html: ZI18nObject.optional(),
-  label: ZI18nObject,
+  html: z.union([ZI18nObject, z.string()]).optional(),
+  label: z.union([ZI18nObject, z.string()]),
   dismissButtonLabel: z.string().optional(),
   placeholder: z.string().optional(),
   logic: z.array(ZSurveyConsentLogic).optional(),
@@ -286,7 +286,7 @@ export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
   choices: z.array(ZSurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceSingleLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
-  otherOptionPlaceholder: ZI18nObject.optional(),
+  otherOptionPlaceholder: z.union([ZI18nObject, z.string()]).optional(),
 });
 
 export type TSurveyMultipleChoiceSingleQuestion = z.infer<typeof ZSurveyMultipleChoiceSingleQuestion>;
@@ -296,15 +296,15 @@ export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
   choices: z.array(ZSurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceMultiLogic).optional(),
   shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
-  otherOptionPlaceholder: ZI18nObject.optional(),
+  otherOptionPlaceholder: z.union([ZI18nObject, z.string()]).optional(),
 });
 
 export type TSurveyMultipleChoiceMultiQuestion = z.infer<typeof ZSurveyMultipleChoiceMultiQuestion>;
 
 export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.NPS),
-  lowerLabel: ZI18nObject,
-  upperLabel: ZI18nObject,
+  lowerLabel: z.union([ZI18nObject, z.string()]),
+  upperLabel: z.union([ZI18nObject, z.string()]),
   logic: z.array(ZSurveyNPSLogic).optional(),
 });
 
@@ -312,10 +312,10 @@ export type TSurveyNPSQuestion = z.infer<typeof ZSurveyNPSQuestion>;
 
 export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.CTA),
-  html: ZI18nObject.optional(),
+  html: z.union([ZI18nObject, z.string()]).optional(),
   buttonUrl: z.string().optional(),
   buttonExternal: z.boolean(),
-  dismissButtonLabel: ZI18nObject.optional(),
+  dismissButtonLabel: z.union([ZI18nObject, z.string()]).optional(),
   logic: z.array(ZSurveyCTALogic).optional(),
 });
 
@@ -336,14 +336,14 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Rating),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]),
-  lowerLabel: ZI18nObject,
-  upperLabel: ZI18nObject,
+  lowerLabel: z.union([ZI18nObject, z.string()]),
+  upperLabel: z.union([ZI18nObject, z.string()]),
   logic: z.array(ZSurveyRatingLogic).optional(),
 });
 
 export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Date),
-  html: ZI18nObject.optional(),
+  html: z.union([ZI18nObject, z.string()]).optional(),
   format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
 });
 

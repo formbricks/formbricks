@@ -93,10 +93,10 @@ export const replaceRecallInfoWithUnderline = (
   while (getLocalizedValue(recallQuestion.headline, language).includes("#recall:")) {
     const recallInfo = extractRecallInfo(getLocalizedValue(recallQuestion.headline, language));
     if (recallInfo) {
-      recallQuestion.headline[language] = getLocalizedValue(recallQuestion.headline, language).replace(
-        recallInfo,
-        "___"
-      );
+      (recallQuestion.headline as TI18nString)[language] = getLocalizedValue(
+        recallQuestion.headline,
+        language
+      ).replace(recallInfo, "___");
     }
   }
   return recallQuestion;
@@ -123,7 +123,7 @@ export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | n
 export const checkForRecallInHeadline = (survey: TSurvey): TSurvey => {
   const modifiedSurvey: TSurvey = JSON.parse(JSON.stringify(survey));
   modifiedSurvey.questions.forEach((question) => {
-    question.headline = recallToHeadline(question.headline, modifiedSurvey, false, "en");
+    question.headline = recallToHeadline(question.headline as TI18nString, modifiedSurvey, false, "en");
   });
   return modifiedSurvey;
 };
@@ -169,7 +169,7 @@ export const headlineToRecall = (
 ): string => {
   recallQuestions.forEach((recallQuestion) => {
     const recallInfo = `#recall:${recallQuestion.id}/fallback:${fallbacks[recallQuestion.id]}#`;
-    text = text.replace(`@${recallQuestion.headline[langauge]}`, recallInfo);
+    text = text.replace(`@${(recallQuestion.headline as TI18nString)[langauge]}`, recallInfo);
   });
   return text;
 };

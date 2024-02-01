@@ -28,7 +28,7 @@ export default function EditLanguage({ product }: { product: TProduct }) {
   const deleteLanguage = (index: number) => {
     const newLanguages = [...languages];
     newLanguages.splice(index, 1);
-    const languagesObject: TLanguages = newLanguages.reduce((acc, [key, value]) => {
+    const languagesObject = newLanguages.reduce<TLanguages>((acc, [key, value]) => {
       if (key && value) {
         acc[key] = value;
       }
@@ -47,7 +47,7 @@ export default function EditLanguage({ product }: { product: TProduct }) {
   };
 
   const updateLanguages = () => {
-    const languagesObject: TLanguages = languages.reduce((acc, [key, value]) => {
+    const languagesObject = languages.reduce<TLanguages>((acc, [key, value]) => {
       if (key && value) {
         acc[key] = value;
       }

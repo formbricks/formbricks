@@ -69,8 +69,8 @@ export default function PreviewSurvey({
         {activeQuestionId == "thank-you-card" ? (
           <ThankYouCard
             brandColor={brandColor}
-            headline={getLocalizedValue(localSurvey?.thankYouCard?.headline, defaultLanguage) || ""}
-            subheader={getLocalizedValue(localSurvey?.thankYouCard?.subheader, defaultLanguage) || ""}
+            headline={getLocalizedValue(localSurvey?.thankYouCard?.headline, defaultLanguage)}
+            subheader={getLocalizedValue(localSurvey?.thankYouCard?.subheader, defaultLanguage)}
           />
         ) : (
           questions.map(
