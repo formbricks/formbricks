@@ -31,17 +31,12 @@ export const AddMemberRole = ({ control, canDoRoleManagement }: AddMemberRolePro
         <div>
           <Label>Role</Label>
           <Select
+            defaultValue="admin"
             value={value}
             onValueChange={(v) => onChange(v as MembershipRole)}
             disabled={!canDoRoleManagement}>
             <SelectTrigger className="capitalize">
-              <SelectValue
-                placeholder={
-                  <span className="text-slate-400">
-                    {canDoRoleManagement ? "Select role" : "Select role (Pro Feature)"}
-                  </span>
-                }
-              />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
