@@ -8,7 +8,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { HardDriveDownloadIcon, HardDriveUploadIcon } from "lucide-react";
+import { FilterIcon, HardDriveDownloadIcon, HardDriveUploadIcon, UsersIcon } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -144,15 +144,35 @@ export default function UserTargetingAdvancedCard({
           <hr className="py-1 text-slate-600" />
 
           <div className="flex flex-col gap-2 p-6">
-            {!userSegment?.filters?.length && (
-              <div className="mb-2 flex w-full items-center gap-4 rounded-lg border border-slate-200 bg-slate-50 px-5 py-3 text-slate-700">
-                <span className="text-2xl">🎯</span>
-                <div className="flex flex-col">
-                  <h3 className="text-sm font-medium">Currently, all users are targeted.</h3>
-                  <p className="text-xs">Without a filter, all of your users can be surveyed.</p>
+            <div className="mb-2 flex w-full items-center gap-4 px-5 pb-3 text-slate-700">
+              {!userSegment?.filters?.length ? (
+                <div className="flex items-center gap-4">
+                  <UsersIcon className="h-5 w-5 text-slate-700" />
+                  <div className="flex flex-col">
+                    <h3 className="text-sm font-medium">
+                      Audience: <span className="font-bold">Everyone</span>
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Without a filter, all of your users can be surveyed.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div>
+                  <div className="flex items-center gap-4">
+                    <FilterIcon className="h-5 w-5 text-slate-700" />
+                    <div className="flex flex-col">
+                      <h3 className="text-sm font-medium">
+                        Audience: <span className="font-bold">Targeted</span>
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        Only people who match your targeting can be surveyed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
               <SegmentAlreadyUsedModal

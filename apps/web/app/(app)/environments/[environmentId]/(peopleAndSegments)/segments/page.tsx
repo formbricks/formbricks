@@ -65,7 +65,7 @@ export default async function SegmentsPage({ params }) {
         <EmptySpaceFiller
           type="table"
           environment={environment}
-          emptyMessage="Your segments will appear here as soon as you add them ⏲️"
+          emptyMessage="No segments yet. Add you first one to get started."
         />
       ) : (
         <SegmentTable
