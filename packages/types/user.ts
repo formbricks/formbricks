@@ -33,7 +33,7 @@ export const ZUser = z.object({
   updatedAt: z.date(),
   onboardingCompleted: z.boolean(),
   objective: ZUserObjective.nullable(),
-  notificationSettings: ZUserNotificationSettings.nullable(),
+  notificationSettings: ZUserNotificationSettings,
 });
 
 export type TUser = z.infer<typeof ZUser>;

@@ -247,3 +247,21 @@ export const getUsersWithTeam = async (teamId: string): Promise<TUser[]> => {
 
   return users;
 };
+
+export const userIdRelatedToApiKey = async (apiKey: string) => {
+  const userId = await prisma.apiKey.findUnique({
+    where: { id: apiKey },
+    select: {
+      environment: {
+        select: {
+          people: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  return userId;
+};
