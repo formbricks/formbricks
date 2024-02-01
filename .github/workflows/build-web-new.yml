@@ -17,15 +17,18 @@ jobs:
 
       - uses: ./.github/actions/cache-build-web
 
+      - name: Install Docker Compose
+        run: sudo apt-get update && sudo apt-get install -y docker-compose
+
       - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
+        run: npm install -g pnpm
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
 
       - name: Start PostgreSQL
         run: |
-          cd packages/database && pnpm db:up &
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/formbricks?schema=public && cd packages/database && pnpm db:up &
           for attempt in {1..20}; do
             if nc -zv localhost 5432; then
               echo "Ready"
