@@ -40,6 +40,9 @@ x-password-reset-disabled: &password_reset_disabled 1
 # Signup. Disable the ability for new users to create an account.
 x-signup-disabled: &signup_disabled 0
 
+# Email login. Disable the ability for users to login with email.
+x-signup-disabled: &email_login_disabled 0
+
 # Team Invite. Disable the ability for invited users to create an account.
 x-invite-disabled: &invite_disabled 0
 

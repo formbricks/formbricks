@@ -32,6 +32,7 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
+    EMAIL_LOGIN_DISABLED: z.enum(["1", "0"]).optional(),
     PRIVACY_URL: z
       .string()
       .url()
@@ -122,6 +123,7 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     SIGNUP_DISABLED: process.env.SIGNUP_DISABLED,
+    EMAIL_LOGIN_DISABLED: process.env.EMAIL_LOGIN_DISABLED,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,
     TERMS_URL: process.env.TERMS_URL,
