@@ -66,6 +66,10 @@ jobs:
         uses: docker/metadata-action@v5 # v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      
+      - name: Add dummy tag
+        run: |
+          echo "::set-output name=tags::${{ steps.meta.outputs.tags }},dummy"
 
       - name: Test tags Mani.
         id: meta2
