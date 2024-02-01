@@ -94,7 +94,7 @@ export default function OpenTextQuestion({
                 onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
               }
             }}
-            pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
+            pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
           />
         ) : (
