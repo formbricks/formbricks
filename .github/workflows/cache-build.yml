@@ -19,7 +19,7 @@ jobs:
         # Add node version in cache key later
         env:
           cache-name: prod-build
-          key-1: ${{ hashFiles('pnpm-lock.lock') }}
+          key-1: ${{ hashFiles('pnpm-lock.yaml') }}
           key-2: ${{ hashFiles('apps/**/**.[jt]s', 'apps/**/**.[jt]sx', 'packages/**/**.[jt]s', 'packages/**/**.[jt]sx', '!**/node_modules') }}
           key-3: ${{ github.event.pull_request.number || github.ref }}
         with:
