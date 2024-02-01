@@ -65,18 +65,18 @@ test.describe("JS Package Test", async () => {
     await expect(page.getByRole("link", { name: "Powered by Formbricks" })).toBeVisible();
   });
 
-  // test("Admin checks Display", async ({ page }) => {
-  //   await login(page, email, password);
+  test("Admin checks Display", async ({ page }) => {
+    await login(page, email, password);
 
-  //   await page.getByRole("link", { name: "In-app Open options Product" }).click();
-  //   (await page.waitForSelector("text=Responses")).isVisible();
+    await page.getByRole("link", { name: "In-app Open options Product" }).click();
+    (await page.waitForSelector("text=Responses")).isVisible();
 
-  //   // Survey should have 1 Display
-  //   await expect(page.getByText("Displays1")).toBeVisible();
+    // Survey should have 1 Display
+    await expect(page.getByText("Displays1")).toBeVisible();
 
-  //   // Survey should have 0 Responses
-  //   await expect(page.getByRole("button", { name: "Responses0% -" })).toBeVisible();
-  // });
+    // Survey should have 0 Responses
+    await expect(page.getByRole("button", { name: "Responses0% -" })).toBeVisible();
+  });
 
   test("JS submits Response to Survey", async ({ page }) => {
     let currentDir = process.cwd();
