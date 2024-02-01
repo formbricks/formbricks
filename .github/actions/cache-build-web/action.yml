@@ -1,13 +1,5 @@
 name: Build & Cache Web Binaries
-# on:
-#   push:
-#     branches:
-#       - shubham/for-1607-use-cache-in-e2e-docker-build
 
-# jobs:
-# build:
-#   name: Build & Cache formbricks-web
-#   runs-on: ubuntu-latest
 runs:
   using: "composite"
   steps:
