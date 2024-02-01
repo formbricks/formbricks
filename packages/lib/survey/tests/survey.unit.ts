@@ -24,9 +24,11 @@ import {
   mockProduct,
   mockSurveyOutput,
   mockSurveyWithAttributesOutput,
+  mockTeamOutput,
   mockTransformedSurveyOutput,
   mockTransformedSurveyWithAttributesIdOutput,
   mockTransformedSurveyWithAttributesOutput,
+  mockUser,
   updateSurveyInput,
 } from "./survey.mock";
 
@@ -235,6 +237,27 @@ describe("Tests for createSurvey", () => {
   describe("Happy Path", () => {
     it("Creates a survey successfully", async () => {
       prismaMock.survey.create.mockResolvedValueOnce(mockSurveyWithAttributesOutput);
+      prismaMock.team.findFirst.mockResolvedValueOnce(mockTeamOutput);
+      prismaMock.user.findMany.mockResolvedValueOnce([
+        {
+          ...mockUser,
+          twoFactorSecret: null,
+          backupCodes: null,
+          password: null,
+          identityProviderAccountId: null,
+          groupId: null,
+          role: "engineer",
+        },
+      ]);
+      prismaMock.user.update.mockResolvedValueOnce({
+        ...mockUser,
+        twoFactorSecret: null,
+        backupCodes: null,
+        password: null,
+        identityProviderAccountId: null,
+        groupId: null,
+        role: "engineer",
+      });
       const createdSurvey = await createSurvey(mockId, createSurveyInput);
       expect(createdSurvey).toEqual(mockTransformedSurveyWithAttributesIdOutput);
     });
