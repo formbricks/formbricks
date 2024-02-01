@@ -30,6 +30,7 @@ const responseSelection = {
   twoFactorEnabled: true,
   identityProvider: true,
   objective: true,
+  notificationSettings: true,
 };
 
 // function to retrive basic information about a user's user
@@ -228,4 +229,22 @@ export const deleteUser = async (id: string): Promise<TUser> => {
 
     throw error;
   }
+};
+
+export const userIdRelatedToApiKey = async (apiKey: string) => {
+  const userId = await prisma.apiKey.findUnique({
+    where: { id: apiKey },
+    select: {
+      environment: {
+        select: {
+          people: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  return userId;
 };
