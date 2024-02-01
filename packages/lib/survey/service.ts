@@ -42,6 +42,7 @@ export const selectSurvey = {
   autoClose: true,
   closeOnDate: true,
   delay: true,
+  displayPercentage: true,
   autoComplete: true,
   verifyEmail: true,
   redirectUrl: true,

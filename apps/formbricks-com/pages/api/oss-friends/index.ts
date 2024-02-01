@@ -11,6 +11,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.appsmith.com",
         },
         {
+          name: "Aptabase",
+          description:
+            "Analytics for Apps, open source, simple and privacy-friendly. SDKs for Swift, React Native, Electron, Flutter and many others.",
+          href: "https://aptabase.com",
+        },
+        {
           name: "Argos",
           description: "Argos provides the developer tools to debug tests and detect visual regressions..",
           href: "https://argos-ci.com",

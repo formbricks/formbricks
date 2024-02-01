@@ -110,7 +110,6 @@ export default async function ProfileSettingsPage({ params, searchParams }) {
       </SettingsCard>
       <IntegrationsTip environmentId={params.environmentId} />
       <SettingsCard
-        beta
         title="Weekly summary (Products)"
         description="Stay up-to-date with a Weekly every Monday.">
         <EditWeeklySummary memberships={memberships} user={user} environmentId={params.environmentId} />

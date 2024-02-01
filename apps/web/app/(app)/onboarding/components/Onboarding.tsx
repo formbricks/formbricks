@@ -55,15 +55,7 @@ export default function Onboarding({ session, environmentId, user, product }: On
     setIsLoading(true);
 
     try {
-      const updatedProfile = {
-        ...user,
-        onboardingCompleted: true,
-        notificationSettings: {
-          alert: user.notificationSettings?.alert || {},
-          weeklySummary: user.notificationSettings?.weeklySummary || {},
-          doNotSubscribeToTeams: user.notificationSettings?.doNotSubscribeToTeams || [],
-        },
-      };
+      const updatedProfile = { onboardingCompleted: true };
       await updateUserAction(updatedProfile);
 
       if (environmentId) {
