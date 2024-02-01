@@ -409,6 +409,7 @@ export const ZSurvey = z.object({
   name: z.string(),
   type: ZSurveyType,
   environmentId: z.string(),
+  createdBy: z.string().nullable(),
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),

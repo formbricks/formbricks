@@ -35,6 +35,7 @@ export const selectSurvey = {
   name: true,
   type: true,
   environmentId: true,
+  createdBy: true,
   status: true,
   welcomeCard: true,
   questions: true,
@@ -391,6 +392,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
   }
 
+  surveyData.updatedAt = new Date();
   data = {
     ...surveyData,
     ...data,
@@ -469,7 +471,11 @@ export async function deleteSurvey(surveyId: string) {
   return deletedSurvey;
 }
 
-export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
+export const createSurvey = async (
+  environmentId: string,
+  surveyBody: TSurveyInput,
+  userId?: string
+): Promise<TSurvey> => {
   validateInputs([environmentId, ZId]);
 
   if (surveyBody.triggers) {
@@ -489,6 +495,11 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   const survey = await prisma.survey.create({
     data: {
       ...data,
+      creator: {
+        connect: {
+          id: userId,
+        },
+      },
       environment: {
         connect: {
           id: environmentId,
@@ -512,7 +523,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   return transformedSurvey;
 };
 
-export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
+export const duplicateSurvey = async (environmentId: string, surveyId: string, userId: string) => {
   validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
 
@@ -528,6 +539,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       ...existingSurvey,
       id: undefined, // id is auto-generated
       environmentId: undefined, // environmentId is set below
+      createdBy: undefined,
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
       questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
@@ -540,6 +552,11 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       environment: {
         connect: {
           id: environmentId,
+        },
+      },
+      creator: {
+        connect: {
+          id: userId,
         },
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage

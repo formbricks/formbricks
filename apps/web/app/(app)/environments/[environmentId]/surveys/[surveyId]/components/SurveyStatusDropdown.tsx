@@ -27,10 +27,7 @@ export default function SurveyStatusDropdown({
     <>
       {survey.status === "draft" ? (
         <div className="flex items-center">
-          {(survey.type === "link" || environment.widgetSetupCompleted) && (
-            <SurveyStatusIndicator status={survey.status} />
-          )}
-          {survey.status === "draft" && <p className="text-sm italic text-slate-600">Draft</p>}
+          <p className="text-sm italic text-slate-600">Draft</p>
         </div>
       ) : (
         <Select
