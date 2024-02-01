@@ -32,6 +32,7 @@ export default function UserTargetingCard({
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedUserSegment = structuredClone(userSegment);
+
     if (updatedUserSegment?.filters?.length === 0) {
       updatedUserSegment.filters.push({
         ...filter,
@@ -57,7 +58,7 @@ export default function UserTargetingCard({
       onOpenChange={setOpen}
       className={cn(
         open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
       )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">

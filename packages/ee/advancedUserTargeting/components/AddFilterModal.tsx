@@ -7,7 +7,7 @@ import React, { useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
+import { TBaseFilter, TUserSegment, TUserSegmentAttributeFilter } from "@formbricks/types/userSegment";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 import { TabBar } from "@formbricks/ui/TabBar";
@@ -108,12 +108,14 @@ const AddFilterModal = ({
     deviceType,
     actionClassId,
     userSegmentId,
+    isUserId = false,
   }: {
     type: TFilterType;
     actionClassId?: string;
     attributeClassName?: string;
     userSegmentId?: string;
     deviceType?: string;
+    isUserId?: boolean;
   }) => {
     if (type === "action") {
       if (!actionClassId) return;
@@ -142,20 +144,23 @@ const AddFilterModal = ({
     if (type === "attribute") {
       if (!attributeClassName) return;
 
+      const newFilterResource: TUserSegmentAttributeFilter = {
+        id: createId(),
+        root: {
+          type,
+          attributeClassName,
+        },
+        qualifier: {
+          operator: "equals",
+        },
+        value: "",
+        ...(isUserId && { meta: { isUserId } }),
+      };
+
       const newFilter: TBaseFilter = {
         id: createId(),
         connector: "and",
-        resource: {
-          id: createId(),
-          root: {
-            type: type,
-            attributeClassName,
-          },
-          qualifier: {
-            operator: "equals",
-          },
-          value: "",
-        },
+        resource: newFilterResource,
       };
 
       onAddFilter(newFilter);
@@ -251,6 +256,7 @@ const AddFilterModal = ({
                       handleAddFilter({
                         type: "attribute",
                         attributeClassName: attributeClass.name,
+                        isUserId: attributeClass.name === "userId" && attributeClass.type === "automatic",
                       });
                     }}
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
@@ -339,6 +345,7 @@ const AddFilterModal = ({
                 handleAddFilter({
                   type: "attribute",
                   attributeClassName: attributeClass.name,
+                  isUserId: attributeClass.name === "userId" && attributeClass.type === "automatic",
                 });
               }}
               className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">

@@ -645,6 +645,8 @@ export const getSyncSurveys = async (
         const surveyPromises = surveys.map(async (survey) => {
           const { userSegment } = survey;
 
+          const personUserId = person.userId ?? person.attributes.userId ?? "";
+
           if (userSegment) {
             const result = await evaluateSegment(
               {
@@ -653,6 +655,7 @@ export const getSyncSurveys = async (
                 deviceType,
                 environmentId,
                 personId: person.id,
+                userId: personUserId,
               },
               userSegment.filters
             );

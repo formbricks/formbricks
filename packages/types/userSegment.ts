@@ -86,6 +86,11 @@ export const ZUserSegmentAttributeFilter = z.object({
   qualifier: z.object({
     operator: ZAttributeOperator,
   }),
+  meta: z
+    .object({
+      isUserId: z.boolean(),
+    })
+    .optional(),
 });
 export type TUserSegmentAttributeFilter = z.infer<typeof ZUserSegmentAttributeFilter>;
 
@@ -300,6 +305,7 @@ export type TEvaluateSegmentUserAttributeData = {
 
 export type TEvaluateSegmentUserData = {
   personId: string;
+  userId?: string;
   environmentId: string;
   attributes: TEvaluateSegmentUserAttributeData;
   actionIds: string[];

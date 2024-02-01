@@ -98,11 +98,6 @@ export default function SurveyEditor({
       return;
     }
 
-    // do nothing if user targeting is not allowed
-    // if (!isUserTargetingAllowed) {
-    //   return;
-    // }
-
     // do nothing if its not an in-app survey
     if (localSurvey.type !== "web") {
       return;
@@ -179,7 +174,7 @@ export default function SurveyEditor({
               />
             )}
           </main>
-          <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6  md:flex md:flex-col">
+          <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6 md:flex md:flex-col">
             <PreviewSurvey
               survey={localSurvey}
               setActiveQuestionId={setActiveQuestionId}

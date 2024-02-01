@@ -448,13 +448,18 @@ export const getUserSegmentsByAttributeClassName = async (
 
 const evaluateAttributeFilter = (
   attributes: TEvaluateSegmentUserAttributeData,
-  filter: TUserSegmentAttributeFilter
+  filter: TUserSegmentAttributeFilter,
+  userId?: string
 ): boolean => {
-  const { value, qualifier, root } = filter;
+  const { value, qualifier, root, meta } = filter;
   const { attributeClassName } = root;
+  const { isUserId } = meta ?? {};
+
+  if (isUserId && userId) {
+    return compareValues(userId, value, qualifier.operator);
+  }
 
   const attributeValue = attributes[attributeClassName];
-
   if (!attributeValue) {
     return false;
   }
@@ -612,7 +617,11 @@ export const evaluateSegment = async (
       const { type } = root;
 
       if (type === "attribute") {
-        result = evaluateAttributeFilter(userData.attributes, resource as TUserSegmentAttributeFilter);
+        result = evaluateAttributeFilter(
+          userData.attributes,
+          resource as TUserSegmentAttributeFilter,
+          userData.userId
+        );
         resultPairs.push({
           result,
           connector: filterItem.connector,
