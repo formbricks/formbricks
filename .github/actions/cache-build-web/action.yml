@@ -21,20 +21,20 @@ runs:
           **/dist/**
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}-${{ env.key-3 }}
 
-    - name: Setup Node.js 18.x
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18.x
-      if: steps.cache-build.outputs.cache-hit != 'true'
+    # - name: Setup Node.js 18.x
+    #   uses: actions/setup-node@v3
+    #   with:
+    #     node-version: 18.x
+    #   if: steps.cache-build.outputs.cache-hit != 'true'
 
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2
-      if: steps.cache-build.outputs.cache-hit != 'true'
+    # - name: Install pnpm
+    #   uses: pnpm/action-setup@v2
+    #   if: steps.cache-build.outputs.cache-hit != 'true'
 
-    - name: Install dependencies
-      run: pnpm install --config.platform=linux --config.architecture=x64
-      if: steps.cache-build.outputs.cache-hit != 'true'
-      shell: bash
+    # - name: Install dependencies
+    #   run: pnpm install --config.platform=linux --config.architecture=x64
+    #   if: steps.cache-build.outputs.cache-hit != 'true'
+    #   shell: bash
 
     - name: create .env
       run: cp .env.example .env
