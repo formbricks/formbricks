@@ -412,7 +412,7 @@ export const subscribeTeamMembersToSurveyResponses = async (
     const users = await getUsersWithTeam(team.id);
     await Promise.all(
       users.map((user) => {
-        if (!user.notificationSettings?.doNotSubscribeToTeams?.includes(team?.id as string)) {
+        if (!user.notificationSettings?.unsubscribedTeamIds?.includes(team?.id as string)) {
           const defaultSettings = { alert: {}, weeklySummary: {} };
           const updatedNotificationSettings: TUserNotificationSettings = {
             ...defaultSettings,

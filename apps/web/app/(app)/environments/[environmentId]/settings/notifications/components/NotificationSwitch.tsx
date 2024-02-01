@@ -11,7 +11,7 @@ import { updateNotificationSettingsAction } from "../actions";
 interface NotificationSwitchProps {
   surveyOrProductOrTeamId: string;
   notificationSettings: TUserNotificationSettings;
-  notificationType: "alert" | "weeklySummary" | "doNotSubscribeToTeams";
+  notificationType: "alert" | "weeklySummary" | "unsubscribedTeamIds";
   autoDisableNotificationType?: string;
   autoDisableNotificationElementId?: string;
 }
@@ -26,25 +26,22 @@ export function NotificationSwitch({
   const [isLoading, setIsLoading] = useState(false);
 
   const isChecked =
-    notificationType === "doNotSubscribeToTeams"
-      ? !notificationSettings.doNotSubscribeToTeams?.includes(surveyOrProductOrTeamId)
+    notificationType === "unsubscribedTeamIds"
+      ? !notificationSettings.unsubscribedTeamIds?.includes(surveyOrProductOrTeamId)
       : notificationSettings[notificationType][surveyOrProductOrTeamId] === true;
 
   const handleSwitchChange = async () => {
     setIsLoading(true);
 
     let updatedNotificationSettings = { ...notificationSettings };
-    if (notificationType === "doNotSubscribeToTeams") {
-      const doNotSubscribeToTeams = updatedNotificationSettings.doNotSubscribeToTeams ?? [];
-      if (doNotSubscribeToTeams.includes(surveyOrProductOrTeamId)) {
-        updatedNotificationSettings.doNotSubscribeToTeams = doNotSubscribeToTeams.filter(
+    if (notificationType === "unsubscribedTeamIds") {
+      const unsubscribedTeamIds = updatedNotificationSettings.unsubscribedTeamIds ?? [];
+      if (unsubscribedTeamIds.includes(surveyOrProductOrTeamId)) {
+        updatedNotificationSettings.unsubscribedTeamIds = unsubscribedTeamIds.filter(
           (id) => id !== surveyOrProductOrTeamId
         );
       } else {
-        updatedNotificationSettings.doNotSubscribeToTeams = [
-          ...doNotSubscribeToTeams,
-          surveyOrProductOrTeamId,
-        ];
+        updatedNotificationSettings.unsubscribedTeamIds = [...unsubscribedTeamIds, surveyOrProductOrTeamId];
       }
     } else {
       updatedNotificationSettings[notificationType][surveyOrProductOrTeamId] =
@@ -71,8 +68,8 @@ export function NotificationSwitch({
           }
           break;
 
-        case "doNotSubscribeToTeams":
-          if (!notificationSettings.doNotSubscribeToTeams?.includes(surveyOrProductOrTeamId)) {
+        case "unsubscribedTeamIds":
+          if (!notificationSettings.unsubscribedTeamIds?.includes(surveyOrProductOrTeamId)) {
             handleSwitchChange();
             toast.success("You will not be auto-subscribed to this team's surveys anymore!", {
               id: "notification-switch",

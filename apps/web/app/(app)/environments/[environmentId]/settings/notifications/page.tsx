@@ -19,7 +19,7 @@ function setCompleteNotificationSettings(
   const newNotificationSettings = {
     alert: {},
     weeklySummary: {},
-    doNotSubscribeToTeams: notificationSettings.doNotSubscribeToTeams || [],
+    unsubscribedTeamIds: notificationSettings.unsubscribedTeamIds || [],
   };
   for (const membership of memberships) {
     for (const product of membership.team.products) {

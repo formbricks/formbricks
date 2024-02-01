@@ -39,7 +39,7 @@ export default function EditAlerts({
               <NotificationSwitch
                 surveyOrProductOrTeamId={membership.team.id}
                 notificationSettings={user.notificationSettings!}
-                notificationType={"doNotSubscribeToTeams"}
+                notificationType={"unsubscribedTeamIds"}
                 autoDisableNotificationType={autoDisableNotificationType}
                 autoDisableNotificationElementId={autoDisableNotificationElementId}
               />
