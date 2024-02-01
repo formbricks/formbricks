@@ -9,7 +9,8 @@
     "build": "next build",
     "build:dev": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "data-migration:targeting": "ts-node ../../packages/database/migrations/20240111114523_targeting/data-migration.ts"
   },
   "dependencies": {
     "@formbricks/api": "workspace:*",
