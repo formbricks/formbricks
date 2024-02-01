@@ -228,6 +228,7 @@ export default function SurveyMenuBar({
      than the current count of accepted response and also it is not set to 0
     */
     if ((survey.autoComplete && responseCount >= survey.autoComplete) || survey?.autoComplete === 0) {
+      toast.error(`Response limit needs to exceed number of received responses (${responseCount}).`);
       return false;
     }
 
