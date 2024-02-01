@@ -55,7 +55,7 @@ export default function Onboarding({ session, environmentId, user, product }: On
     setIsLoading(true);
 
     try {
-      const updatedProfile = { ...user, onboardingCompleted: true };
+      const updatedProfile = { onboardingCompleted: true };
       await updateUserAction(updatedProfile);
 
       if (environmentId) {

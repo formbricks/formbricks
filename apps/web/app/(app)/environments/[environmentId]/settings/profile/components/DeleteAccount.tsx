@@ -55,7 +55,7 @@ function DeleteAccountModal({ setOpen, open, session }: DeleteAccountModalProps)
     try {
       setDeleting(true);
       await deleteUserAction();
-      await signOut();
+      await signOut({ callbackUrl: "/auth/login" });
       await formbricksLogout();
     } catch (error) {
       toast.error("Something went wrong");
