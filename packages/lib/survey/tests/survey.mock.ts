@@ -12,6 +12,8 @@ import {
   TSurveyQuestionType,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
+import { TTeam } from "@formbricks/types/teams";
+import { TUser } from "@formbricks/types/user";
 
 import { selectSurvey } from "../service";
 
@@ -55,6 +57,38 @@ export const mockDisplay = {
   personId: null,
   responseId: null,
   status: null,
+};
+
+// id: true,
+// name: true,
+// email: true,
+// emailVerified: true,
+// imageUrl: true,
+// createdAt: true,
+// updatedAt: true,
+// onboardingCompleted: true,
+// twoFactorEnabled: true,
+// identityProvider: true,
+// objective: true,
+// notificationSettings: true,
+
+export const mockUser: TUser = {
+  id: mockId,
+  name: "mock User",
+  email: "test@unit.com",
+  emailVerified: currentDate,
+  imageUrl: "https://www.google.com",
+  createdAt: currentDate,
+  updatedAt: currentDate,
+  onboardingCompleted: true,
+  twoFactorEnabled: false,
+  identityProvider: "google",
+  objective: "improve_user_retention",
+  notificationSettings: {
+    alert: {},
+    weeklySummary: {},
+    unsubscribedTeamIds: [],
+  },
 };
 
 export const mockPerson: TPerson = {
@@ -127,6 +161,30 @@ const baseSurveyProperties = {
   ...commonMockProperties,
 };
 
+export const mockTeamOutput: TTeam = {
+  id: mockId,
+  name: "mock Team",
+  createdAt: currentDate,
+  updatedAt: currentDate,
+  billing: {
+    stripeCustomerId: null,
+    features: {
+      inAppSurvey: {
+        status: "inactive",
+        unlimited: false,
+      },
+      linkSurvey: {
+        status: "inactive",
+        unlimited: false,
+      },
+      userTargeting: {
+        status: "inactive",
+        unlimited: false,
+      },
+    },
+  },
+};
+
 export const mockSurveyOutput: SurveyMock = {
   type: "web",
   status: "inProgress",
@@ -136,6 +194,7 @@ export const mockSurveyOutput: SurveyMock = {
   singleUse: null,
   styling: null,
   displayPercentage: null,
+  createdBy: null,
   pin: null,
   resultShareKey: null,
   ...baseSurveyProperties,
@@ -159,6 +218,7 @@ export const updateSurveyInput: TSurvey = {
   styling: null,
   singleUse: null,
   displayPercentage: null,
+  createdBy: null,
   pin: null,
   resultShareKey: null,
   ...commonMockProperties,

@@ -24,9 +24,11 @@ import {
   mockProduct,
   mockSurveyOutput,
   mockSurveyWithAttributesOutput,
+  mockTeamOutput,
   mockTransformedSurveyOutput,
   mockTransformedSurveyWithAttributesIdOutput,
   mockTransformedSurveyWithAttributesOutput,
+  mockUser,
   updateSurveyInput,
 } from "./survey.mock";
 
@@ -235,6 +237,27 @@ describe("Tests for createSurvey", () => {
   describe("Happy Path", () => {
     it("Creates a survey successfully", async () => {
       prismaMock.survey.create.mockResolvedValueOnce(mockSurveyWithAttributesOutput);
+      prismaMock.team.findFirst.mockResolvedValueOnce(mockTeamOutput);
+      prismaMock.user.findMany.mockResolvedValueOnce([
+        {
+          ...mockUser,
+          twoFactorSecret: null,
+          backupCodes: null,
+          password: null,
+          identityProviderAccountId: null,
+          groupId: null,
+          role: "engineer",
+        },
+      ]);
+      prismaMock.user.update.mockResolvedValueOnce({
+        ...mockUser,
+        twoFactorSecret: null,
+        backupCodes: null,
+        password: null,
+        identityProviderAccountId: null,
+        groupId: null,
+        role: "engineer",
+      });
       const createdSurvey = await createSurvey(mockId, createSurveyInput);
       expect(createdSurvey).toEqual(mockTransformedSurveyWithAttributesIdOutput);
     });
@@ -260,7 +283,7 @@ describe("Tests for duplicateSurvey", () => {
     it("Duplicates a survey successfully", async () => {
       prismaMock.survey.findUnique.mockResolvedValueOnce(mockSurveyWithAttributesOutput);
       prismaMock.survey.create.mockResolvedValueOnce(mockSurveyWithAttributesOutput);
-      const createdSurvey = await duplicateSurvey(mockId, mockId);
+      const createdSurvey = await duplicateSurvey(mockId, mockId, mockId);
       expect(createdSurvey).toEqual(mockSurveyWithAttributesOutput);
     });
   });
@@ -270,13 +293,13 @@ describe("Tests for duplicateSurvey", () => {
 
     it("Throws ResourceNotFoundError if the survey does not exist", async () => {
       prismaMock.survey.findUnique.mockRejectedValueOnce(new ResourceNotFoundError("Survey", mockId));
-      await expect(duplicateSurvey(mockId, mockId)).rejects.toThrow(ResourceNotFoundError);
+      await expect(duplicateSurvey(mockId, mockId, mockId)).rejects.toThrow(ResourceNotFoundError);
     });
 
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prismaMock.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(duplicateSurvey(mockId, mockId)).rejects.toThrow(Error);
+      await expect(duplicateSurvey(mockId, mockId, mockId)).rejects.toThrow(Error);
     });
   });
 });

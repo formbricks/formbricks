@@ -40,6 +40,7 @@ export const skipOnboarding = async (page: Page): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
   await page.getByRole("button", { name: "I'll do it later" }).click();
+  await page.waitForTimeout(500);
   await page.getByRole("button", { name: "I'll do it later" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);

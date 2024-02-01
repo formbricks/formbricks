@@ -1,6 +1,12 @@
 import { Button } from "@formbricks/ui/Button";
 
-const ContentLayout = ({ headline, description, children }) => {
+interface ContentLayoutProps {
+  headline: string;
+  description: string;
+  children?: React.ReactNode;
+}
+
+const ContentLayout = ({ headline, description, children }: ContentLayoutProps) => {
   return (
     <div className="flex h-screen">
       <div className="m-auto flex flex-col gap-7 text-center text-slate-700">
@@ -57,9 +63,17 @@ export const ExpiredContent = () => {
   return (
     <ContentLayout
       headline="Invite expired 😥"
-      description="Invites are valid for 7 days. Please request a new invite.">
-      <div></div>
-    </ContentLayout>
+      description="Invites are valid for 7 days. Please request a new invite."
+    />
+  );
+};
+
+export const InvitationNotFound = () => {
+  return (
+    <ContentLayout
+      headline="Invite not found 😥"
+      description="The invitation code cannot be found or has already been used."
+    />
   );
 };
 

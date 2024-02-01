@@ -1,12 +1,14 @@
 import { UsersIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
-import { Membership, User } from "../types";
+import { TUser } from "@formbricks/types/user";
+
+import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
 
 interface EditAlertsProps {
   memberships: Membership[];
-  user: User;
+  user: TUser;
   environmentId: string;
 }
 
@@ -34,8 +36,8 @@ export default function EditWeeklySummary({ memberships, user, environmentId }: 
                   <div className="col-span-2">{product?.name}</div>
                   <div className="col-span-1 flex items-center justify-center">
                     <NotificationSwitch
-                      surveyOrProductId={product.id}
-                      notificationSettings={user.notificationSettings}
+                      surveyOrProductOrTeamId={product.id}
+                      notificationSettings={user.notificationSettings!}
                       notificationType={"weeklySummary"}
                     />
                   </div>
