@@ -19,7 +19,7 @@ interface RatingQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   isInvalid: boolean;
 }
 
@@ -31,7 +31,7 @@ export default function RatingQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
@@ -43,7 +43,7 @@ export default function RatingQuestionForm({
         value={question.headline as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
@@ -60,7 +60,7 @@ export default function RatingQuestionForm({
                 value={question.subheader as TI18nString}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                languages={languages}
+                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
@@ -85,7 +85,7 @@ export default function RatingQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(languages)),
+                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
               });
               setShowSubheader(true);
             }}>
@@ -138,7 +138,7 @@ export default function RatingQuestionForm({
             value={question.lowerLabel as TI18nString}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
-            languages={languages}
+            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
@@ -152,7 +152,7 @@ export default function RatingQuestionForm({
             value={question.upperLabel as TI18nString}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
-            languages={languages}
+            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
@@ -171,7 +171,7 @@ export default function RatingQuestionForm({
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               placeholder={"skip"}
-              languages={languages}
+              surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}

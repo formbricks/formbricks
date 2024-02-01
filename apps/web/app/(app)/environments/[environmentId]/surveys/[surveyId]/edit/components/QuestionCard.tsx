@@ -55,7 +55,7 @@ interface QuestionCardProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   isInvalid: boolean;
 }
 
@@ -72,7 +72,7 @@ export default function QuestionCard({
   lastQuestion,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
   isInvalid,
 }: QuestionCardProps) {
   const question = localSurvey.questions[questionIdx];
@@ -213,7 +213,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
@@ -225,7 +225,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
@@ -237,7 +237,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.NPS ? (
@@ -249,7 +249,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.CTA ? (
@@ -261,7 +261,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Rating ? (
@@ -273,7 +273,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Consent ? (
@@ -284,7 +284,7 @@ export default function QuestionCard({
                   updateQuestion={updateQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Date ? (
@@ -296,7 +296,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
@@ -308,7 +308,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.FileUpload ? (
@@ -321,7 +321,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
@@ -333,7 +333,7 @@ export default function QuestionCard({
                   lastQuestion={lastQuestion}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                 />
               ) : null}
@@ -362,7 +362,7 @@ export default function QuestionCard({
                             questionIdx={questionIdx}
                             maxLength={48}
                             placeholder={lastQuestion ? "Finish" : "Next"}
-                            languages={languages}
+                            surveyLanguages={surveyLanguages}
                             isInvalid={isInvalid}
                             updateQuestion={updateQuestion}
                             selectedLanguage={selectedLanguage}
@@ -386,7 +386,7 @@ export default function QuestionCard({
                             questionIdx={questionIdx}
                             maxLength={48}
                             placeholder={"Back"}
-                            languages={languages}
+                            surveyLanguages={surveyLanguages}
                             isInvalid={isInvalid}
                             updateQuestion={updateQuestion}
                             selectedLanguage={selectedLanguage}
@@ -407,7 +407,7 @@ export default function QuestionCard({
                             questionIdx={questionIdx}
                             maxLength={48}
                             placeholder={"Back"}
-                            languages={languages}
+                            surveyLanguages={surveyLanguages}
                             isInvalid={isInvalid}
                             updateQuestion={updateQuestion}
                             selectedLanguage={selectedLanguage}

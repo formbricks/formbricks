@@ -208,7 +208,7 @@ export default function SettingsNavbar({
         hidden: false,
       },
     ],
-    [environmentId, isFormbricksCloud, pathname, isPricingDisabled, isViewer]
+    [environmentId, isFormbricksCloud, pathname, isPricingDisabled, isViewer, isEnterpriseEdition]
   );
 
   if (!navigation) return null;

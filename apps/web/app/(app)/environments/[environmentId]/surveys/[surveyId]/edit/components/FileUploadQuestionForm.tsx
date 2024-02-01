@@ -24,7 +24,7 @@ interface FileUploadFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   isInvalid: boolean;
 }
 
@@ -37,7 +37,7 @@ export default function FileUploadQuestionForm({
   product,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
@@ -119,7 +119,7 @@ export default function FileUploadQuestionForm({
         value={question.headline as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
@@ -135,7 +135,7 @@ export default function FileUploadQuestionForm({
                 value={question.subheader as TI18nString}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                languages={languages}
+                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
@@ -160,7 +160,7 @@ export default function FileUploadQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(languages)),
+                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
               });
               setShowSubheader(true);
             }}>

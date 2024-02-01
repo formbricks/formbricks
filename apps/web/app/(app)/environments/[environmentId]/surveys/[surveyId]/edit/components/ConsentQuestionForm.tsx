@@ -14,7 +14,7 @@ interface ConsentQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   isInvalid: boolean;
 }
 
@@ -26,7 +26,7 @@ export default function ConsentQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -42,7 +42,7 @@ export default function ConsentQuestionForm({
         value={question.headline as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
@@ -56,7 +56,7 @@ export default function ConsentQuestionForm({
             id="subheader"
             value={question.html as TI18nString}
             localSurvey={localSurvey}
-            languages={languages}
+            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
@@ -77,7 +77,7 @@ export default function ConsentQuestionForm({
         value={question.label as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}

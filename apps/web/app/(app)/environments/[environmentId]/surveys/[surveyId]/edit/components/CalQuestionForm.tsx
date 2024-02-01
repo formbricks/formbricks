@@ -16,7 +16,7 @@ interface CalQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   isInvalid: boolean;
 }
 
@@ -27,7 +27,7 @@ export default function CalQuestionForm({
   updateQuestion,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
   isInvalid,
 }: CalQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -40,7 +40,7 @@ export default function CalQuestionForm({
         value={question.headline as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
@@ -56,7 +56,7 @@ export default function CalQuestionForm({
                 value={question.subheader as TI18nString}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                languages={languages}
+                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
@@ -81,7 +81,7 @@ export default function CalQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(languages)),
+                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
               });
               setShowSubheader(true);
             }}>

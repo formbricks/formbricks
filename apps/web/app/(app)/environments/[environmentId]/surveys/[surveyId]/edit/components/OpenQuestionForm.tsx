@@ -38,7 +38,7 @@ interface OpenQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   isInvalid: boolean;
 }
 
@@ -50,7 +50,7 @@ export default function OpenQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
@@ -72,7 +72,7 @@ export default function OpenQuestionForm({
         value={question.headline as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
@@ -89,7 +89,7 @@ export default function OpenQuestionForm({
                 value={question.subheader as TI18nString}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                languages={languages}
+                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
@@ -114,7 +114,7 @@ export default function OpenQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(languages)),
+                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
               });
               setShowSubheader(true);
             }}>
@@ -132,9 +132,9 @@ export default function OpenQuestionForm({
           value={
             question.placeholder && question.placeholder[selectedLanguage]
               ? (question.placeholder as TI18nString)
-              : createI18nString(defaultPlaceholder, extractLanguageSymbols(languages))
+              : createI18nString(defaultPlaceholder, extractLanguageSymbols(surveyLanguages))
           }
-          languages={languages}
+          surveyLanguages={surveyLanguages}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
           isInvalid={isInvalid}

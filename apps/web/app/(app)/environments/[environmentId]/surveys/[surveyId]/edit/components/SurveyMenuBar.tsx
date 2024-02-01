@@ -30,7 +30,7 @@ interface SurveyMenuBarProps {
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
   responseCount: number;
-  languages: string[];
+  surveyLanguages: string[];
   selectedLanguage: string;
 }
 
@@ -44,7 +44,7 @@ export default function SurveyMenuBar({
   setInvalidQuestions,
   product,
   responseCount,
-  languages,
+  surveyLanguages,
   selectedLanguage,
 }: SurveyMenuBarProps) {
   const router = useRouter();
@@ -121,20 +121,20 @@ export default function SurveyMenuBar({
     }
     if (survey.thankYouCard.enabled) {
       if (
-        !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", languages) ||
+        !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", surveyLanguages) ||
         (survey.thankYouCard.subheader &&
           survey.thankYouCard.subheader["en"] !== "" &&
-          !isLabelValidForAllLanguages(survey.thankYouCard.subheader, languages))
+          !isLabelValidForAllLanguages(survey.thankYouCard.subheader, surveyLanguages))
       ) {
         faultyQuestions.push("end");
       }
     }
     if (survey.welcomeCard.enabled) {
       if (
-        !isLabelValidForAllLanguages(survey.welcomeCard.headline, languages) ||
+        !isLabelValidForAllLanguages(survey.welcomeCard.headline, surveyLanguages) ||
         (survey.welcomeCard.html &&
           survey.welcomeCard.html["en"] !== "" &&
-          !isLabelValidForAllLanguages(survey.welcomeCard.html, languages))
+          !isLabelValidForAllLanguages(survey.welcomeCard.html, surveyLanguages))
       ) {
         faultyQuestions.push("start");
       }
@@ -167,7 +167,7 @@ export default function SurveyMenuBar({
 
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
-      const isValid = validateQuestion(question, languages);
+      const isValid = validateQuestion(question, surveyLanguages);
 
       if (!isValid) {
         faultyQuestions.push(question.id);

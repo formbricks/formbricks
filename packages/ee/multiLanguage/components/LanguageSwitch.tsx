@@ -13,25 +13,25 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formb
 import { convertArrayToObject } from "../utils/i18n";
 
 interface LanguageSwitchProps {
-  allLanguages: string[][];
+  productLanguages: string[][];
   setLanguages: any;
   i18n: boolean;
   setI18n: (i18n: boolean) => void;
-  languages: TLanguages;
+  surveyLanguages: TLanguages;
   environmentId: string;
   isEnterpriseEdition: boolean;
 }
 export default function LanguageSwitch({
-  allLanguages,
+  productLanguages,
   setLanguages,
   i18n,
   setI18n,
-  languages,
+  surveyLanguages,
   environmentId,
   isEnterpriseEdition,
 }: LanguageSwitchProps) {
   const [translationsEnabled, setTranslationsEnabled] = useState(i18n);
-  const [languagesArray, setLanguagesArray] = useState<string[][]>(Object.entries(languages));
+  const [languagesArray, setLanguagesArray] = useState<string[][]>(Object.entries(surveyLanguages));
   const [showLanguageToggle, setshowLanguageToggle] = useState(false);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -55,14 +55,14 @@ export default function LanguageSwitch({
   // if there is a change in languages belonging to a particular product, then accordingly update the currently selected languages
   useEffect(() => {
     let updatedLanguagesArray = languagesArray.filter((lang) =>
-      allLanguages.some((allLang) => allLang[0] === lang[0])
+      productLanguages.some((allLang) => allLang[0] === lang[0])
     );
 
     if (updatedLanguagesArray.length !== languagesArray.length) {
       setLanguagesArray(updatedLanguagesArray);
       setLanguages(convertArrayToObject(updatedLanguagesArray));
     }
-  }, [allLanguages, languagesArray]);
+  }, [productLanguages, languagesArray]);
 
   return (
     <div className="flex justify-end">
@@ -91,7 +91,7 @@ export default function LanguageSwitch({
                     <div
                       className="absolute z-20 mt-2 space-y-4 rounded-md border bg-white p-4"
                       ref={wrapperRef}>
-                      {allLanguages?.map((language) => {
+                      {productLanguages?.map((language) => {
                         if (language[0] === "en") return;
                         return (
                           <label

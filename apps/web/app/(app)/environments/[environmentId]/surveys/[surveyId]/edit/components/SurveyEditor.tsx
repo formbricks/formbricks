@@ -49,8 +49,10 @@ export default function SurveyEditor({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
-  const [languages, setLanguages] = useState<TLanguages>({ en: "English" });
-  const [allLanguages, setAllLanguages] = useState(Object.entries(product.languages ?? { en: "English" }));
+  const [surveyLanguages, setSurveyLanguages] = useState<TLanguages>({ en: "English" });
+  const [productLanguages, setProductLanguages] = useState(
+    Object.entries(product.languages ?? { en: "English" })
+  );
   const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
   const surveyEditorRef = useRef(null);
 
@@ -71,15 +73,16 @@ export default function SurveyEditor({
             return acc;
           }, {});
 
-        setLanguages(languagesObj);
+        setSurveyLanguages(languagesObj);
       }
     }
-  }, [survey, localSurvey]);
+  }, [survey, localSurvey, product.languages]);
 
   useEffect(() => {
     if (!localSurvey) return;
-    setLocalSurvey(translateSurvey(localSurvey, extractLanguageSymbols(Object.entries(languages))));
-  }, [i18n, localSurvey?.id, localSurvey?.questions.length, selectedLanguage, languages]);
+    setLocalSurvey(translateSurvey(localSurvey, extractLanguageSymbols(Object.entries(surveyLanguages))));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n, localSurvey?.id, localSurvey?.questions.length, selectedLanguage, surveyLanguages]);
 
   useEffect(() => {
     const listener = () => {
@@ -88,7 +91,7 @@ export default function SurveyEditor({
           const latestProduct = await refetchProduct(localProduct.id);
           if (latestProduct) {
             setLocalProduct(latestProduct);
-            setAllLanguages(Object.entries(latestProduct.languages));
+            setProductLanguages(Object.entries(latestProduct.languages));
           }
         };
         fetchLatestProduct();
@@ -110,10 +113,10 @@ export default function SurveyEditor({
   }, [localSurvey?.type]);
 
   useEffect(() => {
-    if (!Object.keys(languages).includes(selectedLanguage)) {
+    if (!Object.keys(surveyLanguages).includes(selectedLanguage)) {
       setSelectedLanguage("en");
     }
-  }, [languages]);
+  }, [surveyLanguages, selectedLanguage]);
 
   if (!localSurvey) {
     return <Loading />;
@@ -132,7 +135,7 @@ export default function SurveyEditor({
           setInvalidQuestions={setInvalidQuestions}
           product={localProduct}
           responseCount={responseCount}
-          languages={Object.keys(languages)}
+          surveyLanguages={Object.keys(surveyLanguages)}
           selectedLanguage={selectedLanguage}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
@@ -143,10 +146,10 @@ export default function SurveyEditor({
               <>
                 <div className="mt-16">
                   <LanguageSwitch
-                    allLanguages={allLanguages}
-                    languages={languages}
-                    setLanguages={setLanguages}
-                    i18n={Object.entries(languages).length > 1}
+                    productLanguages={productLanguages}
+                    surveyLanguages={surveyLanguages}
+                    setLanguages={setSurveyLanguages}
+                    i18n={Object.entries(surveyLanguages).length > 1}
                     setI18n={setI18n}
                     environmentId={environment.id}
                     isEnterpriseEdition={isEnterpriseEdition}
@@ -162,7 +165,7 @@ export default function SurveyEditor({
                   setInvalidQuestions={setInvalidQuestions}
                   selectedLanguage={selectedLanguage ? selectedLanguage : "en"}
                   setSelectedLanguage={setSelectedLanguage}
-                  languages={Object.entries(languages)}
+                  surveyLanguages={Object.entries(surveyLanguages)}
                 />
               </>
             ) : (

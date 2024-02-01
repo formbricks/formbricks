@@ -22,7 +22,7 @@ interface OpenQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   isInvalid: boolean;
 }
 
@@ -34,7 +34,7 @@ export default function MultipleChoiceSingleForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -171,7 +171,7 @@ export default function MultipleChoiceSingleForm({
         value={question.headline as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
@@ -188,7 +188,7 @@ export default function MultipleChoiceSingleForm({
                 value={question.subheader as TI18nString}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                languages={languages}
+                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
@@ -213,7 +213,7 @@ export default function MultipleChoiceSingleForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(languages)),
+                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
               });
               setShowSubheader(true);
             }}>
@@ -246,7 +246,7 @@ export default function MultipleChoiceSingleForm({
                       setisInvalidValue(null);
                     }
                   }}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   updateChoice={updateChoice}
                   selectedLanguage={selectedLanguage}
                   setSelectedLanguage={setSelectedLanguage}
@@ -254,7 +254,7 @@ export default function MultipleChoiceSingleForm({
                     isInvalid &&
                     !isLabelValidForAllLanguages(
                       question.choices[choiceIdx].label,
-                      extractLanguageSymbols(languages)
+                      extractLanguageSymbols(surveyLanguages)
                     )
                   }
                 />
@@ -269,9 +269,9 @@ export default function MultipleChoiceSingleForm({
                     questionIdx={questionIdx}
                     value={
                       (question.otherOptionPlaceholder as TI18nString) ??
-                      createI18nString("Please specify", extractLanguageSymbols(languages))
+                      createI18nString("Please specify", extractLanguageSymbols(surveyLanguages))
                     }
-                    languages={languages}
+                    surveyLanguages={surveyLanguages}
                     updateChoice={updateChoice}
                     selectedLanguage={selectedLanguage}
                     setSelectedLanguage={setSelectedLanguage}
@@ -279,7 +279,7 @@ export default function MultipleChoiceSingleForm({
                       isInvalid &&
                       !isLabelValidForAllLanguages(
                         question.choices[choiceIdx].label,
-                        extractLanguageSymbols(languages)
+                        extractLanguageSymbols(surveyLanguages)
                       )
                     }
                   />

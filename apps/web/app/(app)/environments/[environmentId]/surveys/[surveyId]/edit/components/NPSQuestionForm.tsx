@@ -17,7 +17,7 @@ interface NPSQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   isInvalid: boolean;
 }
 
@@ -30,7 +30,7 @@ export default function NPSQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: NPSQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
@@ -42,7 +42,7 @@ export default function NPSQuestionForm({
         value={question.headline as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
@@ -59,7 +59,7 @@ export default function NPSQuestionForm({
                 value={question.subheader as TI18nString}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                languages={languages}
+                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
@@ -84,7 +84,7 @@ export default function NPSQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(languages)),
+                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
               });
               setShowSubheader(true);
             }}>
@@ -103,7 +103,7 @@ export default function NPSQuestionForm({
             value={question.lowerLabel as TI18nString}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
-            languages={languages}
+            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
@@ -117,7 +117,7 @@ export default function NPSQuestionForm({
             value={question.upperLabel as TI18nString}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
-            languages={languages}
+            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
@@ -136,7 +136,7 @@ export default function NPSQuestionForm({
             questionIdx={questionIdx}
             maxLength={48}
             placeholder={lastQuestion ? "Finish" : "Next"}
-            languages={languages}
+            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}

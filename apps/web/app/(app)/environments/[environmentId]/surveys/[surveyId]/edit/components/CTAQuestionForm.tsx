@@ -18,7 +18,7 @@ interface CTAQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   isInvalid: boolean;
 }
 
@@ -31,7 +31,7 @@ export default function CTAQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -47,7 +47,7 @@ export default function CTAQuestionForm({
         value={question.headline as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
@@ -61,7 +61,7 @@ export default function CTAQuestionForm({
             id="subheader"
             value={question.html as TI18nString}
             localSurvey={localSurvey}
-            languages={languages}
+            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
@@ -102,7 +102,7 @@ export default function CTAQuestionForm({
             questionIdx={questionIdx}
             maxLength={48}
             placeholder={lastQuestion ? "Finish" : "Next"}
-            languages={languages}
+            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
@@ -118,7 +118,7 @@ export default function CTAQuestionForm({
               questionIdx={questionIdx}
               maxLength={48}
               placeholder={"Back"}
-              languages={languages}
+              surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
@@ -154,7 +154,7 @@ export default function CTAQuestionForm({
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               placeholder={"skip"}
-              languages={languages}
+              surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}

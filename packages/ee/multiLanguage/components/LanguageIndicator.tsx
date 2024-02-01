@@ -3,12 +3,12 @@ import { useState } from "react";
 
 interface LanguageIndicatorProps {
   selectedLanguage: string;
-  languages: string[][];
+  surveyLanguages: string[][];
   setSelectedLanguage: (language: string) => void;
 }
 export function LanguageIndicator({
   selectedLanguage,
-  languages,
+  surveyLanguages,
   setSelectedLanguage,
 }: LanguageIndicatorProps) {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
@@ -19,6 +19,8 @@ export function LanguageIndicator({
     setSelectedLanguage(language[0]);
     setShowLanguageDropdown(false);
   };
+  const langaugeToBeDisplayed = surveyLanguages.find((language) => language[0] === selectedLanguage);
+
   return (
     <div className="absolute right-2 top-2 z-50">
       <button
@@ -27,12 +29,12 @@ export function LanguageIndicator({
         onClick={toggleDropdown}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        {languages.find((language) => language[0] === selectedLanguage)![1]}
+        {langaugeToBeDisplayed ? langaugeToBeDisplayed[1] : ""}
         <LanguageIcon className="ml-1 h-3 w-3" />
       </button>
       {showLanguageDropdown && (
         <div className="absolute right-0 mt-1 space-y-2 rounded-lg bg-slate-900 p-2 text-xs text-white hover:bg-slate-700">
-          {languages.map(
+          {surveyLanguages.map(
             (language) =>
               language[0] !== selectedLanguage && (
                 <button

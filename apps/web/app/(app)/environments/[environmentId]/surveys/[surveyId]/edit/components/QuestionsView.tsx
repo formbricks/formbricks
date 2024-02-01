@@ -29,7 +29,7 @@ interface QuestionsViewProps {
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
 }
 
 export default function QuestionsView({
@@ -42,7 +42,7 @@ export default function QuestionsView({
   selectedLanguage,
   setInvalidQuestions,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -78,7 +78,7 @@ export default function QuestionsView({
       return;
     }
     let temp = JSON.parse(JSON.stringify(invalidQuestions));
-    if (validateQuestion(question, extractLanguageSymbols(languages))) {
+    if (validateQuestion(question, extractLanguageSymbols(surveyLanguages))) {
       temp = invalidQuestions.filter((id) => id !== question.id);
       setInvalidQuestions(temp);
     } else if (!invalidQuestions.includes(question.id)) {
@@ -207,27 +207,27 @@ export default function QuestionsView({
   useEffect(() => {
     if (invalidQuestions === null) return;
 
-    const languagesArray = languages.map((language) => language[0]);
+    const surveyLanguagesArray = surveyLanguages.map((language) => language[0]);
 
     const isCardValid = (card, cardType) => {
       if (cardType === "start") {
         // welcomeCard identified as "start"
         return (
-          isLabelValidForAllLanguages(card.headline, languagesArray) &&
+          isLabelValidForAllLanguages(card.headline, surveyLanguagesArray) &&
           (card.html && card.html["en"] === ""
             ? true
-            : isLabelValidForAllLanguages(card.html, languagesArray)) &&
+            : isLabelValidForAllLanguages(card.html, surveyLanguagesArray)) &&
           (card.buttonLabel && card.buttonLabel["en"] === ""
             ? true
-            : isLabelValidForAllLanguages(card.buttonLabel, languagesArray))
+            : isLabelValidForAllLanguages(card.buttonLabel, surveyLanguagesArray))
         );
       } else if (cardType === "end") {
         // thankYouCard identified as "end"
         return (
-          isLabelValidForAllLanguages(card.headline, languagesArray) &&
+          isLabelValidForAllLanguages(card.headline, surveyLanguagesArray) &&
           (card.subheader && card.subheader["en"] === ""
             ? true
-            : isLabelValidForAllLanguages(card.subheader, languagesArray))
+            : isLabelValidForAllLanguages(card.subheader, surveyLanguagesArray))
         );
       }
       return true;
@@ -250,6 +250,7 @@ export default function QuestionsView({
     );
 
     setInvalidQuestions(updatedQuestionsEnd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
 
   useEffect(() => {
@@ -272,7 +273,7 @@ export default function QuestionsView({
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
           isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
-          languages={languages}
+          surveyLanguages={surveyLanguages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}
         />
@@ -298,7 +299,7 @@ export default function QuestionsView({
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
-                    languages={languages}
+                    surveyLanguages={surveyLanguages}
                     isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
                   />
                 ))}
@@ -316,7 +317,7 @@ export default function QuestionsView({
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
           isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
-          languages={languages}
+          surveyLanguages={surveyLanguages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}
         />

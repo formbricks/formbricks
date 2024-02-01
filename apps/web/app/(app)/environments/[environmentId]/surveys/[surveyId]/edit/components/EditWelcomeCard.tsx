@@ -21,7 +21,7 @@ interface EditWelcomeCardProps {
   isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
 }
 
 export default function EditWelcomeCard({
@@ -32,7 +32,7 @@ export default function EditWelcomeCard({
   isInvalid,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: EditWelcomeCardProps) {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
@@ -130,7 +130,7 @@ export default function EditWelcomeCard({
                 value={localSurvey.welcomeCard.headline as TI18nString}
                 localSurvey={localSurvey}
                 questionIdx={-1}
-                languages={languages}
+                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
                 selectedLanguage={selectedLanguage}
@@ -144,7 +144,7 @@ export default function EditWelcomeCard({
                   id="html"
                   value={localSurvey.welcomeCard.html as TI18nString}
                   localSurvey={localSurvey}
-                  languages={languages}
+                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   updateQuestion={updateSurvey}
                   selectedLanguage={selectedLanguage}
@@ -167,7 +167,7 @@ export default function EditWelcomeCard({
                     questionIdx={-1}
                     maxLength={48}
                     placeholder={"Next"}
-                    languages={languages}
+                    surveyLanguages={surveyLanguages}
                     isInvalid={isInvalid}
                     updateSurvey={updateSurvey}
                     selectedLanguage={selectedLanguage}

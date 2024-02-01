@@ -51,7 +51,7 @@ export function Survey({
     } else {
       return survey.questions.find((q) => q.id === questionId);
     }
-  }, [questionId, survey]);
+  }, [questionId, survey, history]);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !survey.styling?.hideProgressBar;
 

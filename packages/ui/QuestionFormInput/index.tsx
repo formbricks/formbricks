@@ -47,7 +47,7 @@ interface QuestionFormInputProps {
   isInvalid?: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
   maxLength?: number;
   placeholder?: string;
   ref?: RefObject<HTMLInputElement>;
@@ -66,7 +66,7 @@ const QuestionFormInput = ({
   environmentId,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
   maxLength,
   placeholder,
   onBlur,
@@ -102,26 +102,26 @@ const QuestionFormInput = ({
       return (
         ((question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion).choices[
           choiceIdx
-        ].label as TI18nString) || createI18nString("", extractLanguageSymbols(languages))
+        ].label as TI18nString) || createI18nString("", extractLanguageSymbols(surveyLanguages))
       );
     }
     if (isThankYouCard) {
       const thankYouCard = localSurvey.thankYouCard;
       return (
         (thankYouCard[id as keyof typeof thankYouCard] as TI18nString) ||
-        createI18nString("", extractLanguageSymbols(languages))
+        createI18nString("", extractLanguageSymbols(surveyLanguages))
       );
     }
     if (isWelcomeCard) {
       const welcomeCard = localSurvey.welcomeCard;
       return (
         (welcomeCard[id as keyof typeof welcomeCard] as TI18nString) ||
-        createI18nString("", extractLanguageSymbols(languages))
+        createI18nString("", extractLanguageSymbols(surveyLanguages))
       );
     }
     return (
       (question[id as keyof typeof question] as TI18nString) ||
-      createI18nString("", extractLanguageSymbols(languages))
+      createI18nString("", extractLanguageSymbols(surveyLanguages))
     );
   };
 
@@ -163,7 +163,7 @@ const QuestionFormInput = ({
     // Generates an array of headlines from recallQuestions, replacing nested recall questions with '___' .
     const recallQuestionHeadlines = recallQuestions.flatMap((recallQuestion) => {
       if (!getLocalizedValue(recallQuestion.headline, selectedLanguage).includes("#recall:")) {
-        return [recallQuestion.headline[selectedLanguage]];
+        return [(recallQuestion.headline as TI18nString)[selectedLanguage]];
       }
       const recallQuestionText = (recallQuestion[id as keyof typeof recallQuestion] as string) || "";
       const recallInfo = extractRecallInfo(recallQuestionText);
@@ -235,7 +235,7 @@ const QuestionFormInput = ({
 
   // Adds a new recall question to the recallQuestions array, updates fallbacks, modifies the text with recall details.
   const addRecallQuestion = (recallQuestion: TSurveyQuestion) => {
-    if (recallQuestion.headline[selectedLanguage].trim() === "") {
+    if ((recallQuestion.headline as TI18nString)[selectedLanguage].trim() === "") {
       toast.error("Cannot add question with empty headline as recall");
       return;
     }
@@ -438,10 +438,10 @@ const QuestionFormInput = ({
               maxLength={maxLength ?? undefined}
               isInvalid={isInvalid && text[selectedLanguage].trim() === ""}
             />
-            {hasi18n && languages?.length > 1 && (
+            {hasi18n && surveyLanguages?.length > 1 && (
               <LanguageIndicator
                 selectedLanguage={selectedLanguage}
-                languages={languages}
+                surveyLanguages={surveyLanguages}
                 setSelectedLanguage={setSelectedLanguage}
               />
             )}

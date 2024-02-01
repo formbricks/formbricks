@@ -18,7 +18,7 @@ interface LocalizedEditorProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   questionIdx: number;
-  languages: string[][];
+  surveyLanguages: string[][];
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
 }
@@ -31,7 +31,7 @@ export const LocalizedEditor = ({
   selectedLanguage,
   setSelectedLanguage,
   questionIdx,
-  languages,
+  surveyLanguages,
   firstRender,
   setFirstRender,
 }: LocalizedEditorProps) => {
@@ -40,10 +40,10 @@ export const LocalizedEditor = ({
     id === "subheader"
       ? value?.en?.trim() !== "" &&
         isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
+        !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguages)) &&
         selectedLanguage === "en"
       : isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
+        !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguages)) &&
         selectedLanguage === "en";
   return (
     <div className="relative w-full">
@@ -67,11 +67,11 @@ export const LocalizedEditor = ({
         firstRender={firstRender}
         setFirstRender={setFirstRender}
       />
-      {hasi18n && languages?.length > 1 && (
+      {hasi18n && surveyLanguages?.length > 1 && (
         <div>
           <LanguageIndicator
             selectedLanguage={selectedLanguage}
-            languages={languages}
+            surveyLanguages={surveyLanguages}
             setSelectedLanguage={setSelectedLanguage}
           />
 

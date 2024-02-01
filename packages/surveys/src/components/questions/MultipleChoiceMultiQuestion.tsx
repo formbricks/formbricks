@@ -45,11 +45,11 @@ export default function MultipleChoiceMultiQuestion({
       question.choices
         .filter((choice) => choice.id !== "other")
         .map((item) => getLocalizedValue(item.label, language)),
-    [question]
+    [question, language]
   );
   const [otherSelected, setOtherSelected] = useState<boolean>(false);
-
   const [otherValue, setOtherValue] = useState("");
+
   useEffect(() => {
     setOtherSelected(
       !!value &&
@@ -62,7 +62,7 @@ export default function MultipleChoiceMultiQuestion({
         value.filter((v) => !question.choices.find((c) => (c.label as TI18nString)[language] === v))[0]) ||
         ""
     );
-  }, [question.id, getChoicesWithoutOtherLabels, question.choices, value]);
+  }, [question.id, getChoicesWithoutOtherLabels, question.choices, value, language]);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {

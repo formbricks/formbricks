@@ -19,7 +19,7 @@ interface EditThankYouCardProps {
   isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  languages: string[][];
+  surveyLanguages: string[][];
 }
 
 export default function EditThankYouCard({
@@ -30,7 +30,7 @@ export default function EditThankYouCard({
   isInvalid,
   selectedLanguage,
   setSelectedLanguage,
-  languages,
+  surveyLanguages,
 }: EditThankYouCardProps) {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
@@ -113,7 +113,7 @@ export default function EditThankYouCard({
               value={localSurvey?.thankYouCard?.headline as TI18nString}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
-              languages={languages}
+              surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateSurvey={updateSurvey}
               selectedLanguage={selectedLanguage}
@@ -126,7 +126,7 @@ export default function EditThankYouCard({
               value={localSurvey.thankYouCard.subheader as TI18nString}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
-              languages={languages}
+              surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateSurvey={updateSurvey}
               selectedLanguage={selectedLanguage}

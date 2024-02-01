@@ -18,7 +18,7 @@ interface LocalizedInputProps {
   questionIdx: number;
   setSelectedLanguage: (language: string) => void;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
-  languages: string[][];
+  surveyLanguages: string[][];
   maxLength?: number;
   defaultValue?: string;
 }
@@ -35,7 +35,7 @@ const LocalizedInput = ({
   questionIdx,
   setSelectedLanguage,
   onBlur,
-  languages,
+  surveyLanguages,
   maxLength,
 }: LocalizedInputProps) => {
   const isThankYouCard = questionIdx === localSurvey.questions.length;
@@ -56,10 +56,10 @@ const LocalizedInput = ({
     id === "backButtonLabel"
       ? value?.en?.trim() !== "" &&
         isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
+        !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguages)) &&
         selectedLanguage === "en"
       : isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(languages)) &&
+        !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguages)) &&
         selectedLanguage === "en";
   return (
     <div className="relative w-full">
@@ -67,7 +67,7 @@ const LocalizedInput = ({
         id={id}
         localSurvey={localSurvey}
         environmentId={localSurvey.environmentId}
-        isInvalid={languages.length > 1 && isInComplete}
+        isInvalid={surveyLanguages.length > 1 && isInComplete}
         questionId={questionId()}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
@@ -75,7 +75,7 @@ const LocalizedInput = ({
         updateChoice={updateChoice}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        languages={languages}
+        surveyLanguages={surveyLanguages}
         maxLength={maxLength}
         placeholder={placeholder}
         onBlur={onBlur}
@@ -85,7 +85,7 @@ const LocalizedInput = ({
           <strong>Translate:</strong> {recallToHeadline(value, localSurvey, false, "en")["en"]}
         </div>
       )}
-      {languages.length > 1 && isInComplete && (
+      {surveyLanguages.length > 1 && isInComplete && (
         <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
       )}
     </div>

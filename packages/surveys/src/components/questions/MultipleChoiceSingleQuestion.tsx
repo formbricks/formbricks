@@ -63,7 +63,7 @@ export default function MultipleChoiceSingleQuestion({
       value !== undefined &&
       !question.choices.some((choice) => (choice.label as TI18nString)[language] === value);
     setOtherSelected(isOtherSelected);
-  }, [question.id, question.choices, value]);
+  }, [question.id, question.choices, value, language]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
 
@@ -72,6 +72,7 @@ export default function MultipleChoiceSingleQuestion({
       otherSpecify.current?.focus();
     }
   }, [otherSelected]);
+
   return (
     <form
       onSubmit={(e) => {
