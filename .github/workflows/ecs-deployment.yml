@@ -67,8 +67,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # full length sha
             type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       # Build and push Docker image with Buildx
       
