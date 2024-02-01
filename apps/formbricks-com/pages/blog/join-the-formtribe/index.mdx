@@ -1,10 +1,11 @@
-import Image from "next/image";
-import LayoutMdx from "@/components/shared/LayoutMdx";
-import MonorepoImage from "./formbricks-monorepo-folder-structure.png";
-import HeaderImage from "./create-a-new-survey-with-formbricks.png";
-import GitpodImage from "./setup-formbricks-via-gitpod.png";
-import PackagesFolderImage from "./formbricks-packages-folder.png";
 import AuthorBox from "@/components/shared/AuthorBox";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import Image from "next/image";
+
+import HeaderImage from "./create-a-new-survey-with-formbricks.png";
+import MonorepoImage from "./formbricks-monorepo-folder-structure.png";
+import PackagesFolderImage from "./formbricks-packages-folder.png";
+import GitpodImage from "./setup-formbricks-via-gitpod.png";
 
 export const meta = {
   title: "Join the FormTribe 🔥",
@@ -16,7 +17,7 @@ export const meta = {
   tags: ["Open-Source", "No-Code", "Formbricks", "Geting started", "Welcome guide"],
 };
 
-<AuthorBox name="Johannes" title="Co-Founder" date="October 1st, 2023" duration="4" author={"Johannes"}/>
+<AuthorBox name="Johannes" title="Co-Founder" date="October 1st, 2023" duration="4" author={"Johannes"} />
 
 <Image src={HeaderImage} alt="Title Image" className="w-full rounded-lg" />
 
@@ -54,9 +55,9 @@ To get up and running we have 2 options: Gitpod and local.
 
 With Gitpod you can run all of Formbricks in the cloud. With one click you can start coding right away in your browser:
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/formbricks/formbricks)
-
 <Image src={GitpodImage} alt="Setup Formbricks via Gitpod" className="w-full rounded-lg" />
+
+[Read more in our docs](https://formbricks.com/docs/contributing/setup#gitpod-guide)
 
 #### Run on a local machine
 
