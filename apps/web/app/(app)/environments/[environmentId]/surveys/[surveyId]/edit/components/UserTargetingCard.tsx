@@ -4,14 +4,15 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 
-import AddFilterModal from "@formbricks/ee/advancedUserTargeting/components/AddFilterModal";
-import SegmentFilters from "@formbricks/ee/advancedUserTargeting/components/SegmentFilters";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
+
+import BasicAddFilterModal from "./BasicAddFilterModal";
+import BasicSegmentEditor from "./BasicSegmentEditor";
 
 interface UserTargetingCardProps {
   localSurvey: TSurvey;
@@ -91,16 +92,13 @@ export default function UserTargetingCard({
               <p className="text-sm font-semibold text-slate-800">Send survey to audience who match...</p>
               {!!userSegment?.filters?.length && (
                 <div className="w-full">
-                  <SegmentFilters
-                    key={userSegment.filters.toString()}
+                  <BasicSegmentEditor
+                    key={userSegment.id}
                     group={userSegment.filters}
                     environmentId={environmentId}
                     userSegment={userSegment}
                     setUserSegment={setUserSegment}
-                    actionClasses={[]}
                     attributeClasses={attributeClasses}
-                    userSegments={[]}
-                    isAdvancedUserTargetingAllowed={false}
                   />
                 </div>
               )}
@@ -121,16 +119,13 @@ export default function UserTargetingCard({
           />
         </div>
 
-        <AddFilterModal
+        <BasicAddFilterModal
           onAddFilter={(filter) => {
             handleAddFilterInGroup(filter);
           }}
           open={addFilterModalOpen}
           setOpen={setAddFilterModalOpen}
-          actionClasses={[]}
           attributeClasses={attributeClasses}
-          userSegments={[]}
-          isAdvancedTargetingAllowed={false}
         />
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

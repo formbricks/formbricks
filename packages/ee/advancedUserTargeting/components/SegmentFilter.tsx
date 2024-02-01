@@ -73,7 +73,6 @@ type SegmentFilterItemProps = {
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
-  isAdvancedUserTargetingAllowed?: boolean;
 };
 
 const SegmentFilterItemConnector = ({
@@ -129,7 +128,6 @@ const SegmentFilterItemContextMenu = ({
   onDeleteFilter,
   onMoveFilter,
   viewOnly,
-  isAdvancedUserTargetingAllowed,
 }: {
   filterId: string;
   onAddFilterBelow: () => void;
@@ -137,7 +135,6 @@ const SegmentFilterItemContextMenu = ({
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
-  isAdvancedUserTargetingAllowed?: boolean;
 }) => {
   return (
     <div className="flex items-center gap-2">
@@ -147,17 +144,9 @@ const SegmentFilterItemContextMenu = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
-          <DropdownMenuItem
-            className={cn(!isAdvancedUserTargetingAllowed && "hidden")}
-            onClick={() => onAddFilterBelow()}>
-            Add filter below
-          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAddFilterBelow()}>Add filter below</DropdownMenuItem>
 
-          <DropdownMenuItem
-            className={cn(!isAdvancedUserTargetingAllowed && "hidden")}
-            onClick={() => onCreateGroup(filterId)}>
-            Create group
-          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onCreateGroup(filterId)}>Create group</DropdownMenuItem>
           <DropdownMenuItem onClick={() => onMoveFilter(filterId, "up")}>Move up</DropdownMenuItem>
           <DropdownMenuItem onClick={() => onMoveFilter(filterId, "down")}>Move down</DropdownMenuItem>
         </DropdownMenuContent>
@@ -195,7 +184,6 @@ const AttributeSegmentFilter = ({
   setUserSegment,
   attributeClasses,
   viewOnly,
-  isAdvancedUserTargetingAllowed,
 }: TAttributeSegmentFilterProps) => {
   const { attributeClassName } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
@@ -358,7 +346,6 @@ const AttributeSegmentFilter = ({
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
         viewOnly={viewOnly}
-        isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
       />
     </div>
   );
@@ -381,7 +368,6 @@ const ActionSegmentFilter = ({
   updateValueInLocalSurvey,
   actionClasses,
   viewOnly,
-  isAdvancedUserTargetingAllowed,
 }: TActionSegmentFilterProps) => {
   const { actionClassId } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
@@ -447,8 +433,6 @@ const ActionSegmentFilter = ({
       updateValueInLocalSurvey(resource.id, value);
     }
   };
-
-  if (!isAdvancedUserTargetingAllowed) return null;
 
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -547,7 +531,6 @@ const ActionSegmentFilter = ({
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
         viewOnly={viewOnly}
-        isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
       />
     </div>
   );
@@ -568,7 +551,6 @@ const UserSegmentFilter = ({
   userSegments,
   setUserSegment,
   viewOnly,
-  isAdvancedUserTargetingAllowed,
 }: TUserSegmentFilterProps) => {
   const { userSegmentId } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
@@ -603,8 +585,6 @@ const UserSegmentFilter = ({
 
     updateOperatorInUserSegment(resource.id, "userIsIn");
   };
-
-  if (!isAdvancedUserTargetingAllowed) return null;
 
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -657,7 +637,6 @@ const UserSegmentFilter = ({
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
         viewOnly={viewOnly}
-        isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
       />
     </div>
   );
@@ -677,7 +656,6 @@ const DeviceFilter = ({
   userSegment,
   setUserSegment,
   viewOnly,
-  isAdvancedUserTargetingAllowed,
 }: TDeviceFilterProps) => {
   const { value } = resource;
 
@@ -704,8 +682,6 @@ const DeviceFilter = ({
 
     setUserSegment(updatedUserSegment);
   };
-
-  if (!isAdvancedUserTargetingAllowed) return null;
 
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -770,7 +746,6 @@ const DeviceFilter = ({
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
         viewOnly={viewOnly}
-        isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
       />
     </div>
   );
@@ -790,7 +765,6 @@ const SegmentFilter = ({
   onDeleteFilter,
   onMoveFilter,
   viewOnly = false,
-  isAdvancedUserTargetingAllowed = false,
 }: SegmentFilterItemProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const updateFilterValueInUserSegment = (filterId: string, newValue: string | number) => {
@@ -814,12 +788,8 @@ const SegmentFilter = ({
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
       userSegments={userSegments}
-      isAdvancedTargetingAllowed={isAdvancedUserTargetingAllowed}
     />
   );
-
-  // if advanced user targeting is not allowed, but resource is other than an attribute filter, return null
-  if (!isAdvancedUserTargetingAllowed && resource.root.type !== "attribute") return null;
 
   switch (resource.root.type) {
     case "action":
@@ -841,7 +811,6 @@ const SegmentFilter = ({
             onMoveFilter={onMoveFilter}
             updateValueInLocalSurvey={updateFilterValueInUserSegment}
             viewOnly={viewOnly}
-            isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
           />
 
           <RenderFilterModal />
@@ -867,7 +836,6 @@ const SegmentFilter = ({
             onMoveFilter={onMoveFilter}
             updateValueInLocalSurvey={updateFilterValueInUserSegment}
             viewOnly={viewOnly}
-            isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
           />
 
           <RenderFilterModal />
@@ -892,7 +860,6 @@ const SegmentFilter = ({
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             viewOnly={viewOnly}
-            isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
           />
 
           <RenderFilterModal />
@@ -917,7 +884,6 @@ const SegmentFilter = ({
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             viewOnly={viewOnly}
-            isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
           />
 
           <RenderFilterModal />

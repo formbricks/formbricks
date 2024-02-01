@@ -1,5 +1,3 @@
-import UserTargetingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/UserTargetingCard";
-
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -12,6 +10,7 @@ import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
 import StylingCard from "./StylingCard";
 import UserTargetingAdvancedCard from "./UserTargetingAdvancedCard";
+import UserTargetingCard from "./UserTargetingCard";
 import WhenToSendCard from "./WhenToSendCard";
 
 interface SettingsViewProps {

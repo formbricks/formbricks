@@ -205,7 +205,6 @@ export default function UserTargetingAdvancedCard({
                         actionClasses={actionClasses}
                         attributeClasses={attributeClasses}
                         userSegments={userSegments}
-                        isAdvancedUserTargetingAllowed
                       />
                     </div>
                   )}
@@ -258,7 +257,6 @@ export default function UserTargetingAdvancedCard({
                       actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
                       userSegments={userSegments}
-                      isAdvancedTargetingAllowed
                     />
                     {!!userSegment && (
                       <SaveAsNewSegmentModal

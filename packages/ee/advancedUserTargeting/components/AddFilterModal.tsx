@@ -19,7 +19,6 @@ type TAddFilterModalProps = {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   userSegments: TUserSegment[];
-  isAdvancedTargetingAllowed?: boolean;
 };
 
 type TFilterType = "action" | "attribute" | "segment" | "device";
@@ -31,9 +30,8 @@ const AddFilterModal = ({
   actionClasses,
   attributeClasses,
   userSegments,
-  isAdvancedTargetingAllowed = false,
 }: TAddFilterModalProps) => {
-  const [activeTabId, setActiveTabId] = useState(isAdvancedTargetingAllowed ? "all" : "attributes");
+  const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
 
   const tabs: {
@@ -435,10 +433,7 @@ const AddFilterModal = ({
     <Modal hideCloseButton open={open} setOpen={setOpen} closeOnOutsideClick>
       <div className="flex w-auto flex-col">
         <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
-
-        {isAdvancedTargetingAllowed && (
-          <TabBar className="bg-white" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />
-        )}
+        <TabBar className="bg-white" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />
       </div>
 
       <div className={cn("mt-2 flex max-h-80 flex-col gap-1 overflow-y-auto")}>
