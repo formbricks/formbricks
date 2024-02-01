@@ -6,14 +6,31 @@ import {
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
+  isWebAppRoute,
   loginRoute,
   shareUrlRoute,
   signupRoute,
 } from "@/app/middleware/endpointValidator";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { WEBAPP_URL } from "@formbricks/lib/constants";
+
 export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request });
+
+  if (isWebAppRoute(request.nextUrl.pathname) && !token) {
+    return NextResponse.redirect(
+      WEBAPP_URL + "/auth/login?callbackUrl=" + WEBAPP_URL + request.nextUrl.pathname
+    );
+  }
+
+  const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
+  if (token && callbackUrl) {
+    return NextResponse.redirect(WEBAPP_URL + callbackUrl);
+  }
+
   if (process.env.NODE_ENV !== "production") {
     return NextResponse.next();
   }
@@ -54,5 +71,7 @@ export const config = {
     "/api/v1/js/actions",
     "/api/v1/client/storage",
     "/share/(.*)/:path",
+    "/environments/:path*",
+    "/api/auth/signout",
   ],
 };

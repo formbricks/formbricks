@@ -30,6 +30,7 @@ const responseSelection = {
   twoFactorEnabled: true,
   identityProvider: true,
   objective: true,
+  notificationSettings: true,
 };
 
 // function to retrive basic information about a user's user
