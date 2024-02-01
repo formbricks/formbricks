@@ -112,6 +112,14 @@ input[type="search"]::-ms-reveal {
   display: none;
 }
 
+.surveyFilterDropdown[data-state="open"]{
+  background-color: #0f172a;
+  color: white;
+}
+.surveyFilterDropdown:hover * {
+  background-color: #0f172a;
+  color: white;
+}
 
 input[type='range']::-webkit-slider-thumb {
   background: #0f172a;
