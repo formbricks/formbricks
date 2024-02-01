@@ -127,7 +127,7 @@ export async function POST(request: Request) {
     });
 
     // Exclude current response
-    const numberOfExistingResponses = (await getResponseCountBySurveyId(surveyId)) - 1;
+    const responseCount = await getResponseCountBySurveyId(surveyId);
 
     if (usersWithNotifications.length > 0) {
       // get survey
@@ -159,13 +159,7 @@ export async function POST(request: Request) {
       // send email to all users
       await Promise.all(
         usersWithNotifications.map(async (user) => {
-          await sendResponseFinishedEmail(
-            user.email,
-            environmentId,
-            survey,
-            response,
-            numberOfExistingResponses
-          );
+          await sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount);
         })
       );
     }

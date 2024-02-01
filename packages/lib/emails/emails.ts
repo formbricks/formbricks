@@ -163,7 +163,7 @@ export const sendResponseFinishedEmail = async (
   environmentId: string,
   survey: { id: string; name: string; questions: TSurveyQuestion[] },
   response: TResponse,
-  numberOfExistingResponses: number
+  responseCount: number
 ) => {
   const personEmail = response.person?.attributes["email"];
   const team = await getTeamByEnvironmentId(environmentId);
@@ -193,7 +193,7 @@ export const sendResponseFinishedEmail = async (
 
       <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
         survey.id
-      }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">View ${numberOfExistingResponses} more responses</a>
+      }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">${responseCount > 1 ? `View ${responseCount - 1} more ${responseCount === 2 ? "response" : "responses"}` : `View survey summary`}</a>
 
       <div class="tooltip">
       <p class='brandcolor'><strong>Start a conversation 💡</strong></p>

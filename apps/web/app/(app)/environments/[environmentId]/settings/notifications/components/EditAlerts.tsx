@@ -35,7 +35,7 @@ export default function EditAlerts({
             </div>
 
             <div className="col-span-3 flex items-center justify-end pr-2">
-              <p className="pr-4 text-sm">Auto-subscribe to new surveys</p>
+              <p className="pr-4 text-sm text-slate-600">Auto-subscribe to new surveys</p>
               <NotificationSwitch
                 surveyOrProductOrTeamId={membership.team.id}
                 notificationSettings={user.notificationSettings!}
