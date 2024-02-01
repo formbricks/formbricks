@@ -81,6 +81,7 @@ jobs:
           context: .
           file: ./apps/web/Dockerfile
           platforms: linux/amd64,linux/arm64
+          push: true
           tags: formbricks/formbricks-experimental:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
