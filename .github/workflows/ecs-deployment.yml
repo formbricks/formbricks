@@ -65,7 +65,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5 # v5.0.0
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       # Build and push Docker image with Buildx
       
