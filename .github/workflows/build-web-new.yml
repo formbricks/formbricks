@@ -15,31 +15,24 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        if: steps.cache-build.outputs.cache-hit != 'true'
 
-      # - name: 📥 Monorepo install
-      #   uses: ./.github/actions/cache-pnpm-install
-
-      - uses: pnpm/action-setup@v2
-        with:
-          run_install: false
-
-      # - name: Install dependencies
-      #   run: pnpm install --config.platform=linux --config.architecture=x64
-      #   shell: bash
+      - name: Install dependencies
+        run: pnpm install --config.platform=linux --config.architecture=x64
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        shell: bash
 
       # - uses: ./.github/actions/cache-pnpm-install
       - uses: ./.github/actions/cache-build-web
 
       - name: Install Playwright Browsers
-        run: pnpm add playwright && pnpm exec playwright install --with-deps
+        run: pnpm exec playwright install --with-deps
 
       - name: Start PostgreSQL
         run: |
-          cd packages/database && pnpm db:up &
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/formbricks?schema=public && cd packages/database && pnpm db:up &
           for attempt in {1..20}; do
             if nc -zv localhost 5432; then
               echo "Ready"
@@ -49,8 +42,6 @@ jobs:
             sleep 5
           done
           pnpm db:migrate:dev
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/formbricks?schema=public
 
       - name: Serve packages for lazy loading
         run: |
