@@ -95,6 +95,13 @@ jobs:
             ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
             NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }}
       
+      - name: EXP
+        run: |
+          echo ${TAGS}
+        env:
+          TAGS: ${{ steps.docker_meta.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+      
       - name: Sign image with a key
         run: |
           images=""
