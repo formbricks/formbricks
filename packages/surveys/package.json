@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/surveys",
   "license": "MIT",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Formbricks-surveys is a helper library to embed surveys into your application",
   "homepage": "https://formbricks.com",
   "repository": {
@@ -46,7 +46,7 @@
     "autoprefixer": "^10.4.17",
     "concurrently": "8.2.2",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.10.12",
+    "eslint-config-turbo": "1.12.2",
     "postcss": "^8.4.33",
     "preact": "^10.19.3",
     "react-date-picker": "^10.6.0",

@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
   "homepage": "https://formbricks.com",
   "repository": {
@@ -40,17 +40,17 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
-    "@babel/core": "^7.23.7",
-    "@babel/preset-env": "^7.23.8",
+    "@babel/core": "^7.23.9",
+    "@babel/preset-env": "^7.23.9",
     "@babel/preset-typescript": "^7.23.3",
     "@formbricks/api": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/surveys": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@types/jest": "^29.5.11",
-    "@typescript-eslint/eslint-plugin": "^6.19.1",
-    "@typescript-eslint/parser": "^6.19.1",
+    "@types/jest": "^29.5.12",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "babel-jest": "^29.7.0",
     "cross-env": "^7.0.3",
     "isomorphic-fetch": "^3.0.0",
@@ -61,7 +61,7 @@
     "vite": "^5.0.12",
     "vite-plugin-dts": "^3.7.2",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.10.12"
+    "eslint-config-turbo": "1.12.2"
   },
   "jest": {
     "transformIgnorePatterns": [
