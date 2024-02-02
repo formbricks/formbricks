@@ -66,7 +66,6 @@ export default async function SurveysPage({ params }) {
           user={session.user}
         />
       )}
-      {/* <SurveysList environmentId={params.environmentId} />   */}
       <WidgetStatusIndicator environmentId={params.environmentId} type="mini" />
     </ContentWrapper>
   );
