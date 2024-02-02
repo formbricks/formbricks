@@ -23,8 +23,8 @@ jobs:
       # - name: 📥 Monorepo install
       #   uses: ./.github/actions/cache-pnpm-install
 
-      # - name: Install dependencies
-      #   run: npm install -g pnpm && pnpm install
+      - name: Install dependencies
+        run: npm install -g pnpm
 
       # - name: Install dependencies
       #   run: pnpm install --config.platform=linux --config.architecture=x64
