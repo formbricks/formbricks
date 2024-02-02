@@ -46,7 +46,7 @@
     "autoprefixer": "^10.4.17",
     "concurrently": "8.2.2",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.12.2",
+    "eslint-config-turbo": "1.10.12",
     "postcss": "^8.4.33",
     "preact": "^10.19.3",
     "react-date-picker": "^10.6.0",

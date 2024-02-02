@@ -61,7 +61,7 @@
     "vite": "^5.0.12",
     "vite-plugin-dts": "^3.7.2",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.12.2"
+    "eslint-config-turbo": "1.10.12"
   },
   "jest": {
     "transformIgnorePatterns": [
