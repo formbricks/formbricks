@@ -73,7 +73,6 @@ jobs:
       - name: EXP
         run: |
           echo "TEST %%%%%%%%%%%%%%%"
-          echo "${DOCKER_METADATA_OUTPUT_JSON}"
           echo "${TAGS}"
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
