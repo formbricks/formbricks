@@ -256,7 +256,11 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const getSurveys = async (environmentId: string, page?: number): Promise<TSurvey[]> => {
+export const getSurveys = async (
+  environmentId: string,
+  page?: number,
+  unidentifiedSurvey?: boolean
+): Promise<TSurvey[]> => {
   const surveys = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
@@ -265,6 +269,13 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
         surveysPrisma = await prisma.survey.findMany({
           where: {
             environmentId,
+
+            // If its an unidentified survey, we only want to return surveys that are not connected to a user segment
+            ...(unidentifiedSurvey
+              ? {
+                  userSegment: null,
+                }
+              : {}),
           },
           select: selectSurvey,
           take: page ? ITEMS_PER_PAGE : undefined,

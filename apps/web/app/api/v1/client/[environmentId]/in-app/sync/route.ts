@@ -63,7 +63,7 @@ export async function GET(
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSurveys(environmentId),
+      getSurveys(environmentId, undefined, true),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
