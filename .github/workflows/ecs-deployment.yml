@@ -77,43 +77,43 @@ jobs:
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
 
-      # # Build and push Docker image with Buildx
-      # # https://github.com/docker/build-push-action
-      # - name: Build and push Docker image
-      #   id: build-and-push
-      #   uses: depot/build-push-action@v1
-      #   env:
-      #     NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
-      #   with:
-      #     project: tw0fqmsx3c
-      #     token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-      #     context: .
-      #     # file: ./apps/web/Dockerfile # Enable this and Delete Dockerfile from root
-      #     file: ./Dockerfile
-      #     platforms: linux/amd64,linux/arm64
-      #     push: true
-      #     tags: ${{ steps.meta.outputs.tags }}
-      #     labels: ${{ steps.meta.outputs.labels }}
-      #     cache-from: type=gha
-      #     cache-to: type=gha,mode=max
-      #     build-args: |
-      #       NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
-      #       DATABASE_URL=${{ env.DATABASE_URL }}
-      #       ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
-      #       NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }}
+      # Build and push Docker image with Buildx
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: depot/build-push-action@v1
+        env:
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+        with:
+          project: tw0fqmsx3c
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          context: .
+          # file: ./apps/web/Dockerfile # Enable this and Delete Dockerfile from root
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
+            DATABASE_URL=${{ env.DATABASE_URL }}
+            ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }}
       
-      # - name: Sign image with a key
-      #   run: |
-      #     images=""
-      #     for tag in ${TAGS}; do
-      #       images+="${tag}@${DIGEST} "
-      #     done
-      #     cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
-      #   env:
-      #     TAGS: ${{ steps.docker_meta.outputs.tags }}
-      #     COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-      #     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-      #     DIGEST: ${{ steps.build-and-push.outputs.digest }}
+      - name: Sign image with a key
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
   
   # deploy:
   #   needs: build
