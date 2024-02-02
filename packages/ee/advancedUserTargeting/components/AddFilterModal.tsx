@@ -1,13 +1,18 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
+import { FingerprintIcon, MonitorSmartphoneIcon, MousePointerClick, TagIcon, Users2Icon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TUserSegment, TUserSegmentAttributeFilter } from "@formbricks/types/userSegment";
+import {
+  TBaseFilter,
+  TUserSegment,
+  TUserSegmentAttributeFilter,
+  TUserSegmentPersonFilter,
+} from "@formbricks/types/userSegment";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 import { TabBar } from "@formbricks/ui/TabBar";
@@ -21,7 +26,197 @@ type TAddFilterModalProps = {
   userSegments: TUserSegment[];
 };
 
-type TFilterType = "action" | "attribute" | "segment" | "device";
+type TFilterType = "action" | "attribute" | "segment" | "device" | "person";
+
+const handleAddFilter = ({
+  type,
+  onAddFilter,
+  setOpen,
+  attributeClassName,
+  deviceType,
+  actionClassId,
+  userSegmentId,
+}: {
+  type: TFilterType;
+  onAddFilter: (filter: TBaseFilter) => void;
+  setOpen: (open: boolean) => void;
+  actionClassId?: string;
+  attributeClassName?: string;
+  userSegmentId?: string;
+  deviceType?: string;
+}) => {
+  if (type === "action") {
+    if (!actionClassId) return;
+
+    const newFilter: TBaseFilter = {
+      id: createId(),
+      connector: "and",
+      resource: {
+        id: createId(),
+        root: {
+          type: type,
+          actionClassId,
+        },
+        qualifier: {
+          metric: "occuranceCount",
+          operator: "greaterThan",
+        },
+        value: "",
+      },
+    };
+
+    onAddFilter(newFilter);
+    setOpen(false);
+  }
+
+  if (type === "attribute") {
+    if (!attributeClassName) return;
+
+    const newFilterResource: TUserSegmentAttributeFilter = {
+      id: createId(),
+      root: {
+        type,
+        attributeClassName,
+      },
+      qualifier: {
+        operator: "equals",
+      },
+      value: "",
+    };
+    const newFilter: TBaseFilter = {
+      id: createId(),
+      connector: "and",
+      resource: newFilterResource,
+    };
+
+    onAddFilter(newFilter);
+    setOpen(false);
+  }
+
+  if (type === "person") {
+    const newResource: TUserSegmentPersonFilter = {
+      id: createId(),
+      root: { type: "person", personIdentifier: "userId" },
+      qualifier: {
+        operator: "equals",
+      },
+      value: "",
+    };
+
+    const newFilter: TBaseFilter = {
+      id: createId(),
+      connector: "and",
+      resource: newResource,
+    };
+
+    onAddFilter(newFilter);
+    setOpen(false);
+  }
+
+  if (type === "segment") {
+    if (!userSegmentId) return;
+
+    const newFilter: TBaseFilter = {
+      id: createId(),
+      connector: "and",
+      resource: {
+        id: createId(),
+        root: {
+          type: type,
+          userSegmentId,
+        },
+        qualifier: {
+          operator: "userIsIn",
+        },
+        value: userSegmentId,
+      },
+    };
+
+    onAddFilter(newFilter);
+    setOpen(false);
+  }
+
+  if (type === "device") {
+    if (!deviceType) return;
+
+    const newFilter: TBaseFilter = {
+      id: createId(),
+      connector: "and",
+      resource: {
+        id: createId(),
+        root: {
+          type: type,
+          deviceType,
+        },
+        qualifier: {
+          operator: "equals",
+        },
+        value: deviceType,
+      },
+    };
+
+    onAddFilter(newFilter);
+    setOpen(false);
+  }
+};
+
+type AttributeTabContentProps = {
+  attributeClasses: TAttributeClass[];
+  onAddFilter: (filter: TBaseFilter) => void;
+  setOpen: (open: boolean) => void;
+};
+
+const AttributeTabContent = ({ attributeClasses, onAddFilter, setOpen }: AttributeTabContentProps) => {
+  return (
+    <div className="flex flex-col gap-2">
+      <div>
+        <h2 className="text-base font-medium">Person</h2>
+        <div>
+          <div
+            onClick={() => {
+              handleAddFilter({
+                type: "person",
+                onAddFilter,
+                setOpen,
+              });
+            }}
+            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+            <FingerprintIcon className="h-4 w-4" />
+            <p>userId</p>
+          </div>
+        </div>
+      </div>
+
+      <hr className="my-2" />
+
+      <div>
+        <h2 className="text-base font-medium">Attributes</h2>
+      </div>
+      {attributeClasses?.length === 0 && (
+        <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
+          <p>There are no attributes yet!</p>
+        </div>
+      )}
+      {attributeClasses.map((attributeClass) => {
+        return (
+          <div
+            onClick={() => {
+              handleAddFilter({
+                type: "attribute",
+                onAddFilter,
+                setOpen,
+                attributeClassName: attributeClass.name,
+              });
+            }}
+            className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+            <TagIcon className="h-4 w-4" />
+            <p>{attributeClass.name}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const AddFilterModal = ({
   onAddFilter,
@@ -41,7 +236,7 @@ const AddFilterModal = ({
   }[] = [
     { id: "all", label: "All" },
     { id: "actions", label: "Actions", icon: <MousePointerClick className="h-4 w-4" /> },
-    { id: "attributes", label: "Attributes", icon: <TagIcon className="h-4 w-4" /> },
+    { id: "attributes", label: "Person & Attributes", icon: <TagIcon className="h-4 w-4" /> },
     { id: "segments", label: "Segments", icon: <Users2Icon className="h-4 w-4" /> },
     { id: "devices", label: "Devices", icon: <MonitorSmartphoneIcon className="h-4 w-4" /> },
   ];
@@ -100,117 +295,6 @@ const AddFilterModal = ({
     [actionClassesFiltered, attributeClassesFiltered, deviceTypesFiltered, userSegmentsFiltered]
   );
 
-  const handleAddFilter = ({
-    type,
-    attributeClassName,
-    deviceType,
-    actionClassId,
-    userSegmentId,
-    isUserId = false,
-  }: {
-    type: TFilterType;
-    actionClassId?: string;
-    attributeClassName?: string;
-    userSegmentId?: string;
-    deviceType?: string;
-    isUserId?: boolean;
-  }) => {
-    if (type === "action") {
-      if (!actionClassId) return;
-
-      const newFilter: TBaseFilter = {
-        id: createId(),
-        connector: "and",
-        resource: {
-          id: createId(),
-          root: {
-            type: type,
-            actionClassId,
-          },
-          qualifier: {
-            metric: "occuranceCount",
-            operator: "greaterThan",
-          },
-          value: "",
-        },
-      };
-
-      onAddFilter(newFilter);
-      setOpen(false);
-    }
-
-    if (type === "attribute") {
-      if (!attributeClassName) return;
-
-      const newFilterResource: TUserSegmentAttributeFilter = {
-        id: createId(),
-        root: {
-          type,
-          attributeClassName,
-        },
-        qualifier: {
-          operator: "equals",
-        },
-        value: "",
-        ...(isUserId && { meta: { isUserId } }),
-      };
-      const newFilter: TBaseFilter = {
-        id: createId(),
-        connector: "and",
-        resource: newFilterResource,
-      };
-
-      onAddFilter(newFilter);
-      setOpen(false);
-    }
-
-    if (type === "segment") {
-      if (!userSegmentId) return;
-
-      const newFilter: TBaseFilter = {
-        id: createId(),
-        connector: "and",
-        resource: {
-          id: createId(),
-          root: {
-            type: type,
-            userSegmentId,
-          },
-          qualifier: {
-            operator: "userIsIn",
-          },
-          value: userSegmentId,
-        },
-      };
-
-      onAddFilter(newFilter);
-      setOpen(false);
-    }
-
-    if (type === "device") {
-      if (!deviceType) return;
-
-      const newFilter: TBaseFilter = {
-        id: createId(),
-        connector: "and",
-        resource: {
-          id: createId(),
-          root: {
-            type: type,
-            deviceType,
-          },
-          qualifier: {
-            operator: "equals",
-          },
-          value: deviceType,
-        },
-      };
-
-      onAddFilter(newFilter);
-      setOpen(false);
-    }
-  };
-
   const getAllTabContent = () => {
     return (
       <>
@@ -236,6 +320,8 @@ const AddFilterModal = ({
                     onClick={() => {
                       handleAddFilter({
                         type: "action",
+                        onAddFilter,
+                        setOpen,
                         actionClassId: actionClass.id,
                       });
                     }}
@@ -252,8 +338,9 @@ const AddFilterModal = ({
                     onClick={() => {
                       handleAddFilter({
                         type: "attribute",
+                        onAddFilter,
+                        setOpen,
                         attributeClassName: attributeClass.name,
-                        isUserId: attributeClass.name === "userId" && attributeClass.type === "automatic",
                       });
                     }}
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
@@ -269,6 +356,8 @@ const AddFilterModal = ({
                     onClick={() => {
                       handleAddFilter({
                         type: "segment",
+                        onAddFilter,
+                        setOpen,
                         userSegmentId: userSegment.id,
                       });
                     }}
@@ -286,6 +375,8 @@ const AddFilterModal = ({
                   onClick={() => {
                     handleAddFilter({
                       type: "device",
+                      onAddFilter,
+                      setOpen,
                       deviceType: deviceType.id,
                     });
                   }}>
@@ -314,6 +405,8 @@ const AddFilterModal = ({
               onClick={() => {
                 handleAddFilter({
                   type: "action",
+                  onAddFilter,
+                  setOpen,
                   actionClassId: actionClass.id,
                 });
               }}
@@ -329,29 +422,11 @@ const AddFilterModal = ({
 
   const getAttributesTabContent = () => {
     return (
-      <>
-        {attributeClassesFiltered?.length === 0 && (
-          <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-            <p>There are no attributes available</p>
-          </div>
-        )}
-        {attributeClassesFiltered.map((attributeClass) => {
-          return (
-            <div
-              onClick={() => {
-                handleAddFilter({
-                  type: "attribute",
-                  attributeClassName: attributeClass.name,
-                  isUserId: attributeClass.name === "userId" && attributeClass.type === "automatic",
-                });
-              }}
-              className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
-              <TagIcon className="h-4 w-4" />
-              <p>{attributeClass.name}</p>
-            </div>
-          );
-        })}
-      </>
+      <AttributeTabContent
+        attributeClasses={attributeClassesFiltered}
+        onAddFilter={onAddFilter}
+        setOpen={setOpen}
+      />
     );
   };
 
@@ -371,6 +446,8 @@ const AddFilterModal = ({
                 onClick={() => {
                   handleAddFilter({
                     type: "segment",
+                    onAddFilter,
+                    setOpen,
                     userSegmentId: userSegment.id,
                   });
                 }}
@@ -394,6 +471,8 @@ const AddFilterModal = ({
             onClick={() => {
               handleAddFilter({
                 type: "device",
+                onAddFilter,
+                setOpen,
                 deviceType: deviceType.id,
               });
             }}>
@@ -429,7 +508,12 @@ const AddFilterModal = ({
   };
 
   return (
-    <Modal hideCloseButton open={open} setOpen={setOpen} closeOnOutsideClick>
+    <Modal
+      hideCloseButton
+      open={open}
+      setOpen={setOpen}
+      closeOnOutsideClick
+      className="sm:w-[650px] sm:max-w-full">
       <div className="flex w-auto flex-col">
         <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
         <TabBar className="bg-white" tabs={tabs} activeId={activeTabId} setActiveId={setActiveTabId} />

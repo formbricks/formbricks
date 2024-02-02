@@ -10,11 +10,13 @@ import {
   updateAttributeClassNameInFilter,
   updateFilterValue,
   updateOperatorInFilter,
+  updatePersonIdentifierInFilter,
 } from "@formbricks/lib/userSegment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   ARITHMETIC_OPERATORS,
   ATTRIBUTE_OPERATORS,
+  PERSON_OPERATORS,
   TArithmeticOperator,
   TAttributeOperator,
   TUserSegment,
@@ -22,6 +24,7 @@ import {
   TUserSegmentConnector,
   TUserSegmentFilter,
   TUserSegmentFilterValue,
+  TUserSegmentPersonFilter,
 } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import {
@@ -294,6 +297,172 @@ const AttributeSegmentFilter = ({
   );
 };
 
+type TPersonSegmentFilterProps = Omit<SegmentFilterItemProps, "attributeClasses"> & {
+  resource: TUserSegmentPersonFilter;
+  updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
+};
+
+const PersonSegmentFilter = ({
+  connector,
+  resource,
+  onDeleteFilter,
+  onMoveFilter,
+  updateValueInLocalSurvey,
+  userSegment,
+  setUserSegment,
+}: TPersonSegmentFilterProps) => {
+  const { personIdentifier } = resource.root;
+  const operatorText = convertOperatorToText(resource.qualifier.operator);
+
+  const [valueError, setValueError] = useState("");
+
+  // when the operator changes, we need to check if the value is valid
+  useEffect(() => {
+    const { operator } = resource.qualifier;
+
+    if (ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
+      const isNumber = z.coerce.number().safeParse(resource.value);
+
+      if (isNumber.success) {
+        setValueError("");
+      } else {
+        setValueError("Value must be a number");
+      }
+    }
+  }, [resource.qualifier, resource.value]);
+
+  const operatorArr = PERSON_OPERATORS.map((operator) => {
+    return {
+      id: operator,
+      name: convertOperatorToText(operator),
+    };
+  });
+
+  const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+    }
+
+    setUserSegment(updatedUserSegment);
+  };
+
+  const updatePersonIdentifierInLocalSurvey = (filterId: string, newPersonIdentifier: string) => {
+    const updatedUserSegment = structuredClone(userSegment);
+    if (updatedUserSegment.filters) {
+      updatePersonIdentifierInFilter(updatedUserSegment.filters, filterId, newPersonIdentifier);
+    }
+
+    setUserSegment(updatedUserSegment);
+  };
+
+  const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    updateValueInLocalSurvey(resource.id, value);
+
+    if (!value) {
+      setValueError("Value cannot be empty");
+      return;
+    }
+
+    const { operator } = resource.qualifier;
+
+    if (ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
+      const isNumber = z.coerce.number().safeParse(value);
+
+      if (isNumber.success) {
+        setValueError("");
+        updateValueInLocalSurvey(resource.id, parseInt(value, 10));
+      } else {
+        setValueError("Value must be a number");
+        updateValueInLocalSurvey(resource.id, value);
+      }
+
+      return;
+    }
+
+    setValueError("");
+    updateValueInLocalSurvey(resource.id, value);
+  };
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <SegmentFilterItemConnector
+        key={connector}
+        connector={connector}
+        filterId={resource.id}
+        setUserSegment={setUserSegment}
+        userSegment={userSegment}
+      />
+
+      <Select
+        value={personIdentifier}
+        onValueChange={(value) => {
+          updatePersonIdentifierInLocalSurvey(resource.id, value);
+        }}>
+        <SelectTrigger
+          className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
+          hideArrow>
+          <SelectValue hidden />
+          <div className="flex items-center gap-1">
+            <TagIcon className="h-4 w-4 text-sm" />
+            <p>{personIdentifier}</p>
+          </div>
+        </SelectTrigger>
+
+        <SelectContent>
+          <SelectItem value={personIdentifier} key={personIdentifier}>
+            {personIdentifier}
+          </SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={operatorText}
+        onValueChange={(operator: TAttributeOperator) => {
+          updateOperatorInLocalSurvey(resource.id, operator);
+        }}>
+        <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
+          <SelectValue className="hidden" />
+          <p>{operatorText}</p>
+        </SelectTrigger>
+
+        <SelectContent>
+          {operatorArr.map((operator) => (
+            <SelectItem value={operator.id} title={convertOperatorToTitle(operator.id)}>
+              {operator.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
+        <div className="relative flex flex-col gap-1">
+          <Input
+            value={resource.value}
+            onChange={(e) => {
+              checkValueAndUpdate(e);
+            }}
+            className={cn("w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
+          />
+
+          {valueError && (
+            <p className="absolute right-2 -mt-1 rounded-md bg-white px-2 text-xs text-red-500">
+              {valueError}
+            </p>
+          )}
+        </div>
+      )}
+
+      <SegmentFilterItemContextMenu
+        filterId={resource.id}
+        onDeleteFilter={onDeleteFilter}
+        onMoveFilter={onMoveFilter}
+      />
+    </div>
+  );
+};
+
 const BasicSegmentFilter = ({
   resource,
   connector,
@@ -330,6 +499,25 @@ const BasicSegmentFilter = ({
           />
         </>
       );
+
+    case "person":
+      return (
+        <>
+          <PersonSegmentFilter
+            connector={connector}
+            resource={resource as TUserSegmentPersonFilter}
+            environmentId={environmentId}
+            userSegment={userSegment}
+            setUserSegment={setUserSegment}
+            onDeleteFilter={onDeleteFilter}
+            onMoveFilter={onMoveFilter}
+            updateValueInLocalSurvey={updateFilterValueInUserSegment}
+          />
+        </>
+      );
+
+    default:
+      return null;
   }
 };
 

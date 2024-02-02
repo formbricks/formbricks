@@ -1,14 +1,77 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { TagIcon } from "lucide-react";
+import { FingerprintIcon, TagIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
-import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TUserSegmentAttributeFilter } from "@formbricks/types/userSegment";
+import {
+  TBaseFilter,
+  TUserSegmentAttributeFilter,
+  TUserSegmentPersonFilter,
+} from "@formbricks/types/userSegment";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
+
+const handleAddFilter = ({
+  type,
+  attributeClassName,
+  isUserId = false,
+  onAddFilter,
+  setOpen,
+}: {
+  type: "person" | "attribute";
+  attributeClassName?: string;
+  isUserId?: boolean;
+  onAddFilter: (filter: TBaseFilter) => void;
+  setOpen: (open: boolean) => void;
+}) => {
+  if (type === "person") {
+    const newResource: TUserSegmentPersonFilter = {
+      id: createId(),
+      root: { type: "person", personIdentifier: "userId" },
+      qualifier: {
+        operator: "equals",
+      },
+      value: "",
+    };
+
+    const newFilter: TBaseFilter = {
+      id: createId(),
+      connector: "and",
+      resource: newResource,
+    };
+
+    onAddFilter(newFilter);
+    setOpen(false);
+
+    return;
+  }
+
+  if (!attributeClassName) return;
+
+  const newFilterResource: TUserSegmentAttributeFilter = {
+    id: createId(),
+    root: {
+      type: "attribute",
+      attributeClassName,
+    },
+    qualifier: {
+      operator: "equals",
+    },
+    value: "",
+    ...(isUserId && { meta: { isUserId } }),
+  };
+
+  const newFilter: TBaseFilter = {
+    id: createId(),
+    connector: "and",
+    resource: newFilterResource,
+  };
+
+  onAddFilter(newFilter);
+  setOpen(false);
+};
 
 type TBasicAddFilterModalProps = {
   open: boolean;
@@ -30,67 +93,58 @@ const BasicAddFilterModal = ({ onAddFilter, open, setOpen, attributeClasses }: T
     );
   }, [attributeClasses, searchValue]);
 
-  const handleAddFilter = ({
-    attributeClassName,
-    isUserId = false,
-  }: {
-    attributeClassName?: string;
-    isUserId?: boolean;
-  }) => {
-    if (!attributeClassName) return;
-
-    const newFilterResource: TUserSegmentAttributeFilter = {
-      id: createId(),
-      root: {
-        type: "attribute",
-        attributeClassName,
-      },
-      qualifier: {
-        operator: "equals",
-      },
-      value: "",
-      ...(isUserId && { meta: { isUserId } }),
-    };
-
-    const newFilter: TBaseFilter = {
-      id: createId(),
-      connector: "and",
-      resource: newFilterResource,
-    };
-
-    onAddFilter(newFilter);
-    setOpen(false);
-  };
-
   return (
     <Modal hideCloseButton open={open} setOpen={setOpen} closeOnOutsideClick>
       <div className="flex w-auto flex-col">
         <Input placeholder="Browse filters..." autoFocus onChange={(e) => setSearchValue(e.target.value)} />
       </div>
 
-      <div className={cn("mt-2 flex max-h-80 flex-col gap-1 overflow-y-auto")}>
-        <>
-          {attributeClassesFiltered?.length === 0 && (
-            <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
-              <p>There are no attributes available</p>
+      <div className="mt-2 flex flex-col gap-2">
+        <div>
+          <h2 className="text-base font-medium">Person</h2>
+          <div>
+            <div
+              onClick={() => {
+                handleAddFilter({
+                  type: "person",
+                  onAddFilter,
+                  setOpen,
+                });
+              }}
+              className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+              <FingerprintIcon className="h-4 w-4" />
+              <p>userId</p>
             </div>
-          )}
-          {attributeClassesFiltered.map((attributeClass) => {
-            return (
-              <div
-                onClick={() => {
-                  handleAddFilter({
-                    attributeClassName: attributeClass.name,
-                    isUserId: attributeClass.name === "userId" && attributeClass.type === "automatic",
-                  });
-                }}
-                className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
-                <TagIcon className="h-4 w-4" />
-                <p>{attributeClass.name}</p>
-              </div>
-            );
-          })}
-        </>
+          </div>
+        </div>
+
+        <hr />
+
+        <div>
+          <h2 className="text-base font-medium">Attributes</h2>
+        </div>
+        {attributeClassesFiltered?.length === 0 && (
+          <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
+            <p>There are no attributes yet!</p>
+          </div>
+        )}
+        {attributeClassesFiltered.map((attributeClass) => {
+          return (
+            <div
+              onClick={() => {
+                handleAddFilter({
+                  type: "attribute",
+                  onAddFilter,
+                  setOpen,
+                  attributeClassName: attributeClass.name,
+                });
+              }}
+              className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+              <TagIcon className="h-4 w-4" />
+              <p>{attributeClass.name}</p>
+            </div>
+          );
+        })}
       </div>
     </Modal>
   );

@@ -14,6 +14,7 @@ import {
   TUserSegmentConnector,
   TUserSegmentDeviceFilter,
   TUserSegmentFilter,
+  TUserSegmentPersonFilter,
   TUserSegmentSegmentFilter,
 } from "@formbricks/types/userSegment";
 
@@ -390,6 +391,24 @@ export const updateAttributeClassNameInFilter = (
       }
     } else {
       updateAttributeClassNameInFilter(resource, filterId, newAttributeClassName);
+    }
+  }
+};
+
+export const updatePersonIdentifierInFilter = (
+  group: TBaseFilters,
+  filterId: string,
+  newPersonIdentifier: string
+) => {
+  for (let i = 0; i < group.length; i++) {
+    const { resource } = group[i];
+
+    if (isResourceFilter(resource)) {
+      if (resource.id === filterId) {
+        (resource as TUserSegmentPersonFilter).root.personIdentifier = newPersonIdentifier;
+      }
+    } else {
+      updatePersonIdentifierInFilter(resource, filterId, newPersonIdentifier);
     }
   }
 };

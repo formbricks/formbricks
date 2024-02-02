@@ -25,6 +25,8 @@ export const ATTRIBUTE_OPERATORS = [
   "endsWith",
 ] as const;
 
+export const PERSON_OPERATORS = ATTRIBUTE_OPERATORS;
+
 export const ACTION_METRICS = [
   "lastQuarterCount",
   "lastMonthCount",
@@ -41,6 +43,9 @@ export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS] as c
 export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
 export type TAttributeOperator = z.infer<typeof ZAttributeOperator>;
 
+export const ZPersonOperator = z.enum(PERSON_OPERATORS);
+export type TPersonOperator = z.infer<typeof ZPersonOperator>;
+
 export const ZSegmentOperator = z.enum(SEGMENT_OPERATORS);
 export type TSegmentOperator = z.infer<typeof ZSegmentOperator>;
 
@@ -56,12 +61,16 @@ export const ZUserSegmentFilterValue = z.union([z.string(), z.number()]);
 export type TUserSegmentFilterValue = z.infer<typeof ZUserSegmentFilterValue>;
 
 // Root of the filter
-export const ZUserSegmentFilterRootType = z.enum(["attribute", "action", "segment", "device"]);
+export const ZUserSegmentFilterRootType = z.enum(["attribute", "action", "segment", "device", "person"]);
 
 export const ZUserSegmentFilterRoot = z.discriminatedUnion("type", [
   z.object({
     type: z.literal(ZUserSegmentFilterRootType.Enum.attribute),
     attributeClassId: z.string(),
+  }),
+  z.object({
+    type: z.literal(ZUserSegmentFilterRootType.Enum.person),
+    userId: z.string(),
   }),
   z.object({
     type: z.literal(ZUserSegmentFilterRootType.Enum.action),
@@ -87,13 +96,21 @@ export const ZUserSegmentAttributeFilter = z.object({
   qualifier: z.object({
     operator: ZAttributeOperator,
   }),
-  meta: z
-    .object({
-      isUserId: z.boolean(),
-    })
-    .optional(),
 });
 export type TUserSegmentAttributeFilter = z.infer<typeof ZUserSegmentAttributeFilter>;
+
+export const ZUserSegmentPersonFilter = z.object({
+  id: z.string().cuid2(),
+  root: z.object({
+    type: z.literal("person"),
+    personIdentifier: z.string(),
+  }),
+  value: ZUserSegmentFilterValue,
+  qualifier: z.object({
+    operator: ZPersonOperator,
+  }),
+});
+export type TUserSegmentPersonFilter = z.infer<typeof ZUserSegmentPersonFilter>;
 
 export const ZUserSegmentActionFilter = z
   .object({
@@ -159,6 +176,7 @@ export const ZUserSegmentFilter = z
   .union([
     ZUserSegmentActionFilter,
     ZUserSegmentAttributeFilter,
+    ZUserSegmentPersonFilter,
     ZUserSegmentSegmentFilter,
     ZUserSegmentDeviceFilter,
   ])
@@ -306,7 +324,7 @@ export type TEvaluateSegmentUserAttributeData = {
 
 export type TEvaluateSegmentUserData = {
   personId: string;
-  userId?: string;
+  userId: string;
   environmentId: string;
   attributes: TEvaluateSegmentUserAttributeData;
   actionIds: string[];

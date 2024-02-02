@@ -16,6 +16,7 @@ import {
   TUserSegmentConnector,
   TUserSegmentCreateInput,
   TUserSegmentDeviceFilter,
+  TUserSegmentPersonFilter,
   TUserSegmentSegmentFilter,
   TUserSegmentUpdateInput,
   ZUserSegmentCreateInput,
@@ -448,16 +449,10 @@ export const getUserSegmentsByAttributeClassName = async (
 
 const evaluateAttributeFilter = (
   attributes: TEvaluateSegmentUserAttributeData,
-  filter: TUserSegmentAttributeFilter,
-  userId?: string
+  filter: TUserSegmentAttributeFilter
 ): boolean => {
-  const { value, qualifier, root, meta } = filter;
+  const { value, qualifier, root } = filter;
   const { attributeClassName } = root;
-  const { isUserId } = meta ?? {};
-
-  if (isUserId && userId) {
-    return compareValues(userId, value, qualifier.operator);
-  }
 
   const attributeValue = attributes[attributeClassName];
   if (!attributeValue) {
@@ -466,6 +461,18 @@ const evaluateAttributeFilter = (
 
   const attResult = compareValues(attributeValue, value, qualifier.operator);
   return attResult;
+};
+
+const evaluatePersonFilter = (userId: string, filter: TUserSegmentPersonFilter): boolean => {
+  const { value, qualifier, root } = filter;
+  const { personIdentifier } = root;
+
+  if (personIdentifier === "userId") {
+    const attResult = compareValues(userId, value, qualifier.operator);
+    return attResult;
+  }
+
+  return false;
 };
 
 const getResolvedActionValue = async (actionClassId: string, personId: string, metric: TActionMetric) => {
@@ -619,11 +626,15 @@ export const evaluateSegment = async (
       const { type } = root;
 
       if (type === "attribute") {
-        result = evaluateAttributeFilter(
-          userData.attributes,
-          resource as TUserSegmentAttributeFilter,
-          userData.userId
-        );
+        result = evaluateAttributeFilter(userData.attributes, resource as TUserSegmentAttributeFilter);
+        resultPairs.push({
+          result,
+          connector: filterItem.connector,
+        });
+      }
+
+      if (type === "person") {
+        result = evaluatePersonFilter(userData.userId, resource as TUserSegmentPersonFilter);
         resultPairs.push({
           result,
           connector: filterItem.connector,
