@@ -14,7 +14,7 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (e.target.elements.password !== e.target.elements.confirmPassword) {
+    if (e.target.elements.password.value !== e.target.elements.confirmPassword.value) {
       setError("Les mots de passe ne correspondent pas");
       return;
     }
