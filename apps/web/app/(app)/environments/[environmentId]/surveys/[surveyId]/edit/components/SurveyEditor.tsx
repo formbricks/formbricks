@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useRef } from "react";
 
 import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
-import { extractLanguageSymbols, translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -49,18 +49,20 @@ export default function SurveyEditor({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
-  const [surveyLanguages, setSurveyLanguages] = useState<TLanguages>({ en: "English" });
-  const [productLanguages, setProductLanguages] = useState(
-    Object.entries(product.languages ?? { en: "English" })
-  );
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("en");
+  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguage = {
+    [defaultLanguageSymbol]: product.languages[defaultLanguageSymbol],
+  };
+  const [surveyLanguages, setSurveyLanguages] = useState<TLanguages>(defaultLanguage);
+  const [productLanguages, setProductLanguages] = useState<TLanguages>(product.languages ?? defaultLanguage);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(defaultLanguageSymbol);
   const surveyEditorRef = useRef(null);
 
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
-      setLocalSurvey(translateSurvey(structuredClone(survey)));
+      setLocalSurvey(translateSurvey(structuredClone(survey), surveyLanguages, defaultLanguageSymbol));
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
@@ -80,7 +82,7 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (!localSurvey) return;
-    setLocalSurvey(translateSurvey(localSurvey, extractLanguageSymbols(Object.entries(surveyLanguages))));
+    setLocalSurvey(translateSurvey(localSurvey, surveyLanguages, defaultLanguageSymbol));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i18n, localSurvey?.id, localSurvey?.questions.length, selectedLanguage, surveyLanguages]);
 
@@ -91,7 +93,7 @@ export default function SurveyEditor({
           const latestProduct = await refetchProduct(localProduct.id);
           if (latestProduct) {
             setLocalProduct(latestProduct);
-            setProductLanguages(Object.entries(latestProduct.languages));
+            setProductLanguages(latestProduct.languages);
           }
         };
         fetchLatestProduct();
@@ -114,7 +116,7 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (!Object.keys(surveyLanguages).includes(selectedLanguage)) {
-      setSelectedLanguage("en");
+      setSelectedLanguage(defaultLanguageSymbol);
     }
   }, [surveyLanguages, selectedLanguage]);
 
@@ -124,6 +126,7 @@ export default function SurveyEditor({
 
   return (
     <>
+      {console.log(localSurvey)}
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
@@ -135,7 +138,7 @@ export default function SurveyEditor({
           setInvalidQuestions={setInvalidQuestions}
           product={localProduct}
           responseCount={responseCount}
-          surveyLanguages={Object.keys(surveyLanguages)}
+          surveyLanguages={surveyLanguages}
           selectedLanguage={selectedLanguage}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
@@ -163,9 +166,9 @@ export default function SurveyEditor({
                   product={product}
                   invalidQuestions={invalidQuestions}
                   setInvalidQuestions={setInvalidQuestions}
-                  selectedLanguage={selectedLanguage ? selectedLanguage : "en"}
+                  selectedLanguage={selectedLanguage ? selectedLanguage : defaultLanguageSymbol}
                   setSelectedLanguage={setSelectedLanguage}
-                  surveyLanguages={Object.entries(surveyLanguages)}
+                  surveyLanguages={surveyLanguages}
                 />
               </>
             ) : (

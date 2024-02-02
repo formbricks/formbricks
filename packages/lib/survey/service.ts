@@ -729,3 +729,79 @@ export const getSurveyByResultShareKey = async (resultShareKey: string): Promise
     throw error;
   }
 };
+
+export const updateDefaultLanguageInSurveys = async (
+  productId: string,
+  oldDefaultSymbol: string,
+  newDefaultSymbol: string
+) => {
+  const environments = await prisma.environment.findMany({
+    where: { productId: productId },
+    select: { id: true },
+  });
+
+  environments.forEach(async (environment) => {
+    const surveys = await getSurveys(environment.id);
+    surveys.forEach((survey) => {
+      const updatedSurvey = structuredClone(survey);
+      updatedSurvey.questions.forEach((question) => {
+        question.headline = replaceKey(question.headline, oldDefaultSymbol, newDefaultSymbol);
+        question.subheader = question.subheader
+          ? replaceKey(question.subheader, oldDefaultSymbol, newDefaultSymbol)
+          : undefined;
+        question.backButtonLabel = question.backButtonLabel
+          ? replaceKey(question.backButtonLabel, oldDefaultSymbol, newDefaultSymbol)
+          : undefined;
+        question.buttonLabel = question.buttonLabel
+          ? replaceKey(question.buttonLabel, oldDefaultSymbol, newDefaultSymbol)
+          : undefined;
+        if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
+          question.choices = question.choices.map((choice) =>
+            replaceKey(choice, oldDefaultSymbol, newDefaultSymbol)
+          );
+          question.otherOptionPlaceholder = replaceKey(
+            question.otherOptionPlaceholder,
+            oldDefaultSymbol,
+            newDefaultSymbol
+          );
+        }
+        if (question.type === "openText") {
+          question.placeholder = replaceKey(question.placeholder, oldDefaultSymbol, newDefaultSymbol);
+        }
+        if (question.type === "cta") {
+          question.dismissButtonLabel = replaceKey(
+            question.dismissButtonLabel,
+            oldDefaultSymbol,
+            newDefaultSymbol
+          );
+          question.html = replaceKey(question.html, oldDefaultSymbol, newDefaultSymbol);
+        }
+        if (question.type === "consent") {
+          question.html = replaceKey(question.html, oldDefaultSymbol, newDefaultSymbol);
+          question.label = replaceKey(question.label ?? "", oldDefaultSymbol, newDefaultSymbol);
+        }
+        if (question.type === "nps") {
+          question.lowerLabel = replaceKey(question.lowerLabel, oldDefaultSymbol, newDefaultSymbol);
+          question.upperLabel = replaceKey(question.upperLabel, oldDefaultSymbol, newDefaultSymbol);
+        }
+        if (question.type === "rating") {
+          question.lowerLabel = replaceKey(question.lowerLabel, oldDefaultSymbol, newDefaultSymbol);
+          question.upperLabel = replaceKey(question.upperLabel, oldDefaultSymbol, newDefaultSymbol);
+        }
+      });
+      updateSurvey(updatedSurvey);
+    });
+  });
+};
+
+function replaceKey(obj, oldKey, newKey) {
+  if (!obj) return undefined;
+  // Check if the old key exists in the object
+  if (oldKey in obj) {
+    // Assign the value of the old key to the new key
+    obj[newKey] = obj[oldKey];
+    // Delete the old key
+    delete obj[oldKey];
+  }
+  return obj;
+}

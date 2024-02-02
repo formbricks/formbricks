@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { TLanguages } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 
@@ -14,8 +15,9 @@ interface ConsentQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
   isInvalid: boolean;
+  defaultLanguageSymbol: string;
 }
 
 export default function ConsentQuestionForm({
@@ -27,6 +29,7 @@ export default function ConsentQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
+  defaultLanguageSymbol,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -47,6 +50,7 @@ export default function ConsentQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        defaultLanguageSymbol={defaultLanguageSymbol}
       />
 
       <div className="mt-3">
@@ -64,6 +68,7 @@ export default function ConsentQuestionForm({
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
+            defaultLanguageSymbol={defaultLanguageSymbol}
           />
         </div>
       </div>
@@ -82,6 +87,7 @@ export default function ConsentQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        defaultLanguageSymbol={defaultLanguageSymbol}
       />
       {/* <div className="mt-3">
         <Label htmlFor="buttonLabel">Button Label</Label>

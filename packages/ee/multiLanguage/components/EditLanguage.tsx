@@ -12,7 +12,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
-import { updateProductAction } from "../lib/actions";
+import { updateLangaugeAction } from "../lib/actions";
 
 interface EditLanguageProps {
   product: TProduct;
@@ -27,9 +27,11 @@ export default function EditLanguage({
   isFormbricksCloud,
   isEnterpriseEdition,
 }: EditLanguageProps) {
-  const initialLanguages = Object.entries(product.languages || {}).sort(([key1], [key2]) =>
-    key1 === "en" ? -1 : key2 === "en" ? 1 : 0
-  );
+  const [defaultSymbol, setdefaultSymbol] = useState(product.languages["_default_"]);
+  const initialLanguages = Object.entries(product.languages || {})
+    .filter(([key]) => key !== "_default_")
+    .sort(([key1], [key2]) => (key1 === defaultSymbol ? -1 : key2 === defaultSymbol ? 1 : 0));
+
   const [languages, setLanguages] = useState<string[][]>(initialLanguages);
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -78,8 +80,12 @@ export default function EditLanguage({
   };
 
   const handleOnChange = (index: number, type: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsEditing(true); // Set editing state to true when change begins
+    setIsEditing(true);
     const newLanguages = [...languages];
+    if (index === 0 && type === "symbol") {
+      // meaning default language symbol is being changed
+      setdefaultSymbol(e.target.value);
+    }
     newLanguages[index][type === "symbol" ? 0 : 1] = e.target.value;
     setLanguages(newLanguages);
   };
@@ -95,13 +101,14 @@ export default function EditLanguage({
       }
       return acc;
     }, {});
+    languagesObject["_default_"] = defaultSymbol;
     handleSave(languagesObject);
   };
 
   const handleSave = async (languages: TLanguages) => {
     try {
       setIsUpdating(true);
-      await updateProductAction(product.id, { languages });
+      await updateLangaugeAction(product.id, languages, product.languages["_default_"] !== defaultSymbol);
       setIsEditing(false);
       setIsUpdating(false);
       toast.success("Lanuages updated successfully");
@@ -124,46 +131,48 @@ export default function EditLanguage({
             <Label htmlFor="languageId">Language ID</Label>
           </div>
 
-          {languages.map((language, index) => (
-            <div key={index} className="flex space-x-4">
-              <div className="relative flex h-12 w-1/2 items-center justify-end">
-                <Input
-                  disabled={!isEnterpriseEdition || isInputDisabled(index)}
-                  placeholder="e.g., English"
-                  className="absolute h-full w-full"
-                  value={language[1]}
-                  onChange={(e) => handleOnChange(index, "name", e)}
-                />
-                {language[1] === "English" && index === 0 && (
-                  <span className="mr-2 rounded-2xl bg-slate-200 px-2 py-1 text-xs text-slate-500">
-                    Default
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center">
-                <Input
-                  disabled={!isEnterpriseEdition || isInputDisabled(index)}
-                  placeholder="e.g., en"
-                  className="h-12 w-24"
-                  value={language[0]}
-                  onChange={(e) => handleOnChange(index, "symbol", e)}
-                />
-                {index !== 0 && (
-                  <TrashIcon
-                    className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
-                    onClick={() => setIsDeleteLanguageModalOpen(true)}
+          {languages.map((language, index) => {
+            return (
+              <div key={index} className="flex space-x-4">
+                <div className="relative flex h-12 w-1/2 items-center justify-end">
+                  <Input
+                    disabled={!isEnterpriseEdition || isInputDisabled(index)}
+                    placeholder="e.g., English"
+                    className="absolute h-full w-full"
+                    value={language[1]}
+                    onChange={(e) => handleOnChange(index, "name", e)}
                   />
-                )}
+                  {language[1] === "English" && index === 0 && (
+                    <span className="mr-2 rounded-2xl bg-slate-200 px-2 py-1 text-xs text-slate-500">
+                      Default
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <Input
+                    disabled={!isEnterpriseEdition || isInputDisabled(index)}
+                    placeholder="e.g., en"
+                    className="h-12 w-24"
+                    value={language[0]}
+                    onChange={(e) => handleOnChange(index, "symbol", e)}
+                  />
+                  {index !== 0 && (
+                    <TrashIcon
+                      className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
+                      onClick={() => setIsDeleteLanguageModalOpen(true)}
+                    />
+                  )}
+                </div>
+                <DeleteDialog
+                  open={isDeleteLanguageModalOpen}
+                  setOpen={setIsDeleteLanguageModalOpen}
+                  deleteWhat="Language"
+                  onDelete={() => deleteLanguage(index)}
+                  isDeleting={isDeleting}
+                />
               </div>
-              <DeleteDialog
-                open={isDeleteLanguageModalOpen}
-                setOpen={setIsDeleteLanguageModalOpen}
-                deleteWhat="Language"
-                onDelete={() => deleteLanguage(index)}
-                isDeleting={isDeleting}
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       {isEditing && (

@@ -5,10 +5,10 @@ import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString, extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
-import { TProduct } from "@formbricks/types/product";
+import { TLanguages, TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
@@ -24,8 +24,9 @@ interface FileUploadFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
   isInvalid: boolean;
+  defaultLanguageSymbol: string;
 }
 
 export default function FileUploadQuestionForm({
@@ -38,6 +39,7 @@ export default function FileUploadQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
+  defaultLanguageSymbol,
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
@@ -46,6 +48,7 @@ export default function FileUploadQuestionForm({
     error: billingInfoError,
     isLoading: billingInfoLoading,
   } = useGetBillingInfo(product?.teamId ?? "");
+  const surveyLanguageSymbols = Object.keys(surveyLanguages);
 
   const handleInputChange = (event) => {
     setExtension(event.target.value);
@@ -124,6 +127,7 @@ export default function FileUploadQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        defaultLanguageSymbol={defaultLanguageSymbol}
       />
       <div>
         {showSubheader && (
@@ -140,6 +144,7 @@ export default function FileUploadQuestionForm({
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
+                defaultLanguageSymbol={defaultLanguageSymbol}
               />
             </div>
 
@@ -160,7 +165,7 @@ export default function FileUploadQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
+                subheader: createI18nString("", surveyLanguageSymbols, defaultLanguageSymbol),
               });
               setShowSubheader(true);
             }}>

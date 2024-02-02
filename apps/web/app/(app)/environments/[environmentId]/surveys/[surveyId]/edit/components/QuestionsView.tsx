@@ -6,10 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
-import { extractLanguageSymbols, translateQuestion } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { translateQuestion } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TProduct } from "@formbricks/types/product";
+import { TLanguages, TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 import AddQuestionButton from "./AddQuestionButton";
@@ -29,7 +29,7 @@ interface QuestionsViewProps {
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
 }
 
 export default function QuestionsView({
@@ -52,7 +52,7 @@ export default function QuestionsView({
   }, [localSurvey.questions]);
 
   const [backButtonLabel, setbackButtonLabel] = useState(null);
-
+  const defaultLanguageSymbol = product.languages["_default_"];
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
       if (question.headline[selectedLanguage].includes(`recall:${compareId}`)) {
@@ -78,7 +78,7 @@ export default function QuestionsView({
       return;
     }
     let temp = structuredClone(invalidQuestions);
-    if (validateQuestion(question, extractLanguageSymbols(surveyLanguages))) {
+    if (validateQuestion(question, surveyLanguages)) {
       temp = invalidQuestions.filter((id) => id !== question.id);
       setInvalidQuestions(temp);
     } else if (!invalidQuestions.includes(question.id)) {
@@ -176,7 +176,8 @@ export default function QuestionsView({
     if (backButtonLabel) {
       question.backButtonLabel = backButtonLabel;
     }
-    const translatedSurvey = translateQuestion(question);
+    const languageSymbols = Object.keys(surveyLanguages);
+    const translatedSurvey = translateQuestion(question, languageSymbols, defaultLanguageSymbol);
     updatedSurvey.questions.push({ ...translatedSurvey, isDraft: true });
 
     setLocalSurvey(updatedSurvey);
@@ -207,27 +208,25 @@ export default function QuestionsView({
   useEffect(() => {
     if (invalidQuestions === null) return;
 
-    const surveyLanguagesArray = surveyLanguages.map((language) => language[0]);
-
     const isCardValid = (card, cardType) => {
       if (cardType === "start") {
         // welcomeCard identified as "start"
         return (
-          isLabelValidForAllLanguages(card.headline, surveyLanguagesArray) &&
+          isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
           (card.html && card.html["en"] === ""
             ? true
-            : isLabelValidForAllLanguages(card.html, surveyLanguagesArray)) &&
+            : isLabelValidForAllLanguages(card.html, surveyLanguages)) &&
           (card.buttonLabel && card.buttonLabel["en"] === ""
             ? true
-            : isLabelValidForAllLanguages(card.buttonLabel, surveyLanguagesArray))
+            : isLabelValidForAllLanguages(card.buttonLabel, surveyLanguages))
         );
       } else if (cardType === "end") {
         // thankYouCard identified as "end"
         return (
-          isLabelValidForAllLanguages(card.headline, surveyLanguagesArray) &&
+          isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
           (card.subheader && card.subheader["en"] === ""
             ? true
-            : isLabelValidForAllLanguages(card.subheader, surveyLanguagesArray))
+            : isLabelValidForAllLanguages(card.subheader, surveyLanguages))
         );
       }
       return true;
@@ -276,6 +275,7 @@ export default function QuestionsView({
           surveyLanguages={surveyLanguages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}
+          defaultLanguageSymbol={defaultLanguageSymbol}
         />
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -320,6 +320,7 @@ export default function QuestionsView({
           surveyLanguages={surveyLanguages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}
+          defaultLanguageSymbol={defaultLanguageSymbol}
         />
 
         {localSurvey.type === "link" ? (

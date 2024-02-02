@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { TLanguages } from "@formbricks/types/product";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
@@ -18,8 +19,9 @@ interface CTAQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
   isInvalid: boolean;
+  defaultLanguageSymbol: string;
 }
 
 export default function CTAQuestionForm({
@@ -32,6 +34,7 @@ export default function CTAQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
+  defaultLanguageSymbol,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -52,6 +55,7 @@ export default function CTAQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        defaultLanguageSymbol={defaultLanguageSymbol}
       />
 
       <div className="mt-3">
@@ -69,6 +73,7 @@ export default function CTAQuestionForm({
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
+            defaultLanguageSymbol={defaultLanguageSymbol}
           />
         </div>
       </div>
@@ -107,6 +112,7 @@ export default function CTAQuestionForm({
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
+            defaultLanguageSymbol={defaultLanguageSymbol}
           />
 
           {questionIdx !== 0 && (
@@ -123,6 +129,7 @@ export default function CTAQuestionForm({
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
+              defaultLanguageSymbol={defaultLanguageSymbol}
             />
           )}
         </div>
@@ -159,6 +166,7 @@ export default function CTAQuestionForm({
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
+              defaultLanguageSymbol={defaultLanguageSymbol}
             />
           </div>
         </div>

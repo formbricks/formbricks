@@ -8,7 +8,7 @@ import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
-import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+import type { TLanguages, TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 
 import { IS_S3_CONFIGURED, ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
@@ -110,7 +110,8 @@ export const updateProduct = async (
   productId: string,
   inputProduct: TProductUpdateInput
 ): Promise<TProduct> => {
-  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
+  console.log(inputProduct);
+  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput]);
   const { environments, ...data } = inputProduct;
   let updatedProduct;
   try {
@@ -275,4 +276,35 @@ export const createProduct = async (
   return await updateProduct(product.id, {
     environments: [devEnvironment, prodEnvironment],
   });
+};
+
+export const getDefaultLanguageSymbol = async (productId: string): Promise<string> => {
+  const productLanguages = await unstable_cache(
+    async () => {
+      let productLanguages;
+      try {
+        productLanguages = await prisma.product.findUnique({
+          where: {
+            id: productId,
+          },
+          select: {
+            languages: true,
+          },
+        });
+
+        return productLanguages?.languages;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
+    },
+    [`getDefaultLanguageSymbol-${productId}`],
+    {
+      tags: [productCache.tag.byId(productId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+  return productLanguages ? productLanguages["_default_"] : null;
 };

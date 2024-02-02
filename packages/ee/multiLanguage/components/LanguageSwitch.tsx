@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formb
 import { convertArrayToObject } from "../utils/i18n";
 
 interface LanguageSwitchProps {
-  productLanguages: string[][];
+  productLanguages: TLanguages;
   setLanguages: any;
   i18n: boolean;
   setI18n: (i18n: boolean) => void;
@@ -30,9 +30,11 @@ export default function LanguageSwitch({
   environmentId,
   isEnterpriseEdition,
 }: LanguageSwitchProps) {
+  const defaultLanguageSymbol = productLanguages["_default_"];
   const [translationsEnabled, setTranslationsEnabled] = useState(i18n);
   const [languagesArray, setLanguagesArray] = useState<string[][]>(Object.entries(surveyLanguages));
   const [showLanguageToggle, setshowLanguageToggle] = useState(false);
+  const productLanguagesList = Object.entries(productLanguages);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   useClickOutside(wrapperRef, () => {
@@ -55,7 +57,7 @@ export default function LanguageSwitch({
   // if there is a change in languages belonging to a particular product, then accordingly update the currently selected languages
   useEffect(() => {
     let updatedLanguagesArray = languagesArray.filter((lang) =>
-      productLanguages.some((allLang) => allLang[0] === lang[0])
+      productLanguagesList.some((allLang) => allLang[0] === lang[0])
     );
 
     if (updatedLanguagesArray.length !== languagesArray.length) {
@@ -91,8 +93,8 @@ export default function LanguageSwitch({
                     <div
                       className="absolute z-20 mt-2 space-y-4 rounded-md border bg-white p-4"
                       ref={wrapperRef}>
-                      {productLanguages?.map((language) => {
-                        if (language[0] === "en") return;
+                      {productLanguagesList?.map((language) => {
+                        if (language[0] === defaultLanguageSymbol || language[0] === "_default_") return;
                         return (
                           <label
                             htmlFor={`switch-${language}`}

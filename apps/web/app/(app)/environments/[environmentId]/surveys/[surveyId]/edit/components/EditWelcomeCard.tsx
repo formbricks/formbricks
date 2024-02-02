@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
+import { TLanguages } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
@@ -21,7 +22,8 @@ interface EditWelcomeCardProps {
   isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
+  defaultLanguageSymbol: string;
 }
 
 export default function EditWelcomeCard({
@@ -33,6 +35,7 @@ export default function EditWelcomeCard({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
+  defaultLanguageSymbol,
 }: EditWelcomeCardProps) {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
@@ -135,6 +138,7 @@ export default function EditWelcomeCard({
                 updateSurvey={updateSurvey}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
+                defaultLanguageSymbol={defaultLanguageSymbol}
               />
             </div>
             <div className="mt-3">
@@ -152,6 +156,7 @@ export default function EditWelcomeCard({
                   firstRender={firstRender}
                   setFirstRender={setFirstRender}
                   questionIdx={-1}
+                  defaultLanguageSymbol={defaultLanguageSymbol}
                 />
               </div>
             </div>
@@ -172,6 +177,7 @@ export default function EditWelcomeCard({
                     updateSurvey={updateSurvey}
                     selectedLanguage={selectedLanguage}
                     setSelectedLanguage={setSelectedLanguage}
+                    defaultLanguageSymbol={defaultLanguageSymbol}
                   />
                 </div>
               </div>

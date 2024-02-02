@@ -3,7 +3,8 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString, extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { TLanguages } from "@formbricks/types/product";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -19,8 +20,9 @@ interface RatingQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
   isInvalid: boolean;
+  defaultLanguageSymbol: string;
 }
 
 export default function RatingQuestionForm({
@@ -32,8 +34,10 @@ export default function RatingQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
+  defaultLanguageSymbol,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const surveyLanguageSymbols = Object.keys(surveyLanguages);
 
   return (
     <form>
@@ -48,6 +52,7 @@ export default function RatingQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        defaultLanguageSymbol={defaultLanguageSymbol}
       />
 
       <div>
@@ -65,6 +70,7 @@ export default function RatingQuestionForm({
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
+                defaultLanguageSymbol={defaultLanguageSymbol}
               />
             </div>
 
@@ -85,7 +91,7 @@ export default function RatingQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
+                subheader: createI18nString("", surveyLanguageSymbols, defaultLanguageSymbol),
               });
               setShowSubheader(true);
             }}>
@@ -143,6 +149,7 @@ export default function RatingQuestionForm({
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
+            defaultLanguageSymbol={defaultLanguageSymbol}
           />
         </div>
         <div className="flex-1">
@@ -157,6 +164,7 @@ export default function RatingQuestionForm({
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
+            defaultLanguageSymbol={defaultLanguageSymbol}
           />
         </div>
       </div>
@@ -176,6 +184,7 @@ export default function RatingQuestionForm({
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
+              defaultLanguageSymbol={defaultLanguageSymbol}
             />
           </div>
         )}

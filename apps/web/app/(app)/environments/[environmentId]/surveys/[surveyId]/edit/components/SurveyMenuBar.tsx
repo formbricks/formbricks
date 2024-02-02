@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
+import { TLanguages, TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
@@ -30,7 +30,7 @@ interface SurveyMenuBarProps {
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
   responseCount: number;
-  surveyLanguages: string[];
+  surveyLanguages: TLanguages;
   selectedLanguage: string;
 }
 

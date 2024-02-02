@@ -6,7 +6,6 @@ import { TPerson } from "./people";
 export const ZI18nObject = z
   .object({
     _i18n_: z.boolean(),
-    en: z.string().optional(),
   })
   .catchall(z.string());
 

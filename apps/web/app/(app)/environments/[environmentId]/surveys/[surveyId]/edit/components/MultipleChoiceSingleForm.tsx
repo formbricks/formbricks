@@ -7,8 +7,9 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString, extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { TLanguages } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -22,8 +23,9 @@ interface OpenQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
   isInvalid: boolean;
+  defaultLanguageSymbol: string;
 }
 
 export default function MultipleChoiceSingleForm({
@@ -35,12 +37,14 @@ export default function MultipleChoiceSingleForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
+  defaultLanguageSymbol,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
   const questionRef = useRef<HTMLInputElement>(null);
+  const surveyLanguageSymbols = Object.keys(surveyLanguages);
 
   const shuffleOptionsTypes = {
     none: {
@@ -105,7 +109,10 @@ export default function MultipleChoiceSingleForm({
     if (otherChoice) {
       newChoices = newChoices.filter((choice) => choice.id !== "other");
     }
-    const newChoice = { id: createId(), label: createI18nString("") };
+    const newChoice = {
+      id: createId(),
+      label: createI18nString("", surveyLanguageSymbols, defaultLanguageSymbol),
+    };
     if (choiceIdx !== undefined) {
       newChoices.splice(choiceIdx + 1, 0, newChoice);
     } else {
@@ -120,7 +127,10 @@ export default function MultipleChoiceSingleForm({
   const addOther = () => {
     if (question.choices.filter((c) => c.id === "other").length === 0) {
       const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
-      newChoices.push({ id: "other", label: createI18nString("Other") });
+      newChoices.push({
+        id: "other",
+        label: createI18nString("Other", surveyLanguageSymbols, defaultLanguageSymbol),
+      });
       updateQuestion(questionIdx, {
         choices: newChoices,
         ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
@@ -176,6 +186,7 @@ export default function MultipleChoiceSingleForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        defaultLanguageSymbol={defaultLanguageSymbol}
       />
 
       <div>
@@ -193,6 +204,7 @@ export default function MultipleChoiceSingleForm({
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
+                defaultLanguageSymbol={defaultLanguageSymbol}
               />
             </div>
 
@@ -213,7 +225,7 @@ export default function MultipleChoiceSingleForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
+                subheader: createI18nString("", surveyLanguageSymbols, defaultLanguageSymbol),
               });
               setShowSubheader(true);
             }}>
@@ -252,11 +264,9 @@ export default function MultipleChoiceSingleForm({
                   setSelectedLanguage={setSelectedLanguage}
                   isInvalid={
                     isInvalid &&
-                    !isLabelValidForAllLanguages(
-                      question.choices[choiceIdx].label,
-                      extractLanguageSymbols(surveyLanguages)
-                    )
+                    !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
                   }
+                  defaultLanguageSymbol={defaultLanguageSymbol}
                 />
                 {choice.id === "other" && (
                   <LocalizedInput
@@ -269,7 +279,7 @@ export default function MultipleChoiceSingleForm({
                     questionIdx={questionIdx}
                     value={
                       (question.otherOptionPlaceholder as TI18nString) ??
-                      createI18nString("Please specify", extractLanguageSymbols(surveyLanguages))
+                      createI18nString("Please specify", surveyLanguageSymbols, defaultLanguageSymbol)
                     }
                     surveyLanguages={surveyLanguages}
                     updateChoice={updateChoice}
@@ -277,11 +287,9 @@ export default function MultipleChoiceSingleForm({
                     setSelectedLanguage={setSelectedLanguage}
                     isInvalid={
                       isInvalid &&
-                      !isLabelValidForAllLanguages(
-                        question.choices[choiceIdx].label,
-                        extractLanguageSymbols(surveyLanguages)
-                      )
+                      !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
                     }
+                    defaultLanguageSymbol={defaultLanguageSymbol}
                   />
                 )}
                 {question.choices && question.choices.length > 2 && (

@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
+import { TLanguages } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
@@ -19,7 +20,8 @@ interface EditThankYouCardProps {
   isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
+  defaultLanguageSymbol: string;
 }
 
 export default function EditThankYouCard({
@@ -31,6 +33,7 @@ export default function EditThankYouCard({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
+  defaultLanguageSymbol,
 }: EditThankYouCardProps) {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
@@ -118,6 +121,7 @@ export default function EditThankYouCard({
               updateSurvey={updateSurvey}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
+              defaultLanguageSymbol={defaultLanguageSymbol}
             />
 
             <LocalizedInput
@@ -131,6 +135,7 @@ export default function EditThankYouCard({
               updateSurvey={updateSurvey}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
+              defaultLanguageSymbol={defaultLanguageSymbol}
             />
             <div className="mt-4">
               <div className="flex items-center space-x-1">

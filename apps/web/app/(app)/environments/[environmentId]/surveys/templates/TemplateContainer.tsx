@@ -30,6 +30,10 @@ export default function TemplateContainerWithPreview({
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
+  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguage = {
+    [defaultLanguageSymbol]: product.languages[defaultLanguageSymbol],
+  };
   useEffect(() => {
     if (product && templates?.length) {
       const newTemplate = replacePresetPlaceholders(templates[0], product);
@@ -73,12 +77,16 @@ export default function TemplateContainerWithPreview({
           {activeTemplate && (
             <div className="my-6 flex h-[90%] w-full flex-col items-center justify-center">
               <PreviewSurvey
-                survey={translateSurvey({ ...minimalSurvey, ...activeTemplate.preset })}
+                survey={translateSurvey(
+                  { ...minimalSurvey, ...activeTemplate.preset },
+                  defaultLanguage,
+                  defaultLanguageSymbol
+                )}
                 activeQuestionId={activeQuestionId}
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
-                language={"en"}
+                language={defaultLanguageSymbol}
                 onFileUpload={async (file) => file.name}
               />
             </div>

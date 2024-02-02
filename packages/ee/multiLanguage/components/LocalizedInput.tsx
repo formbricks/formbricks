@@ -1,4 +1,5 @@
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
+import { TLanguages } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbricks/types/surveys";
 import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
@@ -12,13 +13,14 @@ interface LocalizedInputProps {
   localSurvey: TSurvey;
   placeholder?: string;
   selectedLanguage: string;
+  defaultLanguageSymbol: string;
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
   updateSurvey?: (data: Partial<TSurveyQuestion>) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyChoice>) => void;
   questionIdx: number;
   setSelectedLanguage: (language: string) => void;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
   maxLength?: number;
   defaultValue?: string;
 }
@@ -37,9 +39,11 @@ const LocalizedInput = ({
   onBlur,
   surveyLanguages,
   maxLength,
+  defaultLanguageSymbol,
 }: LocalizedInputProps) => {
   const isThankYouCard = questionIdx === localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
+  const SurveyLanguagesList = Object.entries(surveyLanguages);
 
   const questionId = () => {
     if (isThankYouCard) return "end";
@@ -54,20 +58,20 @@ const LocalizedInput = ({
     id === "buttonLabel" ||
     id === "placeholder" ||
     id === "backButtonLabel"
-      ? value?.en?.trim() !== "" &&
+      ? value[defaultLanguageSymbol]?.trim() !== "" &&
         isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguages)) &&
-        selectedLanguage === "en"
+        !isLabelValidForAllLanguages(value, extractLanguageSymbols(SurveyLanguagesList)) &&
+        selectedLanguage === defaultLanguageSymbol
       : isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguages)) &&
-        selectedLanguage === "en";
+        !isLabelValidForAllLanguages(value, extractLanguageSymbols(SurveyLanguagesList)) &&
+        selectedLanguage === defaultLanguageSymbol;
   return (
     <div className="relative w-full">
       <QuestionFormInput
         id={id}
         localSurvey={localSurvey}
         environmentId={localSurvey.environmentId}
-        isInvalid={surveyLanguages.length > 1 && isInComplete}
+        isInvalid={SurveyLanguagesList.length > 1 && isInComplete}
         questionId={questionId()}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
@@ -75,17 +79,18 @@ const LocalizedInput = ({
         updateChoice={updateChoice}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        surveyLanguages={surveyLanguages}
+        surveyLanguages={SurveyLanguagesList}
         maxLength={maxLength}
         placeholder={placeholder}
         onBlur={onBlur}
       />
-      {selectedLanguage !== "en" && value.en && (
+      {selectedLanguage !== defaultLanguageSymbol && value[defaultLanguageSymbol] && (
         <div className="mt-1 text-xs text-gray-500">
-          <strong>Translate:</strong> {recallToHeadline(value, localSurvey, false, "en")["en"]}
+          <strong>Translate:</strong>{" "}
+          {recallToHeadline(value, localSurvey, false, defaultLanguageSymbol)[defaultLanguageSymbol]}
         </div>
       )}
-      {surveyLanguages.length > 1 && isInComplete && (
+      {SurveyLanguagesList.length > 1 && isInComplete && (
         <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
       )}
     </div>

@@ -3,8 +3,9 @@ import { createId } from "@paralleldrive/cuid2";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString, extractLanguageSymbols } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { cn } from "@formbricks/lib/cn";
+import { TLanguages } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import FileInput from "@formbricks/ui/FileInput";
@@ -19,8 +20,9 @@ interface PictureSelectionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguages;
   isInvalid: boolean;
+  defaultLanguageSymbol: string;
 }
 
 export default function PictureSelectionForm({
@@ -32,9 +34,11 @@ export default function PictureSelectionForm({
   setSelectedLanguage,
   surveyLanguages,
   isInvalid,
+  defaultLanguageSymbol,
 }: PictureSelectionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
+  const surveyLanguageSymbols = Object.keys(surveyLanguages);
 
   return (
     <form>
@@ -49,6 +53,7 @@ export default function PictureSelectionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
+        defaultLanguageSymbol={defaultLanguageSymbol}
       />
       <div>
         {showSubheader && (
@@ -65,6 +70,7 @@ export default function PictureSelectionForm({
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
+                defaultLanguageSymbol={defaultLanguageSymbol}
               />
             </div>
 
@@ -85,7 +91,7 @@ export default function PictureSelectionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", extractLanguageSymbols(surveyLanguages)),
+                subheader: createI18nString("", surveyLanguageSymbols, defaultLanguageSymbol),
               });
               setShowSubheader(true);
             }}>
