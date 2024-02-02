@@ -7,25 +7,63 @@ import { toast } from "react-hot-toast";
 
 import { TLanguages, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
+import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import { updateProductAction } from "../lib/actions";
 
-export default function EditLanguage({ product }: { product: TProduct }) {
+interface EditLanguageProps {
+  product: TProduct;
+  environmentId: string;
+  isFormbricksCloud: boolean;
+  isEnterpriseEdition: boolean;
+}
+
+export default function EditLanguage({
+  product,
+  environmentId,
+  isFormbricksCloud,
+  isEnterpriseEdition,
+}: EditLanguageProps) {
   const initialLanguages = Object.entries(product.languages || {}).sort(([key1], [key2]) =>
     key1 === "en" ? -1 : key2 === "en" ? 1 : 0
   );
   const [languages, setLanguages] = useState<string[][]>(initialLanguages);
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteLanguageModalOpen, setIsDeleteLanguageModalOpen] = useState(false);
+  const isInputDisabled = (index: number) => {
+    if (isEditing) {
+      return index > 0 && index < languages.length - 1;
+    } else {
+      return index > 0;
+    }
+  };
+
+  const checkIfDuplicateExists = (arr: string[]) => {
+    return new Set(arr).size !== arr.length;
+  };
+
+  const checkForDuplicates = (languages: string[][]) => {
+    const languageIDs = languages.map((language) => language[0].toLowerCase());
+    const languageNames = languages.map((language) => language[1].toLowerCase());
+    if (checkIfDuplicateExists(languageNames) || checkIfDuplicateExists(languageIDs)) {
+      return true;
+    }
+    return false;
+  };
 
   const addNewLanguageField = () => {
+    if (!isEnterpriseEdition) return;
     setLanguages((prevLanguages) => [...prevLanguages, ["", ""]]);
     setIsEditing(true);
   };
 
   const deleteLanguage = (index: number) => {
+    setIsDeleting(true);
     const newLanguages = [...languages];
     newLanguages.splice(index, 1);
     const languagesObject = newLanguages.reduce<TLanguages>((acc, [key, value]) => {
@@ -36,7 +74,7 @@ export default function EditLanguage({ product }: { product: TProduct }) {
     }, {});
     handleSave(languagesObject);
     setLanguages(newLanguages);
-    setIsEditing(false);
+    setIsDeleting(false);
   };
 
   const handleOnChange = (index: number, type: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,6 +85,10 @@ export default function EditLanguage({ product }: { product: TProduct }) {
   };
 
   const updateLanguages = () => {
+    if (checkForDuplicates(languages)) {
+      toast.error("Duplicate language or language ID");
+      return;
+    }
     const languagesObject = languages.reduce<TLanguages>((acc, [key, value]) => {
       if (key && value) {
         acc[key] = value;
@@ -86,12 +128,13 @@ export default function EditLanguage({ product }: { product: TProduct }) {
             <div key={index} className="flex space-x-4">
               <div className="relative flex h-12 w-1/2 items-center justify-end">
                 <Input
+                  disabled={!isEnterpriseEdition || isInputDisabled(index)}
                   placeholder="e.g., English"
                   className="absolute h-full w-full"
                   value={language[1]}
                   onChange={(e) => handleOnChange(index, "name", e)}
                 />
-                {language[1] === "English" && (
+                {language[1] === "English" && index === 0 && (
                   <span className="mr-2 rounded-2xl bg-slate-200 px-2 py-1 text-xs text-slate-500">
                     Default
                   </span>
@@ -99,6 +142,7 @@ export default function EditLanguage({ product }: { product: TProduct }) {
               </div>
               <div className="flex items-center">
                 <Input
+                  disabled={!isEnterpriseEdition || isInputDisabled(index)}
                   placeholder="e.g., en"
                   className="h-12 w-24"
                   value={language[0]}
@@ -107,10 +151,17 @@ export default function EditLanguage({ product }: { product: TProduct }) {
                 {index !== 0 && (
                   <TrashIcon
                     className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
-                    onClick={() => deleteLanguage(index)}
+                    onClick={() => setIsDeleteLanguageModalOpen(true)}
                   />
                 )}
               </div>
+              <DeleteDialog
+                open={isDeleteLanguageModalOpen}
+                setOpen={setIsDeleteLanguageModalOpen}
+                deleteWhat="Language"
+                onDelete={() => deleteLanguage(index)}
+                isDeleting={isDeleting}
+              />
             </div>
           ))}
         </div>
@@ -125,10 +176,28 @@ export default function EditLanguage({ product }: { product: TProduct }) {
           Save
         </Button>
       ) : (
-        <Button variant="darkCTA" className="mt-4 w-fit" onClick={addNewLanguageField}>
+        <Button
+          variant="darkCTA"
+          className="my-4 w-fit"
+          onClick={addNewLanguageField}
+          disabled={!isEnterpriseEdition}>
           Add Language
         </Button>
       )}
+      {!isEnterpriseEdition &&
+        (!isFormbricksCloud ? (
+          <UpgradePlanNotice
+            message="To enable multi-language surveys,"
+            url={`/environments/${environmentId}/settings/billing`}
+            textForUrl="please add your credit card (free)."
+          />
+        ) : (
+          <UpgradePlanNotice
+            message="To manage access roles for your team,"
+            url="https://formbricks.com/docs/self-hosting/license"
+            textForUrl="get a self-hosting license (free)."
+          />
+        ))}
     </div>
   );
 }

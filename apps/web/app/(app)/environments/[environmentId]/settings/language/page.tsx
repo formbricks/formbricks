@@ -1,14 +1,14 @@
 import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
 
+import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
 import EditLanguage from "@formbricks/ee/multiLanguage/components/EditLanguage";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-
-export const revalidate = REVALIDATION_INTERVAL;
 
 export default async function LanguageSettingsPage({ params }: { params: { environmentId: string } }) {
   const product = await getProductByEnvironmentId(params.environmentId);
+  const isEnterpriseEdition = await getIsEnterpriseEdition();
 
   if (!product) {
     throw new Error("Product not found");
@@ -20,7 +20,12 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
       <SettingsCard
         title="Multi-language surveys"
         description="Add languages to create multi-language surveys.">
-        <EditLanguage product={product} />
+        <EditLanguage
+          product={product}
+          environmentId={params.environmentId}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          isEnterpriseEdition={isEnterpriseEdition}
+        />
       </SettingsCard>
     </div>
   );
