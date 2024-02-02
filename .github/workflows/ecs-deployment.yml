@@ -100,7 +100,7 @@ jobs:
           echo "TEST %%%%%%%%%%%%%%%"
           echo "${TAGS}"
         env:
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
+          TAGS: ${{ steps.docker_meta.outputs.DOCKER_METADATA_OUTPUT_JSON }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
       
       - name: Sign image with a key
