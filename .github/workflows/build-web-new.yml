@@ -37,7 +37,7 @@ jobs:
             echo "Waiting..."
             sleep 5
           done
-          pnpm db:migrate:dev
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/formbricks?schema=public && pnpm db:migrate:dev
 
       - name: Serve packages for lazy loading
         run: |
