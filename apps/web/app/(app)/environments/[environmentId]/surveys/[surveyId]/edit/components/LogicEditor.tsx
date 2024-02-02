@@ -234,7 +234,7 @@ export default function LogicEditor({
   };
 
   const deleteLogic = (logicIdx: number) => {
-    const updatedLogic = !question.logic ? [] : JSON.parse(JSON.stringify(question.logic));
+    const updatedLogic = !question.logic ? [] : structuredClone(question.logic);
     updatedLogic.splice(logicIdx, 1);
     updateQuestion(questionIdx, { logic: updatedLogic });
   };

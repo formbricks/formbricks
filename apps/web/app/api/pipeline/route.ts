@@ -154,7 +154,7 @@ export async function POST(request: Request) {
       const survey = {
         id: surveyData.id,
         name: surveyData.name,
-        questions: JSON.parse(JSON.stringify(surveyData.questions)) as TSurveyQuestion[],
+        questions: structuredClone(surveyData.questions) as TSurveyQuestion[],
       };
       // send email to all users
       await Promise.all(

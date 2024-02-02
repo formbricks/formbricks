@@ -161,9 +161,7 @@ export const createActionClass = async (
         name: actionClass.name,
         description: actionClass.description,
         type: actionClass.type,
-        noCodeConfig: actionClass.noCodeConfig
-          ? JSON.parse(JSON.stringify(actionClass.noCodeConfig))
-          : undefined,
+        noCodeConfig: actionClass.noCodeConfig ? structuredClone(actionClass.noCodeConfig) : undefined,
         environment: { connect: { id: environmentId } },
       },
       select,
@@ -199,7 +197,7 @@ export const updateActionClass = async (
         description: inputActionClass.description,
         type: inputActionClass.type,
         noCodeConfig: inputActionClass.noCodeConfig
-          ? JSON.parse(JSON.stringify(inputActionClass.noCodeConfig))
+          ? structuredClone(inputActionClass.noCodeConfig)
           : undefined,
       },
       select,

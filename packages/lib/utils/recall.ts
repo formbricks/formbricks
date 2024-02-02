@@ -58,7 +58,7 @@ export const recallToHeadline = (
   withSlash: boolean,
   language: string
 ): TI18nString => {
-  let newHeadline = JSON.parse(JSON.stringify(headline));
+  let newHeadline = structuredClone(headline);
   if (!newHeadline[language]?.includes("#recall:")) return headline;
 
   while (newHeadline[language].includes("#recall:")) {
@@ -121,7 +121,7 @@ export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | n
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
 export const checkForRecallInHeadline = (survey: TSurvey): TSurvey => {
-  const modifiedSurvey: TSurvey = JSON.parse(JSON.stringify(survey));
+  const modifiedSurvey: TSurvey = structuredClone(survey);
   modifiedSurvey.questions.forEach((question) => {
     question.headline = recallToHeadline(question.headline as TI18nString, modifiedSurvey, false, "en");
   });
@@ -137,7 +137,7 @@ export const getRecallQuestions = (text: string, survey: TSurvey, langauge: stri
   ids.forEach((questionId) => {
     let recallQuestion = survey.questions.find((question) => question.id === questionId);
     if (recallQuestion) {
-      let recallQuestionTemp = JSON.parse(JSON.stringify(recallQuestion));
+      let recallQuestionTemp = structuredClone(recallQuestion);
       recallQuestionTemp = replaceRecallInfoWithUnderline(recallQuestionTemp, langauge);
       recallQuestionArray.push(recallQuestionTemp);
     }

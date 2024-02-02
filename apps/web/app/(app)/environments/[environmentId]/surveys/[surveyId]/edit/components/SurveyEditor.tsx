@@ -60,7 +60,7 @@ export default function SurveyEditor({
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
-      setLocalSurvey(translateSurvey(JSON.parse(JSON.stringify(survey))));
+      setLocalSurvey(translateSurvey(structuredClone(survey)));
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }

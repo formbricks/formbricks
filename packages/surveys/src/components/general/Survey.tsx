@@ -176,7 +176,7 @@ export function Survey({
   };
 
   const parseRecallInformation = (question: TSurveyQuestion) => {
-    const modifiedQuestion = JSON.parse(JSON.stringify(question));
+    const modifiedQuestion = structuredClone(question);
     if (question.headline && (question.headline as TI18nString)[language]?.includes("recall:")) {
       modifiedQuestion.headline[language] = replaceRecallInfo(
         getLocalizedValue(modifiedQuestion.headline, language)

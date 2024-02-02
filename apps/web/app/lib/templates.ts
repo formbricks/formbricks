@@ -4,7 +4,7 @@ import { TTemplate } from "@formbricks/types/templates";
 export const replaceQuestionPresetPlaceholders = (question: TSurveyQuestion, product) => {
   if (!question) return;
   if (!product) return question;
-  const newQuestion = JSON.parse(JSON.stringify(question));
+  const newQuestion = structuredClone(question);
   if (newQuestion.headline) {
     newQuestion.headline = newQuestion.headline.replace("{{productName}}", product.name);
   }
@@ -16,7 +16,7 @@ export const replaceQuestionPresetPlaceholders = (question: TSurveyQuestion, pro
 
 // replace all occurences of productName with the actual product name in the current template
 export const replacePresetPlaceholders = (template: TTemplate, product: any) => {
-  const preset = JSON.parse(JSON.stringify(template.preset));
+  const preset = structuredClone(template.preset);
   preset.name = preset.name.replace("{{productName}}", product.name);
   preset.questions = preset.questions.map((question) => {
     return replaceQuestionPresetPlaceholders(question, product);

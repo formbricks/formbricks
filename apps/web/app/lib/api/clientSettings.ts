@@ -180,10 +180,10 @@ export const getSettings = async (environmentId: string, personId: string): Prom
     .map((survey) => {
       return {
         id: survey.id,
-        questions: JSON.parse(JSON.stringify(survey.questions)),
+        questions: structuredClone(survey.questions),
         triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
-        thankYouCard: JSON.parse(JSON.stringify(survey.thankYouCard)),
-        welcomeCard: JSON.parse(JSON.stringify(survey.welcomeCard)),
+        thankYouCard: structuredClone(survey.thankYouCard),
+        welcomeCard: structuredClone(survey.welcomeCard),
         autoClose: survey.autoClose,
         delay: survey.delay,
       };

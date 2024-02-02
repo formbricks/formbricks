@@ -77,7 +77,7 @@ export default function QuestionsView({
     if (invalidQuestions === null) {
       return;
     }
-    let temp = JSON.parse(JSON.stringify(invalidQuestions));
+    let temp = structuredClone(invalidQuestions);
     if (validateQuestion(question, extractLanguageSymbols(surveyLanguages))) {
       temp = invalidQuestions.filter((id) => id !== question.id);
       setInvalidQuestions(temp);
@@ -150,7 +150,7 @@ export default function QuestionsView({
   };
 
   const duplicateQuestion = (questionIdx: number) => {
-    const questionToDuplicate = JSON.parse(JSON.stringify(localSurvey.questions[questionIdx]));
+    const questionToDuplicate = structuredClone(localSurvey.questions[questionIdx]);
 
     const newQuestionId = createId();
 

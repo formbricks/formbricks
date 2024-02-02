@@ -563,8 +563,8 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       createdBy: undefined,
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
-      questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
-      thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
+      questions: structuredClone(existingSurvey.questions),
+      thankYouCard: structuredClone(existingSurvey.thankYouCard),
       triggers: {
         create: existingSurvey.triggers.map((trigger) => ({
           actionClassId: getActionClassIdFromName(actionClasses, trigger),
@@ -584,18 +584,14 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
         },
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage
-        ? JSON.parse(JSON.stringify(existingSurvey.surveyClosedMessage))
+        ? structuredClone(existingSurvey.surveyClosedMessage)
         : Prisma.JsonNull,
-      singleUse: existingSurvey.singleUse
-        ? JSON.parse(JSON.stringify(existingSurvey.singleUse))
-        : Prisma.JsonNull,
+      singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
       productOverwrites: existingSurvey.productOverwrites
-        ? JSON.parse(JSON.stringify(existingSurvey.productOverwrites))
+        ? structuredClone(existingSurvey.productOverwrites)
         : Prisma.JsonNull,
-      styling: existingSurvey.styling ? JSON.parse(JSON.stringify(existingSurvey.styling)) : Prisma.JsonNull,
-      verifyEmail: existingSurvey.verifyEmail
-        ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
-        : Prisma.JsonNull,
+      styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
+      verifyEmail: existingSurvey.verifyEmail ? structuredClone(existingSurvey.verifyEmail) : Prisma.JsonNull,
     },
   });
 

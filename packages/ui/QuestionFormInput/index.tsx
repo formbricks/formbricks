@@ -239,7 +239,7 @@ const QuestionFormInput = ({
       toast.error("Cannot add question with empty headline as recall");
       return;
     }
-    let recallQuestionTemp = JSON.parse(JSON.stringify(recallQuestion));
+    let recallQuestionTemp = structuredClone(recallQuestion);
     recallQuestionTemp = replaceRecallInfoWithUnderline(recallQuestionTemp, selectedLanguage);
     setRecallQuestions((prevQuestions) => {
       const updatedQuestions = [...prevQuestions, recallQuestionTemp];

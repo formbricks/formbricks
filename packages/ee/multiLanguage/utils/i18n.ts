@@ -16,7 +16,7 @@ import { TSurvey, TSurveyMultipleChoiceMultiQuestion, TSurveyQuestion } from "@f
 export const createI18nString = (text: string | TI18nString, languages?: string[]): TI18nString => {
   if (typeof text === "object" && "_i18n_" in text) {
     // It's already an i18n object, so clone it
-    const i18nString: TI18nString = JSON.parse(JSON.stringify(text));
+    const i18nString: TI18nString = structuredClone(text);
     i18nString._i18n_ = true;
     // Add new language keys with empty strings if they don't exist
     languages?.forEach((language) => {
@@ -67,7 +67,7 @@ export const translateWelcomeCard = (
   welcomeCard: TSurveyWelcomeCard,
   languages?: string[]
 ): TSurveyWelcomeCard => {
-  const clonedWelcomeCard = JSON.parse(JSON.stringify(welcomeCard));
+  const clonedWelcomeCard = structuredClone(welcomeCard);
   clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages);
   clonedWelcomeCard.html = createI18nString(welcomeCard.html ?? "", languages);
   clonedWelcomeCard.buttonLabel = createI18nString(welcomeCard.buttonLabel ?? "", languages);
@@ -79,7 +79,7 @@ export const translateThankYouCard = (
   thankYouCard: TSurveyThankYouCard,
   languages?: string[]
 ): TSurveyThankYouCard => {
-  const clonedThankYouCard = JSON.parse(JSON.stringify(thankYouCard));
+  const clonedThankYouCard = structuredClone(thankYouCard);
   clonedThankYouCard.headline = createI18nString(
     thankYouCard.headline ? thankYouCard.headline : "",
     languages
@@ -94,7 +94,7 @@ export const translateThankYouCard = (
 // Function that will translate a single question
 export const translateQuestion = (question: TSurveyQuestion, languages?: string[]) => {
   // Clone the question to avoid mutating the original
-  const clonedQuestion = JSON.parse(JSON.stringify(question));
+  const clonedQuestion = structuredClone(question);
 
   clonedQuestion.headline = createI18nString(question.headline, languages);
   clonedQuestion.subheader = clonedQuestion.subheader
@@ -105,7 +105,7 @@ export const translateQuestion = (question: TSurveyQuestion, languages?: string[
 
   if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
     (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
-      question.choices.map((choice) => translateChoice(JSON.parse(JSON.stringify(choice)), languages));
+      question.choices.map((choice) => translateChoice(structuredClone(choice)), languages);
     (
       clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion
     ).otherOptionPlaceholder = createI18nString(question.otherOptionPlaceholder ?? "", languages);
@@ -157,7 +157,7 @@ export const translateSurvey = (survey: TSurvey, languages?: string[]): TSurvey 
   });
   const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languages);
   const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languages);
-  const translatedSurvey = JSON.parse(JSON.stringify(survey));
+  const translatedSurvey = structuredClone(survey);
   return {
     ...translatedSurvey,
     questions: translatedQuestions,

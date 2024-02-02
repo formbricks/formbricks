@@ -76,7 +76,7 @@ export default function RecallQuestionSelect({
 
   // function to modify headline (recallInfo to corresponding headline)
   const getRecallHeadline = (question: TSurveyQuestion): TSurveyQuestion => {
-    let questionTemp = JSON.parse(JSON.stringify(question));
+    let questionTemp = structuredClone(question);
     questionTemp = replaceRecallInfoWithUnderline(questionTemp, selectedLanguage);
     return questionTemp;
   };

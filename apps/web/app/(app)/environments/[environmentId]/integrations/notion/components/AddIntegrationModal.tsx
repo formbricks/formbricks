@@ -224,7 +224,7 @@ export default function AddIntegrationModal({
     return questionItems.filter((q) => !selectedQuestionIds.includes(q.id));
   };
 
-  const createCopy = (item) => JSON.parse(JSON.stringify(item));
+  const createCopy = (item) => structuredClone(item);
 
   const MappingRow = ({ idx }: { idx: number }) => {
     const filteredQuestionItems = getFilteredQuestionItems(idx);
