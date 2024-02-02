@@ -18,6 +18,7 @@ export type TBaseOperator = z.infer<typeof ZBaseOperator>;
 export const ATTRIBUTE_OPERATORS = [
   ...BASE_OPERATORS,
   "isSet",
+  "isNotSet",
   "contains",
   "doesNotContain",
   "startsWith",
@@ -203,8 +204,8 @@ export const ZUserSegmentFilter = z
     const { value, qualifier } = filter;
     const { operator } = qualifier;
 
-    // if the operator is "isSet", the value doesn't matter
-    if (operator === "isSet") {
+    // if the operator is "isSet" or "isNotSet", the value doesn't matter
+    if (operator === "isSet" || operator === "isNotSet") {
       return true;
     }
 

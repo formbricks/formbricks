@@ -40,6 +40,8 @@ export const convertOperatorToText = (operator: TAllOperators) => {
       return ">=";
     case "isSet":
       return "is set";
+    case "isNotSet":
+      return "is not set";
     case "contains":
       return "contains ";
     case "doesNotContain":
@@ -73,6 +75,8 @@ export const convertOperatorToTitle = (operator: TAllOperators) => {
       return "Greater than or equal to";
     case "isSet":
       return "Is set";
+    case "isNotSet":
+      return "Is not set";
     case "contains":
       return "Contains";
     case "doesNotContain":

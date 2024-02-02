@@ -267,7 +267,7 @@ const AttributeSegmentFilter = ({
         </SelectContent>
       </Select>
 
-      {resource.qualifier.operator !== "isSet" && (
+      {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
         <div className="relative flex flex-col gap-1">
           <Input
             value={resource.value}

@@ -129,7 +129,7 @@ const AddFilterModal = ({
           },
           qualifier: {
             metric: "occuranceCount",
-            operator: "equals",
+            operator: "greaterThan",
           },
           value: "",
         },
@@ -154,7 +154,6 @@ const AddFilterModal = ({
         value: "",
         ...(isUserId && { meta: { isUserId } }),
       };
-
       const newFilter: TBaseFilter = {
         id: createId(),
         connector: "and",
