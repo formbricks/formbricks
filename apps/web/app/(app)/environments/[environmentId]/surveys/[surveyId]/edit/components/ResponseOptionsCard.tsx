@@ -257,12 +257,12 @@ export default function ResponseOptionsCard({
     surveyClosedMessage.subheading,
   ]);
 
-  const handleCheckMark = () => {
+  const toggleAutocomplete = () => {
     if (autoComplete) {
       const updatedSurvey = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey = { ...localSurvey, autoComplete: 25 };
+      const updatedSurvey = { ...localSurvey, autoComplete: Math.max(25, responseCount + 5) };
       setLocalSurvey(updatedSurvey);
     }
   };
@@ -310,7 +310,7 @@ export default function ResponseOptionsCard({
           <AdvancedOptionToggle
             htmlId="closeOnNumberOfResponse"
             isChecked={autoComplete}
-            onToggle={handleCheckMark}
+            onToggle={toggleAutocomplete}
             title="Close survey on response limit"
             description="Automatically close the survey after a certain number of responses."
             childBorder={true}>
@@ -411,7 +411,7 @@ export default function ResponseOptionsCard({
                 htmlId="singleUserSurveyOptions"
                 isChecked={!!localSurvey.singleUse?.enabled}
                 onToggle={handleSingleUseSurveyToggle}
-                title="Single-Use Survey Links"
+                title="Single-use survey links"
                 description="Allow only 1 response per survey link."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
@@ -507,7 +507,7 @@ export default function ResponseOptionsCard({
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}
                 onToggle={handleProtectSurveyWithPinToggle}
-                title="Protect Survey with a PIN"
+                title="Protect survey with a PIN"
                 description="Only users who have the PIN can access the survey."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
