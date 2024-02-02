@@ -15,7 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: ./.github/actions/cache-pnpm-install
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        if: steps.cache-build.outputs.cache-hit != 'true'
+
+      - name: Install dependencies
+        run: pnpm install --config.platform=linux --config.architecture=x64
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        shell: bash
+
+      # - uses: ./.github/actions/cache-pnpm-install
       - uses: ./.github/actions/cache-build-web
 
       - name: Install Playwright Browsers
