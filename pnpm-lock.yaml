@@ -376,8 +376,8 @@ importers:
         specifier: 14.1.0
         version: 14.1.0(@babel/core@7.23.7)(react-dom@18.2.0)(react@18.2.0)
       nodemailer:
-        specifier: ^6.9.8
-        version: 6.9.8
+        specifier: ^6.9.9
+        version: 6.9.9
       otplib:
         specifier: ^12.0.1
         version: 12.0.1
@@ -668,10 +668,10 @@ importers:
         version: 5.0.4
       next-auth:
         specifier: ^4.24.5
-        version: 4.24.5(next@14.1.0)(nodemailer@6.9.8)(react-dom@18.2.0)(react@18.2.0)
+        version: 4.24.5(next@14.1.0)(nodemailer@6.9.9)(react-dom@18.2.0)(react@18.2.0)
       nodemailer:
-        specifier: ^6.9.8
-        version: 6.9.8
+        specifier: ^6.9.9
+        version: 6.9.9
       posthog-node:
         specifier: ^3.6.0
         version: 3.6.0
@@ -16682,7 +16682,7 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /next-auth@4.24.5(next@14.1.0)(nodemailer@6.9.8)(react-dom@18.2.0)(react@18.2.0):
+  /next-auth@4.24.5(next@14.1.0)(nodemailer@6.9.9)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-3RafV3XbfIKk6rF6GlLE4/KxjTcuMCifqrmD+98ejFq73SRoj2rmzoca8u764977lH/Q7jo6Xu6yM+Re1Mz/Og==}
     peerDependencies:
       next: ^12.2.5 || ^13 || ^14
@@ -16698,7 +16698,7 @@ packages:
       cookie: 0.5.0
       jose: 4.15.4
       next: 14.1.0(@babel/core@7.23.7)(react-dom@18.2.0)(react@18.2.0)
-      nodemailer: 6.9.8
+      nodemailer: 6.9.9
       oauth: 0.9.15
       openid-client: 5.6.1
       preact: 10.19.3
@@ -16928,8 +16928,8 @@ packages:
   /node-releases@2.0.14:
     resolution: {integrity: sha512-y10wOWt8yZpqXmOgRo77WaHEmhYQYGNA6y421PKsKYWEK8aW+cqAphborZDhqfyKrbZEN92CN1X2KbafY2s7Yw==}
 
-  /nodemailer@6.9.8:
-    resolution: {integrity: sha512-cfrYUk16e67Ks051i4CntM9kshRYei1/o/Gi8K1d+R34OIs21xdFnW7Pt7EucmVKA0LKtqUGNcjMZ7ehjl49mQ==}
+  /nodemailer@6.9.9:
+    resolution: {integrity: sha512-dexTll8zqQoVJEZPwQAKzxxtFn0qTnjdQTchoU6Re9BUUGBJiOy3YMn/0ShTW6J5M0dfQ1NeDeRTTl4oIWgQMA==}
     engines: {node: '>=6.0.0'}
     dev: false
 

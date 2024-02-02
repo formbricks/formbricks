@@ -29,7 +29,7 @@
     "mime-types": "^2.1.35",
     "nanoid": "^5.0.4",
     "next-auth": "^4.24.5",
-    "nodemailer": "^6.9.8",
+    "nodemailer": "^6.9.9",
     "posthog-node": "^3.6.0",
     "server-only": "^0.0.1",
     "tailwind-merge": "^2.2.1"
