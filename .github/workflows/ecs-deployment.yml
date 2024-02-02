@@ -70,13 +70,6 @@ jobs:
             type=sha,format=long
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: EXP
-        run: |
-          echo "TEST %%%%%%%%%%%%%%%"
-          echo "${TAGS}"
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-
       # Build and push Docker image with Buildx
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
@@ -102,18 +95,16 @@ jobs:
             ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
             NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }}
       
-      - name: Sign image with a key
+      - name: Sign the images with GitHub OIDC Token
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          TAGS: ${{ steps.docker_meta.outputs.tags }}
         run: |
           images=""
           for tag in ${TAGS}; do
             images+="${tag}@${DIGEST} "
           done
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          cosign sign --yes ${images}
   
   # deploy:
   #   needs: build
