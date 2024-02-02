@@ -19,12 +19,15 @@ jobs:
         uses: pnpm/action-setup@v2
         if: steps.cache-build.outputs.cache-hit != 'true'
 
+      - name: Install dependencies
+        run: pnpm install --config.platform=linux --config.architecture=x64
+        shell: bash
+
       # - uses: ./.github/actions/cache-pnpm-install
       - uses: ./.github/actions/cache-build-web
-      - uses: ./.github/actions/cache-playwright-install
 
-      # - name: Install Playwright Browsers
-      #   run: pnpm exec playwright install --with-deps
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
 
       - name: Start PostgreSQL
         run: |
