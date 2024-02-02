@@ -46,30 +46,7 @@ export const SigninForm = ({
     setLoggingIn(true);
 
     try {
-      const signInResponse = await signIn("credentials", {
-        callbackUrl: searchParams?.get("callbackUrl") || "/",
-        email: data.email.toLowerCase(),
-        password: data.password,
-        ...(totpLogin && { totpCode: data.totpCode }),
-        ...(totpBackup && { backupCode: data.backupCode }),
-        redirect: false,
-      });
-
-      if (signInResponse?.error === "second factor required") {
-        setTotpLogin(true);
-        setLoggingIn(false);
-        return;
-      }
-
-      if (signInResponse?.error) {
-        setLoggingIn(false);
-        setSignInError(signInResponse.error);
-        return;
-      }
-
-      if (!signInResponse?.error) {
-        router.push(searchParams?.get("callbackUrl") || "/");
-      }
+      await signIn("keycloak");
     } catch (error) {
       const errorMessage = error.toString();
       const errorFeedback = errorMessage.includes("Invalid URL")
@@ -187,11 +164,7 @@ export const SigninForm = ({
             )}
             <Button
               onClick={() => {
-                if (!showLogin) {
-                  setShowLogin(true);
-                  // Add a slight delay before focusing the input field to ensure it's visible
-                  setTimeout(() => emailRef.current?.focus(), 100);
-                } else if (formRef.current) {
+              if (formRef.current) {
                   formRef.current.requestSubmit();
                 }
               }}
@@ -221,7 +194,7 @@ export const SigninForm = ({
           )}
         </div>
 
-        {publicSignUpEnabled && !totpLogin && (
+        {false && publicSignUpEnabled && !totpLogin && (
           <div className="mt-9 text-center text-xs ">
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />
@@ -240,7 +213,6 @@ export const SigninForm = ({
           <br />
           <div className="flex flex-col">
             <button
-              type="button"
               className="font-semibold text-slate-600 underline hover:text-slate-700"
               onClick={() => {
                 setTotpBackup(true);
@@ -249,7 +221,6 @@ export const SigninForm = ({
             </button>
 
             <button
-              type="button"
               className="mt-4 font-semibold text-slate-600 underline hover:text-slate-700"
               onClick={() => {
                 setTotpLogin(false);
@@ -263,7 +234,6 @@ export const SigninForm = ({
       {totpBackup && (
         <div className="mt-9 text-center text-xs">
           <button
-            type="button"
             className="font-semibold text-slate-600 underline hover:text-slate-700"
             onClick={() => {
               setTotpBackup(false);
