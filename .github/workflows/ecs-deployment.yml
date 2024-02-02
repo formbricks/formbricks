@@ -99,6 +99,7 @@ jobs:
         run: |
           echo "TEST %%%%%%%%%%%%%%%"
           echo "${DOCKER_METADATA_OUTPUT_JSON}"
+          echo "${TAGS}"
         env:
           TAGS: ${{ steps.docker_meta.outputs.DOCKER_METADATA_OUTPUT_JSON }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
