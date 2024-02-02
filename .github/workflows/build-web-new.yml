@@ -23,18 +23,18 @@ jobs:
       # - name: 📥 Monorepo install
       #   uses: ./.github/actions/cache-pnpm-install
 
-      - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
+      # - name: Install dependencies
+      #   run: npm install -g pnpm && pnpm install
 
-      - name: Install dependencies
-        run: pnpm install --config.platform=linux --config.architecture=x64
-        shell: bash
+      # - name: Install dependencies
+      #   run: pnpm install --config.platform=linux --config.architecture=x64
+      #   shell: bash
 
       # - uses: ./.github/actions/cache-pnpm-install
       - uses: ./.github/actions/cache-build-web
 
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
+        run: pnpm add playwright && pnpm exec playwright install --with-deps
 
       - name: Start PostgreSQL
         run: |
