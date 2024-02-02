@@ -4,7 +4,7 @@ import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-
+import KeycloakProvider, { KeycloakProfile } from "next-auth/providers/keycloak";
 import { prisma } from "@formbricks/database";
 
 import { createAccount } from "./account/service";
@@ -131,6 +131,11 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.AZUREAD_CLIENT_SECRET || "",
       tenantId: env.AZUREAD_TENANT_ID || "",
     }),
+    KeycloakProvider({
+      clientId: env.KEYCLOAK_CLIENT_ID ?? 'formbricks',
+      clientSecret: env.KEYCLOAK_CLIENT_SECRET ?? 'tItj2vr58wq7n8oeBUus9kubPuMS1XDm',
+      issuer: env.KEYCLOAK_ISSUER ?? 'https://13.234.186.121/kc/realms/midas',
+    }),
   ],
   callbacks: {
     async jwt({ token }) {
@@ -154,108 +159,52 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }: any) {
-      if (account.provider === "credentials" || account.provider === "token") {
-        if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
-          throw new Error("Email Verification is Pending");
-        }
-        return true;
-      }
 
       if (!user.email || !user.name || account.type !== "oauth") {
         return false;
       }
 
-      if (account.provider) {
-        const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
-        // check if accounts for this provider / account Id already exists
-        const existingUserWithAccount = await prisma.user.findFirst({
-          include: {
-            accounts: {
-              where: {
-                provider: account.provider,
-              },
-            },
-          },
-          where: {
-            identityProvider: provider,
-            identityProviderAccountId: account.providerAccountId,
-          },
-        });
+      const provider = account.provider;
+      // check if accounts for this provider / account Id already exists
+      const existingUserWithAccount = await prisma.user.findFirst({
+        where: {
+          email : user.email
+        },
+      });
 
-        if (existingUserWithAccount) {
-          // User with this provider found
-          // check if email still the same
-          if (existingUserWithAccount.email === user.email) {
-            return true;
-          }
-
-          // user seemed to change his email within the provider
-          // check if user with this email already exist
-          // if not found just update user with new email address
-          // if found throw an error (TODO find better solution)
-          const otherUserWithEmail = await getUserByEmail(user.email);
-
-          if (!otherUserWithEmail) {
-            await updateUser(existingUserWithAccount.id, { email: user.email });
-            return true;
-          }
-          throw new Error(
-            "Looks like you updated your email somewhere else. A user with this new email exists already."
-          );
-        }
-
-        // There is no existing account for this identity provider / account id
-        // check if user account with this email already exists
-        // if user already exists throw error and request password login
-        const existingUserWithEmail = await getUserByEmail(user.email);
-
-        if (existingUserWithEmail) {
-          throw new Error("A user with this email exists already.");
-        }
-
-        const userProfile = await createUser({
-          name: user.name,
-          email: user.email,
-          emailVerified: new Date(Date.now()),
-          onboardingCompleted: false,
-          identityProvider: provider,
-          identityProviderAccountId: account.providerAccountId,
-        });
-
-        // Default team assignment if env variable is set
-        if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
-          // check if team exists
-          let team = await getTeam(env.DEFAULT_TEAM_ID);
-          let isNewTeam = false;
-          if (!team) {
-            // create team with id from env
-            team = await createTeam({ id: env.DEFAULT_TEAM_ID, name: userProfile.name + "'s Team" });
-            isNewTeam = true;
-          }
-          const role = isNewTeam ? "owner" : env.DEFAULT_TEAM_ROLE || "admin";
-          await createMembership(team.id, userProfile.id, { role, accepted: true });
-          await createAccount({
-            ...account,
-            userId: userProfile.id,
-          });
-          return true;
-        }
-        // Without default team assignment
-        else {
-          const team = await createTeam({ name: userProfile.name + "'s Team" });
-          await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
-          await createAccount({
-            ...account,
-            userId: userProfile.id,
-          });
-          await createProduct(team.id, { name: "My Product" });
-          return true;
-        }
+      if (existingUserWithAccount) {
+        return true;
       }
 
+      const userProfile = await createUser({
+        name: user.name,
+        email: user.email,
+        emailVerified: new Date(Date.now()),
+        onboardingCompleted: false,
+        identityProvider: 'email',
+        identityProviderAccountId: user.id,
+      });
+      // Default team assignment if env variable is set
+      if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
+        // check if team exists
+        let team = await getTeam(env.DEFAULT_TEAM_ID);
+        let isNewTeam = false;
+        if (!team) {
+          // create team with id from env
+          team = await createTeam({ id: env.DEFAULT_TEAM_ID, name: userProfile.name + "'s Team" });
+          isNewTeam = true;
+        }
+        const role = isNewTeam ? "owner" : env.DEFAULT_TEAM_ROLE || "admin";
+        await createMembership(team.id, userProfile.id, { role, accepted: true });
+      } else {
+        const team = await createTeam({ name: userProfile.name + "'s Team" });
+        await createMembership(team.id, userProfile.id, { role: "owner", accepted: true });
+        await createProduct(team.id, { name: "My Product" });
+      }
       return true;
     },
   },
+  secret: env.APP_CLIENT_SECRET ?? 'DEFAULT_CLIENT_SECRET',
   pages: {
     signIn: "/auth/login",
     signOut: "/auth/logout",
