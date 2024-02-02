@@ -39,5 +39,5 @@ runs:
       run: pnpm install --frozen-lockfile --prefer-offline --config.platform=linux --config.architecture=x64
 
     - name: Install Playwright Browsers
+      shell: bash
       run: pnpm exec playwright install --with-deps
-
