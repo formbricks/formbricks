@@ -15,7 +15,7 @@ runs:
         restore-keys: cache-playwright-
 
     - name: Install dependencies
-      run: pnpm install playwright
+      run: pnpm install -w playwright
       if: steps.playwright-cache.outputs.cache-hit != 'true'
       shell: bash
 
