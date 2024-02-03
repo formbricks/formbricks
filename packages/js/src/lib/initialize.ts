@@ -1,20 +1,20 @@
-import type { TJsConfig, TJsConfigInput } from "@formbricks/types/js";
-import { TPersonAttributes } from "@formbricks/types/people";
-
-import { trackAction } from "./actions";
-import { Config } from "./config";
 import {
   ErrorHandler,
   MissingFieldError,
   MissingPersonError,
   NetworkError,
-  NotInitializedError,
   Result,
   err,
   okVoid,
-} from "./errors";
+} from "@formbricks/lib/errors";
+import { isInitialized, setIsInitialize } from "@formbricks/lib/initializationState";
+import { Logger } from "@formbricks/lib/logger";
+import type { TJsConfig, TJsConfigInput } from "@formbricks/types/js";
+import { TPersonAttributes } from "@formbricks/types/people";
+
+import { trackAction } from "./actions";
+import { Config } from "./config";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
-import { Logger } from "./logger";
 import { checkPageUrl } from "./noCodeActions";
 import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
@@ -22,8 +22,6 @@ import { addWidgetContainer, closeSurvey } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
-
-let isInitialized = false;
 
 const setDebugLevel = (c: TJsConfigInput): void => {
   if (c.debug) {
@@ -144,7 +142,7 @@ export const initialize = async (
   addEventListeners();
   addCleanupEventListeners();
 
-  isInitialized = true;
+  setIsInitialize(true);
   logger.debug("Initialized");
 
   // check page url if initialized after page load
@@ -153,22 +151,22 @@ export const initialize = async (
   return okVoid();
 };
 
-export const checkInitialized = (): Result<void, NotInitializedError> => {
-  logger.debug("Check if initialized");
-  if (!isInitialized || !ErrorHandler.initialized) {
-    return err({
-      code: "not_initialized",
-      message: "Formbricks not initialized. Call initialize() first.",
-    });
-  }
+// export const checkInitialized = (): Result<void, NotInitializedError> => {
+//   logger.debug("Check if initialized");
+//   if (!isInitialized || !ErrorHandler.initialized) {
+//     return err({
+//       code: "not_initialized",
+//       message: "Formbricks not initialized. Call initialize() first.",
+//     });
+//   }
 
-  return okVoid();
-};
+//   return okVoid();
+// };
 
 export const deinitalize = (): void => {
   logger.debug("Deinitializing");
   closeSurvey();
   removeAllEventListeners();
   config.resetConfig();
-  isInitialized = false;
+  setIsInitialize(false);
 };

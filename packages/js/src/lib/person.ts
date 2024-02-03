@@ -1,7 +1,4 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people";
-
-import { Config } from "./config";
 import {
   AttributeAlreadyExistsError,
   MissingPersonError,
@@ -10,9 +7,12 @@ import {
   err,
   ok,
   okVoid,
-} from "./errors";
+} from "@formbricks/lib/errors";
+import { Logger } from "@formbricks/lib/logger";
+import { TPersonAttributes, TPersonUpdateInput } from "@formbricks/types/people";
+
+import { Config } from "./config";
 import { deinitalize, initialize } from "./initialize";
-import { Logger } from "./logger";
 import { sync } from "./sync";
 import { closeSurvey } from "./widget";
 

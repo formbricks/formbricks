@@ -1,10 +1,19 @@
+import {
+  ErrorHandler,
+  InvalidMatchTypeError,
+  NetworkError,
+  Result,
+  err,
+  match,
+  ok,
+  okVoid,
+} from "@formbricks/lib/errors";
+import { Logger } from "@formbricks/lib/logger";
 import type { TActionClass } from "@formbricks/types/actionClasses";
 import type { TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
 
 import { trackAction } from "./actions";
 import { Config } from "./config";
-import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
-import { Logger } from "./logger";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();

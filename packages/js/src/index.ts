@@ -1,12 +1,12 @@
+import { CommandQueue } from "@formbricks/lib/commandQueue";
+import { ErrorHandler } from "@formbricks/lib/errors";
+import { Logger } from "@formbricks/lib/logger";
 import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
 import { TJsConfigInput } from "@formbricks/types/js";
 
 import { trackAction } from "./lib/actions";
 import { getApi } from "./lib/api";
-import { CommandQueue } from "./lib/commandQueue";
-import { ErrorHandler } from "./lib/errors";
 import { initialize } from "./lib/initialize";
-import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeActions";
 import { logoutPerson, resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
 

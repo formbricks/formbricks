@@ -1,7 +1,7 @@
 import { wrapThrowsAsync } from "@formbricks/types/errorHandlers";
 
 import { ErrorHandler, Result } from "./errors";
-import { checkInitialized } from "./initialize";
+import { checkInitialized } from "./initializationState";
 
 export class CommandQueue {
   private queue: {

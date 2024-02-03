@@ -1,5 +1,6 @@
+import { err } from "@formbricks/lib/errors";
+
 import { trackAction } from "./actions";
-import { err } from "./errors";
 
 let exitIntentListenerAdded = false;
 

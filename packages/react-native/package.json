@@ -5,10 +5,14 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup",
-    "build-dev": "tsup --watch",
+    "build:dev": "tsup --watch",
     "clean": "rimraf .turbo node_modules dist .turbo"
   },
   "devDependencies": {
+    "@react-native-async-storage/async-storage": "1.21.0",
+    "@formbricks/api": "workspace:*",
+    "@formbricks/lib": "workspace:*",
+    "@formbricks/types": "workspace:*",
     "@types/react": "^18.2.46",
     "@types/react-native": "^0.73.0",
     "@formbricks/tsconfig": "workspace:*",

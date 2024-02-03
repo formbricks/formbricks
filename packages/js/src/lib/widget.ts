@@ -1,4 +1,6 @@
 import { FormbricksAPI } from "@formbricks/api";
+import { ErrorHandler } from "@formbricks/lib/errors";
+import { Logger } from "@formbricks/lib/logger";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
 import { TJSStateDisplay } from "@formbricks/types/js";
@@ -6,8 +8,6 @@ import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { Config } from "./config";
-import { ErrorHandler } from "./errors";
-import { Logger } from "./logger";
 import { filterPublicSurveys, sync } from "./sync";
 
 const containerId = "formbricks-web-container";

@@ -1,9 +1,9 @@
+import { NetworkError, Result, err, ok } from "@formbricks/lib/errors";
+import { Logger } from "@formbricks/lib/logger";
 import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
 
 import { Config } from "./config";
-import { NetworkError, Result, err, ok } from "./errors";
-import { Logger } from "./logger";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
