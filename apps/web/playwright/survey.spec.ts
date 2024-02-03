@@ -1,6 +1,5 @@
 import { surveys, users } from "@/playwright/utils/mock";
 import { expect, test } from "@playwright/test";
-import path from "path";
 
 import { signUpAndLogin, skipOnboarding } from "./utils/helper";
 
@@ -246,7 +245,11 @@ test.describe("Survey Create & Submit Response", async () => {
     await expect(
       page.locator("label").filter({ hasText: "Click or drag to upload files." }).locator("div").nth(0)
     ).toBeVisible();
-    await page.locator("input[type=file]").setInputFiles(path.join(__dirname, "survey.spec.ts"));
+    await page.locator("input[type=file]").setInputFiles({
+      name: "file.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("this is test"),
+    });
     await page.getByText("Uploading...").waitFor({ state: "hidden" });
 
     await page.getByRole("button", { name: "Finish" }).click();

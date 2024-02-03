@@ -1,19 +1,14 @@
 "use client";
 
 import {
-  copyToOtherEnvironmentAction,
-  deleteSurveyAction,
-  duplicateSurveyAction,
-} from "@/app/(app)/environments/[environmentId]/actions";
-import {
   ArrowUpOnSquareStackIcon,
   DocumentDuplicateIcon,
-  EllipsisHorizontalIcon,
   EyeIcon,
   LinkIcon,
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/solid";
+import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -21,15 +16,17 @@ import toast from "react-hot-toast";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TSurvey } from "@formbricks/types/surveys";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+
+import { DeleteDialog } from "../../DeleteDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+} from "../../DropdownMenu";
+import LoadingSpinner from "../../LoadingSpinner";
+import { copyToOtherEnvironmentAction, deleteSurveyAction, duplicateSurveyAction } from "../actions";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -52,11 +49,12 @@ export default function SurveyDropDownMenu({
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const router = useRouter();
 
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
 
-  const handleDeleteSurvey = async (survey) => {
+  const handleDeleteSurvey = async (survey: TSurvey) => {
     setLoading(true);
     try {
       await deleteSurveyAction(survey.id);
@@ -69,7 +67,7 @@ export default function SurveyDropDownMenu({
     setLoading(false);
   };
 
-  const duplicateSurveyAndRefresh = async (surveyId) => {
+  const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
       await duplicateSurveyAction(environmentId, surveyId);
@@ -81,7 +79,7 @@ export default function SurveyDropDownMenu({
     setLoading(false);
   };
 
-  const copyToOtherEnvironment = async (surveyId) => {
+  const copyToOtherEnvironment = async (surveyId: string) => {
     setLoading(true);
     try {
       await copyToOtherEnvironmentAction(environmentId, surveyId, otherEnvironment.id);
@@ -105,11 +103,11 @@ export default function SurveyDropDownMenu({
   }
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-          <div>
+          <div className="rounded-lg border p-2 hover:bg-slate-50">
             <span className="sr-only">Open options</span>
-            <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
+            <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-40">
@@ -127,8 +125,11 @@ export default function SurveyDropDownMenu({
 
                 <DropdownMenuItem>
                   <button
+                    type="button"
                     className="flex w-full items-center"
-                    onClick={async () => {
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
                       duplicateSurveyAndRefresh(survey.id);
                     }}>
                     <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
@@ -142,8 +143,11 @@ export default function SurveyDropDownMenu({
                 {environment.type === "development" ? (
                   <DropdownMenuItem>
                     <button
+                      type="button"
                       className="flex w-full items-center"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsDropDownOpen(false);
                         copyToOtherEnvironment(survey.id);
                       }}>
                       <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
@@ -153,8 +157,11 @@ export default function SurveyDropDownMenu({
                 ) : environment.type === "production" ? (
                   <DropdownMenuItem>
                     <button
+                      type="button"
                       className="flex w-full items-center"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsDropDownOpen(false);
                         copyToOtherEnvironment(survey.id);
                       }}>
                       <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
@@ -167,22 +174,27 @@ export default function SurveyDropDownMenu({
             {survey.type === "link" && survey.status !== "draft" && (
               <>
                 <DropdownMenuItem>
-                  <Link
-                    className="flex w-full items-center"
-                    href={
-                      singleUseId
+                  <div
+                    className="flex w-full cursor-pointer items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      const previewUrl = singleUseId
                         ? `/s/${survey.id}?suId=${singleUseId}&preview=true`
-                        : `/s/${survey.id}?preview=true`
-                    }
-                    target="_blank">
+                        : `/s/${survey.id}?preview=true`;
+                      window.open(previewUrl, "_blank");
+                    }}>
                     <EyeIcon className="mr-2 h-4 w-4" />
                     Preview Survey
-                  </Link>
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <button
+                    type="button"
                     className="flex w-full items-center"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
                       navigator.clipboard.writeText(
                         singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
                       );
@@ -198,8 +210,11 @@ export default function SurveyDropDownMenu({
             {!isSurveyCreationDeletionDisabled && (
               <DropdownMenuItem>
                 <button
+                  type="button"
                   className="flex w-full  items-center"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsDropDownOpen(false);
                     setDeleteDialogOpen(true);
                   }}>
                   <TrashIcon className="mr-2 h-4 w-4" />

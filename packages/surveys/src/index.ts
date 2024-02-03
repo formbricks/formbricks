@@ -1,8 +1,18 @@
 import { SurveyInline } from "@/components/general/SurveyInline";
 import { SurveyModal } from "@/components/general/SurveyModal";
 import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
-import { SurveyInlineProps, SurveyModalProps } from "@/types/props";
 import { h, render } from "preact";
+
+import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
+
+declare global {
+  interface Window {
+    formbricksSurveys: {
+      renderSurveyInline: (props: SurveyInlineProps & { brandColor: string }) => void;
+      renderSurveyModal: (props: SurveyModalProps & { brandColor: string }) => void;
+    };
+  }
+}
 
 export const renderSurveyInline = (props: SurveyInlineProps & { brandColor: string }) => {
   addStylesToDom();
@@ -25,3 +35,10 @@ export const renderSurveyModal = (props: SurveyModalProps & { brandColor: string
   document.body.appendChild(element);
   render(h(SurveyModal, props), element);
 };
+
+if (typeof window !== "undefined") {
+  window.formbricksSurveys = {
+    renderSurveyInline,
+    renderSurveyModal,
+  };
+}

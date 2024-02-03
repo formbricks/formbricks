@@ -13,10 +13,12 @@ export const signUpAndLogin = async (
   await page.getByRole("button", { name: "Continue with Email" }).click();
   await page.getByPlaceholder("Full Name").fill(name);
   await page.getByPlaceholder("Full Name").press("Tab");
+  await page.getByPlaceholder("work@email.com").click();
   await page.getByPlaceholder("work@email.com").fill(email);
   await page.getByPlaceholder("work@email.com").press("Tab");
+  await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
-  await page.press('input[name="password"]', "Enter");
+  await page.getByRole("button", { name: "Continue with Email" }).click();
   await page.getByText("Login").click();
   await page.getByRole("button", { name: "Login with Email" }).click();
   await page.getByPlaceholder("work@email.com").fill(email);
@@ -38,6 +40,7 @@ export const skipOnboarding = async (page: Page): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
   await page.getByRole("button", { name: "I'll do it later" }).click();
+  await page.waitForTimeout(500);
   await page.getByRole("button", { name: "I'll do it later" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
@@ -60,10 +63,11 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
   // the email is already filled in the input field
   const inputValue = await page.getByPlaceholder("work@email.com").inputValue();
   expect(inputValue).toEqual(email);
-
   await page.getByPlaceholder("work@email.com").press("Tab");
+  await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
-  await page.press('input[name="password"]', "Enter");
+  await page.waitForTimeout(500);
+  await page.getByText("Continue with Email").click();
   await page.getByText("Login").click();
   await page.getByRole("button", { name: "Login with Email" }).click();
   await page.getByPlaceholder("work@email.com").fill(email);

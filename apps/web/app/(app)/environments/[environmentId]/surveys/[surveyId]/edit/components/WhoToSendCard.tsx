@@ -186,7 +186,7 @@ export default function WhoToSendCard({ localSurvey, setLocalSurvey, attributeCl
                     );
                   }}
                 />
-                <button onClick={() => removeAttributeFilter(idx)}>
+                <button type="button" onClick={() => removeAttributeFilter(idx)}>
                   <TrashIcon className="h-4 w-4 text-slate-400" />
                 </button>
               </div>

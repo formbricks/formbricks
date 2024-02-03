@@ -76,16 +76,15 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
 
   const copyUrlToClipboard = () => {
     if (typeof window !== "undefined") {
-      // Check if window is defined (i.e., if the code is running in the browser)
-      const currentUrl = window.location.href; // Get the current URL
+      const currentUrl = window.location.href;
       navigator.clipboard
-        .writeText(currentUrl) // Copy it to the clipboard
+        .writeText(currentUrl)
         .then(() => {
-          toast.success("Link to results copied to clipboard."); // Show success message
+          toast.success("Link to results copied to clipboard.");
         })
         .catch((err) => {
-          console.error("Failed to copy: ", err); // Handle any errors
-          toast.error("Failed to copy link to results to clipboard."); // Show error message
+          console.error("Failed to copy: ", err);
+          toast.error("Failed to copy link to results to clipboard.");
         });
     } else {
       console.error("Cannot copy URL: not running in a browser environment.");
@@ -107,22 +106,36 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem
-            className="hover:ring-0"
-            onClick={() => {
-              copyUrlToClipboard();
-            }}>
-            <p className="text-slate-700">
-              Copy link <DocumentDuplicateIcon className="ml-1.5 inline h-4 w-4" />
-            </p>
-          </DropdownMenuItem>
+          {survey.resultShareKey ? (
+            <DropdownMenuItem
+              className="hover:ring-0"
+              onClick={() => {
+                navigator.clipboard.writeText(surveyUrl);
+                toast.success("Link to public results copied");
+              }}>
+              <p className="text-slate-700">
+                Copy link to public results <DocumentDuplicateIcon className="ml-1.5 inline h-4 w-4" />
+              </p>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              className="hover:ring-0"
+              onClick={() => {
+                copyUrlToClipboard();
+              }}>
+              <p className="text-slate-700">
+                Copy link <DocumentDuplicateIcon className="ml-1.5 inline h-4 w-4" />
+              </p>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             className="hover:ring-0"
             onClick={() => {
               setShowResultsLinkModal(true);
             }}>
             <p className="text-slate-700">
-              Publish to web <GlobeAltIcon className="ml-1.5 inline h-4 w-4" />
+              {survey.resultShareKey ? "Unpublish from web" : "Publish to web"}
+              <GlobeAltIcon className="ml-1.5 inline h-4 w-4" />
             </p>
           </DropdownMenuItem>
         </DropdownMenuContent>

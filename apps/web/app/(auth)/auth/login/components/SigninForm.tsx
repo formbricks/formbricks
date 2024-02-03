@@ -240,6 +240,7 @@ export const SigninForm = ({
           <br />
           <div className="flex flex-col">
             <button
+              type="button"
               className="font-semibold text-slate-600 underline hover:text-slate-700"
               onClick={() => {
                 setTotpBackup(true);
@@ -248,6 +249,7 @@ export const SigninForm = ({
             </button>
 
             <button
+              type="button"
               className="mt-4 font-semibold text-slate-600 underline hover:text-slate-700"
               onClick={() => {
                 setTotpLogin(false);
@@ -261,6 +263,7 @@ export const SigninForm = ({
       {totpBackup && (
         <div className="mt-9 text-center text-xs">
           <button
+            type="button"
             className="font-semibold text-slate-600 underline hover:text-slate-700"
             onClick={() => {
               setTotpBackup(false);

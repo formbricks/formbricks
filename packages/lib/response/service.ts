@@ -111,6 +111,9 @@ export const getResponsesByPersonId = async (
           select: responseSelection,
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          orderBy: {
+            updatedAt: "asc",
+          },
         });
 
         if (!responsePrisma) {
@@ -253,6 +256,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       id: response.id,
       personId: response.person?.id,
       surveyId: response.surveyId,
+      singleUseId: singleUseId ? singleUseId : undefined,
     });
 
     responseNoteCache.revalidate({
@@ -353,7 +357,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
         });
 
         if (!responsePrisma) {
-          throw new ResourceNotFoundError("Response", responseId);
+          return null;
         }
 
         const response: TResponse = {
@@ -378,10 +382,12 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     }
   )();
 
-  return {
-    ...formatDateFields(response, ZResponse),
-    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-  } as TResponse;
+  return response
+    ? ({
+        ...formatDateFields(response, ZResponse),
+        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
+      } as TResponse)
+    : null;
 };
 
 export const getResponses = async (

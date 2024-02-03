@@ -195,7 +195,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   }
 
   return survey ? (
-    <div>
+    <div className="relative">
       <MediaBackground survey={survey}>
         <LinkSurvey
           survey={survey}

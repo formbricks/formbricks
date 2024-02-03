@@ -111,3 +111,20 @@ input[type="search"]::-ms-clear {
 input[type="search"]::-ms-reveal {
   display: none;
 }
+
+.surveyFilterDropdown[data-state="open"]{
+  background-color: #0f172a;
+  color: white;
+}
+.surveyFilterDropdown:hover * {
+  background-color: #0f172a;
+  color: white;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  background: #0f172a;
+  height: 20px;
+  width: 20px; 
+  border-radius: 50%;
+  -webkit-appearance: none;
+}

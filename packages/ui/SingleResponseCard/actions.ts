@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { canUserAccessResponse } from "@formbricks/lib/response/auth";
-import { deleteResponse } from "@formbricks/lib/response/service";
+import { deleteResponse, getResponse } from "@formbricks/lib/response/service";
 import { canUserModifyResponseNote, canUserResolveResponseNote } from "@formbricks/lib/responseNote/auth";
 import {
   createResponseNote,
@@ -16,6 +16,7 @@ import { createTag, getTag } from "@formbricks/lib/tag/service";
 import { canUserAccessTagOnResponse, verifyUserRoleAccess } from "@formbricks/lib/tagOnResponse/auth";
 import { addTagToRespone, deleteTagOnResponse } from "@formbricks/lib/tagOnResponse/service";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { TResponse } from "@formbricks/types/responses";
 
 export const createTagAction = async (environmentId: string, tagName: string) => {
   const session = await getServerSession(authOptions);
@@ -93,4 +94,12 @@ export const createResponseNoteAction = async (responseId: string, userId: strin
   const authotized = await canUserAccessResponse(session.user!.id, responseId);
   if (!authotized) throw new AuthorizationError("Not authorized");
   return await createResponseNote(responseId, userId, text);
+};
+
+export const getResponseAction = async (responseId: string): Promise<TResponse | null> => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+  const authotized = await canUserAccessResponse(session.user!.id, responseId);
+  if (!authotized) throw new AuthorizationError("Not authorized");
+  return await getResponse(responseId);
 };

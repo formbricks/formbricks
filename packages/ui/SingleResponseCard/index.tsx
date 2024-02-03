@@ -29,6 +29,7 @@ import { RatingResponse } from "../RatingResponse";
 import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../Tooltip";
 import { deleteResponseAction } from "./actions";
+import { getResponseAction } from "./actions";
 import QuestionSkip from "./components/QuestionSkip";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
@@ -37,9 +38,10 @@ export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
   user?: TUser;
-  pageType: string;
+  pageType: "people" | "response";
   environmentTags: TTag[];
   environment: TEnvironment;
+  setFetchedResponses?: React.Dispatch<React.SetStateAction<TResponse[]>>;
 }
 
 interface TooltipRendererProps {
@@ -78,6 +80,7 @@ export default function SingleResponseCard({
   pageType,
   environmentTags,
   environment,
+  setFetchedResponses,
 }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
@@ -144,15 +147,18 @@ export default function SingleResponseCard({
     }
   }
 
-  const handleDeleteSubmission = async () => {
+  const handleDeleteResponse = async () => {
     setIsDeleting(true);
     try {
       if (isViewer) {
         throw new Error("You are not authorized to perform this action.");
       }
       await deleteResponseAction(response.id);
+      if (setFetchedResponses) {
+        setFetchedResponses((prevResponses) => prevResponses.filter((r) => r.id !== response.id));
+      }
       router.refresh();
-      toast.success("Submission deleted successfully.");
+      toast.success("Response deleted successfully.");
       setDeleteDialogOpen(false);
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);
@@ -218,6 +224,15 @@ export default function SingleResponseCard({
   const fieldIds = survey.hiddenFields?.fieldIds || [];
   const hasFieldIds = !!fieldIds.length;
 
+  const updateFetchedResponses = async () => {
+    const updatedResponse = await getResponseAction(response.id);
+    if (updatedResponse !== null && setFetchedResponses) {
+      setFetchedResponses((prevResponses) =>
+        prevResponses.map((response) => (response.id === updatedResponse.id ? updatedResponse : response))
+      );
+    }
+  };
+
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
@@ -226,7 +241,7 @@ export default function SingleResponseCard({
           pageType === "response" &&
             (isOpen
               ? "w-3/4"
-              : response.notes.length
+              : user && response.notes.length
                 ? "w-[96.5%]"
                 : cn("w-full", user ? "group-hover:w-[96.5%]" : ""))
         )}>
@@ -280,7 +295,7 @@ export default function SingleResponseCard({
               </div>
             )}
 
-            <div className="flex cursor-pointer space-x-4 text-sm">
+            <div className="flex space-x-4 text-sm">
               <time className="text-slate-500" dateTime={timeSince(response.updatedAt.toISOString())}>
                 {timeSince(response.updatedAt.toISOString())}
               </time>
@@ -296,7 +311,7 @@ export default function SingleResponseCard({
                     }}
                     className={`h-4 w-4 ${
                       canResponseBeDeleted
-                        ? "text-slate-500 hover:text-red-700"
+                        ? "cursor-pointer text-slate-500 hover:text-red-700"
                         : "cursor-not-allowed text-slate-400"
                     } `}
                   />
@@ -418,6 +433,7 @@ export default function SingleResponseCard({
                 responseId={response.id}
                 tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
                 environmentTags={environmentTags}
+                updateFetchedResponses={updateFetchedResponses}
               />
             )}
           </LoadingWrapper>
@@ -427,7 +443,7 @@ export default function SingleResponseCard({
           open={deleteDialogOpen}
           setOpen={setDeleteDialogOpen}
           deleteWhat="response"
-          onDelete={handleDeleteSubmission}
+          onDelete={handleDeleteResponse}
           isDeleting={isDeleting}
         />
       </div>
@@ -438,6 +454,7 @@ export default function SingleResponseCard({
           notes={response.notes}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
+          updateFetchedResponses={updateFetchedResponses}
         />
       )}
     </div>

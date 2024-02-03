@@ -223,14 +223,6 @@ export default function SurveyMenuBar({
       return false;
     }
 
-    /*
-     Check whether the count for autocomplete responses is not less 
-     than the current count of accepted response and also it is not set to 0
-    */
-    if ((survey.autoComplete && responseCount >= survey.autoComplete) || survey?.autoComplete === 0) {
-      return false;
-    }
-
     return true;
   };
 

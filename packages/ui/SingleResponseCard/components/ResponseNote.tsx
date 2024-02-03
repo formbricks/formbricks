@@ -3,7 +3,6 @@
 import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -22,10 +21,17 @@ interface ResponseNotesProps {
   notes: TResponseNote[];
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  updateFetchedResponses: () => void;
 }
 
-export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOpen }: ResponseNotesProps) {
-  const router = useRouter();
+export default function ResponseNotes({
+  user,
+  responseId,
+  notes,
+  isOpen,
+  setIsOpen,
+  updateFetchedResponses,
+}: ResponseNotesProps) {
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);
@@ -38,7 +44,7 @@ export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOp
     setIsCreatingNote(true);
     try {
       await createResponseNoteAction(responseId, user.id, noteText);
-      router.refresh();
+      updateFetchedResponses();
       setIsCreatingNote(false);
       setNoteText("");
     } catch (e) {
@@ -54,7 +60,7 @@ export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOp
       if (unresolvedNotes.length === 1) {
         setIsOpen(false);
       }
-      router.refresh();
+      updateFetchedResponses();
     } catch (e) {
       toast.error("An error occurred resolving a note");
       setIsUpdatingNote(false);
@@ -73,7 +79,7 @@ export default function ResponseNotes({ user, responseId, notes, isOpen, setIsOp
     setIsUpdatingNote(true);
     try {
       await updateResponseNoteAction(noteId, noteText);
-      router.refresh();
+      updateFetchedResponses();
       setIsUpdatingNote(false);
       setNoteText("");
     } catch (e) {

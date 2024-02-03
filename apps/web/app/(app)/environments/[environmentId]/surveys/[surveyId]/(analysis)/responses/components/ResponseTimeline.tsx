@@ -65,7 +65,7 @@ export default function ResponseTimeline({
         observer.unobserve(currentLoadingRef);
       }
     };
-  }, [responses, responsesPerPage, page, survey.id, fetchedResponses.length, hasMoreResponses]);
+  }, [responsesPerPage, page, survey.id, fetchedResponses.length, hasMoreResponses]);
 
   return (
     <div className="space-y-4">
@@ -89,6 +89,7 @@ export default function ResponseTimeline({
                   environmentTags={environmentTags}
                   pageType="response"
                   environment={environment}
+                  setFetchedResponses={setFetchedResponses}
                 />
               </div>
             );
