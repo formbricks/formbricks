@@ -50,7 +50,7 @@
       "persistent": true,
       "dependsOn": ["@formbricks/api#build"]
     },
-    "@formbricks/react-native-sdk#build": {
+    "@formbricks/react-native#build": {
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
     },

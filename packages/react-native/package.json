@@ -1,11 +1,11 @@
 {
-  "name": "@formbricks/react-native-sdk",
+  "name": "@formbricks/react-native",
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch",
+    "build-dev": "tsup --watch",
     "clean": "rimraf .turbo node_modules dist .turbo"
   },
   "devDependencies": {

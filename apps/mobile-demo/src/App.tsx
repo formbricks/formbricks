@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { LogBox, StyleSheet, Text, View } from "react-native";
 
-import { test } from "@formbricks/react-native-sdk";
+import { test } from "@formbricks/react-native";
 
 LogBox.ignoreAllLogs();
 

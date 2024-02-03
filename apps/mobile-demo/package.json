@@ -11,7 +11,7 @@
     "clean": "rimraf .turbo node_modules .expo"
   },
   "dependencies": {
-    "@formbricks/react-native-sdk": "workspace:*",
+    "@formbricks/react-native": "workspace:*",
     "expo": "~50.0.3",
     "expo-status-bar": "~1.11.1",
     "react": "18.2.0",
