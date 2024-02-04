@@ -827,9 +827,6 @@ importers:
 
   packages/ui:
     dependencies:
-      '@formbricks/database':
-        specifier: workspace:*
-        version: link:../database
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../lib

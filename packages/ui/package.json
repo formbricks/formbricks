@@ -16,7 +16,6 @@
     "react": "18.2.0"
   },
   "dependencies": {
-    "@formbricks/database": "workspace:*",
     "@formbricks/surveys": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@heroicons/react": "^2.1.1",
