@@ -444,6 +444,7 @@ export const ZSurvey = z.object({
 export const ZSurveyInput = z.object({
   name: z.string(),
   type: ZSurveyType.optional(),
+  createdBy: z.string().cuid().optional(),
   status: ZSurveyStatus.optional(),
   displayOption: ZSurveyDisplayOption.optional(),
   autoClose: z.number().optional(),
