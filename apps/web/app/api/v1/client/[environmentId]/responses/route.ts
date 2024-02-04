@@ -46,7 +46,11 @@ export async function POST(request: Request, context: Context): Promise<NextResp
   }
 
   const agent = UAParser(request.headers.get("user-agent"));
-  const country = headers().get("CF-IPCountry") || headers().get("X-Vercel-IP-Country") || undefined;
+  const country =
+    headers().get("CF-IPCountry") ||
+    headers().get("X-Vercel-IP-Country") ||
+    headers().get("CloudFront-Viewer-Country") ||
+    undefined;
   const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
   if (!inputValidation.success) {
