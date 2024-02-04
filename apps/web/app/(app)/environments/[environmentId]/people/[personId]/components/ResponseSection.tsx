@@ -12,10 +12,12 @@ export default async function ResponseSection({
   environment,
   personId,
   environmentTags,
+  defaultLanguageSymbol,
 }: {
   environment: TEnvironment;
   personId: string;
   environmentTags: TTag[];
+  defaultLanguageSymbol: string;
 }) {
   const responses = await getResponsesByPersonId(personId);
   const surveyIds = responses?.map((response) => response.surveyId) || [];
@@ -36,6 +38,7 @@ export default async function ResponseSection({
       responses={responses}
       environment={environment}
       environmentTags={environmentTags}
+      defaultLanguageSymbol={defaultLanguageSymbol}
     />
   );
 }

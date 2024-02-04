@@ -103,15 +103,15 @@ export const replaceRecallInfoWithUnderline = (
 };
 
 // Checks for survey questions with a "recall" pattern but no fallback value.
-export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | null => {
+export const checkForEmptyFallBackValue = (survey: TSurvey, langauge: string): TSurveyQuestion | null => {
   const findRecalls = (text: string) => {
     const recalls = text.match(/#recall:[^ ]+/g);
     return recalls && recalls.some((recall) => !extractFallbackValue(recall));
   };
   for (const question of survey.questions) {
     if (
-      findRecalls(getLocalizedValue(question.headline, "en")) ||
-      (question.subheader && findRecalls(getLocalizedValue(question.subheader, "en")))
+      findRecalls(getLocalizedValue(question.headline, langauge)) ||
+      (question.subheader && findRecalls(getLocalizedValue(question.subheader, langauge)))
     ) {
       return question;
     }
@@ -120,10 +120,10 @@ export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | n
 };
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
-export const checkForRecallInHeadline = (survey: TSurvey): TSurvey => {
+export const checkForRecallInHeadline = (survey: TSurvey, langauge: string): TSurvey => {
   const modifiedSurvey: TSurvey = structuredClone(survey);
   modifiedSurvey.questions.forEach((question) => {
-    question.headline = recallToHeadline(question.headline as TI18nString, modifiedSurvey, false, "en");
+    question.headline = recallToHeadline(question.headline as TI18nString, modifiedSurvey, false, langauge);
   });
   return modifiedSurvey;
 };

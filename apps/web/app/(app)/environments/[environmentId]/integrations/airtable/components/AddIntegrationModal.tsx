@@ -37,6 +37,7 @@ type AddIntegrationModalProps = {
   airtableArray: TIntegrationItem[];
   surveys: TSurvey[];
   airtableIntegration: TIntegrationAirtable;
+  defaultLanguageSymbol: string;
 } & EditModeProps;
 
 export type IntegrationModalInputs = {
@@ -117,6 +118,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
     airtableIntegration,
     isEditMode,
     defaultData,
+    defaultLanguageSymbol,
   } = props;
   const router = useRouter();
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
@@ -354,7 +356,9 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                                     : field.onChange(field.value?.filter((value) => value !== question.id));
                                 }}
                               />
-                              <span className="ml-2">{getLocalizedValue(question.headline, "en")}</span>
+                              <span className="ml-2">
+                                {getLocalizedValue(question.headline, defaultLanguageSymbol)}
+                              </span>
                             </label>
                           </div>
                         )}

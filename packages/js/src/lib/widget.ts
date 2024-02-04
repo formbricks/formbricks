@@ -29,7 +29,8 @@ export const renderWidget = async (survey: TSurvey) => {
   }
 
   const product = config.get().state.product;
-  const language = config.get().language ?? "en";
+  const defaultLanguageSymbol = product.languages["_default_"];
+  const language = config.get().language ?? defaultLanguageSymbol;
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
   const responseQueue = new ResponseQueue(
@@ -63,6 +64,7 @@ export const renderWidget = async (survey: TSurvey) => {
       language,
       highlightBorderColor,
       placement,
+      defaultLanguageSymbol,
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
       },

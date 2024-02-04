@@ -48,6 +48,7 @@ interface QuestionFormInputProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: string[][];
+  defaultLanguageSymbol: string;
   maxLength?: number;
   placeholder?: string;
   ref?: RefObject<HTMLInputElement>;
@@ -72,6 +73,7 @@ const QuestionFormInput = ({
   placeholder,
   onBlur,
   className,
+  defaultLanguageSymbol,
 }: QuestionFormInputProps) => {
   const isChoice = id.includes("choice");
   let choiceIdx: number | null;
@@ -104,26 +106,27 @@ const QuestionFormInput = ({
       return (
         ((question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion).choices[
           choiceIdx
-        ].label as TI18nString) || createI18nString("", extractLanguageSymbols(surveyLanguages))
+        ].label as TI18nString) ||
+        createI18nString("", extractLanguageSymbols(surveyLanguages), defaultLanguageSymbol)
       );
     }
     if (isThankYouCard) {
       const thankYouCard = localSurvey.thankYouCard;
       return (
         (thankYouCard[id as keyof typeof thankYouCard] as TI18nString) ||
-        createI18nString("", extractLanguageSymbols(surveyLanguages))
+        createI18nString("", extractLanguageSymbols(surveyLanguages), defaultLanguageSymbol)
       );
     }
     if (isWelcomeCard) {
       const welcomeCard = localSurvey.welcomeCard;
       return (
         (welcomeCard[id as keyof typeof welcomeCard] as TI18nString) ||
-        createI18nString("", extractLanguageSymbols(surveyLanguages))
+        createI18nString("", extractLanguageSymbols(surveyLanguages), defaultLanguageSymbol)
       );
     }
     return (
       (question[id as keyof typeof question] as TI18nString) ||
-      createI18nString("", extractLanguageSymbols(surveyLanguages))
+      createI18nString("", extractLanguageSymbols(surveyLanguages), defaultLanguageSymbol)
     );
   };
 
@@ -324,7 +327,6 @@ const QuestionFormInput = ({
 
   // updation of questions and Thank You Card is done in a different manner, so for question we use updateQuestion and for ThankYouCard we use updateSurvey
   const updateQuestionDetails = (updatedText: string) => {
-    console.log("updating");
     let translatedText = {
       ...getQuestionTextBasedOnType(),
       [selectedLanguage]: updatedText,
@@ -337,9 +339,6 @@ const QuestionFormInput = ({
       }
     } else {
       if (updateQuestion) {
-        console.log({
-          [id]: translatedText,
-        });
         updateQuestion(questionIdx, {
           [id]: translatedText,
         });

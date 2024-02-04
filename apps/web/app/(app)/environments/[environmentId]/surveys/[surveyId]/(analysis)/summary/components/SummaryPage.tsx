@@ -54,7 +54,7 @@ const SummaryPage = ({
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, product.languages["_default_"]);
   }, [survey]);
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -84,6 +84,7 @@ const SummaryPage = ({
           responses={filterResponses}
           survey={survey}
           totalResponses={responses}
+          defaultLanguageSymbol={product.languages["_default_"]}
         />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
       </div>
@@ -95,7 +96,14 @@ const SummaryPage = ({
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />
-      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
+      {showDropOffs && (
+        <SummaryDropOffs
+          survey={survey}
+          responses={responses}
+          displayCount={displayCount}
+          defaultLanguageSymbol={product.languages["_default_"]}
+        />
+      )}
       <SummaryList
         responses={filterResponses}
         survey={survey}

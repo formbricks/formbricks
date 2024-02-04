@@ -56,6 +56,7 @@ export default function SurveyMenuBar({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
+  const defaultLanguageSymbol = product.languages["_default_"];
 
   let faultyQuestions: String[] = [];
 
@@ -123,7 +124,7 @@ export default function SurveyMenuBar({
       if (
         !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", surveyLanguages) ||
         (survey.thankYouCard.subheader &&
-          survey.thankYouCard.subheader["en"] !== "" &&
+          survey.thankYouCard.subheader[defaultLanguageSymbol] !== "" &&
           !isLabelValidForAllLanguages(survey.thankYouCard.subheader, surveyLanguages))
       ) {
         faultyQuestions.push("end");
@@ -133,7 +134,7 @@ export default function SurveyMenuBar({
       if (
         !isLabelValidForAllLanguages(survey.welcomeCard.headline, surveyLanguages) ||
         (survey.welcomeCard.html &&
-          survey.welcomeCard.html["en"] !== "" &&
+          survey.welcomeCard.html[defaultLanguageSymbol] !== "" &&
           !isLabelValidForAllLanguages(survey.welcomeCard.html, surveyLanguages))
       ) {
         faultyQuestions.push("start");
@@ -256,7 +257,7 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
-    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguage);
     if (questionWithEmptyFallback) {
       toast.error("Fallback missing");
       return;

@@ -12,6 +12,7 @@ import {
   WEBAPP_URL,
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
+import { getProductByEnvironmentId } from "../product/service";
 import { getQuestionResponseMapping } from "../responses";
 import { getTeamByEnvironmentId } from "../team/service";
 import { withEmailTemplate } from "./email-template";
@@ -167,6 +168,9 @@ export const sendResponseFinishedEmail = async (
 ) => {
   const personEmail = response.person?.attributes["email"];
   const team = await getTeamByEnvironmentId(environmentId);
+  const product = await getProductByEnvironmentId(environmentId);
+  if (!product) return;
+  const defaultLanguageSymbol = product.languages["_default_"];
   await sendEmail({
     to: email,
     subject: personEmail
@@ -180,7 +184,7 @@ export const sendResponseFinishedEmail = async (
 
       <hr/>
 
-      ${getQuestionResponseMapping(survey, response)
+      ${getQuestionResponseMapping(survey, response, defaultLanguageSymbol)
         .map(
           (question) =>
             question.answer &&

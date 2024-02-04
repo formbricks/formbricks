@@ -51,6 +51,7 @@ interface CustomFilterProps {
   survey: TSurvey;
   responses: TResponse[];
   totalResponses: TResponse[];
+  defaultLanguageSymbol: string;
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -64,7 +65,13 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
+const CustomFilter = ({
+  environmentTags,
+  responses,
+  survey,
+  totalResponses,
+  defaultLanguageSymbol,
+}: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -113,7 +120,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
           if (answer) {
             updatedResponse.push({
               id: createId(),
-              question: getLocalizedValue(question.headline, "en"),
+              question: getLocalizedValue(question.headline, defaultLanguageSymbol),
               type: question.type,
               scale: question.scale,
               range: question.range,
@@ -174,7 +181,9 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
       const downloadResponse = filter === FilterDownload.ALL ? await getAllResponsesInBatches() : responses;
 
-      const questionNames = survey.questions?.map((question) => getLocalizedValue(question.headline, "en"));
+      const questionNames = survey.questions?.map((question) =>
+        getLocalizedValue(question.headline, defaultLanguageSymbol)
+      );
       const hiddenFieldIds = survey.hiddenFields.fieldIds;
       const hiddenFieldResponse = {};
       let metaDataFields = extracMetadataKeys(downloadResponse[0].meta);
@@ -370,7 +379,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     <>
       <div className="relative mb-12 flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
-          <ResponseFilter />
+          <ResponseFilter defaultLanguageSymbol={defaultLanguageSymbol} />
           <DropdownMenu
             onOpenChange={(value) => {
               value && handleDatePickerClose();

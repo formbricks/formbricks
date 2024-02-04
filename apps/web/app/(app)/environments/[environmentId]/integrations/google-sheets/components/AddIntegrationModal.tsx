@@ -29,6 +29,7 @@ interface AddWebhookModalProps {
   spreadsheets: TIntegrationItem[];
   googleSheetIntegration: TIntegrationGoogleSheets;
   selectedIntegration?: (TIntegrationGoogleSheetsConfigData & { index: number }) | null;
+  defaultLanguageSymbol: string;
 }
 
 export default function AddIntegrationModal({
@@ -39,6 +40,7 @@ export default function AddIntegrationModal({
   spreadsheets,
   googleSheetIntegration,
   selectedIntegration,
+  defaultLanguageSymbol,
 }: AddWebhookModalProps) {
   const { handleSubmit } = useForm();
 
@@ -287,7 +289,9 @@ export default function AddIntegrationModal({
                                 handleCheckboxChange(question.id);
                               }}
                             />
-                            <span className="ml-2">{getLocalizedValue(question.headline, "en")}</span>
+                            <span className="ml-2">
+                              {getLocalizedValue(question.headline, defaultLanguageSymbol)}
+                            </span>
                           </label>
                         </div>
                       ))}

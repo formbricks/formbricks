@@ -9,6 +9,7 @@ import {
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
@@ -24,6 +25,11 @@ export default async function GoogleSheet({ params }) {
   if (!environment) {
     throw new Error("Environment not found");
   }
+  const product = await getProductByEnvironmentId(params.environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  const defaultLanguageSymbol = product.languages["_default_"];
 
   const googleSheetIntegration: TIntegrationGoogleSheets | undefined = integrations?.find(
     (integration): integration is TIntegrationGoogleSheets => integration.type === "googleSheets"
@@ -43,6 +49,7 @@ export default async function GoogleSheet({ params }) {
           spreadSheetArray={spreadSheetArray}
           googleSheetIntegration={googleSheetIntegration}
           webAppUrl={WEBAPP_URL}
+          defaultLanguageSymbol={defaultLanguageSymbol}
         />
       </div>
     </>

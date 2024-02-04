@@ -19,6 +19,7 @@ export interface SurveyBaseProps {
   language: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
+  defaultLanguageSymbol: string;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

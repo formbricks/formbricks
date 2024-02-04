@@ -22,6 +22,7 @@ interface GoogleSheetWrapperProps {
   spreadSheetArray: TIntegrationItem[];
   googleSheetIntegration?: TIntegrationGoogleSheets;
   webAppUrl: string;
+  defaultLanguageSymbol: string;
 }
 
 export default function GoogleSheetWrapper({
@@ -31,6 +32,7 @@ export default function GoogleSheetWrapper({
   spreadSheetArray,
   googleSheetIntegration,
   webAppUrl,
+  defaultLanguageSymbol,
 }: GoogleSheetWrapperProps) {
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
@@ -58,6 +60,7 @@ export default function GoogleSheetWrapper({
             spreadsheets={spreadsheets}
             googleSheetIntegration={googleSheetIntegration}
             selectedIntegration={selectedIntegration}
+            defaultLanguageSymbol={defaultLanguageSymbol}
           />
           <Home
             environment={environment}

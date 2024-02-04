@@ -213,10 +213,10 @@ export default function QuestionsView({
         // welcomeCard identified as "start"
         return (
           isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
-          (card.html && card.html["en"] === ""
+          (card.html && card.html[defaultLanguageSymbol] === ""
             ? true
             : isLabelValidForAllLanguages(card.html, surveyLanguages)) &&
-          (card.buttonLabel && card.buttonLabel["en"] === ""
+          (card.buttonLabel && card.buttonLabel[defaultLanguageSymbol] === ""
             ? true
             : isLabelValidForAllLanguages(card.buttonLabel, surveyLanguages))
         );
@@ -224,7 +224,7 @@ export default function QuestionsView({
         // thankYouCard identified as "end"
         return (
           isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
-          (card.subheader && card.subheader["en"] === ""
+          (card.subheader && card.subheader[defaultLanguageSymbol] === ""
             ? true
             : isLabelValidForAllLanguages(card.subheader, surveyLanguages))
         );
@@ -253,7 +253,7 @@ export default function QuestionsView({
   }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
 
   useEffect(() => {
-    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguage);
     if (questionWithEmptyFallback) {
       setActiveQuestionId(questionWithEmptyFallback.id);
       if (activeQuestionId === questionWithEmptyFallback.id) {

@@ -20,6 +20,7 @@ interface ResponseTimelineProps {
   user: TUser;
   environmentTags: TTag[];
   responsesPerPage: number;
+  defaultLanguageSymbol: string;
 }
 
 export default function ResponseTimeline({
@@ -29,6 +30,7 @@ export default function ResponseTimeline({
   user,
   environmentTags,
   responsesPerPage,
+  defaultLanguageSymbol,
 }: ResponseTimelineProps) {
   const loadingRef = useRef(null);
   const [fetchedResponses, setFetchedResponses] = useState<TResponse[]>(responses);
@@ -90,6 +92,7 @@ export default function ResponseTimeline({
                   pageType="response"
                   environment={environment}
                   setFetchedResponses={setFetchedResponses}
+                  defaultLanguageSymbol={defaultLanguageSymbol}
                 />
               </div>
             );

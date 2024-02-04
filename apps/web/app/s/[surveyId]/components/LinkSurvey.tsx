@@ -33,6 +33,7 @@ interface LinkSurveyProps {
   languages: TLanguages;
   responseCount?: number;
   verifiedEmail?: string;
+  defaultLanguageSymbol: string;
 }
 
 export default function LinkSurvey({
@@ -47,6 +48,7 @@ export default function LinkSurvey({
   languages,
   responseCount,
   verifiedEmail,
+  defaultLanguageSymbol,
 }: LinkSurveyProps) {
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey, webAppUrl]);
   const responseId = singleUseResponse?.id;
@@ -165,7 +167,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
-          language={languageSymbol ? languageSymbol : "en"}
+          language={languageSymbol ? languageSymbol : defaultLanguageSymbol}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
@@ -203,7 +205,7 @@ export default function LinkSurvey({
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
-                language: languageSymbol ? languages[languageSymbol] : "English",
+                language: languageSymbol ? languages[languageSymbol] : languages[defaultLanguageSymbol],
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",
@@ -224,6 +226,7 @@ export default function LinkSurvey({
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
           responseCount={responseCount}
+          defaultLanguageSymbol={defaultLanguageSymbol}
         />
       </ContentWrapper>
     </>

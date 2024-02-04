@@ -23,12 +23,21 @@ interface handleModalProps {
   setIsConnected: (data: boolean) => void;
   surveys: TSurvey[];
   airtableArray: TIntegrationItem[];
+  defaultLanguageSymbol: string;
 }
 
 const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At"];
 
 export default function Home(props: handleModalProps) {
-  const { airtableIntegration, environment, environmentId, setIsConnected, surveys, airtableArray } = props;
+  const {
+    airtableIntegration,
+    environment,
+    environmentId,
+    setIsConnected,
+    surveys,
+    airtableArray,
+    defaultLanguageSymbol,
+  } = props;
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState<(IntegrationModalInputs & { index: number }) | null>(
@@ -141,6 +150,7 @@ export default function Home(props: handleModalProps) {
           environmentId={environmentId}
           surveys={surveys}
           airtableIntegration={airtableIntegration}
+          defaultLanguageSymbol={defaultLanguageSymbol}
           {...data}
         />
       )}

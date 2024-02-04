@@ -31,6 +31,7 @@ interface PreviewSurveyProps {
   environment: TEnvironment;
   language: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  defaultLanguageSymbol: string;
 }
 
 let surveyNameTemp;
@@ -70,6 +71,7 @@ export default function PreviewSurvey({
   environment,
   language,
   onFileUpload,
+  defaultLanguageSymbol,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -216,6 +218,7 @@ export default function PreviewSurvey({
                     isRedirectDisabled={true}
                     language={language}
                     onFileUpload={onFileUpload}
+                    defaultLanguageSymbol={defaultLanguageSymbol}
                   />
                 </Modal>
               ) : (
@@ -230,6 +233,7 @@ export default function PreviewSurvey({
                       onFileUpload={onFileUpload}
                       language={language}
                       responseCount={42}
+                      defaultLanguageSymbol={defaultLanguageSymbol}
                     />
                   </div>
                 </div>
@@ -287,6 +291,7 @@ export default function PreviewSurvey({
                   isRedirectDisabled={true}
                   language={language}
                   onFileUpload={onFileUpload}
+                  defaultLanguageSymbol={defaultLanguageSymbol}
                 />
               </Modal>
             ) : (
@@ -302,6 +307,7 @@ export default function PreviewSurvey({
                     onFileUpload={onFileUpload}
                     language={language}
                     responseCount={42}
+                    defaultLanguageSymbol={defaultLanguageSymbol}
                   />
                 </div>
               </MediaBackground>

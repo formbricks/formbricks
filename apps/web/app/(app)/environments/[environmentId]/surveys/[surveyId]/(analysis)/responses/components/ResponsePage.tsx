@@ -49,7 +49,7 @@ const ResponsePage = ({
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const searchParams = useSearchParams();
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, product.languages["_default_"]);
   }, [survey]);
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -78,6 +78,7 @@ const ResponsePage = ({
           responses={filterResponses}
           survey={survey}
           totalResponses={responses}
+          defaultLanguageSymbol={product.languages["_default_"]}
         />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
       </div>
@@ -90,6 +91,7 @@ const ResponsePage = ({
         user={user}
         environmentTags={environmentTags}
         responsesPerPage={responsesPerPage}
+        defaultLanguageSymbol={product.languages["_default_"]}
       />
     </ContentWrapper>
   );

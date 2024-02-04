@@ -26,6 +26,7 @@ type QuestionFilterComboBoxProps = {
   type: OptionsType.METADATA | TSurveyQuestionType | "Attributes" | "tags" | "language" | undefined;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
+  defaultLanguageSymbol: string;
 };
 
 const QuestionFilterComboBox = ({
@@ -37,6 +38,7 @@ const QuestionFilterComboBox = ({
   onChangeFilterValue,
   type,
   handleRemoveMultiSelect,
+  defaultLanguageSymbol,
   disabled = false,
 }: QuestionFilterComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
@@ -152,19 +154,21 @@ const QuestionFilterComboBox = ({
                   <CommandItem
                     onSelect={() => {
                       !isMultiple
-                        ? onChangeFilterComboBoxValue(typeof o === "object" ? getLocalizedValue(o, "en") : o)
+                        ? onChangeFilterComboBoxValue(
+                            typeof o === "object" ? getLocalizedValue(o, defaultLanguageSymbol) : o
+                          )
                         : onChangeFilterComboBoxValue(
                             Array.isArray(filterComboBoxValue)
                               ? [
                                   ...filterComboBoxValue,
-                                  typeof o === "object" ? getLocalizedValue(o, "en") : o,
+                                  typeof o === "object" ? getLocalizedValue(o, defaultLanguageSymbol) : o,
                                 ]
-                              : [typeof o === "object" ? getLocalizedValue(o, "en") : o]
+                              : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageSymbol) : o]
                           );
                       !isMultiple && setOpen(false);
                     }}
                     className="cursor-pointer">
-                    {typeof o === "object" ? getLocalizedValue(o, "en") : o}
+                    {typeof o === "object" ? getLocalizedValue(o, defaultLanguageSymbol) : o}
                   </CommandItem>
                 ))}
               </CommandGroup>

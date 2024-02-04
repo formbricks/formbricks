@@ -4,11 +4,17 @@ import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[per
 import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponseSection";
 
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 export default async function PersonPage({ params }) {
   const environment = await getEnvironment(params.environmentId);
   const environmentTags = await getTagsByEnvironmentId(params.environmentId);
+  const product = await getProductByEnvironmentId(params.environmentId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  const defaultLanguageSymbol = product?.languages["_default_"];
   if (!environment) {
     throw new Error("Environment not found");
   }
@@ -24,6 +30,7 @@ export default async function PersonPage({ params }) {
                 environment={environment}
                 personId={params.personId}
                 environmentTags={environmentTags}
+                defaultLanguageSymbol={defaultLanguageSymbol}
               />
               <ActivitySection environmentId={params.environmentId} personId={params.personId} />
             </div>

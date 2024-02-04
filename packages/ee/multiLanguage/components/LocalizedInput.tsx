@@ -85,6 +85,7 @@ const LocalizedInput = ({
         maxLength={maxLength}
         placeholder={placeholder}
         onBlur={onBlur}
+        defaultLanguageSymbol={defaultLanguageSymbol}
         className={className}
       />
       {selectedLanguage !== defaultLanguageSymbol && value[defaultLanguageSymbol] && (

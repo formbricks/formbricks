@@ -110,7 +110,6 @@ export const updateProduct = async (
   productId: string,
   inputProduct: TProductUpdateInput
 ): Promise<TProduct> => {
-  console.log(inputProduct);
   validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput]);
   const { environments, ...data } = inputProduct;
   let updatedProduct;

@@ -60,6 +60,7 @@ const ResponsePage = ({
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
+        defaultLanguageSymbol={product.languages["_default_"]}
       />
       <SurveyResultsTabs
         activeId="responses"
@@ -74,6 +75,7 @@ const ResponsePage = ({
         survey={survey}
         environmentTags={environmentTags}
         responsesPerPage={responsesPerPage}
+        defaultLanguageSymbol={product.languages["_default_"]}
       />
     </ContentWrapper>
   );

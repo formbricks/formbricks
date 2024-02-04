@@ -9,6 +9,7 @@ interface AdvancedSettingsProps {
   questionIdx: number;
   localSurvey: TSurvey;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  defaultLanguageSymbol: string;
 }
 
 export default function AdvancedSettings({
@@ -16,6 +17,7 @@ export default function AdvancedSettings({
   questionIdx,
   localSurvey,
   updateQuestion,
+  defaultLanguageSymbol,
 }: AdvancedSettingsProps) {
   return (
     <div>
@@ -25,6 +27,7 @@ export default function AdvancedSettings({
           updateQuestion={updateQuestion}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
+          defaultLanguageSymbol={defaultLanguageSymbol}
         />
       </div>
 

@@ -18,6 +18,7 @@ interface AirtableWrapperProps {
   environment: TEnvironment;
   enabled: boolean;
   webAppUrl: string;
+  defaultLanguageSymbol: string;
 }
 
 export default function AirtableWrapper({
@@ -28,6 +29,7 @@ export default function AirtableWrapper({
   environment,
   enabled,
   webAppUrl,
+  defaultLanguageSymbol,
 }: AirtableWrapperProps) {
   const [isConnected, setIsConnected_] = useState(
     airtableIntegration ? airtableIntegration.config?.key : false
@@ -45,6 +47,7 @@ export default function AirtableWrapper({
       airtableIntegration={airtableIntegration}
       setIsConnected={setIsConnected}
       surveys={surveys}
+      defaultLanguageSymbol={defaultLanguageSymbol}
     />
   ) : (
     <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />

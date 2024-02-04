@@ -32,6 +32,7 @@ export function Survey({
   getSetIsError,
   onFileUpload,
   responseCount,
+  defaultLanguageSymbol,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -115,7 +116,7 @@ export function Survey({
             (choice) => getLocalizedValue(choice.label, language) === responseValue
           );
           if (choice) {
-            if (evaluateCondition(logic, getLocalizedValue(choice.label, "en"))) {
+            if (evaluateCondition(logic, getLocalizedValue(choice.label, defaultLanguageSymbol))) {
               return logic.destination;
             }
           }
@@ -178,7 +179,7 @@ export function Survey({
   const parseRecallInformation = (question: TSurveyQuestion) => {
     const modifiedQuestion = structuredClone(question);
     if (question.headline && (question.headline as TI18nString)[language]?.includes("recall:")) {
-      modifiedQuestion.headline[language] = replaceRecallInfo(
+      (modifiedQuestion.headline as TI18nString)[language] = replaceRecallInfo(
         getLocalizedValue(modifiedQuestion.headline, language)
       );
     }
@@ -187,7 +188,7 @@ export function Survey({
       (question.subheader as TI18nString)[language]?.includes("recall:") &&
       modifiedQuestion.subheader
     ) {
-      modifiedQuestion.subheader[language] = replaceRecallInfo(
+      (modifiedQuestion.subheader as TI18nString)[language] = replaceRecallInfo(
         getLocalizedValue(modifiedQuestion.subheader, language)
       );
     }

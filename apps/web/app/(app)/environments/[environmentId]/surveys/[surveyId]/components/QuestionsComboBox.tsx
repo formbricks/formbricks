@@ -33,6 +33,7 @@ export type QuestionOption = {
   questionType?: TSurveyQuestionType;
   type: OptionsType;
   id: string;
+  defaultLanguageSymbol: string;
 };
 export type QuestionOptions = {
   header: OptionsType;
@@ -43,9 +44,15 @@ interface QuestionComboBoxProps {
   options: QuestionOptions[];
   selected: Partial<QuestionOption>;
   onChangeValue: (option: QuestionOption) => void;
+  defaultLanguageSymbol: string;
 }
 
-const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOption>) => {
+const SelectedCommandItem = ({
+  label,
+  questionType,
+  type,
+  defaultLanguageSymbol,
+}: Partial<QuestionOption>) => {
   const getIconType = () => {
     switch (type) {
       case OptionsType.QUESTIONS:
@@ -88,12 +95,19 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
   return (
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
-      <p className="ml-3 truncate text-base text-slate-600">{getLocalizedValue(label, "en")}</p>
+      <p className="ml-3 truncate text-base text-slate-600">
+        {getLocalizedValue(label, defaultLanguageSymbol ?? "")}
+      </p>
     </div>
   );
 };
 
-const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
+const QuestionsComboBox = ({
+  options,
+  selected,
+  onChangeValue,
+  defaultLanguageSymbol,
+}: QuestionComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
   const commandRef = React.useRef(null);
   const [inputValue, setInputValue] = React.useState("");
@@ -144,7 +158,12 @@ const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBo
                           setOpen(false);
                         }}
                         className="cursor-pointer">
-                        <SelectedCommandItem label={o.label} type={o.type} questionType={o.questionType} />
+                        <SelectedCommandItem
+                          label={o.label}
+                          type={o.type}
+                          questionType={o.questionType}
+                          defaultLanguageSymbol={defaultLanguageSymbol}
+                        />
                       </CommandItem>
                     ))}
                   </CommandGroup>

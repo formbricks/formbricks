@@ -436,6 +436,7 @@ export default function QuestionCard({
                       questionIdx={questionIdx}
                       localSurvey={localSurvey}
                       updateQuestion={updateQuestion}
+                      defaultLanguageSymbol={defaultLanguageSymbol}
                     />
                   </Collapsible.CollapsibleContent>
                 </Collapsible.Root>

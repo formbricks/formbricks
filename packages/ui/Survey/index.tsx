@@ -26,6 +26,7 @@ interface SurveyProps {
   language: string;
   responseCount?: number;
   supportEmail?: string | null;
+  defaultLanguageSymbol: string;
 }
 
 interface SurveyModalProps extends SurveyProps {

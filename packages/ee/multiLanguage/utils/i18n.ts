@@ -198,7 +198,6 @@ export const translateSurvey = (
   surveyLanguages: TLanguages,
   defaultLanguageSymbol: string
 ): TSurvey => {
-  console.log(survey);
   const languages = Object.keys(surveyLanguages);
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languages, defaultLanguageSymbol);
@@ -256,8 +255,10 @@ export const isSurveyAvailableInSelectedLanguage = (languageSymbol: string, surv
   return false;
 };
 
-export const getSurveyLanguages = (product: TProduct, survey: TSurvey) => {
-  return Object.entries(product.languages)
-    .filter(([langCode]) => survey.questions[0].headline[langCode])
-    .map((lang) => lang);
+export const getSurveyLanguages = (product: TProduct, survey: TSurvey): TLanguages => {
+  return Object.fromEntries(
+    Object.entries(product.languages).filter(
+      ([langCode]) => (survey.questions[0].headline as TI18nString)[langCode]
+    )
+  );
 };

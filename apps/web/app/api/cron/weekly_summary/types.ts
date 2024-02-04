@@ -1,3 +1,4 @@
+import { TLanguages } from "@formbricks/types/product";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion, TSurveyStatus } from "@formbricks/types/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -77,4 +78,5 @@ export type ProductData = {
   name: string;
   environments: EnvironmentData[];
   team: TeamData;
+  languages: TLanguages;
 };

@@ -21,7 +21,7 @@ export type QuestionFilterOptions = {
   id: string;
 };
 
-const ResponseFilter = () => {
+const ResponseFilter = ({ defaultLanguageSymbol }: { defaultLanguageSymbol: string }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const { selectedFilter, setSelectedFilter, selectedOptions } = useResponseFilter();
 
@@ -169,6 +169,7 @@ const ResponseFilter = () => {
                   options={questionComboBoxOptions}
                   selected={s.questionType}
                   onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
+                  defaultLanguageSymbol={defaultLanguageSymbol}
                 />
                 <QuestionFilterComboBox
                   key={`${s.questionType.id}-${i}`}
@@ -197,6 +198,7 @@ const ResponseFilter = () => {
                   onChangeFilterComboBoxValue={(value) => handleOnChangeFilterComboBoxValue(value, i)}
                   onChangeFilterValue={(value) => handleOnChangeFilterValue(value, i)}
                   disabled={!s?.questionType?.label}
+                  defaultLanguageSymbol={defaultLanguageSymbol}
                 />
               </div>
               <div className="flex w-full items-center justify-end gap-1 md:w-auto">

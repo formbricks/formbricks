@@ -64,6 +64,7 @@ const SummaryPage = ({
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
+        defaultLanguageSymbol={product.languages["_default_"]}
       />
       <SurveyResultsTabs
         activeId="summary"
@@ -78,7 +79,14 @@ const SummaryPage = ({
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />
-      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
+      {showDropOffs && (
+        <SummaryDropOffs
+          survey={survey}
+          responses={responses}
+          displayCount={displayCount}
+          defaultLanguageSymbol={product.languages["_default_"]}
+        />
+      )}
       <SummaryList
         responses={filterResponses}
         survey={survey}

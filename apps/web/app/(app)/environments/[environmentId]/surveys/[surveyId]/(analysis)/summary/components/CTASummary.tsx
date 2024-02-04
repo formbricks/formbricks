@@ -10,6 +10,7 @@ import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 interface CTASummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyCTAQuestion>;
+  defaultLanguageSymbol: string;
 }
 
 interface ChoiceResult {
@@ -17,9 +18,8 @@ interface ChoiceResult {
   percentage: number;
 }
 
-export default function CTASummary({ questionSummary }: CTASummaryProps) {
+export default function CTASummary({ questionSummary, defaultLanguageSymbol }: CTASummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
-  const defaultLanguage = "en";
 
   const ctr: ChoiceResult = useMemo(() => {
     const clickedAbs = questionSummary.responses.filter((response) => response.value === "clicked").length;
@@ -34,7 +34,7 @@ export default function CTASummary({ questionSummary }: CTASummaryProps) {
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={getLocalizedValue(questionSummary.question.headline, defaultLanguage)} />
+        <Headline headline={getLocalizedValue(questionSummary.question.headline, defaultLanguageSymbol)} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className=" flex items-center rounded-lg bg-slate-100 p-2 ">

@@ -62,7 +62,7 @@ export default function SurveyEditor({
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
-      if (survey.questions[0].headline._i18n_) {
+      if ((survey.questions[0].headline as TI18nString)._i18n_) {
         setLocalSurvey(survey);
       } else {
         setLocalSurvey(translateSurvey(structuredClone(survey), surveyLanguages, defaultLanguageSymbol));
@@ -197,6 +197,7 @@ export default function SurveyEditor({
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
               language={selectedLanguage}
               onFileUpload={async (file) => file.name}
+              defaultLanguageSymbol={defaultLanguageSymbol}
             />
           </aside>
         </div>

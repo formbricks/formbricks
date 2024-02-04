@@ -24,6 +24,7 @@ export function SurveyModal({
   isRedirectDisabled = false,
   language,
   responseCount,
+  defaultLanguageSymbol,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -67,6 +68,7 @@ export function SurveyModal({
           onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
           responseCount={responseCount}
+          defaultLanguageSymbol={defaultLanguageSymbol}
         />
       </Modal>
     </div>
