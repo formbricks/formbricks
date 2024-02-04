@@ -52,6 +52,7 @@ interface QuestionFormInputProps {
   placeholder?: string;
   ref?: RefObject<HTMLInputElement>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
+  className?: string;
 }
 
 const QuestionFormInput = ({
@@ -70,6 +71,7 @@ const QuestionFormInput = ({
   maxLength,
   placeholder,
   onBlur,
+  className,
 }: QuestionFormInputProps) => {
   const isChoice = id.includes("choice");
   let choiceIdx: number | null;
@@ -322,6 +324,7 @@ const QuestionFormInput = ({
 
   // updation of questions and Thank You Card is done in a different manner, so for question we use updateQuestion and for ThankYouCard we use updateSurvey
   const updateQuestionDetails = (updatedText: string) => {
+    console.log("updating");
     let translatedText = {
       ...getQuestionTextBasedOnType(),
       [selectedLanguage]: updatedText,
@@ -334,6 +337,9 @@ const QuestionFormInput = ({
       }
     } else {
       if (updateQuestion) {
+        console.log({
+          [id]: translatedText,
+        });
         updateQuestion(questionIdx, {
           [id]: translatedText,
         });
@@ -416,7 +422,7 @@ const QuestionFormInput = ({
             )}
             <Input
               key={`${questionId}-${id}`}
-              className="absolute top-0 text-black  caret-black"
+              className={`absolute top-0 text-black  caret-black ${className}`}
               placeholder={getPlaceHolder()}
               id={id}
               name={id}

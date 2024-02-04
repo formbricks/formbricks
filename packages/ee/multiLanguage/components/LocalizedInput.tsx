@@ -23,6 +23,7 @@ interface LocalizedInputProps {
   surveyLanguages: TLanguages;
   maxLength?: number;
   defaultValue?: string;
+  className?: string;
 }
 const LocalizedInput = ({
   id,
@@ -40,6 +41,7 @@ const LocalizedInput = ({
   surveyLanguages,
   maxLength,
   defaultLanguageSymbol,
+  className,
 }: LocalizedInputProps) => {
   const isThankYouCard = questionIdx === localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
@@ -83,6 +85,7 @@ const LocalizedInput = ({
         maxLength={maxLength}
         placeholder={placeholder}
         onBlur={onBlur}
+        className={className}
       />
       {selectedLanguage !== defaultLanguageSymbol && value[defaultLanguageSymbol] && (
         <div className="mt-1 text-xs text-gray-500">

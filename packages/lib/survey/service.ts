@@ -756,9 +756,9 @@ export const updateDefaultLanguageInSurveys = async (
           ? replaceKey(question.buttonLabel, oldDefaultSymbol, newDefaultSymbol)
           : undefined;
         if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
-          question.choices = question.choices.map((choice) =>
-            replaceKey(choice, oldDefaultSymbol, newDefaultSymbol)
-          );
+          question.choices.forEach((choice) => {
+            choice.label = replaceKey(choice.label, oldDefaultSymbol, newDefaultSymbol);
+          });
           question.otherOptionPlaceholder = replaceKey(
             question.otherOptionPlaceholder,
             oldDefaultSymbol,
@@ -789,6 +789,35 @@ export const updateDefaultLanguageInSurveys = async (
           question.upperLabel = replaceKey(question.upperLabel, oldDefaultSymbol, newDefaultSymbol);
         }
       });
+      if (updatedSurvey.welcomeCard.enabled) {
+        updatedSurvey.welcomeCard.headline = replaceKey(
+          updatedSurvey.welcomeCard.headline,
+          oldDefaultSymbol,
+          newDefaultSymbol
+        );
+        updatedSurvey.welcomeCard.html = replaceKey(
+          updatedSurvey.welcomeCard.html,
+          oldDefaultSymbol,
+          newDefaultSymbol
+        );
+        updatedSurvey.welcomeCard.buttonLabel = replaceKey(
+          updatedSurvey.welcomeCard.buttonLabel,
+          oldDefaultSymbol,
+          newDefaultSymbol
+        );
+      }
+      if (updatedSurvey.thankYouCard.enabled) {
+        updatedSurvey.thankYouCard.headline = replaceKey(
+          updatedSurvey.thankYouCard.headline,
+          oldDefaultSymbol,
+          newDefaultSymbol
+        );
+        updatedSurvey.thankYouCard.subheader = replaceKey(
+          updatedSurvey.thankYouCard.subheader,
+          oldDefaultSymbol,
+          newDefaultSymbol
+        );
+      }
       updateSurvey(updatedSurvey);
     });
   });

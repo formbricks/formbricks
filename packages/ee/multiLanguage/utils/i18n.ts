@@ -130,11 +130,9 @@ export const translateQuestion = (
       );
     (
       clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion
-    ).otherOptionPlaceholder = createI18nString(
-      question.otherOptionPlaceholder ?? "",
-      languages,
-      defaultLanguageSymbol
-    );
+    ).otherOptionPlaceholder = question.otherOptionPlaceholder
+      ? createI18nString(question.otherOptionPlaceholder, languages, defaultLanguageSymbol)
+      : undefined;
   }
   if (question.type === "openText") {
     (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(

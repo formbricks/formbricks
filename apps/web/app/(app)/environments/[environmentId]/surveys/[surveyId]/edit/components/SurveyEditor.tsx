@@ -62,7 +62,11 @@ export default function SurveyEditor({
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
-      setLocalSurvey(translateSurvey(structuredClone(survey), surveyLanguages, defaultLanguageSymbol));
+      if (survey.questions[0].headline._i18n_) {
+        setLocalSurvey(survey);
+      } else {
+        setLocalSurvey(translateSurvey(structuredClone(survey), surveyLanguages, defaultLanguageSymbol));
+      }
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
@@ -126,7 +130,6 @@ export default function SurveyEditor({
 
   return (
     <>
-      {console.log(localSurvey)}
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}

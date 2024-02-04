@@ -207,6 +207,7 @@ export default function MultipleChoiceMultiForm({
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
                 defaultLanguageSymbol={defaultLanguageSymbol}
+                className=""
               />
             </div>
 
@@ -244,46 +245,24 @@ export default function MultipleChoiceMultiForm({
           {question.choices &&
             question.choices.map((choice, choiceIdx) => (
               <div key={choiceIdx} className="inline-flex w-full items-center">
-                <LocalizedInput
-                  key={choice.id}
-                  id={`choice-${choiceIdx}`}
-                  name={`choice-${choiceIdx}`}
-                  localSurvey={localSurvey}
-                  placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
-                  questionIdx={questionIdx}
-                  value={choice.label as TI18nString}
-                  onBlur={() => {
-                    const duplicateLabel = findDuplicateLabel();
-                    if (duplicateLabel) {
-                      toast.error("Duplicate choices");
-                      setisInvalidValue(duplicateLabel);
-                    } else {
-                      setisInvalidValue(null);
-                    }
-                  }}
-                  surveyLanguages={surveyLanguages}
-                  updateChoice={updateChoice}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
-                  isInvalid={
-                    isInvalid &&
-                    !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageSymbols)
-                  }
-                  defaultLanguageSymbol={defaultLanguageSymbol}
-                />
-                {choice.id === "other" && (
+                <div className="flex w-full space-x-2">
                   <LocalizedInput
-                    id="otherInputLabel"
-                    name="otherInputLabel"
+                    key={choice.id}
+                    id={`choice-${choiceIdx}`}
+                    name={`choice-${choiceIdx}`}
                     localSurvey={localSurvey}
-                    placeholder={
-                      getLocalizedValue(question.otherOptionPlaceholder, selectedLanguage) ?? "Please specify"
-                    }
+                    placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                     questionIdx={questionIdx}
-                    value={
-                      (question.otherOptionPlaceholder as TI18nString) ??
-                      createI18nString("Please specify", surveyLanguageSymbols, defaultLanguageSymbol)
-                    }
+                    value={choice.label as TI18nString}
+                    onBlur={() => {
+                      const duplicateLabel = findDuplicateLabel();
+                      if (duplicateLabel) {
+                        toast.error("Duplicate choices");
+                        setisInvalidValue(duplicateLabel);
+                      } else {
+                        setisInvalidValue(null);
+                      }
+                    }}
                     surveyLanguages={surveyLanguages}
                     updateChoice={updateChoice}
                     selectedLanguage={selectedLanguage}
@@ -293,8 +272,33 @@ export default function MultipleChoiceMultiForm({
                       !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageSymbols)
                     }
                     defaultLanguageSymbol={defaultLanguageSymbol}
+                    className={`${choice.id === "other" ? "border border-dashed" : ""}`}
                   />
-                )}
+                  {choice.id === "other" && (
+                    <LocalizedInput
+                      id="otherOptionPlaceholder"
+                      name="otherOptionPlaceholder"
+                      localSurvey={localSurvey}
+                      placeholder={"Please specify"}
+                      questionIdx={questionIdx}
+                      value={
+                        question.otherOptionPlaceholder
+                          ? (question.otherOptionPlaceholder as TI18nString)
+                          : createI18nString("Please specify", surveyLanguageSymbols, defaultLanguageSymbol)
+                      }
+                      surveyLanguages={surveyLanguages}
+                      updateQuestion={updateQuestion}
+                      selectedLanguage={selectedLanguage}
+                      setSelectedLanguage={setSelectedLanguage}
+                      isInvalid={
+                        isInvalid &&
+                        !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageSymbols)
+                      }
+                      defaultLanguageSymbol={defaultLanguageSymbol}
+                      className="border border-dashed"
+                    />
+                  )}
+                </div>
                 {question.choices && question.choices.length > 2 && (
                   <TrashIcon
                     className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
