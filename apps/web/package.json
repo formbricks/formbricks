@@ -43,7 +43,7 @@
     "next": "14.1.0",
     "nodemailer": "^6.9.9",
     "otplib": "^12.0.1",
-    "posthog-js": "^1.104.3",
+    "posthog-js": "^1.104.4",
     "prismjs": "^1.29.0",
     "qrcode": "^1.5.3",
     "react": "18.2.0",
