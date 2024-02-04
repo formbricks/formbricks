@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronDownIcon, Equal, Grid2X2, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 

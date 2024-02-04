@@ -1,3 +1,5 @@
+"use client";
+
 import { Code, Link2Icon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
