@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { PrismaClient } from "@prisma/client";
 
-import { TBaseFilter, TBaseFilters } from "@formbricks/types/userSegment";
+import { TBaseFilter, TBaseFilters, TUserSegmentAttributeFilter } from "@formbricks/types/userSegment";
 
 const prisma = new PrismaClient();
 
@@ -18,8 +18,17 @@ async function main() {
       },
     });
 
+    if (!allSurveysWithAttributeFilters?.length) {
+      // stop the migration if there are no surveys with attribute filters
+      return;
+    }
+
     allSurveysWithAttributeFilters.forEach(async (survey) => {
       const { attributeFilters } = survey;
+      // if there are no attribute filters, we can skip this survey
+      if (!attributeFilters?.length) {
+        return;
+      }
       // from these attribute filters, we need to create user segments
       // each attribute filter will be a filter in the user segment
       // all the filters will be joined by AND
@@ -27,23 +36,22 @@ async function main() {
 
       const filters: TBaseFilters = attributeFilters.map((filter, idx) => {
         const { attributeClass } = filter;
+        const resource: TUserSegmentAttributeFilter = {
+          id: createId(),
+          root: {
+            type: "attribute",
+            attributeClassName: attributeClass.name,
+          },
+          qualifier: {
+            operator: filter.condition,
+          },
+          value: filter.value,
+        };
+
         const attributeSegment: TBaseFilter = {
           id: filter.id,
           connector: idx === 0 ? null : "and",
-          resource: {
-            id: createId(),
-            root: {
-              type: "attribute",
-              attributeClassName: attributeClass.name,
-            },
-            qualifier: {
-              operator: filter.condition,
-            },
-            value: filter.value,
-            meta: {
-              isUserId: attributeClass.name === "userId" && attributeClass.type === "automatic",
-            },
-          },
+          resource,
         };
 
         return attributeSegment;

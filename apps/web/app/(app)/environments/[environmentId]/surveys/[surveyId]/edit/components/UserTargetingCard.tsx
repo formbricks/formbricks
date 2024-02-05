@@ -1,5 +1,6 @@
 "use client";
 
+import UserTargetingFallback from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/UserTargetingFallback";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FilterIcon, UsersIcon } from "lucide-react";
@@ -78,34 +79,8 @@ export default function UserTargetingCard({
       <Collapsible.CollapsibleContent>
         <hr className="py-1 text-slate-600" />
         <div className="flex flex-col gap-2 px-6 pt-2">
-          <div className="mb-2 flex w-full items-center gap-4 px-5 py-3 text-slate-700">
-            {!userSegment?.filters?.length ? (
-              <div className="flex items-center gap-4">
-                <UsersIcon className="h-5 w-5 text-slate-700" />
-                <div className="flex flex-col">
-                  <h3 className="text-sm font-medium">
-                    Audience: <span className="font-bold">Everyone</span>
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Without a filter, all of your users can be surveyed.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center gap-4">
-                  <FilterIcon className="h-5 w-5 text-slate-700" />
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-medium">
-                      Audience: <span className="font-bold">Targeted</span>
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Only people who match your targeting can be surveyed.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="mb-2">
+            <UserTargetingFallback userSegment={userSegment} />
           </div>
 
           <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
