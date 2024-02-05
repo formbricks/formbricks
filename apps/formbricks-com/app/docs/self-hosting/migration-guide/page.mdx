@@ -8,7 +8,19 @@ export const metadata = {
 
 # Migration Guide
 
-## v1.1 -> v1.2
+## v1.6
+
+Formbricks v1.6 comes with a ton of stability improvements and game-changing features. This also involves a few changes in our environment variables. This guide will help you migrate your existing Formbricks instance to v1.6 without any hassles or build errors.
+
+### Deprecated Environment Variables
+
+| Environment Variable | Comments                                                                 | 
+| -------------------- | ------------------------------------------------------------------------- |
+| GITHUB_AUTH_ENABLED  | Was used to enable GitHub OAuth, but from v1.6, you can just set the `GITHUB_ID` and `GITHUB_SECRET` environment variables. |
+| GOOGLE_AUTH_ENABLED  | Was used to enable Google OAuth, but from v1.6, you can just set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables. |
+| AZUREAD_AUTH_ENABLED | Was used to enable AzureAD OAuth, but from v1.6, you can just set the `AZUREAD_CLIENT_ID`, `AZUREAD_CLIENT_SECRET` & `AZUREAD_TENANT_ID` environment variables. |
+
+## v1.2
 
 Formbricks v1.2 ships a lot of features targeting our Link Surveys. We have also improved our security posture to be as robust as ever. However, it also comes with a few breaking changes specifically with the environment variables. This guide will help you migrate your existing Formbricks instance to v1.2 without any hassles or build errors.
 
@@ -25,7 +37,7 @@ Formbricks v1.2 ships a lot of features targeting our Link Surveys. We have also
 | -------------------- | ------------------------------------------------------------------------- |
 | SURVEY_BASE_URL      | The WEBAPP_URL is now used to determine the survey base url in all places |
 
-## v1.0 -> v1.1
+## v1.1
 
 Formbricks v1.1 includes a lot of new features and improvements. However, it also comes with a few breaking changes specifically with the environment variables. This guide will help you migrate your existing Formbricks instance to v1.1 without losing any data.
 
@@ -36,18 +48,18 @@ This is now possible with v1.1. However, due to Next.JS best practices, we had t
 
 | till v1.0                                   | v1.1                        |
 | ------------------------------------------- | --------------------------- |
-| **NEXT*PUBLIC***EMAIL_VERIFICATION_DISABLED | EMAIL_VERIFICATION_DISABLED |
-| **NEXT*PUBLIC***PASSWORD_RESET_DISABLED     | PASSWORD_RESET_DISABLED     |
-| **NEXT*PUBLIC***SIGNUP_DISABLED             | SIGNUP_DISABLED             |
-| **NEXT*PUBLIC***INVITE_DISABLED             | INVITE_DISABLED             |
-| **NEXT*PUBLIC***PRIVACY_URL                 | PRIVACY_URL                 |
-| **NEXT*PUBLIC***TERMS_URL                   | TERMS_URL                   |
-| **NEXT*PUBLIC***IMPRINT_URL                 | IMPRINT_URL                 |
-| **NEXT*PUBLIC***GITHUB_AUTH_ENABLED         | GITHUB_AUTH_ENABLED         |
-| **NEXT*PUBLIC***GOOGLE_AUTH_ENABLED         | GOOGLE_AUTH_ENABLED         |
-| **NEXT*PUBLIC***WEBAPP_URL                  | WEBAPP_URL                  |
-| **NEXT*PUBLIC***IS_FORMBRICKS_CLOUD         | IS_FORMBRICKS_CLOUD         |
-| **NEXT*PUBLIC***SURVEY_BASE_URL             | SURVEY_BASE_URL             |
+| **NEXT_PUBLIC_**EMAIL_VERIFICATION_DISABLED | EMAIL_VERIFICATION_DISABLED |
+| **NEXT_PUBLIC_**PASSWORD_RESET_DISABLED     | PASSWORD_RESET_DISABLED     |
+| **NEXT_PUBLIC_**SIGNUP_DISABLED             | SIGNUP_DISABLED             |
+| **NEXT_PUBLIC_**INVITE_DISABLED             | INVITE_DISABLED             |
+| **NEXT_PUBLIC_**PRIVACY_URL                 | PRIVACY_URL                 |
+| **NEXT_PUBLIC_**TERMS_URL                   | TERMS_URL                   |
+| **NEXT_PUBLIC_**IMPRINT_URL                 | IMPRINT_URL                 |
+| **NEXT_PUBLIC_**GITHUB_AUTH_ENABLED         | GITHUB_AUTH_ENABLED         |
+| **NEXT_PUBLIC_**GOOGLE_AUTH_ENABLED         | GOOGLE_AUTH_ENABLED         |
+| **NEXT_PUBLIC_**WEBAPP_URL                  | WEBAPP_URL                  |
+| **NEXT_PUBLIC_**IS_FORMBRICKS_CLOUD         | IS_FORMBRICKS_CLOUD         |
+| **NEXT_PUBLIC_**SURVEY_BASE_URL             | SURVEY_BASE_URL             |
 
 <Note>
   Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated.
