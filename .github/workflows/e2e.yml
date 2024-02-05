@@ -15,8 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build & Cache Web App
-      - uses: ./.github/actions/cache-build-web
+      - name: Build & Cache Web Binaries
+        uses: ./.github/actions/cache-build-web
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2
