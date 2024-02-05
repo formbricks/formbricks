@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
+
+      - name: Build & Cache Web App
       - uses: ./.github/actions/cache-build-web
 
       - name: Install pnpm
