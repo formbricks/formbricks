@@ -510,3 +510,31 @@ export const formatUserSegmentDateFields = (userSegment: TUserSegment): TUserSeg
 
   return userSegment;
 };
+
+export const searchForAttributeClassNameInUserSegment = (
+  filters: TBaseFilters,
+  attributeClassName: string
+): boolean => {
+  for (let filter of filters) {
+    const { resource } = filter;
+
+    if (isResourceFilter(resource)) {
+      const { root } = resource;
+      const { type } = root;
+
+      if (type === "attribute") {
+        const { attributeClassName: className } = root;
+        if (className === attributeClassName) {
+          return true;
+        }
+      }
+    } else {
+      const found = searchForAttributeClassNameInUserSegment(resource, attributeClassName);
+      if (found) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};

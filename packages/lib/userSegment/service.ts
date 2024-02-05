@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
   TActionMetric,
   TAllOperators,
@@ -36,7 +36,7 @@ import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { surveyCache } from "../survey/cache";
 import { validateInputs } from "../utils/validate";
 import { userSegmentCache } from "./cache";
-import { isResourceFilter } from "./utils";
+import { isResourceFilter, searchForAttributeClassNameInUserSegment } from "./utils";
 
 type PrismaUserSegment = Prisma.UserSegmentGetPayload<{
   include: {
@@ -48,7 +48,23 @@ type PrismaUserSegment = Prisma.UserSegmentGetPayload<{
   };
 }>;
 
-export const transformPrismaUserSegment = (userSegment: PrismaUserSegment) => {
+export const selectUserSegment: Prisma.UserSegmentDefaultArgs["select"] = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  title: true,
+  description: true,
+  environmentId: true,
+  filters: true,
+  isPrivate: true,
+  surveys: {
+    select: {
+      id: true,
+    },
+  },
+};
+
+export const transformPrismaUserSegment = (userSegment: PrismaUserSegment): TUserSegment => {
   return {
     ...userSegment,
     surveys: userSegment.surveys.map((survey) => survey.id),
@@ -61,36 +77,35 @@ export const createUserSegment = async (
   validateInputs([userSegmentCreateInput, ZUserSegmentCreateInput]);
 
   const { description, environmentId, filters, isPrivate, surveyId, title } = userSegmentCreateInput;
-  const userSegment = await prisma.userSegment.create({
-    data: {
-      environmentId,
-      title,
-      description,
-      isPrivate,
-      filters,
-      ...(surveyId && {
-        surveys: {
-          connect: {
-            id: surveyId,
+  try {
+    const userSegment = await prisma.userSegment.create({
+      data: {
+        environmentId,
+        title,
+        description,
+        isPrivate,
+        filters,
+        ...(surveyId && {
+          surveys: {
+            connect: {
+              id: surveyId,
+            },
           },
-        },
-      }),
-    },
-    include: {
-      surveys: {
-        select: {
-          id: true,
-        },
+        }),
       },
-    },
-  });
+      select: selectUserSegment,
+    });
 
-  userSegmentCache.revalidate({ id: userSegment.id, environmentId });
+    userSegmentCache.revalidate({ id: userSegment.id, environmentId });
 
-  return {
-    ...userSegment,
-    surveys: userSegment.surveys.map((survey) => survey.id),
-  };
+    return transformPrismaUserSegment(userSegment);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 export const getUserSegments = async (environmentId: string): Promise<TUserSegment[]> => {
@@ -103,13 +118,7 @@ export const getUserSegments = async (environmentId: string): Promise<TUserSegme
           where: {
             environmentId,
           },
-          include: {
-            surveys: {
-              select: {
-                id: true,
-              },
-            },
-          },
+          select: selectUserSegment,
         });
 
         if (!userSegments) {
@@ -117,10 +126,12 @@ export const getUserSegments = async (environmentId: string): Promise<TUserSegme
         }
 
         return userSegments.map((userSegment) => transformPrismaUserSegment(userSegment));
-      } catch (err) {
-        throw new DatabaseError(
-          `Database error when fetching user segments for environment ${environmentId}`
-        );
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
     },
     [`getUserSegments-${environmentId}`],
@@ -143,13 +154,7 @@ export const getUserSegment = async (userSegmentId: string): Promise<TUserSegmen
           where: {
             id: userSegmentId,
           },
-          include: {
-            surveys: {
-              select: {
-                id: true,
-              },
-            },
-          },
+          select: selectUserSegment,
         });
 
         if (!userSegment) {
@@ -157,8 +162,12 @@ export const getUserSegment = async (userSegmentId: string): Promise<TUserSegmen
         }
 
         return transformPrismaUserSegment(userSegment);
-      } catch (err) {
-        throw new DatabaseError(`Database error when fetching user segment ${userSegmentId}`);
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
     },
     [`getUserSegment-${userSegmentId}`],
@@ -177,41 +186,45 @@ export const updateUserSegment = async (
 ): Promise<TUserSegment> => {
   validateInputs([userSegmentId, ZId], [data, ZUserSegmentUpdateInput]);
 
-  let updatedInput: Prisma.UserSegmentUpdateInput = {
-    ...data,
-    surveys: undefined,
-  };
-
-  if (data.surveys) {
-    updatedInput = {
+  try {
+    let updatedInput: Prisma.UserSegmentUpdateInput = {
       ...data,
-      surveys: {
-        connect: data.surveys.map((surveyId) => ({ id: surveyId })),
-      },
+      surveys: undefined,
     };
-  }
 
-  const userSegment = await prisma.userSegment.update({
-    where: {
-      id: userSegmentId,
-    },
-    data: updatedInput,
-    include: {
-      surveys: {
-        select: {
-          id: true,
+    if (data.surveys) {
+      updatedInput = {
+        ...data,
+        surveys: {
+          connect: data.surveys.map((surveyId) => ({ id: surveyId })),
         },
+      };
+    }
+
+    const currentUserSegment = await getUserSegment(userSegmentId);
+    if (!currentUserSegment) {
+      throw new ResourceNotFoundError("userSegment", userSegmentId);
+    }
+
+    const userSegment = await prisma.userSegment.update({
+      where: {
+        id: userSegmentId,
       },
-    },
-  });
+      data: updatedInput,
+      select: selectUserSegment,
+    });
 
-  userSegmentCache.revalidate({ id: userSegmentId, environmentId: userSegment.environmentId });
-  userSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
+    userSegmentCache.revalidate({ id: userSegmentId, environmentId: userSegment.environmentId });
+    userSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
 
-  return {
-    ...userSegment,
-    surveys: userSegment.surveys.map((survey) => survey.id),
-  };
+    return transformPrismaUserSegment(userSegment);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 export const getUserSegmentActiveInactiveSurveys = async (
@@ -222,47 +235,55 @@ export const getUserSegmentActiveInactiveSurveys = async (
 }> => {
   const surveys = await unstable_cache(
     async () => {
-      const activeSurveysData = await prisma.userSegment.findUnique({
-        where: {
-          id: userSegmentId,
-          surveys: {
-            every: {
-              status: "inProgress",
-            },
-          },
-        },
-        select: {
-          surveys: {
-            select: { name: true },
-          },
-        },
-      });
-
-      const inactiveSurveysData = await prisma.userSegment.findUnique({
-        where: {
-          id: userSegmentId,
-          surveys: {
-            every: {
-              status: {
-                in: ["paused", "completed"],
+      try {
+        const activeSurveysData = await prisma.userSegment.findUnique({
+          where: {
+            id: userSegmentId,
+            surveys: {
+              every: {
+                status: "inProgress",
               },
             },
           },
-        },
-        select: {
-          surveys: {
-            select: { name: true },
+          select: {
+            surveys: {
+              select: { name: true },
+            },
           },
-        },
-      });
+        });
 
-      const activeSurveys = activeSurveysData?.surveys.map((survey) => survey.name);
-      const inactiveSurveys = inactiveSurveysData?.surveys.map((survey) => survey.name);
+        const inactiveSurveysData = await prisma.userSegment.findUnique({
+          where: {
+            id: userSegmentId,
+            surveys: {
+              every: {
+                status: {
+                  in: ["paused", "completed"],
+                },
+              },
+            },
+          },
+          select: {
+            surveys: {
+              select: { name: true },
+            },
+          },
+        });
 
-      return {
-        activeSurveys: activeSurveys ?? [],
-        inactiveSurveys: inactiveSurveys ?? [],
-      };
+        const activeSurveys = activeSurveysData?.surveys.map((survey) => survey.name);
+        const inactiveSurveys = inactiveSurveysData?.surveys.map((survey) => survey.name);
+
+        return {
+          activeSurveys: activeSurveys ?? [],
+          inactiveSurveys: inactiveSurveys ?? [],
+        };
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getUserSegmentActiveInactiveSurveys-${userSegmentId}`],
     {
@@ -274,73 +295,40 @@ export const getUserSegmentActiveInactiveSurveys = async (
   return surveys;
 };
 
-export const deleteUserSegment = async (segmentId: string) => {
-  // unset the user segment from all the surveys
+export const deleteUserSegment = async (segmentId: string): Promise<TUserSegment> => {
+  try {
+    const currentUserSegment = await getUserSegment(segmentId);
+    if (!currentUserSegment) {
+      throw new ResourceNotFoundError("userSegment", segmentId);
+    }
 
-  await prisma.survey.updateMany({
-    where: {
-      userSegmentId: segmentId,
-    },
-    data: {
-      userSegmentId: null,
-    },
-  });
+    const segment = await prisma.userSegment.delete({
+      where: {
+        id: segmentId,
+      },
+      select: selectUserSegment,
+    });
 
-  const segment = await prisma.userSegment.delete({
-    where: {
-      id: segmentId,
-    },
-  });
+    userSegmentCache.revalidate({ id: segmentId, environmentId: segment.environmentId });
+    segment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
 
-  userSegmentCache.revalidate({ id: segmentId, environmentId: segment.environmentId });
-  surveyCache.revalidate({ environmentId: segment.environmentId });
-};
+    return transformPrismaUserSegment(segment);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
 
-export const loadNewUserSegment = async (surveyId: string, newSegmentId: string) => {
-  const userSegment = await getUserSegment(newSegmentId);
-
-  if (!userSegment) {
-    throw new Error("User segment not found");
+    throw error;
   }
-
-  const updatedSurvey = await prisma.survey.update({
-    where: {
-      id: surveyId,
-    },
-    data: {
-      userSegment: {
-        connect: {
-          id: newSegmentId,
-        },
-      },
-    },
-    include: {
-      userSegment: {
-        include: {
-          surveys: {
-            select: {
-              id: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  userSegmentCache.revalidate({ id: newSegmentId });
-  surveyCache.revalidate({ id: surveyId });
-
-  return updatedSurvey;
 };
 
 export const cloneUserSegment = async (userSegmentId: string, surveyId: string): Promise<TUserSegment> => {
-  const userSegment = await getUserSegment(userSegmentId);
-
-  if (!userSegment) {
-    throw new ResourceNotFoundError("userSegment", userSegmentId);
-  }
-
   try {
+    const userSegment = await getUserSegment(userSegmentId);
+    if (!userSegment) {
+      throw new ResourceNotFoundError("userSegment", userSegmentId);
+    }
+
     const clonedUserSegment = await prisma.userSegment.create({
       data: {
         title: `Copy of ${userSegment.title}`,
@@ -353,16 +341,14 @@ export const cloneUserSegment = async (userSegmentId: string, surveyId: string):
           },
         },
       },
-      include: {
-        surveys: { select: { id: true } },
-      },
+      select: selectUserSegment,
     });
 
     if (clonedUserSegment.id) {
       // parse the filters and update the user segment
       const parsedFilters = ZUserSegmentFilters.safeParse(userSegment.filters);
       if (!parsedFilters.success) {
-        throw new Error("Invalid filters");
+        throw new ValidationError("Invalid filters");
       }
 
       clonedUserSegment.filters = parsedFilters.data;
@@ -371,12 +357,13 @@ export const cloneUserSegment = async (userSegmentId: string, surveyId: string):
     userSegmentCache.revalidate({ id: clonedUserSegment.id, environmentId: clonedUserSegment.environmentId });
     surveyCache.revalidate({ id: surveyId });
 
-    return {
-      ...clonedUserSegment,
-      surveys: clonedUserSegment.surveys.map((survey) => survey.id),
-    };
-  } catch (err) {
-    throw new DatabaseError("Error cloning user segment");
+    return transformPrismaUserSegment(clonedUserSegment);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
   }
 };
 
@@ -386,53 +373,29 @@ export const getUserSegmentsByAttributeClassName = async (
 ) => {
   const segments = await unstable_cache(
     async () => {
-      const userSegments = await prisma.userSegment.findMany({
-        where: {
-          environmentId,
-        },
-        include: {
-          surveys: {
-            select: {
-              id: true,
-              name: true,
-              status: true,
-            },
+      try {
+        const userSegments = await prisma.userSegment.findMany({
+          where: {
+            environmentId,
           },
-        },
-      });
+          select: selectUserSegment,
+        });
 
-      // search for attributeClassName in the filters
-      const clonedUserSegments = structuredClone(userSegments);
-      function searchForAttributeClassName(filters: TBaseFilters): boolean {
-        for (let filter of filters) {
-          const { resource } = filter;
+        // search for attributeClassName in the filters
+        const clonedUserSegments = structuredClone(userSegments);
 
-          if (isResourceFilter(resource)) {
-            const { root } = resource;
-            const { type } = root;
+        const filteredUserSegments = clonedUserSegments.filter((userSegment) => {
+          return searchForAttributeClassNameInUserSegment(userSegment.filters, attributeClassName);
+        });
 
-            if (type === "attribute") {
-              const { attributeClassName: className } = root;
-              if (className === attributeClassName) {
-                return true;
-              }
-            }
-          } else {
-            const found = searchForAttributeClassName(resource);
-            if (found) {
-              return true;
-            }
-          }
+        return filteredUserSegments;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
         }
 
-        return false;
+        throw error;
       }
-
-      const filteredUserSegments = clonedUserSegments.filter((userSegment) => {
-        return searchForAttributeClassName(userSegment.filters);
-      });
-
-      return filteredUserSegments;
     },
     [`getUserSegmentsByAttributeClassName-${environmentId}-${attributeClassName}`],
     {

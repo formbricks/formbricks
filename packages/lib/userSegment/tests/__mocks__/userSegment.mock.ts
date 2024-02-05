@@ -5,6 +5,8 @@ import {
   TEvaluateSegmentUserAttributeData,
   TEvaluateSegmentUserData,
   TUserSegment,
+  TUserSegmentCreateInput,
+  TUserSegmentUpdateInput,
 } from "@formbricks/types/userSegment";
 
 export const mockUserSegmentId = "rh2eual2apby2bx0r027ru70";
@@ -41,7 +43,12 @@ export const mockEvaluateSegmentUserData: TEvaluateSegmentUserData = {
   attributes: mockEvaluateSegmentUserAttributes,
   actionIds: [mockActionClassId],
   deviceType: "phone",
+  userId: mockUserId,
 };
+
+export const mockUserSegmentTitle = "Engaged Users with Specific Interests";
+export const mockUserSegmentDescription =
+  "Segment targeting engaged users interested in specific topics and using mobile";
 
 export const getMockUserSegmentFilters = (
   actionMetric: TActionMetric,
@@ -119,12 +126,45 @@ export const getMockUserSegmentFilters = (
 
 export const mockUserSegment: TUserSegment = {
   id: mockUserSegmentId,
-  title: "Engaged Users with Specific Interests",
-  description: "Segment targeting engaged users interested in specific topics and using mobile",
+  title: mockUserSegmentTitle,
+  description: mockUserSegmentDescription,
   isPrivate: false,
   filters: getMockUserSegmentFilters("lastMonthCount", 5, "equals"),
   environmentId: mockEnvironmentId,
   createdAt: new Date(),
   updatedAt: new Date(),
   surveys: [mockSurveyId],
+};
+
+export const mockUserSegmentCreateInput: TUserSegmentCreateInput = {
+  title: mockUserSegmentTitle,
+  description: mockUserSegmentDescription,
+  isPrivate: false,
+  filters: getMockUserSegmentFilters("lastMonthCount", 5, "equals"),
+  environmentId: mockEnvironmentId,
+  surveyId: mockSurveyId,
+};
+
+export const mockUserSegmentUpdateInput: TUserSegmentUpdateInput = {
+  title: mockUserSegmentTitle,
+  description: mockUserSegmentDescription,
+  isPrivate: false,
+  filters: getMockUserSegmentFilters("lastMonthCount", 5, "greaterEqual"),
+};
+
+export const mockUserSegmentPrisma = {
+  id: mockUserSegmentId,
+  title: mockUserSegmentTitle,
+  description: mockUserSegmentDescription,
+  isPrivate: false,
+  filters: getMockUserSegmentFilters("lastMonthCount", 5, "equals"),
+  environmentId: mockEnvironmentId,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  surveys: [{ id: mockSurveyId }],
+};
+
+export const mockUserSegmentActiveInactiveSurves = {
+  activeSurveys: ["Churn Survey"],
+  inactiveSurveys: ["NPS Survey"],
 };

@@ -6,7 +6,7 @@ import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
 export const metadata: Metadata = {
-  title: "People",
+  title: "Segments",
 };
 
 export default async function PeopleLayout({ params, children }) {

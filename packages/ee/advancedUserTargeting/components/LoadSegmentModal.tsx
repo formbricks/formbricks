@@ -57,7 +57,7 @@ const SegmentDetails = ({
         ...updatedSurvey.userSegment,
         description: updatedSurvey.userSegment.description || "",
         filters: parsedFilters.data,
-        surveys: updatedSurvey.userSegment.surveys.map((survey) => survey.id),
+        surveys: updatedSurvey.userSegment.surveys,
       });
 
       setIsSegmentEditorOpen(false);

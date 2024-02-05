@@ -1,12 +1,12 @@
 "use server";
 
 import { surveyCache } from "@formbricks/lib/survey/cache";
+import { loadNewUserSegmentInSurvey } from "@formbricks/lib/survey/service";
 import {
   cloneUserSegment,
   createUserSegment,
   deleteUserSegment,
   getUserSegment,
-  loadNewUserSegment,
   updateUserSegment,
 } from "@formbricks/lib/userSegment/service";
 import { formatDateFields } from "@formbricks/lib/utils/datetime";
@@ -72,7 +72,7 @@ export const updateUserSegmentAction = async (segmentId: string, data: TUserSegm
 };
 
 export const loadNewUserSegmentAction = async (surveyId: string, segmentId: string) => {
-  return await loadNewUserSegment(surveyId, segmentId);
+  return await loadNewUserSegmentInSurvey(surveyId, segmentId);
 };
 
 export const cloneUserSegmentAction = async (segmentId: string, surveyId: string) => {

@@ -23,7 +23,7 @@ import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { userSegmentCache } from "../userSegment/cache";
-import { evaluateSegment, updateUserSegment } from "../userSegment/service";
+import { evaluateSegment, getUserSegment, updateUserSegment } from "../userSegment/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -346,8 +346,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
     try {
       await updateUserSegment(userSegment.id, userSegment);
-    } catch (err) {
-      console.log({ err });
+    } catch (error) {
+      console.error(error);
       throw new Error("Error updating survey");
     }
   }
@@ -690,6 +690,64 @@ export const getSurveyByResultShareKey = async (resultShareKey: string): Promise
     }
 
     return survey.id;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const loadNewUserSegmentInSurvey = async (
+  surveyId: string,
+  newSegmentId: string
+): Promise<TSurvey> => {
+  try {
+    validateInputs([surveyId, ZId], [newSegmentId, ZId]);
+
+    const currentSurvey = await getSurvey(surveyId);
+    if (!currentSurvey) {
+      throw new ResourceNotFoundError("survey", surveyId);
+    }
+
+    const currentUserSegment = await getUserSegment(newSegmentId);
+    if (!currentUserSegment) {
+      throw new ResourceNotFoundError("userSegment", newSegmentId);
+    }
+
+    const prismaSurvey = await prisma.survey.update({
+      where: {
+        id: surveyId,
+      },
+      select: selectSurvey,
+      data: {
+        userSegment: {
+          connect: {
+            id: newSegmentId,
+          },
+        },
+      },
+    });
+
+    userSegmentCache.revalidate({ id: newSegmentId });
+    surveyCache.revalidate({ id: surveyId });
+
+    let surveyUserSegment: TUserSegment | null = null;
+    if (prismaSurvey.userSegment) {
+      surveyUserSegment = {
+        ...prismaSurvey.userSegment,
+        surveys: prismaSurvey.userSegment.surveys.map((survey) => survey.id),
+      };
+    }
+
+    const modifiedSurvey: TSurvey = {
+      ...prismaSurvey, // Properties from prismaSurvey
+      triggers: prismaSurvey.triggers.map((trigger) => trigger.actionClass.name),
+      userSegment: surveyUserSegment,
+    };
+
+    return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
