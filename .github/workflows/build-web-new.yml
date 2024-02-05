@@ -28,6 +28,7 @@ jobs:
 
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
+        shell: bash
 
       - name: Start PostgreSQL
         run: |
