@@ -75,7 +75,7 @@ export default function ShareEmbedSurvey({
       }
     }
     setSurveyUrl(url);
-  }, [survey, webAppUrl, language]);
+  }, [survey, webAppUrl, language, defaultLanguageSymbol]);
 
   useEffect(() => {
     getUrl();

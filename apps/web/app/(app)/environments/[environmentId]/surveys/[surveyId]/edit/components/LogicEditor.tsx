@@ -56,7 +56,7 @@ export default function LogicEditor({
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];
-  }, [question]);
+  }, [question, defaultLanguageSymbol]);
 
   const conditions = {
     openText: ["submitted", "skipped"],

@@ -119,7 +119,7 @@ export default function MultipleChoiceSummary({
       return b.count - a.count;
     });
     return results;
-  }, [questionSummary, isSingleChoice]);
+  }, [questionSummary, isSingleChoice, defaultLanguageSymbol]);
 
   const totalResponses = useMemo(() => {
     let total = 0;

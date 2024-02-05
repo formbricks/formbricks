@@ -308,6 +308,7 @@ const CustomFilter = ({
 
       URL.revokeObjectURL(downloadUrl);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [downloadFileName, responses, survey, extracMetadataKeys, getAllResponsesInBatches]
   );
 

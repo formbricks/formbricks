@@ -82,6 +82,7 @@ export default function SurveyEditor({
         setSurveyLanguages(languagesObj);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey, localSurvey, product.languages]);
 
   useEffect(() => {
@@ -122,7 +123,7 @@ export default function SurveyEditor({
     if (!Object.keys(surveyLanguages).includes(selectedLanguage)) {
       setSelectedLanguage(defaultLanguageSymbol);
     }
-  }, [surveyLanguages, selectedLanguage]);
+  }, [surveyLanguages, selectedLanguage, defaultLanguageSymbol]);
 
   if (!localSurvey) {
     return <Loading />;

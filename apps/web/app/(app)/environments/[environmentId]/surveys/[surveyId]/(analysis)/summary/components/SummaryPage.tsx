@@ -53,9 +53,11 @@ const SummaryPage = ({
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
+
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey, product.languages["_default_"]);
-  }, [survey]);
+  }, [survey, product.languages]);
+
   useEffect(() => {
     if (!searchParams?.get("referer")) {
       resetState();
