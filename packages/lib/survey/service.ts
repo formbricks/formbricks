@@ -488,11 +488,7 @@ export async function deleteSurvey(surveyId: string) {
   return deletedSurvey;
 }
 
-export const createSurvey = async (
-  environmentId: string,
-  surveyBody: TSurveyInput,
-  userId?: string
-): Promise<TSurvey> => {
+export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
   validateInputs([environmentId, ZId]);
 
   if (surveyBody.attributeFilters) {
@@ -503,25 +499,33 @@ export const createSurvey = async (
     const actionClasses = await getActionClasses(environmentId);
     revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
   }
-  // TODO: Create with triggers & attributeFilters
-  delete surveyBody.triggers;
-  delete surveyBody.attributeFilters;
-  const data: Omit<TSurveyInput, "triggers" | "attributeFilters"> = {
+
+  const createdBy = surveyBody.createdBy;
+  delete surveyBody.createdBy;
+
+  const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
     ...surveyBody,
+    // TODO: Create with triggers & attributeFilters
+    triggers: undefined,
+    attributeFilters: undefined,
   };
+
   if (surveyBody.type === "web" && data.thankYouCard) {
     data.thankYouCard.buttonLabel = "";
     data.thankYouCard.buttonLink = "";
   }
 
+  if (createdBy) {
+    data.creator = {
+      connect: {
+        id: createdBy,
+      },
+    };
+  }
+
   const survey = await prisma.survey.create({
     data: {
       ...data,
-      creator: {
-        connect: {
-          id: userId,
-        },
-      },
       environment: {
         connect: {
           id: environmentId,
