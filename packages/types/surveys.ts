@@ -453,7 +453,7 @@ export const ZSurveyInput = z.object({
   welcomeCard: ZSurveyWelcomeCard.optional(),
   questions: ZSurveyQuestions.optional(),
   thankYouCard: ZSurveyThankYouCard.optional(),
-  hiddenFields: ZSurveyHiddenFields,
+  hiddenFields: ZSurveyHiddenFields.optional(),
   delay: z.number().optional(),
   autoComplete: z.number().optional(),
   closeOnDate: z.date().optional(),
