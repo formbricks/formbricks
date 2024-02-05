@@ -1,7 +1,7 @@
 "use client";
 
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { TrashIcon } from "@heroicons/react/24/solid";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -39,19 +39,19 @@ export default function EditLanguage({
   const [isDeleteLanguageModalOpen, setIsDeleteLanguageModalOpen] = useState(false);
   const isInputDisabled = (index: number) => {
     if (isEditing) {
-      return index > 0 && index < languages.length - 1;
+      return index > 0 && index !== Object.entries(product.languages).length - 1;
     } else {
       return index > 0;
     }
   };
-
+  console.log(product.languages);
   const checkIfDuplicateExists = (arr: string[]) => {
     return new Set(arr).size !== arr.length;
   };
 
   const checkForDuplicates = (languages: string[][]) => {
-    const languageIDs = languages.map((language) => language[0].toLowerCase());
-    const languageNames = languages.map((language) => language[1].toLowerCase());
+    const languageIDs = languages.map((language) => language[0].toLowerCase().trim());
+    const languageNames = languages.map((language) => language[1].toLowerCase().trim());
     if (checkIfDuplicateExists(languageNames) || checkIfDuplicateExists(languageIDs)) {
       return true;
     }
@@ -74,6 +74,7 @@ export default function EditLanguage({
       }
       return acc;
     }, {});
+    languagesObject["_default_"] = defaultSymbol;
     handleSave(languagesObject);
     setLanguages(newLanguages);
     setIsDeleting(false);
@@ -142,7 +143,7 @@ export default function EditLanguage({
                     value={language[1]}
                     onChange={(e) => handleOnChange(index, "name", e)}
                   />
-                  {language[1] === "English" && index === 0 && (
+                  {language[0] === defaultSymbol && (
                     <span className="mr-2 rounded-2xl bg-slate-200 px-2 py-1 text-xs text-slate-500">
                       Default
                     </span>
@@ -158,6 +159,12 @@ export default function EditLanguage({
                   />
                   {index !== 0 && (
                     <TrashIcon
+                      className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
+                      onClick={() => setIsDeleteLanguageModalOpen(true)}
+                    />
+                  )}
+                  {index === 0 && (
+                    <PencilIcon
                       className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
                       onClick={() => setIsDeleteLanguageModalOpen(true)}
                     />
