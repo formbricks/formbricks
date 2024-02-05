@@ -1,7 +1,12 @@
 import { createId } from "@paralleldrive/cuid2";
 import { PrismaClient } from "@prisma/client";
 
-import { TBaseFilter, TBaseFilters, TUserSegmentAttributeFilter } from "@formbricks/types/userSegment";
+import {
+  TBaseFilter,
+  TBaseFilters,
+  TUserSegmentAttributeFilter,
+  TUserSegmentPersonFilter,
+} from "@formbricks/types/userSegment";
 
 const prisma = new PrismaClient();
 
@@ -36,17 +41,33 @@ async function main() {
 
       const filters: TBaseFilters = attributeFilters.map((filter, idx) => {
         const { attributeClass } = filter;
-        const resource: TUserSegmentAttributeFilter = {
-          id: createId(),
-          root: {
-            type: "attribute",
-            attributeClassName: attributeClass.name,
-          },
-          qualifier: {
-            operator: filter.condition,
-          },
-          value: filter.value,
-        };
+        let resource: TUserSegmentAttributeFilter | TUserSegmentPersonFilter;
+        // if the attribute class is userId, we need to create a user segment with the person filter
+        if (attributeClass.name === "userId" && attributeClass.type === "automatic") {
+          resource = {
+            id: createId(),
+            root: {
+              type: "person",
+              personIdentifier: "userId",
+            },
+            qualifier: {
+              operator: filter.condition,
+            },
+            value: filter.value,
+          };
+        } else {
+          resource = {
+            id: createId(),
+            root: {
+              type: "attribute",
+              attributeClassName: attributeClass.name,
+            },
+            qualifier: {
+              operator: filter.condition,
+            },
+            value: filter.value,
+          };
+        }
 
         const attributeSegment: TBaseFilter = {
           id: filter.id,
