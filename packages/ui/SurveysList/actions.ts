@@ -1,8 +1,9 @@
 "use server";
 
-import { Prisma as prismaClient } from "@prisma/client/";
+import { Prisma as prismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
 
+import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
@@ -10,8 +11,6 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { deleteSurvey, duplicateSurvey, getSurvey } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-
-import { prisma } from "../../database/src";
 
 export async function duplicateSurveyAction(environmentId: string, surveyId: string) {
   const session = await getServerSession(authOptions);
