@@ -3,7 +3,6 @@
 import UserTargetingFallback from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/UserTargetingFallback";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { FilterIcon, UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";

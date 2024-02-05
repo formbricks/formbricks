@@ -149,7 +149,7 @@ export default function Navigation({
         hidden: false,
       },
     ],
-    [environment.id, pathname, isViewer]
+    [environment.id, pathname, isUserTargetingAllowed, isViewer]
   );
 
   const dropdownNavigation = [

@@ -9,7 +9,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { FilterIcon, HardDriveDownloadIcon, HardDriveUploadIcon, UsersIcon } from "lucide-react";
+import { HardDriveDownloadIcon, HardDriveUploadIcon } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
