@@ -216,30 +216,45 @@ export default function MultipleChoiceSingleForm({
         <div className="mt-2 space-y-2" id="choices">
           {question.choices &&
             question.choices.map((choice, choiceIdx) => (
-              <div key={choiceIdx} className="inline-flex w-full items-center">
-                <Input
-                  ref={choiceIdx === question.choices.length - 1 ? lastChoiceRef : null}
-                  id={choice.id}
-                  name={choice.id}
-                  value={choice.label}
-                  className={cn(choice.id === "other" && "border-dashed")}
-                  placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
-                  onBlur={() => {
-                    const duplicateLabel = findDuplicateLabel();
-                    if (duplicateLabel) {
-                      setisInvalidValue(duplicateLabel);
-                    } else if (findEmptyLabel()) {
-                      setisInvalidValue("");
-                    } else {
-                      setisInvalidValue(null);
+              <div key={choiceIdx} className="flex w-full items-center">
+                <div className="flex w-full space-x-2">
+                  <Input
+                    ref={choiceIdx === question.choices.length - 1 ? lastChoiceRef : null}
+                    id={choice.id}
+                    name={choice.id}
+                    value={choice.label}
+                    className={cn(choice.id === "other" && "border-dashed")}
+                    placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
+                    onBlur={() => {
+                      const duplicateLabel = findDuplicateLabel();
+                      if (duplicateLabel) {
+                        setisInvalidValue(duplicateLabel);
+                      } else if (findEmptyLabel()) {
+                        setisInvalidValue("");
+                      } else {
+                        setisInvalidValue(null);
+                      }
+                    }}
+                    onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
+                    isInvalid={
+                      (isInvalidValue === "" && choice.label.trim() === "") ||
+                      (isInvalidValue !== null && choice.label.trim() === isInvalidValue.trim())
                     }
-                  }}
-                  onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
-                  isInvalid={
-                    (isInvalidValue === "" && choice.label.trim() === "") ||
-                    (isInvalidValue !== null && choice.label.trim() === isInvalidValue.trim())
-                  }
-                />
+                  />
+                  {choice.id === "other" && (
+                    <Input
+                      id="otherInputLabel"
+                      name="otherInputLabel"
+                      value={question.otherOptionPlaceholder ?? "Please specify"}
+                      placeholder={question.otherOptionPlaceholder ?? "Please specify"}
+                      className={cn(choice.id === "other" && "border-dashed")}
+                      onChange={(e) => {
+                        if (e.target.value.trim() == "") e.target.value = "";
+                        updateQuestion(questionIdx, { otherOptionPlaceholder: e.target.value });
+                      }}
+                    />
+                  )}
+                </div>
                 {question.choices && question.choices.length > 2 && (
                   <TrashIcon
                     className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

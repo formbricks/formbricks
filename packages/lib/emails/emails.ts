@@ -13,6 +13,7 @@ import {
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
 import { getQuestionResponseMapping } from "../responses";
+import { getTeamByEnvironmentId } from "../team/service";
 import { withEmailTemplate } from "./email-template";
 
 const nodemailer = require("nodemailer");
@@ -31,10 +32,6 @@ interface sendEmailData {
 interface TEmailUser {
   id: string;
   email: string;
-}
-
-interface TEmailUserWithName extends TEmailUser {
-  name: string | null;
 }
 
 export interface LinkSurveyEmailData {
@@ -93,34 +90,6 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
     <a href="${verificationRequestLink}">Request new verification</a><br/>
     <br/>
     Your Formbricks Team`),
-  });
-};
-
-export const sendGettingStartedEmail = async (user: TEmailUserWithName) => {
-  await sendEmail({
-    to: user.email,
-    subject: "Get started with Formbricks 🤸",
-    html: withEmailTemplate(`
-    <h1 style="text-align: center; line-height: 1.2; padding-top: 16px; padding-bottom:8px;">Turn customer insights into irresistible experiences</h1>
-    <a href="https://app.formbricks.com?utm_source=drip_campaign&utm_medium=email&utm_campaign=first_drip_mail&utm_content=top_image"><img src="https://formbricks-cdn.s3.eu-central-1.amazonaws.com/getting-started-with-formbricks-v5.png" alt="Formbricks can do it all" /></a>
-    <h3 style="text-align:center;">Welcome to Formbricks! 🤗</h3>
-    <p style="text-align:center;">We're the fastest growing Experience Management platform! Gracefully collect feedback without survey fatigue. Are you ready?</p>
-    <div style="text-align:center; margin-bottom:72px;">
-    <a class="button" href="https://app.formbricks.com?utm_source=drip_campaign&utm_medium=email&utm_campaign=first_drip_mail&utm_content=first_button">Create your survey</a><br/>
-    </div>
-    <a href="https://app.formbricks.com?utm_source=drip_campaign&utm_medium=email&utm_campaign=first_drip_mail&utm_content=second_image"><img style="border-radius:16px; box-shadow: 10px 10px 57px -21px rgba(71,85,105,0.58);" src="https://formbricks-cdn.s3.eu-central-1.amazonaws.com/getting-started-header-v4.png" alt="Formbricks can do it all"></a>
-    <h2 style="margin-top:32px;">Collect feedback everywhere!</h2>
-    <p>Formbricks is very versatile. Run:</p>
-    <ul>
-        <li><b>Website Surveys</b> like HotJar Ask</li>
-        <li><b>In-App Surveys</b> like Sprig</li>
-        <li><b>Link Surveys</b> like Typeform</li>
-        <li><b>Headless Surveys</b> via API</li>
-    </ul>
-    <p>All on one, open source platform ✅</p>
-    <a class="button" style="margin-bottom:12px; margin-top:0px;" href="https://app.formbricks.com?utm_source=drip_campaign&utm_medium=email&utm_campaign=first_drip_mail&utm_content=second_button">Create your survey</a><br/>
-    <p style="margin-bottom:0px; margin-top:40px; text-align:center;"><b>Life is short, craft something irresistible!</b><br/>The Formbricks Team 🤍</p>   
-    `),
   });
 };
 
@@ -193,44 +162,52 @@ export const sendResponseFinishedEmail = async (
   email: string,
   environmentId: string,
   survey: { id: string; name: string; questions: TSurveyQuestion[] },
-  response: TResponse
+  response: TResponse,
+  responseCount: number
 ) => {
   const personEmail = response.person?.attributes["email"];
+  const team = await getTeamByEnvironmentId(environmentId);
   await sendEmail({
     to: email,
     subject: personEmail
       ? `${personEmail} just completed your ${survey.name} survey ✅`
       : `A response for ${survey.name} was completed ✅`,
     replyTo: personEmail?.toString() || MAIL_FROM,
-    html: withEmailTemplate(`<h1>Hey 👋</h1>Someone just completed your survey <strong>${
-      survey.name
-    }</strong><br/>
+    html: withEmailTemplate(`
+      <h1>Hey 👋</h1>
+      <p>Congrats, you received a new response to your survey!
+      Someone just completed your survey <strong>${survey.name}</strong><br/></p>
 
-    <hr/>
+      <hr/>
 
-    ${getQuestionResponseMapping(survey, response)
-      .map(
-        (question) =>
-          question.answer &&
-          `<div style="margin-top:1em;">
-          <p style="margin:0px;">${question.question}</p>
-          <p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>  
-        </div>`
-      )
-      .join("")}
+      ${getQuestionResponseMapping(survey, response)
+        .map(
+          (question) =>
+            question.answer &&
+            `<div style="margin-top:1em;">
+            <p style="margin:0px;">${question.question}</p>
+            <p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>  
+          </div>`
+        )
+        .join("")}
 
-    <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
-      survey.id
-    }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">View all responses</a>
+      <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
+        survey.id
+      }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">${responseCount > 1 ? `View ${responseCount - 1} more ${responseCount === 2 ? "response" : "responses"}` : `View survey summary`}</a>
 
-    <div class="tooltip">
-    <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
-    ${
-      personEmail
-        ? `<p>Hit 'Reply' or reach out manually: ${personEmail}</p>`
-        : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
-    }
-    </div>
+      <div class="tooltip">
+      <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
+      ${
+        personEmail
+          ? `<p>Hit 'Reply' or reach out manually: ${personEmail}</p>`
+          : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
+      }
+      </div>
+
+      <hr/>
+
+      <p><b>Don't want to get these emails?</b></p>
+      <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;"><p><i>Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}">this form</a>. <br/> Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedTeamIds&elementId=${team?.id}">all newly created forms</a>.</i></p></div>
     `),
   });
 };

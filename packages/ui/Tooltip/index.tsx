@@ -2,6 +2,7 @@
 
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as React from "react";
+import { ReactNode } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 
@@ -31,3 +32,25 @@ const TooltipContent: React.ComponentType<TooltipPrimitive.TooltipContentProps> 
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+
+interface TooltipRendererProps {
+  shouldRender: boolean;
+  tooltipContent: ReactNode;
+  children: ReactNode;
+  className?: string;
+}
+export function TooltipRenderer(props: TooltipRendererProps) {
+  const { children, shouldRender, tooltipContent, className } = props;
+  if (shouldRender) {
+    return (
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger>{children}</TooltipTrigger>
+          <TooltipContent className={className}>{tooltipContent}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return <>{children}</>;
+}

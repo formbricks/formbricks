@@ -27,7 +27,7 @@ export default function LegalFooter({
 
   return (
     <div
-      className={`fixed bottom-0 h-12 w-full`}
+      className={`absolute bottom-0 h-12 w-full`}
       style={{
         backgroundColor: `${bgColor}`,
       }}>

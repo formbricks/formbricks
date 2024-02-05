@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 
 import { Button } from "@formbricks/ui/Button";
 
-import { FooterLogo } from "../../components/shared/Logo";
+import { FooterLogo } from "../shared/Logo";
 
 export default function HeaderLight() {
   const plausible = usePlausible();

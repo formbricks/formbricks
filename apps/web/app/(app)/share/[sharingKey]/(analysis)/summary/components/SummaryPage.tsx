@@ -4,8 +4,8 @@ import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/comp
 import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
 import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
-import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import SurveyResultsTabs from "@/app/(app)/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
+import CustomFilter from "@/app/(app)/share/[sharingKey]/components/CustomFilter";
 import SummaryHeader from "@/app/(app)/share/[sharingKey]/components/SummaryHeader";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
