@@ -44,7 +44,6 @@ export default function EditLanguage({
       return index > 0;
     }
   };
-  console.log(product.languages);
   const checkIfDuplicateExists = (arr: string[]) => {
     return new Set(arr).size !== arr.length;
   };
