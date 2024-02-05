@@ -116,7 +116,7 @@ const unauthorizedResponse = (cors: boolean = false) =>
 
 const successResponse = (data: Object, cors: boolean = false, cache: string = "private, no-store") => {
   const responseHeaders = {
-    ...(cors && { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Credentials": "true" }),
+    ...(cors && corsHeaders),
     "Cache-Control": cache,
   };
 
