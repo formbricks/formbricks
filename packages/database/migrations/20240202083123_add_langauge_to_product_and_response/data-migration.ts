@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
-import { translateSurvey } from "@formbricks/lib/i18n/utils";
-import { selectSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { translateSurvey } from "../../../lib/i18n/utils";
+import { selectSurvey, updateSurvey } from "../../../lib/survey/service";
 
 const prisma = new PrismaClient();
 
