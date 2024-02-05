@@ -15,17 +15,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+      # - name: Setup Node.js 18.x
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18.x
 
       # - uses: ./.github/actions/cache-pnpm-install
       - uses: ./.github/actions/cache-build-web
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
 
       - name: Install dependencies
         run: pnpm install
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: pnpm exec playwright install --with-deps
 
       - name: Start PostgreSQL
         run: |
