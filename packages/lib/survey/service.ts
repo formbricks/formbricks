@@ -154,58 +154,6 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
   return survey ? formatDateFields(survey, ZSurvey) : null;
 };
 
-// export const getSurveysByAttributeClassId = async (
-//   attributeClassId: string,
-//   page?: number
-// ): Promise<TSurvey[]> => {
-//   const surveys = await unstable_cache(
-//     async () => {
-//       validateInputs([attributeClassId, ZId], [page, ZOptionalNumber]);
-
-//       const surveysPrisma = await prisma.survey.findMany({
-//         where: {
-//           attributeFilters: {
-//             some: {
-//               attributeClassId,
-//             },
-//           },
-//         },
-//         select: selectSurvey,
-//         take: page ? ITEMS_PER_PAGE : undefined,
-//         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-//       });
-
-//       const surveys: TSurvey[] = [];
-
-//       for (const surveyPrisma of surveysPrisma) {
-//         let userSegment: TUserSegment | null = null;
-//         if (surveyPrisma.userSegment) {
-//           userSegment = {
-//             ...surveyPrisma.userSegment,
-//             surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
-//           };
-//         }
-
-//         const transformedSurvey: TSurvey = {
-//           ...surveyPrisma,
-//           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
-//           userSegment,
-//         };
-
-//         surveys.push(transformedSurvey);
-//       }
-
-//       return surveys;
-//     },
-//     [`getSurveysByAttributeClassId-${attributeClassId}-${page}`],
-//     {
-//       tags: [surveyCache.tag.byAttributeClassId(attributeClassId)],
-//       revalidate: SERVICES_REVALIDATION_INTERVAL,
-//     }
-//   )();
-//   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
-// };
-
 export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
   const surveys = await unstable_cache(
     async () => {
@@ -260,7 +208,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
 export const getSurveys = async (
   environmentId: string,
   page?: number,
-  unidentifiedSurvey?: boolean
+  noSegments?: boolean
 ): Promise<TSurvey[]> => {
   const surveys = await unstable_cache(
     async () => {
@@ -272,7 +220,7 @@ export const getSurveys = async (
             environmentId,
 
             // If its an unidentified survey, we only want to return surveys that are not connected to a user segment
-            ...(unidentifiedSurvey
+            ...(noSegments
               ? {
                   userSegment: null,
                 }
