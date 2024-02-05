@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 import Modal from "./Modal";

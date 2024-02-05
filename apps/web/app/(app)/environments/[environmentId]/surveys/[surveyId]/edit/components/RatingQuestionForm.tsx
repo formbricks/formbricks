@@ -3,7 +3,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TLanguages } from "@formbricks/types/product";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";
@@ -141,6 +141,7 @@ export default function RatingQuestionForm({
           <LocalizedInput
             id="lowerLabel"
             name="lowerLabel"
+            placeholder="Not good"
             value={question.lowerLabel as TI18nString}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
@@ -156,6 +157,7 @@ export default function RatingQuestionForm({
           <LocalizedInput
             id="upperLabel"
             name="upperLabel"
+            placeholder="Very satisfied"
             value={question.upperLabel as TI18nString}
             localSurvey={localSurvey}
             questionIdx={questionIdx}

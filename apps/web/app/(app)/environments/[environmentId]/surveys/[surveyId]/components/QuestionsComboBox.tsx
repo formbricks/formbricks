@@ -14,8 +14,8 @@ import clsx from "clsx";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@formbricks/ui/Command";
 import { NetPromoterScoreIcon } from "@formbricks/ui/icons";

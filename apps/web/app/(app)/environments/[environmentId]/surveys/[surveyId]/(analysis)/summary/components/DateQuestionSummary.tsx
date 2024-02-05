@@ -4,10 +4,10 @@ import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useState } from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import type { TSurveyDateQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 

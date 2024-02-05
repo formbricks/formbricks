@@ -9,13 +9,20 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
-import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
+import {
+  TI18nString,
+  TSurvey,
+  TSurveyAttributeFilter,
+  TSurveyInput,
+  ZSurvey,
+} from "@formbricks/types/surveys";
 
 import { getActionClasses } from "../actionClass/service";
 import { getAttributeClasses } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
+import { createI18nString } from "../i18n/utils";
 import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
@@ -759,25 +766,27 @@ export const updateDefaultLanguageInSurveys = async (
           question.choices.forEach((choice) => {
             choice.label = replaceKey(choice.label, oldDefaultSymbol, newDefaultSymbol);
           });
-          question.otherOptionPlaceholder = replaceKey(
-            question.otherOptionPlaceholder,
-            oldDefaultSymbol,
-            newDefaultSymbol
-          );
+          question.otherOptionPlaceholder = question.otherOptionPlaceholder
+            ? replaceKey(question.otherOptionPlaceholder, oldDefaultSymbol, newDefaultSymbol)
+            : undefined;
         }
         if (question.type === "openText") {
-          question.placeholder = replaceKey(question.placeholder, oldDefaultSymbol, newDefaultSymbol);
+          question.placeholder = question.placeholder
+            ? replaceKey(question.placeholder, oldDefaultSymbol, newDefaultSymbol)
+            : undefined;
         }
         if (question.type === "cta") {
-          question.dismissButtonLabel = replaceKey(
-            question.dismissButtonLabel,
-            oldDefaultSymbol,
-            newDefaultSymbol
-          );
-          question.html = replaceKey(question.html, oldDefaultSymbol, newDefaultSymbol);
+          question.dismissButtonLabel = question.dismissButtonLabel
+            ? replaceKey(question.dismissButtonLabel, oldDefaultSymbol, newDefaultSymbol)
+            : undefined;
+          question.html = question.html
+            ? replaceKey(question.html, oldDefaultSymbol, newDefaultSymbol)
+            : undefined;
         }
         if (question.type === "consent") {
-          question.html = replaceKey(question.html, oldDefaultSymbol, newDefaultSymbol);
+          question.html = question.html
+            ? replaceKey(question.html, oldDefaultSymbol, newDefaultSymbol)
+            : undefined;
           question.label = replaceKey(question.label ?? "", oldDefaultSymbol, newDefaultSymbol);
         }
         if (question.type === "nps") {
@@ -795,36 +804,30 @@ export const updateDefaultLanguageInSurveys = async (
           oldDefaultSymbol,
           newDefaultSymbol
         );
-        updatedSurvey.welcomeCard.html = replaceKey(
-          updatedSurvey.welcomeCard.html,
-          oldDefaultSymbol,
-          newDefaultSymbol
-        );
-        updatedSurvey.welcomeCard.buttonLabel = replaceKey(
-          updatedSurvey.welcomeCard.buttonLabel,
-          oldDefaultSymbol,
-          newDefaultSymbol
-        );
+        updatedSurvey.welcomeCard.html = updatedSurvey.welcomeCard.html
+          ? replaceKey(updatedSurvey.welcomeCard.html, oldDefaultSymbol, newDefaultSymbol)
+          : undefined;
+        updatedSurvey.welcomeCard.buttonLabel = updatedSurvey.welcomeCard.buttonLabel
+          ? replaceKey(updatedSurvey.welcomeCard.buttonLabel, oldDefaultSymbol, newDefaultSymbol)
+          : undefined;
       }
       if (updatedSurvey.thankYouCard.enabled) {
-        updatedSurvey.thankYouCard.headline = replaceKey(
-          updatedSurvey.thankYouCard.headline,
-          oldDefaultSymbol,
-          newDefaultSymbol
-        );
-        updatedSurvey.thankYouCard.subheader = replaceKey(
-          updatedSurvey.thankYouCard.subheader,
-          oldDefaultSymbol,
-          newDefaultSymbol
-        );
+        updatedSurvey.thankYouCard.headline = updatedSurvey.thankYouCard.headline
+          ? replaceKey(updatedSurvey.thankYouCard.headline, oldDefaultSymbol, newDefaultSymbol)
+          : undefined;
+        updatedSurvey.thankYouCard.subheader = updatedSurvey.thankYouCard.subheader
+          ? replaceKey(updatedSurvey.thankYouCard.subheader, oldDefaultSymbol, newDefaultSymbol)
+          : undefined;
       }
       updateSurvey(updatedSurvey);
     });
   });
 };
 
-function replaceKey(obj, oldKey, newKey) {
-  if (!obj) return undefined;
+function replaceKey(obj: TI18nString | string, oldKey: string, newKey: string): TI18nString {
+  if (typeof obj === "string") {
+    return createI18nString(obj, [newKey], newKey);
+  }
   // Check if the old key exists in the object
   if (oldKey in obj) {
     // Assign the value of the old key to the new key

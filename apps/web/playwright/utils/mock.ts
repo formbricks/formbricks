@@ -21,7 +21,12 @@ export const users = {
   survey: [
     {
       name: "Survey User 1",
-      email: "survey1@formbricks.com",
+      email: "survey10@formbricks.com",
+      password: "Y1I*EpURUSb32j5XijP",
+    },
+    {
+      name: "Multi Language Survey User 1",
+      email: "MLSurvey16@formbricks.com",
       password: "Y1I*EpURUSb32j5XijP",
     },
   ],
@@ -133,6 +138,63 @@ export const surveys = {
     thankYouCard: {
       headline: "This is my Thank You Card Headline!",
       description: "This is my Thank you Card Description!",
+    },
+  },
+  germanCreate: {
+    welcomeCard: {
+      headline: "Willkommen zu meiner Testumfrage Willkommenskarte!", // German translation
+      description: "Dies ist die Beschreibung meiner Willkommenskarte!", // German translation
+    },
+    openTextQuestion: {
+      question: "Dies ist meine offene Textfrage", // German translation
+      description: "Dies ist meine Beschreibung zum offenen Text", // German translation
+      placeholder: "Dies ist mein Platzhalter", // German translation
+    },
+    singleSelectQuestion: {
+      question: "Dies ist meine Einzelauswahlfrage", // German translation
+      description: "Dies ist meine Beschreibung zur Einzelauswahl", // German translation
+      options: ["Option 1", "Option 2"], // Translated options
+    },
+    multiSelectQuestion: {
+      question: "Dies ist meine Mehrfachauswahlfrage", // German translation
+      description: "Dies ist die Beschreibung zur Mehrfachauswahl", // German translation
+      options: ["Option 1", "Option 2", "Option 3"], // Translated options
+    },
+    ratingQuestion: {
+      question: "Dies ist meine Bewertungsfrage", // German translation
+      description: "Dies ist die Beschreibung zur Bewertung", // German translation
+      lowLabel: "Mein unteres Label", // German translation
+      highLabel: "Mein oberes Label", // German translation
+    },
+    npsQuestion: {
+      question: "Dies ist meine NPS-Frage", // German translation
+      lowLabel: "Mein unteres Label", // German translation
+      highLabel: "Mein oberes Label", // German translation
+    },
+    ctaQuestion: {
+      question: "Dies ist meine CTA-Frage", // German translation
+      buttonLabel: "Mein Knopfetikett", // German translation
+    },
+    consentQuestion: {
+      question: "Dies ist meine Zustimmungsfrage", // German translation
+      checkboxLabel: "Mein Kontrollkästchen-Label", // German translation
+    },
+    pictureSelectQuestion: {
+      question: "Dies ist meine Bildauswahlfrage", // German translation
+      description: "Dies ist die Beschreibung zur Bildauswahl", // German translation
+    },
+    fileUploadQuestion: {
+      question: "Dies ist meine Datei-Upload-Frage", // German translation
+    },
+    dateQuestion: {
+      question: "Dies ist date question", // German translation
+    },
+    calQuestion: {
+      question: "Dies ist cal question", // German translation
+    },
+    thankYouCard: {
+      headline: "Dies ist meine Dankeskarte Überschrift!", // German translation
+      description: "Dies ist meine Beschreibung zur Dankeskarte!", // German translation
     },
   },
 };

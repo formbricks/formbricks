@@ -1,6 +1,6 @@
 import { CheckCircleIcon, ChevronDoubleDownIcon, XCircleIcon } from "@heroicons/react/20/solid";
 
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";

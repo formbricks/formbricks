@@ -11,7 +11,7 @@ import { notFound } from "next/navigation";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
-import { getDefaultLanguageSymbol, getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -175,7 +175,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
-  const defaultLanguageSymbol = await getDefaultLanguageSymbol(product.id);
+  const defaultLanguageSymbol = product.languages["_default_"];
 
   if (isSurveyPinProtected) {
     return (

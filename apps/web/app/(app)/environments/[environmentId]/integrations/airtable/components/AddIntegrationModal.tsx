@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,

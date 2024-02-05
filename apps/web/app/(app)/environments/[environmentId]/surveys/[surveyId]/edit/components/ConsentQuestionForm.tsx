@@ -79,6 +79,8 @@ export default function ConsentQuestionForm({
       <LocalizedInput
         id="label"
         name="label"
+        label="Checkbox Label"
+        placeholder="I agree to the terms and conditions"
         value={question.label as TI18nString}
         localSurvey={localSurvey}
         questionIdx={questionIdx}

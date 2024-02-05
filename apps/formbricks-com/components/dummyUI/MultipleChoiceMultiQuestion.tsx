@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 
 import Headline from "./Headline";

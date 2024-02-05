@@ -2,7 +2,7 @@ import { evaluateCondition } from "@/app/(app)/environments/[environmentId]/surv
 import { TimerIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";

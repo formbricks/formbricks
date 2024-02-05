@@ -1,15 +1,26 @@
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TProduct } from "@formbricks/types/product";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 
-export const replaceQuestionPresetPlaceholders = (question: TSurveyQuestion, product) => {
-  if (!question) return;
+export const replaceQuestionPresetPlaceholders = (
+  question: TSurveyQuestion,
+  product: TProduct
+): TSurveyQuestion => {
   if (!product) return question;
   const newQuestion = structuredClone(question);
+  const defaultLanguageSymbol = product.languages["_default_"];
   if (newQuestion.headline) {
-    newQuestion.headline = newQuestion.headline.replace("{{productName}}", product.name);
+    newQuestion.headline = getLocalizedValue(newQuestion.headline, defaultLanguageSymbol).replace(
+      "{{productName}}",
+      product.name
+    );
   }
   if (newQuestion.subheader) {
-    newQuestion.subheader = newQuestion.subheader?.replace("{{productName}}", product.name);
+    newQuestion.subheader = getLocalizedValue(newQuestion.subheader, defaultLanguageSymbol)?.replace(
+      "{{productName}}",
+      product.name
+    );
   }
   return newQuestion;
 };

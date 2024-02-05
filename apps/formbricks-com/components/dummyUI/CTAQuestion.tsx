@@ -1,4 +1,4 @@
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveyCTAQuestion } from "@formbricks/types/surveys";
 
 import Headline from "./Headline";

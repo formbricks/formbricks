@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { FormbricksAPI } from "@formbricks/api";
-import { isSurveyAvailableInSelectedLanguage } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { isSurveyAvailableInSelectedLanguage } from "@formbricks/lib/i18n/utils";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TLanguages, TProduct } from "@formbricks/types/product";

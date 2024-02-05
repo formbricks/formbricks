@@ -4,7 +4,7 @@ import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
 
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurveyRatingQuestion } from "@formbricks/types/surveys";

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useRef } from "react";
 
 import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
-import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { translateSurvey } from "@formbricks/lib/i18n/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";

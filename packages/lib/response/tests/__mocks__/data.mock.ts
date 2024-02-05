@@ -106,6 +106,7 @@ export const mockResponse: ResponseMock = {
   tags: mockTags,
   personId: mockPersonId,
   updatedAt: new Date(),
+  language: "English",
   ttc: {},
 };
 

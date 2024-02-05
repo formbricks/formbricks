@@ -45,10 +45,10 @@ export default function AddQuestionButton({ addQuestion, product }: AddQuestionB
             className="mx-2 inline-flex items-center rounded p-0.5 px-4 py-2 font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
             onClick={() => {
               addQuestion({
-                id: createId(),
-                type: questionType.id,
                 ...universalQuestionPresets,
                 ...getQuestionDefaults(questionType.id, product),
+                id: createId(),
+                type: questionType.id,
               });
               setOpen(false);
             }}>

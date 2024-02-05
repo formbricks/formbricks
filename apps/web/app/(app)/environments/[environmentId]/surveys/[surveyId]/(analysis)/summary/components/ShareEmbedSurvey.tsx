@@ -14,8 +14,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import { getSurveyLanguages } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { cn } from "@formbricks/lib/cn";
+import { getSurveyLanguages } from "@formbricks/lib/i18n/utils";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";

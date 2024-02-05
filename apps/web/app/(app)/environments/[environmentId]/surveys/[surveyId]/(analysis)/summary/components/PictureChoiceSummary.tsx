@@ -4,7 +4,7 @@ import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useMemo } from "react";
 
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import type { TSurveyPictureSelectionQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 

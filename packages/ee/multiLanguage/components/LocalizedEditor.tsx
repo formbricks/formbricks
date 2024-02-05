@@ -1,13 +1,13 @@
 import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 
+import { extractLanguageSymbols, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TLanguages } from "@formbricks/types/product";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 
-import { extractLanguageSymbols, isLabelValidForAllLanguages } from "../utils/i18n";
 import { LanguageIndicator } from "./LanguageIndicator";
 
 interface LocalizedEditorProps {

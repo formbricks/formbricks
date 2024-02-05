@@ -1,9 +1,8 @@
+import { extractLanguageSymbols, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TLanguages } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbricks/types/surveys";
 import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
-
-import { extractLanguageSymbols, isLabelValidForAllLanguages } from "../utils/i18n";
 
 interface LocalizedInputProps {
   id: string;
@@ -12,6 +11,7 @@ interface LocalizedInputProps {
   isInvalid: boolean;
   localSurvey: TSurvey;
   placeholder?: string;
+  label?: string;
   selectedLanguage: string;
   defaultLanguageSymbol: string;
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
@@ -31,6 +31,7 @@ const LocalizedInput = ({
   isInvalid,
   localSurvey,
   placeholder,
+  label,
   selectedLanguage,
   updateQuestion,
   updateSurvey,
@@ -74,6 +75,7 @@ const LocalizedInput = ({
         localSurvey={localSurvey}
         environmentId={localSurvey.environmentId}
         isInvalid={SurveyLanguagesList.length > 1 && isInComplete}
+        label={label}
         questionId={questionId()}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}

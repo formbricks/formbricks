@@ -4,13 +4,12 @@ import { ArrowUpRightIcon, ChevronDownIcon, ChevronUpIcon, LanguageIcon } from "
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { convertArrayToObject } from "@formbricks/lib/i18n/utils";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TLanguages } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-
-import { convertArrayToObject } from "../utils/i18n";
 
 interface LanguageSwitchProps {
   productLanguages: TLanguages;

@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString, isLabelValidForAllLanguages } from "@formbricks/ee/multiLanguage/utils/i18n";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { createI18nString, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TLanguages } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";

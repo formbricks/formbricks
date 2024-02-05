@@ -5,7 +5,7 @@ import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import {
   extractId,
   extractRecallInfo,
@@ -28,7 +28,7 @@ import {
 } from "@formbricks/types/surveys";
 
 import { LanguageIndicator } from "../../ee/multiLanguage/components/LanguageIndicator";
-import { createI18nString, extractLanguageSymbols } from "../../ee/multiLanguage/utils/i18n";
+import { createI18nString, extractLanguageSymbols } from "../../lib/i18n/utils";
 import FileInput from "../FileInput";
 import { Input } from "../Input";
 import { Label } from "../Label";
@@ -49,6 +49,7 @@ interface QuestionFormInputProps {
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: string[][];
   defaultLanguageSymbol: string;
+  label?: string;
   maxLength?: number;
   placeholder?: string;
   ref?: RefObject<HTMLInputElement>;
@@ -66,6 +67,7 @@ const QuestionFormInput = ({
   updateChoice,
   isInvalid,
   environmentId,
+  label,
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
@@ -347,6 +349,7 @@ const QuestionFormInput = ({
   };
 
   const getLabelById = (id: string) => {
+    if (label) return label;
     switch (id) {
       case "headline":
         return "Question";
@@ -363,7 +366,7 @@ const QuestionFormInput = ({
       case "upperLabel":
         return "Upper Label";
       default:
-        return null;
+        return "";
     }
   };
   const getFileUrl = () => {
@@ -425,7 +428,7 @@ const QuestionFormInput = ({
               placeholder={getPlaceHolder()}
               id={id}
               name={id}
-              aria-label={id === "headline" ? "Question" : "Description"}
+              aria-label={label ? label : getLabelById(id)}
               autoComplete={showQuestionSelect ? "off" : "on"}
               value={recallToHeadline(text, localSurvey, false, selectedLanguage)[selectedLanguage]}
               ref={inputRef}

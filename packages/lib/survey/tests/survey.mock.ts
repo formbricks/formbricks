@@ -47,6 +47,7 @@ export const mockProduct: TProduct = {
   clickOutsideClose: false,
   darkOverlay: false,
   environments: [],
+  languages: { en: "English", _default_: "en" },
 };
 
 export const mockDisplay = {

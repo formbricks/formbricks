@@ -2,7 +2,7 @@ import { RefObject, useEffect } from "react";
 
 import { TI18nString, TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
-import { getLocalizedValue } from "./i18n";
+import { getLocalizedValue } from "../i18n/utils";
 
 export interface fallbacks {
   [id: string]: string;

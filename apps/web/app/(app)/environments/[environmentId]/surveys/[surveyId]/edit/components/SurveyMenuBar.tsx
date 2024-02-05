@@ -131,12 +131,7 @@ export default function SurveyMenuBar({
       }
     }
     if (survey.welcomeCard.enabled) {
-      if (
-        !isLabelValidForAllLanguages(survey.welcomeCard.headline, surveyLanguages) ||
-        (survey.welcomeCard.html &&
-          survey.welcomeCard.html[defaultLanguageSymbol] !== "" &&
-          !isLabelValidForAllLanguages(survey.welcomeCard.html, surveyLanguages))
-      ) {
+      if (!isLabelValidForAllLanguages(survey.welcomeCard.headline, surveyLanguages)) {
         faultyQuestions.push("start");
       }
     }

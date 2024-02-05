@@ -4,10 +4,10 @@ import { InboxStackIcon } from "@heroicons/react/24/solid";
 import { DownloadIcon, FileIcon } from "lucide-react";
 import Link from "next/link";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
 import { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";

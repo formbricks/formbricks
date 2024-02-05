@@ -1,14 +1,13 @@
 import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { getServerSession } from "next-auth";
 
-import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
-import { getSurveyLanguages } from "@formbricks/ee/multiLanguage/utils/i18n";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { translateSurvey } from "@formbricks/lib/i18n/utils";
+import { getSurveyLanguages } from "@formbricks/lib/i18n/utils";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getDefaultLanguageSymbol } from "@formbricks/lib/product/service";
 import { getResponses } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
@@ -46,7 +45,7 @@ export default async function Page({ params }) {
   if (!team) {
     throw new Error("Team not found");
   }
-  const defaultLanguageSymbol = await getDefaultLanguageSymbol(product.id);
+  const defaultLanguageSymbol = product.languages["_default_"];
   const surveyLanguages = getSurveyLanguages(product, survey);
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);

@@ -61,7 +61,7 @@ export default function EditWelcomeCard({
   };
   useEffect(() => {
     setFirstRender(true);
-  }, [selectedLanguage, activeQuestionId]);
+  }, [localSurvey.thankYouCard]);
 
   return (
     <div
@@ -131,6 +131,7 @@ export default function EditWelcomeCard({
                 id="headline"
                 name="headline"
                 value={localSurvey.welcomeCard.headline as TI18nString}
+                label="Headline"
                 localSurvey={localSurvey}
                 questionIdx={-1}
                 surveyLanguages={surveyLanguages}

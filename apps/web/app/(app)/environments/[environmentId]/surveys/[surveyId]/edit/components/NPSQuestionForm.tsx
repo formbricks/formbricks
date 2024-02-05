@@ -4,7 +4,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TLanguages } from "@formbricks/types/product";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import { TI18nString } from "@formbricks/types/surveys";

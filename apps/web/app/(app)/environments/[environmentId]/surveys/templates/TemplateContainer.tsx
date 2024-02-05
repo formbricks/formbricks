@@ -3,7 +3,7 @@
 import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { useEffect, useState } from "react";
 
-import { translateSurvey } from "@formbricks/ee/multiLanguage/utils/i18n";
+import { translateSurvey } from "@formbricks/lib/i18n/utils";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import type { TTemplate } from "@formbricks/types/templates";
@@ -88,6 +88,7 @@ export default function TemplateContainerWithPreview({
                 setActiveQuestionId={setActiveQuestionId}
                 language={defaultLanguageSymbol}
                 onFileUpload={async (file) => file.name}
+                defaultLanguageSymbol={defaultLanguageSymbol}
               />
             </div>
           )}

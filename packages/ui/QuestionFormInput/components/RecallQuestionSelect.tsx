@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { RefObject, useEffect, useMemo, useState } from "react";
 
-import { getLocalizedValue } from "@formbricks/lib/utils/i18n";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
