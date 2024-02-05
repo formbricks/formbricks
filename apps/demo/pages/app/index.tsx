@@ -31,7 +31,6 @@ export default function AppPage({}) {
         userId,
         debug: true,
         attributes,
-        language: "de",
       });
       window.formbricks = formbricks;
     }
