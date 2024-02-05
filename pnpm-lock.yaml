@@ -479,6 +479,9 @@ importers:
         specifier: ^7.3.0
         version: 7.3.0
     devDependencies:
+      '@formbricks/lib':
+        specifier: workspace:*
+        version: link:../lib
       '@formbricks/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

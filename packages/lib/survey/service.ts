@@ -280,7 +280,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+export async function updateSurvey(updatedSurvey: TSurvey, tx?: Prisma.TransactionClient): Promise<TSurvey> {
   validateInputs([updatedSurvey, ZSurvey]);
 
   const surveyId = updatedSurvey.id;
@@ -426,7 +426,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
   };
 
   try {
-    const prismaSurvey = await prisma.survey.update({
+    const prismaSurvey = await (tx || prisma).survey.update({
       where: { id: surveyId },
       data,
     });
