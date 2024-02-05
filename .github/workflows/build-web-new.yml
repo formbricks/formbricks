@@ -26,7 +26,7 @@ jobs:
       - uses: ./.github/actions/cache-build-web
 
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
+        run: npx playwright install --with-deps
 
       - name: Start PostgreSQL
         run: |
