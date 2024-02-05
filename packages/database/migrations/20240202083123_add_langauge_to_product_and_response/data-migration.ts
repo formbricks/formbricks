@@ -1,14 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 
-import { translateSurvey } from "../../../lib/i18n/utils";
-import { selectSurvey, updateSurvey } from "../../../lib/survey/service";
+import { translateSurvey } from "./i18n";
+import { selectSurvey, updateSurvey } from "./service";
 
 const prisma = new PrismaClient();
 
 async function main() {
   await prisma.$transaction(async (tx) => {
     const surveys = await prisma.survey.findMany({
-      include: selectSurvey,
+      select: selectSurvey,
     });
 
     if (!surveys) {
