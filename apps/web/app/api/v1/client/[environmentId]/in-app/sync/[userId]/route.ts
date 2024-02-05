@@ -1,5 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
@@ -11,6 +12,7 @@ import {
 } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
+import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import {
@@ -18,6 +20,7 @@ import {
   getMonthlyTeamResponseCount,
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
+import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 
@@ -95,6 +98,27 @@ export async function GET(
         person = await createPerson(environmentId, userId);
       }
     } else {
+      await unstable_cache(
+        async () => {
+          const teamDetails = await getTeamDetails(environmentId);
+          if (teamDetails?.teamOwnerId) {
+            console.log("free limit reached");
+            return await capturePosthogEvent(
+              teamDetails.teamOwnerId,
+              "free limit reached",
+              teamDetails.teamId,
+              {
+                plan: "userTargeting",
+              }
+            );
+          }
+        },
+        [`posthog-userTargetingLimitReached-${environmentId}`],
+        {
+          revalidate: 60 * 60 * 24 * 15, // 15 days
+        }
+      )();
+
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
         // if it's a new person and MAU limit is reached, throw an error
@@ -106,6 +130,28 @@ export async function GET(
           throw new Error(errorMessage);
         }
       }
+    }
+    if (isInAppSurveyLimitReached) {
+      await unstable_cache(
+        async () => {
+          const teamDetails = await getTeamDetails(environmentId);
+          if (teamDetails?.teamOwnerId) {
+            console.log("free limit reached");
+            return await capturePosthogEvent(
+              teamDetails.teamOwnerId,
+              "free limit reached",
+              teamDetails.teamId,
+              {
+                plan: "inAppSurvey",
+              }
+            );
+          }
+        },
+        [`posthog-inAppSurveyLimitReached-${environmentId}`],
+        {
+          revalidate: 60 * 60 * 24 * 15, // 15 days
+        }
+      )();
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
