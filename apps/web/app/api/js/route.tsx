@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
       headers: {
         "Content-Type": "application/javascript",
         "Cache-Control": "public, s-maxage=600, max-age=1800, stale-while-revalidate=600, stale-if-error=600",
+        "Access-Control-Allow-Origin": "*",
       },
     });
   } catch (error) {
