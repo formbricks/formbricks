@@ -17,6 +17,7 @@ import {
 
 export default async function JoinTeam({ searchParams }) {
   const currentUser = await getServerSession(authOptions);
+  console.log("hi");
 
   try {
     const { inviteId, email } = verifyInviteToken(searchParams.token);
