@@ -100,6 +100,8 @@ async function main() {
 
     // delete all attribute filters
     await tx.surveyAttributeFilter.deleteMany({});
+
+    throw new Error("Rollback");
   });
 }
 
