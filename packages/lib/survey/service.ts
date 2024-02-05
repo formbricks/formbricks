@@ -21,6 +21,7 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
+import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { userSegmentCache } from "../userSegment/cache";
 import { evaluateSegment, updateUserSegment } from "../userSegment/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
@@ -482,35 +483,40 @@ export async function deleteSurvey(surveyId: string) {
   return deletedSurvey;
 }
 
-export const createSurvey = async (
-  environmentId: string,
-  surveyBody: TSurveyInput,
-  userId?: string
-): Promise<TSurvey> => {
+export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
   validateInputs([environmentId, ZId]);
 
   if (surveyBody.triggers) {
     const actionClasses = await getActionClasses(environmentId);
     revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
   }
-  // TODO: Create with triggers
-  delete surveyBody.triggers;
-  const data: Omit<TSurveyInput, "triggers"> = {
+
+  const createdBy = surveyBody.createdBy;
+  delete surveyBody.createdBy;
+
+  const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
     ...surveyBody,
+    // TODO: Create with triggers & attributeFilters
+    triggers: undefined,
+    attributeFilters: undefined,
   };
+
   if (surveyBody.type === "web" && data.thankYouCard) {
     data.thankYouCard.buttonLabel = "";
     data.thankYouCard.buttonLink = "";
   }
 
+  if (createdBy) {
+    data.creator = {
+      connect: {
+        id: createdBy,
+      },
+    };
+  }
+
   const survey = await prisma.survey.create({
     data: {
       ...data,
-      creator: {
-        connect: {
-          id: userId,
-        },
-      },
       environment: {
         connect: {
           id: environmentId,
@@ -525,6 +531,8 @@ export const createSurvey = async (
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
     userSegment: null,
   };
+
+  await subscribeTeamMembersToSurveyResponses(environmentId, survey.id);
 
   surveyCache.revalidate({
     id: survey.id,

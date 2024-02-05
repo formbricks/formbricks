@@ -21,9 +21,11 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
 
   if (isWebAppRoute(request.nextUrl.pathname) && !token) {
-    return NextResponse.redirect(
-      WEBAPP_URL + "/auth/login?callbackUrl=" + WEBAPP_URL + request.nextUrl.pathname
+    const loginUrl = new URL(
+      `/auth/login?callbackUrl=${encodeURIComponent(request.nextUrl.toString())}`,
+      WEBAPP_URL
     );
+    return NextResponse.redirect(loginUrl.href);
   }
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
@@ -73,5 +75,6 @@ export const config = {
     "/share/(.*)/:path",
     "/environments/:path*",
     "/api/auth/signout",
+    "/auth/login",
   ],
 };

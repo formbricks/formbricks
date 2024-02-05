@@ -231,6 +231,23 @@ export const deleteUser = async (id: string): Promise<TUser> => {
   }
 };
 
+export const getUsersWithTeam = async (teamId: string): Promise<TUser[]> => {
+  validateInputs([teamId, ZId]);
+
+  const users = await prisma.user.findMany({
+    where: {
+      memberships: {
+        some: {
+          teamId,
+        },
+      },
+    },
+    select: responseSelection,
+  });
+
+  return users;
+};
+
 export const userIdRelatedToApiKey = async (apiKey: string) => {
   const userId = await prisma.apiKey.findUnique({
     where: { id: apiKey },
