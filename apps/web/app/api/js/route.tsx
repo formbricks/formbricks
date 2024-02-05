@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
         ? req.nextUrl.searchParams.get("format")!
         : "umd";
       path = `../../packages/js/dist/index.${format}.js`;
-      append = await handleEnvironment(req);
+      append = await handleInit(req);
       break;
     default:
       return responses.badRequestResponse("unknown module requested");
@@ -41,14 +41,16 @@ export async function GET(req: NextRequest) {
   }
 }
 
-async function handleEnvironment(req: NextRequest) {
+async function handleInit(req: NextRequest) {
   const environmentId = req.nextUrl.searchParams.get("environmentId");
 
   if (environmentId) {
     const environment = await getEnvironment(environmentId);
 
     if (environment) {
-      return `formbricks.init({environmentId: "${environmentId}", apiHost: "${WEBAPP_URL}"});`;
+      const enableDebug =
+        req.nextUrl.searchParams.get("debug") === "true" || req.nextUrl.searchParams.get("debug") === "1";
+      return `formbricks.init({environmentId: "${environmentId}", apiHost: "${WEBAPP_URL}", debug: ${enableDebug}});`;
     }
   }
   return "";
