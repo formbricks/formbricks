@@ -1,11 +1,7 @@
 name: E2E Tests
 on:
-  push:
-    branches:
-      - shubham/for-1607-use-cache-in-e2e-docker-build
-
-# on:
-#   workflow_call:
+  workflow_call:
+  workflow_dispatch:
 
 jobs:
   build:
