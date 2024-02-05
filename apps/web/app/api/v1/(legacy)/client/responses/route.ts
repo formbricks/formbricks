@@ -23,7 +23,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     responseInput.personId = null;
   }
   const agent = UAParser(request.headers.get("user-agent"));
-  const country = headers().get("CF-IPCountry") || headers().get("X-Vercel-IP-Country") || undefined;
+  const country =
+    headers().get("CF-IPCountry") ||
+    headers().get("X-Vercel-IP-Country") ||
+    headers().get("CloudFront-Viewer-Country") ||
+    undefined;
   const inputValidation = ZResponseLegacyInput.safeParse(responseInput);
 
   if (!inputValidation.success) {

@@ -258,7 +258,7 @@ model Survey {
   type                SurveyType              @default(web)
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId       String
-  creator             User?                   @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  creator             User?                   @relation(fields: [createdBy], references: [id])
   createdBy           String?
   status              SurveyStatus            @default(draft)
   /// @zod.custom(imports.ZSurveyWelcomeCard)
