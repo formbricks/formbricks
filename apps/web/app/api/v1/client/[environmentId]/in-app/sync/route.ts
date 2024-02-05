@@ -1,16 +1,14 @@
+import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { unstable_cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, PRICING_APPSURVEYS_FREE_RESPONSES } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
 
 export async function OPTIONS(): Promise<NextResponse> {
@@ -60,26 +58,7 @@ export async function GET(
       isInAppSurveyLimitReached =
         !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
       if (isInAppSurveyLimitReached) {
-        await unstable_cache(
-          async () => {
-            const teamDetails = await getTeamDetails(environmentId);
-            if (teamDetails?.teamOwnerId) {
-              console.log("free limit reached");
-              return await capturePosthogEvent(
-                teamDetails.teamOwnerId,
-                "free limit reached",
-                teamDetails.teamId,
-                {
-                  plan: "inAppSurvey",
-                }
-              );
-            }
-          },
-          [`posthog-inAppSurveyLimitReached-${environmentId}`],
-          {
-            revalidate: 60 * 60 * 24 * 15, // 15 days
-          }
-        )();
+        sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
       }
     }
 
