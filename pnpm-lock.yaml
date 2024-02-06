@@ -245,6 +245,9 @@ importers:
       react-native:
         specifier: 0.73.2
         version: 0.73.2(@babel/core@7.23.7)(@babel/preset-env@7.23.8)(react@18.2.0)
+      react-native-webview:
+        specifier: 13.7.0
+        version: 13.7.0(react-native@0.73.2)(react@18.2.0)
     devDependencies:
       '@babel/core':
         specifier: ^7.20.0
@@ -758,6 +761,9 @@ importers:
       react-native:
         specifier: ^0.73.1
         version: 0.73.2(@babel/core@7.23.7)(@babel/preset-env@7.23.8)(react@18.2.0)
+      react-native-webview:
+        specifier: 13.7.0
+        version: 13.7.0(react-native@0.73.2)(react@18.2.0)
     devDependencies:
       '@formbricks/api':
         specifier: workspace:*
@@ -20710,6 +20716,18 @@ packages:
       vfile: 6.0.1
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /react-native-webview@13.7.0(react-native@0.73.2)(react@18.2.0):
+    resolution: {integrity: sha512-pvAaGDxAGrhv9sxvQgpMyLeZrHxGY314lmvp6YakrzdvRa1ZUkAYMgYL3JnogMV6QIvxuFp1AWO1bJxmWmArUw==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      escape-string-regexp: 2.0.0
+      invariant: 2.2.4
+      react: 18.2.0
+      react-native: 0.73.2(@babel/core@7.23.7)(@babel/preset-env@7.23.8)(react@18.2.0)
     dev: false
 
   /react-native@0.73.2(@babel/core@7.23.7)(@babel/preset-env@7.23.8)(react@18.2.0):

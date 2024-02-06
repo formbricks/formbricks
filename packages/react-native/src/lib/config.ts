@@ -1,13 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Result, err, wrapThrows } from "@formbricks/lib/errors";
-import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
+import type { TRNConfig, TRNConfigUpdateInput } from "@formbricks/types/react-native";
 
 export const LOCAL_STORAGE_KEY = "formbricks-react-native";
 
 export class Config {
   private static instance: Config | undefined;
-  private config: TJsConfig | null = null;
+  private config: TRNConfig | null = null;
 
   private constructor() {}
 
@@ -18,7 +18,7 @@ export class Config {
     return Config.instance;
   }
 
-  public update(newConfig: TJsConfigUpdateInput): void {
+  public update(newConfig: TRNConfigUpdateInput): void {
     if (newConfig) {
       const expiresAt = new Date(new Date().getTime() + 15 * 60000); // 15 minutes in the future
 
@@ -32,7 +32,7 @@ export class Config {
     }
   }
 
-  public get(): TJsConfig {
+  public get(): TRNConfig {
     if (!this.config) {
       throw new Error("config is null, maybe the init function was not called?");
     }
@@ -40,17 +40,15 @@ export class Config {
   }
 
   public async loadFromAsyncStorage() {
-    console.log("loading config");
     return AsyncStorage.getItem(LOCAL_STORAGE_KEY)
       .then((savedConfig) => {
         if (!savedConfig) {
-          console.log("no config found");
           return err(new Error("No or invalid config in local storage"));
         }
         // TODO: validate config
         // This is a hack to get around the fact that we don't have a proper
         // way to validate the config yet.
-        const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
+        const parsedConfig = JSON.parse(savedConfig) as TRNConfig;
 
         if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
           return err(new Error("Config in local storage has expired"));
@@ -64,13 +62,20 @@ export class Config {
   }
 
   private saveToLocalStorage(): Result<Promise<void>, Error> {
-    return wrapThrows(() => AsyncStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.config)))();
+    return wrapThrows(() =>
+      AsyncStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.config)).catch((_) => {
+        throw new Error("Unable to save to async storage");
+      })
+    )();
   }
 
   // reset the config
-
   public resetConfig(): Result<Promise<void>, Error> {
     this.config = null;
-    return wrapThrows(() => AsyncStorage.removeItem(LOCAL_STORAGE_KEY))();
+    return wrapThrows(() =>
+      AsyncStorage.removeItem(LOCAL_STORAGE_KEY).catch((_) => {
+        throw new Error("Unable to reset config in async storage");
+      })
+    )();
   }
 }
