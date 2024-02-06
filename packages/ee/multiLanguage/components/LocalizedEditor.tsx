@@ -40,15 +40,18 @@ export const LocalizedEditor = ({
 }: LocalizedEditorProps) => {
   const hasi18n = value._i18n_;
   const surveyLanguageList = Object.entries(surveyLanguages);
+
   const isInComplete =
-    id === "subheader"
+    value !== undefined &&
+    (id === "subheader"
       ? value[defaultLanguageSymbol]?.trim() !== "" &&
         isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguageList)) &&
         selectedLanguage === defaultLanguageSymbol
       : isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguageList)) &&
-        selectedLanguage === defaultLanguageSymbol;
+        selectedLanguage === defaultLanguageSymbol);
+
   return (
     <div className="relative w-full">
       <Editor
