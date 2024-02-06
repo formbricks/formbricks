@@ -63,6 +63,7 @@ export async function copyToOtherEnvironmentAction(
           attributeClass: true,
         },
       },
+      userSegment: true,
     },
   });
 
@@ -174,6 +175,9 @@ export async function copyToOtherEnvironmentAction(
       productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
       styling: existingSurvey.styling ?? prismaClient.JsonNull,
+      userSegment: existingSurvey.userSegment
+        ? { connect: { id: existingSurvey.userSegment.id } }
+        : undefined,
     },
   });
 
