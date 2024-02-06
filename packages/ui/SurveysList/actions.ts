@@ -144,6 +144,7 @@ export async function copyToOtherEnvironmentAction(
       id: undefined, // id is auto-generated
       environmentId: undefined, // environmentId is set below
       createdBy: undefined,
+      userSegmentId: undefined,
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
       questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
