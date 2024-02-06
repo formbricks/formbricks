@@ -7,7 +7,7 @@ import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 interface LocalizedInputProps {
   id: string;
   name: string;
-  value: TI18nString;
+  value: TI18nString | undefined;
   isInvalid: boolean;
   localSurvey: TSurvey;
   placeholder?: string;
@@ -92,7 +92,7 @@ const LocalizedInput = ({
         defaultLanguageSymbol={defaultLanguageSymbol}
         className={className}
       />
-      {selectedLanguage !== defaultLanguageSymbol && value[defaultLanguageSymbol] && (
+      {value && selectedLanguage !== defaultLanguageSymbol && value[defaultLanguageSymbol] && (
         <div className="mt-1 text-xs text-gray-500">
           <strong>Translate:</strong>{" "}
           {recallToHeadline(value, localSurvey, false, defaultLanguageSymbol)[defaultLanguageSymbol]}

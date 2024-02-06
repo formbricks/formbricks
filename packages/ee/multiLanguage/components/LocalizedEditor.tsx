@@ -12,7 +12,7 @@ import { LanguageIndicator } from "./LanguageIndicator";
 
 interface LocalizedEditorProps {
   id: string;
-  value: TI18nString;
+  value: TI18nString | undefined;
   localSurvey: TSurvey;
   isInvalid: boolean;
   updateQuestion: any;
@@ -38,7 +38,7 @@ export const LocalizedEditor = ({
   setFirstRender,
   defaultLanguageSymbol,
 }: LocalizedEditorProps) => {
-  const hasi18n = value._i18n_;
+  const hasi18n = value ? value._i18n_ : false;
   const surveyLanguageList = Object.entries(surveyLanguages);
 
   const isInComplete =
@@ -56,8 +56,9 @@ export const LocalizedEditor = ({
     <div className="relative w-full">
       <Editor
         key={`${questionIdx}-${selectedLanguage}`}
-        getText={() => md.render(value[selectedLanguage] ?? "")}
+        getText={() => md.render(value ? value[selectedLanguage] : "")}
         setText={(v: string) => {
+          if (!value) return;
           let translatedHtml = {
             ...(value as TI18nString),
             [selectedLanguage]: v,
@@ -82,7 +83,7 @@ export const LocalizedEditor = ({
             setSelectedLanguage={setSelectedLanguage}
           />
 
-          {selectedLanguage !== defaultLanguageSymbol && value[defaultLanguageSymbol] && (
+          {value && selectedLanguage !== defaultLanguageSymbol && value[defaultLanguageSymbol] && (
             <div className="mt-1 flex text-xs text-gray-500">
               <strong>Translate:</strong>
               <label
