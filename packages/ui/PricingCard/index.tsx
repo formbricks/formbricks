@@ -97,7 +97,7 @@ export const PricingCard = ({
             {team.billing.features[featureNameKey].status === "inactive" && (
               <p className=" whitespace-pre-wrap text-sm text-slate-600">
                 You&apos;re on the <b>Free plan</b> in {title}.<br />
-                Upgrade now to unlock the below features:
+                Upgrade now to unlock the following for free:
               </p>
             )}
 
@@ -118,8 +118,7 @@ export const PricingCard = ({
             </ul>
           </div>
 
-          <div className="w-1/5"></div>
-          <div className="w-1/5">
+          <div className="ml-6 flex w-2/5 flex-col items-end space-y-2">
             {!team.billing.features[featureNameKey].unlimited && (
               <div className="my-2">
                 {team.billing.features[featureNameKey].status !== "inactive" ? (
@@ -160,12 +159,8 @@ export const PricingCard = ({
               </div>
             )}
             {team.billing.features[featureNameKey].status === "inactive" && (
-              <Button
-                variant="darkCTA"
-                className="w-full justify-center py-2 text-white shadow-sm"
-                loading={loading}
-                onClick={() => onUpgrade()}>
-                Upgrade
+              <Button variant="darkCTA" loading={loading} onClick={() => onUpgrade()}>
+                Upgrade {title !== "Link Survey" ? "for free" : "now"}
               </Button>
             )}
           </div>

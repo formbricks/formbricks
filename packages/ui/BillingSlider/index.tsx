@@ -17,7 +17,7 @@ export const BillingSlider = React.forwardRef<React.ElementRef<typeof SliderPrim
       ref={ref}
       className={cn("relative flex w-full touch-none select-none items-center", className)}
       {...props}>
-      <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-slate-300">
+      <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-r-full bg-slate-300">
         <div
           style={{ width: `calc(${Math.min(value / max, 0.93) * 100}%)` }}
           className="absolute h-full bg-slate-800"></div>
@@ -26,12 +26,12 @@ export const BillingSlider = React.forwardRef<React.ElementRef<typeof SliderPrim
             width: `${((freeTierLimit - value) / max) * 100}%`,
             left: `${(value / max) * 100}%`,
           }}
-          className="absolute h-full bg-slate-500"></div>
+          className="absolute h-full bg-slate-400"></div>
       </SliderPrimitive.Track>
 
       <div
         style={{ left: `calc(${Math.min(value / max, 0.93) * 100}%)` }}
-        className="absolute mt-4 h-6 w-px bg-slate-500"></div>
+        className="absolute mt-4 h-6 w-px bg-slate-400"></div>
 
       <div
         style={{ left: `calc(${Math.min(value / max, 0.93) * 100}% + 0.5rem)` }}
