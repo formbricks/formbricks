@@ -8,23 +8,6 @@ import { getUserSegmentsByAttributeClassName } from "@formbricks/lib/userSegment
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-// export const getActiveInactiveSurveysAction = async (
-//   attributeClassId: string
-// ): Promise<{ activeSurveys: string[]; inactiveSurveys: string[] }> => {
-// const session = await getServerSession(authOptions);
-// if (!session) throw new AuthorizationError("Not authorized");
-
-// const isAuthorized = await canUserAccessAttributeClass(session.user.id, attributeClassId);
-// if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-//   const surveys = await getSurveysByAttributeClassId(attributeClassId);
-//   const response = {
-//     activeSurveys: surveys.filter((s) => s.status === "inProgress").map((survey) => survey.name),
-//     inactiveSurveys: surveys.filter((s) => s.status !== "inProgress").map((survey) => survey.name),
-//   };
-//   return response;
-// };
-
 export const getUserSegmentsByAttributeClassAction = async (
   environmentId: string,
   attributeClass: TAttributeClass
