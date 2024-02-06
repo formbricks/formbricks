@@ -1,4 +1,5 @@
 export const getOriginalFileNameFromUrl = (fileURL: string) => {
+  console.log(fileURL);
   const fileNameFromURL = new URL(fileURL).pathname.split("/").pop();
   const fileExt = fileNameFromURL?.split(".").pop();
   const originalFileName = fileNameFromURL?.split("--fid--")[0];

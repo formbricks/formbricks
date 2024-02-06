@@ -1,5 +1,5 @@
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 import {
   DEBUG,
@@ -13,6 +13,7 @@ import {
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
 import { getQuestionResponseMapping } from "../responses";
+import { getOriginalFileNameFromUrl } from "../storage/utils";
 import { getTeamByEnvironmentId } from "../team/service";
 import { withEmailTemplate } from "./email-template";
 
@@ -186,7 +187,39 @@ export const sendResponseFinishedEmail = async (
             question.answer &&
             `<div style="margin-top:1em;">
             <p style="margin:0px;">${question.question}</p>
-            <p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>  
+            ${
+              question.type === TSurveyQuestionType.FileUpload
+                ? `<div className="relative m-2 rounded-lg bg-slate-300">
+                <a href=${question.answer as string} download=${getOriginalFileNameFromUrl(question.answer)}>
+                  <div className="absolute right-0 top-0 m-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 bg-opacity-50 hover:bg-slate-200/50">
+                    <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    style={{ height: "1rem" }}
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </a>
+        
+                <div className="flex flex-col items-center justify-center p-2">
+                  <FileIcon className="h-6 text-slate-500" />
+                  <p className="mt-2 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-sm text-slate-500 dark:text-slate-400">
+                  ${getOriginalFileNameFromUrl(question.answer)}
+                  </p>
+                </div>
+              </div>`
+                : `<p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>`
+            }
+            
           </div>`
         )
         .join("")}

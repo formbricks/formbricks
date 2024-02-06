@@ -203,6 +203,7 @@ export default function LinkSurvey({
             });
 
             const uploadedUrl = await api.client.storage.uploadFile(file, params);
+            console.log(uploadedUrl);
             return uploadedUrl;
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}

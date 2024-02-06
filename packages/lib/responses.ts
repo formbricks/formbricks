@@ -1,11 +1,11 @@
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 export const getQuestionResponseMapping = (
   survey: { questions: TSurveyQuestion[] },
   response: TResponse
-): { question: string; answer: string }[] => {
-  const questionResponseMapping: { question: string; answer: string }[] = [];
+): { question: string; answer: string; type: TSurveyQuestionType }[] => {
+  const questionResponseMapping: { question: string; answer: string; type: TSurveyQuestionType }[] = [];
 
   for (const question of survey.questions) {
     const answer = response.data[question.id];
@@ -13,6 +13,7 @@ export const getQuestionResponseMapping = (
     questionResponseMapping.push({
       question: question.headline,
       answer: typeof answer !== "undefined" ? answer.toString() : "",
+      type: question.type,
     });
   }
 
