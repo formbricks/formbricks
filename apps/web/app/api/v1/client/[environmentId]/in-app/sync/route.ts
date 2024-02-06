@@ -58,7 +58,7 @@ export async function GET(
       isInAppSurveyLimitReached =
         !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
       if (isInAppSurveyLimitReached) {
-        sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+        await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
       }
     }
 
