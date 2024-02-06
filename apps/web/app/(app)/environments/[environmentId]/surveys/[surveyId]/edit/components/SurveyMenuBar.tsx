@@ -247,7 +247,6 @@ export default function SurveyMenuBar({
         return rest;
       }),
     };
-
     if (!validateSurvey(localSurvey)) {
       setIsSurveySaving(false);
       return;
@@ -258,7 +257,8 @@ export default function SurveyMenuBar({
       const parsedFilters = ZUserSegmentFilters.safeParse(strippedSurvey.userSegment.filters);
       if (!parsedFilters.success) {
         const errMsg =
-          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
+          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
+          "Invalid targeting: Please check your audience filters";
         setIsSurveySaving(false);
         toast.error(errMsg);
         return;

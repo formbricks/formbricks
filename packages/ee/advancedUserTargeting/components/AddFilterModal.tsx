@@ -267,6 +267,14 @@ const AddFilterModal = ({
     );
   }, [attributeClasses, searchValue]);
 
+  const personAttributesFiltered = useMemo(() => {
+    const personAttributes = [{ name: "userId" }];
+
+    return personAttributes.filter((personAttribute) =>
+      personAttribute.name.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  }, [searchValue]);
+
   const userSegmentsFiltered = useMemo(() => {
     if (!userSegments) return [];
 
@@ -287,12 +295,19 @@ const AddFilterModal = ({
     () => [
       {
         attributes: attributeClassesFiltered,
+        personAttributes: personAttributesFiltered,
         actions: actionClassesFiltered,
         segments: userSegmentsFiltered,
         devices: deviceTypesFiltered,
       },
     ],
-    [actionClassesFiltered, attributeClassesFiltered, deviceTypesFiltered, userSegmentsFiltered]
+    [
+      actionClassesFiltered,
+      attributeClassesFiltered,
+      deviceTypesFiltered,
+      personAttributesFiltered,
+      userSegmentsFiltered,
+    ]
   );
 
   const getAllTabContent = () => {
@@ -303,7 +318,8 @@ const AddFilterModal = ({
             filterArr.actions.length === 0 &&
             filterArr.attributes.length === 0 &&
             filterArr.segments.length === 0 &&
-            filterArr.devices.length === 0
+            filterArr.devices.length === 0 &&
+            filterArr.personAttributes.length === 0
           );
         }) && (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
@@ -346,6 +362,23 @@ const AddFilterModal = ({
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                     <TagIcon className="h-4 w-4" />
                     <p>{attributeClass.name}</p>
+                  </div>
+                );
+              })}
+
+              {filters.personAttributes.map((personAttribute) => {
+                return (
+                  <div
+                    onClick={() => {
+                      handleAddFilter({
+                        type: "person",
+                        onAddFilter,
+                        setOpen,
+                      });
+                    }}
+                    className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
+                    <FingerprintIcon className="h-4 w-4" />
+                    <p>{personAttribute.name}</p>
                   </div>
                 );
               })}
