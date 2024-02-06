@@ -55,7 +55,8 @@ const LocalizedInput = ({
   };
 
   const isInComplete =
-    id === "subheader" ||
+    value !== undefined &&
+    (id === "subheader" ||
     id === "lowerLabel" ||
     id === "upperLabel" ||
     id === "buttonLabel" ||
@@ -67,7 +68,8 @@ const LocalizedInput = ({
         selectedLanguage === defaultLanguageSymbol
       : isInvalid &&
         !isLabelValidForAllLanguages(value, extractLanguageSymbols(SurveyLanguagesList)) &&
-        selectedLanguage === defaultLanguageSymbol;
+        selectedLanguage === defaultLanguageSymbol);
+
   return (
     <div className="relative w-full">
       <QuestionFormInput
