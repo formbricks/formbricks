@@ -96,7 +96,7 @@ export async function GET(
         person = await createPerson(environmentId, userId);
       }
     } else {
-      sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "userTargeting");
+      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "userTargeting");
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
         // if it's a new person and MAU limit is reached, throw an error
@@ -110,7 +110,7 @@ export async function GET(
       }
     }
     if (isInAppSurveyLimitReached) {
-      sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
