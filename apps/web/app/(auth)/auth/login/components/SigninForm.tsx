@@ -8,7 +8,7 @@ import TwoFactorBackup from "@/app/(auth)/auth/login/components/TwoFactorBackup"
 import { XCircleIcon } from "@heroicons/react/24/solid";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
@@ -36,7 +36,6 @@ export const SigninForm = ({
   githubOAuthEnabled: boolean;
   azureOAuthEnabled: boolean;
 }) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
 
