@@ -1,3 +1,4 @@
+import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextResponse, userAgent } from "next/server";
@@ -97,6 +98,7 @@ export async function GET(
         person = await createPerson(environmentId, userId);
       }
     } else {
+      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "userTargeting");
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
         // if it's a new person and MAU limit is reached, throw an error
@@ -108,6 +110,9 @@ export async function GET(
           throw new Error(errorMessage);
         }
       }
+    }
+    if (isInAppSurveyLimitReached) {
+      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([

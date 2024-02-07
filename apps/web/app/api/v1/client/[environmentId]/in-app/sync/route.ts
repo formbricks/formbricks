@@ -1,3 +1,4 @@
+import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, NextResponse } from "next/server";
@@ -56,6 +57,9 @@ export async function GET(
       const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
       isInAppSurveyLimitReached =
         !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
+      if (isInAppSurveyLimitReached) {
+        await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+      }
     }
 
     if (!environment?.widgetSetupCompleted) {
