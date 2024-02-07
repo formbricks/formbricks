@@ -9,6 +9,7 @@ interface sendEmailData {
   subject: string;
   text?: string;
   html: string;
+  from?: string;
 }
 
 export const sendEmail = async (emailData: sendEmailData) => {
@@ -20,15 +21,11 @@ export const sendEmail = async (emailData: sendEmailData) => {
       user: serverRuntimeConfig.smtpUser,
       pass: serverRuntimeConfig.smtpPassword,
     },
-    from: serverRuntimeConfig.smtpUser,
+    from: `Kadea Academy <${ serverRuntimeConfig.mailFrom || serverRuntimeConfig.smtpUser }>`,
     // logger: true,
     // debug: true,
   });
-  const emailDefaults = {
-    from: `Kadea  Academy <${serverRuntimeConfig.smtpUser || "noreply@kinshasadigital.com" //user:serverRuntimeConfig.mailFrom
-      }>`,
-  };
-  await transporter.sendMail({ ...emailDefaults, ...emailData });
+  await transporter.sendMail(emailData);
 };
 
 export const sendVerificationEmail = async (user, url = "/sourcings") => {
@@ -46,6 +43,7 @@ export const sendVerificationEmail = async (user, url = "/sourcings") => {
     )}&callbackUrl=${encodeURIComponent(url)}`;
   await sendEmail({
     to: user.email,
+    from: `Jean-Louis Mbaka <${ serverRuntimeConfig.smtpUser }>`,
     subject: `Merci pour ton enregistrement ${user.firstname} x Kadea Academy !`,
     html: `<div>
       <p>Hello ${user.firstname} !</p>
@@ -81,13 +79,13 @@ export const sendForgotPasswordEmail = async (user) => {
     }/auth/reset-password?token=${encodeURIComponent(token)}`;
   await sendEmail({
     to: user.email,
-    subject: "Réinitialiser votre mot de passe Kadea Sourcing",
-    html: `Vous avez demandé un lien pour changer votre mot de passe. Vous pouvez le faire en cliquant sur le lien ci-dessous :<br/>
-    <a href="${verifyLink}">${verifyLink}</a><br/>
+    subject: "Réinitialise ton mot de passe Kadea Sourcing",
+    html: `Tu as demandé un lien pour changer ton mot de passe. Tu peux le faire en cliquant sur le lien ci-dessous :<br/>
+    <a href="${verifyLink}" style="background-color: rgba(245, 59, 87); color:#fff; padding:8px; border: 2px solid red; margin: auto; border-radius: 15px;">Réinitialise ton mot de passe</a><br/>
     <br/>
-    Le lien est valable pendant 24 heures. Si vous ne l'avez pas demandé, veuillez ignorer cet e-mail.<br/>
+    Le lien est valable pendant 24 heures. Si tu ne l'as pas demandé, ignore cet e-mail.<br/>
     <br/>
-    Votre mot de passe ne changera pas tant que vous n'aurez pas accédé au lien ci-dessus et créé un nouveau mot de passe.<br/>
+    Ton mot de passe ne changera pas tant que tu n'aura pas accédé au lien ci-dessus et créé un nouveau mot de passe.<br/>
     <br/>
     L'équipe Kadea`,
   });
@@ -96,8 +94,8 @@ export const sendForgotPasswordEmail = async (user) => {
 export const sendPasswordResetNotifyEmail = async (user) => {
   await sendEmail({
     to: user.email,
-    subject: "Votre mot de passe Kadea Sourcing a été changé",
-    html: `Nous vous contactons pour vous informer que votre mot de passe a été modifié.<br/>
+    subject: "Ton mot de passe Kadea Sourcing a été changé",
+    html: `Nous te contactons pour t'informer que ton mot de passe a été modifié.<br/>
     <br/>
     L'équipe Kadea`,
   });
