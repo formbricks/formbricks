@@ -416,6 +416,7 @@ export const ZSurvey = z.object({
   name: z.string(),
   type: ZSurveyType,
   environmentId: z.string(),
+  createdBy: z.string().nullable(),
   status: ZSurveyStatus,
   attributeFilters: z.array(ZSurveyAttributeFilter),
   displayOption: ZSurveyDisplayOption,
@@ -443,6 +444,7 @@ export const ZSurvey = z.object({
 export const ZSurveyInput = z.object({
   name: z.string(),
   type: ZSurveyType.optional(),
+  createdBy: z.string().cuid().optional(),
   status: ZSurveyStatus.optional(),
   displayOption: ZSurveyDisplayOption.optional(),
   autoClose: z.number().optional(),
@@ -462,11 +464,13 @@ export const ZSurveyInput = z.object({
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
+
 export type TSurveyDates = {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];
   closeOnDate: TSurvey["closeOnDate"];
 };
+
 export type TSurveyInput = z.infer<typeof ZSurveyInput>;
 
 export const ZSurveyTSurveyQuestionType = z.union([

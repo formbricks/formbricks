@@ -81,7 +81,7 @@ export default function BestPracticeNavigation() {
     },
 
     {
-      name: "Improve Newsletter Cotent",
+      name: "Improve Newsletter Content",
       href: "/improve-newsletter-content",
       status: true,
       icon: FeedbackIcon,

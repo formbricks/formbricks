@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 
-import { TSurveyHiddenFields, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import {
   AppPieChartIcon,
@@ -14,6 +14,7 @@ import {
   DashboardIcon,
   DogChaserIcon,
   DoorIcon,
+  EmailIcon,
   FeedbackIcon,
   GaugeSpeedFastIcon,
   HeartCommentIcon,
@@ -36,11 +37,6 @@ const welcomeCardDefault = {
   enabled: true,
   timeToFinish: false,
   showResponseCount: false,
-};
-
-const hiddenFieldsDefault: TSurveyHiddenFields = {
-  enabled: true,
-  fieldIds: [],
 };
 
 export const customSurvey: TTemplate = {
@@ -1231,12 +1227,12 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Improve Newsletter Content",
+    icon: EmailIcon,
     category: "Growth",
-    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
     description: "Find out how your subscribers like your newsletter content.",
+    objectives: ["increase_conversion", "sharpen_marketing_messaging"],
     preset: {
       name: "Improve Newsletter Content",
-      welcomeCard: welcomeCardDefault,
       questions: [
         {
           id: createId(),
@@ -1277,8 +1273,11 @@ export const templates: TTemplate[] = [
           dismissButtonLabel: "Find your own friends",
         },
       ],
+      welcomeCard: welcomeCardDefault,
       thankYouCard: thankYouCardDefault,
-      hiddenFields: hiddenFieldsDefault,
+      hiddenFields: {
+        enabled: false,
+      },
     },
   },
 ];

@@ -98,8 +98,11 @@ export const leaveTeamAction = async (teamId: string) => {
 };
 
 export const createInviteTokenAction = async (inviteId: string) => {
-  const { email } = await getInvite(inviteId);
-  const inviteToken = createInviteToken(inviteId, email, {
+  const invite = await getInvite(inviteId);
+  if (!invite) {
+    throw new ValidationError("Invite not found");
+  }
+  const inviteToken = createInviteToken(inviteId, invite.email, {
     expiresIn: "7d",
   });
 
