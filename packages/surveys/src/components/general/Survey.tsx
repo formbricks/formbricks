@@ -3,14 +3,15 @@ import ProgressBar from "@/components/general/ProgressBar";
 import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { evaluateCondition } from "@/lib/logicEvaluator";
-import { cn, getLocalizedValue } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { SurveyBaseProps } from "@formbricks/types/formbricksSurveys";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TI18nString, TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
@@ -178,17 +179,17 @@ export function Survey({
 
   const parseRecallInformation = (question: TSurveyQuestion) => {
     const modifiedQuestion = structuredClone(question);
-    if (question.headline && (question.headline as TI18nString)[language]?.includes("recall:")) {
-      (modifiedQuestion.headline as TI18nString)[language] = replaceRecallInfo(
+    if (question.headline && question.headline[language]?.includes("recall:")) {
+      modifiedQuestion.headline[language] = replaceRecallInfo(
         getLocalizedValue(modifiedQuestion.headline, language)
       );
     }
     if (
       question.subheader &&
-      (question.subheader as TI18nString)[language]?.includes("recall:") &&
+      question.subheader[language]?.includes("recall:") &&
       modifiedQuestion.subheader
     ) {
-      (modifiedQuestion.subheader as TI18nString)[language] = replaceRecallInfo(
+      modifiedQuestion.subheader[language] = replaceRecallInfo(
         getLocalizedValue(modifiedQuestion.subheader, language)
       );
     }
@@ -221,10 +222,10 @@ export function Survey({
     if (questionId === "start" && survey.welcomeCard.enabled) {
       return (
         <WelcomeCard
-          headline={survey.welcomeCard.headline as TI18nString}
-          html={getLocalizedValue(survey.welcomeCard.html, language)}
+          headline={survey.welcomeCard.headline}
+          html={survey.welcomeCard.html}
           fileUrl={survey.welcomeCard.fileUrl}
-          buttonLabel={getLocalizedValue(survey.welcomeCard.buttonLabel, language)}
+          buttonLabel={survey.welcomeCard.buttonLabel}
           onSubmit={onSubmit}
           survey={survey}
           language={language}
@@ -234,8 +235,8 @@ export function Survey({
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
       return (
         <ThankYouCard
-          headline={survey.thankYouCard.headline as TI18nString}
-          subheader={survey.thankYouCard.subheader as TI18nString}
+          headline={survey.thankYouCard.headline}
+          subheader={survey.thankYouCard.subheader}
           buttonLabel={survey.thankYouCard.buttonLabel}
           buttonLink={survey.thankYouCard.buttonLink}
           imageUrl={survey.thankYouCard.imageUrl}

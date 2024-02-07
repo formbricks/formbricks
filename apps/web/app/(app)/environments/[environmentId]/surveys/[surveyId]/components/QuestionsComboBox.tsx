@@ -16,7 +16,7 @@ import * as React from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TI18nString, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@formbricks/ui/Command";
 import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 
@@ -29,7 +29,7 @@ export enum OptionsType {
 }
 
 export type QuestionOption = {
-  label: string;
+  label: string | TI18nString;
   questionType?: TSurveyQuestionType;
   type: OptionsType;
   id: string;
@@ -96,7 +96,7 @@ const SelectedCommandItem = ({
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
       <p className="ml-3 truncate text-base text-slate-600">
-        {getLocalizedValue(label, defaultLanguageSymbol ?? "")}
+        {typeof label === "string" ? label : getLocalizedValue(label, defaultLanguageSymbol ?? "")}
       </p>
     </div>
   );

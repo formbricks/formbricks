@@ -418,7 +418,7 @@ model Product {
   darkOverlay          Boolean         @default(false)
   /// @zod.custom(imports.ZLanguages)
   /// [Languages]
-  languages            Json            @default("{\"en\":\"English\",\"_default_\":\"en\"}")
+  languages            Json            @default("[{\"id\":\"en\",\"default\":true,\"alias\":\"English\"}]")
 
   @@unique([teamId, name])
   @@index([teamId])

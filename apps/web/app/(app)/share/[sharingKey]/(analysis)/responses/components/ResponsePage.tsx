@@ -9,6 +9,7 @@ import { getFilterResponses } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 
+import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
@@ -39,7 +40,7 @@ const ResponsePage = ({
   responsesPerPage,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
-
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -60,7 +61,7 @@ const ResponsePage = ({
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
-        defaultLanguageSymbol={product.languages["_default_"]}
+        defaultLanguageSymbol={defaultLanguageSymbol}
       />
       <SurveyResultsTabs
         activeId="responses"
@@ -75,7 +76,7 @@ const ResponsePage = ({
         survey={survey}
         environmentTags={environmentTags}
         responsesPerPage={responsesPerPage}
-        defaultLanguageSymbol={product.languages["_default_"]}
+        defaultLanguageSymbol={defaultLanguageSymbol}
       />
     </ContentWrapper>
   );

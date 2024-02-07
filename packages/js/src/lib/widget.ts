@@ -29,7 +29,7 @@ export const renderWidget = async (survey: TSurvey) => {
   }
 
   const product = config.get().state.product;
-  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguageSymbol = product.languages.find((language) => language.default === true)?.id ?? "en";
   const language = config.get().language ?? defaultLanguageSymbol;
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 

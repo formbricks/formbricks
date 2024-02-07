@@ -4,10 +4,9 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { TLanguages } from "@formbricks/types/product";
+import { createI18nString, extractLanguageIds } from "@formbricks/lib/i18n/utils";
+import { TLanguage } from "@formbricks/types/product";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
-import { TI18nString } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 
 interface NPSQuestionFormProps {
@@ -18,7 +17,7 @@ interface NPSQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageSymbol: string;
 }
@@ -36,13 +35,13 @@ export default function NPSQuestionForm({
   defaultLanguageSymbol,
 }: NPSQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const surveyLanguageSymbols = Object.keys(surveyLanguages);
+  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
   return (
     <form>
       <LocalizedInput
         id="headline"
         name="headline"
-        value={question.headline as TI18nString}
+        value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         surveyLanguages={surveyLanguages}
@@ -60,7 +59,7 @@ export default function NPSQuestionForm({
               <LocalizedInput
                 id="subheader"
                 name="subheader"
-                value={question.subheader as TI18nString}
+                value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 surveyLanguages={surveyLanguages}
@@ -89,7 +88,7 @@ export default function NPSQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageSymbols, defaultLanguageSymbol),
+                subheader: createI18nString("", surveyLanguageIds, defaultLanguageSymbol),
               });
               setShowSubheader(true);
             }}>
@@ -105,7 +104,7 @@ export default function NPSQuestionForm({
           <LocalizedInput
             id="lowerLabel"
             name="lowerLabel"
-            value={question.lowerLabel as TI18nString}
+            value={question.lowerLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             surveyLanguages={surveyLanguages}
@@ -120,7 +119,7 @@ export default function NPSQuestionForm({
           <LocalizedInput
             id="upperLabel"
             name="upperLabel"
-            value={question.upperLabel as TI18nString}
+            value={question.upperLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             surveyLanguages={surveyLanguages}
@@ -138,7 +137,7 @@ export default function NPSQuestionForm({
           <LocalizedInput
             id="buttonLabel"
             name="buttonLabel"
-            value={question.buttonLabel as TI18nString}
+            value={question.buttonLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             maxLength={48}

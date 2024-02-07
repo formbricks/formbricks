@@ -4,66 +4,59 @@ import { ArrowUpRightIcon, ChevronDownIcon, ChevronUpIcon, LanguageIcon } from "
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { convertArrayToObject } from "@formbricks/lib/i18n/utils";
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TLanguages } from "@formbricks/types/product";
+import { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface LanguageSwitchProps {
-  productLanguages: TLanguages;
-  setLanguages: any;
+  productLanguages: TLanguage[];
+  setSurveyLanguages: (languages: TLanguage[]) => void;
   i18n: boolean;
   setI18n: (i18n: boolean) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   environmentId: string;
   isEnterpriseEdition: boolean;
 }
 export default function LanguageSwitch({
   productLanguages,
-  setLanguages,
+  setSurveyLanguages,
   i18n,
   setI18n,
   surveyLanguages,
   environmentId,
   isEnterpriseEdition,
 }: LanguageSwitchProps) {
-  const defaultLanguageSymbol = productLanguages["_default_"];
   const [translationsEnabled, setTranslationsEnabled] = useState(i18n);
-  const [languagesArray, setLanguagesArray] = useState<string[][]>(Object.entries(surveyLanguages));
   const [showLanguageToggle, setshowLanguageToggle] = useState(false);
-  const productLanguagesList = Object.entries(productLanguages);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   useClickOutside(wrapperRef, () => {
     setshowLanguageToggle(false);
   });
 
-  const toggleLanguage = (language: string[]) => {
-    const languageCode = language[0];
-    if (languagesArray.some((lang) => lang[0] === languageCode)) {
-      const updateArray = languagesArray.filter((lang) => lang[0] !== languageCode);
-      setLanguagesArray(updateArray);
-      setLanguages(convertArrayToObject(updateArray));
+  const toggleLanguage = (language: TLanguage) => {
+    const languageCode = language.id;
+    if (surveyLanguages.some((lang) => lang.id === languageCode)) {
+      const updateArray = surveyLanguages.filter((lang) => lang.id !== languageCode);
+      setSurveyLanguages(updateArray);
     } else {
-      const updateArray = [...languagesArray, language];
-      setLanguagesArray(updateArray);
-      setLanguages(convertArrayToObject(updateArray));
+      const updateArray = [...surveyLanguages, language];
+      setSurveyLanguages(updateArray);
     }
   };
 
   // if there is a change in languages belonging to a particular product, then accordingly update the currently selected languages
   useEffect(() => {
-    let updatedLanguagesArray = languagesArray.filter((lang) =>
-      productLanguagesList.some((allLang) => allLang[0] === lang[0])
+    let updatedLanguagesArray = surveyLanguages.filter((lang) =>
+      productLanguages.some((allLang) => allLang.id === lang.id)
     );
 
-    if (updatedLanguagesArray.length !== languagesArray.length) {
-      setLanguagesArray(updatedLanguagesArray);
-      setLanguages(convertArrayToObject(updatedLanguagesArray));
+    if (updatedLanguagesArray.length !== surveyLanguages.length) {
+      setSurveyLanguages(updatedLanguagesArray);
     }
-  }, [productLanguages, languagesArray]);
+  }, [productLanguages, surveyLanguages]);
 
   return (
     <div className="flex justify-end">
@@ -92,20 +85,20 @@ export default function LanguageSwitch({
                     <div
                       className="absolute z-20 mt-2 space-y-4 rounded-md border bg-white p-4"
                       ref={wrapperRef}>
-                      {productLanguagesList?.map((language) => {
-                        if (language[0] === defaultLanguageSymbol || language[0] === "_default_") return;
+                      {productLanguages.map((language) => {
+                        if (language.default) return;
                         return (
                           <label
                             htmlFor={`switch-${language}`}
                             className="flex cursor-pointer items-center text-sm">
                             <Switch
                               id={`switch-${language}`}
-                              value={language}
+                              value={language.alias}
                               className="mr-4"
-                              checked={languagesArray.some((lang) => lang[0] === language[0])}
+                              checked={surveyLanguages.some((lang) => lang.id === language.id)}
                               onClick={() => toggleLanguage(language)}
                             />
-                            {language[1]}
+                            {language.alias}
                           </label>
                         );
                       })}

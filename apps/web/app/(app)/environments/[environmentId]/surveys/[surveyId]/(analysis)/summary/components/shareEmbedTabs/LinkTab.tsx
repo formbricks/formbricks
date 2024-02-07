@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
+import { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 
 interface LinkTabProps {
@@ -15,7 +16,7 @@ interface LinkTabProps {
   webAppUrl: string;
   generateNewSingleUseLink: () => void;
   isSingleUseLinkSurvey: boolean;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguage[];
   setLanguage: (langauge: string) => void;
 }
 
@@ -87,10 +88,10 @@ export default function LinkTab({
                         <div
                           className="rounded-md px-1 py-2 hover:cursor-pointer hover:bg-slate-700"
                           onClick={() => {
-                            setLanguage(language[0]);
+                            setLanguage(language.id);
                             setShowLanguageSelect(false);
                           }}>
-                          {language[1]}
+                          {language.alias}
                         </div>
                       );
                     })}

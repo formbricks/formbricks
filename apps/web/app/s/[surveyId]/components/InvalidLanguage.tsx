@@ -1,10 +1,11 @@
 import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
 
+import { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { StackedCardsContainer } from "@formbricks/ui/StackedCardsContainer";
 
 interface InvalidLanguageProps {
-  languages: string[][];
+  languages: TLanguage[];
   surveyUrl: string;
 }
 
@@ -19,10 +20,10 @@ export default function InvalidLanguage({ languages, surveyUrl }: InvalidLanguag
           {languages.map((language) => (
             <Button
               variant="secondary"
-              href={surveyUrl + `?lang=${language[0]}`}
+              href={surveyUrl + `?lang=${language.id}`}
               endIconClassName="h-4 w-4"
               EndIcon={ArrowUpRightIcon}>
-              <span>{language[1]}</span>
+              <span>{language.alias}</span>
             </Button>
           ))}
         </div>

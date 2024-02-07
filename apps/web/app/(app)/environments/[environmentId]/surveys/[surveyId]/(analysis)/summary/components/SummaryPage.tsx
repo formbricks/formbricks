@@ -11,6 +11,7 @@ import { getFilterResponses } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
@@ -53,10 +54,11 @@ const SummaryPage = ({
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
 
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, product.languages["_default_"]);
-  }, [survey, product.languages]);
+    return checkForRecallInHeadline(survey, defaultLanguageSymbol);
+  }, [survey, product.languages, defaultLanguageSymbol]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -86,7 +88,7 @@ const SummaryPage = ({
           responses={filterResponses}
           survey={survey}
           totalResponses={responses}
-          defaultLanguageSymbol={product.languages["_default_"]}
+          defaultLanguageSymbol={defaultLanguageSymbol}
         />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
       </div>
@@ -103,7 +105,7 @@ const SummaryPage = ({
           survey={survey}
           responses={responses}
           displayCount={displayCount}
-          defaultLanguageSymbol={product.languages["_default_"]}
+          defaultLanguageSymbol={defaultLanguageSymbol}
         />
       )}
       <SummaryList

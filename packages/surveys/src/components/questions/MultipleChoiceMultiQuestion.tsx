@@ -4,12 +4,13 @@ import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getLocalizedValue, shuffleQuestions } from "@/lib/utils";
+import { cn, shuffleQuestions } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TI18nString, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
+import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
@@ -59,7 +60,7 @@ export default function MultipleChoiceMultiQuestion({
     );
     setOtherValue(
       (Array.isArray(value) &&
-        value.filter((v) => !question.choices.find((c) => (c.label as TI18nString)[language] === v))[0]) ||
+        value.filter((v) => !question.choices.find((c) => c.label[language] === v))[0]) ||
         ""
     );
   }, [question.id, getChoicesWithoutOtherLabels, question.choices, value, language]);

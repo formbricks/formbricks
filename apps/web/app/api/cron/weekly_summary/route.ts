@@ -4,8 +4,8 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TLanguages } from "@formbricks/types/product";
+import { getDefaultLanguage, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TLanguage } from "@formbricks/types/product";
 
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
 import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
@@ -173,7 +173,7 @@ const getProductsByTeamId = async (teamId: string): Promise<ProductData[]> => {
 const getNotificationResponse = (
   environment: EnvironmentData,
   productName: string,
-  languages: TLanguages
+  languages: TLanguage[]
 ): NotificationResponse => {
   const insights = {
     totalCompletedResponses: 0,
@@ -184,7 +184,7 @@ const getNotificationResponse = (
   };
 
   const surveys: Survey[] = [];
-  const defaultLanguageSymbol = languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(languages).id;
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
     const surveyData: Survey = {

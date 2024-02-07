@@ -4,10 +4,10 @@ import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { getLocalizedValue } from "@/lib/utils";
 import { useState } from "preact/hooks";
 import { useCallback } from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";

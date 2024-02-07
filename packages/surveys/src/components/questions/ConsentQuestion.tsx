@@ -6,10 +6,9 @@ import QuestionImage from "@/components/general/QuestionImage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
-
-import { getLocalizedValue } from "../../lib/utils";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;

@@ -1,6 +1,7 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
-import { calculateElementIdx, getLocalizedValue } from "@/lib/utils";
+import { calculateElementIdx } from "@/lib/utils";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 
@@ -9,9 +10,9 @@ import HtmlBody from "./HtmlBody";
 
 interface WelcomeCardProps {
   headline?: TI18nString;
-  html?: string;
+  html?: TI18nString;
   fileUrl?: string;
-  buttonLabel?: string;
+  buttonLabel?: TI18nString;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   survey: TSurvey;
   language: string;
@@ -109,7 +110,7 @@ export default function WelcomeCard({
       <div className="mt-10 flex w-full justify-between">
         <div className="flex w-full justify-start gap-4">
           <SubmitButton
-            buttonLabel={buttonLabel}
+            buttonLabel={getLocalizedValue(buttonLabel, language)}
             isLastQuestion={false}
             focus={true}
             onClick={() => {

@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { TEXT_RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getSurveyLanguages, translateSurvey } from "@formbricks/lib/i18n/utils";
+import { getDefaultLanguage, getSurveyLanguages, translateSurvey } from "@formbricks/lib/i18n/utils";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
@@ -41,7 +41,7 @@ export default async function Page({ params }) {
   if (!team) {
     throw new Error("Team not found");
   }
-  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
   const surveyLanguages = getSurveyLanguages(product, survey);
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 

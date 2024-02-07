@@ -11,9 +11,8 @@ import {
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { TLanguages } from "@formbricks/types/product";
-import { TI18nString } from "@formbricks/types/surveys";
+import { createI18nString, extractLanguageIds } from "@formbricks/lib/i18n/utils";
+import { TLanguage } from "@formbricks/types/product";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,
@@ -39,7 +38,7 @@ interface OpenQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageSymbol: string;
 }
@@ -57,13 +56,13 @@ export default function OpenQuestionForm({
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
-  const surveyLanguageSymbols = Object.keys(surveyLanguages);
+  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
       inputType: inputType,
       placeholder: createI18nString(
         getPlaceholderByInputType(inputType),
-        surveyLanguageSymbols,
+        surveyLanguageIds,
         defaultLanguageSymbol
       ),
       longAnswer: inputType === "text" ? question.longAnswer : false,
@@ -76,7 +75,7 @@ export default function OpenQuestionForm({
       <LocalizedInput
         id="headline"
         name="headline"
-        value={question.headline as TI18nString}
+        value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         surveyLanguages={surveyLanguages}
@@ -94,7 +93,7 @@ export default function OpenQuestionForm({
               <LocalizedInput
                 id="subheader"
                 name="subheader"
-                value={question.subheader as TI18nString}
+                value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 surveyLanguages={surveyLanguages}
@@ -123,7 +122,7 @@ export default function OpenQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageSymbols, defaultLanguageSymbol),
+                subheader: createI18nString("", surveyLanguageIds, defaultLanguageSymbol),
               });
               setShowSubheader(true);
             }}>
@@ -140,8 +139,8 @@ export default function OpenQuestionForm({
           name="placeholder"
           value={
             question.placeholder && question.placeholder[selectedLanguage]
-              ? (question.placeholder as TI18nString)
-              : createI18nString(defaultPlaceholder, surveyLanguageSymbols, defaultLanguageSymbol)
+              ? question.placeholder
+              : createI18nString(defaultPlaceholder, surveyLanguageIds, defaultLanguageSymbol)
           }
           surveyLanguages={surveyLanguages}
           localSurvey={localSurvey}

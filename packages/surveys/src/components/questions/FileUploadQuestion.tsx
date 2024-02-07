@@ -1,8 +1,8 @@
 import QuestionImage from "@/components/general/QuestionImage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { getLocalizedValue } from "@/lib/utils";
 import { useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";

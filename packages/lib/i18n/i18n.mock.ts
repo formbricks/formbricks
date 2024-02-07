@@ -1,194 +1,247 @@
 import {
   TSurvey,
-  TSurveyCTAQuestion,
-  TSurveyCalQuestion,
-  TSurveyConsentQuestion,
-  TSurveyDateQuestion,
-  TSurveyDisplayOption,
-  TSurveyFileUploadQuestion,
-  TSurveyMultipleChoiceMultiQuestion,
-  TSurveyMultipleChoiceSingleQuestion,
-  TSurveyNPSQuestion,
-  TSurveyOpenTextQuestion,
-  TSurveyPictureSelectionQuestion,
   TSurveyQuestionType,
-  TSurveyRatingQuestion,
-  TSurveyStatus,
-  TSurveyType,
+  TSurveyThankYouCard,
+  TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 
 export const mockWelcomeCard = {
-  html: '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span style="white-space: pre-wrap;">Thanks for providing your feedback - let\'s go!</span></p>',
+  html: {
+    en: '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span style="white-space: pre-wrap;">Thanks for providing your feedback - let\'s go!</span></p>',
+  },
   enabled: true,
-  headline: "Welcome!",
-  timeToFinish: true,
+  headline: {
+    en: "Welcome!",
+  },
+  timeToFinish: false,
   showResponseCount: false,
-};
+} as unknown as TSurveyWelcomeCard;
 
-export const mockOpenTextQuestion: TSurveyOpenTextQuestion = {
-  id: "ljlxqvultjvuunrqh8fixd3j",
+export const mockOpenTextQuestion = {
+  id: "lqht9sj5s6andjkmr9k1n54q",
   type: TSurveyQuestionType.OpenText,
-  headline: "What would you like to know?",
+  headline: {
+    en: "What would you like to know?",
+  },
+
   required: true,
   inputType: "text",
-  subheader: "This is an example survey.",
-  placeholder: "Type your answer here...",
+  subheader: {
+    en: "This is an example survey.",
+  },
+  placeholder: {
+    en: "Type your answer here...",
+  },
 };
 
-export const mockSingleSelectQuestion: TSurveyMultipleChoiceSingleQuestion = {
+export const mockSingleSelectQuestion = {
   id: "mvqx8t90np6isb6oel9eamzc",
   type: TSurveyQuestionType.MultipleChoiceSingle,
   choices: [
     {
       id: "r52sul8ag19upaicit0fyqzo",
-      label: "Eat the cake 🍰",
+      label: {
+        en: "Eat the cake 🍰",
+      },
     },
     {
       id: "es0gc12hrpk12x13rlqm59rg",
-      label: "Have the cake 🎂",
+      label: {
+        en: "Have the cake 🎂",
+      },
     },
   ],
   isDraft: true,
-  headline: "What do you do?",
+  headline: {
+    en: "What do you do?",
+  },
   required: true,
-  subheader: "Can't do both.",
+  subheader: {
+    en: "Can't do both.",
+  },
   shuffleOption: "none",
 };
 
-export const mockMultiSelectQuestion: TSurveyMultipleChoiceMultiQuestion = {
-  id: "mmpocsyp7y7xn11v8ff65f2y",
+export const mockMultiSelectQuestion = {
+  required: true,
+  headline: {
+    en: "What's important on vacay?",
+  },
+  choices: [
+    {
+      id: "mgjk3i967ject4mezs4cjadj",
+      label: {
+        en: "Sun ☀️",
+      },
+    },
+    {
+      id: "m1wmzagcle4bzmkmgru4ol0w",
+      label: {
+        en: "Ocean 🌊",
+      },
+    },
+    {
+      id: "h12xs1v3w7s579p4upb5vnzp",
+      label: {
+        en: "Palms 🌴",
+      },
+    },
+  ],
+  shuffleOption: "none",
+  id: "cpydxgsmjg8q9iwfa8wj4ida",
   type: TSurveyQuestionType.MultipleChoiceMulti,
-  choices: [
-    {
-      id: "haso0u4ev1rkmp6shhkqbkiw",
-      label: "Sun ☀️",
-    },
-    {
-      id: "lo3ge4hwsfs8mxw38xob232l",
-      label: "Ocean 🌊",
-    },
-    {
-      id: "m7xknhpqxgeb1b865f9c61xh",
-      label: "Palms 🌴",
-    },
-  ],
   isDraft: true,
-  headline: "What's important on vacay?",
-  required: true,
-  shuffleOption: "none",
 };
 
-export const mockPictureSelectQuestion: TSurveyPictureSelectionQuestion = {
-  id: "h6zsei27y2ixsq200jfbb65d",
-  type: TSurveyQuestionType.PictureSelection,
+export const mockPictureSelectQuestion = {
+  required: true,
+  headline: {
+    en: "Which is the cutest puppy?",
+  },
+  subheader: {
+    en: "You can also pick both.",
+  },
+  allowMulti: true,
   choices: [
     {
-      id: "c3ykzkv8fn7g9071n6u9guck",
+      id: "bdz471uu4ut7ox38b5aprzkq",
       imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
     },
     {
-      id: "nx5r56j2tfo8ywnpmj9veyek",
+      id: "t10v5rkqw32si3orlkt9mrdw",
       imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
     },
   ],
+  id: "a8monbe8hq0mivh3irfhd3i5",
+  type: TSurveyQuestionType.PictureSelection,
   isDraft: true,
-  headline: "Which is the cutest puppy?",
-  required: true,
-  subheader: "You can also pick both.",
-  allowMulti: true,
 };
 
-export const mockRatingQuestion: TSurveyRatingQuestion = {
-  id: "p5d2x9lzftqql86kznn01868",
-  type: TSurveyQuestionType.Rating,
-  range: 5,
+export const mockRatingQuestion = {
+  required: true,
+  headline: {
+    en: "How would you rate My Product",
+  },
+  subheader: {
+    en: "Don't worry, be honest.",
+  },
   scale: "star",
+  range: 5,
+  lowerLabel: {
+    en: "Not good",
+  },
+  upperLabel: {
+    en: "Very good",
+  },
+  id: "waldsboahjtgqhg5p18d1awz",
+  type: TSurveyQuestionType.Rating,
   isDraft: true,
-  headline: "How would you rate My Product",
-  required: true,
-  subheader: "Don't worry, be honest.",
-  lowerLabel: "Not good",
-  upperLabel: "Very good",
 };
 
-export const mockNpsQuestion: TSurveyNPSQuestion = {
-  id: "mh02j2lta8ulfatk1b7y8xmq",
+export const mockNpsQuestion = {
+  required: true,
+  headline: {
+    en: "How likely are you to recommend My Product to a friend or colleague?",
+  },
+  lowerLabel: {
+    en: "Not at all likely",
+  },
+  upperLabel: {
+    en: "Extremely likely",
+  },
+  id: "m9pemgdih2p4exvkmeeqq6jf",
   type: TSurveyQuestionType.NPS,
   isDraft: true,
-  headline: "How likely are you to recommend My Product to a friend or colleague?",
-  required: true,
-  lowerLabel: "Not at all likely",
-  upperLabel: "Extremely likely",
 };
 
-export const mockCtaQuestion: TSurveyCTAQuestion = {
-  id: "shn6361v3b6ablomuy5coeje",
-  html: '<p class="fb-editor-paragraph" dir="ltr"><span style="white-space: pre-wrap;">We would love to talk to you and learn more about how you use our product.</span></p>',
+export const mockCtaQuestion = {
+  required: true,
+  headline: {
+    en: "You are one of our power users!",
+  },
+  buttonLabel: {
+    en: "Book interview",
+  },
+  buttonExternal: false,
+  dismissButtonLabel: {
+    en: "Skip",
+  },
+  id: "gwn15urom4ffnhfimwbz3vgc",
   type: TSurveyQuestionType.CTA,
   isDraft: true,
-  headline: "You are one of our power users!",
-  required: true,
-  buttonLabel: "Book interview",
-  buttonExternal: false,
-  dismissButtonLabel: "Skip",
 };
 
-export const mockConsentQuestion: TSurveyConsentQuestion = {
-  id: "a7ds978r8dur153nuq8hiqll",
-  html: '<p class="fb-editor-paragraph" dir="ltr"><span style="white-space: pre-wrap;">We would love to talk to you and learn more about how you use our product.</span></p>',
+export const mockConsentQuestion = {
+  required: true,
+  headline: {
+    en: "Terms and Conditions",
+  },
+  label: {
+    en: "I agree to the terms and conditions",
+  },
+  dismissButtonLabel: "Skip",
+  id: "av561aoif3i2hjlsl6krnsfm",
   type: TSurveyQuestionType.Consent,
-  label: "I agree to the terms and conditions",
   isDraft: true,
-  headline: "Terms and Conditions",
-  required: true,
-  dismissButtonLabel: "Skip",
 };
 
-export const mockDateQuestion: TSurveyDateQuestion = {
-  id: "p49e2xt2ro8dx5i1pxxsn8t0",
-  type: TSurveyQuestionType.Date,
+export const mockDateQuestion = {
+  required: true,
+  headline: {
+    en: "When is your birthday?",
+  },
   format: "M-d-y",
+  id: "ts2f6v2oo9jfmfli9kk6lki9",
+  type: TSurveyQuestionType.Date,
   isDraft: true,
-  headline: "When is your birthday?",
-  required: true,
 };
 
-export const mockFileUploadQuestion: TSurveyFileUploadQuestion = {
-  id: "u5zezsoimxh12ijbtp40ve05",
+export const mockFileUploadQuestion = {
+  required: true,
+  headline: {
+    en: "File Upload",
+  },
+  allowMultipleFiles: false,
+  id: "ozzxo2jj1s6mj56c79q8pbef",
   type: TSurveyQuestionType.FileUpload,
   isDraft: true,
-  headline: "File Upload",
-  required: true,
-  allowMultipleFiles: false,
 };
 
-export const mockCalQuestion: TSurveyCalQuestion = {
-  id: "hoyr8wi42h21o1oh419yfbpc",
+export const mockCalQuestion = {
+  required: true,
+  headline: {
+    en: "Schedule a call with me",
+  },
+  buttonLabel: {
+    en: "Skip",
+  },
+  calUserName: "rick/get-rick-rolled",
+  id: "o3bnux6p42u9ew9d02l14r26",
   type: TSurveyQuestionType.Cal,
   isDraft: true,
-  headline: "Schedule a call with me",
-  required: true,
-  buttonLabel: "Skip",
-  calUserName: "rick/get-rick-rolled",
 };
 
 export const mockThankYouCard = {
   enabled: true,
-  headline: "Thank you!",
-  subheader: "We appreciate your feedback.",
+  headline: {
+    en: "Thank you!",
+  },
+  subheader: {
+    en: "We appreciate your feedback.",
+  },
   buttonLink: "https://formbricks.com/signup",
   buttonLabel: "Create your own Survey",
-};
+} as unknown as TSurveyThankYouCard;
 
 export const mockSurvey: TSurvey = {
   id: "surveyId",
-  createdAt: new Date("2024-02-05T08:02:06.732Z"),
-  updatedAt: new Date("2024-02-05T08:03:13.206Z"),
+  createdAt: new Date("2024-02-06T20:12:03.521Z"),
+  updatedAt: new Date("2024-02-06T20:12:03.521Z"),
   name: "New Survey",
-  type: "link" as TSurveyType,
-  environmentId: "EnvironmentId",
-  createdBy: "CreatorId",
-  status: "inProgress" as TSurveyStatus,
+  type: "link",
+  environmentId: "envId",
+  createdBy: "creatorId",
+  status: "draft",
   welcomeCard: mockWelcomeCard,
   questions: [
     mockOpenTextQuestion,
@@ -203,12 +256,22 @@ export const mockSurvey: TSurvey = {
     mockFileUploadQuestion,
     mockCalQuestion,
   ],
-  thankYouCard: mockThankYouCard,
+  thankYouCard: {
+    enabled: true,
+    headline: {
+      en: "Thank you!",
+    },
+    subheader: {
+      en: "We appreciate your feedback.",
+    },
+    buttonLink: "https://formbricks.com/signup",
+    buttonLabel: "Create your own Survey",
+  },
   hiddenFields: {
     enabled: true,
     fieldIds: [],
   },
-  displayOption: "displayOnce" as TSurveyDisplayOption,
+  displayOption: "displayOnce",
   recontactDays: null,
   autoClose: null,
   closeOnDate: null,
@@ -218,12 +281,7 @@ export const mockSurvey: TSurvey = {
   verifyEmail: null,
   redirectUrl: null,
   productOverwrites: null,
-  styling: {
-    background: {
-      bg: "",
-      bgType: "color",
-    },
-  },
+  styling: null,
   surveyClosedMessage: null,
   singleUse: {
     enabled: false,
@@ -233,109 +291,105 @@ export const mockSurvey: TSurvey = {
   resultShareKey: null,
   triggers: [],
   attributeFilters: [],
-};
+} as unknown as TSurvey;
 
 export const mockTranslatedWelcomeCard = {
   html: {
-    _i18n_: true,
     en: '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span style="white-space: pre-wrap;">Thanks for providing your feedback - let\'s go!</span></p>',
     de: "",
   },
   enabled: true,
-  headline: { _i18n_: true, en: "Welcome!", de: "" },
-  timeToFinish: true,
+  headline: { en: "Welcome!", de: "" },
+  timeToFinish: false,
   showResponseCount: false,
 };
 
 export const mockTranslatedOpenTextQuestion = {
   ...mockOpenTextQuestion,
-  headline: { _i18n_: true, en: "What would you like to know?", de: "" },
-  subheader: { _i18n_: true, en: "This is an example survey.", de: "" },
-  placeholder: { _i18n_: true, en: "Type your answer here...", de: "" },
+  headline: { en: "What would you like to know?", de: "" },
+  subheader: { en: "This is an example survey.", de: "" },
+  placeholder: { en: "Type your answer here...", de: "" },
 };
 
 export const mockTranslatedSingleSelectQuestion = {
   ...mockSingleSelectQuestion,
-  headline: { _i18n_: true, en: "What do you do?", de: "" },
-  subheader: { _i18n_: true, en: "Can't do both.", de: "" },
+  headline: { en: "What do you do?", de: "" },
+  subheader: { en: "Can't do both.", de: "" },
   choices: mockSingleSelectQuestion.choices.map((choice) => ({
     ...choice,
-    label: { _i18n_: true, en: choice.label, de: "" },
+    label: { en: choice.label.en, de: "" },
   })),
   otherOptionPlaceholder: undefined,
 };
 
 export const mockTranslatedMultiSelectQuestion = {
   ...mockMultiSelectQuestion,
-  headline: { _i18n_: true, en: "What's important on vacay?", de: "" },
+  headline: { en: "What's important on vacay?", de: "" },
   choices: mockMultiSelectQuestion.choices.map((choice) => ({
     ...choice,
-    label: { _i18n_: true, en: choice.label, de: "" },
+    label: { en: choice.label.en, de: "" },
   })),
   otherOptionPlaceholder: undefined,
 };
 
 export const mockTranslatedPictureSelectQuestion = {
   ...mockPictureSelectQuestion,
-  headline: { _i18n_: true, en: "Which is the cutest puppy?", de: "" },
-  subheader: { _i18n_: true, en: "You can also pick both.", de: "" },
+  headline: { en: "Which is the cutest puppy?", de: "" },
+  subheader: { en: "You can also pick both.", de: "" },
 };
 
 export const mockTranslatedRatingQuestion = {
   ...mockRatingQuestion,
-  headline: { _i18n_: true, en: "How would you rate My Product", de: "" },
-  subheader: { _i18n_: true, en: "Don't worry, be honest.", de: "" },
-  lowerLabel: { _i18n_: true, en: "Not good", de: "" },
-  upperLabel: { _i18n_: true, en: "Very good", de: "" },
+  headline: { en: "How would you rate My Product", de: "" },
+  subheader: { en: "Don't worry, be honest.", de: "" },
+  lowerLabel: { en: "Not good", de: "" },
+  upperLabel: { en: "Very good", de: "" },
 };
 
 export const mockTranslatedNpsQuestion = {
   ...mockNpsQuestion,
   headline: {
-    _i18n_: true,
     en: "How likely are you to recommend My Product to a friend or colleague?",
     de: "",
   },
-  lowerLabel: { _i18n_: true, en: "Not at all likely", de: "" },
-  upperLabel: { _i18n_: true, en: "Extremely likely", de: "" },
+  lowerLabel: { en: "Not at all likely", de: "" },
+  upperLabel: { en: "Extremely likely", de: "" },
 };
 
 export const mockTranslatedCtaQuestion = {
   ...mockCtaQuestion,
-  headline: { _i18n_: true, en: "You are one of our power users!", de: "" },
-  html: { _i18n_: true, en: mockCtaQuestion.html, de: "" },
-  buttonLabel: { _i18n_: true, en: "Book interview", de: "" },
-  dismissButtonLabel: { _i18n_: true, en: "Skip", de: "" },
+  headline: { en: "You are one of our power users!", de: "" },
+  buttonLabel: { en: "Book interview", de: "" },
+  dismissButtonLabel: { en: "Skip", de: "" },
 };
 
 export const mockTranslatedConsentQuestion = {
   ...mockConsentQuestion,
-  headline: { _i18n_: true, en: "Terms and Conditions", de: "" },
-  html: { _i18n_: true, en: mockConsentQuestion.html, de: "" },
-  label: { _i18n_: true, en: "I agree to the terms and conditions", de: "" },
+  headline: { en: "Terms and Conditions", de: "" },
+  label: { en: "I agree to the terms and conditions", de: "" },
   dismissButtonLabel: "Skip",
 };
 
 export const mockTranslatedDateQuestion = {
   ...mockDateQuestion,
-  headline: { _i18n_: true, en: "When is your birthday?", de: "" },
+  headline: { en: "When is your birthday?", de: "" },
 };
 
 export const mockTranslatedFileUploadQuestion = {
   ...mockFileUploadQuestion,
-  headline: { _i18n_: true, en: "File Upload", de: "" },
+  headline: { en: "File Upload", de: "" },
 };
 
 export const mockTranslatedCalQuestion = {
   ...mockCalQuestion,
-  headline: { _i18n_: true, en: "Schedule a call with me", de: "" },
-  buttonLabel: { _i18n_: true, en: "Skip", de: "" },
+  headline: { en: "Schedule a call with me", de: "" },
+  buttonLabel: { en: "Skip", de: "" },
 };
 
 export const mockTranslatedThankYouCard = {
   ...mockThankYouCard,
-  headline: { _i18n_: true, en: "Thank you!", de: "" },
-  subheader: { _i18n_: true, en: "We appreciate your feedback.", de: "" },
+  headline: { en: "Thank you!", de: "" },
+  subheader: { en: "We appreciate your feedback.", de: "" },
   buttonLabel: "Create your own Survey",
 };
 

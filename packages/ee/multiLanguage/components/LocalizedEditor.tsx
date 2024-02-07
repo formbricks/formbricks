@@ -1,10 +1,14 @@
 import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
 
-import { extractLanguageSymbols, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
+import {
+  containsTranslations,
+  extractLanguageIds,
+  isLabelValidForAllLanguages,
+} from "@formbricks/lib/i18n/utils";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TLanguages } from "@formbricks/types/product";
+import { TLanguage } from "@formbricks/types/product";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 
@@ -19,7 +23,7 @@ interface LocalizedEditorProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   questionIdx: number;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
   defaultLanguageSymbol: string;
@@ -38,29 +42,28 @@ export const LocalizedEditor = ({
   setFirstRender,
   defaultLanguageSymbol,
 }: LocalizedEditorProps) => {
-  const hasi18n = value ? value._i18n_ : false;
-  const surveyLanguageList = Object.entries(surveyLanguages);
-
+  const hasi18n = value ? containsTranslations(value) : false;
+  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
   const isInComplete =
     value !== undefined &&
     (id === "subheader"
       ? value[defaultLanguageSymbol]?.trim() !== "" &&
         isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguageList)) &&
+        !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
         selectedLanguage === defaultLanguageSymbol
       : isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(surveyLanguageList)) &&
+        !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
         selectedLanguage === defaultLanguageSymbol);
 
   return (
     <div className="relative w-full">
       <Editor
         key={`${questionIdx}-${selectedLanguage}`}
-        getText={() => md.render(value ? value[selectedLanguage] : "")}
+        getText={() => md.render(value ? value[selectedLanguage] ?? "" : "")}
         setText={(v: string) => {
           if (!value) return;
           let translatedHtml = {
-            ...(value as TI18nString),
+            ...value,
             [selectedLanguage]: v,
           };
           if (questionIdx === -1) {
@@ -75,11 +78,11 @@ export const LocalizedEditor = ({
         firstRender={firstRender}
         setFirstRender={setFirstRender}
       />
-      {hasi18n && surveyLanguageList?.length > 1 && (
+      {hasi18n && surveyLanguages.length > 1 && (
         <div>
           <LanguageIndicator
             selectedLanguage={selectedLanguage}
-            surveyLanguages={surveyLanguageList}
+            surveyLanguages={surveyLanguages}
             setSelectedLanguage={setSelectedLanguage}
           />
 

@@ -7,9 +7,8 @@ import { useEffect, useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
-import { TLanguages } from "@formbricks/types/product";
+import { TLanguage } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TI18nString } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -22,7 +21,7 @@ interface EditWelcomeCardProps {
   isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   defaultLanguageSymbol: string;
 }
 
@@ -130,7 +129,7 @@ export default function EditWelcomeCard({
               <LocalizedInput
                 id="headline"
                 name="headline"
-                value={localSurvey.welcomeCard.headline as TI18nString}
+                value={localSurvey.welcomeCard.headline}
                 label="Headline"
                 localSurvey={localSurvey}
                 questionIdx={-1}
@@ -147,7 +146,7 @@ export default function EditWelcomeCard({
               <div className="mt-2">
                 <LocalizedEditor
                   id="html"
-                  value={localSurvey.welcomeCard.html as TI18nString}
+                  value={localSurvey.welcomeCard.html}
                   localSurvey={localSurvey}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
@@ -168,7 +167,7 @@ export default function EditWelcomeCard({
                   <LocalizedInput
                     id="buttonLabel"
                     name="buttonLabel"
-                    value={localSurvey.welcomeCard.buttonLabel as TI18nString}
+                    value={localSurvey.welcomeCard.buttonLabel}
                     localSurvey={localSurvey}
                     questionIdx={-1}
                     maxLength={48}

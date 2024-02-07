@@ -3,6 +3,7 @@ import AirtableWrapper from "@/app/(app)/environments/[environmentId]/integratio
 import { getAirtableTables } from "@formbricks/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
@@ -24,7 +25,7 @@ export default async function Airtable({ params }) {
   if (!product) {
     throw new Error("Product not found");
   }
-  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
 
   const airtableIntegration: TIntegrationAirtable | undefined = integrations?.find(
     (integration): integration is TIntegrationAirtable => integration.type === "airtable"

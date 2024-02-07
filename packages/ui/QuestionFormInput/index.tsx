@@ -5,7 +5,7 @@ import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { containsTranslations, extractLanguageIds, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import {
   extractId,
   extractRecallInfo,
@@ -17,6 +17,7 @@ import {
   replaceRecallInfoWithUnderline,
   useSyncScroll,
 } from "@formbricks/lib/utils/recall";
+import { TLanguage } from "@formbricks/types/product";
 import {
   TI18nString,
   TSurvey,
@@ -28,7 +29,7 @@ import {
 } from "@formbricks/types/surveys";
 
 import { LanguageIndicator } from "../../ee/multiLanguage/components/LanguageIndicator";
-import { createI18nString, extractLanguageSymbols } from "../../lib/i18n/utils";
+import { createI18nString } from "../../lib/i18n/utils";
 import FileInput from "../FileInput";
 import { Input } from "../Input";
 import { Label } from "../Label";
@@ -47,7 +48,7 @@ interface QuestionFormInputProps {
   isInvalid?: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: string[][];
+  surveyLanguages: TLanguage[];
   defaultLanguageSymbol: string;
   label?: string;
   maxLength?: number;
@@ -92,6 +93,7 @@ const QuestionFormInput = ({
   }
   const isThankYouCard = questionId === "end";
   const isWelcomeCard = questionId === "start";
+  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
 
   const question: TSurveyQuestion | TSurveyThankYouCard = isThankYouCard
     ? localSurvey.thankYouCard
@@ -108,32 +110,31 @@ const QuestionFormInput = ({
       return (
         ((question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion).choices[
           choiceIdx
-        ].label as TI18nString) ||
-        createI18nString("", extractLanguageSymbols(surveyLanguages), defaultLanguageSymbol)
+        ].label as TI18nString) || createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
       );
     }
     if (isThankYouCard) {
       const thankYouCard = localSurvey.thankYouCard;
       return (
         (thankYouCard[id as keyof typeof thankYouCard] as TI18nString) ||
-        createI18nString("", extractLanguageSymbols(surveyLanguages), defaultLanguageSymbol)
+        createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
       );
     }
     if (isWelcomeCard) {
       const welcomeCard = localSurvey.welcomeCard;
       return (
         (welcomeCard[id as keyof typeof welcomeCard] as TI18nString) ||
-        createI18nString("", extractLanguageSymbols(surveyLanguages), defaultLanguageSymbol)
+        createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
       );
     }
     return (
       (question[id as keyof typeof question] as TI18nString) ||
-      createI18nString("", extractLanguageSymbols(surveyLanguages), defaultLanguageSymbol)
+      createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
     );
   };
 
   const [text, setText] = useState(getQuestionTextBasedOnType());
-  const hasi18n = text._i18n_;
+  const hasi18n = containsTranslations(text);
 
   const [renderedText, setRenderedText] = useState<JSX.Element[]>();
 
@@ -208,9 +209,7 @@ const QuestionFormInput = ({
               {"@" + headline}
             </span>
           );
-          remainingText = remainingText.substring(
-            index + getLocalizedValue(headline, selectedLanguage).length + 1
-          );
+          remainingText = remainingText.substring(index + headline.length + 1);
         }
       });
       if (remainingText?.length) {
@@ -403,8 +402,8 @@ const QuestionFormInput = ({
           />
         )}
         <div className="flex items-center space-x-2">
-          <div className="group relative w-full">
-            <div className="h-10 w-full"></div>
+          <div className="group relative w-full ">
+            <div className="h-10 w-full "></div>
             <div
               id="wrapper"
               ref={highlightContainerRef}

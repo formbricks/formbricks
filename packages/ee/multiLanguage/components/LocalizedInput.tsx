@@ -1,6 +1,6 @@
-import { extractLanguageSymbols, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
+import { extractLanguageIds, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TLanguages } from "@formbricks/types/product";
+import { TLanguage } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbricks/types/surveys";
 import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
@@ -20,7 +20,7 @@ interface LocalizedInputProps {
   questionIdx: number;
   setSelectedLanguage: (language: string) => void;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   maxLength?: number;
   defaultValue?: string;
   className?: string;
@@ -46,7 +46,7 @@ const LocalizedInput = ({
 }: LocalizedInputProps) => {
   const isThankYouCard = questionIdx === localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
-  const SurveyLanguagesList = Object.entries(surveyLanguages);
+  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
 
   const questionId = () => {
     if (isThankYouCard) return "end";
@@ -64,10 +64,10 @@ const LocalizedInput = ({
     id === "backButtonLabel"
       ? value[defaultLanguageSymbol]?.trim() !== "" &&
         isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(SurveyLanguagesList)) &&
+        !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
         selectedLanguage === defaultLanguageSymbol
       : isInvalid &&
-        !isLabelValidForAllLanguages(value, extractLanguageSymbols(SurveyLanguagesList)) &&
+        !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
         selectedLanguage === defaultLanguageSymbol);
 
   return (
@@ -76,7 +76,7 @@ const LocalizedInput = ({
         id={id}
         localSurvey={localSurvey}
         environmentId={localSurvey.environmentId}
-        isInvalid={SurveyLanguagesList.length > 1 && isInComplete}
+        isInvalid={surveyLanguages.length > 1 && isInComplete}
         label={label}
         questionId={questionId()}
         questionIdx={questionIdx}
@@ -85,7 +85,7 @@ const LocalizedInput = ({
         updateChoice={updateChoice}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        surveyLanguages={SurveyLanguagesList}
+        surveyLanguages={surveyLanguages}
         maxLength={maxLength}
         placeholder={placeholder}
         onBlur={onBlur}
@@ -98,7 +98,7 @@ const LocalizedInput = ({
           {recallToHeadline(value, localSurvey, false, defaultLanguageSymbol)[defaultLanguageSymbol]}
         </div>
       )}
-      {SurveyLanguagesList.length > 1 && isInComplete && (
+      {surveyLanguages.length > 1 && isInComplete && (
         <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
       )}
     </div>

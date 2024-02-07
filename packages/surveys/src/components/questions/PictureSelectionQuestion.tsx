@@ -4,9 +4,10 @@ import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getLocalizedValue } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 

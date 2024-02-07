@@ -4,9 +4,10 @@ import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getLocalizedValue, shuffleQuestions } from "@/lib/utils";
+import { cn, shuffleQuestions } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
 import type { TI18nString, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";

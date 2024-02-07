@@ -3,9 +3,12 @@ import { z } from "zod";
 import { ZColor, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
 
-export const ZLanguages = z.record(z.string());
-
-export type TLanguages = z.infer<typeof ZLanguages>;
+const ZLanguage = z.object({
+  id: z.string(),
+  default: z.boolean(),
+  alias: z.string(),
+});
+export type TLanguage = z.infer<typeof ZLanguage>;
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
@@ -22,7 +25,7 @@ export const ZProduct = z.object({
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
   environments: z.array(ZEnvironment),
-  languages: ZLanguages,
+  languages: z.array(ZLanguage),
 });
 
 export type TProduct = z.infer<typeof ZProduct>;
@@ -39,7 +42,7 @@ export const ZProductUpdateInput = z.object({
   clickOutsideClose: z.boolean().optional(),
   darkOverlay: z.boolean().optional(),
   environments: z.array(ZEnvironment).optional(),
-  languages: ZLanguages.optional(),
+  languages: z.array(ZLanguage).optional(),
 });
 
 export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;

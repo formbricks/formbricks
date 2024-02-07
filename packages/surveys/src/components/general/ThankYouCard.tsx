@@ -3,9 +3,9 @@ import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import RedirectCountDown from "@/components/general/RedirectCountdown";
 import Subheader from "@/components/general/Subheader";
-import { getLocalizedValue } from "@/lib/utils";
 import { useEffect } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TI18nString } from "@formbricks/types/surveys";
 
 interface ThankYouCardProps {

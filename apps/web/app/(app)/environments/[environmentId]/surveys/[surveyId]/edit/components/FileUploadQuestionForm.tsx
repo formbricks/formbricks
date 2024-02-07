@@ -8,9 +8,8 @@ import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInp
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
-import { TLanguages, TProduct } from "@formbricks/types/product";
+import { TLanguage, TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
-import { TI18nString } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -24,7 +23,7 @@ interface FileUploadFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageSymbol: string;
 }
@@ -119,7 +118,7 @@ export default function FileUploadQuestionForm({
       <LocalizedInput
         id="headline"
         name="headline"
-        value={question.headline as TI18nString}
+        value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         surveyLanguages={surveyLanguages}
@@ -136,7 +135,7 @@ export default function FileUploadQuestionForm({
               <LocalizedInput
                 id="subheader"
                 name="subheader"
-                value={question.subheader as TI18nString}
+                value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 surveyLanguages={surveyLanguages}

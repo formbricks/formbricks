@@ -1,4 +1,4 @@
-import { TLanguages, TProduct } from "@formbricks/types/product";
+import { TLanguage, TProduct } from "@formbricks/types/product";
 import {
   TI18nString,
   TSurveyCTAQuestion,
@@ -17,10 +17,9 @@ export const createI18nString = (
   languages: string[],
   defaultLanguageSymbol: string
 ): TI18nString => {
-  if (typeof text === "object" && "_i18n_" in text) {
+  if (typeof text === "object") {
     // It's already an i18n object, so clone it
     const i18nString: TI18nString = structuredClone(text);
-    i18nString._i18n_ = true;
     // Add new language keys with empty strings if they don't exist
     languages?.forEach((language) => {
       if (!(language in i18nString)) {
@@ -30,20 +29,15 @@ export const createI18nString = (
 
     // Remove language keys that are not in the languages array
     Object.keys(i18nString).forEach((key) => {
-      if (key !== "_i18n_" && key !== defaultLanguageSymbol && languages && !languages.includes(key)) {
+      if (key !== defaultLanguageSymbol && languages && !languages.includes(key)) {
         delete i18nString[key];
       }
     });
-
-    if (Object.keys(i18nString).length === 2) {
-      i18nString._i18n_ = false;
-    }
 
     return i18nString;
   } else {
     // It's a regular string, so create a new i18n object
     const i18nString: any = {
-      _i18n_: languages.length > 1 ? true : false,
       [defaultLanguageSymbol]: text as string, // Type assertion to assure TypeScript `text` is a string
     };
 
@@ -218,10 +212,10 @@ export const translateQuestion = (
 // Function to translate an entire survey
 export const translateSurvey = (
   survey: TSurvey,
-  surveyLanguages: TLanguages,
+  surveyLanguages: TLanguage[],
   defaultLanguageSymbol: string
 ): TSurvey => {
-  const languages = Object.keys(surveyLanguages);
+  const languages = extractLanguageIds(surveyLanguages);
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languages, defaultLanguageSymbol);
   });
@@ -236,57 +230,37 @@ export const translateSurvey = (
   };
 };
 
-// Function to retrieve the correct translation from an i18nObject
-export const getTranslation = (i18nObject: TI18nString, languageCode: string): string => {
-  // If the specific language translation exists, return it
-  if (i18nObject[languageCode]) {
-    return i18nObject[languageCode];
-  }
-  // If not, return the English version or a default fallback
-  return i18nObject.en || "Translation not available";
-};
-
-export function convertArrayToObject(array2D: string[][]): Record<string, string> {
-  return array2D.reduce(
-    (obj: Record<string, string>, item) => {
-      if (item.length >= 2) {
-        const [key, value] = item;
-        obj[key] = value;
-      }
-      return obj;
-    },
-    {} as Record<string, string>
-  );
-}
-
-export function extractLanguageSymbols(array2D: string[][]): string[] {
-  return array2D.map((item) => item[0]);
-}
-
-export const isLabelValidForAllLanguages = (label: string | TI18nString, languages: string[]): boolean => {
-  if (typeof label === "string") {
-    return label.trim() !== "";
-  } else {
-    return languages.every((language) => label[language] && label[language].trim() !== "");
-  }
+export const isLabelValidForAllLanguages = (label: TI18nString, languages: string[]): boolean => {
+  return languages.every((language) => label[language] && label[language].trim() !== "");
 };
 
 export const isSurveyAvailableInSelectedLanguage = (languageSymbol: string, survey: TSurvey) => {
-  if ((survey.questions[0].headline as TI18nString)[languageSymbol]) {
+  if (survey.questions[0].headline[languageSymbol]) {
     return true;
   }
   return false;
 };
 
-export const getSurveyLanguages = (product: TProduct, survey: TSurvey): TLanguages => {
-  return Object.fromEntries(
-    Object.entries(product.languages).filter(
-      ([langCode]) => (survey.questions[0].headline as TI18nString)[langCode]
-    )
-  );
+export const getSurveyLanguages = (product: TProduct, survey: TSurvey): TLanguage[] => {
+  const languageCodes = Object.keys(survey.questions[0].headline);
+
+  const surveyLanguages = languageCodes
+    .map((code) => {
+      const language = product.languages.find((lang) => lang.id === code);
+      if (language) {
+        return {
+          id: code,
+          default: language.default,
+          alias: language.alias,
+        };
+      }
+    })
+    .filter((language): language is TLanguage => language !== undefined); // Filter out undefined values
+
+  return surveyLanguages;
 };
 
-export const getLocalizedValue = (value: string | TI18nString | undefined, language: string): string => {
+export const getLocalizedValue = (value: TI18nString | undefined, language: string): string => {
   if (!value) {
     return "";
   }
@@ -296,9 +270,29 @@ export const getLocalizedValue = (value: string | TI18nString | undefined, langu
     }
     return "";
   }
-  return value; // If it's a string, return as it is
+  return "";
 };
 
 function isI18nString(object: any): object is TI18nString {
-  return typeof object === "object" && object !== null && "_i18n_" in object;
+  return typeof object === "object";
 }
+
+export const getDefaultLanguage = (languages: TLanguage[]): TLanguage => {
+  const defaultLanguage = languages.find((language) => language.default === true);
+  if (defaultLanguage) {
+    return defaultLanguage;
+  }
+  return {
+    id: "en",
+    default: true,
+    alias: "English",
+  };
+};
+
+export const extractLanguageIds = (languages: TLanguage[]): string[] => {
+  return languages.map((language) => language.id);
+};
+
+export const containsTranslations = (i18nString: TI18nString) => {
+  return Object.entries(i18nString).length > 1;
+};

@@ -9,10 +9,10 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { FormbricksAPI } from "@formbricks/api";
-import { isSurveyAvailableInSelectedLanguage } from "@formbricks/lib/i18n/utils";
+import { getSurveyLanguages, isSurveyAvailableInSelectedLanguage } from "@formbricks/lib/i18n/utils";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
-import { TLanguages, TProduct } from "@formbricks/types/product";
+import { TLanguage, TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -30,7 +30,7 @@ interface LinkSurveyProps {
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
-  languages: TLanguages;
+  languages: TLanguage[];
   responseCount?: number;
   verifiedEmail?: string;
   defaultLanguageSymbol: string;
@@ -65,13 +65,16 @@ export default function LinkSurvey({
   );
 
   const prefillResponseData: TResponseData | undefined = prefillAnswer
-    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
+    ? getPrefillResponseData(
+        survey.questions[0],
+        survey,
+        prefillAnswer,
+        languageSymbol ?? defaultLanguageSymbol
+      )
     : undefined;
 
   const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
-  const surveyLanguages = Object.entries(product.languages)
-    .filter(([langCode]) => survey.questions[0].headline[langCode])
-    .map((lang) => lang);
+  const surveyLanguages = getSurveyLanguages(product, survey);
 
   const responseQueue = useMemo(
     () =>
@@ -205,7 +208,9 @@ export default function LinkSurvey({
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
-                language: languageSymbol ? languages[languageSymbol] : languages[defaultLanguageSymbol],
+                language: languageSymbol
+                  ? languages.find((language) => language.id === languageSymbol)?.alias
+                  : languages.find((language) => language.default === true)?.alias,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",

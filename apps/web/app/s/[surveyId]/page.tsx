@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
@@ -28,6 +29,7 @@ interface LinkSurveyPageProps {
     suId?: string;
     userId?: string;
     verify?: string;
+    lang?: string;
   };
 }
 
@@ -97,10 +99,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
   }
-
-  // question pre filling: Check if the first question is prefilled and if it is valid
-  const prefillAnswer = searchParams[survey.questions[0].id];
-  const isPrefilledAnswerValid = prefillAnswer ? checkValidity(survey!.questions[0], prefillAnswer) : false;
 
   if (survey && survey.status !== "inProgress") {
     return (
@@ -175,7 +173,14 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
-  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const languageSymbol = searchParams.lang ?? defaultLanguageSymbol;
+
+  // question pre filling: Check if the first question is prefilled and if it is valid
+  const prefillAnswer = searchParams[survey.questions[0].id];
+  const isPrefilledAnswerValid = prefillAnswer
+    ? checkValidity(survey!.questions[0], prefillAnswer, languageSymbol)
+    : false;
 
   if (isSurveyPinProtected) {
     return (

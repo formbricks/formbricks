@@ -25,8 +25,9 @@ import { Draggable } from "react-beautiful-dnd";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
+import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TLanguages, TProduct } from "@formbricks/types/product";
+import { TLanguage, TProduct } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -55,7 +56,7 @@ interface QuestionCardProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   isInvalid: boolean;
 }
 
@@ -78,7 +79,7 @@ export default function QuestionCard({
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
-  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
 
   // formats the text to highlight specific parts of the text with slashes
   const formatTextWithSlashes = (text) => {
@@ -169,19 +170,13 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {recallToHeadline(
-                        question.headline as TI18nString,
-                        localSurvey,
-                        true,
+                      {recallToHeadline(question.headline, localSurvey, true, selectedLanguage)[
                         selectedLanguage
-                      )[selectedLanguage]
+                      ]
                         ? formatTextWithSlashes(
-                            recallToHeadline(
-                              question.headline as TI18nString,
-                              localSurvey,
-                              true,
+                            recallToHeadline(question.headline, localSurvey, true, selectedLanguage)[
                               selectedLanguage
-                            )[selectedLanguage] ?? ""
+                            ] ?? ""
                           )
                         : getTSurveyQuestionTypeName(question.type)}
                     </p>
@@ -369,7 +364,7 @@ export default function QuestionCard({
                           <LocalizedInput
                             id="buttonLabel"
                             name="buttonLabel"
-                            value={question.buttonLabel as TI18nString}
+                            value={question.buttonLabel}
                             localSurvey={localSurvey}
                             questionIdx={questionIdx}
                             maxLength={48}
@@ -381,10 +376,12 @@ export default function QuestionCard({
                             setSelectedLanguage={setSelectedLanguage}
                             defaultLanguageSymbol={defaultLanguageSymbol}
                             onBlur={(e) => {
+                              if (!question.buttonLabel) return;
                               let translatedNextButtonLabel = {
-                                ...(question.buttonLabel as TI18nString),
+                                ...question.buttonLabel,
                                 [selectedLanguage]: e.target.value,
                               };
+
                               if (questionIdx === localSurvey.questions.length - 1) return;
                               updateEmptyNextButtonLabels(translatedNextButtonLabel);
                             }}
@@ -394,7 +391,7 @@ export default function QuestionCard({
                           <LocalizedInput
                             id="backButtonLabel"
                             name="backButtonLabel"
-                            value={question.backButtonLabel as TI18nString}
+                            value={question.backButtonLabel}
                             localSurvey={localSurvey}
                             questionIdx={questionIdx}
                             maxLength={48}
@@ -416,7 +413,7 @@ export default function QuestionCard({
                           <LocalizedInput
                             id="backButtonLabel"
                             name="backButtonLabel"
-                            value={question.backButtonLabel as TI18nString}
+                            value={question.backButtonLabel}
                             localSurvey={localSurvey}
                             questionIdx={questionIdx}
                             maxLength={48}

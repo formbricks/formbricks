@@ -4,9 +4,9 @@ import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[su
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import PictureChoiceSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getDefaultLanguage, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TLanguages } from "@formbricks/types/product";
+import { TLanguage } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import type {
@@ -42,7 +42,7 @@ interface SummaryListProps {
   survey: TSurvey;
   responses: TResponse[];
   responsesPerPage: number;
-  languages: TLanguages;
+  languages: TLanguage[];
 }
 
 export default function SummaryList({
@@ -52,7 +52,7 @@ export default function SummaryList({
   responsesPerPage,
   languages,
 }: SummaryListProps) {
-  const defaultLanguageSymbol = languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(languages).id;
 
   const getLanguageSymbol = (languages, language) => {
     for (let languageSymbol in languages) {

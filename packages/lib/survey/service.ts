@@ -9,20 +9,13 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
-import {
-  TI18nString,
-  TSurvey,
-  TSurveyAttributeFilter,
-  TSurveyInput,
-  ZSurvey,
-} from "@formbricks/types/surveys";
+import { TSurvey, TSurveyAttributeFilter, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
 
 import { getActionClasses } from "../actionClass/service";
 import { getAttributeClasses } from "../attributeClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
-import { createI18nString } from "../i18n/utils";
 import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
@@ -280,7 +273,8 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export async function updateSurvey(updatedSurvey: TSurvey, tx?: Prisma.TransactionClient): Promise<TSurvey> {
+export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
+  console.log(updatedSurvey);
   validateInputs([updatedSurvey, ZSurvey]);
 
   const surveyId = updatedSurvey.id;
@@ -426,7 +420,7 @@ export async function updateSurvey(updatedSurvey: TSurvey, tx?: Prisma.Transacti
   };
 
   try {
-    const prismaSurvey = await (tx || prisma).survey.update({
+    const prismaSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data,
     });
@@ -740,104 +734,3 @@ export const getSurveyByResultShareKey = async (resultShareKey: string): Promise
     throw error;
   }
 };
-
-export const updateDefaultLanguageInSurveys = async (
-  productId: string,
-  oldDefaultSymbol: string,
-  newDefaultSymbol: string
-) => {
-  const environments = await prisma.environment.findMany({
-    where: { productId: productId },
-    select: { id: true },
-  });
-
-  environments.forEach(async (environment) => {
-    const surveys = await getSurveys(environment.id);
-    surveys.forEach((survey) => {
-      const updatedSurvey = structuredClone(survey);
-      updatedSurvey.questions.forEach((question) => {
-        question.headline = replaceKey(question.headline, oldDefaultSymbol, newDefaultSymbol);
-        question.subheader = question.subheader
-          ? replaceKey(question.subheader, oldDefaultSymbol, newDefaultSymbol)
-          : undefined;
-        question.backButtonLabel = question.backButtonLabel
-          ? replaceKey(question.backButtonLabel, oldDefaultSymbol, newDefaultSymbol)
-          : undefined;
-        question.buttonLabel = question.buttonLabel
-          ? replaceKey(question.buttonLabel, oldDefaultSymbol, newDefaultSymbol)
-          : undefined;
-        if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
-          question.choices.forEach((choice) => {
-            choice.label = replaceKey(choice.label, oldDefaultSymbol, newDefaultSymbol);
-          });
-          question.otherOptionPlaceholder = question.otherOptionPlaceholder
-            ? replaceKey(question.otherOptionPlaceholder, oldDefaultSymbol, newDefaultSymbol)
-            : undefined;
-        }
-        if (question.type === "openText") {
-          question.placeholder = question.placeholder
-            ? replaceKey(question.placeholder, oldDefaultSymbol, newDefaultSymbol)
-            : undefined;
-        }
-        if (question.type === "cta") {
-          question.dismissButtonLabel = question.dismissButtonLabel
-            ? replaceKey(question.dismissButtonLabel, oldDefaultSymbol, newDefaultSymbol)
-            : undefined;
-          question.html = question.html
-            ? replaceKey(question.html, oldDefaultSymbol, newDefaultSymbol)
-            : undefined;
-        }
-        if (question.type === "consent") {
-          question.html = question.html
-            ? replaceKey(question.html, oldDefaultSymbol, newDefaultSymbol)
-            : undefined;
-          question.label = replaceKey(question.label ?? "", oldDefaultSymbol, newDefaultSymbol);
-        }
-        if (question.type === "nps") {
-          question.lowerLabel = replaceKey(question.lowerLabel, oldDefaultSymbol, newDefaultSymbol);
-          question.upperLabel = replaceKey(question.upperLabel, oldDefaultSymbol, newDefaultSymbol);
-        }
-        if (question.type === "rating") {
-          question.lowerLabel = replaceKey(question.lowerLabel, oldDefaultSymbol, newDefaultSymbol);
-          question.upperLabel = replaceKey(question.upperLabel, oldDefaultSymbol, newDefaultSymbol);
-        }
-      });
-      if (updatedSurvey.welcomeCard.enabled) {
-        updatedSurvey.welcomeCard.headline = replaceKey(
-          updatedSurvey.welcomeCard.headline,
-          oldDefaultSymbol,
-          newDefaultSymbol
-        );
-        updatedSurvey.welcomeCard.html = updatedSurvey.welcomeCard.html
-          ? replaceKey(updatedSurvey.welcomeCard.html, oldDefaultSymbol, newDefaultSymbol)
-          : undefined;
-        updatedSurvey.welcomeCard.buttonLabel = updatedSurvey.welcomeCard.buttonLabel
-          ? replaceKey(updatedSurvey.welcomeCard.buttonLabel, oldDefaultSymbol, newDefaultSymbol)
-          : undefined;
-      }
-      if (updatedSurvey.thankYouCard.enabled) {
-        updatedSurvey.thankYouCard.headline = updatedSurvey.thankYouCard.headline
-          ? replaceKey(updatedSurvey.thankYouCard.headline, oldDefaultSymbol, newDefaultSymbol)
-          : undefined;
-        updatedSurvey.thankYouCard.subheader = updatedSurvey.thankYouCard.subheader
-          ? replaceKey(updatedSurvey.thankYouCard.subheader, oldDefaultSymbol, newDefaultSymbol)
-          : undefined;
-      }
-      updateSurvey(updatedSurvey);
-    });
-  });
-};
-
-function replaceKey(obj: TI18nString | string, oldKey: string, newKey: string): TI18nString {
-  if (typeof obj === "string") {
-    return createI18nString(obj, [newKey], newKey);
-  }
-  // Check if the old key exists in the object
-  if (oldKey in obj) {
-    // Assign the value of the old key to the new key
-    obj[newKey] = obj[oldKey];
-    // Delete the old key
-    delete obj[oldKey];
-  }
-  return obj;
-}

@@ -7,9 +7,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TLanguages, TProduct } from "@formbricks/types/product";
+import { TLanguage, TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
@@ -30,7 +31,7 @@ interface SurveyMenuBarProps {
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
   responseCount: number;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   selectedLanguage: string;
 }
 
@@ -56,7 +57,7 @@ export default function SurveyMenuBar({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
-  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
 
   let faultyQuestions: String[] = [];
 

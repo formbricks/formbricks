@@ -32,9 +32,9 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask for a text-based answer",
     icon: ChatBubbleBottomCenterTextIcon,
     preset: {
-      headline: "Who let the dogs out?",
-      subheader: "Who? Who? Who?",
-      placeholder: "Type your answer here...",
+      headline: { en: "Who let the dogs out?" },
+      subheader: { en: "Who? Who? Who?" },
+      placeholder: { en: "Type your answer here..." },
       longAnswer: true,
     },
   },
@@ -44,11 +44,11 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "A single choice from a list of options (radio buttons)",
     icon: QueueListIcon,
     preset: {
-      headline: "What do you do?",
-      subheader: "Can't do both.",
+      headline: { en: "What do you do?" },
+      subheader: { en: "Can't do both." },
       choices: [
-        { id: createId(), label: "Eat the cake 🍰" },
-        { id: createId(), label: "Have the cake 🎂" },
+        { id: createId(), label: { en: "Eat the cake 🍰" } },
+        { id: createId(), label: { en: "Have the cake 🎂" } },
       ],
       shuffleOption: "none",
     },
@@ -59,11 +59,11 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Number of choices from a list of options (checkboxes)",
     icon: ListBulletIcon,
     preset: {
-      headline: "What's important on vacay?",
+      headline: { en: "What's important on vacay?" },
       choices: [
-        { id: createId(), label: "Sun ☀️" },
-        { id: createId(), label: "Ocean 🌊" },
-        { id: createId(), label: "Palms 🌴" },
+        { id: createId(), label: { en: "Sun ☀️" } },
+        { id: createId(), label: { en: "Ocean 🌊" } },
+        { id: createId(), label: { en: "Palms 🌴" } },
       ],
       shuffleOption: "none",
     },
@@ -74,8 +74,8 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask respondents to select one or more pictures",
     icon: PhotoIcon,
     preset: {
-      headline: "Which is the cutest puppy?",
-      subheader: "You can also pick both.",
+      headline: { en: "Which is the cutest puppy?" },
+      subheader: { en: "You can also pick both." },
       allowMulti: true,
       choices: [
         {
@@ -95,12 +95,12 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask respondents for a rating",
     icon: StarIcon,
     preset: {
-      headline: "How would you rate {{productName}}",
-      subheader: "Don't worry, be honest.",
+      headline: { en: "How would you rate {{productName}}" },
+      subheader: { en: "Don't worry, be honest." },
       scale: "star",
       range: 5,
-      lowerLabel: "Not good",
-      upperLabel: "Very good",
+      lowerLabel: { en: "Not good" },
+      upperLabel: { en: "Very good" },
     },
   },
   {
@@ -109,9 +109,9 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Rate satisfaction on a 0-10 scale",
     icon: PresentationChartBarIcon,
     preset: {
-      headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
-      lowerLabel: "Not at all likely",
-      upperLabel: "Extremely likely",
+      headline: { en: "How likely are you to recommend {{productName}} to a friend or colleague?" },
+      lowerLabel: { en: "Not at all likely" },
+      upperLabel: { en: "Extremely likely" },
     },
   },
   {
@@ -120,8 +120,9 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Prompt respondents to perform an action",
     icon: CursorArrowRippleIcon,
     preset: {
-      headline: "You are one of our power users!",
-      buttonLabel: "Book interview",
+      headline: { en: "You are one of our power users!" },
+      html: { en: "" },
+      buttonLabel: { en: "Book interview" },
       buttonExternal: false,
       dismissButtonLabel: "Skip",
     },
@@ -132,8 +133,9 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask respondents for consent",
     icon: CheckIcon,
     preset: {
-      headline: "Terms and Conditions",
-      label: "I agree to the terms and conditions",
+      headline: { en: "Terms and Conditions" },
+      html: { en: "" },
+      label: { en: "I agree to the terms and conditions" },
       dismissButtonLabel: "Skip",
     },
   },
@@ -143,7 +145,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask your users to select a date",
     icon: CalendarDaysIcon,
     preset: {
-      headline: "When is your birthday?",
+      headline: { en: "When is your birthday?" },
       format: "M-d-y",
     },
   },
@@ -153,7 +155,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Allow respondents to upload a file",
     icon: ArrowUpTrayIcon,
     preset: {
-      headline: "File Upload",
+      headline: { en: "File Upload" },
       allowMultipleFiles: false,
     },
   },
@@ -163,8 +165,8 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Allow respondents to schedule a meet",
     icon: PhoneIcon,
     preset: {
-      headline: "Schedule a call with me",
-      buttonLabel: "Skip",
+      headline: { en: "Schedule a call with me" },
+      buttonLabel: { en: "Skip" },
       calUserName: "rick/get-rick-rolled",
     },
   },

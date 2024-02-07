@@ -1,18 +1,21 @@
 "use client";
 
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { TrashIcon } from "@heroicons/react/24/solid";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import Select from "react-select";
 
-import { TLanguages, TProduct } from "@formbricks/types/product";
+import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
+import { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
-import { updateLangaugeAction } from "../lib/actions";
+import { updateProductAction } from "../lib/actions";
+import { iso639Identifiers } from "../utils/ISOLanguages";
 
 interface EditLanguageProps {
   product: TProduct;
@@ -27,88 +30,107 @@ export default function EditLanguage({
   isFormbricksCloud,
   isEnterpriseEdition,
 }: EditLanguageProps) {
-  const [defaultSymbol, setdefaultSymbol] = useState(product.languages["_default_"]);
-  const initialLanguages = Object.entries(product.languages || {})
-    .filter(([key]) => key !== "_default_")
-    .sort(([key1], [key2]) => (key1 === defaultSymbol ? -1 : key2 === defaultSymbol ? 1 : 0));
+  const [defaultSymbol, setdefaultSymbol] = useState(getDefaultLanguage(product.languages).id);
+  const initialLanguages = product.languages.sort((key1, key2) =>
+    key1.id === defaultSymbol ? -1 : key2.id === defaultSymbol ? 1 : 0
+  );
 
-  const [languages, setLanguages] = useState<string[][]>(initialLanguages);
+  const [languages, setLanguages] = useState<TLanguage[]>(initialLanguages);
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isDeleteLanguageModalOpen, setIsDeleteLanguageModalOpen] = useState(false);
-  const isInputDisabled = (index: number) => {
-    if (isEditing) {
-      return index > 0 && index !== Object.entries(product.languages).length - 1;
-    } else {
-      return index > 0;
-    }
-  };
+  const [deleteModalOpenIndex, setDeleteModalOpenIndex] = useState<number | null>(null);
+  const languageOptions = iso639Identifiers.map((code) => ({
+    value: code,
+    label: code,
+  }));
+
   const checkIfDuplicateExists = (arr: string[]) => {
     return new Set(arr).size !== arr.length;
   };
 
-  const checkForDuplicates = (languages: string[][]) => {
-    const languageIDs = languages.map((language) => language[0].toLowerCase().trim());
-    const languageNames = languages.map((language) => language[1].toLowerCase().trim());
+  useEffect(() => {
+    if (isEditing) return;
+    setLanguages(
+      languages.sort((key1, key2) => (key1.id === defaultSymbol ? -1 : key2.id === defaultSymbol ? 1 : 0))
+    );
+  }, [isEditing, languages]);
+
+  const validateLanguage = (languages: TLanguage[]) => {
+    const languageIDs = languages.map((language) => language.id.toLowerCase().trim());
+    const languageNames = languages.map((language) => language.alias.toLowerCase().trim());
     if (checkIfDuplicateExists(languageNames) || checkIfDuplicateExists(languageIDs)) {
-      return true;
+      toast.error("Duplicate language or language ID");
+      return false;
     }
-    return false;
+    if (languageIDs.includes("") || languageNames.includes("")) {
+      toast.error("Missing language or language ID");
+      return false;
+    }
+
+    return true;
   };
 
   const addNewLanguageField = () => {
     if (!isEnterpriseEdition) return;
-    setLanguages((prevLanguages) => [...prevLanguages, ["", ""]]);
+    setLanguages((prevLanguages) => [
+      ...prevLanguages,
+      {
+        id: "",
+        alias: "",
+        default: false,
+      },
+    ]);
     setIsEditing(true);
   };
 
-  const deleteLanguage = (index: number) => {
+  const deleteLanguage = (id: string) => {
     setIsDeleting(true);
-    const newLanguages = [...languages];
-    newLanguages.splice(index, 1);
-    const languagesObject = newLanguages.reduce<TLanguages>((acc, [key, value]) => {
-      if (key && value) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
-    languagesObject["_default_"] = defaultSymbol;
-    handleSave(languagesObject);
+    console.log(id);
+    const newLanguages = languages.filter((language) => language.id !== id);
+    handleSave(newLanguages);
     setLanguages(newLanguages);
     setIsDeleting(false);
+    setDeleteModalOpenIndex(null);
   };
 
-  const handleOnChange = (index: number, type: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOnChange = (index: number, type: "id" | "alias", value: string) => {
     setIsEditing(true);
     const newLanguages = [...languages];
-    if (index === 0 && type === "symbol") {
+    if (index === 0 && type === "id") {
       // meaning default language symbol is being changed
-      setdefaultSymbol(e.target.value);
+      setdefaultSymbol(value);
     }
-    newLanguages[index][type === "symbol" ? 0 : 1] = e.target.value;
+    newLanguages[index][type] = value;
     setLanguages(newLanguages);
   };
 
   const updateLanguages = () => {
-    if (checkForDuplicates(languages)) {
-      toast.error("Duplicate language or language ID");
+    if (!validateLanguage(languages)) {
       return;
     }
-    const languagesObject = languages.reduce<TLanguages>((acc, [key, value]) => {
-      if (key && value) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
-    languagesObject["_default_"] = defaultSymbol;
-    handleSave(languagesObject);
+    handleSave(languages);
   };
 
-  const handleSave = async (languages: TLanguages) => {
+  const markAsDefault = (languageId: string) => {
+    const newLanguages = [...languages];
+    const defaultLanguage = newLanguages.find((language) => language.id === defaultSymbol);
+    if (defaultLanguage) {
+      defaultLanguage.default = false;
+    }
+    const newDefaultLanguage = newLanguages.find((language) => language.id === languageId);
+    if (newDefaultLanguage) {
+      newDefaultLanguage.default = true;
+      setdefaultSymbol(newDefaultLanguage.id);
+    }
+    setLanguages(newLanguages);
+    handleSave(newLanguages);
+  };
+
+  const handleSave = async (languages: TLanguage[]) => {
     try {
       setIsUpdating(true);
-      await updateLangaugeAction(product.id, languages, product.languages["_default_"] !== defaultSymbol);
+      await updateProductAction(product.id, { languages });
       setIsEditing(false);
       setIsUpdating(false);
       toast.success("Lanuages updated successfully");
@@ -120,62 +142,91 @@ export default function EditLanguage({
     }
   };
 
+  const isLanguageSelectDisable = (index: number) => {
+    if (!isEditing) return true;
+    else {
+      if (index < product.languages.length) {
+        return true;
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col">
-      <div className="flex space-x-4 space-y-2">
-        <div className="w-96 space-y-2">
+      <div className="flex ">
+        <div className="space-y-4">
           <div className="flex w-full space-x-4">
-            <Label className="w-1/2" htmlFor="languages">
-              Language
+            <Label className="w-28" htmlFor="languagesId">
+              Language ID
             </Label>
-            <Label htmlFor="languageId">Language ID</Label>
+            <Label htmlFor="Alias">Alias</Label>
           </div>
 
           {languages.map((language, index) => {
             return (
-              <div key={index} className="flex space-x-4">
-                <div className="relative flex h-12 w-1/2 items-center justify-end">
-                  <Input
-                    disabled={!isEnterpriseEdition || isInputDisabled(index)}
-                    placeholder="e.g., English"
-                    className="absolute h-full w-full"
-                    value={language[1]}
-                    onChange={(e) => handleOnChange(index, "name", e)}
-                  />
-                  {language[0] === defaultSymbol && (
-                    <span className="mr-2 rounded-2xl bg-slate-200 px-2 py-1 text-xs text-slate-500">
-                      Default
-                    </span>
-                  )}
-                </div>
+              <div key={index} className=" flex items-center space-x-6">
                 <div className="flex items-center">
-                  <Input
-                    disabled={!isEnterpriseEdition || isInputDisabled(index)}
-                    placeholder="e.g., en"
-                    className="h-12 w-24"
-                    value={language[0]}
-                    onChange={(e) => handleOnChange(index, "symbol", e)}
+                  <Select
+                    className=" h-full w-24"
+                    value={languageOptions.find((option) => option.value === language.id)}
+                    onChange={(selectedOption) => {
+                      if (!selectedOption) return;
+                      handleOnChange(index, "id", selectedOption.value);
+                    }}
+                    options={languageOptions}
+                    isDisabled={!isEnterpriseEdition || isLanguageSelectDisable(index)}
+                    isSearchable={true}
+                    placeholder="en"
                   />
-                  {index !== 0 && (
-                    <TrashIcon
-                      className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
-                      onClick={() => setIsDeleteLanguageModalOpen(true)}
-                    />
-                  )}
-                  {index === 0 && (
-                    <PencilIcon
-                      className="ml-2 h-4 w-4 cursor-pointer text-slate-400"
-                      onClick={() => setIsDeleteLanguageModalOpen(true)}
-                    />
-                  )}
                 </div>
-                <DeleteDialog
-                  open={isDeleteLanguageModalOpen}
-                  setOpen={setIsDeleteLanguageModalOpen}
-                  deleteWhat="Language"
-                  onDelete={() => deleteLanguage(index)}
-                  isDeleting={isDeleting}
-                />
+                <div className="flex h-12 w-1/2  ">
+                  <div className="relative h-full">
+                    <Input
+                      disabled={!isEnterpriseEdition}
+                      placeholder="English"
+                      className="h-full w-40"
+                      value={language.alias}
+                      onChange={(e) => handleOnChange(index, "alias", e.target.value)}
+                    />
+                    {language.id === defaultSymbol && (
+                      <span className="absolute right-2 top-3 rounded-2xl bg-slate-200 px-2 py-1 text-xs text-slate-500">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {language.default !== true ? (
+                  <div>
+                    <TrashIcon
+                      className=" h-5 w-5 cursor-pointer text-slate-400"
+                      onClick={() => {
+                        if (isEditing) return;
+                        setDeleteModalOpenIndex(index);
+                      }}
+                    />
+                    <DeleteDialog
+                      open={deleteModalOpenIndex === index}
+                      setOpen={(open) => {
+                        if (!open) setDeleteModalOpenIndex(null);
+                      }}
+                      deleteWhat="Language"
+                      onDelete={() => deleteLanguage(language.id)}
+                      isDeleting={isDeleting}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-6 w-6"></div>
+                )}
+                {language.default === false && (
+                  <Button
+                    variant="darkCTA"
+                    disabled={index === product.languages.length || isEditing}
+                    className="whitespace-nowrap"
+                    onClick={() => markAsDefault(language.id)}
+                    loading={isUpdating}>
+                    Mark as default
+                  </Button>
+                )}
               </div>
             );
           })}

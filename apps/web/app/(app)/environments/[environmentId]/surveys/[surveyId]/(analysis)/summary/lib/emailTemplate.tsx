@@ -15,7 +15,7 @@ import { CalendarDaysIcon } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getDefaultLanguage, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
@@ -37,7 +37,7 @@ export const getEmailTemplateHtml = async (surveyId) => {
   if (!product) {
     throw new Error("Product not found");
   }
-  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
   const brandColor = product.brandColor;
   const surveyUrl = WEBAPP_URL + "/s/" + survey.id;
   const html = render(

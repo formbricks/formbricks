@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
-import { getSurveyLanguages } from "@formbricks/lib/i18n/utils";
+import { getDefaultLanguage, getSurveyLanguages } from "@formbricks/lib/i18n/utils";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
@@ -44,7 +44,7 @@ export default function ShareEmbedSurvey({
 }: ShareEmbedSurveyProps) {
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
-  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
   const { email } = user;
 
   const tabs = [
@@ -57,7 +57,7 @@ export default function ShareEmbedSurvey({
   const [showInitialPage, setShowInitialPage] = useState(true);
   const linkTextRef = useRef(null);
   const [surveyUrl, setSurveyUrl] = useState("");
-  const surveyLanguages = Object.entries(getSurveyLanguages(product, survey));
+  const surveyLanguages = getSurveyLanguages(product, survey);
   const [language, setLanguage] = useState<string>(defaultLanguageSymbol);
   const [showLanguageSelect, setShowLanguageSelect] = useState(false);
 
@@ -135,10 +135,10 @@ export default function ShareEmbedSurvey({
                               <div
                                 className="rounded-md px-1 py-2 hover:cursor-pointer hover:bg-slate-700"
                                 onClick={() => {
-                                  setLanguage(language[0]);
+                                  setLanguage(language.id);
                                   setShowLanguageSelect(false);
                                 }}>
-                                {language[1]}
+                                {language.alias}
                               </div>
                             );
                           })}

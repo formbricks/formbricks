@@ -7,13 +7,19 @@ import { useEffect, useState } from "react";
 import { useRef } from "react";
 
 import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
-import { translateSurvey } from "@formbricks/lib/i18n/utils";
+import {
+  containsTranslations,
+  extractLanguageIds,
+  getDefaultLanguage,
+  getSurveyLanguages,
+  translateSurvey,
+} from "@formbricks/lib/i18n/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { TLanguages, TProduct } from "@formbricks/types/product";
-import { TI18nString, TSurvey } from "@formbricks/types/surveys";
+import { TLanguage, TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 
 import PreviewSurvey from "../../../components/PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
@@ -49,12 +55,10 @@ export default function SurveyEditor({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
-  const defaultLanguageSymbol = product.languages["_default_"];
-  const defaultLanguage = {
-    [defaultLanguageSymbol]: product.languages[defaultLanguageSymbol],
-  };
-  const [surveyLanguages, setSurveyLanguages] = useState<TLanguages>(defaultLanguage);
-  const [productLanguages, setProductLanguages] = useState<TLanguages>(product.languages ?? defaultLanguage);
+  const defaultLanguage = getDefaultLanguage(product.languages);
+  const defaultLanguageSymbol = defaultLanguage.id;
+  const [surveyLanguages, setSurveyLanguages] = useState<TLanguage[]>([defaultLanguage]);
+  const [productLanguages, setProductLanguages] = useState<TLanguage[]>(product.languages ?? defaultLanguage);
   const [selectedLanguage, setSelectedLanguage] = useState<string>(defaultLanguageSymbol);
   const surveyEditorRef = useRef(null);
 
@@ -62,24 +66,13 @@ export default function SurveyEditor({
   useEffect(() => {
     if (survey) {
       if (localSurvey) return;
-      if ((survey.questions[0].headline as TI18nString)._i18n_) {
-        setLocalSurvey(survey);
-      } else {
-        setLocalSurvey(translateSurvey(structuredClone(survey), surveyLanguages, defaultLanguageSymbol));
-      }
+      setLocalSurvey(survey);
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
-      if ((survey.questions[0].headline as TI18nString)._i18n_) {
-        // Construct an object with the language codes from the headline
-        const languagesObj: TLanguages = Object.keys(survey.questions[0].headline)
-          .filter((key) => key !== "_i18n_") // Exclude the _i18n_ property
-          .reduce((acc, lang) => {
-            acc[lang] = product.languages[lang];
-            return acc;
-          }, {});
-
-        setSurveyLanguages(languagesObj);
+      if (containsTranslations(survey.questions[0].headline)) {
+        const surveyLanguages = getSurveyLanguages(product, survey);
+        setSurveyLanguages(surveyLanguages);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,12 +108,11 @@ export default function SurveyEditor({
     if (localSurvey?.questions?.length && localSurvey.questions.length > 0) {
       setActiveQuestionId(localSurvey.questions[0].id);
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type]);
 
   useEffect(() => {
-    if (!Object.keys(surveyLanguages).includes(selectedLanguage)) {
+    if (!extractLanguageIds(surveyLanguages).includes(selectedLanguage)) {
       setSelectedLanguage(defaultLanguageSymbol);
     }
   }, [surveyLanguages, selectedLanguage, defaultLanguageSymbol]);
@@ -155,8 +147,8 @@ export default function SurveyEditor({
                   <LanguageSwitch
                     productLanguages={productLanguages}
                     surveyLanguages={surveyLanguages}
-                    setLanguages={setSurveyLanguages}
-                    i18n={Object.entries(surveyLanguages).length > 1}
+                    setSurveyLanguages={setSurveyLanguages}
+                    i18n={surveyLanguages.length > 1}
                     setI18n={setI18n}
                     environmentId={environment.id}
                     isEnterpriseEdition={isEnterpriseEdition}

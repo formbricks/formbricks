@@ -6,10 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
-import { translateQuestion } from "@formbricks/lib/i18n/utils";
+import { getDefaultLanguage, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TLanguages, TProduct } from "@formbricks/types/product";
+import { TLanguage, TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 import AddQuestionButton from "./AddQuestionButton";
@@ -29,7 +29,7 @@ interface QuestionsViewProps {
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
 }
 
 export default function QuestionsView({
@@ -52,7 +52,7 @@ export default function QuestionsView({
   }, [localSurvey.questions]);
 
   const [backButtonLabel, setbackButtonLabel] = useState(null);
-  const defaultLanguageSymbol = product.languages["_default_"];
+  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
       if (question.headline[selectedLanguage].includes(`recall:${compareId}`)) {

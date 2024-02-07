@@ -4,9 +4,8 @@ import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { TLanguages } from "@formbricks/types/product";
+import { TLanguage } from "@formbricks/types/product";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
-import { TI18nString } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
@@ -19,7 +18,7 @@ interface CTAQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageSymbol: string;
 }
@@ -47,7 +46,7 @@ export default function CTAQuestionForm({
       <LocalizedInput
         id="headline"
         name="headline"
-        value={question.headline as TI18nString}
+        value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         surveyLanguages={surveyLanguages}
@@ -63,7 +62,7 @@ export default function CTAQuestionForm({
         <div className="mt-2">
           <LocalizedEditor
             id="subheader"
-            value={question.html as TI18nString}
+            value={question.html}
             localSurvey={localSurvey}
             surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
@@ -102,7 +101,7 @@ export default function CTAQuestionForm({
           <LocalizedInput
             id="buttonLabel"
             name="buttonLabel"
-            value={question.buttonLabel as TI18nString}
+            value={question.buttonLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
             maxLength={48}
@@ -119,7 +118,7 @@ export default function CTAQuestionForm({
             <LocalizedInput
               id="backButtonLabel"
               name="backButtonLabel"
-              value={question.backButtonLabel as TI18nString}
+              value={question.backButtonLabel}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               maxLength={48}
@@ -157,7 +156,7 @@ export default function CTAQuestionForm({
             <LocalizedInput
               id="dismissButtonLabel"
               name="dismissButtonLabel"
-              value={question.dismissButtonLabel as TI18nString}
+              value={question.dismissButtonLabel}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               placeholder={"skip"}

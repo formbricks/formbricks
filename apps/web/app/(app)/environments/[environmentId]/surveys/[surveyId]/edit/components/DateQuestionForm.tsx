@@ -2,9 +2,9 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { TLanguages } from "@formbricks/types/product";
-import { TI18nString, TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
+import { createI18nString, extractLanguageIds } from "@formbricks/lib/i18n/utils";
+import { TLanguage } from "@formbricks/types/product";
+import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
@@ -17,7 +17,7 @@ interface IDateQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageSymbol: string;
 }
@@ -49,14 +49,14 @@ export default function DateQuestionForm({
   defaultLanguageSymbol,
 }: IDateQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const surveyLanguageSymbols = Object.keys(surveyLanguages);
+  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
 
   return (
     <form>
       <LocalizedInput
         id="headline"
         name="headline"
-        value={question.headline as TI18nString}
+        value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         surveyLanguages={surveyLanguages}
@@ -73,7 +73,7 @@ export default function DateQuestionForm({
               <LocalizedInput
                 id="subheader"
                 name="subheader"
-                value={question.subheader as TI18nString}
+                value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 surveyLanguages={surveyLanguages}
@@ -103,7 +103,7 @@ export default function DateQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageSymbols, defaultLanguageSymbol),
+                subheader: createI18nString("", surveyLanguageIds, defaultLanguageSymbol),
               });
               setShowSubheader(true);
             }}>

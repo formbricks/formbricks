@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { TLanguages } from "@formbricks/types/product";
-import { TI18nString, TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
+import { TLanguage } from "@formbricks/types/product";
+import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 
 interface ConsentQuestionFormProps {
@@ -15,7 +15,7 @@ interface ConsentQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageSymbol: string;
 }
@@ -42,7 +42,7 @@ export default function ConsentQuestionForm({
       <LocalizedInput
         id="headline"
         name="headline"
-        value={question.headline as TI18nString}
+        value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         surveyLanguages={surveyLanguages}
@@ -58,7 +58,7 @@ export default function ConsentQuestionForm({
         <div className="mt-2">
           <LocalizedEditor
             id="subheader"
-            value={question.html as TI18nString}
+            value={question.html}
             localSurvey={localSurvey}
             surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
@@ -72,16 +72,13 @@ export default function ConsentQuestionForm({
           />
         </div>
       </div>
-      <div className="mb-2 mt-3">
-        <Label>Checkbox Label</Label>
-      </div>
 
       <LocalizedInput
         id="label"
         name="label"
         label="Checkbox Label"
         placeholder="I agree to the terms and conditions"
-        value={question.label as TI18nString}
+        value={question.label}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         surveyLanguages={surveyLanguages}

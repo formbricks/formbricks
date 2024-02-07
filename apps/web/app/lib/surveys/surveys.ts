@@ -163,7 +163,7 @@ export const generateQuestionAndFilterOptions = (
   const tagsOptions = environmentTags?.map((t) => {
     return t.name;
   });
-  if (Object.keys(survey.questions[0].headline).length > 2) {
+  if (Object.keys(survey.questions[0].headline).length > 1) {
     // If so, add the LANGUAGES filter to the questionOptions array.
     questionOptions.push({
       header: OptionsType.METADATA,
@@ -511,16 +511,23 @@ export const getFilterResponses = (
             response.personAttributes && Object.keys(response.personAttributes).length > 0
               ? response.personAttributes
               : null;
-          if (attributes && attributes.hasOwnProperty(filter?.questionType?.label)) {
+          if (
+            typeof filter?.questionType?.label === "string" &&
+            attributes &&
+            Object.prototype.hasOwnProperty.call(attributes, filter?.questionType?.label)
+          ) {
+            const attributeValue = attributes[filter?.questionType?.label];
+
             if (filter?.filterType?.filterValue === "Equals") {
-              return attributes[filter?.questionType?.label] === filter?.filterType?.filterComboBoxValue;
+              return attributeValue === filter?.filterType?.filterComboBoxValue;
             }
+
             if (filter?.filterType?.filterValue === "Not equals") {
-              return attributes[filter?.questionType?.label] !== filter?.filterType?.filterComboBoxValue;
+              return attributeValue !== filter?.filterType?.filterComboBoxValue;
             }
-          } else {
-            return false;
           }
+
+          return false;
         }
         return true;
       });

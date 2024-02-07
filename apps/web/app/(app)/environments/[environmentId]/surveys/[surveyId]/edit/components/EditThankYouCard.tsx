@@ -5,9 +5,8 @@ import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
-import { TLanguages } from "@formbricks/types/product";
+import { TLanguage } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TI18nString } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
@@ -20,7 +19,7 @@ interface EditThankYouCardProps {
   isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguages;
+  surveyLanguages: TLanguage[];
   defaultLanguageSymbol: string;
 }
 
@@ -113,7 +112,7 @@ export default function EditThankYouCard({
             <LocalizedInput
               id="headline"
               name="headline"
-              value={localSurvey?.thankYouCard?.headline as TI18nString}
+              value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
               surveyLanguages={surveyLanguages}
@@ -127,7 +126,7 @@ export default function EditThankYouCard({
             <LocalizedInput
               id="subheader"
               name="subheader"
-              value={localSurvey.thankYouCard.subheader as TI18nString}
+              value={localSurvey.thankYouCard.subheader}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
               surveyLanguages={surveyLanguages}
