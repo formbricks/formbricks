@@ -14,10 +14,10 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (e.target.elements.password.value !== e.target.elements.confirmPassword.value) {
-      setError("Les mots de passe ne correspondent pas");
-      return;
-    }
+      if (emailVerified && (e.target.elements.password.value !== e.target.elements.confirmPassword.value)) {
+        setError("Les mots de passe ne correspondent pas");
+        return;
+      } 
     try {
       const resetedPassword = await resetPassword(token, e.target.elements.password.value);
 
