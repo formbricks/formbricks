@@ -81,9 +81,6 @@ export class ResponseQueue {
         await this.api.client.response.update({ ...responseUpdate, responseId: this.surveyState.responseId });
       } else {
         const newResponseId = createId();
-        console.log("Formbricks: Creating new response with id", newResponseId);
-        // console.log(isCuid(newResponseId));
-
         const response = await this.api.client.response.create({
           id: newResponseId,
           ...responseUpdate,
@@ -91,17 +88,12 @@ export class ResponseQueue {
           userId: this.surveyState.userId || null,
           singleUseId: this.surveyState.singleUseId || null,
         });
-        console.log("Formbricks: response ", response);
-
         if (!response.ok) {
           throw new Error("Could not create response");
         }
         if (this.surveyState.displayId) {
-          console.log("Formbricks: Updating display with responseId", newResponseId);
-
           await this.api.client.display.update(this.surveyState.displayId, { responseId: newResponseId });
         }
-        console.log("Formbricks: Created new response with id", newResponseId);
         this.surveyState.updateResponseId(newResponseId);
         if (this.config.setSurveyState) {
           this.config.setSurveyState(this.surveyState);
