@@ -206,8 +206,6 @@ Let's have a chat about your survey needs and get you started.
 
 We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. See [`SECURITY.md`](./SECURITY.md) for more information.
 
-<p align="right"><a href="#top">🔼 Back to top</a></p>
-
 <a id="license"></a>
 
 ## 👩‍⚖️ License
@@ -227,3 +225,5 @@ If you have other licensing requirements such as White-Labeling please [send us 
 ### Why charge for Enterprise Features?
 
 The Enterprise Edition and White-Label Licenses allow us to fund the development of Formbricks sustainably. It guarantees that the open-source surveying infrastructure we're building will be around for decades to come.
+
+<p align="right"><a href="#top">🔼 Back to top</a></p>
