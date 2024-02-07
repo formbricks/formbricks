@@ -48,11 +48,9 @@ x-privacy-url: &privacy_url
 x-terms-url: &terms_url
 x-imprint-url: &imprint_url
 
-x-github-auth-enabled: &github_auth_enabled 0 # Configure Github Login
 x-github-id: &github_id
 x-github-secret: &github_secret
 
-x-google-auth-enabled: &google_auth_enabled 0 # Configure Google Login
 x-google-client-id: &google_client_id
 x-google-client-secret: &google_client_secret
 
@@ -110,10 +108,8 @@ services:
       INVITE_DISABLED: *invite_disabled
       SENTRY_IGNORE_API_RESOLUTION_ERROR: *sentry_ignore_api_resolution_error
       NEXT_PUBLIC_SENTRY_DSN: *next_public_sentry_dsn
-      GITHUB_AUTH_ENABLED: *github_auth_enabled
       GITHUB_ID: *github_id
       GITHUB_SECRET: *github_secret
-      GOOGLE_AUTH_ENABLED: *google_auth_enabled
       GOOGLE_CLIENT_ID: *google_client_id
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
