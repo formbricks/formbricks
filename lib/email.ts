@@ -85,7 +85,7 @@ export const sendForgotPasswordEmail = async (user) => {
     <br/>
     Le lien est valable pendant 24 heures. Si tu ne l'as pas demandé, ignore cet e-mail.<br/>
     <br/>
-    Ton mot de passe ne changera pas tant que tu n'aura pas accédé au lien ci-dessus et créé un nouveau mot de passe.<br/>
+    Ton mot de passe ne changera pas tant que tu n'auras pas accédé au lien ci-dessus et créé un nouveau mot de passe.<br/>
     <br/>
     L'équipe Kadea`,
   });
