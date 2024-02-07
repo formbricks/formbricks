@@ -1,5 +1,9 @@
 "use server";
 
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@formbricks/lib/authOptions";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import {
   cloneSegment,
   createSegment,
@@ -7,9 +11,11 @@ import {
   getSegment,
   updateSegment,
 } from "@formbricks/lib/segment/service";
+import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
 import { formatDateFields } from "@formbricks/lib/utils/datetime";
+import { AuthorizationError } from "@formbricks/types/errors";
 import {
   TBaseFilters,
   TSegmentUpdateInput,
@@ -32,6 +38,13 @@ export const createSegmentAction = async ({
   isPrivate: boolean;
   filters: TBaseFilters;
 }) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  // @ts-expect-error
+  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+
   const parsedFilters = ZSegmentFilters.safeParse(filters);
 
   if (!parsedFilters.success) {
@@ -53,7 +66,18 @@ export const createSegmentAction = async ({
   return segment;
 };
 
-export const updateSegmentAction = async (segmentId: string, data: TSegmentUpdateInput) => {
+export const updateSegmentAction = async (
+  environmentId: string,
+  segmentId: string,
+  data: TSegmentUpdateInput
+) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  // @ts-expect-error
+  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+
   const { filters } = data;
   if (filters) {
     const parsedFilters = ZSegmentFilters.safeParse(filters);
@@ -72,10 +96,24 @@ export const updateSegmentAction = async (segmentId: string, data: TSegmentUpdat
 };
 
 export const loadNewSegmentAction = async (surveyId: string, segmentId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  // @ts-expect-error
+  const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+
   return await loadNewSegmentInSurvey(surveyId, segmentId);
 };
 
 export const cloneSegmentAction = async (segmentId: string, surveyId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  // @ts-expect-error
+  const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+
   try {
     const clonedSegment = await cloneSegment(segmentId, surveyId);
     return clonedSegment;
@@ -84,7 +122,14 @@ export const cloneSegmentAction = async (segmentId: string, surveyId: string) =>
   }
 };
 
-export const deleteSegmentAction = async (segmentId: string) => {
+export const deleteSegmentAction = async (environmentId: string, segmentId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  // @ts-expect-error
+  const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+
   const foundSegment = await getSegment(segmentId);
 
   if (!foundSegment) {

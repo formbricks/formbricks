@@ -59,7 +59,7 @@ const BasicSaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
 
       setIsLoading(true);
       if (!!segment && segment?.isPrivate) {
-        const updatedSegment = await updateBasicSegmentAction(segment.id, {
+        const updatedSegment = await updateBasicSegmentAction(segment.environmentId, segment.id, {
           ...segment,
           title: data.title,
           description: data.description,

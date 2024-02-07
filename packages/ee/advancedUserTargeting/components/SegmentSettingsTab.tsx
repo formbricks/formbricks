@@ -82,7 +82,7 @@ const SegmentSettingsTab = ({
 
     try {
       setIsUpdatingSegment(true);
-      await updateSegmentAction(segment.id, {
+      await updateSegmentAction(segment.environmentId, segment.id, {
         title: segment.title,
         description: segment.description ?? "",
         isPrivate: segment.isPrivate,
@@ -105,7 +105,7 @@ const SegmentSettingsTab = ({
   const handleDeleteSegment = async () => {
     try {
       setIsDeletingSegment(true);
-      await deleteSegmentAction(segment.id);
+      await deleteSegmentAction(segment.environmentId, segment.id);
 
       setIsDeletingSegment(false);
       toast.success("Segment deleted successfully!");
