@@ -1,7 +1,10 @@
+import BasicCreateSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/BasicCreateSegmentModal";
+import BasicSegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/BasicSegmentTable";
+
 import CreateSegmentModal from "@formbricks/ee/advancedUserTargeting/components/CreateSegmentModal";
 import SegmentTable from "@formbricks/ee/advancedUserTargeting/components/SegmentTable";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
-import { getUserTargetingPermission } from "@formbricks/ee/lib/service";
+import { getAdvancedUserTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
@@ -29,11 +32,7 @@ export default async function SegmentsPage({ params }) {
     throw new Error("Team not found");
   }
 
-  const isUserTargetingAllowed = getUserTargetingPermission(team);
-
-  if (!isUserTargetingAllowed) {
-    throw new Error("User targeting not allowed");
-  }
+  const isAdvancedUserTargetingAllowed = getAdvancedUserTargetingPermission(team);
 
   if (!segments) {
     throw new Error("Failed to fetch segments");
@@ -53,14 +52,33 @@ export default async function SegmentsPage({ params }) {
     return true;
   });
 
+  const SegmentTableToRender = () => {
+    if (isAdvancedUserTargetingAllowed) {
+      return (
+        <SegmentTable
+          segments={filteredSegments}
+          actionClasses={actionClasses}
+          attributeClasses={attributeClasses}
+        />
+      );
+    }
+
+    return <BasicSegmentTable segments={filteredSegments} attributeClasses={attributeClasses} />;
+  };
+
   return (
     <>
-      <CreateSegmentModal
-        environmentId={params.environmentId}
-        actionClasses={actionClasses}
-        attributeClasses={attributeClasses}
-        segments={filteredSegments}
-      />
+      {isAdvancedUserTargetingAllowed ? (
+        <CreateSegmentModal
+          environmentId={params.environmentId}
+          actionClasses={actionClasses}
+          attributeClasses={attributeClasses}
+          segments={filteredSegments}
+        />
+      ) : (
+        <BasicCreateSegmentModal attributeClasses={attributeClasses} environmentId={params.environmentId} />
+      )}
+
       {filteredSegments.length === 0 ? (
         <EmptySpaceFiller
           type="table"
@@ -68,11 +86,7 @@ export default async function SegmentsPage({ params }) {
           emptyMessage="No segments yet. Add your first one to get started."
         />
       ) : (
-        <SegmentTable
-          segments={filteredSegments}
-          actionClasses={actionClasses}
-          attributeClasses={attributeClasses}
-        />
+        <SegmentTableToRender />
       )}
     </>
   );

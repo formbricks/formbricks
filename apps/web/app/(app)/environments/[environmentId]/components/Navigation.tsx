@@ -69,7 +69,6 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   webAppUrl: string;
   membershipRole?: TMembershipRole;
-  isUserTargetingAllowed?: boolean;
 }
 
 export default function Navigation({
@@ -82,7 +81,6 @@ export default function Navigation({
   isFormbricksCloud,
   webAppUrl,
   membershipRole,
-  isUserTargetingAllowed = false,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -122,7 +120,7 @@ export default function Navigation({
         hidden: false,
       },
       {
-        name: isUserTargetingAllowed ? "People & Segments" : "People",
+        name: "People & Segments",
         href: `/environments/${environment.id}/people`,
         icon: CustomersIcon,
         current: pathname?.includes("/people") || pathname?.includes("/segments"),
@@ -149,7 +147,7 @@ export default function Navigation({
         hidden: false,
       },
     ],
-    [environment.id, pathname, isUserTargetingAllowed, isViewer]
+    [environment.id, pathname, isViewer]
   );
 
   const dropdownNavigation = [

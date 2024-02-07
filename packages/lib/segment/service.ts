@@ -324,12 +324,19 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
+    // parse the filters and update the user segment
+    const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+    if (!parsedFilters.success) {
+      throw new ValidationError("Invalid filters");
+    }
+
     const clonedSegment = await prisma.segment.create({
       data: {
         title: `Copy of ${segment.title}`,
         description: segment.description,
         isPrivate: segment.isPrivate,
         environmentId: segment.environmentId,
+        filters: segment.filters,
         surveys: {
           connect: {
             id: surveyId,
@@ -338,16 +345,6 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       },
       select: selectSegment,
     });
-
-    if (clonedSegment.id) {
-      // parse the filters and update the user segment
-      const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-      if (!parsedFilters.success) {
-        throw new ValidationError("Invalid filters");
-      }
-
-      clonedSegment.filters = parsedFilters.data;
-    }
 
     segmentCache.revalidate({ id: clonedSegment.id, environmentId: clonedSegment.environmentId });
     surveyCache.revalidate({ id: surveyId });

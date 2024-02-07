@@ -16,8 +16,7 @@ import toast from "react-hot-toast";
 import AddFilterModal from "@formbricks/ee/advancedUserTargeting/components/AddFilterModal";
 import LoadSegmentModal from "@formbricks/ee/advancedUserTargeting/components/LoadSegmentModal";
 import SaveAsNewSegmentModal from "@formbricks/ee/advancedUserTargeting/components/SaveAsNewSegmentModal";
-import SegmentAlreadyUsedModal from "@formbricks/ee/advancedUserTargeting/components/SegmentAlreadyUsedModal";
-import SegmentFilters from "@formbricks/ee/advancedUserTargeting/components/SegmentFilters";
+import SegmentEditor from "@formbricks/ee/advancedUserTargeting/components/SegmentFilters";
 import { cloneSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -26,6 +25,7 @@ import { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
+import SegmentAlreadyUsedModal from "@formbricks/ui/Targeting/SegmentAlreadyUsedModal";
 
 interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
@@ -34,6 +34,7 @@ interface UserTargetingAdvancedCardProps {
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
+  initialSegment?: TSegment;
 }
 
 export default function UserTargetingAdvancedCard({
@@ -43,6 +44,7 @@ export default function UserTargetingAdvancedCard({
   actionClasses: actionClassesProps,
   attributeClasses,
   segments,
+  initialSegment,
 }: UserTargetingAdvancedCardProps) {
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
@@ -190,7 +192,7 @@ export default function UserTargetingAdvancedCard({
                   </div>
                   {!!segment?.filters?.length && (
                     <div className="w-full">
-                      <SegmentFilters
+                      <SegmentEditor
                         key={segment.filters.toString()}
                         group={segment.filters}
                         environmentId={environmentId}
@@ -227,11 +229,8 @@ export default function UserTargetingAdvancedCard({
                           setIsSegmentEditorOpen(false);
                           setSegmentEditorViewOnly(false);
 
-                          const segmentFromApi = segments.find((segment) => segment.id === segment.id);
-
-                          // reset the state changes:
-                          if (segmentFromApi) {
-                            setSegment(segmentFromApi);
+                          if (initialSegment) {
+                            setSegment(initialSegment);
                           }
                         }}>
                         Cancel
@@ -295,7 +294,7 @@ export default function UserTargetingAdvancedCard({
 
                   {segmentEditorViewOnly && segment && (
                     <div className="opacity-60">
-                      <SegmentFilters
+                      <SegmentEditor
                         key={segment.filters.toString()}
                         group={segment.filters}
                         environmentId={environmentId}

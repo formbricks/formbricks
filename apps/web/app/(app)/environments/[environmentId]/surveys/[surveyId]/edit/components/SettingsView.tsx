@@ -50,6 +50,8 @@ export default function SettingsView({
             setLocalSurvey={setLocalSurvey}
             environmentId={environment.id}
             attributeClasses={attributeClasses}
+            segments={segments}
+            initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
           />
         ) : (
           <UserTargetingAdvancedCard
@@ -60,6 +62,7 @@ export default function SettingsView({
             attributeClasses={attributeClasses}
             actionClasses={actionClasses}
             segments={segments}
+            initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
           />
         )
       ) : null}

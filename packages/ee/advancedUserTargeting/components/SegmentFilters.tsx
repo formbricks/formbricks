@@ -36,7 +36,7 @@ type TSegmentFilterProps = {
   viewOnly?: boolean;
 };
 
-const SegmentFilters = ({
+const SegmentEditor = ({
   group,
   environmentId,
   setSegment,
@@ -161,7 +161,7 @@ const SegmentFilters = ({
                 </div>
 
                 <div className="rounded-lg border-2 border-slate-300 bg-white p-4">
-                  <SegmentFilters
+                  <SegmentEditor
                     group={resource}
                     environmentId={environmentId}
                     segment={segment}
@@ -261,4 +261,4 @@ const SegmentFilters = ({
   );
 };
 
-export default SegmentFilters;
+export default SegmentEditor;

@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 
-import { getUserTargetingPermission } from "@formbricks/ee/lib/service";
+import { getAdvancedUserTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -59,7 +59,7 @@ export default async function SurveysEditPage({ params }) {
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isSurveyCreationDeletionDisabled = isViewer;
 
-  const isUserTargetingAllowed = getUserTargetingPermission(team);
+  const isUserTargetingAllowed = getAdvancedUserTargetingPermission(team);
 
   if (
     !survey ||

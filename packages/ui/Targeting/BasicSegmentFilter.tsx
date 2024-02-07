@@ -26,15 +26,11 @@ import {
   TSegmentFilterValue,
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/DropdownMenu";
-import { Input } from "@formbricks/ui/Input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+
+import { Button } from "../Button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../DropdownMenu";
+import { Input } from "../Input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../Select";
 
 type SegmentFilterItemProps = {
   connector: TSegmentConnector;

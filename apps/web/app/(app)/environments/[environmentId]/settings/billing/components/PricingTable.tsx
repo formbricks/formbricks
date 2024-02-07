@@ -329,7 +329,7 @@ export default function PricingTableComponent({
       </div>
 
       <AlertDialog
-        headerText="Are your sure that you want to unsubscribe?"
+        headerText="Are you sure that you want to unsubscribe?"
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
         onConfirm={() => {

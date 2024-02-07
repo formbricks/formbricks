@@ -2,12 +2,13 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { FingerprintIcon, TagIcon } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegmentAttributeFilter, TSegmentPersonFilter } from "@formbricks/types/segment";
-import { Input } from "@formbricks/ui/Input";
-import { Modal } from "@formbricks/ui/Modal";
+
+import { Input } from "../Input";
+import { Modal } from "../Modal";
 
 const handleAddFilter = ({
   type,

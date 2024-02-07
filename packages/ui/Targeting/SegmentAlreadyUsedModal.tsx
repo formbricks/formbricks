@@ -1,7 +1,7 @@
 import { useRouter } from "next/navigation";
 
-import { Button } from "@formbricks/ui/Button";
-import { Modal } from "@formbricks/ui/Modal";
+import { Button } from "../Button";
+import { Modal } from "../Modal";
 
 type TSegmentAlreadyUsedModalProps = {
   open: boolean;
