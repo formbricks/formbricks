@@ -64,8 +64,6 @@ Formbricks is both a free and open source survey platform - and a privacy-first 
 
 - [Self-hosted Version](#self-hosted-version)
 
-- [License](#license)
-
 - [Development](#development)
 
 - [Contribution](#contribution)
@@ -73,6 +71,8 @@ Formbricks is both a free and open source survey platform - and a privacy-first 
 - [Contact](#contact-us)
 
 - [Security](#security)
+
+- [License](#license)
 
 <a id="features"></a>
 
@@ -140,31 +140,11 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
 
-<a id="license"></a>
-
-## License
-
-### The AGPL Formbricks Core
-
-The Formbricks core application is licensed under the [AGPLv3 Open Source License](https://github.com/formbricks/formbricks/blob/main/LICENSE). The core application is fully functional and includes everything you need to design & run link surveys, website surveys and in-app surveys. You can use the software for free for personal and commercial use. You're also allowed to create and distribute modified versions as long as you document the changes you make incl. date. The AGPL license requires you to publish your modified version under the AGPLv3 license as well.
-
-### The Enterprise Edition
-
-Additional to the AGPL licensed Formbricks core, this repository contains code licensed under an Enterprise license. The [code](https://github.com/formbricks/formbricks/tree/main/packages/ee) and [license](https://github.com/formbricks/formbricks/blob/main/packages/ee/LICENSE) for the enterprise functionality can be found in the `/packages/ee` folder of this repository. This additional additional functionality is not part of the AGPLv3 licensed Formbricks core and is designed to meet the needs of larger teams and enterprises. This advanced functionality is already included in the Docker images, but you need an [Enterprise License Key](https://formbricks.com/docs/self-hosting/license) to unlock it.
-
-### White-Labeling Formbricks and Other Licensing Needs
-
-If you have other licensing requirements such as White-Labeling please [send us an email](mailto:hola@formbricks.com).
-
-### Why charge for Enterprise Features?
-
-The Enterprise Edition and White-Label Licenses allow us to fund the development of Formbricks sustainably. It guarantees that the open-source surveying infrastructure we're building will be around for decades to come.
-
 <a id="development"></a>
 
-### 👨‍💻 Development
+## 👨‍💻 Development
 
-#### Prerequisites
+### Prerequisites
 
 Here is what you need to be able to run Formbricks:
 
@@ -174,11 +154,11 @@ Here is what you need to be able to run Formbricks:
 
 - [Docker](https://www.docker.com/) - to run PostgreSQL and MailHog
 
-#### Local Setup
+### Local Setup
 
 To get started locally, we've got a [guide to help you](https://formbricks.com/docs/contributing/setup).
 
-#### Gitpod Setup
+### Gitpod Setup
 
 1. Click the button below to open this project in Gitpod.
 
@@ -227,3 +207,23 @@ Let's have a chat about your survey needs and get you started.
 We take security very seriously. If you come across any security vulnerabilities, please disclose them by sending an email to security@formbricks.com. We appreciate your help in making our platform as secure as possible and are committed to working with you to resolve any issues quickly and efficiently. See [`SECURITY.md`](./SECURITY.md) for more information.
 
 <p align="right"><a href="#top">🔼 Back to top</a></p>
+
+<a id="license"></a>
+
+## 👩‍⚖️ License
+
+### The AGPL Formbricks Core
+
+The Formbricks core application is licensed under the [AGPLv3 Open Source License](https://github.com/formbricks/formbricks/blob/main/LICENSE). The core application is fully functional and includes everything you need to design & run link surveys, website surveys and in-app surveys. You can use the software for free for personal and commercial use. You're also allowed to create and distribute modified versions as long as you document the changes you make incl. date. The AGPL license requires you to publish your modified version under the AGPLv3 license as well.
+
+### The Enterprise Edition
+
+Additional to the AGPL licensed Formbricks core, this repository contains code licensed under an Enterprise license. The [code](https://github.com/formbricks/formbricks/tree/main/packages/ee) and [license](https://github.com/formbricks/formbricks/blob/main/packages/ee/LICENSE) for the enterprise functionality can be found in the `/packages/ee` folder of this repository. This additional additional functionality is not part of the AGPLv3 licensed Formbricks core and is designed to meet the needs of larger teams and enterprises. This advanced functionality is already included in the Docker images, but you need an [Enterprise License Key](https://formbricks.com/docs/self-hosting/enterprise) to unlock it.
+
+### White-Labeling Formbricks and Other Licensing Needs
+
+If you have other licensing requirements such as White-Labeling please [send us an email](mailto:hola@formbricks.com).
+
+### Why charge for Enterprise Features?
+
+The Enterprise Edition and White-Label Licenses allow us to fund the development of Formbricks sustainably. It guarantees that the open-source surveying infrastructure we're building will be around for decades to come.
