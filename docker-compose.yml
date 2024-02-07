@@ -41,7 +41,7 @@ x-password-reset-disabled: &password_reset_disabled 1
 x-signup-disabled: &signup_disabled 0
 
 # Email login. Disable the ability for users to login with email.
-x-signup-disabled: &email_login_disabled 0
+x-auth-disabled: &email_auth_disabled 0
 
 # Team Invite. Disable the ability for invited users to create an account.
 x-invite-disabled: &invite_disabled 0
@@ -109,6 +109,7 @@ services:
       IMPRINT_URL: *imprint_url
       EMAIL_VERIFICATION_DISABLED: *email_verification_disabled
       PASSWORD_RESET_DISABLED: *password_reset_disabled
+      EMAIL_AUTH_DISABLED: *email_auth_disabled
       SIGNUP_DISABLED: *signup_disabled
       INVITE_DISABLED: *invite_disabled
       SENTRY_IGNORE_API_RESOLUTION_ERROR: *sentry_ignore_api_resolution_error

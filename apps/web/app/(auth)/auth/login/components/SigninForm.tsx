@@ -24,14 +24,14 @@ type TSigninFormState = {
 };
 
 export const SigninForm = ({
-  emailLoginEnabled,
+  emailAuthEnabled,
   publicSignUpEnabled,
   passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
 }: {
-  emailLoginEnabled: boolean;
+  emailAuthEnabled: boolean;
   publicSignUpEnabled: boolean;
   passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
@@ -187,7 +187,7 @@ export const SigninForm = ({
                 )}
               </div>
             )}
-            {emailLoginEnabled && (
+            {emailAuthEnabled && (
               <Button
                 onClick={() => {
                   if (!showLogin) {

@@ -48,7 +48,7 @@ x-environment: &environment
     # SIGNUP_DISABLED:
 
     # Uncomment the below and set it to 1 to disable logging in with email
-    # EMAIL_LOGIN_DISABLED:
+    # EMAIL_AUTH_DISABLED:
 
     # Uncomment the below and set it to 1 to disable Invites
     # INVITE_DISABLED:
