@@ -34,6 +34,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://cal.com",
         },
         {
+          name: "ClassroomIO.com",
+          description:
+            "ClassroomIO is a no-code tool that allows you build and scale your own teaching platform with ease.",
+          href: "https://www.classroomio.com",
+        },
+        {
           name: "Crowd.dev",
           description:
             "Centralize community, product, and customer data to understand which companies are engaging with your open source project.",
