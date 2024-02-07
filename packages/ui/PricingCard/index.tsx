@@ -66,7 +66,7 @@ export const PricingCard = ({
           <Badge text="Cancelling at End of this Month" size="normal" type="warning" />
         ) : null}
 
-        <p className=" whitespace-pre-wrap text-sm text-slate-600">{subtitle}</p>
+        <p className=" mt-1 whitespace-pre-wrap text-sm text-slate-600">{subtitle}</p>
 
         {metric && perMetricCharge && (
           <div className="rounded-xl bg-slate-100 py-4 dark:bg-slate-800">
@@ -95,9 +95,9 @@ export const PricingCard = ({
         <div className="flex py-3">
           <div className="w-3/5">
             {team.billing.features[featureNameKey].status === "inactive" && (
-              <p className=" whitespace-pre-wrap text-sm text-slate-600">
+              <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">
                 You&apos;re on the <b>Free plan</b> in {title}.<br />
-                Upgrade now to unlock the following for free:
+                Upgrade now to unlock the following:
               </p>
             )}
 
@@ -160,7 +160,7 @@ export const PricingCard = ({
             )}
             {team.billing.features[featureNameKey].status === "inactive" && (
               <Button variant="darkCTA" loading={loading} onClick={() => onUpgrade()}>
-                Upgrade {title !== "Link Survey" ? "for free" : "now"}
+                Upgrade {title !== "Link Survey Pro" ? "for free" : "now"}
               </Button>
             )}
           </div>
