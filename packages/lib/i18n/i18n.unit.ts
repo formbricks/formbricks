@@ -1,5 +1,4 @@
 import { TLanguage } from "@formbricks/types/product";
-import { TI18nString } from "@formbricks/types/surveys";
 
 import {
   mockSurvey,
@@ -24,12 +23,12 @@ describe("createI18nString", () => {
   });
 
   it("should create a new i18n string with i18n enabled from a previous i18n string", () => {
-    const result = createI18nString({ en: "Hello" } as unknown as TI18nString, ["en", "es"], "en");
+    const result = createI18nString({ en: "Hello" }, ["en", "es"], "en");
     expect(result).toEqual({ en: "Hello", es: "" });
   });
 
   it("should add a new field key value pair when a new language is added", () => {
-    const i18nObject = { en: "Hello", es: "Hola" } as unknown as TI18nString;
+    const i18nObject = { en: "Hello", es: "Hola" };
     const newLanguages = ["en", "es", "de"];
     const result = createI18nString(i18nObject, newLanguages, "en");
     expect(result).toEqual({
@@ -40,7 +39,7 @@ describe("createI18nString", () => {
   });
 
   it("should remove the translation that are not present in newLanguages", () => {
-    const i18nObject = { en: "Hello", es: "hola" } as unknown as TI18nString;
+    const i18nObject = { en: "Hello", es: "hola" };
     const newLanguages = ["en"];
     const result = createI18nString(i18nObject, newLanguages, "en");
     expect(result).toEqual({

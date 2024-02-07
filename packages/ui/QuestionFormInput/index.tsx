@@ -108,9 +108,9 @@ const QuestionFormInput = ({
   const getQuestionTextBasedOnType = (): TI18nString => {
     if (isChoice && typeof choiceIdx === "number") {
       return (
-        ((question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion).choices[
+        (question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion).choices[
           choiceIdx
-        ].label as TI18nString) || createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
+        ].label || createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
       );
     }
     if (isThankYouCard) {

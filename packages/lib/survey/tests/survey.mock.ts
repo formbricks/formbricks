@@ -5,7 +5,6 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TPerson } from "@formbricks/types/people";
 import { TProduct } from "@formbricks/types/product";
 import {
-  TI18nString,
   TSurvey,
   TSurveyAttributeFilter,
   TSurveyInput,
@@ -127,14 +126,14 @@ export const mockAttributeFilter: TSurveyAttributeFilter = {
 const mockQuestion: TSurveyQuestion = {
   id: mockId,
   type: TSurveyQuestionType.OpenText,
-  headline: { en: "Question Text" } as unknown as TI18nString,
+  headline: { en: "Question Text" },
   required: false,
   inputType: "text",
 };
 
 const mockWelcomeCard: TSurveyWelcomeCard = {
   enabled: false,
-  headline: { en: "My welcome card" } as unknown as TI18nString,
+  headline: { en: "My welcome card" },
   timeToFinish: false,
   showResponseCount: false,
 };
