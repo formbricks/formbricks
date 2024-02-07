@@ -19,6 +19,7 @@ interface SurveyCardProps {
   WEBAPP_URL: string;
   orientation: string;
 }
+
 export default function SurveyCard({
   survey,
   environment,
@@ -54,10 +55,10 @@ export default function SurveyCard({
 
   const SurveyTypeIndicator = ({ type }: { type: string }) => (
     <div className="flex items-center space-x-2 text-sm text-slate-600">
-      {type === "web" ? (
+      {type === "web" || type === "mobile" ? (
         <>
           <Code className="h-4 w-4" />
-          <span> In-app</span>
+          <span>{` In-app (${type})`}</span>
         </>
       ) : (
         <>

@@ -17,6 +17,12 @@ import { TSurvey } from "@formbricks/types/surveys";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
+declare global {
+  interface Window {
+    ReactNativeWebView: Window;
+  }
+}
+
 let setIsError = (_: boolean) => {};
 
 interface LinkSurveyProps {
@@ -49,6 +55,7 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
+  const isMobile = searchParams?.get("mobile") === "true";
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
@@ -118,6 +125,11 @@ export default function LinkSurvey({
     }
   }, [survey.verifyEmail, verifiedEmail]);
 
+  // tell react native app to close the survey.
+  const onFinishedMobile = () => {
+    window.ReactNativeWebView.postMessage(JSON.stringify({ closeModal: true }));
+  };
+
   useEffect(() => {
     responseQueue.updateSurveyState(surveyState);
   }, [responseQueue, surveyState]);
@@ -169,6 +181,7 @@ export default function LinkSurvey({
               });
               const res = await api.client.display.create({
                 surveyId: survey.id,
+                userId,
               });
               if (!res.ok) {
                 throw new Error("Could not create display");
@@ -206,6 +219,7 @@ export default function LinkSurvey({
             return uploadedUrl;
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
+          onFinished={isMobile ? onFinishedMobile : () => {}}
           activeQuestionId={activeQuestionId}
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}

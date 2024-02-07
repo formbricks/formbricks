@@ -1,8 +1,8 @@
 import type { NetworkError, Result } from "@formbricks/lib/errors";
 import { err, ok } from "@formbricks/lib/errors";
 import { Logger } from "@formbricks/lib/logger";
-import type { TJsStateSync } from "@formbricks/types/js";
-import type { TRNState, TRNSyncParams } from "@formbricks/types/react-native";
+import type { TJsState, TJsStateSync } from "@formbricks/types/js";
+import type { TRNSyncParams } from "@formbricks/types/react-native";
 
 import { Config } from "./config";
 
@@ -17,16 +17,18 @@ export const sync = async (params: TRNSyncParams): Promise<void> => {
       throw syncResult.error;
     }
 
-    let oldState: TRNState | undefined;
+    let oldState: TJsState | undefined;
     try {
       oldState = config.get().state;
     } catch (e) {
       // ignore error
     }
 
-    let state: TRNState = {
-      surveys: syncResult.value.surveys,
+    let state: TJsState = {
+      // filter for mobile surveys only
+      surveys: syncResult.value.surveys.filter((survey) => survey.type === "mobile"),
       product: syncResult.value.product,
+      noCodeActionClasses: [],
       attributes: oldState?.attributes || {},
     };
 

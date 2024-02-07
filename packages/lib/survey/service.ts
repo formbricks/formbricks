@@ -627,7 +627,9 @@ export const getSyncSurveys = async (environmentId: string, person: TPerson): Pr
       let surveys = await getSurveys(environmentId);
 
       // filtered surveys for running and web
-      surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
+      surveys = surveys.filter(
+        (survey) => survey.status === "inProgress" && (survey.type === "web" || survey.type === "mobile")
+      );
 
       const displays = await getDisplaysByPersonId(person.id);
 

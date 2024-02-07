@@ -7,25 +7,20 @@ import Formbricks, { track } from "@formbricks/react-native";
 LogBox.ignoreAllLogs();
 
 export default function App() {
-  const [text, setText] = useState("Open up App.tsx to start working on your app!");
+  const [text, setText] = useState("Formbricks React Native SDK Demo");
   const config = {
     environmentId: "cls9j2dox000ahde62sjgfw08",
     apiHost: "http://localhost:3000",
     debug: true,
-    userId: "1234",
+    userId: "123456",
     attributes: {
-      userId: "1234",
+      userId: "123456",
     },
   };
   return (
     <View style={styles.container}>
       <Text>{text}</Text>
-      <Button
-        title="Change Text"
-        onPress={() => {
-          setText("Hello from Formbricks");
-        }}
-      />
+
       <Button
         title="Trigger Code Action"
         onPress={() => {
@@ -33,6 +28,7 @@ export default function App() {
         }}
       />
       <StatusBar style="auto" />
+
       <Formbricks initializationConfig={config} />
     </View>
   );

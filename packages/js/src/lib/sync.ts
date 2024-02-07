@@ -77,7 +77,8 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
     }
 
     let state: TJsState = {
-      surveys: syncResult.value.surveys,
+      // filter for web surveys only
+      surveys: syncResult.value.surveys.filter((survey) => survey.type === "web"),
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
       attributes: oldState?.attributes || {},

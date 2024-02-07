@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
 
   const survey = await getSurvey(params.surveyId);
 
-  if (!survey || survey.type !== "link" || survey.status === "draft") {
+  if (!survey || !["link", "mobile"].includes(survey.type) || survey.status === "draft") {
     notFound();
   }
 
@@ -94,7 +94,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
 
-  if (!survey || survey.type !== "link" || survey.status === "draft") {
+  if (!survey || !["link", "mobile"].includes(survey.type) || survey.status === "draft") {
     notFound();
   }
 

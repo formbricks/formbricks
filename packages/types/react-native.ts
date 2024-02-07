@@ -1,24 +1,13 @@
 import { z } from "zod";
 
-import { ZJSStateDisplay } from "./js";
+import { ZJsState } from "./js";
 import { ZPersonAttributes } from "./people";
-import { ZProduct } from "./product";
-import { ZSurvey } from "./surveys";
-
-export const ZRNState = z.object({
-  attributes: ZPersonAttributes,
-  surveys: z.array(ZSurvey),
-  product: ZProduct,
-  displays: z.array(ZJSStateDisplay).optional(),
-});
-
-export type TRNState = z.infer<typeof ZRNState>;
 
 export const ZRNConfig = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   userId: z.string(),
-  state: ZRNState,
+  state: ZJsState,
   expiresAt: z.date(),
 });
 
@@ -39,7 +28,7 @@ export const ZRNConfigUpdateInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   userId: z.string(),
-  state: ZRNState,
+  state: ZJsState,
 });
 
 export type TRNConfigUpdateInput = z.infer<typeof ZRNConfigUpdateInput>;
