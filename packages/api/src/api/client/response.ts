@@ -18,19 +18,7 @@ export class ResponseAPI {
   async create(
     responseInput: Omit<TResponseInput, "environmentId">
   ): Promise<Result<{ id: string }, NetworkError | Error>> {
-    return makeRequest(
-      // "https://bbqabiq6jdvj5nwcg2mbf5vhdu0ewkrk.lambda-url.eu-central-1.on.aws/",
-      // "/",
-      this.apiHost,
-      `/api/v1/client/${this.environmentId}/responses`,
-      "POST",
-      {
-        ...responseInput,
-      },
-      {
-        "x-environment-id": this.environmentId,
-      }
-    );
+    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses`, "POST", responseInput);
   }
 
   async update({
@@ -39,21 +27,10 @@ export class ResponseAPI {
     data,
     ttc,
   }: TResponseUpdateInputWithResponseId): Promise<Result<{}, NetworkError | Error>> {
-    return makeRequest(
-      // "https://bbqabiq6jdvj5nwcg2mbf5vhdu0ewkrk.lambda-url.eu-central-1.on.aws/",
-      // "/",
-      this.apiHost,
-      `/api/v1/client/${this.environmentId}/responses/${responseId}`,
-      "PUT",
-      {
-        finished,
-        data,
-        ttc,
-      },
-      {
-        "x-environment-id": this.environmentId,
-        "x-response-id": responseId,
-      }
-    );
+    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
+      finished,
+      data,
+      ttc,
+    });
   }
 }

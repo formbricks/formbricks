@@ -7,8 +7,7 @@ export async function makeRequest<T>(
   apiHost: string,
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
-  data?: any,
-  headers?: Record<string, string>
+  data?: any
 ): Promise<Result<T, NetworkError | Error>> {
   const url = new URL(endpoint, apiHost);
   const body = JSON.stringify(data);
@@ -17,7 +16,6 @@ export async function makeRequest<T>(
     method,
     headers: {
       "Content-Type": "application/json",
-      ...headers,
     },
     body,
   });
