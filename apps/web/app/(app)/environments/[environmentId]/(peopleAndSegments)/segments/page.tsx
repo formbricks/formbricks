@@ -6,16 +6,16 @@ import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getSegments } from "@formbricks/lib/segment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { getUserSegments } from "@formbricks/lib/userSegment/service";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 
 export const revalidate = REVALIDATION_INTERVAL;
 
 export default async function SegmentsPage({ params }) {
-  const [environment, userSegments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
+  const [environment, segments, attributeClasses, actionClassesFromServer, team] = await Promise.all([
     getEnvironment(params.environmentId),
-    getUserSegments(params.environmentId),
+    getSegments(params.environmentId),
     getAttributeClasses(params.environmentId),
     getActionClasses(params.environmentId),
     getTeamByEnvironmentId(params.environmentId),
@@ -35,11 +35,11 @@ export default async function SegmentsPage({ params }) {
     throw new Error("User targeting not allowed");
   }
 
-  if (!userSegments) {
+  if (!segments) {
     throw new Error("Failed to fetch segments");
   }
 
-  const segments = userSegments.filter((segment) => !segment.isPrivate);
+  const filteredSegments = segments.filter((segment) => !segment.isPrivate);
 
   const actionClasses = actionClassesFromServer.filter((actionClass) => {
     if (actionClass.type === "automatic") {
@@ -59,9 +59,9 @@ export default async function SegmentsPage({ params }) {
         environmentId={params.environmentId}
         actionClasses={actionClasses}
         attributeClasses={attributeClasses}
-        userSegments={userSegments}
+        segments={filteredSegments}
       />
-      {segments.length === 0 ? (
+      {filteredSegments.length === 0 ? (
         <EmptySpaceFiller
           type="table"
           environment={environment}
@@ -69,7 +69,7 @@ export default async function SegmentsPage({ params }) {
         />
       ) : (
         <SegmentTable
-          userSegments={segments}
+          segments={filteredSegments}
           actionClasses={actionClasses}
           attributeClasses={attributeClasses}
         />

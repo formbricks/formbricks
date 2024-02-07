@@ -57,69 +57,69 @@ export type TAllOperators = (typeof ALL_OPERATORS)[number];
 export const ZActionMetric = z.enum(ACTION_METRICS);
 export type TActionMetric = z.infer<typeof ZActionMetric>;
 
-export const ZUserSegmentFilterValue = z.union([z.string(), z.number()]);
-export type TUserSegmentFilterValue = z.infer<typeof ZUserSegmentFilterValue>;
+export const ZSegmentFilterValue = z.union([z.string(), z.number()]);
+export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 
 // Root of the filter
-export const ZUserSegmentFilterRootType = z.enum(["attribute", "action", "segment", "device", "person"]);
+export const ZSegmentFilterRootType = z.enum(["attribute", "action", "segment", "device", "person"]);
 
-export const ZUserSegmentFilterRoot = z.discriminatedUnion("type", [
+export const ZSegmentFilterRoot = z.discriminatedUnion("type", [
   z.object({
-    type: z.literal(ZUserSegmentFilterRootType.Enum.attribute),
+    type: z.literal(ZSegmentFilterRootType.Enum.attribute),
     attributeClassId: z.string(),
   }),
   z.object({
-    type: z.literal(ZUserSegmentFilterRootType.Enum.person),
+    type: z.literal(ZSegmentFilterRootType.Enum.person),
     userId: z.string(),
   }),
   z.object({
-    type: z.literal(ZUserSegmentFilterRootType.Enum.action),
+    type: z.literal(ZSegmentFilterRootType.Enum.action),
     actionClassId: z.string(),
   }),
   z.object({
-    type: z.literal(ZUserSegmentFilterRootType.Enum.segment),
-    userSegmentId: z.string(),
+    type: z.literal(ZSegmentFilterRootType.Enum.segment),
+    segmentId: z.string(),
   }),
   z.object({
-    type: z.literal(ZUserSegmentFilterRootType.Enum.device),
+    type: z.literal(ZSegmentFilterRootType.Enum.device),
     deviceType: z.string(),
   }),
 ]);
 
-export const ZUserSegmentAttributeFilter = z.object({
+export const ZSegmentAttributeFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
     type: z.literal("attribute"),
     attributeClassName: z.string(),
   }),
-  value: ZUserSegmentFilterValue,
+  value: ZSegmentFilterValue,
   qualifier: z.object({
     operator: ZAttributeOperator,
   }),
 });
-export type TUserSegmentAttributeFilter = z.infer<typeof ZUserSegmentAttributeFilter>;
+export type TSegmentAttributeFilter = z.infer<typeof ZSegmentAttributeFilter>;
 
-export const ZUserSegmentPersonFilter = z.object({
+export const ZSegmentPersonFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
     type: z.literal("person"),
     personIdentifier: z.string(),
   }),
-  value: ZUserSegmentFilterValue,
+  value: ZSegmentFilterValue,
   qualifier: z.object({
     operator: ZPersonOperator,
   }),
 });
-export type TUserSegmentPersonFilter = z.infer<typeof ZUserSegmentPersonFilter>;
+export type TSegmentPersonFilter = z.infer<typeof ZSegmentPersonFilter>;
 
-export const ZUserSegmentActionFilter = z
+export const ZSegmentActionFilter = z
   .object({
     id: z.string().cuid2(),
     root: z.object({
       type: z.literal("action"),
       actionClassId: z.string(),
     }),
-    value: ZUserSegmentFilterValue,
+    value: ZSegmentFilterValue,
     qualifier: z.object({
       metric: z.enum(ACTION_METRICS),
       operator: ZBaseOperator,
@@ -143,42 +143,42 @@ export const ZUserSegmentActionFilter = z
       message: "Value must be a number for action filters",
     }
   );
-export type TUserSegmentActionFilter = z.infer<typeof ZUserSegmentActionFilter>;
+export type TSegmentActionFilter = z.infer<typeof ZSegmentActionFilter>;
 
-export const ZUserSegmentSegmentFilter = z.object({
+export const ZSegmentSegmentFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
     type: z.literal("segment"),
-    userSegmentId: z.string(),
+    segmentId: z.string(),
   }),
-  value: ZUserSegmentFilterValue,
+  value: ZSegmentFilterValue,
   qualifier: z.object({
     operator: ZSegmentOperator,
   }),
 });
-export type TUserSegmentSegmentFilter = z.infer<typeof ZUserSegmentSegmentFilter>;
+export type TSegmentSegmentFilter = z.infer<typeof ZSegmentSegmentFilter>;
 
-export const ZUserSegmentDeviceFilter = z.object({
+export const ZSegmentDeviceFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
     type: z.literal("device"),
     deviceType: z.string(),
   }),
-  value: ZUserSegmentFilterValue,
+  value: ZSegmentFilterValue,
   qualifier: z.object({
     operator: ZDeviceOperator,
   }),
 });
 
-export type TUserSegmentDeviceFilter = z.infer<typeof ZUserSegmentDeviceFilter>;
+export type TSegmentDeviceFilter = z.infer<typeof ZSegmentDeviceFilter>;
 
-export const ZUserSegmentFilter = z
+export const ZSegmentFilter = z
   .union([
-    ZUserSegmentActionFilter,
-    ZUserSegmentAttributeFilter,
-    ZUserSegmentPersonFilter,
-    ZUserSegmentSegmentFilter,
-    ZUserSegmentDeviceFilter,
+    ZSegmentActionFilter,
+    ZSegmentAttributeFilter,
+    ZSegmentPersonFilter,
+    ZSegmentSegmentFilter,
+    ZSegmentDeviceFilter,
   ])
   .refine(
     (filter) => {
@@ -239,16 +239,16 @@ export const ZUserSegmentFilter = z
     }
   );
 
-export type TUserSegmentFilter = z.infer<typeof ZUserSegmentFilter>;
+export type TSegmentFilter = z.infer<typeof ZSegmentFilter>;
 
-export const ZUserSegmentConnector = z.enum(["and", "or"]).nullable();
+export const ZSegmentConnector = z.enum(["and", "or"]).nullable();
 
-export type TUserSegmentConnector = z.infer<typeof ZUserSegmentConnector>;
+export type TSegmentConnector = z.infer<typeof ZSegmentConnector>;
 
 export type TBaseFilter = {
   id: string;
-  connector: TUserSegmentConnector;
-  resource: TUserSegmentFilter | TBaseFilters;
+  connector: TSegmentConnector;
+  resource: TSegmentFilter | TBaseFilters;
 };
 export type TBaseFilters = TBaseFilter[];
 
@@ -272,13 +272,13 @@ const refineFilters = (filters: TBaseFilters): boolean => {
   return result;
 };
 
-export const ZUserSegmentFilters: z.ZodType<TBaseFilters> = z
+export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
   .lazy(() =>
     z.array(
       z.object({
         id: z.string().cuid2(),
-        connector: ZUserSegmentConnector,
-        resource: z.union([ZUserSegmentFilter, ZUserSegmentFilters]),
+        connector: ZSegmentConnector,
+        resource: z.union([ZSegmentFilter, ZSegmentFilters]),
       })
     )
   )
@@ -286,42 +286,42 @@ export const ZUserSegmentFilters: z.ZodType<TBaseFilters> = z
     message: "Invalid filters applied",
   });
 
-export const ZUserSegment = z.object({
+export const ZSegment = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().nullable(),
   isPrivate: z.boolean().default(true),
-  filters: ZUserSegmentFilters,
+  filters: ZSegmentFilters,
   environmentId: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
   surveys: z.array(z.string()),
 });
 
-export const ZUserSegmentCreateInput = z.object({
+export const ZSegmentCreateInput = z.object({
   environmentId: z.string(),
   title: z.string(),
   description: z.string().nullable(),
   isPrivate: z.boolean().default(true),
-  filters: ZUserSegmentFilters,
+  filters: ZSegmentFilters,
   surveyId: z.string(),
 });
 
-export type TUserSegmentCreateInput = z.infer<typeof ZUserSegmentCreateInput>;
+export type TSegmentCreateInput = z.infer<typeof ZSegmentCreateInput>;
 
-export type TUserSegment = z.infer<typeof ZUserSegment>;
+export type TSegment = z.infer<typeof ZSegment>;
 
-export const ZUserSegmentUpdateInput = z
+export const ZSegmentUpdateInput = z
   .object({
     title: z.string(),
     description: z.string().nullable(),
     isPrivate: z.boolean().default(true),
-    filters: ZUserSegmentFilters,
+    filters: ZSegmentFilters,
     surveys: z.array(z.string()),
   })
   .partial();
 
-export type TUserSegmentUpdateInput = z.infer<typeof ZUserSegmentUpdateInput>;
+export type TSegmentUpdateInput = z.infer<typeof ZSegmentUpdateInput>;
 
 export type TEvaluateSegmentUserAttributeData = {
   [attributeClassName: string]: string | number;

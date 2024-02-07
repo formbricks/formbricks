@@ -2531,5 +2531,5 @@ export const minimalSurvey: TSurvey = {
   singleUse: null,
   styling: null,
   resultShareKey: null,
-  userSegment: null,
+  segment: null,
 };

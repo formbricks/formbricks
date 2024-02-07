@@ -1,24 +1,24 @@
-import { getUserSegmentActiveInactiveSurveys } from "@formbricks/lib/userSegment/service";
+import { getSegmentActiveInactiveSurveys } from "@formbricks/lib/segment/service";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TUserSegment } from "@formbricks/types/userSegment";
+import { TSegment } from "@formbricks/types/segment";
 
 import SegmentTableDataRow from "./SegmentTableDataRow";
 
 type TSegmentTableDataRowProps = {
-  currentSegment: TUserSegment;
-  userSegments: TUserSegment[];
+  currentSegment: TSegment;
+  segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
 };
 
 const SegmentTableDataRowContainer = async ({
   currentSegment,
-  userSegments,
+  segments,
   actionClasses,
   attributeClasses,
 }: TSegmentTableDataRowProps) => {
-  const { activeSurveys = [], inactiveSurveys = [] } = await getUserSegmentActiveInactiveSurveys(
+  const { activeSurveys = [], inactiveSurveys = [] } = await getSegmentActiveInactiveSurveys(
     currentSegment.id
   );
 
@@ -29,7 +29,7 @@ const SegmentTableDataRowContainer = async ({
         activeSurveys,
         inactiveSurveys,
       }}
-      userSegments={userSegments}
+      segments={segments}
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
     />

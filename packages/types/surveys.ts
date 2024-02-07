@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
-import { ZUserSegment } from "./userSegment";
+import { ZSegment } from "./segment";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
@@ -426,7 +426,7 @@ export const ZSurvey = z.object({
   productOverwrites: ZSurveyProductOverwrites.nullable(),
   styling: ZSurveyStyling.nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
-  userSegment: ZUserSegment.nullable(),
+  segment: ZSegment.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
   pin: z.string().nullable().optional(),

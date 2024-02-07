@@ -4,12 +4,12 @@ import {
   TBaseOperator,
   TEvaluateSegmentUserAttributeData,
   TEvaluateSegmentUserData,
-  TUserSegment,
-  TUserSegmentCreateInput,
-  TUserSegmentUpdateInput,
-} from "@formbricks/types/userSegment";
+  TSegment,
+  TSegmentCreateInput,
+  TSegmentUpdateInput,
+} from "@formbricks/types/segment";
 
-export const mockUserSegmentId = "rh2eual2apby2bx0r027ru70";
+export const mockSegmentId = "rh2eual2apby2bx0r027ru70";
 export const mockEnvironmentId = "t7fszh4tsotoe87ppa6lqhie";
 export const mockSurveyId = "phz5mjwvatwc0dqwuip90qpv";
 export const mockFilterGroupId = "wi6zz4ekmcwi08bhv1hmgqcr";
@@ -46,11 +46,11 @@ export const mockEvaluateSegmentUserData: TEvaluateSegmentUserData = {
   userId: mockUserId,
 };
 
-export const mockUserSegmentTitle = "Engaged Users with Specific Interests";
-export const mockUserSegmentDescription =
+export const mockSegmentTitle = "Engaged Users with Specific Interests";
+export const mockSegmentDescription =
   "Segment targeting engaged users interested in specific topics and using mobile";
 
-export const getMockUserSegmentFilters = (
+export const getMockSegmentFilters = (
   actionMetric: TActionMetric,
   actionValue: string | number,
   actionOperator: TBaseOperator
@@ -124,47 +124,47 @@ export const getMockUserSegmentFilters = (
   },
 ];
 
-export const mockUserSegment: TUserSegment = {
-  id: mockUserSegmentId,
-  title: mockUserSegmentTitle,
-  description: mockUserSegmentDescription,
+export const mockSegment: TSegment = {
+  id: mockSegmentId,
+  title: mockSegmentTitle,
+  description: mockSegmentDescription,
   isPrivate: false,
-  filters: getMockUserSegmentFilters("lastMonthCount", 5, "equals"),
+  filters: getMockSegmentFilters("lastMonthCount", 5, "equals"),
   environmentId: mockEnvironmentId,
   createdAt: new Date(),
   updatedAt: new Date(),
   surveys: [mockSurveyId],
 };
 
-export const mockUserSegmentCreateInput: TUserSegmentCreateInput = {
-  title: mockUserSegmentTitle,
-  description: mockUserSegmentDescription,
+export const mockSegmentCreateInput: TSegmentCreateInput = {
+  title: mockSegmentTitle,
+  description: mockSegmentDescription,
   isPrivate: false,
-  filters: getMockUserSegmentFilters("lastMonthCount", 5, "equals"),
+  filters: getMockSegmentFilters("lastMonthCount", 5, "equals"),
   environmentId: mockEnvironmentId,
   surveyId: mockSurveyId,
 };
 
-export const mockUserSegmentUpdateInput: TUserSegmentUpdateInput = {
-  title: mockUserSegmentTitle,
-  description: mockUserSegmentDescription,
+export const mockSegmentUpdateInput: TSegmentUpdateInput = {
+  title: mockSegmentTitle,
+  description: mockSegmentDescription,
   isPrivate: false,
-  filters: getMockUserSegmentFilters("lastMonthCount", 5, "greaterEqual"),
+  filters: getMockSegmentFilters("lastMonthCount", 5, "greaterEqual"),
 };
 
-export const mockUserSegmentPrisma = {
-  id: mockUserSegmentId,
-  title: mockUserSegmentTitle,
-  description: mockUserSegmentDescription,
+export const mockSegmentPrisma = {
+  id: mockSegmentId,
+  title: mockSegmentTitle,
+  description: mockSegmentDescription,
   isPrivate: false,
-  filters: getMockUserSegmentFilters("lastMonthCount", 5, "equals"),
+  filters: getMockSegmentFilters("lastMonthCount", 5, "equals"),
   environmentId: mockEnvironmentId,
   createdAt: new Date(),
   updatedAt: new Date(),
   surveys: [{ id: mockSurveyId }],
 };
 
-export const mockUserSegmentActiveInactiveSurves = {
+export const mockSegmentActiveInactiveSurves = {
   activeSurveys: ["Churn Survey"],
   inactiveSurveys: ["NPS Survey"],
 };

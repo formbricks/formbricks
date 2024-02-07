@@ -1,6 +1,7 @@
 import { TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TIntegrationConfig } from "@formbricks/types/integration";
 import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/responses";
+import { TBaseFilters } from "@formbricks/types/segment";
 import {
   TSurveyClosedMessage,
   TSurveyHiddenFields,
@@ -14,7 +15,6 @@ import {
 } from "@formbricks/types/surveys";
 import { TTeamBilling } from "@formbricks/types/teams";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-import { TBaseFilters } from "@formbricks/types/userSegment";
 
 declare global {
   namespace PrismaJson {
@@ -35,6 +35,6 @@ declare global {
     export type SurveyVerifyEmail = TSurveyVerifyEmail;
     export type TeamBilling = TTeamBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
-    export type UserSegmentFilter = TBaseFilters;
+    export type SegmentFilter = TBaseFilters;
   }
 }

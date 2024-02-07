@@ -10,15 +10,10 @@ import {
   isResourceFilter,
   moveResource,
   toggleGroupConnector,
-} from "@formbricks/lib/userSegment/utils";
+} from "@formbricks/lib/segment/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import {
-  TBaseFilter,
-  TBaseFilters,
-  TUserSegment,
-  TUserSegmentConnector,
-} from "@formbricks/types/userSegment";
+import { TBaseFilter, TBaseFilters, TSegment, TSegmentConnector } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
@@ -28,80 +23,80 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 
 import AddFilterModal from "./AddFilterModal";
-import SegmentFilter from "./SegmentFilter";
+import SegmentSegmentFilter from "./SegmentFilter";
 
 type TSegmentFilterProps = {
   group: TBaseFilters;
   environmentId: string;
-  userSegment: TUserSegment;
-  userSegments: TUserSegment[];
+  segment: TSegment;
+  segments: TSegment[];
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  setUserSegment: React.Dispatch<React.SetStateAction<TUserSegment>>;
+  setSegment: React.Dispatch<React.SetStateAction<TSegment>>;
   viewOnly?: boolean;
 };
 
 const SegmentFilters = ({
   group,
   environmentId,
-  setUserSegment,
-  userSegment,
+  setSegment,
+  segment,
   actionClasses,
   attributeClasses,
-  userSegments,
+  segments,
   viewOnly = false,
 }: TSegmentFilterProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
 
   const handleAddFilterBelow = (resourceId: string, filter: TBaseFilter) => {
-    const localSegmentCopy = structuredClone(userSegment);
+    const localSegmentCopy = structuredClone(segment);
 
     if (localSegmentCopy.filters) {
       addFilterBelow(localSegmentCopy.filters, resourceId, filter);
     }
 
-    setUserSegment(localSegmentCopy);
+    setSegment(localSegmentCopy);
   };
 
   const handleCreateGroup = (resourceId: string) => {
-    const localSegmentCopy = structuredClone(userSegment);
+    const localSegmentCopy = structuredClone(segment);
     if (localSegmentCopy.filters) {
       createGroupFromResource(localSegmentCopy.filters, resourceId);
     }
 
-    setUserSegment(localSegmentCopy);
+    setSegment(localSegmentCopy);
   };
 
   const handleMoveResource = (resourceId: string, direction: "up" | "down") => {
-    const localSegmentCopy = structuredClone(userSegment);
+    const localSegmentCopy = structuredClone(segment);
     if (localSegmentCopy.filters) {
       moveResource(localSegmentCopy.filters, resourceId, direction);
     }
 
-    setUserSegment(localSegmentCopy);
+    setSegment(localSegmentCopy);
   };
 
   const handleDeleteResource = (resourceId: string) => {
-    const localSegmentCopy = structuredClone(userSegment);
+    const localSegmentCopy = structuredClone(segment);
 
     if (localSegmentCopy.filters) {
       deleteResource(localSegmentCopy.filters, resourceId);
     }
 
-    setUserSegment(localSegmentCopy);
+    setSegment(localSegmentCopy);
   };
 
-  const handleToggleGroupConnector = (groupId: string, newConnectorValue: TUserSegmentConnector) => {
-    const localSegmentCopy = structuredClone(userSegment);
+  const handleToggleGroupConnector = (groupId: string, newConnectorValue: TSegmentConnector) => {
+    const localSegmentCopy = structuredClone(segment);
     if (localSegmentCopy.filters) {
       toggleGroupConnector(localSegmentCopy.filters, groupId, newConnectorValue);
     }
 
-    setUserSegment(localSegmentCopy);
+    setSegment(localSegmentCopy);
   };
 
-  const onConnectorChange = (groupId: string, connector: TUserSegmentConnector) => {
+  const onConnectorChange = (groupId: string, connector: TSegmentConnector) => {
     if (!connector) return;
 
     if (connector === "and") {
@@ -112,12 +107,12 @@ const SegmentFilters = ({
   };
 
   const handleAddFilterInGroup = (groupId: string, filter: TBaseFilter) => {
-    const localSegmentCopy = structuredClone(userSegment);
+    const localSegmentCopy = structuredClone(segment);
 
     if (localSegmentCopy.filters) {
       addFilterInGroup(localSegmentCopy.filters, groupId, filter);
     }
-    setUserSegment(localSegmentCopy);
+    setSegment(localSegmentCopy);
   };
 
   return (
@@ -127,16 +122,16 @@ const SegmentFilters = ({
 
         if (isResourceFilter(resource)) {
           return (
-            <SegmentFilter
+            <SegmentSegmentFilter
               key={groupId}
               connector={connector}
               resource={resource}
               environmentId={environmentId}
-              userSegment={userSegment}
-              userSegments={userSegments}
+              segment={segment}
+              segments={segments}
               actionClasses={actionClasses}
               attributeClasses={attributeClasses}
-              setUserSegment={setUserSegment}
+              setSegment={setSegment}
               handleAddFilterBelow={handleAddFilterBelow}
               onCreateGroup={(filterId: string) => handleCreateGroup(filterId)}
               onDeleteFilter={(filterId: string) => handleDeleteResource(filterId)}
@@ -169,11 +164,11 @@ const SegmentFilters = ({
                   <SegmentFilters
                     group={resource}
                     environmentId={environmentId}
-                    userSegment={userSegment}
-                    setUserSegment={setUserSegment}
+                    segment={segment}
+                    setSegment={setSegment}
                     actionClasses={actionClasses}
                     attributeClasses={attributeClasses}
-                    userSegments={userSegments}
+                    segments={segments}
                     viewOnly={viewOnly}
                   />
 
@@ -203,7 +198,7 @@ const SegmentFilters = ({
                     }}
                     actionClasses={actionClasses}
                     attributeClasses={attributeClasses}
-                    userSegments={userSegments}
+                    segments={segments}
                   />
                 </div>
 

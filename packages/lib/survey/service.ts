@@ -9,8 +9,8 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
+import { TSegment, ZSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
-import { TUserSegment, ZUserSegment, ZUserSegmentFilters } from "@formbricks/types/userSegment";
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
@@ -21,9 +21,9 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
+import { segmentCache } from "../segment/cache";
+import { evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
-import { userSegmentCache } from "../userSegment/cache";
-import { evaluateSegment, getUserSegment, updateUserSegment } from "../userSegment/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -73,7 +73,7 @@ export const selectSurvey = {
       },
     },
   },
-  userSegment: {
+  segment: {
     include: {
       surveys: {
         select: {
@@ -123,21 +123,21 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         return null;
       }
 
-      let surveyUserSegment: TUserSegment | null = null;
-      if (surveyPrisma.userSegment) {
-        surveyUserSegment = formatDateFields(
+      let surveySegment: TSegment | null = null;
+      if (surveyPrisma.segment) {
+        surveySegment = formatDateFields(
           {
-            ...surveyPrisma.userSegment,
-            surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
+            ...surveyPrisma.segment,
+            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
           },
-          ZUserSegment
+          ZSegment
         );
       }
 
       const transformedSurvey: TSurvey = {
         ...surveyPrisma,
         triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
-        userSegment: surveyUserSegment,
+        segment: surveySegment,
       };
 
       return transformedSurvey;
@@ -177,19 +177,19 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       const surveys: TSurvey[] = [];
 
       for (const surveyPrisma of surveysPrisma) {
-        let userSegment: TUserSegment | null = null;
+        let segment: TSegment | null = null;
 
-        if (surveyPrisma.userSegment) {
-          userSegment = {
-            ...surveyPrisma.userSegment,
-            surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
+        if (surveyPrisma.segment) {
+          segment = {
+            ...surveyPrisma.segment,
+            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
           };
         }
 
         const transformedSurvey: TSurvey = {
           ...surveyPrisma,
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
-          userSegment,
+          segment,
         };
         surveys.push(transformedSurvey);
       }
@@ -222,7 +222,7 @@ export const getSurveys = async (
             // If its an unidentified survey, we only want to return surveys that are not connected to a user segment
             ...(noSegments
               ? {
-                  userSegment: null,
+                  segment: null,
                 }
               : {}),
           },
@@ -242,19 +242,19 @@ export const getSurveys = async (
       const surveys: TSurvey[] = [];
 
       for (const surveyPrisma of surveysPrisma) {
-        let userSegment: TUserSegment | null = null;
+        let segment: TSegment | null = null;
 
-        if (surveyPrisma.userSegment) {
-          userSegment = {
-            ...surveyPrisma.userSegment,
-            surveys: surveyPrisma.userSegment.surveys.map((survey) => survey.id),
+        if (surveyPrisma.segment) {
+          segment = {
+            ...surveyPrisma.segment,
+            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
           };
         }
 
         const transformedSurvey: TSurvey = {
           ...surveyPrisma,
           triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
-          userSegment,
+          segment,
         };
 
         surveys.push(transformedSurvey);
@@ -286,7 +286,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const { triggers, environmentId, userSegment, ...surveyData } = updatedSurvey;
+  const { triggers, environmentId, segment, ...surveyData } = updatedSurvey;
 
   if (triggers) {
     const newTriggers: string[] = [];
@@ -337,15 +337,15 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     revalidateSurveyByActionClassId(actionClasses, [...newTriggers, ...removedTriggers]);
   }
 
-  if (userSegment) {
+  if (segment) {
     // parse the segment filters:
-    const parsedFilters = ZUserSegmentFilters.safeParse(userSegment.filters);
+    const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
     if (!parsedFilters.success) {
       throw new InvalidInputError("Invalid user segment filters");
     }
 
     try {
-      await updateUserSegment(userSegment.id, userSegment);
+      await updateSegment(segment.id, segment);
     } catch (error) {
       console.error(error);
       throw new Error("Error updating survey");
@@ -365,18 +365,18 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       select: selectSurvey,
     });
 
-    let surveyUserSegment: TUserSegment | null = null;
-    if (prismaSurvey.userSegment) {
-      surveyUserSegment = {
-        ...prismaSurvey.userSegment,
-        surveys: prismaSurvey.userSegment.surveys.map((survey) => survey.id),
+    let surveySegment: TSegment | null = null;
+    if (prismaSurvey.segment) {
+      surveySegment = {
+        ...prismaSurvey.segment,
+        surveys: prismaSurvey.segment.surveys.map((survey) => survey.id),
       };
     }
 
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: updatedSurvey.triggers ? updatedSurvey.triggers : [], // Include triggers from updatedSurvey
-      userSegment: surveyUserSegment,
+      segment: surveySegment,
     };
 
     surveyCache.revalidate({
@@ -414,9 +414,9 @@ export async function deleteSurvey(surveyId: string) {
     environmentId: deletedSurvey.environmentId,
   });
 
-  if (deletedSurvey.userSegment?.id) {
-    userSegmentCache.revalidate({
-      id: deletedSurvey.userSegment.id,
+  if (deletedSurvey.segment?.id) {
+    segmentCache.revalidate({
+      id: deletedSurvey.segment.id,
       environmentId: deletedSurvey.environmentId,
     });
   }
@@ -477,7 +477,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   const transformedSurvey: TSurvey = {
     ...survey,
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
-    userSegment: null,
+    segment: null,
   };
 
   await subscribeTeamMembersToSurveyResponses(environmentId, survey.id);
@@ -539,9 +539,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : Prisma.JsonNull,
-      userSegment: existingSurvey.userSegment
-        ? { connect: { id: existingSurvey.userSegment.id } }
-        : undefined,
+      segment: existingSurvey.segment ? { connect: { id: existingSurvey.segment.id } } : undefined,
     },
   });
 
@@ -550,9 +548,9 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
     environmentId: newSurvey.environmentId,
   });
 
-  if (newSurvey.userSegmentId) {
-    userSegmentCache.revalidate({
-      id: newSurvey.userSegmentId,
+  if (newSurvey.segmentId) {
+    segmentCache.revalidate({
+      id: newSurvey.segmentId,
       environmentId: newSurvey.environmentId,
     });
   }
@@ -627,11 +625,11 @@ export const getSyncSurveys = async (
 
       if (anySurveyHasFilters(surveys)) {
         const surveyPromises = surveys.map(async (survey) => {
-          const { userSegment } = survey;
+          const { segment } = survey;
 
           const personUserId = person.userId ?? person.attributes.userId ?? "";
 
-          if (userSegment) {
+          if (segment) {
             const result = await evaluateSegment(
               {
                 attributes: person.attributes,
@@ -641,7 +639,7 @@ export const getSyncSurveys = async (
                 personId: person.id,
                 userId: personUserId,
               },
-              userSegment.filters
+              segment.filters
             );
 
             if (result) {
@@ -699,10 +697,7 @@ export const getSurveyByResultShareKey = async (resultShareKey: string): Promise
   }
 };
 
-export const loadNewUserSegmentInSurvey = async (
-  surveyId: string,
-  newSegmentId: string
-): Promise<TSurvey> => {
+export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: string): Promise<TSurvey> => {
   try {
     validateInputs([surveyId, ZId], [newSegmentId, ZId]);
 
@@ -711,9 +706,9 @@ export const loadNewUserSegmentInSurvey = async (
       throw new ResourceNotFoundError("survey", surveyId);
     }
 
-    const currentUserSegment = await getUserSegment(newSegmentId);
-    if (!currentUserSegment) {
-      throw new ResourceNotFoundError("userSegment", newSegmentId);
+    const currentSegment = await getSegment(newSegmentId);
+    if (!currentSegment) {
+      throw new ResourceNotFoundError("segment", newSegmentId);
     }
 
     const prismaSurvey = await prisma.survey.update({
@@ -722,7 +717,7 @@ export const loadNewUserSegmentInSurvey = async (
       },
       select: selectSurvey,
       data: {
-        userSegment: {
+        segment: {
           connect: {
             id: newSegmentId,
           },
@@ -730,21 +725,21 @@ export const loadNewUserSegmentInSurvey = async (
       },
     });
 
-    userSegmentCache.revalidate({ id: newSegmentId });
+    segmentCache.revalidate({ id: newSegmentId });
     surveyCache.revalidate({ id: surveyId });
 
-    let surveyUserSegment: TUserSegment | null = null;
-    if (prismaSurvey.userSegment) {
-      surveyUserSegment = {
-        ...prismaSurvey.userSegment,
-        surveys: prismaSurvey.userSegment.surveys.map((survey) => survey.id),
+    let surveySegment: TSegment | null = null;
+    if (prismaSurvey.segment) {
+      surveySegment = {
+        ...prismaSurvey.segment,
+        surveys: prismaSurvey.segment.surveys.map((survey) => survey.id),
       };
     }
 
     const modifiedSurvey: TSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       triggers: prismaSurvey.triggers.map((trigger) => trigger.actionClass.name),
-      userSegment: surveyUserSegment,
+      segment: surveySegment,
     };
 
     return modifiedSurvey;

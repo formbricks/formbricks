@@ -23,7 +23,7 @@ import {
   updateOperatorInFilter,
   updatePersonIdentifierInFilter,
   updateSegmentIdInFilter,
-} from "@formbricks/lib/userSegment/utils";
+} from "@formbricks/lib/segment/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
@@ -39,17 +39,17 @@ import {
   TBaseFilter,
   TBaseOperator,
   TDeviceOperator,
+  TSegment,
+  TSegmentActionFilter,
+  TSegmentAttributeFilter,
+  TSegmentConnector,
+  TSegmentDeviceFilter,
+  TSegmentFilter,
+  TSegmentFilterValue,
   TSegmentOperator,
-  TUserSegment,
-  TUserSegmentActionFilter,
-  TUserSegmentAttributeFilter,
-  TUserSegmentConnector,
-  TUserSegmentDeviceFilter,
-  TUserSegmentFilter,
-  TUserSegmentFilterValue,
-  TUserSegmentPersonFilter,
-  TUserSegmentSegmentFilter,
-} from "@formbricks/types/userSegment";
+  TSegmentPersonFilter,
+  TSegmentSegmentFilter,
+} from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
@@ -63,14 +63,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import AddFilterModal from "./AddFilterModal";
 
 type SegmentFilterItemProps = {
-  connector: TUserSegmentConnector;
-  resource: TUserSegmentFilter;
+  connector: TSegmentConnector;
+  resource: TSegmentFilter;
   environmentId: string;
-  userSegment: TUserSegment;
-  userSegments: TUserSegment[];
+  segment: TSegment;
+  segments: TSegment[];
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  setUserSegment: (userSegment: TUserSegment) => void;
+  setSegment: (segment: TSegment) => void;
   handleAddFilterBelow: (resourceId: string, filter: TBaseFilter) => void;
   onCreateGroup: (filterId: string) => void;
   onDeleteFilter: (filterId: string) => void;
@@ -80,24 +80,24 @@ type SegmentFilterItemProps = {
 
 const SegmentFilterItemConnector = ({
   connector,
-  userSegment,
-  setUserSegment,
+  segment,
+  setSegment,
   filterId,
   viewOnly,
 }: {
-  connector: TUserSegmentConnector;
-  userSegment: TUserSegment;
-  setUserSegment: (userSegment: TUserSegment) => void;
+  connector: TSegmentConnector;
+  segment: TSegment;
+  setSegment: (segment: TSegment) => void;
   filterId: string;
   viewOnly?: boolean;
 }) => {
-  const updateLocalSurvey = (newConnector: TUserSegmentConnector) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      toggleFilterConnector(updatedUserSegment.filters, filterId, newConnector);
+  const updateLocalSurvey = (newConnector: TSegmentConnector) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      toggleFilterConnector(updatedSegment.filters, filterId, newConnector);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const onConnectorChange = () => {
@@ -171,8 +171,8 @@ const SegmentFilterItemContextMenu = ({
 
 type TAttributeSegmentFilterProps = SegmentFilterItemProps & {
   onAddFilterBelow: () => void;
-  resource: TUserSegmentAttributeFilter;
-  updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
+  resource: TSegmentAttributeFilter;
+  updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
 
 const AttributeSegmentFilter = ({
@@ -183,8 +183,8 @@ const AttributeSegmentFilter = ({
   onDeleteFilter,
   onMoveFilter,
   updateValueInLocalSurvey,
-  userSegment,
-  setUserSegment,
+  segment,
+  setSegment,
   attributeClasses,
   viewOnly,
 }: TAttributeSegmentFilterProps) => {
@@ -218,21 +218,21 @@ const AttributeSegmentFilter = ({
   const attributeClass = attributeClasses?.find((attrClass) => attrClass?.name === attributeClassName)?.name;
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const updateAttributeClassNameInLocalSurvey = (filterId: string, newAttributeClassName: string) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateAttributeClassNameInFilter(updatedUserSegment.filters, filterId, newAttributeClassName);
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateAttributeClassNameInFilter(updatedSegment.filters, filterId, newAttributeClassName);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -270,8 +270,8 @@ const AttributeSegmentFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        setUserSegment={setUserSegment}
-        userSegment={userSegment}
+        setSegment={setSegment}
+        segment={segment}
         viewOnly={viewOnly}
       />
 
@@ -356,8 +356,8 @@ const AttributeSegmentFilter = ({
 
 type TPersonSegmentFilterProps = SegmentFilterItemProps & {
   onAddFilterBelow: () => void;
-  resource: TUserSegmentPersonFilter;
-  updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
+  resource: TSegmentPersonFilter;
+  updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
 
 const PersonSegmentFilter = ({
@@ -368,8 +368,8 @@ const PersonSegmentFilter = ({
   onDeleteFilter,
   onMoveFilter,
   updateValueInLocalSurvey,
-  userSegment,
-  setUserSegment,
+  segment,
+  setSegment,
   viewOnly,
 }: TPersonSegmentFilterProps) => {
   const { personIdentifier } = resource.root;
@@ -400,21 +400,21 @@ const PersonSegmentFilter = ({
   });
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const updatePersonIdentifierInLocalSurvey = (filterId: string, newPersonIdentifier: string) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updatePersonIdentifierInFilter(updatedUserSegment.filters, filterId, newPersonIdentifier);
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updatePersonIdentifierInFilter(updatedSegment.filters, filterId, newPersonIdentifier);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -452,8 +452,8 @@ const PersonSegmentFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        setUserSegment={setUserSegment}
-        userSegment={userSegment}
+        setSegment={setSegment}
+        segment={segment}
         viewOnly={viewOnly}
       />
 
@@ -534,14 +534,14 @@ const PersonSegmentFilter = ({
 
 type TActionSegmentFilterProps = SegmentFilterItemProps & {
   onAddFilterBelow: () => void;
-  resource: TUserSegmentActionFilter;
-  updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
+  resource: TSegmentActionFilter;
+  updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
 const ActionSegmentFilter = ({
   connector,
   resource,
-  userSegment,
-  setUserSegment,
+  segment,
+  setSegment,
   onAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
@@ -568,31 +568,31 @@ const ActionSegmentFilter = ({
 
   const actionClass = actionClasses.find((actionClass) => actionClass.id === actionClassId)?.name;
 
-  const updateOperatorInUserSegment = (filterId: string, newOperator: TBaseOperator) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+  const updateOperatorInSegment = (filterId: string, newOperator: TBaseOperator) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
-  const updateActionClassIdInUserSegment = (filterId: string, actionClassId: string) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateActionClassIdInFilter(updatedUserSegment.filters, filterId, actionClassId);
+  const updateActionClassIdInSegment = (filterId: string, actionClassId: string) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateActionClassIdInFilter(updatedSegment.filters, filterId, actionClassId);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const updateActionMetricInLocalSurvey = (filterId: string, newMetric: TActionMetric) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateMetricInFilter(updatedUserSegment.filters, filterId, newMetric);
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateMetricInFilter(updatedSegment.filters, filterId, newMetric);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -621,15 +621,15 @@ const ActionSegmentFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        userSegment={userSegment}
-        setUserSegment={setUserSegment}
+        segment={segment}
+        setSegment={setSegment}
         viewOnly={viewOnly}
       />
 
       <Select
         value={actionClass}
         onValueChange={(value) => {
-          updateActionClassIdInUserSegment(resource.id, value);
+          updateActionClassIdInSegment(resource.id, value);
         }}
         disabled={viewOnly}>
         <SelectTrigger
@@ -670,7 +670,7 @@ const ActionSegmentFilter = ({
       <Select
         value={operatorText}
         onValueChange={(operator: TBaseOperator) => {
-          updateOperatorInUserSegment(resource.id, operator);
+          updateOperatorInSegment(resource.id, operator);
         }}
         disabled={viewOnly}>
         <SelectTrigger
@@ -717,54 +717,54 @@ const ActionSegmentFilter = ({
   );
 };
 
-type TUserSegmentFilterProps = SegmentFilterItemProps & {
+type TSegmentSegmentFilterProps = SegmentFilterItemProps & {
   onAddFilterBelow: () => void;
-  resource: TUserSegmentSegmentFilter;
+  resource: TSegmentSegmentFilter;
 };
-const UserSegmentFilter = ({
+const SegmentSegmentFilter = ({
   connector,
   onAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
   onMoveFilter,
   resource,
-  userSegment,
-  userSegments,
-  setUserSegment,
+  segment,
+  segments,
+  setSegment,
   viewOnly,
-}: TUserSegmentFilterProps) => {
-  const { userSegmentId } = resource.root;
+}: TSegmentSegmentFilterProps) => {
+  const { segmentId } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
 
-  const currentUserSegment = userSegments?.find((segment) => segment.id === userSegmentId);
+  const currentSegment = segments?.find((segment) => segment.id === segmentId);
 
-  const updateOperatorInUserSegment = (filterId: string, newOperator: TSegmentOperator) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+  const updateOperatorInSegment = (filterId: string, newOperator: TSegmentOperator) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
-  const updateSegmentIdInUserSegment = (filterId: string, newSegmentId: string) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateSegmentIdInFilter(updatedUserSegment.filters, filterId, newSegmentId);
+  const updateSegmentIdInSegment = (filterId: string, newSegmentId: string) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateSegmentIdInFilter(updatedSegment.filters, filterId, newSegmentId);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const toggleSegmentOperator = () => {
     if (!resource.qualifier.operator) return;
 
     if (resource.qualifier.operator === "userIsIn") {
-      updateOperatorInUserSegment(resource.id, "userIsNotIn");
+      updateOperatorInSegment(resource.id, "userIsNotIn");
       return;
     }
 
-    updateOperatorInUserSegment(resource.id, "userIsIn");
+    updateOperatorInSegment(resource.id, "userIsIn");
   };
 
   return (
@@ -773,8 +773,8 @@ const UserSegmentFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        userSegment={userSegment}
-        setUserSegment={setUserSegment}
+        segment={segment}
+        setSegment={setSegment}
         viewOnly={viewOnly}
       />
 
@@ -790,9 +790,9 @@ const UserSegmentFilter = ({
       </div>
 
       <Select
-        value={currentUserSegment?.id}
+        value={currentSegment?.id}
         onValueChange={(value) => {
-          updateSegmentIdInUserSegment(resource.id, value);
+          updateSegmentIdInSegment(resource.id, value);
         }}
         disabled={viewOnly}>
         <SelectTrigger
@@ -805,7 +805,7 @@ const UserSegmentFilter = ({
         </SelectTrigger>
 
         <SelectContent>
-          {userSegments
+          {segments
             ?.filter((segment) => !segment.isPrivate)
             .map((segment) => <SelectItem value={segment.id}>{segment.title}</SelectItem>)}
         </SelectContent>
@@ -825,7 +825,7 @@ const UserSegmentFilter = ({
 
 type TDeviceFilterProps = SegmentFilterItemProps & {
   onAddFilterBelow: () => void;
-  resource: TUserSegmentDeviceFilter;
+  resource: TSegmentDeviceFilter;
 };
 const DeviceFilter = ({
   connector,
@@ -834,8 +834,8 @@ const DeviceFilter = ({
   onDeleteFilter,
   onMoveFilter,
   resource,
-  userSegment,
-  setUserSegment,
+  segment,
+  setSegment,
   viewOnly,
 }: TDeviceFilterProps) => {
   const { value } = resource;
@@ -846,22 +846,22 @@ const DeviceFilter = ({
     name: convertOperatorToText(operator),
   }));
 
-  const updateOperatorInUserSegment = (filterId: string, newOperator: TDeviceOperator) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+  const updateOperatorInSegment = (filterId: string, newOperator: TDeviceOperator) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
-  const updateValueInUserSegment = (filterId: string, newValue: "phone" | "desktop") => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateDeviceTypeInFilter(updatedUserSegment.filters, filterId, newValue);
+  const updateValueInSegment = (filterId: string, newValue: "phone" | "desktop") => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateDeviceTypeInFilter(updatedSegment.filters, filterId, newValue);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   return (
@@ -870,8 +870,8 @@ const DeviceFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        userSegment={userSegment}
-        setUserSegment={setUserSegment}
+        segment={segment}
+        setSegment={setSegment}
         viewOnly={viewOnly}
       />
 
@@ -883,7 +883,7 @@ const DeviceFilter = ({
       <Select
         value={operatorText}
         onValueChange={(operator: TDeviceOperator) => {
-          updateOperatorInUserSegment(resource.id, operator);
+          updateOperatorInSegment(resource.id, operator);
         }}
         disabled={viewOnly}>
         <SelectTrigger
@@ -903,7 +903,7 @@ const DeviceFilter = ({
       <Select
         value={value as "phone" | "desktop"}
         onValueChange={(value: "phone" | "desktop") => {
-          updateValueInUserSegment(resource.id, value);
+          updateValueInSegment(resource.id, value);
         }}
         disabled={viewOnly}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
@@ -936,11 +936,11 @@ const SegmentFilter = ({
   resource,
   connector,
   environmentId,
-  userSegment,
-  userSegments,
+  segment,
+  segments,
   actionClasses,
   attributeClasses,
-  setUserSegment,
+  setSegment,
   handleAddFilterBelow,
   onCreateGroup,
   onDeleteFilter,
@@ -948,13 +948,13 @@ const SegmentFilter = ({
   viewOnly = false,
 }: SegmentFilterItemProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const updateFilterValueInUserSegment = (filterId: string, newValue: string | number) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateFilterValue(updatedUserSegment.filters, filterId, newValue);
+  const updateFilterValueInSegment = (filterId: string, newValue: string | number) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateFilterValue(updatedSegment.filters, filterId, newValue);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const onAddFilterBelow = () => {
@@ -968,7 +968,7 @@ const SegmentFilter = ({
       onAddFilter={(filter) => handleAddFilterBelow(resource.id, filter)}
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
-      userSegments={userSegments}
+      segments={segments}
     />
   );
 
@@ -978,19 +978,19 @@ const SegmentFilter = ({
         <>
           <ActionSegmentFilter
             connector={connector}
-            resource={resource as TUserSegmentActionFilter}
+            resource={resource as TSegmentActionFilter}
             environmentId={environmentId}
-            userSegment={userSegment}
-            userSegments={userSegments}
+            segment={segment}
+            segments={segments}
             actionClasses={actionClasses}
             attributeClasses={attributeClasses}
-            setUserSegment={setUserSegment}
+            setSegment={setSegment}
             onAddFilterBelow={onAddFilterBelow}
             handleAddFilterBelow={handleAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
-            updateValueInLocalSurvey={updateFilterValueInUserSegment}
+            updateValueInLocalSurvey={updateFilterValueInSegment}
             viewOnly={viewOnly}
           />
 
@@ -1003,19 +1003,19 @@ const SegmentFilter = ({
         <>
           <AttributeSegmentFilter
             connector={connector}
-            resource={resource as TUserSegmentAttributeFilter}
+            resource={resource as TSegmentAttributeFilter}
             environmentId={environmentId}
-            userSegment={userSegment}
-            userSegments={userSegments}
+            segment={segment}
+            segments={segments}
             actionClasses={actionClasses}
             attributeClasses={attributeClasses}
-            setUserSegment={setUserSegment}
+            setSegment={setSegment}
             onAddFilterBelow={onAddFilterBelow}
             handleAddFilterBelow={handleAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
-            updateValueInLocalSurvey={updateFilterValueInUserSegment}
+            updateValueInLocalSurvey={updateFilterValueInSegment}
             viewOnly={viewOnly}
           />
 
@@ -1028,19 +1028,19 @@ const SegmentFilter = ({
         <>
           <PersonSegmentFilter
             connector={connector}
-            resource={resource as TUserSegmentPersonFilter}
+            resource={resource as TSegmentPersonFilter}
             environmentId={environmentId}
-            userSegment={userSegment}
-            userSegments={userSegments}
+            segment={segment}
+            segments={segments}
             actionClasses={actionClasses}
             attributeClasses={attributeClasses}
-            setUserSegment={setUserSegment}
+            setSegment={setSegment}
             onAddFilterBelow={onAddFilterBelow}
             handleAddFilterBelow={handleAddFilterBelow}
             onCreateGroup={onCreateGroup}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
-            updateValueInLocalSurvey={updateFilterValueInUserSegment}
+            updateValueInLocalSurvey={updateFilterValueInSegment}
             viewOnly={viewOnly}
           />
 
@@ -1051,15 +1051,15 @@ const SegmentFilter = ({
     case "segment":
       return (
         <>
-          <UserSegmentFilter
+          <SegmentSegmentFilter
             connector={connector}
-            resource={resource as TUserSegmentSegmentFilter}
+            resource={resource as TSegmentSegmentFilter}
             environmentId={environmentId}
-            userSegment={userSegment}
-            userSegments={userSegments}
+            segment={segment}
+            segments={segments}
             actionClasses={actionClasses}
             attributeClasses={attributeClasses}
-            setUserSegment={setUserSegment}
+            setSegment={setSegment}
             onAddFilterBelow={onAddFilterBelow}
             handleAddFilterBelow={handleAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -1077,13 +1077,13 @@ const SegmentFilter = ({
         <>
           <DeviceFilter
             connector={connector}
-            resource={resource as TUserSegmentDeviceFilter}
+            resource={resource as TSegmentDeviceFilter}
             environmentId={environmentId}
-            userSegment={userSegment}
-            userSegments={userSegments}
+            segment={segment}
+            segments={segments}
             actionClasses={actionClasses}
             attributeClasses={attributeClasses}
-            setUserSegment={setUserSegment}
+            setSegment={setSegment}
             onAddFilterBelow={onAddFilterBelow}
             handleAddFilterBelow={handleAddFilterBelow}
             onCreateGroup={onCreateGroup}

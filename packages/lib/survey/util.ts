@@ -13,13 +13,13 @@ export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
     survey.closeOnDate = new Date(survey.closeOnDate);
   }
 
-  if (survey.userSegment) {
-    if (typeof survey.userSegment.createdAt === "string") {
-      survey.userSegment.createdAt = new Date(survey.userSegment.createdAt);
+  if (survey.segment) {
+    if (typeof survey.segment.createdAt === "string") {
+      survey.segment.createdAt = new Date(survey.segment.createdAt);
     }
 
-    if (typeof survey.userSegment.updatedAt === "string") {
-      survey.userSegment.updatedAt = new Date(survey.userSegment.updatedAt);
+    if (typeof survey.segment.updatedAt === "string") {
+      survey.segment.updatedAt = new Date(survey.segment.updatedAt);
     }
   }
 
@@ -27,4 +27,4 @@ export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
 };
 
 export const anySurveyHasFilters = (surveys: TSurvey[]) =>
-  !surveys.every((survey) => !survey.userSegment?.filters?.length);
+  !surveys.every((survey) => !survey.segment?.filters?.length);

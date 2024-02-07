@@ -1,14 +1,14 @@
 import {
-  getMockUserSegmentFilters,
+  getMockSegmentFilters,
   mockEnvironmentId,
   mockEvaluateSegmentUserData,
+  mockSegment,
+  mockSegmentCreateInput,
+  mockSegmentId,
+  mockSegmentPrisma,
+  mockSegmentUpdateInput,
   mockSurveyId,
-  mockUserSegment,
-  mockUserSegmentCreateInput,
-  mockUserSegmentId,
-  mockUserSegmentPrisma,
-  mockUserSegmentUpdateInput,
-} from "./__mocks__/userSegment.mock";
+} from "./__mocks__/segment.mock";
 
 import { Prisma } from "@prisma/client";
 
@@ -17,13 +17,13 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { testInputValidation } from "../../jest/jestSetup";
 import {
-  cloneUserSegment,
-  createUserSegment,
-  deleteUserSegment,
+  cloneSegment,
+  createSegment,
+  deleteSegment,
   evaluateSegment,
-  getUserSegment,
-  getUserSegments,
-  updateUserSegment,
+  getSegment,
+  getSegments,
+  updateSegment,
 } from "../service";
 
 function addOrSubractDays(date: Date, number: number) {
@@ -31,11 +31,11 @@ function addOrSubractDays(date: Date, number: number) {
 }
 
 beforeEach(() => {
-  prismaMock.userSegment.findUnique.mockResolvedValue(mockUserSegmentPrisma);
-  prismaMock.userSegment.findMany.mockResolvedValue([mockUserSegmentPrisma]);
-  prismaMock.userSegment.update.mockResolvedValue({
-    ...mockUserSegmentPrisma,
-    filters: getMockUserSegmentFilters("lastMonthCount", 5, "greaterEqual"),
+  prismaMock.segment.findUnique.mockResolvedValue(mockSegmentPrisma);
+  prismaMock.segment.findMany.mockResolvedValue([mockSegmentPrisma]);
+  prismaMock.segment.update.mockResolvedValue({
+    ...mockSegmentPrisma,
+    filters: getMockSegmentFilters("lastMonthCount", 5, "greaterEqual"),
   });
 });
 
@@ -45,7 +45,7 @@ describe("Tests for evaluateSegment service", () => {
       prismaMock.action.count.mockResolvedValue(4);
       const result = await evaluateSegment(
         mockEvaluateSegmentUserData,
-        getMockUserSegmentFilters("lastQuarterCount", 5, "lessThan")
+        getMockSegmentFilters("lastQuarterCount", 5, "lessThan")
       );
       expect(result).toBe(true);
     });
@@ -54,7 +54,7 @@ describe("Tests for evaluateSegment service", () => {
       prismaMock.action.count.mockResolvedValue(0);
       const result = await evaluateSegment(
         mockEvaluateSegmentUserData,
-        getMockUserSegmentFilters("lastMonthCount", 5, "lessThan")
+        getMockSegmentFilters("lastMonthCount", 5, "lessThan")
       );
       expect(result).toBe(true);
     });
@@ -63,7 +63,7 @@ describe("Tests for evaluateSegment service", () => {
       prismaMock.action.count.mockResolvedValue(6);
       const result = await evaluateSegment(
         mockEvaluateSegmentUserData,
-        getMockUserSegmentFilters("lastWeekCount", 5, "greaterEqual")
+        getMockSegmentFilters("lastWeekCount", 5, "greaterEqual")
       );
       expect(result).toBe(true);
     });
@@ -72,7 +72,7 @@ describe("Tests for evaluateSegment service", () => {
       prismaMock.action.count.mockResolvedValue(6);
       const result = await evaluateSegment(
         mockEvaluateSegmentUserData,
-        getMockUserSegmentFilters("occuranceCount", 5, "greaterEqual")
+        getMockSegmentFilters("occuranceCount", 5, "greaterEqual")
       );
       expect(result).toBe(true);
     });
@@ -82,7 +82,7 @@ describe("Tests for evaluateSegment service", () => {
 
       const result = await evaluateSegment(
         mockEvaluateSegmentUserData,
-        getMockUserSegmentFilters("lastOccurranceDaysAgo", 0, "greaterEqual")
+        getMockSegmentFilters("lastOccurranceDaysAgo", 0, "greaterEqual")
       );
       expect(result).toBe(true);
     });
@@ -92,7 +92,7 @@ describe("Tests for evaluateSegment service", () => {
 
       const result = await evaluateSegment(
         mockEvaluateSegmentUserData,
-        getMockUserSegmentFilters("firstOccurranceDaysAgo", 6, "lessThan")
+        getMockSegmentFilters("firstOccurranceDaysAgo", 6, "lessThan")
       );
       expect(result).toBe(true);
     });
@@ -103,24 +103,24 @@ describe("Tests for evaluateSegment service", () => {
       prismaMock.action.count.mockResolvedValue(0);
       const result = await evaluateSegment(
         mockEvaluateSegmentUserData,
-        getMockUserSegmentFilters("lastQuarterCount", 5, "greaterThan")
+        getMockSegmentFilters("lastQuarterCount", 5, "greaterThan")
       );
       expect(result).toBe(false);
     });
   });
 });
 
-describe("Tests for createUserSegment service", () => {
+describe("Tests for createSegment service", () => {
   describe("Happy Path", () => {
     it("Creates a new user segment", async () => {
-      prismaMock.userSegment.create.mockResolvedValue(mockUserSegmentPrisma);
-      const result = await createUserSegment(mockUserSegmentCreateInput);
-      expect(result).toEqual(mockUserSegment);
+      prismaMock.segment.create.mockResolvedValue(mockSegmentPrisma);
+      const result = await createSegment(mockSegmentCreateInput);
+      expect(result).toEqual(mockSegment);
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(createUserSegment, { ...mockUserSegmentCreateInput, title: undefined });
+    testInputValidation(createSegment, { ...mockSegmentCreateInput, title: undefined });
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -129,30 +129,30 @@ describe("Tests for createUserSegment service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.userSegment.create.mockRejectedValue(errToThrow);
+      prismaMock.segment.create.mockRejectedValue(errToThrow);
 
-      await expect(createUserSegment(mockUserSegmentCreateInput)).rejects.toThrow(DatabaseError);
+      await expect(createSegment(mockSegmentCreateInput)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.userSegment.create.mockRejectedValue(new Error(mockErrorMessage));
+      prismaMock.segment.create.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(createUserSegment(mockUserSegmentCreateInput)).rejects.toThrow(Error);
+      await expect(createSegment(mockSegmentCreateInput)).rejects.toThrow(Error);
     });
   });
 });
 
-describe("Tests for getUserSegments service", () => {
+describe("Tests for getSegments service", () => {
   describe("Happy Path", () => {
     it("Returns all user segments", async () => {
-      const result = await getUserSegments(mockEnvironmentId);
-      expect(result).toEqual([mockUserSegment]);
+      const result = await getSegments(mockEnvironmentId);
+      expect(result).toEqual([mockSegment]);
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getUserSegments, "123");
+    testInputValidation(getSegments, "123");
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -161,34 +161,34 @@ describe("Tests for getUserSegments service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.userSegment.findMany.mockRejectedValue(errToThrow);
+      prismaMock.segment.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getUserSegments(mockEnvironmentId)).rejects.toThrow(DatabaseError);
+      await expect(getSegments(mockEnvironmentId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.userSegment.findMany.mockRejectedValue(new Error(mockErrorMessage));
+      prismaMock.segment.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(getUserSegments(mockEnvironmentId)).rejects.toThrow(Error);
+      await expect(getSegments(mockEnvironmentId)).rejects.toThrow(Error);
     });
   });
 });
 
-describe("Tests for getUserSegment service", () => {
+describe("Tests for getSegment service", () => {
   describe("Happy Path", () => {
     it("Returns a user segment", async () => {
-      const result = await getUserSegment(mockUserSegmentId);
-      expect(result).toEqual(mockUserSegment);
+      const result = await getSegment(mockSegmentId);
+      expect(result).toEqual(mockSegment);
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getUserSegment, "123");
+    testInputValidation(getSegment, "123");
 
     it("Throws a ResourceNotFoundError error if the user segment does not exist", async () => {
-      prismaMock.userSegment.findUnique.mockResolvedValue(null);
-      await expect(getUserSegment(mockUserSegmentId)).rejects.toThrow(ResourceNotFoundError);
+      prismaMock.segment.findUnique.mockResolvedValue(null);
+      await expect(getSegment(mockSegmentId)).rejects.toThrow(ResourceNotFoundError);
     });
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
@@ -198,37 +198,37 @@ describe("Tests for getUserSegment service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.userSegment.findUnique.mockRejectedValue(errToThrow);
+      prismaMock.segment.findUnique.mockRejectedValue(errToThrow);
 
-      await expect(getUserSegment(mockUserSegmentId)).rejects.toThrow(DatabaseError);
+      await expect(getSegment(mockSegmentId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.userSegment.findUnique.mockRejectedValue(new Error(mockErrorMessage));
+      prismaMock.segment.findUnique.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(getUserSegment(mockUserSegmentId)).rejects.toThrow(Error);
+      await expect(getSegment(mockSegmentId)).rejects.toThrow(Error);
     });
   });
 });
 
-describe("Tests for updateUserSegment service", () => {
+describe("Tests for updateSegment service", () => {
   describe("Happy Path", () => {
     it("Updates a user segment", async () => {
-      const result = await updateUserSegment(mockUserSegmentId, mockUserSegmentUpdateInput);
+      const result = await updateSegment(mockSegmentId, mockSegmentUpdateInput);
       expect(result).toEqual({
-        ...mockUserSegment,
-        filters: getMockUserSegmentFilters("lastMonthCount", 5, "greaterEqual"),
+        ...mockSegment,
+        filters: getMockSegmentFilters("lastMonthCount", 5, "greaterEqual"),
       });
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(updateUserSegment, "123", {});
+    testInputValidation(updateSegment, "123", {});
 
     it("Throws a ResourceNotFoundError error if the user segment does not exist", async () => {
-      prismaMock.userSegment.findUnique.mockResolvedValue(null);
-      await expect(updateUserSegment(mockUserSegmentId, mockUserSegmentCreateInput)).rejects.toThrow(
+      prismaMock.segment.findUnique.mockResolvedValue(null);
+      await expect(updateSegment(mockSegmentId, mockSegmentCreateInput)).rejects.toThrow(
         ResourceNotFoundError
       );
     });
@@ -240,37 +240,35 @@ describe("Tests for updateUserSegment service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.userSegment.update.mockRejectedValue(errToThrow);
+      prismaMock.segment.update.mockRejectedValue(errToThrow);
 
-      await expect(updateUserSegment(mockUserSegmentId, mockUserSegmentCreateInput)).rejects.toThrow(
-        DatabaseError
-      );
+      await expect(updateSegment(mockSegmentId, mockSegmentCreateInput)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.userSegment.update.mockRejectedValue(new Error(mockErrorMessage));
+      prismaMock.segment.update.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(updateUserSegment(mockUserSegmentId, mockUserSegmentCreateInput)).rejects.toThrow(Error);
+      await expect(updateSegment(mockSegmentId, mockSegmentCreateInput)).rejects.toThrow(Error);
     });
   });
 });
 
-describe("Tests for deleteUserSegment service", () => {
+describe("Tests for deleteSegment service", () => {
   describe("Happy Path", () => {
     it("Deletes a user segment", async () => {
-      prismaMock.userSegment.delete.mockResolvedValue(mockUserSegmentPrisma);
-      const result = await deleteUserSegment(mockUserSegmentId);
-      expect(result).toEqual(mockUserSegment);
+      prismaMock.segment.delete.mockResolvedValue(mockSegmentPrisma);
+      const result = await deleteSegment(mockSegmentId);
+      expect(result).toEqual(mockSegment);
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(deleteUserSegment, "123");
+    testInputValidation(deleteSegment, "123");
 
     it("Throws a ResourceNotFoundError error if the user segment does not exist", async () => {
-      prismaMock.userSegment.findUnique.mockResolvedValue(null);
-      await expect(deleteUserSegment(mockUserSegmentId)).rejects.toThrow(ResourceNotFoundError);
+      prismaMock.segment.findUnique.mockResolvedValue(null);
+      await expect(deleteSegment(mockSegmentId)).rejects.toThrow(ResourceNotFoundError);
     });
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
@@ -280,41 +278,41 @@ describe("Tests for deleteUserSegment service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.userSegment.delete.mockRejectedValue(errToThrow);
+      prismaMock.segment.delete.mockRejectedValue(errToThrow);
 
-      await expect(deleteUserSegment(mockUserSegmentId)).rejects.toThrow(DatabaseError);
+      await expect(deleteSegment(mockSegmentId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.userSegment.delete.mockRejectedValue(new Error(mockErrorMessage));
+      prismaMock.segment.delete.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(deleteUserSegment(mockUserSegmentId)).rejects.toThrow(Error);
+      await expect(deleteSegment(mockSegmentId)).rejects.toThrow(Error);
     });
   });
 });
 
-describe("Tests for cloneUserSegment service", () => {
+describe("Tests for cloneSegment service", () => {
   describe("Happy Path", () => {
     it("Clones a user segment", async () => {
-      prismaMock.userSegment.create.mockResolvedValue({
-        ...mockUserSegmentPrisma,
-        title: `Copy of ${mockUserSegmentPrisma.title}`,
+      prismaMock.segment.create.mockResolvedValue({
+        ...mockSegmentPrisma,
+        title: `Copy of ${mockSegmentPrisma.title}`,
       });
-      const result = await cloneUserSegment(mockUserSegmentId, mockSurveyId);
+      const result = await cloneSegment(mockSegmentId, mockSurveyId);
       expect(result).toEqual({
-        ...mockUserSegment,
-        title: `Copy of ${mockUserSegment.title}`,
+        ...mockSegment,
+        title: `Copy of ${mockSegment.title}`,
       });
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(cloneUserSegment, "123", "123");
+    testInputValidation(cloneSegment, "123", "123");
 
     it("Throws a ResourceNotFoundError error if the user segment does not exist", async () => {
-      prismaMock.userSegment.findUnique.mockResolvedValue(null);
-      await expect(cloneUserSegment(mockUserSegmentId, mockSurveyId)).rejects.toThrow(ResourceNotFoundError);
+      prismaMock.segment.findUnique.mockResolvedValue(null);
+      await expect(cloneSegment(mockSegmentId, mockSurveyId)).rejects.toThrow(ResourceNotFoundError);
     });
 
     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
@@ -324,16 +322,16 @@ describe("Tests for cloneUserSegment service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.userSegment.create.mockRejectedValue(errToThrow);
+      prismaMock.segment.create.mockRejectedValue(errToThrow);
 
-      await expect(cloneUserSegment(mockUserSegmentId, mockSurveyId)).rejects.toThrow(DatabaseError);
+      await expect(cloneSegment(mockSegmentId, mockSurveyId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.userSegment.create.mockRejectedValue(new Error(mockErrorMessage));
+      prismaMock.segment.create.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(cloneUserSegment(mockUserSegmentId, mockSurveyId)).rejects.toThrow(Error);
+      await expect(cloneSegment(mockSegmentId, mockSurveyId)).rejects.toThrow(Error);
     });
   });
 });

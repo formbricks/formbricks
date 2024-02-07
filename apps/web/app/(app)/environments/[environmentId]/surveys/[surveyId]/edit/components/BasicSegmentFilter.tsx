@@ -11,7 +11,7 @@ import {
   updateFilterValue,
   updateOperatorInFilter,
   updatePersonIdentifierInFilter,
-} from "@formbricks/lib/userSegment/utils";
+} from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   ARITHMETIC_OPERATORS,
@@ -19,13 +19,13 @@ import {
   PERSON_OPERATORS,
   TArithmeticOperator,
   TAttributeOperator,
-  TUserSegment,
-  TUserSegmentAttributeFilter,
-  TUserSegmentConnector,
-  TUserSegmentFilter,
-  TUserSegmentFilterValue,
-  TUserSegmentPersonFilter,
-} from "@formbricks/types/userSegment";
+  TSegment,
+  TSegmentAttributeFilter,
+  TSegmentConnector,
+  TSegmentFilter,
+  TSegmentFilterValue,
+  TSegmentPersonFilter,
+} from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import {
   DropdownMenu,
@@ -37,34 +37,34 @@ import { Input } from "@formbricks/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 type SegmentFilterItemProps = {
-  connector: TUserSegmentConnector;
-  resource: TUserSegmentFilter;
+  connector: TSegmentConnector;
+  resource: TSegmentFilter;
   environmentId: string;
-  userSegment: TUserSegment;
+  segment: TSegment;
   attributeClasses: TAttributeClass[];
-  setUserSegment: (userSegment: TUserSegment) => void;
+  setSegment: (segment: TSegment) => void;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
 };
 
 const SegmentFilterItemConnector = ({
   connector,
-  userSegment,
-  setUserSegment,
+  segment,
+  setSegment,
   filterId,
 }: {
-  connector: TUserSegmentConnector;
-  userSegment: TUserSegment;
-  setUserSegment: (userSegment: TUserSegment) => void;
+  connector: TSegmentConnector;
+  segment: TSegment;
+  setSegment: (segment: TSegment) => void;
   filterId: string;
 }) => {
-  const updateLocalSurvey = (newConnector: TUserSegmentConnector) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      toggleFilterConnector(updatedUserSegment.filters, filterId, newConnector);
+  const updateLocalSurvey = (newConnector: TSegmentConnector) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      toggleFilterConnector(updatedSegment.filters, filterId, newConnector);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const onConnectorChange = () => {
@@ -125,8 +125,8 @@ const SegmentFilterItemContextMenu = ({
 };
 
 type TAttributeSegmentFilterProps = SegmentFilterItemProps & {
-  resource: TUserSegmentAttributeFilter;
-  updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
+  resource: TSegmentAttributeFilter;
+  updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
 
 const AttributeSegmentFilter = ({
@@ -135,8 +135,8 @@ const AttributeSegmentFilter = ({
   onDeleteFilter,
   onMoveFilter,
   updateValueInLocalSurvey,
-  userSegment,
-  setUserSegment,
+  segment,
+  setSegment,
   attributeClasses,
 }: TAttributeSegmentFilterProps) => {
   const { attributeClassName } = resource.root;
@@ -169,21 +169,21 @@ const AttributeSegmentFilter = ({
   const attributeClass = attributeClasses?.find((attrClass) => attrClass?.name === attributeClassName)?.name;
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const updateAttributeClassNameInLocalSurvey = (filterId: string, newAttributeClassName: string) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateAttributeClassNameInFilter(updatedUserSegment.filters, filterId, newAttributeClassName);
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateAttributeClassNameInFilter(updatedSegment.filters, filterId, newAttributeClassName);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,8 +221,8 @@ const AttributeSegmentFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        setUserSegment={setUserSegment}
-        userSegment={userSegment}
+        setSegment={setSegment}
+        segment={segment}
       />
 
       <Select
@@ -298,8 +298,8 @@ const AttributeSegmentFilter = ({
 };
 
 type TPersonSegmentFilterProps = Omit<SegmentFilterItemProps, "attributeClasses"> & {
-  resource: TUserSegmentPersonFilter;
-  updateValueInLocalSurvey: (filterId: string, newValue: TUserSegmentFilterValue) => void;
+  resource: TSegmentPersonFilter;
+  updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
 
 const PersonSegmentFilter = ({
@@ -308,8 +308,8 @@ const PersonSegmentFilter = ({
   onDeleteFilter,
   onMoveFilter,
   updateValueInLocalSurvey,
-  userSegment,
-  setUserSegment,
+  segment,
+  setSegment,
 }: TPersonSegmentFilterProps) => {
   const { personIdentifier } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
@@ -339,21 +339,21 @@ const PersonSegmentFilter = ({
   });
 
   const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateOperatorInFilter(updatedUserSegment.filters, filterId, newOperator);
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const updatePersonIdentifierInLocalSurvey = (filterId: string, newPersonIdentifier: string) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updatePersonIdentifierInFilter(updatedUserSegment.filters, filterId, newPersonIdentifier);
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updatePersonIdentifierInFilter(updatedSegment.filters, filterId, newPersonIdentifier);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const checkValueAndUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -391,8 +391,8 @@ const PersonSegmentFilter = ({
         key={connector}
         connector={connector}
         filterId={resource.id}
-        setUserSegment={setUserSegment}
-        userSegment={userSegment}
+        setSegment={setSegment}
+        segment={segment}
       />
 
       <Select
@@ -467,19 +467,19 @@ const BasicSegmentFilter = ({
   resource,
   connector,
   environmentId,
-  userSegment,
+  segment,
   attributeClasses,
-  setUserSegment,
+  setSegment,
   onDeleteFilter,
   onMoveFilter,
 }: SegmentFilterItemProps) => {
-  const updateFilterValueInUserSegment = (filterId: string, newValue: string | number) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment.filters) {
-      updateFilterValue(updatedUserSegment.filters, filterId, newValue);
+  const updateFilterValueInSegment = (filterId: string, newValue: string | number) => {
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment.filters) {
+      updateFilterValue(updatedSegment.filters, filterId, newValue);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   switch (resource.root.type) {
@@ -488,14 +488,14 @@ const BasicSegmentFilter = ({
         <>
           <AttributeSegmentFilter
             connector={connector}
-            resource={resource as TUserSegmentAttributeFilter}
+            resource={resource as TSegmentAttributeFilter}
             environmentId={environmentId}
-            userSegment={userSegment}
+            segment={segment}
             attributeClasses={attributeClasses}
-            setUserSegment={setUserSegment}
+            setSegment={setSegment}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
-            updateValueInLocalSurvey={updateFilterValueInUserSegment}
+            updateValueInLocalSurvey={updateFilterValueInSegment}
           />
         </>
       );
@@ -505,13 +505,13 @@ const BasicSegmentFilter = ({
         <>
           <PersonSegmentFilter
             connector={connector}
-            resource={resource as TUserSegmentPersonFilter}
+            resource={resource as TSegmentPersonFilter}
             environmentId={environmentId}
-            userSegment={userSegment}
-            setUserSegment={setUserSegment}
+            segment={segment}
+            setSegment={setSegment}
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
-            updateValueInLocalSurvey={updateFilterValueInUserSegment}
+            updateValueInLocalSurvey={updateFilterValueInSegment}
           />
         </>
       );

@@ -4,7 +4,7 @@ import { UserGroupIcon } from "@heroicons/react/24/solid";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TUserSegment } from "@formbricks/types/userSegment";
+import { TSegment } from "@formbricks/types/segment";
 import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
 
 import SegmentActivityTab from "./SegmentActivityTab";
@@ -14,11 +14,11 @@ interface EditSegmentModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  currentSegment: TUserSegment & {
+  currentSegment: TSegment & {
     activeSurveys: string[];
     inactiveSurveys: string[];
   };
-  userSegments: TUserSegment[];
+  segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
 }
@@ -30,7 +30,7 @@ export default function EditSegmentModal({
   currentSegment,
   actionClasses,
   attributeClasses,
-  userSegments,
+  segments,
 }: EditSegmentModalProps) {
   const tabs = [
     {
@@ -46,7 +46,7 @@ export default function EditSegmentModal({
           initialSegment={currentSegment}
           actionClasses={actionClasses}
           attributeClasses={attributeClasses}
-          userSegments={userSegments}
+          segments={segments}
         />
       ),
     },

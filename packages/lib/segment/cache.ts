@@ -6,16 +6,16 @@ interface RevalidateProps {
   attributeClassName?: string;
 }
 
-export const userSegmentCache = {
+export const segmentCache = {
   tag: {
     byId(id: string) {
-      return `userSegment-${id}`;
+      return `segment-${id}`;
     },
     byEnvironmentId(environmentId: string): string {
-      return `environments-${environmentId}-userSegements`;
+      return `environments-${environmentId}-segements`;
     },
     byAttributeClassName(attributeClassName: string): string {
-      return `attribute-${attributeClassName}-userSegements`;
+      return `attribute-${attributeClassName}-segements`;
     },
   },
   revalidate({ id, environmentId, attributeClassName }: RevalidateProps): void {

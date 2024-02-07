@@ -7,8 +7,8 @@ import { useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
@@ -28,31 +28,31 @@ export default function UserTargetingCard({
   environmentId,
   attributeClasses,
 }: UserTargetingCardProps) {
-  const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment);
+  const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
   const [open, setOpen] = useState(false);
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
-    const updatedUserSegment = structuredClone(userSegment);
+    const updatedSegment = structuredClone(segment);
 
-    if (updatedUserSegment?.filters?.length === 0) {
-      updatedUserSegment.filters.push({
+    if (updatedSegment?.filters?.length === 0) {
+      updatedSegment.filters.push({
         ...filter,
         connector: null,
       });
     } else {
-      updatedUserSegment?.filters.push(filter);
+      updatedSegment?.filters.push(filter);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({
       ...localSurveyOld,
-      userSegment,
+      segment: segment,
     }));
-  }, [setLocalSurvey, userSegment]);
+  }, [setLocalSurvey, segment]);
 
   return (
     <Collapsible.Root
@@ -79,20 +79,20 @@ export default function UserTargetingCard({
         <hr className="py-1 text-slate-600" />
         <div className="flex flex-col gap-2 px-6 pt-2">
           <div className="mb-2">
-            <UserTargetingFallback userSegment={userSegment} />
+            <UserTargetingFallback segment={segment} />
           </div>
 
           <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
             <div className="flex w-full flex-col gap-2">
               <p className="text-sm font-semibold text-slate-800">Send survey to audience who match...</p>
-              {!!userSegment?.filters?.length && (
+              {!!segment?.filters?.length && (
                 <div className="w-full">
                   <BasicSegmentEditor
-                    key={userSegment.id}
-                    group={userSegment.filters}
+                    key={segment.id}
+                    group={segment.filters}
                     environmentId={environmentId}
-                    userSegment={userSegment}
-                    setUserSegment={setUserSegment}
+                    segment={segment}
+                    setSegment={setSegment}
                     attributeClasses={attributeClasses}
                   />
                 </div>

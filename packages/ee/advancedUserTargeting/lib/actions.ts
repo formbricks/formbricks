@@ -1,23 +1,23 @@
 "use server";
 
-import { surveyCache } from "@formbricks/lib/survey/cache";
-import { loadNewUserSegmentInSurvey } from "@formbricks/lib/survey/service";
 import {
-  cloneUserSegment,
-  createUserSegment,
-  deleteUserSegment,
-  getUserSegment,
-  updateUserSegment,
-} from "@formbricks/lib/userSegment/service";
+  cloneSegment,
+  createSegment,
+  deleteSegment,
+  getSegment,
+  updateSegment,
+} from "@formbricks/lib/segment/service";
+import { surveyCache } from "@formbricks/lib/survey/cache";
+import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
 import { formatDateFields } from "@formbricks/lib/utils/datetime";
 import {
   TBaseFilters,
-  TUserSegmentUpdateInput,
-  ZUserSegmentFilters,
-  ZUserSegmentUpdateInput,
-} from "@formbricks/types/userSegment";
+  TSegmentUpdateInput,
+  ZSegmentFilters,
+  ZSegmentUpdateInput,
+} from "@formbricks/types/segment";
 
-export const createUserSegmentAction = async ({
+export const createSegmentAction = async ({
   description,
   environmentId,
   filters,
@@ -32,7 +32,7 @@ export const createUserSegmentAction = async ({
   isPrivate: boolean;
   filters: TBaseFilters;
 }) => {
-  const parsedFilters = ZUserSegmentFilters.safeParse(filters);
+  const parsedFilters = ZSegmentFilters.safeParse(filters);
 
   if (!parsedFilters.success) {
     const errMsg =
@@ -40,7 +40,7 @@ export const createUserSegmentAction = async ({
     throw new Error(errMsg);
   }
 
-  const segment = await createUserSegment({
+  const segment = await createSegment({
     environmentId,
     surveyId,
     title,
@@ -53,10 +53,10 @@ export const createUserSegmentAction = async ({
   return segment;
 };
 
-export const updateUserSegmentAction = async (segmentId: string, data: TUserSegmentUpdateInput) => {
+export const updateSegmentAction = async (segmentId: string, data: TSegmentUpdateInput) => {
   const { filters } = data;
   if (filters) {
-    const parsedFilters = ZUserSegmentFilters.safeParse(filters);
+    const parsedFilters = ZSegmentFilters.safeParse(filters);
 
     if (!parsedFilters.success) {
       throw new Error("Invalid filters");
@@ -65,31 +65,31 @@ export const updateUserSegmentAction = async (segmentId: string, data: TUserSegm
 
   const _data = {
     ...data,
-    ...formatDateFields(data, ZUserSegmentUpdateInput),
+    ...formatDateFields(data, ZSegmentUpdateInput),
   };
 
-  return await updateUserSegment(segmentId, _data);
+  return await updateSegment(segmentId, _data);
 };
 
-export const loadNewUserSegmentAction = async (surveyId: string, segmentId: string) => {
-  return await loadNewUserSegmentInSurvey(surveyId, segmentId);
+export const loadNewSegmentAction = async (surveyId: string, segmentId: string) => {
+  return await loadNewSegmentInSurvey(surveyId, segmentId);
 };
 
-export const cloneUserSegmentAction = async (segmentId: string, surveyId: string) => {
+export const cloneSegmentAction = async (segmentId: string, surveyId: string) => {
   try {
-    const clonedUserSegment = await cloneUserSegment(segmentId, surveyId);
-    return clonedUserSegment;
+    const clonedSegment = await cloneSegment(segmentId, surveyId);
+    return clonedSegment;
   } catch (err: any) {
     throw new Error(err);
   }
 };
 
-export const deleteUserSegmentAction = async (segmentId: string) => {
-  const foundSegment = await getUserSegment(segmentId);
+export const deleteSegmentAction = async (segmentId: string) => {
+  const foundSegment = await getSegment(segmentId);
 
   if (!foundSegment) {
     throw new Error(`Segment with id ${segmentId} not found`);
   }
 
-  return await deleteUserSegment(segmentId);
+  return await deleteSegment(segmentId);
 };

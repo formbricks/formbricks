@@ -5,11 +5,7 @@ import { FingerprintIcon, TagIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import {
-  TBaseFilter,
-  TUserSegmentAttributeFilter,
-  TUserSegmentPersonFilter,
-} from "@formbricks/types/userSegment";
+import { TBaseFilter, TSegmentAttributeFilter, TSegmentPersonFilter } from "@formbricks/types/segment";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 
@@ -27,7 +23,7 @@ const handleAddFilter = ({
   setOpen: (open: boolean) => void;
 }) => {
   if (type === "person") {
-    const newResource: TUserSegmentPersonFilter = {
+    const newResource: TSegmentPersonFilter = {
       id: createId(),
       root: { type: "person", personIdentifier: "userId" },
       qualifier: {
@@ -50,7 +46,7 @@ const handleAddFilter = ({
 
   if (!attributeClassName) return;
 
-  const newFilterResource: TUserSegmentAttributeFilter = {
+  const newFilterResource: TSegmentAttributeFilter = {
     id: createId(),
     root: {
       type: "attribute",

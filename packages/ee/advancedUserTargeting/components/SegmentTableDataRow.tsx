@@ -6,16 +6,16 @@ import { useState } from "react";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TUserSegment } from "@formbricks/types/userSegment";
+import { TSegment } from "@formbricks/types/segment";
 
 import EditSegmentModal from "./EditSegmentModal";
 
 type TSegmentTableDataRowProps = {
-  currentSegment: TUserSegment & {
+  currentSegment: TSegment & {
     activeSurveys: string[];
     inactiveSurveys: string[];
   };
-  userSegments: TUserSegment[];
+  segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
 };
@@ -24,7 +24,7 @@ const SegmentTableDataRow = ({
   currentSegment,
   actionClasses,
   attributeClasses,
-  userSegments,
+  segments,
 }: TSegmentTableDataRowProps) => {
   const { createdAt, environmentId, id, surveys, title, updatedAt, description } = currentSegment;
   const [isEditSegmentModalOpen, setIsEditSegmentModalOpen] = useState(false);
@@ -38,7 +38,7 @@ const SegmentTableDataRow = ({
         currentSegment={currentSegment}
         actionClasses={actionClasses}
         attributeClasses={attributeClasses}
-        userSegments={userSegments}
+        segments={segments}
       />
       <div
         key={id}

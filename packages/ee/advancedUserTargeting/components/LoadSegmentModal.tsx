@@ -2,11 +2,11 @@
 
 import toast from "react-hot-toast";
 
-import { TUserSegment, ZUserSegmentFilters } from "@formbricks/types/userSegment";
+import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import { Modal } from "@formbricks/ui/Modal";
 
-import { loadNewUserSegmentAction } from "../lib/actions";
+import { loadNewSegmentAction } from "../lib/actions";
 
 type LoadSegmentModalProps = {
   open: boolean;
@@ -14,50 +14,50 @@ type LoadSegmentModalProps = {
   surveyId: string;
   step: "initial" | "load";
   setStep: (step: "initial" | "load") => void;
-  userSegment: TUserSegment;
-  userSegments: TUserSegment[];
-  setUserSegment: (userSegment: TUserSegment) => void;
+  currentSegment: TSegment;
+  segments: TSegment[];
+  setSegment: (segment: TSegment) => void;
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
 };
 
 const SegmentDetails = ({
   surveyId,
   setOpen,
-  setUserSegment,
-  userSegment,
-  userSegments,
+  setSegment,
+  currentSegment,
+  segments,
   setIsSegmentEditorOpen,
 }: {
   surveyId: string;
-  userSegment: TUserSegment;
-  userSegments: TUserSegment[];
-  setUserSegment: (userSegment: TUserSegment) => void;
+  currentSegment: TSegment;
+  segments: TSegment[];
+  setSegment: (segment: TSegment) => void;
   setOpen: (open: boolean) => void;
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
 }) => {
   const handleLoadNewSegment = async (segmentId: string) => {
     try {
-      const updatedSurvey = await loadNewUserSegmentAction(surveyId, segmentId);
+      const updatedSurvey = await loadNewSegmentAction(surveyId, segmentId);
 
       if (!updatedSurvey?.id) {
         throw new Error("Error loading segment");
       }
 
-      if (!updatedSurvey.userSegment) {
+      if (!updatedSurvey.segment) {
         throw new Error("Error loading segment");
       }
 
-      const parsedFilters = ZUserSegmentFilters.safeParse(updatedSurvey?.userSegment?.filters);
+      const parsedFilters = ZSegmentFilters.safeParse(updatedSurvey?.segment?.filters);
 
       if (!parsedFilters.success) {
         throw new Error("Invalid segment filters");
       }
 
-      setUserSegment({
-        ...updatedSurvey.userSegment,
-        description: updatedSurvey.userSegment.description || "",
+      setSegment({
+        ...updatedSurvey.segment,
+        description: updatedSurvey.segment.description || "",
         filters: parsedFilters.data,
-        surveys: updatedSurvey.userSegment.surveys,
+        surveys: updatedSurvey.segment.surveys,
       });
 
       setIsSegmentEditorOpen(false);
@@ -68,17 +68,15 @@ const SegmentDetails = ({
     }
   };
 
-  const userSegmentsArray = userSegments?.filter(
-    (segment) => segment.id !== userSegment.id && !segment.isPrivate
-  );
+  const segmentsArray = segments?.filter((segment) => segment.id !== currentSegment.id && !segment.isPrivate);
 
   return (
     <div className="flex flex-col">
-      {!userSegmentsArray?.length && (
+      {!segmentsArray?.length && (
         <div className="my-12 text-center text-base text-slate-600">You have not created a segment yet</div>
       )}
 
-      {userSegmentsArray?.map((segment) => (
+      {segmentsArray?.map((segment) => (
         <div
           key={segment.id}
           className="flex cursor-pointer flex-col gap-1 rounded-lg px-4 py-3 hover:bg-slate-100"
@@ -99,9 +97,9 @@ const LoadSegmentModal = ({
   setOpen,
   setStep,
   step,
-  userSegment,
-  userSegments,
-  setUserSegment,
+  currentSegment,
+  segments,
+  setSegment,
   setIsSegmentEditorOpen,
 }: LoadSegmentModalProps) => {
   const handleResetState = () => {
@@ -142,9 +140,9 @@ const LoadSegmentModal = ({
         <SegmentDetails
           surveyId={surveyId}
           setOpen={setOpen}
-          setUserSegment={setUserSegment}
-          userSegment={userSegment}
-          userSegments={userSegments}
+          setSegment={setSegment}
+          currentSegment={currentSegment}
+          segments={segments}
           setIsSegmentEditorOpen={setIsSegmentEditorOpen}
         />
       )}

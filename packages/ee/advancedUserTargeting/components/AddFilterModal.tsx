@@ -9,10 +9,10 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import {
   TBaseFilter,
-  TUserSegment,
-  TUserSegmentAttributeFilter,
-  TUserSegmentPersonFilter,
-} from "@formbricks/types/userSegment";
+  TSegment,
+  TSegmentAttributeFilter,
+  TSegmentPersonFilter,
+} from "@formbricks/types/segment";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 import { TabBar } from "@formbricks/ui/TabBar";
@@ -23,7 +23,7 @@ type TAddFilterModalProps = {
   onAddFilter: (filter: TBaseFilter) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  userSegments: TUserSegment[];
+  segments: TSegment[];
 };
 
 type TFilterType = "action" | "attribute" | "segment" | "device" | "person";
@@ -35,14 +35,14 @@ const handleAddFilter = ({
   attributeClassName,
   deviceType,
   actionClassId,
-  userSegmentId,
+  segmentId,
 }: {
   type: TFilterType;
   onAddFilter: (filter: TBaseFilter) => void;
   setOpen: (open: boolean) => void;
   actionClassId?: string;
   attributeClassName?: string;
-  userSegmentId?: string;
+  segmentId?: string;
   deviceType?: string;
 }) => {
   if (type === "action") {
@@ -72,7 +72,7 @@ const handleAddFilter = ({
   if (type === "attribute") {
     if (!attributeClassName) return;
 
-    const newFilterResource: TUserSegmentAttributeFilter = {
+    const newFilterResource: TSegmentAttributeFilter = {
       id: createId(),
       root: {
         type,
@@ -94,7 +94,7 @@ const handleAddFilter = ({
   }
 
   if (type === "person") {
-    const newResource: TUserSegmentPersonFilter = {
+    const newResource: TSegmentPersonFilter = {
       id: createId(),
       root: { type: "person", personIdentifier: "userId" },
       qualifier: {
@@ -114,7 +114,7 @@ const handleAddFilter = ({
   }
 
   if (type === "segment") {
-    if (!userSegmentId) return;
+    if (!segmentId) return;
 
     const newFilter: TBaseFilter = {
       id: createId(),
@@ -123,12 +123,12 @@ const handleAddFilter = ({
         id: createId(),
         root: {
           type: type,
-          userSegmentId,
+          segmentId,
         },
         qualifier: {
           operator: "userIsIn",
         },
-        value: userSegmentId,
+        value: segmentId,
       },
     };
 
@@ -224,7 +224,7 @@ const AddFilterModal = ({
   setOpen,
   actionClasses,
   attributeClasses,
-  userSegments,
+  segments,
 }: TAddFilterModalProps) => {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
@@ -275,15 +275,15 @@ const AddFilterModal = ({
     );
   }, [searchValue]);
 
-  const userSegmentsFiltered = useMemo(() => {
-    if (!userSegments) return [];
+  const segmentsFiltered = useMemo(() => {
+    if (!segments) return [];
 
-    if (!searchValue) return userSegments.filter((userSegment) => !userSegment.isPrivate);
+    if (!searchValue) return segments.filter((segment) => !segment.isPrivate);
 
-    return userSegments
-      .filter((userSegment) => !userSegment.isPrivate)
-      .filter((userSegment) => userSegment.title.toLowerCase().includes(searchValue.toLowerCase()));
-  }, [userSegments, searchValue]);
+    return segments
+      .filter((segment) => !segment.isPrivate)
+      .filter((segment) => segment.title.toLowerCase().includes(searchValue.toLowerCase()));
+  }, [segments, searchValue]);
 
   const deviceTypesFiltered = useMemo(() => {
     if (!searchValue) return devices;
@@ -297,7 +297,7 @@ const AddFilterModal = ({
         attributes: attributeClassesFiltered,
         personAttributes: personAttributesFiltered,
         actions: actionClassesFiltered,
-        segments: userSegmentsFiltered,
+        segments: segmentsFiltered,
         devices: deviceTypesFiltered,
       },
     ],
@@ -306,7 +306,7 @@ const AddFilterModal = ({
       attributeClassesFiltered,
       deviceTypesFiltered,
       personAttributesFiltered,
-      userSegmentsFiltered,
+      segmentsFiltered,
     ]
   );
 
@@ -383,7 +383,7 @@ const AddFilterModal = ({
                 );
               })}
 
-              {filters.segments.map((userSegment) => {
+              {filters.segments.map((segment) => {
                 return (
                   <div
                     onClick={() => {
@@ -391,12 +391,12 @@ const AddFilterModal = ({
                         type: "segment",
                         onAddFilter,
                         setOpen,
-                        userSegmentId: userSegment.id,
+                        segmentId: segment.id,
                       });
                     }}
                     className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                     <Users2Icon className="h-4 w-4" />
-                    <p>{userSegment.title}</p>
+                    <p>{segment.title}</p>
                   </div>
                 );
               })}
@@ -466,14 +466,14 @@ const AddFilterModal = ({
   const getSegmentsTabContent = () => {
     return (
       <>
-        {userSegmentsFiltered?.length === 0 && (
+        {segmentsFiltered?.length === 0 && (
           <div className="flex w-full items-center justify-center gap-4 rounded-lg px-2 py-1 text-sm">
             <p>You currently have no saved segments.</p>
           </div>
         )}
-        {userSegmentsFiltered
+        {segmentsFiltered
           ?.filter((segment) => !segment.isPrivate)
-          ?.map((userSegment) => {
+          ?.map((segment) => {
             return (
               <div
                 onClick={() => {
@@ -481,12 +481,12 @@ const AddFilterModal = ({
                     type: "segment",
                     onAddFilter,
                     setOpen,
-                    userSegmentId: userSegment.id,
+                    segmentId: segment.id,
                   });
                 }}
                 className="flex cursor-pointer items-center gap-4 rounded-lg px-2 py-1 text-sm hover:bg-slate-50">
                 <Users2Icon className="h-4 w-4" />
-                <p>{userSegment.title}</p>
+                <p>{segment.title}</p>
               </div>
             );
           })}

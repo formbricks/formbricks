@@ -8,18 +8,18 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
+import { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 
-import { createUserSegmentAction } from "../lib/actions";
+import { createSegmentAction } from "../lib/actions";
 import AddFilterModal from "./AddFilterModal";
 import SegmentFilters from "./SegmentFilters";
 
 type TCreateSegmentModalProps = {
   environmentId: string;
-  userSegments: TUserSegment[];
+  segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
 };
@@ -27,7 +27,7 @@ const CreateSegmentModal = ({
   environmentId,
   actionClasses,
   attributeClasses,
-  userSegments,
+  segments,
 }: TCreateSegmentModalProps) => {
   const router = useRouter();
   const initialSegmentState = {
@@ -44,44 +44,44 @@ const CreateSegmentModal = ({
 
   const [open, setOpen] = useState(false);
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const [userSegment, setUserSegment] = useState<TUserSegment>(initialSegmentState);
+  const [segment, setSegment] = useState<TSegment>(initialSegmentState);
   const [isCreatingSegment, setIsCreatingSegment] = useState(false);
 
   const [titleError, setTitleError] = useState("");
 
   const handleResetState = () => {
-    setUserSegment(initialSegmentState);
+    setSegment(initialSegmentState);
     setTitleError("");
     setOpen(false);
   };
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment?.filters?.length === 0) {
-      updatedUserSegment.filters.push({
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment?.filters?.length === 0) {
+      updatedSegment.filters.push({
         ...filter,
         connector: null,
       });
     } else {
-      updatedUserSegment?.filters.push(filter);
+      updatedSegment?.filters.push(filter);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const handleCreateSegment = async () => {
-    if (!userSegment.title) {
+    if (!segment.title) {
       setTitleError("Title is required");
       return;
     }
 
     try {
       setIsCreatingSegment(true);
-      await createUserSegmentAction({
-        title: userSegment.title,
-        description: userSegment.description ?? "",
-        isPrivate: userSegment.isPrivate,
-        filters: userSegment.filters,
+      await createSegmentAction({
+        title: segment.title,
+        description: segment.description ?? "",
+        isPrivate: segment.isPrivate,
+        filters: segment.filters,
         environmentId,
         surveyId: "",
       });
@@ -141,7 +141,7 @@ const CreateSegmentModal = ({
                   <Input
                     placeholder="Ex. Power Users"
                     onChange={(e) => {
-                      setUserSegment((prev) => ({
+                      setSegment((prev) => ({
                         ...prev,
                         title: e.target.value,
                       }));
@@ -162,7 +162,7 @@ const CreateSegmentModal = ({
                 <Input
                   placeholder="Ex. Fully activated recurring users"
                   onChange={(e) => {
-                    setUserSegment((prev) => ({
+                    setSegment((prev) => ({
                       ...prev,
                       description: e.target.value,
                     }));
@@ -175,12 +175,12 @@ const CreateSegmentModal = ({
             <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-700 bg-white p-4">
               <SegmentFilters
                 environmentId={environmentId}
-                userSegment={userSegment}
-                setUserSegment={setUserSegment}
-                group={userSegment.filters}
+                segment={segment}
+                setSegment={setSegment}
+                group={segment.filters}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
-                userSegments={userSegments}
+                segments={segments}
               />
 
               <div>
@@ -197,7 +197,7 @@ const CreateSegmentModal = ({
                 setOpen={setAddFilterModalOpen}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
-                userSegments={userSegments}
+                segments={segments}
               />
             </div>
 

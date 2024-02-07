@@ -10,8 +10,8 @@ import toast from "react-hot-toast";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
+import { ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
-import { ZUserSegmentFilters } from "@formbricks/types/userSegment";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
@@ -253,8 +253,8 @@ export default function SurveyMenuBar({
     }
 
     // validate the user segment filters
-    if (!!strippedSurvey.userSegment?.filters?.length) {
-      const parsedFilters = ZUserSegmentFilters.safeParse(strippedSurvey.userSegment.filters);
+    if (!!strippedSurvey.segment?.filters?.length) {
+      const parsedFilters = ZSegmentFilters.safeParse(strippedSurvey.segment.filters);
       if (!parsedFilters.success) {
         const errMsg =
           parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||

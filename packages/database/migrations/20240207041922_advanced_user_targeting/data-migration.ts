@@ -4,9 +4,9 @@ import { PrismaClient } from "@prisma/client";
 import {
   TBaseFilter,
   TBaseFilters,
-  TUserSegmentAttributeFilter,
-  TUserSegmentPersonFilter,
-} from "@formbricks/types/userSegment";
+  TSegmentAttributeFilter,
+  TSegmentPersonFilter,
+} from "@formbricks/types/segment";
 
 const prisma = new PrismaClient();
 
@@ -41,7 +41,7 @@ async function main() {
 
       const filters: TBaseFilters = attributeFilters.map((filter, idx) => {
         const { attributeClass } = filter;
-        let resource: TUserSegmentAttributeFilter | TUserSegmentPersonFilter;
+        let resource: TSegmentAttributeFilter | TSegmentPersonFilter;
         // if the attribute class is userId, we need to create a user segment with the person filter
         if (attributeClass.name === "userId" && attributeClass.type === "automatic") {
           resource = {
@@ -78,7 +78,7 @@ async function main() {
         return attributeSegment;
       });
 
-      await tx.userSegment.create({
+      await tx.segment.create({
         data: {
           title: "",
           description: "",

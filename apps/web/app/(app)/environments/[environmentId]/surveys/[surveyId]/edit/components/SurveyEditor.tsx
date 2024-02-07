@@ -5,14 +5,14 @@ import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { createUserSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
+import { createSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TUserSegment } from "@formbricks/types/userSegment";
 
 import PreviewSurvey from "../../../components/PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
@@ -26,7 +26,7 @@ interface SurveyEditorProps {
   environment: TEnvironment;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  userSegments: TUserSegment[];
+  segments: TSegment[];
   responseCount: number;
   membershipRole?: TMembershipRole;
   colours: string[];
@@ -39,7 +39,7 @@ export default function SurveyEditor({
   environment,
   actionClasses,
   attributeClasses,
-  userSegments,
+  segments,
   responseCount,
   membershipRole,
   colours,
@@ -104,7 +104,7 @@ export default function SurveyEditor({
     }
 
     const createSegment = async () => {
-      const createdSegment = await createUserSegmentAction({
+      const createdSegment = await createSegmentAction({
         title: "",
         description: "",
         environmentId: environment.id,
@@ -115,11 +115,11 @@ export default function SurveyEditor({
 
       setLocalSurvey({
         ...localSurvey,
-        userSegment: createdSegment,
+        segment: createdSegment,
       });
     };
 
-    if (!localSurvey.userSegment?.id) {
+    if (!localSurvey.segment?.id) {
       try {
         createSegment();
       } catch (err) {
@@ -166,7 +166,7 @@ export default function SurveyEditor({
                 setLocalSurvey={setLocalSurvey}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
-                userSegments={userSegments}
+                segments={segments}
                 responseCount={responseCount}
                 membershipRole={membershipRole}
                 colours={colours}

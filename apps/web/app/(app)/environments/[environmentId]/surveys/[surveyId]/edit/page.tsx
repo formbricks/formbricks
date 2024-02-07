@@ -10,9 +10,9 @@ import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service"
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { getUserSegments } from "@formbricks/lib/userSegment/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 import SurveyEditor from "./components/SurveyEditor";
@@ -34,7 +34,7 @@ export default async function SurveysEditPage({ params }) {
     responseCount,
     team,
     session,
-    userSegments,
+    segments,
   ] = await Promise.all([
     getSurvey(params.surveyId),
     getProductByEnvironmentId(params.environmentId),
@@ -44,7 +44,7 @@ export default async function SurveysEditPage({ params }) {
     getResponseCountBySurveyId(params.surveyId),
     getTeamByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
-    getUserSegments(params.environmentId),
+    getSegments(params.environmentId),
   ]);
 
   if (!session) {
@@ -82,7 +82,7 @@ export default async function SurveysEditPage({ params }) {
       responseCount={responseCount}
       membershipRole={currentUserMembership?.role}
       colours={colours}
-      userSegments={userSegments}
+      segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
     />
   );

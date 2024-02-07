@@ -1,12 +1,12 @@
 "use client";
 
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
-import { TUserSegment } from "@formbricks/types/userSegment";
+import { TSegment } from "@formbricks/types/segment";
 import { Label } from "@formbricks/ui/Label";
 
 interface SegmentActivityTabProps {
   environmentId: string;
-  currentSegment: TUserSegment & {
+  currentSegment: TSegment & {
     activeSurveys: string[];
     inactiveSurveys: string[];
   };

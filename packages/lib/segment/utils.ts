@@ -7,22 +7,20 @@ import {
   TBaseFilter,
   TBaseFilters,
   TDeviceOperator,
+  TSegment,
+  TSegmentActionFilter,
+  TSegmentAttributeFilter,
+  TSegmentConnector,
+  TSegmentDeviceFilter,
+  TSegmentFilter,
   TSegmentOperator,
-  TUserSegment,
-  TUserSegmentActionFilter,
-  TUserSegmentAttributeFilter,
-  TUserSegmentConnector,
-  TUserSegmentDeviceFilter,
-  TUserSegmentFilter,
-  TUserSegmentPersonFilter,
-  TUserSegmentSegmentFilter,
-} from "@formbricks/types/userSegment";
+  TSegmentPersonFilter,
+  TSegmentSegmentFilter,
+} from "@formbricks/types/segment";
 
 // type guard to check if a resource is a filter
-export const isResourceFilter = (
-  resource: TUserSegmentFilter | TBaseFilters
-): resource is TUserSegmentFilter => {
-  return (resource as TUserSegmentFilter).root !== undefined;
+export const isResourceFilter = (resource: TSegmentFilter | TBaseFilters): resource is TSegmentFilter => {
+  return (resource as TSegmentFilter).root !== undefined;
 };
 
 export const convertOperatorToText = (operator: TAllOperators) => {
@@ -324,7 +322,7 @@ export const addFilterInGroup = (group: TBaseFilters, groupId: string, filter: T
 export const toggleGroupConnector = (
   group: TBaseFilters,
   groupId: string,
-  newConnectorValue: TUserSegmentConnector
+  newConnectorValue: TSegmentConnector
 ) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
@@ -342,7 +340,7 @@ export const toggleGroupConnector = (
 export const toggleFilterConnector = (
   group: TBaseFilters,
   filterId: string,
-  newConnectorValue: TUserSegmentConnector
+  newConnectorValue: TSegmentConnector
 ) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
@@ -386,7 +384,7 @@ export const updateAttributeClassNameInFilter = (
 
     if (isResourceFilter(resource)) {
       if (resource.id === filterId) {
-        (resource as TUserSegmentAttributeFilter).root.attributeClassName = newAttributeClassName;
+        (resource as TSegmentAttributeFilter).root.attributeClassName = newAttributeClassName;
         break;
       }
     } else {
@@ -405,7 +403,7 @@ export const updatePersonIdentifierInFilter = (
 
     if (isResourceFilter(resource)) {
       if (resource.id === filterId) {
-        (resource as TUserSegmentPersonFilter).root.personIdentifier = newPersonIdentifier;
+        (resource as TSegmentPersonFilter).root.personIdentifier = newPersonIdentifier;
       }
     } else {
       updatePersonIdentifierInFilter(resource, filterId, newPersonIdentifier);
@@ -423,7 +421,7 @@ export const updateActionClassIdInFilter = (
 
     if (isResourceFilter(resource)) {
       if (resource.id === filterId) {
-        (resource as TUserSegmentActionFilter).root.actionClassId = newActionClassId;
+        (resource as TSegmentActionFilter).root.actionClassId = newActionClassId;
         break;
       }
     } else {
@@ -438,7 +436,7 @@ export const updateMetricInFilter = (group: TBaseFilters, filterId: string, newM
 
     if (isResourceFilter(resource)) {
       if (resource.id === filterId) {
-        (resource as TUserSegmentActionFilter).qualifier.metric = newMetric;
+        (resource as TSegmentActionFilter).qualifier.metric = newMetric;
         break;
       }
     } else {
@@ -453,7 +451,7 @@ export const updateSegmentIdInFilter = (group: TBaseFilters, filterId: string, n
 
     if (isResourceFilter(resource)) {
       if (resource.id === filterId) {
-        (resource as TUserSegmentSegmentFilter).root.userSegmentId = newSegmentId;
+        (resource as TSegmentSegmentFilter).root.segmentId = newSegmentId;
         resource.value = newSegmentId;
         break;
       }
@@ -489,7 +487,7 @@ export const updateDeviceTypeInFilter = (
 
     if (isResourceFilter(resource)) {
       if (resource.id === filterId) {
-        (resource as TUserSegmentDeviceFilter).root.deviceType = newDeviceType;
+        (resource as TSegmentDeviceFilter).root.deviceType = newDeviceType;
         resource.value = newDeviceType;
         break;
       }
@@ -499,19 +497,19 @@ export const updateDeviceTypeInFilter = (
   }
 };
 
-export const formatUserSegmentDateFields = (userSegment: TUserSegment): TUserSegment => {
-  if (typeof userSegment.createdAt === "string") {
-    userSegment.createdAt = new Date(userSegment.createdAt);
+export const formatSegmentDateFields = (segment: TSegment): TSegment => {
+  if (typeof segment.createdAt === "string") {
+    segment.createdAt = new Date(segment.createdAt);
   }
 
-  if (typeof userSegment.updatedAt === "string") {
-    userSegment.updatedAt = new Date(userSegment.updatedAt);
+  if (typeof segment.updatedAt === "string") {
+    segment.updatedAt = new Date(segment.updatedAt);
   }
 
-  return userSegment;
+  return segment;
 };
 
-export const searchForAttributeClassNameInUserSegment = (
+export const searchForAttributeClassNameInSegment = (
   filters: TBaseFilters,
   attributeClassName: string
 ): boolean => {
@@ -529,7 +527,7 @@ export const searchForAttributeClassNameInUserSegment = (
         }
       }
     } else {
-      const found = searchForAttributeClassNameInUserSegment(resource, attributeClassName);
+      const found = searchForAttributeClassNameInSegment(resource, attributeClassName);
       if (found) {
         return true;
       }

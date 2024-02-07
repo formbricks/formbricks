@@ -2,8 +2,8 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TUserSegment } from "@formbricks/types/userSegment";
 
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
@@ -19,7 +19,7 @@ interface SettingsViewProps {
   setLocalSurvey: (survey: TSurvey) => void;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  userSegments: TUserSegment[];
+  segments: TSegment[];
   responseCount: number;
   membershipRole?: TMembershipRole;
   colours: string[];
@@ -32,7 +32,7 @@ export default function SettingsView({
   setLocalSurvey,
   actionClasses,
   attributeClasses,
-  userSegments,
+  segments,
   responseCount,
   membershipRole,
   colours,
@@ -45,7 +45,7 @@ export default function SettingsView({
       {localSurvey.type === "web" ? (
         !isUserTargetingAllowed ? (
           <UserTargetingCard
-            key={localSurvey.userSegment?.id}
+            key={localSurvey.segment?.id}
             localSurvey={localSurvey}
             setLocalSurvey={setLocalSurvey}
             environmentId={environment.id}
@@ -53,13 +53,13 @@ export default function SettingsView({
           />
         ) : (
           <UserTargetingAdvancedCard
-            key={localSurvey.userSegment?.id}
+            key={localSurvey.segment?.id}
             localSurvey={localSurvey}
             setLocalSurvey={setLocalSurvey}
             environmentId={environment.id}
             attributeClasses={attributeClasses}
             actionClasses={actionClasses}
-            userSegments={userSegments}
+            segments={segments}
           />
         )
       ) : null}

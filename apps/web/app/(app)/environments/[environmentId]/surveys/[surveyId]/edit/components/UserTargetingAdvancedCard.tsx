@@ -18,12 +18,12 @@ import LoadSegmentModal from "@formbricks/ee/advancedUserTargeting/components/Lo
 import SaveAsNewSegmentModal from "@formbricks/ee/advancedUserTargeting/components/SaveAsNewSegmentModal";
 import SegmentAlreadyUsedModal from "@formbricks/ee/advancedUserTargeting/components/SegmentAlreadyUsedModal";
 import SegmentFilters from "@formbricks/ee/advancedUserTargeting/components/SegmentFilters";
-import { cloneUserSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
+import { cloneSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
+import { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TBaseFilter, TUserSegment } from "@formbricks/types/userSegment";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 
@@ -33,7 +33,7 @@ interface UserTargetingAdvancedCardProps {
   environmentId: string;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  userSegments: TUserSegment[];
+  segments: TSegment[];
 }
 
 export default function UserTargetingAdvancedCard({
@@ -42,17 +42,17 @@ export default function UserTargetingAdvancedCard({
   environmentId,
   actionClasses: actionClassesProps,
   attributeClasses,
-  userSegments,
+  segments,
 }: UserTargetingAdvancedCardProps) {
   const [open, setOpen] = useState(false);
-  const [userSegment, setUserSegment] = useState<TUserSegment | null>(localSurvey.userSegment);
+  const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
   const [resetAllFiltersModalOpen, setResetAllFiltersModalOpen] = useState(false);
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
   const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
-  const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.userSegment?.isPrivate);
+  const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.segment?.isPrivate);
   const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
 
@@ -71,32 +71,31 @@ export default function UserTargetingAdvancedCard({
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({
       ...localSurveyOld,
-      userSegment,
+      segment: segment,
     }));
-  }, [setLocalSurvey, userSegment]);
+  }, [setLocalSurvey, segment]);
 
   const isSegmentUsedInOtherSurveys = useMemo(
-    () => (localSurvey?.userSegment ? localSurvey.userSegment?.surveys?.length > 1 : false),
-    [localSurvey.userSegment]
+    () => (localSurvey?.segment ? localSurvey.segment?.surveys?.length > 1 : false),
+    [localSurvey.segment]
   );
 
   const handleCloneSegment = async () => {
-    if (!userSegment) return;
+    if (!segment) return;
 
     try {
-      const clonedUserSegment = await cloneUserSegmentAction(userSegment.id, localSurvey.id);
-
-      setUserSegment(clonedUserSegment);
+      const clonedSegment = await cloneSegmentAction(segment.id, localSurvey.id);
+      setSegment(clonedSegment);
     } catch (err) {
       toast.error(err.message);
     }
   };
 
   useEffect(() => {
-    if (!!userSegment && userSegment?.filters?.length > 0) {
+    if (!!segment && segment?.filters?.length > 0) {
       setOpen(true);
     }
-  }, [userSegment, userSegment?.filters?.length]);
+  }, [segment, segment?.filters?.length]);
 
   useEffect(() => {
     if (localSurvey.type === "link") {
@@ -105,17 +104,17 @@ export default function UserTargetingAdvancedCard({
   }, [localSurvey.type]);
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment?.filters?.length === 0) {
-      updatedUserSegment.filters.push({
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment?.filters?.length === 0) {
+      updatedSegment.filters.push({
         ...filter,
         connector: null,
       });
     } else {
-      updatedUserSegment?.filters.push(filter);
+      updatedSegment?.filters.push(filter);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   if (localSurvey.type === "link") {
@@ -146,7 +145,7 @@ export default function UserTargetingAdvancedCard({
 
           <div className="flex flex-col gap-2 p-6">
             <div className="mb-2">
-              <UserTargetingFallback userSegment={userSegment} />
+              <UserTargetingFallback segment={segment} />
             </div>
 
             <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
@@ -156,16 +155,16 @@ export default function UserTargetingAdvancedCard({
                 environmentId={environmentId}
               />
 
-              {!!userSegment && (
+              {!!segment && (
                 <LoadSegmentModal
                   open={loadSegmentModalOpen}
                   setOpen={setLoadSegmentModalOpen}
                   surveyId={localSurvey.id}
                   step={loadSegmentModalStep}
                   setStep={setLoadSegmentModalStep}
-                  userSegment={userSegment}
-                  userSegments={userSegments}
-                  setUserSegment={setUserSegment}
+                  currentSegment={segment}
+                  segments={segments}
+                  setSegment={setSegment}
                   setIsSegmentEditorOpen={setIsSegmentEditorOpen}
                 />
               )}
@@ -173,12 +172,12 @@ export default function UserTargetingAdvancedCard({
               {isSegmentEditorOpen ? (
                 <div className="w-full">
                   <div className="mb-4">
-                    {!userSegment?.isPrivate ? (
+                    {!segment?.isPrivate ? (
                       <div className="mb-2 flex items-center gap-6">
                         <UserGroupIcon className="h-6 w-6 text-slate-700" />
                         <div className="flex flex-col">
-                          <h3 className="font-medium text-slate-900">{localSurvey.userSegment?.title}</h3>
-                          <p className="text-sm text-slate-500">{localSurvey.userSegment?.description}</p>
+                          <h3 className="font-medium text-slate-900">{localSurvey.segment?.title}</h3>
+                          <p className="text-sm text-slate-500">{localSurvey.segment?.description}</p>
                         </div>
                       </div>
                     ) : (
@@ -189,17 +188,17 @@ export default function UserTargetingAdvancedCard({
                       </div>
                     )}
                   </div>
-                  {!!userSegment?.filters?.length && (
+                  {!!segment?.filters?.length && (
                     <div className="w-full">
                       <SegmentFilters
-                        key={userSegment.filters.toString()}
-                        group={userSegment.filters}
+                        key={segment.filters.toString()}
+                        group={segment.filters}
                         environmentId={environmentId}
-                        userSegment={userSegment}
-                        setUserSegment={setUserSegment}
+                        segment={segment}
+                        setSegment={setSegment}
                         actionClasses={actionClasses}
                         attributeClasses={attributeClasses}
-                        userSegments={userSegments}
+                        segments={segments}
                       />
                     </div>
                   )}
@@ -209,7 +208,7 @@ export default function UserTargetingAdvancedCard({
                       Add filter
                     </Button>
 
-                    {isSegmentEditorOpen && !!userSegment?.filters?.length && (
+                    {isSegmentEditorOpen && !!segment?.filters?.length && (
                       <Button
                         variant="minimal"
                         size="sm"
@@ -219,7 +218,7 @@ export default function UserTargetingAdvancedCard({
                       </Button>
                     )}
 
-                    {isSegmentEditorOpen && !userSegment?.isPrivate && !!userSegment?.filters?.length && (
+                    {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
                       <Button
                         variant="minimal"
                         size="sm"
@@ -228,13 +227,11 @@ export default function UserTargetingAdvancedCard({
                           setIsSegmentEditorOpen(false);
                           setSegmentEditorViewOnly(false);
 
-                          const segmentFromApi = userSegments.find(
-                            (segment) => segment.id === userSegment.id
-                          );
+                          const segmentFromApi = segments.find((segment) => segment.id === segment.id);
 
                           // reset the state changes:
                           if (segmentFromApi) {
-                            setUserSegment(segmentFromApi);
+                            setSegment(segmentFromApi);
                           }
                         }}>
                         Cancel
@@ -251,15 +248,15 @@ export default function UserTargetingAdvancedCard({
                       setOpen={setAddFilterModalOpen}
                       actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
-                      userSegments={userSegments}
+                      segments={segments}
                     />
-                    {!!userSegment && (
+                    {!!segment && (
                       <SaveAsNewSegmentModal
                         open={saveAsNewSegmentModalOpen}
                         setOpen={setSaveAsNewSegmentModalOpen}
                         localSurvey={localSurvey}
-                        userSegment={userSegment}
-                        setUserSegment={setUserSegment}
+                        segment={segment}
+                        setSegment={setSegment}
                         setIsSegmentEditorOpen={setIsSegmentEditorOpen}
                       />
                     )}
@@ -275,12 +272,12 @@ export default function UserTargetingAdvancedCard({
                       }}
                       confirmBtnLabel="Remove all filters"
                       onConfirm={() => {
-                        const updatedUserSegment = structuredClone(userSegment);
-                        if (updatedUserSegment?.filters) {
-                          updatedUserSegment.filters = [];
+                        const updatedSegment = structuredClone(segment);
+                        if (updatedSegment?.filters) {
+                          updatedSegment.filters = [];
                         }
 
-                        setUserSegment(updatedUserSegment);
+                        setSegment(updatedSegment);
                         setResetAllFiltersModalOpen(false);
                       }}
                     />
@@ -291,22 +288,22 @@ export default function UserTargetingAdvancedCard({
                   <div className="mb-2 flex items-center gap-6">
                     <UserGroupIcon className="h-6 w-6 text-slate-700" />
                     <div className="flex flex-col">
-                      <h3 className="font-medium text-slate-900">{localSurvey.userSegment?.title}</h3>
-                      <p className="text-sm text-slate-500">{localSurvey.userSegment?.description}</p>
+                      <h3 className="font-medium text-slate-900">{localSurvey.segment?.title}</h3>
+                      <p className="text-sm text-slate-500">{localSurvey.segment?.description}</p>
                     </div>
                   </div>
 
-                  {segmentEditorViewOnly && userSegment && (
+                  {segmentEditorViewOnly && segment && (
                     <div className="opacity-60">
                       <SegmentFilters
-                        key={userSegment.filters.toString()}
-                        group={userSegment.filters}
+                        key={segment.filters.toString()}
+                        group={segment.filters}
                         environmentId={environmentId}
-                        userSegment={userSegment}
+                        segment={segment}
                         actionClasses={actionClasses}
                         attributeClasses={attributeClasses}
-                        userSegments={userSegments}
-                        setUserSegment={setUserSegment}
+                        segments={segments}
+                        setSegment={setSegment}
                         viewOnly={segmentEditorViewOnly}
                       />
                     </div>
@@ -356,7 +353,7 @@ export default function UserTargetingAdvancedCard({
                 Load Segment <HardDriveUploadIcon className="ml-2 h-4 w-4" />
               </Button>
 
-              {isSegmentEditorOpen && !!userSegment?.filters?.length && (
+              {isSegmentEditorOpen && !!segment?.filters?.length && (
                 <Button
                   variant="minimal"
                   size="sm"

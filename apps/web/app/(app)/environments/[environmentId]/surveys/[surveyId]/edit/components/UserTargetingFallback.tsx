@@ -1,10 +1,10 @@
 import { FilterIcon, UsersIcon } from "lucide-react";
 import React from "react";
 
-import { TUserSegment } from "@formbricks/types/userSegment";
+import { TSegment } from "@formbricks/types/segment";
 
-const UserTargetingFallback = ({ userSegment }: { userSegment: TUserSegment | null }) => {
-  const doFiltersExist = !!userSegment?.filters?.length;
+const UserTargetingFallback = ({ segment }: { segment: TSegment | null }) => {
+  const doFiltersExist = !!segment?.filters?.length;
 
   return (
     <div className="flex items-center gap-4">

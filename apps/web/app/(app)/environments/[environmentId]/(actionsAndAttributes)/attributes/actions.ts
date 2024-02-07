@@ -4,11 +4,11 @@ import { getServerSession } from "next-auth";
 
 import { canUserAccessAttributeClass } from "@formbricks/lib/attributeClass/auth";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getUserSegmentsByAttributeClassName } from "@formbricks/lib/userSegment/service";
+import { getSegmentsByAttributeClassName } from "@formbricks/lib/segment/service";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-export const getUserSegmentsByAttributeClassAction = async (
+export const getSegmentsByAttributeClassAction = async (
   environmentId: string,
   attributeClass: TAttributeClass
 ): Promise<{ activeSurveys: string[]; inactiveSurveys: string[] }> => {
@@ -18,7 +18,7 @@ export const getUserSegmentsByAttributeClassAction = async (
 
     const isAuthorized = await canUserAccessAttributeClass(session.user.id, attributeClass.id);
     if (!isAuthorized) throw new AuthorizationError("Not authorized");
-    const segments = await getUserSegmentsByAttributeClassName(environmentId, attributeClass.name);
+    const segments = await getSegmentsByAttributeClassName(environmentId, attributeClass.name);
 
     // segments is an array of segments, each segment has a survey array with objects with properties: id, name and status.
     // We need the name of the surveys only and we need to filter out the surveys that are both in progress and not in progress.

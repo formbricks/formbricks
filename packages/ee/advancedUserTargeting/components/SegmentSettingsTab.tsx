@@ -7,19 +7,19 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TUserSegment, ZUserSegmentFilters } from "@formbricks/types/userSegment";
+import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
-import { deleteUserSegmentAction, updateUserSegmentAction } from "../lib/actions";
+import { deleteSegmentAction, updateSegmentAction } from "../lib/actions";
 import AddFilterModal from "./AddFilterModal";
 import SegmentFilters from "./SegmentFilters";
 
 type TSegmentSettingsTabProps = {
   environmentId: string;
   setOpen: (open: boolean) => void;
-  initialSegment: TUserSegment;
-  userSegments: TUserSegment[];
+  initialSegment: TSegment;
+  segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
 };
@@ -30,12 +30,12 @@ const SegmentSettingsTab = ({
   setOpen,
   actionClasses,
   attributeClasses,
-  userSegments,
+  segments,
 }: TSegmentSettingsTabProps) => {
   const router = useRouter();
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const [userSegment, setUserSegment] = useState<TUserSegment>(initialSegment);
+  const [segment, setSegment] = useState<TSegment>(initialSegment);
 
   const [isUpdatingSegment, setIsUpdatingSegment] = useState(false);
   const [isDeletingSegment, setIsDeletingSegment] = useState(false);
@@ -46,7 +46,7 @@ const SegmentSettingsTab = ({
   const [isSaveDisabled, setIsSaveDisabled] = useState(false);
 
   const handleResetState = () => {
-    setUserSegment(initialSegment);
+    setSegment(initialSegment);
     setOpen(false);
 
     setTitleError("");
@@ -56,37 +56,37 @@ const SegmentSettingsTab = ({
   };
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
-    const updatedUserSegment = structuredClone(userSegment);
-    if (updatedUserSegment?.filters?.length === 0) {
-      updatedUserSegment.filters.push({
+    const updatedSegment = structuredClone(segment);
+    if (updatedSegment?.filters?.length === 0) {
+      updatedSegment.filters.push({
         ...filter,
         connector: null,
       });
     } else {
-      updatedUserSegment?.filters.push(filter);
+      updatedSegment?.filters.push(filter);
     }
 
-    setUserSegment(updatedUserSegment);
+    setSegment(updatedSegment);
   };
 
   const handleUpdateSegment = async () => {
-    if (!userSegment.title) {
+    if (!segment.title) {
       setTitleError("Title is required");
       return;
     }
 
-    if (!userSegment.description) {
+    if (!segment.description) {
       setDescriptionError("Description is required");
       return;
     }
 
     try {
       setIsUpdatingSegment(true);
-      await updateUserSegmentAction(userSegment.id, {
-        title: userSegment.title,
-        description: userSegment.description ?? "",
-        isPrivate: userSegment.isPrivate,
-        filters: userSegment.filters,
+      await updateSegmentAction(segment.id, {
+        title: segment.title,
+        description: segment.description ?? "",
+        isPrivate: segment.isPrivate,
+        filters: segment.filters,
       });
 
       setIsUpdatingSegment(false);
@@ -105,7 +105,7 @@ const SegmentSettingsTab = ({
   const handleDeleteSegment = async () => {
     try {
       setIsDeletingSegment(true);
-      await deleteUserSegmentAction(userSegment.id);
+      await deleteSegmentAction(segment.id);
 
       setIsDeletingSegment(false);
       toast.success("Segment deleted successfully!");
@@ -119,13 +119,13 @@ const SegmentSettingsTab = ({
 
   useEffect(() => {
     // parse the filters to check if they are valid
-    const parsedFilters = ZUserSegmentFilters.safeParse(userSegment.filters);
+    const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
     if (!parsedFilters.success) {
       setIsSaveDisabled(true);
     } else {
       setIsSaveDisabled(false);
     }
-  }, [userSegment]);
+  }, [segment]);
 
   return (
     <>
@@ -137,10 +137,10 @@ const SegmentSettingsTab = ({
                 <label className="text-sm font-medium text-slate-900">Title</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
-                    value={userSegment.title}
+                    value={segment.title}
                     placeholder="Ex. Power Users"
                     onChange={(e) => {
-                      setUserSegment((prev) => ({
+                      setSegment((prev) => ({
                         ...prev,
                         title: e.target.value,
                       }));
@@ -162,10 +162,10 @@ const SegmentSettingsTab = ({
                 <label className="text-sm font-medium text-slate-900">Description</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
-                    value={userSegment.description ?? ""}
+                    value={segment.description ?? ""}
                     placeholder="Ex. Power Users"
                     onChange={(e) => {
-                      setUserSegment((prev) => ({
+                      setSegment((prev) => ({
                         ...prev,
                         description: e.target.value,
                       }));
@@ -190,12 +190,12 @@ const SegmentSettingsTab = ({
             <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-700 bg-white p-4">
               <SegmentFilters
                 environmentId={environmentId}
-                userSegment={userSegment}
-                setUserSegment={setUserSegment}
-                group={userSegment.filters}
+                segment={segment}
+                setSegment={setSegment}
+                group={segment.filters}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
-                userSegments={userSegments}
+                segments={segments}
               />
 
               <div>
@@ -212,7 +212,7 @@ const SegmentSettingsTab = ({
                 setOpen={setAddFilterModalOpen}
                 actionClasses={actionClasses}
                 attributeClasses={attributeClasses}
-                userSegments={userSegments}
+                segments={segments}
               />
             </div>
 

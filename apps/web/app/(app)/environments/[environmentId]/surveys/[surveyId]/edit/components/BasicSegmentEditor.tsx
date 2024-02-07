@@ -1,41 +1,41 @@
-import { deleteResource, isResourceFilter, moveResource } from "@formbricks/lib/userSegment/utils";
+import { deleteResource, isResourceFilter, moveResource } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilters, TUserSegment } from "@formbricks/types/userSegment";
+import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 
 import BasicSegmentFilter from "./BasicSegmentFilter";
 
 type TSegmentFilterProps = {
   group: TBaseFilters;
   environmentId: string;
-  userSegment: TUserSegment;
+  segment: TSegment;
   attributeClasses: TAttributeClass[];
-  setUserSegment: React.Dispatch<React.SetStateAction<TUserSegment>>;
+  setSegment: React.Dispatch<React.SetStateAction<TSegment>>;
 };
 
 const BasicSegmentEditor = ({
   group,
   environmentId,
-  setUserSegment,
-  userSegment,
+  setSegment,
+  segment,
   attributeClasses,
 }: TSegmentFilterProps) => {
   const handleMoveResource = (resourceId: string, direction: "up" | "down") => {
-    const localSegmentCopy = structuredClone(userSegment);
+    const localSegmentCopy = structuredClone(segment);
     if (localSegmentCopy.filters) {
       moveResource(localSegmentCopy.filters, resourceId, direction);
     }
 
-    setUserSegment(localSegmentCopy);
+    setSegment(localSegmentCopy);
   };
 
   const handleDeleteResource = (resourceId: string) => {
-    const localSegmentCopy = structuredClone(userSegment);
+    const localSegmentCopy = structuredClone(segment);
 
     if (localSegmentCopy.filters) {
       deleteResource(localSegmentCopy.filters, resourceId);
     }
 
-    setUserSegment(localSegmentCopy);
+    setSegment(localSegmentCopy);
   };
 
   return (
@@ -50,9 +50,9 @@ const BasicSegmentEditor = ({
               connector={connector}
               resource={resource}
               environmentId={environmentId}
-              userSegment={userSegment}
+              segment={segment}
               attributeClasses={attributeClasses}
-              setUserSegment={setUserSegment}
+              setSegment={setSegment}
               onDeleteFilter={(filterId: string) => handleDeleteResource(filterId)}
               onMoveFilter={(filterId: string, direction: "up" | "down") =>
                 handleMoveResource(filterId, direction)

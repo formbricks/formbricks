@@ -5,20 +5,20 @@ import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TUserSegment } from "@formbricks/types/userSegment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 
-import { createUserSegmentAction, updateUserSegmentAction } from "../lib/actions";
+import { createSegmentAction, updateSegmentAction } from "../lib/actions";
 
 type SaveAsNewSegmentModalProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   localSurvey: TSurvey;
-  userSegment: TUserSegment;
-  setUserSegment: (userSegment: TUserSegment) => void;
+  segment: TSegment;
+  setSegment: (segment: TSegment) => void;
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
 };
 
@@ -31,8 +31,8 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
   open,
   setOpen,
   localSurvey,
-  userSegment,
-  setUserSegment,
+  segment,
+  setSegment,
   setIsSegmentEditorOpen,
 }) => {
   const {
@@ -51,40 +51,40 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
   };
 
   const handleSaveSegment: SubmitHandler<SaveAsNewSegmentModalForm> = async (data) => {
-    if (!userSegment || !userSegment?.filters.length) return;
+    if (!segment || !segment?.filters.length) return;
 
     try {
       // if the segment is private, update it to add title, description and make it public
       // otherwise, create a new segment
 
       setIsLoading(true);
-      if (!!userSegment && userSegment?.isPrivate) {
-        const updatedUserSegment = await updateUserSegmentAction(userSegment.id, {
-          ...userSegment,
+      if (!!segment && segment?.isPrivate) {
+        const updatedSegment = await updateSegmentAction(segment.id, {
+          ...segment,
           title: data.title,
           description: data.description,
           isPrivate: false,
-          filters: userSegment?.filters,
+          filters: segment?.filters,
         });
 
         toast.success("Segment updated successfully");
-        setUserSegment(updatedUserSegment);
+        setSegment(updatedSegment);
 
         setIsSegmentEditorOpen(false);
         handleReset();
         return;
       }
 
-      const createdUserSegment = await createUserSegmentAction({
+      const createdSegment = await createSegmentAction({
         environmentId: localSurvey.environmentId,
         surveyId: localSurvey.id,
         title: data.title,
         description: data.description,
         isPrivate: false,
-        filters: userSegment?.filters,
+        filters: segment?.filters,
       });
 
-      setUserSegment(createdUserSegment);
+      setSegment(createdSegment);
 
       setIsSegmentEditorOpen(false);
       setIsLoading(false);

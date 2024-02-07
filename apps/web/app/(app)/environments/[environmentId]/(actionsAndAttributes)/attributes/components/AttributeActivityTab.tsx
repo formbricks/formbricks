@@ -1,6 +1,6 @@
 "use client";
 
-import { getUserSegmentsByAttributeClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
+import { getSegmentsByAttributeClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
 import { TagIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 
@@ -29,7 +29,7 @@ export default function AttributeActivityTab({ attributeClass }: EventActivityTa
     async function getSurveys() {
       try {
         setLoading(true);
-        const segmentsWithAttributeClassName = await getUserSegmentsByAttributeClassAction(
+        const segmentsWithAttributeClassName = await getSegmentsByAttributeClassAction(
           attributeClass.environmentId,
           attributeClass
         );
