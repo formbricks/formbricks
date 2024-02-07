@@ -60,8 +60,8 @@ export const sendVerificationEmail = async (user, url = "/sourcings") => {
       <p>Suite à ce test Gail, notre responsable admission te contactera pour répondre à toutes tes questions.</p>
       <p>Est-ce que cela te convient ?</p><br/>
       <div style="margin: auto; text-align: center;">
-  <a href="${verifyLink}" style="background-color: rgba(245, 59, 87); color:#fff; padding:8px; border: 2px solid red; margin: auto; border-radius: 15px;">Commencer le test en ligne</a>
-</div>
+        <a href="${verifyLink}" style="background-color: rgba(245, 59, 87); color:#fff; padding:8px; border: 2px solid red; margin: auto; border-radius: 15px;">Commencer le test en ligne</a>
+      </div>
       <br/>
     <p>Le lien est valide pour une journée. S'il a expiré, tu peux générer un nouveau <a href="${verificationRequestLink}">lien en cliquant ici !</a>!</p>
     <p>À très bientôt</p><br/>
@@ -80,14 +80,11 @@ export const sendForgotPasswordEmail = async (user) => {
   await sendEmail({
     to: user.email,
     subject: "Réinitialise ton mot de passe Kadea Sourcing",
-    html: `Tu as demandé un lien pour changer ton mot de passe. Tu peux le faire en cliquant sur le lien ci-dessous :<br/>
-    <a href="${verifyLink}" style="background-color: rgba(245, 59, 87); color:#fff; padding:8px; border: 2px solid red; margin: auto; border-radius: 15px;">Réinitialise ton mot de passe</a><br/>
-    <br/>
-    Le lien est valable pendant 24 heures. Si tu ne l'as pas demandé, ignore cet e-mail.<br/>
-    <br/>
-    Ton mot de passe ne changera pas tant que tu n'auras pas accédé au lien ci-dessus et créé un nouveau mot de passe.<br/>
-    <br/>
-    L'équipe Kadea`,
+    html: `<p>Tu as demandé un lien pour changer ton mot de passe. Tu peux le faire en cliquant sur le lien ci-dessous :<p>
+    <p><a href="${verifyLink}" style="background-color: rgba(245, 59, 87); color:#fff; padding:8px; border: 2px solid red; margin: auto; border-radius: 15px;">Réinitialise ton mot de passe</a></p>
+    <p>Le lien est valable pendant 24 heures. Si tu ne l'as pas demandé, ignore cet e-mail.</p>
+    <p>Ton mot de passe ne changera pas tant que tu n'auras pas accédé au lien ci-dessus et créé un nouveau mot de passe.</p>
+    <p>L'équipe Kadea</p>`,
   });
 };
 
