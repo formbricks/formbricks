@@ -5,13 +5,12 @@ import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { TSegment } from "@formbricks/types/segment";
+import { TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Modal } from "@formbricks/ui/Modal";
 
-import { createSegmentAction, updateSegmentAction } from "../lib/actions";
+import { Button } from "../Button";
+import { Input } from "../Input";
+import { Modal } from "../Modal";
 
 type SaveAsNewSegmentModalProps = {
   open: boolean;
@@ -20,6 +19,8 @@ type SaveAsNewSegmentModalProps = {
   segment: TSegment;
   setSegment: (segment: TSegment) => void;
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
+  onCreateSegment: (data: TSegmentCreateInput) => Promise<TSegment>;
+  onUpdateSegment: (environmentId: string, segmentId: string, data: TSegmentUpdateInput) => Promise<TSegment>;
 };
 
 type SaveAsNewSegmentModalForm = {
@@ -34,6 +35,8 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
   segment,
   setSegment,
   setIsSegmentEditorOpen,
+  onCreateSegment,
+  onUpdateSegment,
 }) => {
   const {
     register,
@@ -59,7 +62,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
 
       setIsLoading(true);
       if (!!segment && segment?.isPrivate) {
-        const updatedSegment = await updateSegmentAction(segment.environmentId, segment.id, {
+        const updatedSegment = await onUpdateSegment(segment.environmentId, segment.id, {
           ...segment,
           title: data.title,
           description: data.description,
@@ -75,11 +78,11 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
         return;
       }
 
-      const createdSegment = await createSegmentAction({
+      const createdSegment = await onCreateSegment({
         environmentId: localSurvey.environmentId,
         surveyId: localSurvey.id,
         title: data.title,
-        description: data.description,
+        description: data.description ?? "",
         isPrivate: false,
         filters: segment?.filters,
       });

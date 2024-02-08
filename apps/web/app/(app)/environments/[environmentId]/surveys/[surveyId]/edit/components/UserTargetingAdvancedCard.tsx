@@ -14,10 +14,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import AddFilterModal from "@formbricks/ee/advancedUserTargeting/components/AddFilterModal";
-import LoadSegmentModal from "@formbricks/ee/advancedUserTargeting/components/LoadSegmentModal";
-import SaveAsNewSegmentModal from "@formbricks/ee/advancedUserTargeting/components/SaveAsNewSegmentModal";
-import SegmentEditor from "@formbricks/ee/advancedUserTargeting/components/SegmentFilters";
-import { cloneSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
+import SegmentEditor from "@formbricks/ee/advancedUserTargeting/components/SegmentEditor";
+import {
+  cloneSegmentAction,
+  createSegmentAction,
+  loadNewSegmentAction,
+  updateSegmentAction,
+} from "@formbricks/ee/advancedUserTargeting/lib/actions";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -25,6 +28,8 @@ import { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
+import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
+import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
 import SegmentAlreadyUsedModal from "@formbricks/ui/Targeting/SegmentAlreadyUsedModal";
 
 interface UserTargetingAdvancedCardProps {
@@ -168,6 +173,7 @@ export default function UserTargetingAdvancedCard({
                   segments={segments}
                   setSegment={setSegment}
                   setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+                  onSegmentLoad={(surveyId, segmentId) => loadNewSegmentAction(surveyId, segmentId)}
                 />
               )}
 
@@ -257,6 +263,10 @@ export default function UserTargetingAdvancedCard({
                         segment={segment}
                         setSegment={setSegment}
                         setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+                        onCreateSegment={async (data) => createSegmentAction(data)}
+                        onUpdateSegment={async (environmentId, segmentId, data) =>
+                          updateSegmentAction(environmentId, segmentId, data)
+                        }
                       />
                     )}
 

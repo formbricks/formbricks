@@ -20,12 +20,17 @@ import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
 import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
+import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
+import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
 import SegmentAlreadyUsedModal from "@formbricks/ui/Targeting/SegmentAlreadyUsedModal";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
-import { cloneBasicSegmentAction } from "../actions";
-import BasicLoadSegmentModal from "./BasicLoadSegmentModal";
-import BasicSaveAsNewSegmentModal from "./BasicSaveAsNewSegmentModal";
+import {
+  cloneBasicSegmentAction,
+  createBasicSegmentAction,
+  loadNewBasicSegmentAction,
+  updateBasicSegmentAction,
+} from "../actions";
 import UserTargetingFallback from "./UserTargetingFallback";
 
 interface UserTargetingCardProps {
@@ -284,7 +289,7 @@ export default function UserTargetingCard({
         </div>
 
         {!!segment && (
-          <BasicLoadSegmentModal
+          <LoadSegmentModal
             open={loadSegmentModalOpen}
             setOpen={setLoadSegmentModalOpen}
             surveyId={localSurvey.id}
@@ -294,6 +299,7 @@ export default function UserTargetingCard({
             segments={segments}
             setSegment={setSegment}
             setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+            onSegmentLoad={async (surveyId, segmentId) => loadNewBasicSegmentAction(surveyId, segmentId)}
           />
         )}
 
@@ -307,13 +313,17 @@ export default function UserTargetingCard({
         />
 
         {!!segment && (
-          <BasicSaveAsNewSegmentModal
+          <SaveAsNewSegmentModal
             open={saveAsNewSegmentModalOpen}
             setOpen={setSaveAsNewSegmentModalOpen}
             localSurvey={localSurvey}
             segment={segment}
             setSegment={setSegment}
             setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+            onCreateSegment={async (data) => createBasicSegmentAction(data)}
+            onUpdateSegment={async (environmentId, segmentId, data) =>
+              updateBasicSegmentAction(environmentId, segmentId, data)
+            }
           />
         )}
 

@@ -23,7 +23,7 @@ type TBasicSegmentSettingsTabProps = {
   attributeClasses: TAttributeClass[];
 };
 
-const BasicSegmentSettingsTab = ({
+const BasicSegmentSettings = ({
   environmentId,
   initialSegment,
   setOpen,
@@ -237,4 +237,4 @@ const BasicSegmentSettingsTab = ({
   );
 };
 
-export default BasicSegmentSettingsTab;
+export default BasicSegmentSettings;

@@ -7,7 +7,7 @@ import { TSegment } from "@formbricks/types/segment";
 import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
 
 import BasicSegmentActivityTab from "./BasicSegmentActivityTab";
-import BasicSegmentsSettingsTab from "./BasicSegmentSettingsTab";
+import BasicSegmentsSettingsTab from "./BasicSegmentSettings";
 
 interface BasicEditSegmentModalProps {
   environmentId: string;

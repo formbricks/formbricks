@@ -15,7 +15,7 @@ import { Modal } from "@formbricks/ui/Modal";
 
 import { createSegmentAction } from "../lib/actions";
 import AddFilterModal from "./AddFilterModal";
-import SegmentFilters from "./SegmentFilters";
+import SegmentFilters from "./SegmentEditor";
 
 type TCreateSegmentModalProps = {
   environmentId: string;

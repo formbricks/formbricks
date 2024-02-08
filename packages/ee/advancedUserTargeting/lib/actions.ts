@@ -17,7 +17,7 @@ import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
 import { formatDateFields } from "@formbricks/lib/utils/datetime";
 import { AuthorizationError } from "@formbricks/types/errors";
 import {
-  TBaseFilters,
+  TSegmentCreateInput,
   TSegmentUpdateInput,
   ZSegmentFilters,
   ZSegmentUpdateInput,
@@ -30,14 +30,7 @@ export const createSegmentAction = async ({
   isPrivate,
   surveyId,
   title,
-}: {
-  environmentId: string;
-  surveyId: string;
-  title: string;
-  description?: string;
-  isPrivate: boolean;
-  filters: TBaseFilters;
-}) => {
+}: TSegmentCreateInput) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -57,7 +50,7 @@ export const createSegmentAction = async ({
     environmentId,
     surveyId,
     title,
-    description: description || "",
+    description,
     isPrivate,
     filters,
   });

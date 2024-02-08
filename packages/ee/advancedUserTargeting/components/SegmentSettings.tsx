@@ -13,7 +13,7 @@ import { Input } from "@formbricks/ui/Input";
 
 import { deleteSegmentAction, updateSegmentAction } from "../lib/actions";
 import AddFilterModal from "./AddFilterModal";
-import SegmentFilters from "./SegmentFilters";
+import SegmentEditor from "./SegmentEditor";
 
 type TSegmentSettingsTabProps = {
   environmentId: string;
@@ -24,7 +24,7 @@ type TSegmentSettingsTabProps = {
   actionClasses: TActionClass[];
 };
 
-const SegmentSettingsTab = ({
+const SegmentSettings = ({
   environmentId,
   initialSegment,
   setOpen,
@@ -188,7 +188,7 @@ const SegmentSettingsTab = ({
 
             <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
             <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-700 bg-white p-4">
-              <SegmentFilters
+              <SegmentEditor
                 environmentId={environmentId}
                 segment={segment}
                 setSegment={setSegment}
@@ -244,4 +244,4 @@ const SegmentSettingsTab = ({
   );
 };
 
-export default SegmentSettingsTab;
+export default SegmentSettings;

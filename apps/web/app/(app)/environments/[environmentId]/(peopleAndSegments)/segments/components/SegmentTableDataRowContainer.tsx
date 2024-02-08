@@ -10,6 +10,7 @@ type TSegmentTableDataRowProps = {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
+  isAdvancedUserTargetingAllowed: boolean;
 };
 
 const SegmentTableDataRowContainer = async ({
@@ -17,6 +18,7 @@ const SegmentTableDataRowContainer = async ({
   segments,
   actionClasses,
   attributeClasses,
+  isAdvancedUserTargetingAllowed,
 }: TSegmentTableDataRowProps) => {
   const { activeSurveys = [], inactiveSurveys = [] } = await getSegmentActiveInactiveSurveys(
     currentSegment.id
@@ -32,6 +34,7 @@ const SegmentTableDataRowContainer = async ({
       segments={segments}
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
+      isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
     />
   );
 };

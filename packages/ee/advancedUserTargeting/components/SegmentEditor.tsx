@@ -23,7 +23,7 @@ import {
 } from "@formbricks/ui/DropdownMenu";
 
 import AddFilterModal from "./AddFilterModal";
-import SegmentSegmentFilter from "./SegmentFilter";
+import SegmentFilter from "./SegmentFilter";
 
 type TSegmentFilterProps = {
   group: TBaseFilters;
@@ -122,7 +122,7 @@ const SegmentEditor = ({
 
         if (isResourceFilter(resource)) {
           return (
-            <SegmentSegmentFilter
+            <SegmentFilter
               key={groupId}
               connector={connector}
               resource={resource}

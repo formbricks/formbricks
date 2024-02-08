@@ -1,13 +1,21 @@
-import BasicSegmentTableDataRowContainer from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/BasicSegmentTableDataRowContainer";
-
+import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment } from "@formbricks/types/segment";
+
+import SegmentTableDataRowContainer from "./SegmentTableDataRowContainer";
 
 type TSegmentTableProps = {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
+  actionClasses: TActionClass[];
+  isAdvancedUserTargetingAllowed: boolean;
 };
-const BasicSegmentTable = async ({ segments, attributeClasses }: TSegmentTableProps) => {
+const SegmentTable = ({
+  segments,
+  actionClasses,
+  attributeClasses,
+  isAdvancedUserTargetingAllowed,
+}: TSegmentTableProps) => {
   return (
     <div className="rounded-lg border border-slate-200">
       <div className="grid h-12 grid-cols-7 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
@@ -17,10 +25,16 @@ const BasicSegmentTable = async ({ segments, attributeClasses }: TSegmentTablePr
         <div className="col-span-1 hidden text-center sm:block">Created</div>
       </div>
       {segments.map((segment) => (
-        <BasicSegmentTableDataRowContainer currentSegment={segment} attributeClasses={attributeClasses} />
+        <SegmentTableDataRowContainer
+          currentSegment={segment}
+          segments={segments}
+          actionClasses={actionClasses}
+          attributeClasses={attributeClasses}
+          isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
+        />
       ))}
     </div>
   );
 };
 
-export default BasicSegmentTable;
+export default SegmentTable;

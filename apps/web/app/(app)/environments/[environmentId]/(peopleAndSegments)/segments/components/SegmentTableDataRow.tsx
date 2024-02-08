@@ -18,6 +18,7 @@ type TSegmentTableDataRowProps = {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
+  isAdvancedUserTargetingAllowed: boolean;
 };
 
 const SegmentTableDataRow = ({
@@ -25,6 +26,7 @@ const SegmentTableDataRow = ({
   actionClasses,
   attributeClasses,
   segments,
+  isAdvancedUserTargetingAllowed,
 }: TSegmentTableDataRowProps) => {
   const { createdAt, environmentId, id, surveys, title, updatedAt, description } = currentSegment;
   const [isEditSegmentModalOpen, setIsEditSegmentModalOpen] = useState(false);
@@ -39,6 +41,7 @@ const SegmentTableDataRow = ({
         actionClasses={actionClasses}
         attributeClasses={attributeClasses}
         segments={segments}
+        isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
       />
       <div
         key={id}

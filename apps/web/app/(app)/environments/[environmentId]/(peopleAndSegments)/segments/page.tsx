@@ -1,8 +1,7 @@
 import BasicCreateSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/BasicCreateSegmentModal";
-import BasicSegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/BasicSegmentTable";
+import SegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/SegmentTable";
 
 import CreateSegmentModal from "@formbricks/ee/advancedUserTargeting/components/CreateSegmentModal";
-import SegmentTable from "@formbricks/ee/advancedUserTargeting/components/SegmentTable";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { getAdvancedUserTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
@@ -52,20 +51,6 @@ export default async function SegmentsPage({ params }) {
     return true;
   });
 
-  const SegmentTableToRender = () => {
-    if (isAdvancedUserTargetingAllowed) {
-      return (
-        <SegmentTable
-          segments={filteredSegments}
-          actionClasses={actionClasses}
-          attributeClasses={attributeClasses}
-        />
-      );
-    }
-
-    return <BasicSegmentTable segments={filteredSegments} attributeClasses={attributeClasses} />;
-  };
-
   return (
     <>
       {isAdvancedUserTargetingAllowed ? (
@@ -86,7 +71,12 @@ export default async function SegmentsPage({ params }) {
           emptyMessage="No segments yet. Add your first one to get started."
         />
       ) : (
-        <SegmentTableToRender />
+        <SegmentTable
+          segments={filteredSegments}
+          actionClasses={actionClasses}
+          attributeClasses={attributeClasses}
+          isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
+        />
       )}
     </>
   );

@@ -2,13 +2,14 @@
 
 import { UserGroupIcon } from "@heroicons/react/24/solid";
 
+import SegmentSettingsTab from "@formbricks/ee/advancedUserTargeting/components/SegmentSettings";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment } from "@formbricks/types/segment";
 import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
 
+import BasicSegmentSettings from "./BasicSegmentSettings";
 import SegmentActivityTab from "./SegmentActivityTab";
-import SegmentSettingsTab from "./SegmentSettingsTab";
 
 interface EditSegmentModalProps {
   environmentId: string;
@@ -21,6 +22,7 @@ interface EditSegmentModalProps {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
+  isAdvancedUserTargetingAllowed: boolean;
 }
 
 export default function EditSegmentModal({
@@ -31,7 +33,32 @@ export default function EditSegmentModal({
   actionClasses,
   attributeClasses,
   segments,
+  isAdvancedUserTargetingAllowed,
 }: EditSegmentModalProps) {
+  const SettingsTab = () => {
+    if (isAdvancedUserTargetingAllowed) {
+      return (
+        <SegmentSettingsTab
+          actionClasses={actionClasses}
+          attributeClasses={attributeClasses}
+          environmentId={environmentId}
+          initialSegment={currentSegment}
+          segments={segments}
+          setOpen={setOpen}
+        />
+      );
+    }
+
+    return (
+      <BasicSegmentSettings
+        attributeClasses={attributeClasses}
+        environmentId={environmentId}
+        initialSegment={currentSegment}
+        setOpen={setOpen}
+      />
+    );
+  };
+
   const tabs = [
     {
       title: "Activity",
@@ -39,16 +66,7 @@ export default function EditSegmentModal({
     },
     {
       title: "Settings",
-      children: (
-        <SegmentSettingsTab
-          setOpen={setOpen}
-          environmentId={environmentId}
-          initialSegment={currentSegment}
-          actionClasses={actionClasses}
-          attributeClasses={attributeClasses}
-          segments={segments}
-        />
-      ),
+      children: <SettingsTab />,
     },
   ];
 

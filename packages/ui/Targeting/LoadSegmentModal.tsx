@@ -3,41 +3,33 @@
 import toast from "react-hot-toast";
 
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { Button } from "@formbricks/ui/Button";
-import { Modal } from "@formbricks/ui/Modal";
+import { TSurvey } from "@formbricks/types/surveys";
 
-import { loadNewBasicSegmentAction } from "../actions";
+import { Button } from "../Button";
+import { Modal } from "../Modal";
 
-type LoadSegmentModalProps = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
+type SegmentDetailsProps = {
   surveyId: string;
-  step: "initial" | "load";
-  setStep: (step: "initial" | "load") => void;
+  setOpen: (open: boolean) => void;
+  setSegment: (segment: TSegment) => void;
   currentSegment: TSegment;
   segments: TSegment[];
-  setSegment: (segment: TSegment) => void;
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
+  onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
 };
 
-const BasicSegmentDetails = ({
+const SegmentDetails = ({
   surveyId,
   setOpen,
   setSegment,
   currentSegment,
   segments,
   setIsSegmentEditorOpen,
-}: {
-  surveyId: string;
-  currentSegment: TSegment;
-  segments: TSegment[];
-  setSegment: (segment: TSegment) => void;
-  setOpen: (open: boolean) => void;
-  setIsSegmentEditorOpen: (isOpen: boolean) => void;
-}) => {
+  onSegmentLoad,
+}: SegmentDetailsProps) => {
   const handleLoadNewSegment = async (segmentId: string) => {
     try {
-      const updatedSurvey = await loadNewBasicSegmentAction(surveyId, segmentId);
+      const updatedSurvey = await onSegmentLoad(surveyId, segmentId);
 
       if (!updatedSurvey?.id) {
         throw new Error("Error loading segment");
@@ -91,7 +83,20 @@ const BasicSegmentDetails = ({
   );
 };
 
-const BasicLoadSegmentModal = ({
+type LoadSegmentModalProps = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  surveyId: string;
+  step: "initial" | "load";
+  setStep: (step: "initial" | "load") => void;
+  currentSegment: TSegment;
+  segments: TSegment[];
+  setSegment: (segment: TSegment) => void;
+  setIsSegmentEditorOpen: (isOpen: boolean) => void;
+  onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
+};
+
+const LoadSegmentModal = ({
   surveyId,
   open,
   setOpen,
@@ -101,6 +106,7 @@ const BasicLoadSegmentModal = ({
   segments,
   setSegment,
   setIsSegmentEditorOpen,
+  onSegmentLoad,
 }: LoadSegmentModalProps) => {
   const handleResetState = () => {
     setStep("initial");
@@ -137,17 +143,18 @@ const BasicLoadSegmentModal = ({
       )}
 
       {step === "load" && (
-        <BasicSegmentDetails
+        <SegmentDetails
           surveyId={surveyId}
           setOpen={setOpen}
           setSegment={setSegment}
           currentSegment={currentSegment}
           segments={segments}
           setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+          onSegmentLoad={onSegmentLoad}
         />
       )}
     </Modal>
   );
 };
 
-export default BasicLoadSegmentModal;
+export default LoadSegmentModal;
