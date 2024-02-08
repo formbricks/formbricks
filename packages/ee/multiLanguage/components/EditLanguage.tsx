@@ -15,7 +15,7 @@ import { Label } from "@formbricks/ui/Label";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import { updateProductAction } from "../lib/actions";
-import { iso639Identifiers } from "../utils/ISOLanguages";
+import { iso639Identifiers } from "../lib/isoLanguages";
 
 interface EditLanguageProps {
   product: TProduct;
@@ -219,7 +219,8 @@ export default function EditLanguage({
                 )}
                 {language.default === false && (
                   <Button
-                    variant="darkCTA"
+                    size="sm"
+                    variant="secondary"
                     disabled={index === product.languages.length || isEditing}
                     className="whitespace-nowrap"
                     onClick={() => markAsDefault(language.id)}
