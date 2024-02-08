@@ -6,7 +6,7 @@ import { ZEnvironment } from "./environment";
 const ZLanguage = z.object({
   id: z.string(),
   default: z.boolean(),
-  alias: z.string(),
+  alias: z.string().nullable(),
 });
 export type TLanguage = z.infer<typeof ZLanguage>;
 
