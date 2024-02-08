@@ -84,7 +84,7 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
     subject: "Please verify your email to use Formbricks",
     html: withEmailTemplate(`<h1>Almost there!</h1>
     To start using Formbricks please verify your email below:<br/><br/>
-    <a class="button" href="${verifyLink}">Verify email</a><br/><br/>
+    <a className="button" href="${verifyLink}">Verify email</a><br/><br/>
     You can also click on this link:<br/>
     <a href="${verifyLink}" style="word-break: break-all; color: #1e293b;">${verifyLink}</a><br/><br/>
     <strong>The link is valid for 24h.</strong><br/><br/>If it has expired please request a new token here:
@@ -104,7 +104,7 @@ export const sendForgotPasswordEmail = async (user: TEmailUser) => {
     subject: "Reset your Formbricks password",
     html: withEmailTemplate(`<h1>Change password</h1>
     You have requested a link to change your password. You can do this by clicking the link below:<br/><br/>
-    <a class="button" href="${verifyLink}">Change password</a><br/>
+    <a className="button" href="${verifyLink}">Change password</a><br/>
     <br/>
     <strong>The link is valid for 24 hours.</strong><br/><br/>If you didn't request this, please ignore this email.<br/>
     Your Formbricks Team`),
@@ -139,7 +139,7 @@ export const sendInviteMemberEmail = async (
     subject: `You're invited to collaborate on Formbricks!`,
     html: withEmailTemplate(`Hey ${inviteeName},<br/><br/>
     Your colleague ${inviterName} invited you to join them at Formbricks. To accept the invitation, please click the link below:<br/><br/>
-    <a class="button" href="${verifyLink}">Join team</a><br/>
+    <a className="button" href="${verifyLink}">Join team</a><br/>
     <br/>
     Have a great day!<br/>
     The Formbricks Team!`),
@@ -189,34 +189,27 @@ export const sendResponseFinishedEmail = async (
             <p style="margin:0px;">${question.question}</p>
             ${
               question.type === TSurveyQuestionType.FileUpload
-                ? `<div className="relative m-2 rounded-lg bg-slate-300">
-                <a href=${question.answer as string} download=${getOriginalFileNameFromUrl(question.answer)}>
-                  <div className="absolute right-0 top-0 m-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 bg-opacity-50 hover:bg-slate-200/50">
-                    <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    style={{ height: "1rem" }}
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
-                        />
+                ? typeof question.answer !== "string" &&
+                  question.answer.map((answer) => {
+                    return `<a href=${question.answer as string} download=${getOriginalFileNameFromUrl(answer)} style="margin-top: 1rem;">
+                  <div style="position: relative; display: flex; width: 15rem; flex-direction: column; align-items: center; justify-content: center; border-radius: 0.5rem; background-color: #e2e8f0; color: black;">
+                    <div style="position: absolute; right: 0.5rem; top: 0.5rem;">
+                      <div style="display: flex; height: 1.5rem; width: 1.5rem; align-items: center; justify-content: center; border-radius: 0.5rem; background-color: rgba(255, 255, 255, 0.5); &:hover { background-color: rgba(226, 232, 240, 0.5);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                      </div>
+                    </div>
+                    <div style="margin-top: 1rem; color: black;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-file">
+                        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
                       </svg>
                     </div>
+                    <p style="margin-top: 0.5rem; width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1rem; font-size: 0.875rem; color: black;">
+                    ${getOriginalFileNameFromUrl(answer)}
+                    </p>
                   </div>
-                </a>
-        
-                <div className="flex flex-col items-center justify-center p-2">
-                  <FileIcon className="h-6 text-slate-500" />
-                  <p className="mt-2 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-sm text-slate-500 dark:text-slate-400">
-                  ${getOriginalFileNameFromUrl(question.answer)}
-                  </p>
-                </div>
-              </div>`
+                </a>`;
+                  })
                 : `<p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>`
             }
             
@@ -224,12 +217,12 @@ export const sendResponseFinishedEmail = async (
         )
         .join("")}
 
-      <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
+      <a className="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
         survey.id
       }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">${responseCount > 1 ? `View ${responseCount - 1} more ${responseCount === 2 ? "response" : "responses"}` : `View survey summary`}</a>
 
-      <div class="tooltip">
-      <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
+      <div className="tooltip">
+      <p className='brandcolor'><strong>Start a conversation 💡</strong></p>
       ${
         personEmail
           ? `<p>Hit 'Reply' or reach out manually: ${personEmail}</p>`
@@ -275,7 +268,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
     Thanks for validating your email. Here is your Survey.<br/><br/>
     <strong>${surveyData?.name}</strong>
     <p>${surveyData?.subheading}</p>
-    <a class="button" href="${getSurveyLink()}">Take survey</a><br/>
+    <a className="button" href="${getSurveyLink()}">Take survey</a><br/>
     <br/>
     All the best,<br/>
     Your Formbricks Team 🤍`),
