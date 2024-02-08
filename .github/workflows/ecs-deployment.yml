@@ -125,7 +125,7 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         env: 
-          IMAGE_SHA : ${{ jobs.build.steps.meta.outputs.tags }}
+          IMAGE_SHA : ${{ needs.build.steps.meta.outputs.tags }}
         with:
           task-definition: task-definition.json
           container-name: prod-webapp-container
