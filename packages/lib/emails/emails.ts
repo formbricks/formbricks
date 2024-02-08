@@ -84,7 +84,7 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
     subject: "Please verify your email to use Formbricks",
     html: withEmailTemplate(`<h1>Almost there!</h1>
     To start using Formbricks please verify your email below:<br/><br/>
-    <a className="button" href="${verifyLink}">Verify email</a><br/><br/>
+    <a class="button" href="${verifyLink}">Verify email</a><br/><br/>
     You can also click on this link:<br/>
     <a href="${verifyLink}" style="word-break: break-all; color: #1e293b;">${verifyLink}</a><br/><br/>
     <strong>The link is valid for 24h.</strong><br/><br/>If it has expired please request a new token here:
@@ -104,7 +104,7 @@ export const sendForgotPasswordEmail = async (user: TEmailUser) => {
     subject: "Reset your Formbricks password",
     html: withEmailTemplate(`<h1>Change password</h1>
     You have requested a link to change your password. You can do this by clicking the link below:<br/><br/>
-    <a className="button" href="${verifyLink}">Change password</a><br/>
+    <a class="button" href="${verifyLink}">Change password</a><br/>
     <br/>
     <strong>The link is valid for 24 hours.</strong><br/><br/>If you didn't request this, please ignore this email.<br/>
     Your Formbricks Team`),
@@ -139,7 +139,7 @@ export const sendInviteMemberEmail = async (
     subject: `You're invited to collaborate on Formbricks!`,
     html: withEmailTemplate(`Hey ${inviteeName},<br/><br/>
     Your colleague ${inviterName} invited you to join them at Formbricks. To accept the invitation, please click the link below:<br/><br/>
-    <a className="button" href="${verifyLink}">Join team</a><br/>
+    <a class="button" href="${verifyLink}">Join team</a><br/>
     <br/>
     Have a great day!<br/>
     The Formbricks Team!`),
@@ -217,12 +217,12 @@ export const sendResponseFinishedEmail = async (
         )
         .join("")}
 
-      <a className="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
+      <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
         survey.id
       }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">${responseCount > 1 ? `View ${responseCount - 1} more ${responseCount === 2 ? "response" : "responses"}` : `View survey summary`}</a>
 
-      <div className="tooltip">
-      <p className='brandcolor'><strong>Start a conversation 💡</strong></p>
+      <div class="tooltip">
+      <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
       ${
         personEmail
           ? `<p>Hit 'Reply' or reach out manually: ${personEmail}</p>`
@@ -268,7 +268,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
     Thanks for validating your email. Here is your Survey.<br/><br/>
     <strong>${surveyData?.name}</strong>
     <p>${surveyData?.subheading}</p>
-    <a className="button" href="${getSurveyLink()}">Take survey</a><br/>
+    <a class="button" href="${getSurveyLink()}">Take survey</a><br/>
     <br/>
     All the best,<br/>
     Your Formbricks Team 🤍`),

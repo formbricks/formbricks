@@ -15,7 +15,6 @@ export const getQuestionResponseMapping = (
     const answer = response.data[question.id];
 
     const getAnswer = () => {
-      console.log(answer);
       if (!answer) return "";
       else {
         if (question.type === "fileUpload") {
