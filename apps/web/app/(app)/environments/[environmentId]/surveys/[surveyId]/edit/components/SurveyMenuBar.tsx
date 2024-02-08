@@ -278,13 +278,28 @@ export default function SurveyMenuBar({
     }
   };
 
-  function containsEmptyTriggers() {
+  const containsEmptyTriggers = () => {
     return (
       localSurvey.type === "web" &&
       localSurvey.triggers &&
       (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
     );
-  }
+  };
+
+  const handleSurveyPublish = async () => {
+    try {
+      setIsSurveyPublishing(true);
+      if (!validateSurvey(localSurvey)) {
+        setIsSurveyPublishing(false);
+        return;
+      }
+      await updateSurveyAction({ ...localSurvey, status: "inProgress" });
+      router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
+    } catch (error) {
+      toast.error("An error occured while publishing the survey.");
+      setIsSurveyPublishing(false);
+    }
+  };
 
   return (
     <>
@@ -364,15 +379,7 @@ export default function SurveyMenuBar({
               disabled={isSurveySaving || containsEmptyTriggers()}
               variant="darkCTA"
               loading={isSurveyPublishing}
-              onClick={async () => {
-                setIsSurveyPublishing(true);
-                if (!validateSurvey(localSurvey)) {
-                  setIsSurveyPublishing(false);
-                  return;
-                }
-                await updateSurveyAction({ ...localSurvey, status: "inProgress" });
-                router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
-              }}>
+              onClick={handleSurveyPublish}>
               Publish
             </Button>
           )}
