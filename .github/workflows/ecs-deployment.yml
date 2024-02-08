@@ -81,7 +81,8 @@ jobs:
           project: tw0fqmsx3c
           token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
-          file: ./apps/web/Dockerfile
+          # file: ./apps/web/Dockerfile
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
