@@ -24,7 +24,7 @@ import {
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
+import { TBaseFilter, TSegment, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
@@ -127,6 +127,15 @@ export default function UserTargetingAdvancedCard({
   const handleLoadNewSegment = async (surveyId: string, segmentId: string) => {
     const updatedSurvey = await loadNewSegmentAction(surveyId, segmentId);
     return updatedSurvey;
+  };
+
+  const handleSaveAsNewSegment = async (
+    environmentId: string,
+    segmentId: string,
+    data: TSegmentUpdateInput
+  ) => {
+    const updatedSegment = await updateSegmentAction(environmentId, segmentId, data);
+    return updatedSegment;
   };
 
   if (localSurvey.type === "link") {
@@ -269,9 +278,7 @@ export default function UserTargetingAdvancedCard({
                         setSegment={setSegment}
                         setIsSegmentEditorOpen={setIsSegmentEditorOpen}
                         onCreateSegment={async (data) => createSegmentAction(data)}
-                        onUpdateSegment={async (environmentId, segmentId, data) =>
-                          updateSegmentAction(environmentId, segmentId, data)
-                        }
+                        onUpdateSegment={handleSaveAsNewSegment}
                       />
                     )}
 

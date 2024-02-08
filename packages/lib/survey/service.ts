@@ -18,6 +18,7 @@ import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { personCache } from "../person/cache";
+import { getPerson } from "../person/service";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
@@ -564,7 +565,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
 
 export const getSyncSurveys = async (
   environmentId: string,
-  person: TPerson,
+  personId: string,
   deviceType: "phone" | "desktop" = "desktop",
   options?: {
     version?: string;
@@ -575,9 +576,14 @@ export const getSyncSurveys = async (
   const surveys = await unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
+      const person = await getPerson(personId);
 
       if (!product) {
         throw new Error("Product not found");
+      }
+
+      if (!person) {
+        throw new Error("Person not found");
       }
 
       let surveys = await getSurveys(environmentId);
@@ -688,11 +694,12 @@ export const getSyncSurveys = async (
 
       return surveys;
     },
-    [`getSyncSurveys-${environmentId}-${person.userId}`],
+    [`getSyncSurveys-${environmentId}-${personId}`],
     {
       tags: [
-        personCache.tag.byEnvironmentIdAndUserId(environmentId, person.userId),
-        displayCache.tag.byPersonId(person.id),
+        personCache.tag.byEnvironmentId(environmentId),
+        personCache.tag.byId(personId),
+        displayCache.tag.byPersonId(personId),
         surveyCache.tag.byEnvironmentId(environmentId),
         productCache.tag.byEnvironmentId(environmentId),
       ],

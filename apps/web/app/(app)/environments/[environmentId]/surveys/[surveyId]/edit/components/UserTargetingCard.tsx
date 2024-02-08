@@ -15,7 +15,7 @@ import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment } from "@formbricks/types/segment";
+import { TBaseFilter, TSegment, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
@@ -91,6 +91,15 @@ export default function UserTargetingCard({
   const handleLoadNewSegment = async (surveyId: string, segmentId: string) => {
     const updatedSurvey = await loadNewBasicSegmentAction(surveyId, segmentId);
     return updatedSurvey;
+  };
+
+  const handleSaveAsNewSegment = async (
+    environmentId: string,
+    segmentId: string,
+    data: TSegmentUpdateInput
+  ) => {
+    const updatedSegment = await updateBasicSegmentAction(environmentId, segmentId, data);
+    return updatedSegment;
   };
 
   useEffect(() => {
@@ -355,9 +364,7 @@ export default function UserTargetingCard({
             setSegment={setSegment}
             setIsSegmentEditorOpen={setIsSegmentEditorOpen}
             onCreateSegment={async (data) => createBasicSegmentAction(data)}
-            onUpdateSegment={async (environmentId, segmentId, data) =>
-              updateBasicSegmentAction(environmentId, segmentId, data)
-            }
+            onUpdateSegment={handleSaveAsNewSegment}
           />
         )}
 

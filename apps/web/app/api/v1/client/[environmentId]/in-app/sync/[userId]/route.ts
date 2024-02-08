@@ -117,7 +117,7 @@ export async function GET(
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person, device.type === "mobile" ? "phone" : "desktop", {
+      getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
         version: apiVersion ?? undefined,
       }),
       getActionClasses(environmentId),
