@@ -177,7 +177,7 @@ export const sendResponseFinishedEmail = async (
     html: withEmailTemplate(`
       <h1>Hey 👋</h1>
       <p>Congrats, you received a new response to your survey!
-      Someone just completed your survey <strong>${survey.name}</strong><br/></p>
+      Someone just completed your survey <strong>${survey.name}:</strong><br/></p>
 
       <hr/>
 
@@ -190,14 +190,10 @@ export const sendResponseFinishedEmail = async (
             ${
               question.type === TSurveyQuestionType.FileUpload
                 ? typeof question.answer !== "string" &&
-                  question.answer.map((answer) => {
-                    return `<a href=${question.answer as string} download=${getOriginalFileNameFromUrl(answer)} style="margin-top: 1rem;">
-                  <div style="position: relative; display: flex; width: 15rem; flex-direction: column; align-items: center; justify-content: center; border-radius: 0.5rem; background-color: #e2e8f0; color: black;">
-                    <div style="position: absolute; right: 0.5rem; top: 0.5rem;">
-                      <div style="display: flex; height: 1.5rem; width: 1.5rem; align-items: center; justify-content: center; border-radius: 0.5rem; background-color: rgba(255, 255, 255, 0.5); &:hover { background-color: rgba(226, 232, 240, 0.5);">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                      </div>
-                    </div>
+                  question.answer
+                    .map((answer) => {
+                      return `
+                  <div style="position: relative; display: flex; width: 15rem; flex-direction: column; align-items: center; justify-content: center; border-radius: 0.5rem; background-color: #e2e8f0; color: black; margin-top:8px;">
                     <div style="margin-top: 1rem; color: black;">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-file">
                         <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
@@ -208,8 +204,9 @@ export const sendResponseFinishedEmail = async (
                     ${getOriginalFileNameFromUrl(answer)}
                     </p>
                   </div>
-                </a>`;
-                  })
+               `;
+                    })
+                    .join("")
                 : `<p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>`
             }
             
@@ -221,19 +218,10 @@ export const sendResponseFinishedEmail = async (
         survey.id
       }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">${responseCount > 1 ? `View ${responseCount - 1} more ${responseCount === 2 ? "response" : "responses"}` : `View survey summary`}</a>
 
-      <div class="tooltip">
-      <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
-      ${
-        personEmail
-          ? `<p>Hit 'Reply' or reach out manually: ${personEmail}</p>`
-          : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
-      }
-      </div>
-
       <hr/>
 
-      <p><b>Don't want to get these emails?</b></p>
-      <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;"><p><i>Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}">this form</a>. <br/> Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedTeamIds&elementId=${team?.id}">all newly created forms</a>.</i></p></div>
+      <p>Don't want to get these emails?</p>
+      <div style="margin-top:0.8em; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;"><p>Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}">this form</a>. <br/> Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedTeamIds&elementId=${team?.id}">all newly created forms</a>.</p></div>
     `),
   });
 };
