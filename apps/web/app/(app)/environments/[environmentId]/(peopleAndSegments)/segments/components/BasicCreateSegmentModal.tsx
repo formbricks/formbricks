@@ -1,6 +1,7 @@
 "use client";
 
 import { UserGroupIcon } from "@heroicons/react/20/solid";
+import { FilterIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -163,6 +164,13 @@ const BasicCreateSegmentModal = ({ environmentId, attributeClasses }: TCreateSeg
 
             <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
             <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-700 bg-white p-4">
+              {segment?.filters?.length === 0 && (
+                <div className="-mb-2 flex items-center gap-1">
+                  <FilterIcon className="h-5 w-5 text-slate-700" />
+                  <h3 className="text-sm font-medium text-slate-700">Add your first filter to get started</h3>
+                </div>
+              )}
+
               <BasicSegmentEditor
                 environmentId={environmentId}
                 segment={segment}
@@ -171,11 +179,13 @@ const BasicCreateSegmentModal = ({ environmentId, attributeClasses }: TCreateSeg
                 attributeClasses={attributeClasses}
               />
 
-              <div>
-                <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
-                  Add Filter
-                </Button>
-              </div>
+              <Button
+                className="w-fit"
+                variant="secondary"
+                size="sm"
+                onClick={() => setAddFilterModalOpen(true)}>
+                Add Filter
+              </Button>
 
               <BasicAddFilterModal
                 onAddFilter={(filter) => {

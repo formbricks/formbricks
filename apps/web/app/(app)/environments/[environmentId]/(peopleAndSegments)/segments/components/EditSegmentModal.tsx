@@ -5,7 +5,7 @@ import { UserGroupIcon } from "@heroicons/react/24/solid";
 import SegmentSettingsTab from "@formbricks/ee/advancedUserTargeting/components/SegmentSettings";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSegment } from "@formbricks/types/segment";
+import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import ModalWithTabs from "@formbricks/ui/ModalWithTabs";
 
 import BasicSegmentSettings from "./BasicSegmentSettings";
@@ -15,10 +15,7 @@ interface EditSegmentModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  currentSegment: TSegment & {
-    activeSurveys: string[];
-    inactiveSurveys: string[];
-  };
+  currentSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];

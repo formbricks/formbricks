@@ -11,16 +11,17 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
+import { TBaseFilter, TSegment, TSegmentWithSurveyNames, ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
 import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
+import ConfirmDeleteSegmentModal from "@formbricks/ui/Targeting/ConfirmDeleteSegmentModal";
 
 type TBasicSegmentSettingsTabProps = {
   environmentId: string;
   setOpen: (open: boolean) => void;
-  initialSegment: TSegment;
+  initialSegment: TSegmentWithSurveyNames;
   attributeClasses: TAttributeClass[];
 };
 
@@ -39,16 +40,15 @@ const BasicSegmentSettings = ({
   const [isDeletingSegment, setIsDeletingSegment] = useState(false);
 
   const [titleError, setTitleError] = useState("");
-  const [descriptionError, setDescriptionError] = useState("");
 
   const [isSaveDisabled, setIsSaveDisabled] = useState(false);
+  const [isDeleteSegmentModalOpen, setIsDeleteSegmentModalOpen] = useState(false);
 
   const handleResetState = () => {
     setSegment(initialSegment);
     setOpen(false);
 
     setTitleError("");
-    setDescriptionError("");
 
     router.refresh();
   };
@@ -70,11 +70,6 @@ const BasicSegmentSettings = ({
   const handleUpdateSegment = async () => {
     if (!segment.title) {
       setTitleError("Title is required");
-      return;
-    }
-
-    if (!segment.description) {
-      setDescriptionError("Description is required");
       return;
     }
 
@@ -175,19 +170,9 @@ const BasicSegmentSettings = ({
                         ...prev,
                         description: e.target.value,
                       }));
-
-                      if (e.target.value) {
-                        setDescriptionError("");
-                      }
                     }}
-                    className={cn("w-auto", descriptionError && "border border-red-500 focus:border-red-500")}
+                    className={cn("w-auto")}
                   />
-
-                  {descriptionError && (
-                    <p className="absolute -bottom-1.5 right-2 bg-white text-xs text-red-500">
-                      {descriptionError}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
@@ -224,7 +209,7 @@ const BasicSegmentSettings = ({
                 variant="warn"
                 loading={isDeletingSegment}
                 onClick={() => {
-                  handleDeleteSegment();
+                  setIsDeleteSegmentModalOpen(true);
                 }}>
                 Delete
               </Button>
@@ -239,6 +224,15 @@ const BasicSegmentSettings = ({
                 Save Changes
               </Button>
             </div>
+
+            {isDeleteSegmentModalOpen && (
+              <ConfirmDeleteSegmentModal
+                onDelete={handleDeleteSegment}
+                open={isDeleteSegmentModalOpen}
+                segment={initialSegment}
+                setOpen={setIsDeleteSegmentModalOpen}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -304,6 +304,20 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
       select: selectSegment,
     });
 
+    // pause all the running surveys that are using this segment
+    const surveyIds = segment.surveys.map((survey) => survey.id);
+    if (!!surveyIds?.length) {
+      await prisma.survey.updateMany({
+        where: {
+          id: { in: surveyIds },
+          status: "inProgress",
+        },
+        data: {
+          status: "paused",
+        },
+      });
+    }
+
     segmentCache.revalidate({ id: segmentId, environmentId: segment.environmentId });
     segment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
 

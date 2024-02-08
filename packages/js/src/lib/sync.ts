@@ -81,7 +81,6 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
       attributes: syncResult.value.person?.attributes || {},
-      // attributes: oldState?.attributes || {},
     };
 
     if (!params.userId) {
