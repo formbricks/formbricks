@@ -1,7 +1,6 @@
 import Navigation from "@/app/(app)/environments/[environmentId]/components/Navigation";
 import type { Session } from "next-auth";
 
-import { getAdvancedUserTargetingPermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";

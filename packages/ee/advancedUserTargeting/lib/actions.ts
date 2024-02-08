@@ -34,7 +34,6 @@ export const createSegmentAction = async ({
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  // @ts-expect-error
   const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!environmentAccess) throw new AuthorizationError("Not authorized");
 
@@ -67,7 +66,6 @@ export const updateSegmentAction = async (
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  // @ts-expect-error
   const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!environmentAccess) throw new AuthorizationError("Not authorized");
 
@@ -92,7 +90,6 @@ export const loadNewSegmentAction = async (surveyId: string, segmentId: string) 
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  // @ts-expect-error
   const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
   if (!environmentAccess) throw new AuthorizationError("Not authorized");
 
@@ -103,7 +100,6 @@ export const cloneSegmentAction = async (segmentId: string, surveyId: string) =>
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  // @ts-expect-error
   const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
   if (!environmentAccess) throw new AuthorizationError("Not authorized");
 
@@ -119,7 +115,6 @@ export const deleteSegmentAction = async (environmentId: string, segmentId: stri
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  // @ts-expect-error
   const environmentAccess = hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!environmentAccess) throw new AuthorizationError("Not authorized");
 
