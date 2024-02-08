@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
+import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
@@ -123,6 +124,14 @@ const BasicSegmentSettings = ({
       setIsSaveDisabled(false);
     }
   }, [segment]);
+
+  if (isAdvancedSegment(segment.filters)) {
+    return (
+      <p className="text-sm font-semibold text-slate-800">
+        This is an advanced segment, you cannot edit it. Please upgrade your plan!
+      </p>
+    );
+  }
 
   return (
     <>

@@ -23,6 +23,7 @@ import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { segmentCache } from "../segment/cache";
 import { evaluateSegment, getSegment, updateSegment } from "../segment/service";
+import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -564,7 +565,10 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
 export const getSyncSurveys = async (
   environmentId: string,
   person: TPerson,
-  deviceType: "phone" | "desktop" = "desktop"
+  deviceType: "phone" | "desktop" = "desktop",
+  options?: {
+    version?: string;
+  }
 ): Promise<TSurvey[]> => {
   validateInputs([environmentId, ZId]);
 
@@ -618,47 +622,70 @@ export const getSyncSurveys = async (
         }
       });
 
+      if (!anySurveyHasFilters(surveys)) {
+        return surveys;
+      }
+
       const personActions = await getActionsByPersonId(person.id);
       const personActionClassIds = Array.from(
         new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
       );
+      const personUserId = person.userId ?? person.attributes.userId ?? "";
 
-      if (anySurveyHasFilters(surveys)) {
-        const surveyPromises = surveys.map(async (survey) => {
-          const { segment } = survey;
+      const surveyPromises = surveys.map(async (survey) => {
+        const { segment } = survey;
+        if (!segment) {
+          return survey;
+        }
 
-          const personUserId = person.userId ?? person.attributes.userId ?? "";
-
-          if (segment) {
-            const result = await evaluateSegment(
-              {
-                attributes: person.attributes,
-                actionIds: personActionClassIds,
-                deviceType,
-                environmentId,
-                personId: person.id,
-                userId: personUserId,
-              },
-              segment.filters
-            );
-
-            if (result) {
-              return survey;
-            }
-
+        if (!options?.version) {
+          const attributeFilters = transformSegmentFiltersToAttributeFilters(segment.filters);
+          if (attributeFilters === null) {
+            // segment filters don't match the expected format for attribute filters
             return null;
           }
-        });
 
-        const promisesResult = await Promise.all(surveyPromises);
-        const filteredResult = promisesResult.filter((survey) => !!survey);
+          if (!attributeFilters.length) {
+            return survey;
+          }
 
-        surveys = filteredResult as TSurvey[];
-      }
+          const isEligible = attributeFilters.every((attributeFilter) => {
+            const personAttributeValue = person.attributes[attributeFilter.attributeClassName];
+            if (attributeFilter.operator === "equals") {
+              return personAttributeValue === attributeFilter.value;
+            } else if (attributeFilter.operator === "notEquals") {
+              return personAttributeValue !== attributeFilter.value;
+            } else {
+              return false;
+            }
+          });
+
+          return isEligible ? survey : null;
+        }
+
+        // Evaluate the segment with additional options
+        const result = await evaluateSegment(
+          {
+            attributes: person.attributes,
+            actionIds: personActionClassIds,
+            deviceType,
+            environmentId,
+            personId: person.id,
+            userId: personUserId,
+          },
+          segment.filters
+        );
+
+        return result ? survey : null;
+      });
+
+      const resolvedSurveys = await Promise.all(surveyPromises);
+      surveys = resolvedSurveys.filter((survey) => !!survey) as TSurvey[];
 
       if (!surveys) {
         throw new ResourceNotFoundError("Survey", environmentId);
       }
+
       return surveys;
     },
     [`getSyncSurveys-${environmentId}-${person.userId}`],
@@ -672,6 +699,7 @@ export const getSyncSurveys = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
+
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 

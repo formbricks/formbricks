@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
+import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -135,10 +136,98 @@ export default function UserTargetingCard({
 
           <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
             <div className="flex w-full flex-col gap-2">
-              {isSegmentEditorOpen ? (
-                <div className="w-full">
-                  <div className="mb-4">
-                    {!segment?.isPrivate ? (
+              {isAdvancedSegment(segment?.filters ?? []) ? (
+                <div>
+                  {!segment?.isPrivate ? (
+                    <div className="mb-2 flex items-center gap-6">
+                      <UserGroupIcon className="h-6 w-6 text-slate-700" />
+                      <div className="flex flex-col">
+                        <h3 className="font-medium text-slate-900">{localSurvey.segment?.title}</h3>
+                        <p className="text-sm text-slate-500">{localSurvey.segment?.description}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">
+                        Send survey to audience who match...
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-sm font-semibold text-slate-800">
+                    This is an advanced segment, you cannot edit it. Please upgrade your plan!
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {isSegmentEditorOpen ? (
+                    <div className="w-full">
+                      <div className="mb-4">
+                        {!segment?.isPrivate ? (
+                          <div className="mb-2 flex items-center gap-6">
+                            <UserGroupIcon className="h-6 w-6 text-slate-700" />
+                            <div className="flex flex-col">
+                              <h3 className="font-medium text-slate-900">{localSurvey.segment?.title}</h3>
+                              <p className="text-sm text-slate-500">{localSurvey.segment?.description}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">
+                              Send survey to audience who match...
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {!!segment?.filters?.length && (
+                        <div className="w-full">
+                          <BasicSegmentEditor
+                            key={segment.filters.toString()}
+                            group={segment.filters}
+                            environmentId={environmentId}
+                            segment={segment}
+                            setSegment={setSegment}
+                            attributeClasses={attributeClasses}
+                          />
+                        </div>
+                      )}
+
+                      <div className="mt-4 flex items-center gap-4">
+                        <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
+                          Add filter
+                        </Button>
+
+                        {isSegmentEditorOpen && !!segment?.filters?.length && (
+                          <Button
+                            variant="minimal"
+                            size="sm"
+                            className="flex items-center gap-2"
+                            onClick={() => setResetAllFiltersModalOpen(true)}>
+                            <p className="text-sm">Reset all filters</p>
+                          </Button>
+                        )}
+
+                        {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
+                          <Button
+                            variant="minimal"
+                            size="sm"
+                            className="flex items-center gap-2"
+                            onClick={() => {
+                              setIsSegmentEditorOpen(false);
+                              setSegmentEditorViewOnly(false);
+
+                              if (initialSegment) {
+                                setSegment(initialSegment);
+                              }
+                            }}>
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 rounded-lg">
                       <div className="mb-2 flex items-center gap-6">
                         <UserGroupIcon className="h-6 w-6 text-slate-700" />
                         <div className="flex flex-col">
@@ -146,119 +235,59 @@ export default function UserTargetingCard({
                           <p className="text-sm text-slate-500">{localSurvey.segment?.description}</p>
                         </div>
                       </div>
-                    ) : (
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">
-                          Send survey to audience who match...
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  {!!segment?.filters?.length && (
-                    <div className="w-full">
-                      <BasicSegmentEditor
-                        key={segment.filters.toString()}
-                        group={segment.filters}
-                        environmentId={environmentId}
-                        segment={segment}
-                        setSegment={setSegment}
-                        attributeClasses={attributeClasses}
-                      />
-                    </div>
-                  )}
 
-                  <div className="mt-4 flex items-center gap-4">
-                    <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
-                      Add filter
-                    </Button>
-
-                    {isSegmentEditorOpen && !!segment?.filters?.length && (
-                      <Button
-                        variant="minimal"
-                        size="sm"
-                        className="flex items-center gap-2"
-                        onClick={() => setResetAllFiltersModalOpen(true)}>
-                        <p className="text-sm">Reset all filters</p>
-                      </Button>
-                    )}
-
-                    {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
-                      <Button
-                        variant="minimal"
-                        size="sm"
-                        className="flex items-center gap-2"
-                        onClick={() => {
-                          setIsSegmentEditorOpen(false);
-                          setSegmentEditorViewOnly(false);
-
-                          if (initialSegment) {
-                            setSegment(initialSegment);
-                          }
-                        }}>
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 rounded-lg">
-                  <div className="mb-2 flex items-center gap-6">
-                    <UserGroupIcon className="h-6 w-6 text-slate-700" />
-                    <div className="flex flex-col">
-                      <h3 className="font-medium text-slate-900">{localSurvey.segment?.title}</h3>
-                      <p className="text-sm text-slate-500">{localSurvey.segment?.description}</p>
-                    </div>
-                  </div>
-
-                  {segmentEditorViewOnly && segment && (
-                    <div className="opacity-60">
-                      <BasicSegmentEditor
-                        key={segment.filters.toString()}
-                        group={segment.filters}
-                        environmentId={environmentId}
-                        segment={segment}
-                        attributeClasses={attributeClasses}
-                        setSegment={setSegment}
-                      />
-                    </div>
-                  )}
-
-                  <div className="mt-3 flex items-center gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setSegmentEditorViewOnly(!segmentEditorViewOnly);
-                      }}>
-                      {segmentEditorViewOnly ? "Hide" : "View"} Filters{" "}
-                      {segmentEditorViewOnly ? (
-                        <ChevronDownIcon className="ml-2 h-3 w-3" />
-                      ) : (
-                        <ChevronUpIcon className="ml-2 h-3 w-3" />
+                      {segmentEditorViewOnly && segment && (
+                        <div className="opacity-60">
+                          <BasicSegmentEditor
+                            key={segment.filters.toString()}
+                            group={segment.filters}
+                            environmentId={environmentId}
+                            segment={segment}
+                            attributeClasses={attributeClasses}
+                            setSegment={setSegment}
+                            viewOnly
+                          />
+                        </div>
                       )}
-                    </Button>
 
-                    {isSegmentUsedInOtherSurveys && (
-                      <Button variant="secondary" size="sm" onClick={() => handleCloneSegment()}>
-                        Clone & Edit Segment
-                      </Button>
-                    )}
-                    <Button
-                      variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
-                      size="sm"
-                      onClick={() => {
-                        if (isSegmentUsedInOtherSurveys) {
-                          setSegmentUsedModalOpen(true);
-                        } else {
-                          setIsSegmentEditorOpen(true);
-                          setSegmentEditorViewOnly(false);
-                        }
-                      }}>
-                      {isSegmentUsedInOtherSurveys ? "Go to Segment View" : "Edit Segment"}
-                      <PencilIcon className="ml-2 h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
+                      <div className="mt-3 flex items-center gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setSegmentEditorViewOnly(!segmentEditorViewOnly);
+                          }}>
+                          {segmentEditorViewOnly ? "Hide" : "View"} Filters{" "}
+                          {segmentEditorViewOnly ? (
+                            <ChevronDownIcon className="ml-2 h-3 w-3" />
+                          ) : (
+                            <ChevronUpIcon className="ml-2 h-3 w-3" />
+                          )}
+                        </Button>
+
+                        {isSegmentUsedInOtherSurveys && (
+                          <Button variant="secondary" size="sm" onClick={() => handleCloneSegment()}>
+                            Clone & Edit Segment
+                          </Button>
+                        )}
+                        <Button
+                          variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
+                          size="sm"
+                          onClick={() => {
+                            if (isSegmentUsedInOtherSurveys) {
+                              setSegmentUsedModalOpen(true);
+                            } else {
+                              setIsSegmentEditorOpen(true);
+                              setSegmentEditorViewOnly(false);
+                            }
+                          }}>
+                          {isSegmentUsedInOtherSurveys ? "Go to Segment View" : "Edit Segment"}
+                          <PencilIcon className="ml-2 h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -296,7 +325,7 @@ export default function UserTargetingCard({
             step={loadSegmentModalStep}
             setStep={setLoadSegmentModalStep}
             currentSegment={segment}
-            segments={segments}
+            segments={segments.filter((segment) => !isAdvancedSegment(segment.filters))}
             setSegment={setSegment}
             setIsSegmentEditorOpen={setIsSegmentEditorOpen}
             onSegmentLoad={async (surveyId, segmentId) => loadNewBasicSegmentAction(surveyId, segmentId)}

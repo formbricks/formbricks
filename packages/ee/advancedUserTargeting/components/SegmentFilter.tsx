@@ -62,7 +62,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import AddFilterModal from "./AddFilterModal";
 
-type SegmentFilterItemProps = {
+type TSegmentFilterProps = {
   connector: TSegmentConnector;
   resource: TSegmentFilter;
   environmentId: string;
@@ -169,7 +169,7 @@ const SegmentFilterItemContextMenu = ({
   );
 };
 
-type TAttributeSegmentFilterProps = SegmentFilterItemProps & {
+type TAttributeSegmentFilterProps = TSegmentFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentAttributeFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
@@ -354,7 +354,7 @@ const AttributeSegmentFilter = ({
   );
 };
 
-type TPersonSegmentFilterProps = SegmentFilterItemProps & {
+type TPersonSegmentFilterProps = TSegmentFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentPersonFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
@@ -532,7 +532,7 @@ const PersonSegmentFilter = ({
   );
 };
 
-type TActionSegmentFilterProps = SegmentFilterItemProps & {
+type TActionSegmentFilterProps = TSegmentFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentActionFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
@@ -717,7 +717,7 @@ const ActionSegmentFilter = ({
   );
 };
 
-type TSegmentSegmentFilterProps = SegmentFilterItemProps & {
+type TSegmentSegmentFilterProps = TSegmentFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentSegmentFilter;
 };
@@ -823,7 +823,7 @@ const SegmentSegmentFilter = ({
   );
 };
 
-type TDeviceFilterProps = SegmentFilterItemProps & {
+type TDeviceFilterProps = TSegmentFilterProps & {
   onAddFilterBelow: () => void;
   resource: TSegmentDeviceFilter;
 };
@@ -946,7 +946,7 @@ const SegmentFilter = ({
   onDeleteFilter,
   onMoveFilter,
   viewOnly = false,
-}: SegmentFilterItemProps) => {
+}: TSegmentFilterProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const updateFilterValueInSegment = (filterId: string, newValue: string | number) => {
     const updatedSegment = structuredClone(segment);

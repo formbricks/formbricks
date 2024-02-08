@@ -32,7 +32,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "../Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../Select";
 
-type SegmentFilterItemProps = {
+type TBasicSegmentFilterProps = {
   connector: TSegmentConnector;
   resource: TSegmentFilter;
   environmentId: string;
@@ -41,6 +41,7 @@ type SegmentFilterItemProps = {
   setSegment: (segment: TSegment) => void;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
+  viewOnly?: boolean;
 };
 
 const SegmentFilterItemConnector = ({
@@ -48,11 +49,13 @@ const SegmentFilterItemConnector = ({
   segment,
   setSegment,
   filterId,
+  viewOnly,
 }: {
   connector: TSegmentConnector;
   segment: TSegment;
   setSegment: (segment: TSegment) => void;
   filterId: string;
+  viewOnly?: boolean;
 }) => {
   const updateLocalSurvey = (newConnector: TSegmentConnector) => {
     const updatedSegment = structuredClone(segment);
@@ -76,8 +79,9 @@ const SegmentFilterItemConnector = ({
   return (
     <div className="w-[40px]">
       <span
-        className={cn(!!connector && "cursor-pointer underline")}
+        className={cn(!!connector && "cursor-pointer underline", viewOnly && "cursor-not-allowed")}
         onClick={() => {
+          if (viewOnly) return;
           onConnectorChange();
         }}>
         {!!connector ? connector : "Where"}
@@ -90,15 +94,17 @@ const SegmentFilterItemContextMenu = ({
   filterId,
   onDeleteFilter,
   onMoveFilter,
+  viewOnly,
 }: {
   filterId: string;
   onDeleteFilter: (filterId: string) => void;
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
+  viewOnly?: boolean;
 }) => {
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger disabled={viewOnly}>
           <MoreVertical className="h-4 w-4" />
         </DropdownMenuTrigger>
 
@@ -113,14 +119,15 @@ const SegmentFilterItemContextMenu = ({
         className="mr-4 p-0"
         onClick={() => {
           onDeleteFilter(filterId);
-        }}>
-        <Trash2 className={cn("h-4 w-4 cursor-pointer")}></Trash2>
+        }}
+        disabled={viewOnly}>
+        <Trash2 className={cn("h-4 w-4 cursor-pointer", viewOnly && "cursor-not-allowed")}></Trash2>
       </Button>
     </div>
   );
 };
 
-type TAttributeSegmentFilterProps = SegmentFilterItemProps & {
+type TAttributeSegmentFilterProps = TBasicSegmentFilterProps & {
   resource: TSegmentAttributeFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
@@ -134,6 +141,7 @@ const AttributeSegmentFilter = ({
   segment,
   setSegment,
   attributeClasses,
+  viewOnly,
 }: TAttributeSegmentFilterProps) => {
   const { attributeClassName } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
@@ -219,13 +227,15 @@ const AttributeSegmentFilter = ({
         filterId={resource.id}
         setSegment={setSegment}
         segment={segment}
+        viewOnly={viewOnly}
       />
 
       <Select
         value={attributeClass}
         onValueChange={(value) => {
           updateAttributeClassNameInLocalSurvey(resource.id, value);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
@@ -251,7 +261,8 @@ const AttributeSegmentFilter = ({
         value={operatorText}
         onValueChange={(operator: TAttributeOperator) => {
           updateOperatorInLocalSurvey(resource.id, operator);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
           <SelectValue className="hidden" />
           <p>{operatorText}</p>
@@ -269,6 +280,7 @@ const AttributeSegmentFilter = ({
       {!["isSet", "isNotSet"].includes(resource.qualifier.operator) && (
         <div className="relative flex flex-col gap-1">
           <Input
+            disabled={viewOnly}
             value={resource.value}
             onChange={(e) => {
               checkValueAndUpdate(e);
@@ -288,12 +300,13 @@ const AttributeSegmentFilter = ({
         filterId={resource.id}
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
+        viewOnly={viewOnly}
       />
     </div>
   );
 };
 
-type TPersonSegmentFilterProps = Omit<SegmentFilterItemProps, "attributeClasses"> & {
+type TPersonSegmentFilterProps = Omit<TBasicSegmentFilterProps, "attributeClasses"> & {
   resource: TSegmentPersonFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
@@ -306,6 +319,7 @@ const PersonSegmentFilter = ({
   updateValueInLocalSurvey,
   segment,
   setSegment,
+  viewOnly,
 }: TPersonSegmentFilterProps) => {
   const { personIdentifier } = resource.root;
   const operatorText = convertOperatorToText(resource.qualifier.operator);
@@ -389,13 +403,15 @@ const PersonSegmentFilter = ({
         filterId={resource.id}
         setSegment={setSegment}
         segment={segment}
+        viewOnly={viewOnly}
       />
 
       <Select
         value={personIdentifier}
         onValueChange={(value) => {
           updatePersonIdentifierInLocalSurvey(resource.id, value);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
@@ -417,7 +433,8 @@ const PersonSegmentFilter = ({
         value={operatorText}
         onValueChange={(operator: TAttributeOperator) => {
           updateOperatorInLocalSurvey(resource.id, operator);
-        }}>
+        }}
+        disabled={viewOnly}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
           <SelectValue className="hidden" />
           <p>{operatorText}</p>
@@ -440,6 +457,7 @@ const PersonSegmentFilter = ({
               checkValueAndUpdate(e);
             }}
             className={cn("w-auto bg-white", valueError && "border border-red-500 focus:border-red-500")}
+            disabled={viewOnly}
           />
 
           {valueError && (
@@ -454,6 +472,7 @@ const PersonSegmentFilter = ({
         filterId={resource.id}
         onDeleteFilter={onDeleteFilter}
         onMoveFilter={onMoveFilter}
+        viewOnly={viewOnly}
       />
     </div>
   );
@@ -468,7 +487,8 @@ const BasicSegmentFilter = ({
   setSegment,
   onDeleteFilter,
   onMoveFilter,
-}: SegmentFilterItemProps) => {
+  viewOnly,
+}: TBasicSegmentFilterProps) => {
   const updateFilterValueInSegment = (filterId: string, newValue: string | number) => {
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {
@@ -492,6 +512,7 @@ const BasicSegmentFilter = ({
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             updateValueInLocalSurvey={updateFilterValueInSegment}
+            viewOnly={viewOnly}
           />
         </>
       );
@@ -508,6 +529,7 @@ const BasicSegmentFilter = ({
             onDeleteFilter={onDeleteFilter}
             onMoveFilter={onMoveFilter}
             updateValueInLocalSurvey={updateFilterValueInSegment}
+            viewOnly={viewOnly}
           />
         </>
       );

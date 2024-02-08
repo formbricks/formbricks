@@ -25,7 +25,7 @@ import {
 import AddFilterModal from "./AddFilterModal";
 import SegmentFilter from "./SegmentFilter";
 
-type TSegmentFilterProps = {
+type TSegmentEditorProps = {
   group: TBaseFilters;
   environmentId: string;
   segment: TSegment;
@@ -45,7 +45,7 @@ const SegmentEditor = ({
   attributeClasses,
   segments,
   viewOnly = false,
-}: TSegmentFilterProps) => {
+}: TSegmentEditorProps) => {
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
 

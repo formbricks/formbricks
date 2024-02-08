@@ -233,7 +233,7 @@ export default function UserTargetingAdvancedCard({
                         className="flex items-center gap-2"
                         onClick={() => {
                           setIsSegmentEditorOpen(false);
-                          setSegmentEditorViewOnly(false);
+                          setSegmentEditorViewOnly(true);
 
                           if (initialSegment) {
                             setSegment(initialSegment);

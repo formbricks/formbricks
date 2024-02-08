@@ -536,3 +536,72 @@ export const searchForAttributeClassNameInSegment = (
 
   return false;
 };
+
+// check if a segment has a filter with "type" other than "attribute" or "person"
+// if it does, this is an advanced segment
+export const isAdvancedSegment = (filters: TBaseFilters): boolean => {
+  for (let filter of filters) {
+    const { resource } = filter;
+
+    if (isResourceFilter(resource)) {
+      const { root } = resource;
+      const { type } = root;
+
+      if (type !== "attribute" && type !== "person") {
+        return true;
+      }
+    } else {
+      // the resource is a group, so we don't need to recurse, we know that this is an advanced segment
+      return true;
+    }
+  }
+
+  return false;
+};
+
+type TAttributeFilter = {
+  attributeClassName: string;
+  operator: TAttributeOperator;
+  value: string;
+};
+
+export const transformSegmentFiltersToAttributeFilters = (
+  filters: TBaseFilters
+): TAttributeFilter[] | null => {
+  const attributeFilters: TAttributeFilter[] = [];
+
+  for (let filter of filters) {
+    const { resource } = filter;
+
+    if (isResourceFilter(resource)) {
+      const { root, qualifier, value } = resource;
+      const { type } = root;
+
+      if (type === "attribute") {
+        const { attributeClassName } = root;
+        const { operator } = qualifier;
+
+        attributeFilters.push({
+          attributeClassName,
+          operator: operator as TAttributeOperator,
+          value: value.toString(),
+        });
+      }
+
+      if (type === "person") {
+        const { operator } = qualifier;
+
+        attributeFilters.push({
+          attributeClassName: "userId",
+          operator: operator as TAttributeOperator,
+          value: value.toString(),
+        });
+      }
+    } else {
+      // the resource is a group, so we don't need to recurse, we know that this is an advanced segment
+      return null;
+    }
+  }
+
+  return attributeFilters;
+};

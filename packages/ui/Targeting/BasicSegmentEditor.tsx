@@ -4,12 +4,13 @@ import { TBaseFilters, TSegment } from "@formbricks/types/segment";
 
 import BasicSegmentFilter from "./BasicSegmentFilter";
 
-type TSegmentFilterProps = {
+type TBasicSegmentEditorProps = {
   group: TBaseFilters;
   environmentId: string;
   segment: TSegment;
   attributeClasses: TAttributeClass[];
   setSegment: React.Dispatch<React.SetStateAction<TSegment>>;
+  viewOnly?: boolean;
 };
 
 const BasicSegmentEditor = ({
@@ -18,7 +19,8 @@ const BasicSegmentEditor = ({
   setSegment,
   segment,
   attributeClasses,
-}: TSegmentFilterProps) => {
+  viewOnly,
+}: TBasicSegmentEditorProps) => {
   const handleMoveResource = (resourceId: string, direction: "up" | "down") => {
     const localSegmentCopy = structuredClone(segment);
     if (localSegmentCopy.filters) {
@@ -57,6 +59,7 @@ const BasicSegmentEditor = ({
               onMoveFilter={(filterId: string, direction: "up" | "down") =>
                 handleMoveResource(filterId, direction)
               }
+              viewOnly={viewOnly}
             />
           );
         } else {

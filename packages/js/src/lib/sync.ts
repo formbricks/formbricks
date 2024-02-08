@@ -15,7 +15,7 @@ const syncWithBackend = async ({
   environmentId,
   userId,
 }: TJsSyncParams): Promise<Result<TJsStateSync, NetworkError>> => {
-  const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}`;
+  const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}?version=1.6.0`;
   const publicUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
 
   // if user id is available

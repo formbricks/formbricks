@@ -1,7 +1,7 @@
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse, userAgent } from "next/server";
+import { NextRequest, NextResponse, userAgent } from "next/server";
 
 import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
@@ -27,7 +27,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   {
     params,
   }: {
@@ -39,6 +39,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const { device } = userAgent(request);
+    const apiVersion = request.nextUrl.searchParams.get("version");
 
     // validate using zod
     const inputValidation = ZJsPeopleUserIdInput.safeParse({
@@ -116,7 +117,9 @@ export async function GET(
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person, device.type === "mobile" ? "phone" : "desktop"),
+      getSyncSurveys(environmentId, person, device.type === "mobile" ? "phone" : "desktop", {
+        version: apiVersion ?? undefined,
+      }),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
