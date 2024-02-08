@@ -58,6 +58,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             team: {
               select: {
                 id: true,
+                name: true,
                 memberships: {
                   select: {
                     userId: true,
@@ -76,6 +77,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
     // find team owner
     const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
+    const teamName = environment.product.team.name;
 
     const responseInput = {
       survey: {
@@ -189,7 +191,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     captureTelemetry("response created");
     if (teamOwnerId) {
-      await capturePosthogEvent(teamOwnerId, "response created", environmentId, {
+      await capturePosthogEvent(teamOwnerId, "response created", environmentId, teamName, {
         surveyId,
         surveyType: survey.type,
       });

@@ -13,7 +13,7 @@ import { validateInputs } from "../utils/validate";
 
 export const getTeamDetails = async (
   environmentId: string
-): Promise<{ teamId: string; teamOwnerId: string | undefined }> =>
+): Promise<{ teamId: string; teamName: string; teamOwnerId: string | undefined }> =>
   unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
@@ -29,6 +29,7 @@ export const getTeamDetails = async (
                 team: {
                   select: {
                     id: true,
+                    name: true,
                     memberships: {
                       select: {
                         userId: true,
@@ -52,8 +53,11 @@ export const getTeamDetails = async (
           (m) => m.role === "owner"
         )?.userId;
 
+        const teamName: string = environment.product.team.name;
+
         return {
           teamId: teamId,
+          teamName: teamName,
           teamOwnerId: teamOwnerId,
         };
       } catch (error) {

@@ -122,10 +122,16 @@ export async function POST(request: Request, context: Context): Promise<NextResp
   }
 
   if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "response created", survey.environmentId, {
-      surveyId: response.surveyId,
-      surveyType: survey.type,
-    });
+    await capturePosthogEvent(
+      teamDetails.teamOwnerId,
+      "response created",
+      survey.environmentId,
+      teamDetails.teamName,
+      {
+        surveyId: response.surveyId,
+        surveyType: survey.type,
+      }
+    );
   } else {
     console.warn("Posthog capture not possible. No team owner found");
   }

@@ -9,6 +9,7 @@ export const capturePosthogEvent = async (
   userId: string,
   eventName: string,
   environmentId: string,
+  teamName: string,
   properties: any = {}
 ) => {
   if (
@@ -28,7 +29,13 @@ export const capturePosthogEvent = async (
       groups: { environment: environmentId },
       properties,
     });
-
+    client.groupIdentify({
+      groupType: "environment",
+      groupKey: environmentId,
+      properties: {
+        name: teamName,
+      },
+    });
     await client.shutdownAsync();
   } catch (error) {
     console.error("error sending posthog event:", error);

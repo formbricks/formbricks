@@ -34,6 +34,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             team: {
               select: {
                 id: true,
+                name: true,
                 memberships: {
                   select: {
                     userId: true,
@@ -52,6 +53,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
     // find team owner
     const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
+    const teamName = environment.product.team.name;
 
     const createBody: any = {
       select: {
@@ -78,7 +80,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const displayData = await prisma.display.create(createBody);
 
     if (teamOwnerId) {
-      await capturePosthogEvent(teamOwnerId, "display created", environmentId, {
+      await capturePosthogEvent(teamOwnerId, "display created", environmentId, teamName, {
         surveyId,
       });
     } else {
