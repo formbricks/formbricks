@@ -72,7 +72,6 @@ export default function FileUploadQuestion({
         surveyId={surveyId}
         onFileUpload={onFileUpload}
         onUploadCallback={(urls: string[]) => {
-          console.log(urls);
           if (urls) {
             onChange({ [question.id]: urls });
           } else {
