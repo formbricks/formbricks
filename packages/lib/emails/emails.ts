@@ -207,7 +207,7 @@ export const sendResponseFinishedEmail = async (
                `;
                     })
                     .join("")
-                : `<p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>`
+                : `<p style="margin:0px; white-space:pre-wrap"><b>${question.answer}</b></p>`
             }
             
           </div>`
@@ -219,9 +219,11 @@ export const sendResponseFinishedEmail = async (
       }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">${responseCount > 1 ? `View ${responseCount - 1} more ${responseCount === 2 ? "response" : "responses"}` : `View survey summary`}</a>
 
       <hr/>
-
-      <p>Don't want to get these emails?</p>
-      <div style="margin-top:0.8em; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;"><p>Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}">this form</a>. <br/> Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedTeamIds&elementId=${team?.id}">all newly created forms</a>.</p></div>
+     
+      <div style="margin-top:0.8em; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;">
+      <p><b>Don't want to get these notifications?</b></p>
+      <p>Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}">this form</a>. 
+      <br/> Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedTeamIds&elementId=${team?.id}">all newly created forms</a>.</p></div>
     `),
   });
 };
