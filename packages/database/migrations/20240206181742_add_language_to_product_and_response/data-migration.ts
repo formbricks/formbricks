@@ -1,14 +1,18 @@
 import { PrismaClient } from "@prisma/client";
 
-import { translateSurvey } from "./i18n";
-import { selectSurvey, updateSurvey } from "./service";
+import { translateSurvey } from "./lib/i18n";
 
 const prisma = new PrismaClient();
 
 async function main() {
   await prisma.$transaction(async (tx) => {
-    const surveys = await prisma.survey.findMany({
-      select: selectSurvey,
+    const surveys = await tx.survey.findMany({
+      select: {
+        id: true,
+        questions: true,
+        thankYouCard: true,
+        welcomeCard: true,
+      },
     });
 
     if (!surveys) {
@@ -18,18 +22,17 @@ async function main() {
 
     for (const survey of surveys) {
       if (survey.questions.length > 0 && typeof survey.questions[0].headline === "string") {
-        const transformedSurvey = {
-          ...survey,
-          triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
-        };
         const translatedSurvey = translateSurvey(
-          transformedSurvey,
+          survey,
           [{ id: "en", alias: "English", default: true }],
           "en"
         );
 
         // Save the translated survey
-        await updateSurvey(translatedSurvey, tx);
+        await tx.survey.update({
+          where: { id: survey.id },
+          data: { ...translatedSurvey },
+        });
       }
     }
   });

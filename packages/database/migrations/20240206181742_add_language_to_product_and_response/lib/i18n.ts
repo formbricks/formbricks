@@ -215,10 +215,10 @@ export const extractLanguageIds = (languages: TLanguage[]): string[] => {
 
 // Function to translate an entire survey
 export const translateSurvey = (
-  survey: TSurvey,
+  survey: Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard">,
   surveyLanguages: TLanguage[],
   defaultLanguageSymbol: string
-): TSurvey => {
+): Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard"> => {
   const languages = extractLanguageIds(surveyLanguages);
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languages, defaultLanguageSymbol);
