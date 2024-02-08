@@ -1,6 +1,8 @@
 "use client";
 
 import { UserGroupIcon } from "@heroicons/react/24/solid";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { formatDate, timeSinceDate } from "@formbricks/lib/time";
@@ -8,7 +10,6 @@ import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { Button } from "../Button";
-import EmptySpaceFiller from "../EmptySpaceFiller";
 import { Modal } from "../Modal";
 
 type SegmentDetailsProps = {
@@ -30,22 +31,29 @@ const SegmentDetails = ({
   setIsSegmentEditorOpen,
   onSegmentLoad,
 }: SegmentDetailsProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleLoadNewSegment = async (segmentId: string) => {
     try {
+      setIsLoading(true);
       const updatedSurvey = await onSegmentLoad(surveyId, segmentId);
 
-      if (!updatedSurvey?.id) {
-        throw new Error("Error loading segment");
-      }
-
-      if (!updatedSurvey.segment) {
-        throw new Error("Error loading segment");
+      if (!updatedSurvey?.id || !updatedSurvey?.segment) {
+        toast.error("Error loading survey");
+        setIsLoading(false);
+        setIsSegmentEditorOpen(false);
+        setOpen(false);
+        return;
       }
 
       const parsedFilters = ZSegmentFilters.safeParse(updatedSurvey?.segment?.filters);
 
       if (!parsedFilters.success) {
-        throw new Error("Invalid segment filters");
+        toast.error("Error loading survey");
+        setIsLoading(false);
+        setIsSegmentEditorOpen(false);
+        setOpen(false);
+        return;
       }
 
       setSegment({
@@ -55,9 +63,9 @@ const SegmentDetails = ({
         surveys: updatedSurvey.segment.surveys,
       });
 
-      setIsSegmentEditorOpen(false);
-      setOpen(false);
+      setIsLoading(false);
     } catch (err: any) {
+      setIsLoading(false);
       toast.error(err.message);
       setOpen(false);
     }
@@ -87,10 +95,16 @@ const SegmentDetails = ({
         {segmentsArray.map((segment) => (
           <div
             key={segment.id}
-            className="grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100"
+            className="relative grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100"
             onClick={() => {
+              if (isLoading) return;
               handleLoadNewSegment(segment.id);
             }}>
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-50 opacity-80">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            )}
             <div className="col-span-3 flex items-center pl-6 text-sm">
               <div className="flex items-center gap-4">
                 <div className="ph-no-capture h-8 w-8 flex-shrink-0 text-slate-700">

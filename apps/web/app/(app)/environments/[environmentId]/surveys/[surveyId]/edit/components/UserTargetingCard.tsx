@@ -88,6 +88,11 @@ export default function UserTargetingCard({
     }
   };
 
+  const handleLoadNewSegment = async (surveyId: string, segmentId: string) => {
+    const updatedSurvey = await loadNewBasicSegmentAction(surveyId, segmentId);
+    return updatedSurvey;
+  };
+
   useEffect(() => {
     if (!!segment && segment?.filters?.length > 0) {
       setOpen(true);
@@ -328,7 +333,7 @@ export default function UserTargetingCard({
             segments={segments.filter((segment) => !isAdvancedSegment(segment.filters))}
             setSegment={setSegment}
             setIsSegmentEditorOpen={setIsSegmentEditorOpen}
-            onSegmentLoad={async (surveyId, segmentId) => loadNewBasicSegmentAction(surveyId, segmentId)}
+            onSegmentLoad={handleLoadNewSegment}
           />
         )}
 

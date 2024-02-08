@@ -24,7 +24,7 @@ import {
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment } from "@formbricks/types/segment";
+import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
@@ -124,6 +124,11 @@ export default function UserTargetingAdvancedCard({
     setSegment(updatedSegment);
   };
 
+  const handleLoadNewSegment = async (surveyId: string, segmentId: string) => {
+    const updatedSurvey = await loadNewSegmentAction(surveyId, segmentId);
+    return updatedSurvey;
+  };
+
   if (localSurvey.type === "link") {
     return null; // Hide card completely
   }
@@ -173,7 +178,7 @@ export default function UserTargetingAdvancedCard({
                   segments={segments}
                   setSegment={setSegment}
                   setIsSegmentEditorOpen={setIsSegmentEditorOpen}
-                  onSegmentLoad={(surveyId, segmentId) => loadNewSegmentAction(surveyId, segmentId)}
+                  onSegmentLoad={handleLoadNewSegment}
                 />
               )}
 
