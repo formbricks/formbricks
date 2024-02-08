@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { prisma } from "@formbricks/database";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const environmentId = req.query.environmentId?.toString();
@@ -23,37 +24,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       return res.status(400).json({ message: "Missing surveyId" });
     }
 
-    // get teamId from environment
-    const environment = await prisma.environment.findUnique({
-      where: {
-        id: environmentId,
-      },
-      select: {
-        product: {
-          select: {
-            team: {
-              select: {
-                id: true,
-                name: true,
-                memberships: {
-                  select: {
-                    userId: true,
-                    role: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
+    const environment = await getEnvironment(environmentId);
     if (!environment) {
       return res.status(404).json({ message: "Environment not found" });
     }
-    // find team owner
-    const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
-    const teamName = environment.product.team.name;
 
     const createBody: any = {
       select: {
@@ -79,13 +53,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     // create new display
     const displayData = await prisma.display.create(createBody);
 
-    if (teamOwnerId) {
-      await capturePosthogEvent(teamOwnerId, "display created", environmentId, teamName, {
-        surveyId,
-      });
-    } else {
-      console.warn("Posthog capture not possible. No team owner found");
-    }
+    await capturePosthogEnvironmentEvent(environmentId, "display created", {
+      surveyId,
+    });
 
     return res.json(displayData);
   }

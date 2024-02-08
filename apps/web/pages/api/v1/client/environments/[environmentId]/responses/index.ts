@@ -2,8 +2,9 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { prisma } from "@formbricks/database";
+import { getEnvironment } from "@formbricks/lib/environment/service";
 import { transformPrismaPerson } from "@formbricks/lib/person/service";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
@@ -48,36 +49,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     // get teamId from environment
-    const environment = await prisma.environment.findUnique({
-      where: {
-        id: environmentId,
-      },
-      select: {
-        product: {
-          select: {
-            team: {
-              select: {
-                id: true,
-                name: true,
-                memberships: {
-                  select: {
-                    userId: true,
-                    role: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
+    const environment = await getEnvironment(environmentId);
     if (!environment) {
       return res.status(404).json({ message: "Environment not found" });
     }
     // find team owner
-    const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
-    const teamName = environment.product.team.name;
 
     const responseInput = {
       survey: {
@@ -190,14 +166,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     captureTelemetry("response created");
-    if (teamOwnerId) {
-      await capturePosthogEvent(teamOwnerId, "response created", environmentId, teamName, {
-        surveyId,
-        surveyType: survey.type,
-      });
-    } else {
-      console.warn("Posthog capture not possible. No team owner found");
-    }
+    await capturePosthogEnvironmentEvent(environmentId, "response created", {
+      surveyId,
+      surveyType: survey.type,
+    });
 
     return res.json({ id: responseData.id });
   }

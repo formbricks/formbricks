@@ -5,11 +5,9 @@ const enabled =
   process.env.NEXT_PUBLIC_POSTHOG_API_HOST &&
   process.env.NEXT_PUBLIC_POSTHOG_API_KEY;
 
-export const capturePosthogEvent = async (
-  userId: string,
-  eventName: string,
+export const capturePosthogEnvironmentEvent = async (
   environmentId: string,
-  teamName: string,
+  eventName: string,
   properties: any = {}
 ) => {
   if (
@@ -24,17 +22,10 @@ export const capturePosthogEvent = async (
       host: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
     });
     client.capture({
+      distinctId: environmentId,
       event: eventName,
-      distinctId: userId,
       groups: { environment: environmentId },
       properties,
-    });
-    client.groupIdentify({
-      groupType: "environment",
-      groupKey: environmentId,
-      properties: {
-        name: teamName,
-      },
     });
     await client.shutdownAsync();
   } catch (error) {
