@@ -24,7 +24,7 @@ import {
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment, TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
+import { TBaseFilter, TSegment, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
