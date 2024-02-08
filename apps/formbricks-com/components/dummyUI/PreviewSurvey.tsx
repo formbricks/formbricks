@@ -1,11 +1,9 @@
 import { useState } from "react";
 
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
-
 import Modal from "./Modal";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
+import { TSurvey, TSurveyQuestion } from "./types";
 
 interface PreviewSurveyProps {
   localSurvey?: TSurvey;
@@ -23,7 +21,6 @@ export default function PreviewSurvey({
   brandColor,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
-  const defaultLanguage = "en";
 
   const gotoNextQuestion = () => {
     const currentIndex = questions.findIndex((q) => q.id === activeQuestionId);
@@ -69,8 +66,8 @@ export default function PreviewSurvey({
         {activeQuestionId == "thank-you-card" ? (
           <ThankYouCard
             brandColor={brandColor}
-            headline={getLocalizedValue(localSurvey?.thankYouCard?.headline, defaultLanguage)}
-            subheader={getLocalizedValue(localSurvey?.thankYouCard?.subheader, defaultLanguage)}
+            headline={localSurvey?.thankYouCard?.headline!}
+            subheader={localSurvey?.thankYouCard?.subheader!}
           />
         ) : (
           questions.map(
