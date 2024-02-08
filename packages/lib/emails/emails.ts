@@ -1,5 +1,5 @@
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 import {
   DEBUG,
@@ -13,6 +13,7 @@ import {
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
 import { getQuestionResponseMapping } from "../responses";
+import { getOriginalFileNameFromUrl } from "../storage/utils";
 import { getTeamByEnvironmentId } from "../team/service";
 import { withEmailTemplate } from "./email-template";
 
@@ -176,7 +177,7 @@ export const sendResponseFinishedEmail = async (
     html: withEmailTemplate(`
       <h1>Hey 👋</h1>
       <p>Congrats, you received a new response to your survey!
-      Someone just completed your survey <strong>${survey.name}</strong><br/></p>
+      Someone just completed your survey <strong>${survey.name}:</strong><br/></p>
 
       <hr/>
 
@@ -186,7 +187,29 @@ export const sendResponseFinishedEmail = async (
             question.answer &&
             `<div style="margin-top:1em;">
             <p style="margin:0px;">${question.question}</p>
-            <p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>  
+            ${
+              question.type === TSurveyQuestionType.FileUpload
+                ? typeof question.answer !== "string" &&
+                  question.answer
+                    .map((answer) => {
+                      return `
+                  <div style="position: relative; display: flex; width: 15rem; flex-direction: column; align-items: center; justify-content: center; border-radius: 0.5rem; background-color: #e2e8f0; color: black; margin-top:8px;">
+                    <div style="margin-top: 1rem; color: black;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-file">
+                        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                      </svg>
+                    </div>
+                    <p style="margin-top: 0.5rem; width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1rem; font-size: 0.875rem; color: black;">
+                    ${getOriginalFileNameFromUrl(answer)}
+                    </p>
+                  </div>
+               `;
+                    })
+                    .join("")
+                : `<p style="margin:0px; white-space:pre-wrap"><b>${question.answer}</b></p>`
+            }
+            
           </div>`
         )
         .join("")}
@@ -195,19 +218,12 @@ export const sendResponseFinishedEmail = async (
         survey.id
       }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">${responseCount > 1 ? `View ${responseCount - 1} more ${responseCount === 2 ? "response" : "responses"}` : `View survey summary`}</a>
 
-      <div class="tooltip">
-      <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
-      ${
-        personEmail
-          ? `<p>Hit 'Reply' or reach out manually: ${personEmail}</p>`
-          : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
-      }
-      </div>
-
       <hr/>
-
-      <p><b>Don't want to get these emails?</b></p>
-      <div style="margin-top:0.8em; background-color:#f1f5f9; border-radius:8px; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;"><p><i>Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}">this form</a>. <br/> Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedTeamIds&elementId=${team?.id}">all newly created forms</a>.</i></p></div>
+     
+      <div style="margin-top:0.8em; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;">
+      <p><b>Don't want to get these notifications?</b></p>
+      <p>Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}">this form</a>. 
+      <br/> Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedTeamIds&elementId=${team?.id}">all newly created forms</a>.</p></div>
     `),
   });
 };
