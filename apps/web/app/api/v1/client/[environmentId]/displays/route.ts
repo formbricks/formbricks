@@ -51,7 +51,7 @@ export async function POST(request: Request, context: Context): Promise<NextResp
   }
 
   if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "display created", teamDetails.teamId);
+    await capturePosthogEvent(teamDetails.teamOwnerId, "display created", inputValidation.data.environmentId);
   } else {
     console.warn("Posthog capture not possible. No team owner found");
   }

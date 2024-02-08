@@ -66,7 +66,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "display created", teamDetails.teamId, {
+    await capturePosthogEvent(teamDetails.teamOwnerId, "display created", survey.environmentId, {
       surveyId,
     });
   } else {

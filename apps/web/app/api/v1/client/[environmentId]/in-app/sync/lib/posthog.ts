@@ -11,7 +11,7 @@ export const sendFreeLimitReachedEventToPosthogBiWeekly = async (
     async () => {
       const teamDetails = await getTeamDetails(environmentId);
       if (teamDetails?.teamOwnerId) {
-        await capturePosthogEvent(teamDetails.teamOwnerId, "free limit reached", teamDetails.teamId, {
+        await capturePosthogEvent(teamDetails.teamOwnerId, "free limit reached", environmentId, {
           plan,
         });
       }

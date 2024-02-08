@@ -122,7 +122,7 @@ export async function POST(request: Request, context: Context): Promise<NextResp
   }
 
   if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "response created", teamDetails.teamId, {
+    await capturePosthogEvent(teamDetails.teamOwnerId, "response created", survey.environmentId, {
       surveyId: response.surveyId,
       surveyType: survey.type,
     });

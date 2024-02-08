@@ -50,8 +50,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (!environment) {
       return res.status(404).json({ message: "Environment not found" });
     }
-
-    const teamId = environment.product.team.id;
     // find team owner
     const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
 
@@ -80,7 +78,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     const displayData = await prisma.display.create(createBody);
 
     if (teamOwnerId) {
-      await capturePosthogEvent(teamOwnerId, "display created", teamId, {
+      await capturePosthogEvent(teamOwnerId, "display created", environmentId, {
         surveyId,
       });
     } else {

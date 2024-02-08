@@ -74,8 +74,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (!environment) {
       return res.status(404).json({ message: "Environment not found" });
     }
-
-    const teamId = environment.product.team.id;
     // find team owner
     const teamOwnerId = environment.product.team.memberships.find((m) => m.role === "owner")?.userId;
 
@@ -191,7 +189,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     captureTelemetry("response created");
     if (teamOwnerId) {
-      await capturePosthogEvent(teamOwnerId, "response created", teamId, {
+      await capturePosthogEvent(teamOwnerId, "response created", environmentId, {
         surveyId,
         surveyType: survey.type,
       });

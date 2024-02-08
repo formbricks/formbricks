@@ -8,7 +8,7 @@ const enabled =
 export const capturePosthogEvent = async (
   userId: string,
   eventName: string,
-  teamId?: string,
+  environmentId: string,
   properties: any = {}
 ) => {
   if (
@@ -25,7 +25,7 @@ export const capturePosthogEvent = async (
     client.capture({
       event: eventName,
       distinctId: userId,
-      groups: teamId ? { company: teamId } : {},
+      groups: { environment: environmentId },
       properties,
     });
 
