@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+// The segment filter has operators, these are all the types of operators that can be used
 export const BASE_OPERATORS = [
   "lessThan",
   "lessEqual",
@@ -15,6 +16,7 @@ export type TStringOperator = (typeof STRING_OPERATORS)[number];
 export const ZBaseOperator = z.enum(BASE_OPERATORS);
 export type TBaseOperator = z.infer<typeof ZBaseOperator>;
 
+// An attribute filter can have these operators
 export const ATTRIBUTE_OPERATORS = [
   ...BASE_OPERATORS,
   "isSet",
@@ -25,8 +27,12 @@ export const ATTRIBUTE_OPERATORS = [
   "endsWith",
 ] as const;
 
+// the person filter currently has the same operators as the attribute filter
+// but we might want to add more operators in the future, so we keep it separated
 export const PERSON_OPERATORS = ATTRIBUTE_OPERATORS;
 
+// A metric is always only associated with an action filter
+// Metrics are used to evaluate the value of an action filter, from the database
 export const ACTION_METRICS = [
   "lastQuarterCount",
   "lastMonthCount",
@@ -36,8 +42,13 @@ export const ACTION_METRICS = [
   "firstOccurranceDaysAgo",
 ] as const;
 
+// operators for segment filters
 export const SEGMENT_OPERATORS = ["userIsIn", "userIsNotIn"] as const;
+
+// operators for device filters
 export const DEVICE_OPERATORS = ["equals", "notEquals"] as const;
+
+// all operators
 export const ALL_OPERATORS = [...ATTRIBUTE_OPERATORS, ...SEGMENT_OPERATORS] as const;
 
 export const ZAttributeOperator = z.enum(ATTRIBUTE_OPERATORS);
@@ -60,9 +71,12 @@ export type TActionMetric = z.infer<typeof ZActionMetric>;
 export const ZSegmentFilterValue = z.union([z.string(), z.number()]);
 export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 
-// Root of the filter
+// the type of the root of a filter
 export const ZSegmentFilterRootType = z.enum(["attribute", "action", "segment", "device", "person"]);
 
+// Root of the filter, this defines the type of the filter and the metadata associated with it
+// For example, if the root is "attribute", the attributeClassName is required
+// if the root is "action", the actionClassId is required.
 export const ZSegmentFilterRoot = z.discriminatedUnion("type", [
   z.object({
     type: z.literal(ZSegmentFilterRootType.Enum.attribute),
@@ -86,6 +100,10 @@ export const ZSegmentFilterRoot = z.discriminatedUnion("type", [
   }),
 ]);
 
+// Each filter has a qualifier, which usually contains the operator for evaluating the filter.
+// Only in the case of action filters, the metric is also included in the qualifier
+
+// Attribute filter -> root will always have type "attribute"
 export const ZSegmentAttributeFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
@@ -99,6 +117,7 @@ export const ZSegmentAttributeFilter = z.object({
 });
 export type TSegmentAttributeFilter = z.infer<typeof ZSegmentAttributeFilter>;
 
+// Person filter -> root will always have type "person"
 export const ZSegmentPersonFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
@@ -112,6 +131,8 @@ export const ZSegmentPersonFilter = z.object({
 });
 export type TSegmentPersonFilter = z.infer<typeof ZSegmentPersonFilter>;
 
+// Action filter -> root will always have type "action"
+// Action filters also have the metric along with the operator in the qualifier of the filter
 export const ZSegmentActionFilter = z
   .object({
     id: z.string().cuid2(),
@@ -145,6 +166,7 @@ export const ZSegmentActionFilter = z
   );
 export type TSegmentActionFilter = z.infer<typeof ZSegmentActionFilter>;
 
+// Segment filter -> root will always have type "segment"
 export const ZSegmentSegmentFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
@@ -158,6 +180,7 @@ export const ZSegmentSegmentFilter = z.object({
 });
 export type TSegmentSegmentFilter = z.infer<typeof ZSegmentSegmentFilter>;
 
+// Device filter -> root will always have type "device"
 export const ZSegmentDeviceFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
@@ -172,6 +195,7 @@ export const ZSegmentDeviceFilter = z.object({
 
 export type TSegmentDeviceFilter = z.infer<typeof ZSegmentDeviceFilter>;
 
+// A segment filter is a union of all the different filter types
 export const ZSegmentFilter = z
   .union([
     ZSegmentActionFilter,
@@ -180,6 +204,7 @@ export const ZSegmentFilter = z
     ZSegmentSegmentFilter,
     ZSegmentDeviceFilter,
   ])
+  // we need to refine the filter to make sure that the filter is valid
   .refine(
     (filter) => {
       if (filter.root.type === "action") {
@@ -252,6 +277,7 @@ export type TBaseFilter = {
 };
 export type TBaseFilters = TBaseFilter[];
 
+// here again, we refine the filters to make sure that the filters are valid
 const refineFilters = (filters: TBaseFilters): boolean => {
   let result = true;
 
@@ -271,6 +297,9 @@ const refineFilters = (filters: TBaseFilters): boolean => {
 
   return result;
 };
+
+// The filters can be nested, so we need to use z.lazy to define the type
+// more on recusrsive types -> https://zod.dev/?id=recursive-types
 
 export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
   .lazy(() =>

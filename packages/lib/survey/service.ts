@@ -8,7 +8,6 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
 
@@ -628,6 +627,7 @@ export const getSyncSurveys = async (
         }
       });
 
+      // if no surveys have segment filters, return the surveys
       if (!anySurveyHasFilters(surveys)) {
         return surveys;
       }
@@ -638,23 +638,30 @@ export const getSyncSurveys = async (
       );
       const personUserId = person.userId ?? person.attributes.userId ?? "";
 
+      // the surveys now have segment filters, so we need to evaluate them
       const surveyPromises = surveys.map(async (survey) => {
         const { segment } = survey;
         if (!segment) {
           return survey;
         }
 
+        // backwards compatibility for older versions of the js package
+        // if the version is not provided, we will use the old method of evaluating the segment, which is attribute filters
+        // transform the segment filters to attribute filters and evaluate them
         if (!options?.version) {
           const attributeFilters = transformSegmentFiltersToAttributeFilters(segment.filters);
+
+          // if the attribute filters are null, it means the segment filters don't match the expected format for attribute filters, so we skip this survey
           if (attributeFilters === null) {
-            // segment filters don't match the expected format for attribute filters
             return null;
           }
 
+          // if there are no attribute filters, we return the survey
           if (!attributeFilters.length) {
             return survey;
           }
 
+          // we check if the person meets the attribute filters for all the attribute filters
           const isEligible = attributeFilters.every((attributeFilter) => {
             const personAttributeValue = person.attributes[attributeFilter.attributeClassName];
             if (attributeFilter.operator === "equals") {
@@ -662,6 +669,7 @@ export const getSyncSurveys = async (
             } else if (attributeFilter.operator === "notEquals") {
               return personAttributeValue !== attributeFilter.value;
             } else {
+              // if the operator is not equals or not equals, we skip the survey, this means that new segment filter options are being used
               return false;
             }
           });
@@ -669,7 +677,7 @@ export const getSyncSurveys = async (
           return isEligible ? survey : null;
         }
 
-        // Evaluate the segment with additional options
+        // Evaluate the segment filters
         const result = await evaluateSegment(
           {
             attributes: person.attributes,
