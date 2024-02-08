@@ -123,15 +123,17 @@ jobs:
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
+        env: 
+          IMAGE_SHA : ${{ build.steps.meta.outputs.tags }}
         with:
           task-definition: task-definition.json
           container-name: prod-webapp-container
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{env.IMAGE_SHA}}
 
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: prod-webapp-ecs-service
-          cluster: prod-core-infra-ecs-cluster
-          wait-for-service-stability: true
+      # - name: Deploy Amazon ECS task definition
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      #   with:
+      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
+      #     service: prod-webapp-ecs-service
+      #     cluster: prod-core-infra-ecs-cluster
+      #     wait-for-service-stability: true
