@@ -296,7 +296,7 @@ export default function SurveyMenuBar({
       await updateSurveyAction({ ...localSurvey, status: "inProgress" });
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
-      toast.error("Some error occured while publishing survey");
+      toast.error("An error occured while publishing the survey.");
       setIsSurveyPublishing(false);
     }
   };
