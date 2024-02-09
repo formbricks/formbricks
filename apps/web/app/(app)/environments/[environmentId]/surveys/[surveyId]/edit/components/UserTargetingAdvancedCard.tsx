@@ -9,7 +9,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { HardDriveDownloadIcon, HardDriveUploadIcon } from "lucide-react";
+import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -30,7 +30,6 @@ import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
 import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
-import SegmentAlreadyUsedModal from "@formbricks/ui/Targeting/SegmentAlreadyUsedModal";
 
 interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
@@ -60,7 +59,6 @@ export default function UserTargetingAdvancedCard({
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
   const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.segment?.isPrivate);
-  const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
 
   const actionClasses = actionClassesProps.filter((actionClass) => {
@@ -170,12 +168,6 @@ export default function UserTargetingAdvancedCard({
             </div>
 
             <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
-              <SegmentAlreadyUsedModal
-                open={segmentUsedModalOpen}
-                setOpen={setSegmentUsedModalOpen}
-                environmentId={environmentId}
-              />
-
               {!!segment && (
                 <LoadSegmentModal
                   open={loadSegmentModalOpen}
@@ -225,11 +217,14 @@ export default function UserTargetingAdvancedCard({
                     </div>
                   )}
 
-                  <div className="mt-4 flex items-center gap-4">
+                  <div className="mt-4 flex items-center gap-3">
                     <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                       Add filter
                     </Button>
-
+                    <Button variant="secondary" size="sm" onClick={() => setSegmentEditorViewOnly(true)}>
+                      Save changes
+                    </Button>
+                    {/* 
                     {isSegmentEditorOpen && !!segment?.filters?.length && (
                       <Button
                         variant="minimal"
@@ -238,7 +233,7 @@ export default function UserTargetingAdvancedCard({
                         onClick={() => setResetAllFiltersModalOpen(true)}>
                         <p className="text-sm">Reset all filters</p>
                       </Button>
-                    )}
+                    )} */}
 
                     {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
                       <Button
@@ -354,33 +349,37 @@ export default function UserTargetingAdvancedCard({
                       variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
                       size="sm"
                       onClick={() => {
-                        if (isSegmentUsedInOtherSurveys) {
-                          setSegmentUsedModalOpen(true);
-                        } else {
-                          setIsSegmentEditorOpen(true);
-                          setSegmentEditorViewOnly(false);
-                        }
+                        setIsSegmentEditorOpen(true);
+                        setSegmentEditorViewOnly(false);
                       }}>
-                      {isSegmentUsedInOtherSurveys ? "Go to Segment View" : "Edit Segment"}
+                      Edit Segment
                       <PencilIcon className="ml-2 h-3 w-3" />
                     </Button>
+                    {isSegmentUsedInOtherSurveys && (
+                      <p className="text-xs text-slate-600">
+                        This segment is used in other surveys. Make changes{" "}
+                        <Link href={`/environments/${environmentId}/segments`} target="_blank">
+                          here.
+                        </Link>
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="mt-4 flex w-full gap-4">
+            <div className="mt-4 flex w-full gap-3">
               <Button variant="secondary" size="sm" onClick={() => setLoadSegmentModalOpen(true)}>
-                Load Segment <HardDriveUploadIcon className="ml-2 h-4 w-4" />
+                Load Segment
               </Button>
 
               {isSegmentEditorOpen && !!segment?.filters?.length && (
                 <Button
-                  variant="minimal"
+                  variant="secondary"
                   size="sm"
                   className="flex items-center gap-2"
                   onClick={() => setSaveAsNewSegmentModalOpen(true)}>
-                  Save as new Segment <HardDriveDownloadIcon className="h-4 w-4" />
+                  Save as new Segment
                 </Button>
               )}
             </div>

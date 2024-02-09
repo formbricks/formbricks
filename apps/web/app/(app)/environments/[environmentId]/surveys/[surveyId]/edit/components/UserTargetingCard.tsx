@@ -8,7 +8,8 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { HardDriveDownloadIcon, HardDriveUploadIcon } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -23,7 +24,6 @@ import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
 import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
 import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
 import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
-import SegmentAlreadyUsedModal from "@formbricks/ui/Targeting/SegmentAlreadyUsedModal";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import {
@@ -60,7 +60,6 @@ export default function UserTargetingCard({
   const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [resetAllFiltersModalOpen, setResetAllFiltersModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
-  const [segmentUsedModalOpen, setSegmentUsedModalOpen] = useState(false);
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedSegment = structuredClone(segment);
@@ -207,12 +206,15 @@ export default function UserTargetingCard({
                         </div>
                       )}
 
-                      <div className="mt-4 flex items-center gap-4">
+                      <div className="mt-4 flex items-center gap-3">
                         <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                           Add filter
                         </Button>
+                        <Button variant="secondary" size="sm" onClick={() => setSegmentEditorViewOnly(false)}>
+                          Save changes
+                        </Button>
 
-                        {isSegmentEditorOpen && !!segment?.filters?.length && (
+                        {/*                         {isSegmentEditorOpen && !!segment?.filters?.length && (
                           <Button
                             variant="minimal"
                             size="sm"
@@ -220,7 +222,7 @@ export default function UserTargetingCard({
                             onClick={() => setResetAllFiltersModalOpen(true)}>
                             <p className="text-sm">Reset all filters</p>
                           </Button>
-                        )}
+                        )} */}
 
                         {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
                           <Button
@@ -284,21 +286,31 @@ export default function UserTargetingCard({
                             Clone & Edit Segment
                           </Button>
                         )}
-                        <Button
-                          variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
-                          size="sm"
-                          onClick={() => {
-                            if (isSegmentUsedInOtherSurveys) {
-                              setSegmentUsedModalOpen(true);
-                            } else {
+                        {!isSegmentUsedInOtherSurveys && (
+                          <Button
+                            variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
+                            size="sm"
+                            onClick={() => {
                               setIsSegmentEditorOpen(true);
                               setSegmentEditorViewOnly(false);
-                            }
-                          }}>
-                          {isSegmentUsedInOtherSurveys ? "Go to Segment View" : "Edit Segment"}
-                          <PencilIcon className="ml-2 h-3 w-3" />
-                        </Button>
+                            }}>
+                            Edit Segment
+                            <PencilIcon className="ml-2 h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
+                      {isSegmentUsedInOtherSurveys && (
+                        <p className="mt-1 flex items-center text-xs text-slate-500">
+                          <AlertCircle className="mr-1 inline h-3 w-3" />
+                          This segment is used in other surveys. Make changes{" "}
+                          <Link
+                            href={`/environments/${environmentId}/segments`}
+                            target="_blank"
+                            className="ml-1 underline">
+                            here.
+                          </Link>
+                        </p>
+                      )}
                     </div>
                   )}
                 </>
@@ -307,18 +319,18 @@ export default function UserTargetingCard({
           </div>
         </div>
 
-        <div className="ml-6 mt-4 flex w-full gap-4">
+        <div className="ml-6 mt-4 flex w-full gap-3">
           <Button variant="secondary" size="sm" onClick={() => setLoadSegmentModalOpen(true)}>
-            Load Segment <HardDriveUploadIcon className="ml-2 h-4 w-4" />
+            Load Segment
           </Button>
 
           {isSegmentEditorOpen && !!segment?.filters?.length && (
             <Button
-              variant="minimal"
+              variant="secondary"
               size="sm"
               className="flex items-center gap-2"
               onClick={() => setSaveAsNewSegmentModalOpen(true)}>
-              Save as new Segment <HardDriveDownloadIcon className="h-4 w-4" />
+              Save as new Segment
             </Button>
           )}
         </div>
@@ -367,12 +379,6 @@ export default function UserTargetingCard({
             onUpdateSegment={handleSaveAsNewSegment}
           />
         )}
-
-        <SegmentAlreadyUsedModal
-          open={segmentUsedModalOpen}
-          setOpen={setSegmentUsedModalOpen}
-          environmentId={environmentId}
-        />
 
         <AlertDialog
           headerText="Are you sure?"

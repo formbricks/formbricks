@@ -19,31 +19,31 @@ const ConfirmDeleteSegmentModal = ({ onDelete, open, segment, setOpen }: Confirm
 
   return (
     <Modal open={open} setOpen={setOpen} title="Delete Segment">
-      <div className="flex flex-col gap-2">
-        <p>
-          Deleting a segment will remove it from all the surveys it is currently being used in. This action
-          cannot be undone.
-        </p>
-
-        <div className="flex flex-col gap-2">
-          <p>The following are the surveys this segment is used in:</p>
-          <div className="flex flex-col gap-1">
-            {segment.activeSurveys.map((survey) => (
-              <p key={survey} className="text-sm font-semibold text-slate-800">
-                {survey}
-              </p>
-            ))}
+      <div className="text-slate-900">
+        {segment.activeSurveys.length > 0 && (
+          <div className="space-y-2">
+            <p>If you delete this segment, this will happen:</p>
+            <ul className="ml-4 list-disc">
+              <li>
+                This segment will be <b>removed</b> from these surveys:
+                <ol className="my-2 ml-4 list-decimal text-sm">
+                  {segment.activeSurveys.map((survey) => (
+                    <li key={survey}>{survey}</li>
+                  ))}
+                </ol>
+              </li>
+              <li>
+                These surveys will be <b>paused.</b>
+              </li>
+            </ul>
           </div>
-
-          <div>
-            <p>Note: All the running surveys this segment is used in will be paused!</p>
-          </div>
-        </div>
+        )}
+        <p className="mt-2">This action cannot be undone.</p>
       </div>
 
       <div className="mt-4 space-x-2 text-right">
-        <Button variant="darkCTA" onClick={() => setOpen(false)}>
-          Decline
+        <Button variant="minimal" onClick={() => setOpen(false)}>
+          Cancel
         </Button>
         <Button
           variant="warn"
