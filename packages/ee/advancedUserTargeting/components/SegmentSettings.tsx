@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -171,7 +172,7 @@ const SegmentSettings = ({
             </div>
 
             <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
-            <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-700 bg-white p-4">
+            <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               <SegmentEditor
                 environmentId={environmentId}
                 segment={segment}
@@ -207,7 +208,9 @@ const SegmentSettings = ({
                 loading={isDeletingSegment}
                 onClick={() => {
                   setIsDeleteSegmentModalOpen(true);
-                }}>
+                }}
+                EndIcon={Trash2}
+                endIconClassName="p-0.5">
                 Delete
               </Button>
               <Button

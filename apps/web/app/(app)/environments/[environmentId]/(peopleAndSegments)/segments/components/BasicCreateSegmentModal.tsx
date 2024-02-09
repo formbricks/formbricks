@@ -163,7 +163,7 @@ const BasicCreateSegmentModal = ({ environmentId, attributeClasses }: TCreateSeg
             </div>
 
             <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
-            <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-700 bg-white p-4">
+            <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               {segment?.filters?.length === 0 && (
                 <div className="-mb-2 flex items-center gap-1">
                   <FilterIcon className="h-5 w-5 text-slate-700" />

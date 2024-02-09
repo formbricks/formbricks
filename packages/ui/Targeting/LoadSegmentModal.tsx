@@ -94,7 +94,7 @@ const SegmentDetails = ({
         {segmentsArray.map((segment) => (
           <div
             key={segment.id}
-            className="relative grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100"
+            className=" relative mt-1 grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100"
             onClick={() => {
               if (isLoading) return;
               handleLoadNewSegment(segment.id);
