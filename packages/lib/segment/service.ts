@@ -321,6 +321,8 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
     segmentCache.revalidate({ id: segmentId, environmentId: segment.environmentId });
     segment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
 
+    surveyCache.revalidate({ environmentId: currentSegment.environmentId });
+
     return transformPrismaSegment(segment);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

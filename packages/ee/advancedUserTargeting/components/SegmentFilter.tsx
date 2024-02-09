@@ -284,11 +284,12 @@ const AttributeSegmentFilter = ({
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
-          <SelectValue hidden />
-          <div className="flex items-center gap-1">
-            <TagIcon className="h-4 w-4 text-sm" />
-            <p>{attributeClass}</p>
-          </div>
+          <SelectValue>
+            <div className="flex items-center gap-1">
+              <TagIcon className="h-4 w-4 text-sm" />
+              <p>{attributeClass}</p>
+            </div>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
@@ -309,8 +310,9 @@ const AttributeSegmentFilter = ({
         }}
         disabled={viewOnly}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
-          <SelectValue className="hidden" />
-          <p>{operatorText}</p>
+          <SelectValue>
+            <p>{operatorText}</p>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
@@ -466,11 +468,12 @@ const PersonSegmentFilter = ({
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
-          <SelectValue hidden />
-          <div className="flex items-center gap-1">
-            <TagIcon className="h-4 w-4 text-sm" />
-            <p>{personIdentifier}</p>
-          </div>
+          <SelectValue>
+            <div className="flex items-center gap-1">
+              <TagIcon className="h-4 w-4 text-sm" />
+              <p>{personIdentifier}</p>
+            </div>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
@@ -487,8 +490,9 @@ const PersonSegmentFilter = ({
         }}
         disabled={viewOnly}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
-          <SelectValue className="hidden" />
-          <p>{operatorText}</p>
+          <SelectValue>
+            <p>{operatorText}</p>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
@@ -635,11 +639,12 @@ const ActionSegmentFilter = ({
         <SelectTrigger
           className="w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
-          <SelectValue />
-          <div className="flex items-center gap-1">
-            <MousePointerClick className="h-4 w-4 text-sm" />
-            <p>{actionClass}</p>
-          </div>
+          <SelectValue>
+            <div className="flex items-center gap-1">
+              <MousePointerClick className="h-4 w-4 text-sm" />
+              <p>{actionClass}</p>
+            </div>
+          </SelectValue>
         </SelectTrigger>
         <SelectContent className="bottom-0">
           {actionClasses.map((actionClass) => (
@@ -676,8 +681,9 @@ const ActionSegmentFilter = ({
         <SelectTrigger
           className="flex w-full max-w-[40px] items-center justify-center bg-white text-center"
           hideArrow>
-          <SelectValue />
-          <p>{operatorText}</p>
+          <SelectValue>
+            <p>{operatorText}</p>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
@@ -887,10 +893,11 @@ const DeviceFilter = ({
         }}
         disabled={viewOnly}>
         <SelectTrigger
-          className="flex w-full max-w-[40px] items-center justify-center bg-white text-center"
+          className="flex w-auto max-w-[40px] items-center justify-center bg-white text-center"
           hideArrow>
-          <SelectValue />
-          <p>{operatorText}</p>
+          <SelectValue>
+            <p>{operatorText}</p>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>

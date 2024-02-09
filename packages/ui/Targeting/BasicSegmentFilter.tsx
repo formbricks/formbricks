@@ -239,11 +239,12 @@ const AttributeSegmentFilter = ({
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
-          <SelectValue hidden />
-          <div className="flex items-center gap-1">
-            <TagIcon className="h-4 w-4 text-sm" />
-            <p>{attributeClass}</p>
-          </div>
+          <SelectValue>
+            <div className="flex items-center gap-2">
+              <TagIcon className="h-4 w-4 text-sm" />
+              <p>{attributeClass}</p>
+            </div>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
@@ -264,8 +265,9 @@ const AttributeSegmentFilter = ({
         }}
         disabled={viewOnly}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
-          <SelectValue className="hidden" />
-          <p>{operatorText}</p>
+          <SelectValue>
+            <p>{operatorText}</p>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
@@ -415,11 +417,12 @@ const PersonSegmentFilter = ({
         <SelectTrigger
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
-          <SelectValue hidden />
-          <div className="flex items-center gap-1">
-            <TagIcon className="h-4 w-4 text-sm" />
-            <p>{personIdentifier}</p>
-          </div>
+          <SelectValue>
+            <div className="flex items-center gap-1">
+              <TagIcon className="h-4 w-4 text-sm" />
+              <p>{personIdentifier}</p>
+            </div>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
@@ -436,8 +439,9 @@ const PersonSegmentFilter = ({
         }}
         disabled={viewOnly}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
-          <SelectValue className="hidden" />
-          <p>{operatorText}</p>
+          <SelectValue>
+            <p>{operatorText}</p>
+          </SelectValue>
         </SelectTrigger>
 
         <SelectContent>
