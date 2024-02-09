@@ -6,15 +6,12 @@ import { useState } from "react";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TSegment } from "@formbricks/types/segment";
+import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 
 import EditSegmentModal from "./EditSegmentModal";
 
 type TSegmentTableDataRowProps = {
-  currentSegment: TSegment & {
-    activeSurveys: string[];
-    inactiveSurveys: string[];
-  };
+  currentSegment: TSegmentWithSurveyNames;
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
@@ -33,16 +30,6 @@ const SegmentTableDataRow = ({
 
   return (
     <>
-      <EditSegmentModal
-        environmentId={environmentId}
-        open={isEditSegmentModalOpen}
-        setOpen={setIsEditSegmentModalOpen}
-        currentSegment={currentSegment}
-        actionClasses={actionClasses}
-        attributeClasses={attributeClasses}
-        segments={segments}
-        isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
-      />
       <div
         key={id}
         className="m-2 grid h-16 cursor-pointer grid-cols-7 content-center rounded-lg hover:bg-slate-100"
@@ -61,17 +48,28 @@ const SegmentTableDataRow = ({
         <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
           <div className="ph-no-capture text-slate-900">{surveys?.length}</div>
         </div>
-        <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+        <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
           <div className="ph-no-capture text-slate-900">
             {formatDistanceToNow(updatedAt, {
               addSuffix: true,
             }).replace("about", "")}
           </div>
         </div>
-        <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+        <div className="col-span-1 my-auto hidden whitespace-normal text-center text-sm text-slate-500 sm:block">
           <div className="ph-no-capture text-slate-900">{format(createdAt, "do 'of' MMMM, yyyy")}</div>
         </div>
       </div>
+
+      <EditSegmentModal
+        environmentId={environmentId}
+        open={isEditSegmentModalOpen}
+        setOpen={setIsEditSegmentModalOpen}
+        currentSegment={currentSegment}
+        actionClasses={actionClasses}
+        attributeClasses={attributeClasses}
+        segments={segments}
+        isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
+      />
     </>
   );
 };

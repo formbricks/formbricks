@@ -119,11 +119,11 @@ const SegmentDetails = ({
               </div>
             </div>
 
-            <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+            <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
               <div className="ph-no-capture text-slate-900">{timeSinceDate(segment.updatedAt)}</div>
             </div>
 
-            <div className="col-span-1 my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 sm:block">
+            <div className="whitespace-wrap col-span-1 my-auto hidden text-center text-sm text-slate-500 sm:block">
               <div className="ph-no-capture text-slate-900">{formatDate(segment.createdAt)}</div>
             </div>
           </div>
