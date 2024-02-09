@@ -22,7 +22,7 @@ interface EditWelcomeCardProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 export default function EditWelcomeCard({
@@ -34,7 +34,7 @@ export default function EditWelcomeCard({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: EditWelcomeCardProps) {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
@@ -138,7 +138,7 @@ export default function EditWelcomeCard({
                 updateSurvey={updateSurvey}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageSymbol={defaultLanguageSymbol}
+                defaultLanguageId={defaultLanguageId}
               />
             </div>
             <div className="mt-3">
@@ -156,7 +156,7 @@ export default function EditWelcomeCard({
                   firstRender={firstRender}
                   setFirstRender={setFirstRender}
                   questionIdx={-1}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               </div>
             </div>
@@ -177,7 +177,7 @@ export default function EditWelcomeCard({
                     updateSurvey={updateSurvey}
                     selectedLanguage={selectedLanguage}
                     setSelectedLanguage={setSelectedLanguage}
-                    defaultLanguageSymbol={defaultLanguageSymbol}
+                    defaultLanguageId={defaultLanguageId}
                   />
                 </div>
               </div>

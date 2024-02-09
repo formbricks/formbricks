@@ -6,7 +6,7 @@ export function getPrefillResponseData(
   currentQuestion: TSurveyQuestion,
   survey: TSurvey,
   firstQuestionPrefill: string,
-  language: string
+  languageId: string
 ): TResponseData | undefined {
   try {
     if (firstQuestionPrefill) {
@@ -16,7 +16,7 @@ export function getPrefillResponseData(
       const question = survey?.questions.find((q: any) => q.id === firstQuestionId);
       if (!question) throw new Error("Question not found");
 
-      const answer = transformAnswer(question, firstQuestionPrefill || "", language);
+      const answer = transformAnswer(question, firstQuestionPrefill || "", languageId);
       const answerObj = { [firstQuestionId]: answer };
 
       if (

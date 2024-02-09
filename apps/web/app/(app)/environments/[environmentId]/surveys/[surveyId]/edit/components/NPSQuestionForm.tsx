@@ -19,7 +19,7 @@ interface NPSQuestionFormProps {
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 export default function NPSQuestionForm({
@@ -32,7 +32,7 @@ export default function NPSQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: NPSQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageIds = extractLanguageIds(surveyLanguages);
@@ -49,7 +49,7 @@ export default function NPSQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
 
       <div>
@@ -67,7 +67,7 @@ export default function NPSQuestionForm({
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageSymbol={defaultLanguageSymbol}
+                defaultLanguageId={defaultLanguageId}
               />
             </div>
 
@@ -88,7 +88,7 @@ export default function NPSQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageIds, defaultLanguageSymbol),
+                subheader: createI18nString("", surveyLanguageIds, defaultLanguageId),
               });
               setShowSubheader(true);
             }}>
@@ -112,7 +112,7 @@ export default function NPSQuestionForm({
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageSymbol={defaultLanguageSymbol}
+            defaultLanguageId={defaultLanguageId}
           />
         </div>
         <div className="w-full">
@@ -127,7 +127,7 @@ export default function NPSQuestionForm({
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageSymbol={defaultLanguageSymbol}
+            defaultLanguageId={defaultLanguageId}
           />
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function NPSQuestionForm({
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageSymbol={defaultLanguageSymbol}
+            defaultLanguageId={defaultLanguageId}
           />
         </div>
       )}

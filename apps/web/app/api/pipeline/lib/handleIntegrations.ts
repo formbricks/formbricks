@@ -14,19 +14,15 @@ export async function handleIntegrations(
   integrations: TIntegration[],
   data: TPipelineInput,
   surveyData: TSurvey,
-  defaultLanguageSymbol: string
+  defaultLanguageId: string
 ) {
   for (const integration of integrations) {
     switch (integration.type) {
       case "googleSheets":
-        await handleGoogleSheetsIntegration(
-          integration as TIntegrationGoogleSheets,
-          data,
-          defaultLanguageSymbol
-        );
+        await handleGoogleSheetsIntegration(integration as TIntegrationGoogleSheets, data, defaultLanguageId);
         break;
       case "airtable":
-        await handleAirtableIntegration(integration as TIntegrationAirtable, data, defaultLanguageSymbol);
+        await handleAirtableIntegration(integration as TIntegrationAirtable, data, defaultLanguageId);
         break;
       case "notion":
         await handleNotionIntegration(integration as TIntegrationNotion, data, surveyData);
@@ -38,12 +34,12 @@ export async function handleIntegrations(
 async function handleAirtableIntegration(
   integration: TIntegrationAirtable,
   data: TPipelineInput,
-  defaultLanguageSymbol: string
+  defaultLanguageId: string
 ) {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], defaultLanguageSymbol);
+        const values = await extractResponses(data, element.questionIds as string[], defaultLanguageId);
 
         await airtableWriteData(integration.config.key, element, values);
       }
@@ -54,12 +50,12 @@ async function handleAirtableIntegration(
 async function handleGoogleSheetsIntegration(
   integration: TIntegrationGoogleSheets,
   data: TPipelineInput,
-  defaultLanguageSymbol: string
+  defaultLanguageId: string
 ) {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], defaultLanguageSymbol);
+        const values = await extractResponses(data, element.questionIds as string[], defaultLanguageId);
         await writeData(integration.config.key, element.spreadsheetId, values);
       }
     }
@@ -69,7 +65,7 @@ async function handleGoogleSheetsIntegration(
 async function extractResponses(
   data: TPipelineInput,
   questionIds: string[],
-  defaultLanguageSymbol: string
+  defaultLanguageId: string
 ): Promise<string[][]> {
   const responses: string[] = [];
   const questions: string[] = [];
@@ -85,7 +81,7 @@ async function extractResponses(
     }
 
     const question = survey?.questions.find((q) => q.id === questionId);
-    questions.push(getLocalizedValue(question?.headline, defaultLanguageSymbol) || "");
+    questions.push(getLocalizedValue(question?.headline, defaultLanguageId) || "");
   }
 
   return [responses, questions];

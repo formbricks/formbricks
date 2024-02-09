@@ -26,7 +26,7 @@ interface LocalizedEditorProps {
   surveyLanguages: TLanguage[];
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 export const LocalizedEditor = ({
   id,
@@ -40,20 +40,20 @@ export const LocalizedEditor = ({
   surveyLanguages,
   firstRender,
   setFirstRender,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: LocalizedEditorProps) => {
   const hasi18n = value ? containsTranslations(value) : false;
   const surveyLanguageIds = extractLanguageIds(surveyLanguages);
   const isInComplete =
     value !== undefined &&
     (id === "subheader"
-      ? value[defaultLanguageSymbol]?.trim() !== "" &&
+      ? value[defaultLanguageId]?.trim() !== "" &&
         isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === defaultLanguageSymbol
+        selectedLanguage === defaultLanguageId
       : isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === defaultLanguageSymbol);
+        selectedLanguage === defaultLanguageId);
 
   return (
     <div className="relative w-full">
@@ -86,16 +86,14 @@ export const LocalizedEditor = ({
             setSelectedLanguage={setSelectedLanguage}
           />
 
-          {value && selectedLanguage !== defaultLanguageSymbol && value[defaultLanguageSymbol] && (
+          {value && selectedLanguage !== defaultLanguageId && value[defaultLanguageId] && (
             <div className="mt-1 flex text-xs text-gray-500">
               <strong>Translate:</strong>
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
-                    recallToHeadline(value, localSurvey, false, defaultLanguageSymbol)[
-                      defaultLanguageSymbol
-                    ] ?? ""
+                    recallToHeadline(value, localSurvey, false, defaultLanguageId)[defaultLanguageId] ?? ""
                   ),
                 }}></label>
             </div>

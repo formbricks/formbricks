@@ -57,7 +57,7 @@ export default function SurveyMenuBar({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   let faultyQuestions: String[] = [];
 
@@ -125,7 +125,7 @@ export default function SurveyMenuBar({
       if (
         !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", surveyLanguages) ||
         (survey.thankYouCard.subheader &&
-          survey.thankYouCard.subheader[defaultLanguageSymbol] !== "" &&
+          survey.thankYouCard.subheader[defaultLanguageId] !== "" &&
           !isLabelValidForAllLanguages(survey.thankYouCard.subheader, surveyLanguages))
       ) {
         faultyQuestions.push("end");

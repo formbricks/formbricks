@@ -1,7 +1,7 @@
 "use client";
 
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { TrashIcon } from "@heroicons/react/24/solid";
+import { InformationCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import Select from "react-select";
@@ -12,10 +12,11 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import { updateProductAction } from "../lib/actions";
-import { iso639Identifiers } from "../utils/ISOLanguages";
+import { iso639Languages } from "../lib/isoLanguages";
 
 interface EditLanguageProps {
   product: TProduct;
@@ -40,9 +41,9 @@ export default function EditLanguage({
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteModalOpenIndex, setDeleteModalOpenIndex] = useState<number | null>(null);
-  const languageOptions = iso639Identifiers.map((code) => ({
-    value: code,
-    label: code,
+  const languageOptions = iso639Languages.map((language) => ({
+    value: language.alpha2,
+    label: `${language.alpha2} (${language.english})`,
   }));
 
   const checkIfDuplicateExists = (arr: string[]) => {
@@ -58,16 +59,13 @@ export default function EditLanguage({
 
   const validateLanguage = (languages: TLanguage[]) => {
     const languageIDs = languages.map((language) => language.id.toLowerCase().trim());
-    const languageNames = languages.map((language) => language.alias.toLowerCase().trim());
-    if (checkIfDuplicateExists(languageNames) || checkIfDuplicateExists(languageIDs)) {
+    const languageAliases = languages
+      .filter((l) => l.alias !== null)
+      .map((l) => (l.alias || "").toLowerCase().trim());
+    if (checkIfDuplicateExists(languageAliases) || checkIfDuplicateExists(languageIDs)) {
       toast.error("Duplicate language or language ID");
       return false;
     }
-    if (languageIDs.includes("") || languageNames.includes("")) {
-      toast.error("Missing language or language ID");
-      return false;
-    }
-
     return true;
   };
 
@@ -77,7 +75,7 @@ export default function EditLanguage({
       ...prevLanguages,
       {
         id: "",
-        alias: "",
+        alias: null,
         default: false,
       },
     ]);
@@ -112,18 +110,20 @@ export default function EditLanguage({
   };
 
   const markAsDefault = (languageId: string) => {
-    const newLanguages = [...languages];
-    const defaultLanguage = newLanguages.find((language) => language.id === defaultSymbol);
-    if (defaultLanguage) {
-      defaultLanguage.default = false;
+    if (confirm(`Are you sure you want to change the default language to "${languageId}"?`)) {
+      const newLanguages = [...languages];
+      const defaultLanguage = newLanguages.find((language) => language.id === defaultSymbol);
+      if (defaultLanguage) {
+        defaultLanguage.default = false;
+      }
+      const newDefaultLanguage = newLanguages.find((language) => language.id === languageId);
+      if (newDefaultLanguage) {
+        newDefaultLanguage.default = true;
+        setdefaultSymbol(newDefaultLanguage.id);
+      }
+      setLanguages(newLanguages);
+      handleSave(newLanguages);
     }
-    const newDefaultLanguage = newLanguages.find((language) => language.id === languageId);
-    if (newDefaultLanguage) {
-      newDefaultLanguage.default = true;
-      setdefaultSymbol(newDefaultLanguage.id);
-    }
-    setLanguages(newLanguages);
-    handleSave(newLanguages);
   };
 
   const handleSave = async (languages: TLanguage[]) => {
@@ -155,18 +155,32 @@ export default function EditLanguage({
       <div className="flex ">
         <div className="space-y-4">
           <div className="flex w-full space-x-4">
-            <Label className="w-28" htmlFor="languagesId">
+            <Label className="w-48" htmlFor="languagesId">
               Language ID
             </Label>
-            <Label htmlFor="Alias">Alias</Label>
+            <Label htmlFor="Alias">
+              Alias{" "}
+              <TooltipProvider delayDuration={80}>
+                <Tooltip>
+                  <TooltipTrigger tabIndex={-1}>
+                    <div>
+                      <InformationCircleIcon className="h-5 w-5 text-slate-400" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    The alias is an alternate name to identify the language in link surveys and the SDK.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </Label>
           </div>
 
           {languages.map((language, index) => {
             return (
-              <div key={index} className=" flex items-center space-x-6">
+              <div key={index} className="flex items-center space-x-6">
                 <div className="flex items-center">
                   <Select
-                    className=" h-full w-24"
+                    className="h-full w-48"
                     value={languageOptions.find((option) => option.value === language.id)}
                     onChange={(selectedOption) => {
                       if (!selectedOption) return;
@@ -175,29 +189,24 @@ export default function EditLanguage({
                     options={languageOptions}
                     isDisabled={!isEnterpriseEdition || isLanguageSelectDisable(index)}
                     isSearchable={true}
-                    placeholder="en"
+                    placeholder="English (en)"
                   />
                 </div>
-                <div className="flex h-12 w-1/2  ">
+                <div className="flex h-12 ">
                   <div className="relative h-full">
                     <Input
                       disabled={!isEnterpriseEdition}
-                      placeholder="English"
                       className="h-full w-40"
-                      value={language.alias}
+                      value={language.alias || ""}
+                      placeholder="not provided"
                       onChange={(e) => handleOnChange(index, "alias", e.target.value)}
                     />
-                    {language.id === defaultSymbol && (
-                      <span className="absolute right-2 top-3 rounded-2xl bg-slate-200 px-2 py-1 text-xs text-slate-500">
-                        Default
-                      </span>
-                    )}
                   </div>
                 </div>
                 {language.default !== true ? (
                   <div>
                     <TrashIcon
-                      className=" h-5 w-5 cursor-pointer text-slate-400"
+                      className="h-4 w-4 cursor-pointer text-slate-400"
                       onClick={() => {
                         if (isEditing) return;
                         setDeleteModalOpenIndex(index);
@@ -216,15 +225,18 @@ export default function EditLanguage({
                 ) : (
                   <div className="h-6 w-6"></div>
                 )}
-                {language.default === false && (
+                {language.default === false ? (
                   <Button
-                    variant="darkCTA"
+                    size="sm"
+                    variant="secondary"
                     disabled={index === product.languages.length || isEditing}
                     className="whitespace-nowrap"
                     onClick={() => markAsDefault(language.id)}
                     loading={isUpdating}>
                     Mark as default
                   </Button>
+                ) : (
+                  <span className="rounded-2xl bg-slate-500 px-3 py-1 text-sm text-white">Default</span>
                 )}
               </div>
             );

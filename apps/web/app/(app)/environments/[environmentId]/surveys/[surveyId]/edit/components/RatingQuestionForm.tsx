@@ -21,7 +21,7 @@ interface RatingQuestionFormProps {
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 export default function RatingQuestionForm({
@@ -33,7 +33,7 @@ export default function RatingQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageIds = extractLanguageIds(surveyLanguages);
@@ -51,7 +51,7 @@ export default function RatingQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
 
       <div>
@@ -69,7 +69,7 @@ export default function RatingQuestionForm({
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageSymbol={defaultLanguageSymbol}
+                defaultLanguageId={defaultLanguageId}
               />
             </div>
 
@@ -90,7 +90,7 @@ export default function RatingQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageIds, defaultLanguageSymbol),
+                subheader: createI18nString("", surveyLanguageIds, defaultLanguageId),
               });
               setShowSubheader(true);
             }}>
@@ -149,7 +149,7 @@ export default function RatingQuestionForm({
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageSymbol={defaultLanguageSymbol}
+            defaultLanguageId={defaultLanguageId}
           />
         </div>
         <div className="flex-1">
@@ -165,7 +165,7 @@ export default function RatingQuestionForm({
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageSymbol={defaultLanguageSymbol}
+            defaultLanguageId={defaultLanguageId}
           />
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function RatingQuestionForm({
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
-              defaultLanguageSymbol={defaultLanguageSymbol}
+              defaultLanguageId={defaultLanguageId}
             />
           </div>
         )}

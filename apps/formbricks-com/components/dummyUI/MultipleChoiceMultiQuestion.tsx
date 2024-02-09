@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { TSurveyMultipleChoiceMultiQuestion } from "./types";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
@@ -22,7 +21,6 @@ export default function MultipleChoiceMultiQuestion({
 }: MultipleChoiceMultiProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([]);
   const [isAtLeastOneChecked, setIsAtLeastOneChecked] = useState(false);
-  const defaultLanguage = "en";
 
   useEffect(() => {
     setIsAtLeastOneChecked(selectedChoices.length > 0);
@@ -43,11 +41,8 @@ export default function MultipleChoiceMultiQuestion({
         onSubmit(data);
         setSelectedChoices([]); // reset value
       }}>
-      <Headline headline={getLocalizedValue(question.headline, defaultLanguage)} questionId={question.id} />
-      <Subheader
-        subheader={getLocalizedValue(question.subheader, defaultLanguage)}
-        questionId={question.id}
-      />
+      <Headline headline={question.headline} questionId={question.id} />
+      <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
@@ -57,7 +52,7 @@ export default function MultipleChoiceMultiQuestion({
                 <label
                   key={choice.id}
                   className={cn(
-                    selectedChoices.includes(getLocalizedValue(choice.label, defaultLanguage))
+                    selectedChoices.includes(choice.label)
                       ? "z-10 border-slate-400 bg-slate-50 dark:border-slate-400 dark:bg-slate-600"
                       : "border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:hover:bg-slate-600",
                     "relative flex cursor-pointer flex-col rounded-md border p-4  focus:outline-none"
@@ -67,10 +62,10 @@ export default function MultipleChoiceMultiQuestion({
                       type="checkbox"
                       id={choice.id}
                       name={question.id}
-                      value={getLocalizedValue(choice.label, defaultLanguage)}
+                      value={choice.label}
                       className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0 dark:border-slate-600 dark:bg-slate-500"
                       aria-labelledby={`${choice.id}-label`}
-                      checked={selectedChoices.includes(getLocalizedValue(choice.label, defaultLanguage))}
+                      checked={selectedChoices.includes(choice.label)}
                       onChange={(e) => {
                         if (e.currentTarget.checked) {
                           setSelectedChoices([...selectedChoices, e.currentTarget.value]);
@@ -85,7 +80,7 @@ export default function MultipleChoiceMultiQuestion({
                     <span
                       id={`${choice.id}-label`}
                       className="ml-3 font-medium text-slate-900 dark:text-slate-200">
-                      {getLocalizedValue(choice.label, defaultLanguage)}
+                      {choice.label}
                     </span>
                   </span>
                 </label>
@@ -106,7 +101,7 @@ export default function MultipleChoiceMultiQuestion({
           type="submit"
           className="flex items-center rounded-md border border-transparent px-3 py-3 text-base font-medium leading-4 text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
           style={{ backgroundColor: brandColor }}>
-          {getLocalizedValue(question.buttonLabel, defaultLanguage) || (lastQuestion ? "Finish" : "Next")}
+          {question.buttonLabel || (lastQuestion ? "Finish" : "Next")}
         </button>
       </div>
     </form>

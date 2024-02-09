@@ -56,10 +56,10 @@ export default function SurveyEditor({
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [i18n, setI18n] = useState(false);
   const defaultLanguage = getDefaultLanguage(product.languages);
-  const defaultLanguageSymbol = defaultLanguage.id;
+  const defaultLanguageId = defaultLanguage.id;
   const [surveyLanguages, setSurveyLanguages] = useState<TLanguage[]>([defaultLanguage]);
   const [productLanguages, setProductLanguages] = useState<TLanguage[]>(product.languages ?? defaultLanguage);
-  const [selectedLanguage, setSelectedLanguage] = useState<string>(defaultLanguageSymbol);
+  const [selectedLanguageId, setSelectedLanguageId] = useState<string>(defaultLanguageId);
   const surveyEditorRef = useRef(null);
 
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
@@ -80,9 +80,9 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (!localSurvey) return;
-    setLocalSurvey(translateSurvey(localSurvey, surveyLanguages, defaultLanguageSymbol));
+    setLocalSurvey(translateSurvey(localSurvey, surveyLanguages, defaultLanguageId));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n, localSurvey?.id, localSurvey?.questions.length, selectedLanguage, surveyLanguages]);
+  }, [i18n, localSurvey?.id, localSurvey?.questions.length, selectedLanguageId, surveyLanguages]);
 
   useEffect(() => {
     const listener = () => {
@@ -112,10 +112,10 @@ export default function SurveyEditor({
   }, [localSurvey?.type]);
 
   useEffect(() => {
-    if (!extractLanguageIds(surveyLanguages).includes(selectedLanguage)) {
-      setSelectedLanguage(defaultLanguageSymbol);
+    if (!extractLanguageIds(surveyLanguages).includes(selectedLanguageId)) {
+      setSelectedLanguageId(defaultLanguageId);
     }
-  }, [surveyLanguages, selectedLanguage, defaultLanguageSymbol]);
+  }, [surveyLanguages, selectedLanguageId, defaultLanguageId]);
 
   if (!localSurvey) {
     return <Loading />;
@@ -135,7 +135,7 @@ export default function SurveyEditor({
           product={localProduct}
           responseCount={responseCount}
           surveyLanguages={surveyLanguages}
-          selectedLanguage={selectedLanguage}
+          selectedLanguage={selectedLanguageId}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
@@ -162,8 +162,8 @@ export default function SurveyEditor({
                   product={product}
                   invalidQuestions={invalidQuestions}
                   setInvalidQuestions={setInvalidQuestions}
-                  selectedLanguage={selectedLanguage ? selectedLanguage : defaultLanguageSymbol}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguage={selectedLanguageId ? selectedLanguageId : defaultLanguageId}
+                  setSelectedLanguage={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                 />
               </>
@@ -188,9 +188,9 @@ export default function SurveyEditor({
               product={localProduct}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
-              language={selectedLanguage}
+              languageId={selectedLanguageId}
               onFileUpload={async (file) => file.name}
-              defaultLanguageSymbol={defaultLanguageSymbol}
+              defaultLanguageId={defaultLanguageId}
             />
           </aside>
         </div>

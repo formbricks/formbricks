@@ -49,7 +49,7 @@ interface QuestionFormInputProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
   label?: string;
   maxLength?: number;
   placeholder?: string;
@@ -76,7 +76,7 @@ const QuestionFormInput = ({
   placeholder,
   onBlur,
   className,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: QuestionFormInputProps) => {
   const isChoice = id.includes("choice");
   let choiceIdx: number | null;
@@ -110,26 +110,26 @@ const QuestionFormInput = ({
       return (
         (question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion).choices[
           choiceIdx
-        ].label || createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
+        ].label || createI18nString("", surveyLanguageIds, defaultLanguageId)
       );
     }
     if (isThankYouCard) {
       const thankYouCard = localSurvey.thankYouCard;
       return (
         (thankYouCard[id as keyof typeof thankYouCard] as TI18nString) ||
-        createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
+        createI18nString("", surveyLanguageIds, defaultLanguageId)
       );
     }
     if (isWelcomeCard) {
       const welcomeCard = localSurvey.welcomeCard;
       return (
         (welcomeCard[id as keyof typeof welcomeCard] as TI18nString) ||
-        createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
+        createI18nString("", surveyLanguageIds, defaultLanguageId)
       );
     }
     return (
       (question[id as keyof typeof question] as TI18nString) ||
-      createI18nString("", surveyLanguageIds, defaultLanguageSymbol)
+      createI18nString("", surveyLanguageIds, defaultLanguageId)
     );
   };
 

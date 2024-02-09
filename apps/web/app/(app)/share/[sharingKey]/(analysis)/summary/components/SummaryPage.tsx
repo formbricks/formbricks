@@ -45,7 +45,7 @@ const SummaryPage = ({
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -66,7 +66,7 @@ const SummaryPage = ({
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
       <SurveyResultsTabs
         activeId="summary"
@@ -86,7 +86,7 @@ const SummaryPage = ({
           survey={survey}
           responses={responses}
           displayCount={displayCount}
-          defaultLanguageSymbol={defaultLanguageSymbol}
+          defaultLanguageId={defaultLanguageId}
         />
       )}
       <SummaryList

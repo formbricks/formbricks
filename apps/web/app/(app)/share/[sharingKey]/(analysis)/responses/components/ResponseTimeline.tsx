@@ -18,7 +18,7 @@ interface ResponseTimelineProps {
   survey: TSurvey;
   environmentTags: TTag[];
   responsesPerPage: number;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 export default function ResponseTimeline({
@@ -27,7 +27,7 @@ export default function ResponseTimeline({
   survey,
   environmentTags,
   responsesPerPage,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: ResponseTimelineProps) {
   const [fetchedResponses, setFetchedResponses] = useState<TResponse[]>(responses);
   const loadingRef = useRef(null);
@@ -88,7 +88,7 @@ export default function ResponseTimeline({
                   environmentTags={environmentTags}
                   pageType="response"
                   environment={environment}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               </div>
             );

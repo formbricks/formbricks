@@ -16,7 +16,7 @@ export default async function LanguageSettingsPage({ params }: { params: { envir
 
   return (
     <div>
-      <SettingsTitle title="Languages" />
+      <SettingsTitle title="Survey Languages" />
       <SettingsCard
         title="Multi-language surveys"
         description="Add languages to create multi-language surveys.">

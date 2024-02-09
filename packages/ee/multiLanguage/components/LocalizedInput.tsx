@@ -13,7 +13,7 @@ interface LocalizedInputProps {
   placeholder?: string;
   label?: string;
   selectedLanguage: string;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
   updateSurvey?: (data: Partial<TSurveyQuestion>) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyChoice>) => void;
@@ -41,7 +41,7 @@ const LocalizedInput = ({
   onBlur,
   surveyLanguages,
   maxLength,
-  defaultLanguageSymbol,
+  defaultLanguageId,
   className,
 }: LocalizedInputProps) => {
   const isThankYouCard = questionIdx === localSurvey.questions.length;
@@ -62,13 +62,13 @@ const LocalizedInput = ({
     id === "buttonLabel" ||
     id === "placeholder" ||
     id === "backButtonLabel"
-      ? value[defaultLanguageSymbol]?.trim() !== "" &&
+      ? value[defaultLanguageId]?.trim() !== "" &&
         isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === defaultLanguageSymbol
+        selectedLanguage === defaultLanguageId
       : isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === defaultLanguageSymbol);
+        selectedLanguage === defaultLanguageId);
 
   return (
     <div className="relative w-full">
@@ -89,13 +89,13 @@ const LocalizedInput = ({
         maxLength={maxLength}
         placeholder={placeholder}
         onBlur={onBlur}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
         className={className}
       />
-      {value && selectedLanguage !== defaultLanguageSymbol && value[defaultLanguageSymbol] && (
+      {value && selectedLanguage !== defaultLanguageId && value[defaultLanguageId] && (
         <div className="mt-1 text-xs text-gray-500">
           <strong>Translate:</strong>{" "}
-          {recallToHeadline(value, localSurvey, false, defaultLanguageSymbol)[defaultLanguageSymbol]}
+          {recallToHeadline(value, localSurvey, false, defaultLanguageId)[defaultLanguageId]}
         </div>
       )}
       {surveyLanguages.length > 1 && isInComplete && (

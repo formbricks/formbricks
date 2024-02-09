@@ -40,7 +40,7 @@ const ResponsePage = ({
   responsesPerPage,
 }: ResponsePageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -61,7 +61,7 @@ const ResponsePage = ({
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
       <SurveyResultsTabs
         activeId="responses"
@@ -76,7 +76,7 @@ const ResponsePage = ({
         survey={survey}
         environmentTags={environmentTags}
         responsesPerPage={responsesPerPage}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
     </ContentWrapper>
   );

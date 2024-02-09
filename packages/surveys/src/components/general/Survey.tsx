@@ -29,11 +29,11 @@ export function Survey({
   onRetry = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
-  language,
+  languageId,
   getSetIsError,
   onFileUpload,
   responseCount,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -114,10 +114,10 @@ export function Survey({
           currentQuestion.type === "multipleChoiceMulti"
         ) {
           const choice = currentQuestion.choices.find(
-            (choice) => getLocalizedValue(choice.label, language) === responseValue
+            (choice) => getLocalizedValue(choice.label, languageId) === responseValue
           );
           if (choice) {
-            if (evaluateCondition(logic, getLocalizedValue(choice.label, defaultLanguageSymbol))) {
+            if (evaluateCondition(logic, getLocalizedValue(choice.label, defaultLanguageId))) {
               return logic.destination;
             }
           }
@@ -179,18 +179,18 @@ export function Survey({
 
   const parseRecallInformation = (question: TSurveyQuestion) => {
     const modifiedQuestion = structuredClone(question);
-    if (question.headline && question.headline[language]?.includes("recall:")) {
-      modifiedQuestion.headline[language] = replaceRecallInfo(
-        getLocalizedValue(modifiedQuestion.headline, language)
+    if (question.headline && question.headline[languageId]?.includes("recall:")) {
+      modifiedQuestion.headline[languageId] = replaceRecallInfo(
+        getLocalizedValue(modifiedQuestion.headline, languageId)
       );
     }
     if (
       question.subheader &&
-      question.subheader[language]?.includes("recall:") &&
+      question.subheader[languageId]?.includes("recall:") &&
       modifiedQuestion.subheader
     ) {
-      modifiedQuestion.subheader[language] = replaceRecallInfo(
-        getLocalizedValue(modifiedQuestion.subheader, language)
+      modifiedQuestion.subheader[languageId] = replaceRecallInfo(
+        getLocalizedValue(modifiedQuestion.subheader, languageId)
       );
     }
     return modifiedQuestion;
@@ -228,7 +228,7 @@ export function Survey({
           buttonLabel={survey.welcomeCard.buttonLabel}
           onSubmit={onSubmit}
           survey={survey}
-          language={language}
+          languageId={languageId}
           responseCount={responseCount}
         />
       );
@@ -242,7 +242,7 @@ export function Survey({
           imageUrl={survey.thankYouCard.imageUrl}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
-          language={language}
+          languageId={languageId}
           replaceRecallInfo={replaceRecallInfo}
         />
       );
@@ -265,7 +265,7 @@ export function Survey({
                 : currentQuestion.id === survey?.questions[0]?.id
             }
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
-            language={language}
+            languageId={languageId}
           />
         )
       );

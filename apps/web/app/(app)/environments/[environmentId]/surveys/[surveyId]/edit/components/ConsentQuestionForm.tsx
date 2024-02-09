@@ -17,7 +17,7 @@ interface ConsentQuestionFormProps {
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 export default function ConsentQuestionForm({
@@ -29,7 +29,7 @@ export default function ConsentQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -50,7 +50,7 @@ export default function ConsentQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
 
       <div className="mt-3">
@@ -68,7 +68,7 @@ export default function ConsentQuestionForm({
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
-            defaultLanguageSymbol={defaultLanguageSymbol}
+            defaultLanguageId={defaultLanguageId}
           />
         </div>
       </div>
@@ -86,7 +86,7 @@ export default function ConsentQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
       {/* <div className="mt-3">
         <Label htmlFor="buttonLabel">Button Label</Label>

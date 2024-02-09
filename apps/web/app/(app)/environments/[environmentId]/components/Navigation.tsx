@@ -172,7 +172,7 @@ export default function Navigation({
         },
         {
           icon: LanguageIcon,
-          label: "Multiple Languages",
+          label: "Survey Languages",
           href: `/environments/${environment.id}/settings/language`,
           hidden: !isEnterpriseEdition,
         },

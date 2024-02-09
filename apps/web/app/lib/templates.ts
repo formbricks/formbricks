@@ -9,17 +9,17 @@ export const replaceQuestionPresetPlaceholders = (
 ): TSurveyQuestion => {
   if (!product) return question;
   const newQuestion = structuredClone(question);
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   if (newQuestion.headline) {
-    newQuestion.headline[defaultLanguageSymbol] = getLocalizedValue(
+    newQuestion.headline[defaultLanguageId] = getLocalizedValue(
       newQuestion.headline,
-      defaultLanguageSymbol
+      defaultLanguageId
     ).replace("{{productName}}", product.name);
   }
   if (newQuestion.subheader) {
-    newQuestion.subheader[defaultLanguageSymbol] = getLocalizedValue(
+    newQuestion.subheader[defaultLanguageId] = getLocalizedValue(
       newQuestion.subheader,
-      defaultLanguageSymbol
+      defaultLanguageId
     )?.replace("{{productName}}", product.name);
   }
   return newQuestion;

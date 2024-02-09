@@ -722,8 +722,8 @@ export const getSyncSurveys = async (
         throw new ResourceNotFoundError("Survey", environmentId);
       }
       if (!version) {
-        const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
-        return surveys.map((survey) => reverseTranslateSurvey(survey, defaultLanguageSymbol));
+        const defaultLanguageId = getDefaultLanguage(product.languages).id;
+        return surveys.map((survey) => reverseTranslateSurvey(survey, defaultLanguageId));
       }
       return surveys;
     },

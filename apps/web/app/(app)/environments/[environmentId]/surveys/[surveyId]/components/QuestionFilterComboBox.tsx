@@ -26,7 +26,7 @@ type QuestionFilterComboBoxProps = {
   type: OptionsType.METADATA | TSurveyQuestionType | "Attributes" | "tags" | "language" | undefined;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 };
 
 const QuestionFilterComboBox = ({
@@ -38,7 +38,7 @@ const QuestionFilterComboBox = ({
   onChangeFilterValue,
   type,
   handleRemoveMultiSelect,
-  defaultLanguageSymbol,
+  defaultLanguageId,
   disabled = false,
 }: QuestionFilterComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
@@ -155,20 +155,20 @@ const QuestionFilterComboBox = ({
                     onSelect={() => {
                       !isMultiple
                         ? onChangeFilterComboBoxValue(
-                            typeof o === "object" ? getLocalizedValue(o, defaultLanguageSymbol) : o
+                            typeof o === "object" ? getLocalizedValue(o, defaultLanguageId) : o
                           )
                         : onChangeFilterComboBoxValue(
                             Array.isArray(filterComboBoxValue)
                               ? [
                                   ...filterComboBoxValue,
-                                  typeof o === "object" ? getLocalizedValue(o, defaultLanguageSymbol) : o,
+                                  typeof o === "object" ? getLocalizedValue(o, defaultLanguageId) : o,
                                 ]
-                              : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageSymbol) : o]
+                              : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageId) : o]
                           );
                       !isMultiple && setOpen(false);
                     }}
                     className="cursor-pointer">
-                    {typeof o === "object" ? getLocalizedValue(o, defaultLanguageSymbol) : o}
+                    {typeof o === "object" ? getLocalizedValue(o, defaultLanguageId) : o}
                   </CommandItem>
                 ))}
               </CommandGroup>

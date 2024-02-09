@@ -13,7 +13,7 @@ interface ThankYouCardProps {
   subheader?: TI18nString;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
-  language: string;
+  languageId: string;
   buttonLabel?: string;
   buttonLink?: string;
   imageUrl?: string;
@@ -25,7 +25,7 @@ export default function ThankYouCard({
   subheader,
   redirectUrl,
   isRedirectDisabled,
-  language,
+  languageId,
   buttonLabel,
   buttonLink,
   imageUrl,
@@ -72,11 +72,11 @@ export default function ThankYouCard({
       <div>
         <Headline
           alignTextCenter={true}
-          headline={replaceRecallInfo(getLocalizedValue(headline, language))}
+          headline={replaceRecallInfo(getLocalizedValue(headline, languageId))}
           questionId="thankYouCard"
         />
         <Subheader
-          subheader={replaceRecallInfo(getLocalizedValue(subheader, language))}
+          subheader={replaceRecallInfo(getLocalizedValue(subheader, languageId))}
           questionId="thankYouCard"
         />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />

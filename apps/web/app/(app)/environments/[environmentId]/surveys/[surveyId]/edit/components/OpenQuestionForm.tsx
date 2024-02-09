@@ -40,7 +40,7 @@ interface OpenQuestionFormProps {
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 export default function OpenQuestionForm({
@@ -52,7 +52,7 @@ export default function OpenQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
@@ -63,7 +63,7 @@ export default function OpenQuestionForm({
       placeholder: createI18nString(
         getPlaceholderByInputType(inputType),
         surveyLanguageIds,
-        defaultLanguageSymbol
+        defaultLanguageId
       ),
       longAnswer: inputType === "text" ? question.longAnswer : false,
     };
@@ -83,7 +83,7 @@ export default function OpenQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
 
       <div>
@@ -101,7 +101,7 @@ export default function OpenQuestionForm({
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageSymbol={defaultLanguageSymbol}
+                defaultLanguageId={defaultLanguageId}
               />
             </div>
 
@@ -122,7 +122,7 @@ export default function OpenQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageIds, defaultLanguageSymbol),
+                subheader: createI18nString("", surveyLanguageIds, defaultLanguageId),
               });
               setShowSubheader(true);
             }}>
@@ -140,7 +140,7 @@ export default function OpenQuestionForm({
           value={
             question.placeholder && question.placeholder[selectedLanguage]
               ? question.placeholder
-              : createI18nString(defaultPlaceholder, surveyLanguageIds, defaultLanguageSymbol)
+              : createI18nString(defaultPlaceholder, surveyLanguageIds, defaultLanguageId)
           }
           surveyLanguages={surveyLanguages}
           localSurvey={localSurvey}
@@ -149,7 +149,7 @@ export default function OpenQuestionForm({
           updateQuestion={updateQuestion}
           selectedLanguage={selectedLanguage}
           setSelectedLanguage={setSelectedLanguage}
-          defaultLanguageSymbol={defaultLanguageSymbol}
+          defaultLanguageId={defaultLanguageId}
         />
       </div>
 

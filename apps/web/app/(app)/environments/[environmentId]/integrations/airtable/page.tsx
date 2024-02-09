@@ -25,7 +25,7 @@ export default async function Airtable({ params }) {
   if (!product) {
     throw new Error("Product not found");
   }
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   const airtableIntegration: TIntegrationAirtable | undefined = integrations?.find(
     (integration): integration is TIntegrationAirtable => integration.type === "airtable"
@@ -48,7 +48,7 @@ export default async function Airtable({ params }) {
           surveys={surveys}
           environment={environment}
           webAppUrl={WEBAPP_URL}
-          defaultLanguageSymbol={defaultLanguageSymbol}
+          defaultLanguageId={defaultLanguageId}
         />
       </div>
     </>
