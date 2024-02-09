@@ -6,7 +6,7 @@ const Roles = [
   {
     name: "(Senior) Full-Stack Engineer",
     description: "Join early and be a part of our journey right from the start 🚀",
-    location: "Worldwide",
+    location: "Mr. Worldwide",
     workplace: "Remote",
   } /*
   {
