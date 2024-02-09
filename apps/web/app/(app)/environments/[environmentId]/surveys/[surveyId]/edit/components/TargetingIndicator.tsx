@@ -2,7 +2,7 @@ import { FilterIcon, UsersIcon } from "lucide-react";
 
 import { TSegment } from "@formbricks/types/segment";
 
-const UserTargetingFallback = ({ segment }: { segment: TSegment | null }) => {
+const TargetingIndicator = ({ segment }: { segment: TSegment | null }) => {
   const doFiltersExist = !!segment?.filters?.length;
 
   return (
@@ -27,4 +27,4 @@ const UserTargetingFallback = ({ segment }: { segment: TSegment | null }) => {
   );
 };
 
-export default UserTargetingFallback;
+export default TargetingIndicator;
