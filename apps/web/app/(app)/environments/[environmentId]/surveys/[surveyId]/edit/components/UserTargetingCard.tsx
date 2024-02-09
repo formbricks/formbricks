@@ -154,8 +154,8 @@ export default function UserTargetingCard({
                     </div>
                   )}
 
-                  <p className="text-sm font-semibold text-slate-800">
-                    This is an advanced segment, you cannot edit it. Please upgrade your plan!
+                  <p className="text-sm italic text-slate-600">
+                    This is an advanced segment. Please upgrade your plan to edit it.
                   </p>
                 </div>
               ) : (
@@ -269,7 +269,7 @@ export default function UserTargetingCard({
                         )}
                         {!isSegmentUsedInOtherSurveys && (
                           <Button
-                            variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
+                            variant="secondary"
                             size="sm"
                             onClick={() => {
                               setIsSegmentEditorOpen(true);
