@@ -23,7 +23,7 @@ interface FileUploadQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   surveyId: string;
-  language: string;
+  languageId: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -38,7 +38,7 @@ export default function FileUploadQuestion({
   isLastQuestion,
   surveyId,
   onFileUpload,
-  language,
+  languageId,
   ttc,
   setTtc,
 }: FileUploadQuestionProps) {
@@ -69,12 +69,12 @@ export default function FileUploadQuestion({
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
-        headline={getLocalizedValue(question.headline, language)}
+        headline={getLocalizedValue(question.headline, languageId)}
         questionId={question.id}
         required={question.required}
       />
       <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageId) : ""}
         questionId={question.id}
       />
       <FileInput
@@ -98,7 +98,7 @@ export default function FileUploadQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageId)}
             onClick={() => {
               onBack();
             }}
@@ -106,7 +106,7 @@ export default function FileUploadQuestion({
         )}
         <div></div>
         <SubmitButton
-          buttonLabel={getLocalizedValue(question.buttonLabel, language)}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageId)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
         />

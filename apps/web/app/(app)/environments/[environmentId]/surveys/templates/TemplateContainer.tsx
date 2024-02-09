@@ -30,7 +30,7 @@ export default function TemplateContainerWithPreview({
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   const defaultLanguage = { id: "en", alias: "English", default: true };
   useEffect(() => {
     if (product && templates?.length) {
@@ -78,15 +78,15 @@ export default function TemplateContainerWithPreview({
                 survey={translateSurvey(
                   { ...minimalSurvey, ...activeTemplate.preset },
                   [defaultLanguage],
-                  defaultLanguageSymbol
+                  defaultLanguageId
                 )}
                 activeQuestionId={activeQuestionId}
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
-                language={"en"}
+                languageId={"en"}
                 onFileUpload={async (file) => file.name}
-                defaultLanguageSymbol={defaultLanguageSymbol}
+                defaultLanguageId={defaultLanguageId}
               />
             </div>
           )}

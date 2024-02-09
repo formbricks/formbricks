@@ -22,7 +22,7 @@ interface MultipleChoiceSummaryProps {
   environmentId: string;
   surveyType: string;
   responsesPerPage: number;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 interface ChoiceResult {
@@ -45,7 +45,7 @@ export default function MultipleChoiceSummary({
   environmentId,
   surveyType,
   responsesPerPage,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: MultipleChoiceSummaryProps) {
   const isSingleChoice = questionSummary.question.type === TSurveyQuestionType.MultipleChoiceSingle;
   const [otherDisplayCount, setOtherDisplayCount] = useState(responsesPerPage);
@@ -57,9 +57,9 @@ export default function MultipleChoiceSummary({
     // build a dictionary of choices
     const resultsDict: { [key: string]: ChoiceResult } = {};
     for (const choice of questionSummary.question.choices) {
-      resultsDict[getLocalizedValue(choice.label, defaultLanguageSymbol)] = {
+      resultsDict[getLocalizedValue(choice.label, defaultLanguageId)] = {
         id: choice.id,
-        label: getLocalizedValue(choice.label, defaultLanguageSymbol),
+        label: getLocalizedValue(choice.label, defaultLanguageId),
         count: 0,
         percentage: 0,
         otherValues: [],
@@ -119,7 +119,7 @@ export default function MultipleChoiceSummary({
       return b.count - a.count;
     });
     return results;
-  }, [questionSummary, isSingleChoice, defaultLanguageSymbol]);
+  }, [questionSummary, isSingleChoice, defaultLanguageId]);
 
   const totalResponses = useMemo(() => {
     let total = 0;
@@ -132,7 +132,7 @@ export default function MultipleChoiceSummary({
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={getLocalizedValue(questionSummary.question.headline, defaultLanguageSymbol)} />
+        <Headline headline={getLocalizedValue(questionSummary.question.headline, defaultLanguageId)} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">

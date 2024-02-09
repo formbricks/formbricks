@@ -20,7 +20,7 @@ interface MultipleChoiceSingleProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  language: string;
+  languageId: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -33,7 +33,7 @@ export default function MultipleChoiceSingleQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  language,
+  languageId,
   ttc,
   setTtc,
 }: MultipleChoiceSingleProps) {
@@ -61,9 +61,9 @@ export default function MultipleChoiceSingleQuestion({
 
   useEffect(() => {
     const isOtherSelected =
-      value !== undefined && !question.choices.some((choice) => choice.label[language] === value);
+      value !== undefined && !question.choices.some((choice) => choice.label[languageId] === value);
     setOtherSelected(isOtherSelected);
-  }, [question.id, question.choices, value, language]);
+  }, [question.id, question.choices, value, languageId]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
 
@@ -84,12 +84,12 @@ export default function MultipleChoiceSingleQuestion({
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
-        headline={getLocalizedValue(question.headline, language)}
+        headline={getLocalizedValue(question.headline, languageId)}
         questionId={question.id}
         required={question.required}
       />
       <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, language) : ""}
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageId) : ""}
         questionId={question.id}
       />{" "}
       <div className="mt-4">
@@ -130,13 +130,13 @@ export default function MultipleChoiceSingleQuestion({
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
                       setOtherSelected(false);
-                      onChange({ [question.id]: getLocalizedValue(choice.label, language) });
+                      onChange({ [question.id]: getLocalizedValue(choice.label, languageId) });
                     }}
-                    checked={value === getLocalizedValue(choice.label, language)}
+                    checked={value === getLocalizedValue(choice.label, languageId)}
                     required={question.required && idx === 0}
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                    {getLocalizedValue(choice.label, language)}
+                    {getLocalizedValue(choice.label, languageId)}
                   </span>
                 </span>
               </label>
@@ -145,7 +145,7 @@ export default function MultipleChoiceSingleQuestion({
               <label
                 tabIndex={questionChoices.length + 1}
                 className={cn(
-                  value === getLocalizedValue(otherOption.label, language)
+                  value === getLocalizedValue(otherOption.label, languageId)
                     ? "border-border-highlight bg-accent-selected-bg z-10"
                     : "border-border",
                   "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
@@ -162,7 +162,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={otherOption.id}
                     tabIndex={-1}
                     name={question.id}
-                    value={getLocalizedValue(otherOption.label, language)}
+                    value={getLocalizedValue(otherOption.label, languageId)}
                     className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={() => {
@@ -172,7 +172,7 @@ export default function MultipleChoiceSingleQuestion({
                     checked={otherSelected}
                   />
                   <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
-                    {getLocalizedValue(otherOption.label, language)}
+                    {getLocalizedValue(otherOption.label, languageId)}
                   </span>
                 </span>
                 {otherSelected && (
@@ -195,7 +195,7 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     placeholder={
-                      getLocalizedValue(question.otherOptionPlaceholder, language) ?? "Please specify"
+                      getLocalizedValue(question.otherOptionPlaceholder, languageId) ?? "Please specify"
                     }
                     className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus mt-3 flex h-10 w-full rounded-md border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
@@ -210,7 +210,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, language)}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageId)}
             tabIndex={questionChoices.length + 3}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -222,7 +222,7 @@ export default function MultipleChoiceSingleQuestion({
         <div></div>
         <SubmitButton
           tabIndex={questionChoices.length + 2}
-          buttonLabel={getLocalizedValue(question.buttonLabel, language)}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageId)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
         />

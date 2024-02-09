@@ -15,7 +15,7 @@ interface WelcomeCardProps {
   buttonLabel?: TI18nString;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   survey: TSurvey;
-  language: string;
+  languageId: string;
   responseCount?: number;
 }
 
@@ -62,7 +62,7 @@ export default function WelcomeCard({
   fileUrl,
   buttonLabel,
   onSubmit,
-  language,
+  languageId,
   survey,
   responseCount,
 }: WelcomeCardProps) {
@@ -104,13 +104,13 @@ export default function WelcomeCard({
         <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
       )}
 
-      <Headline headline={getLocalizedValue(headline, language)} questionId="welcomeCard" />
-      <HtmlBody htmlString={getLocalizedValue(html, language)} questionId="welcomeCard" />
+      <Headline headline={getLocalizedValue(headline, languageId)} questionId="welcomeCard" />
+      <HtmlBody htmlString={getLocalizedValue(html, languageId)} questionId="welcomeCard" />
 
       <div className="mt-10 flex w-full justify-between">
         <div className="flex w-full justify-start gap-4">
           <SubmitButton
-            buttonLabel={getLocalizedValue(buttonLabel, language)}
+            buttonLabel={getLocalizedValue(buttonLabel, languageId)}
             isLastQuestion={false}
             focus={true}
             onClick={() => {

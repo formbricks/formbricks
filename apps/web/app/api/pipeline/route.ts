@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   const { environmentId, surveyId, event, response } = inputValidation.data;
   const product = await getProductByEnvironmentId(environmentId);
   if (!product) return;
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   // get all webhooks of this environment where event in triggers
   const webhooks = await prisma.webhook.findMany({
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
           questions: true,
         },
       });
-      handleIntegrations(integrations, inputValidation.data, surveyData, defaultLanguageSymbol);
+      handleIntegrations(integrations, inputValidation.data, surveyData, defaultLanguageId);
     }
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {

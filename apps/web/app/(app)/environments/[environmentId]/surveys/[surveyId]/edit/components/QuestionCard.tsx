@@ -79,7 +79,7 @@ export default function QuestionCard({
   const question = localSurvey.questions[questionIdx];
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   // formats the text to highlight specific parts of the text with slashes
   const formatTextWithSlashes = (text) => {
@@ -211,7 +211,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
                 <MultipleChoiceSingleForm
@@ -224,7 +224,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
                 <MultipleChoiceMultiForm
@@ -237,7 +237,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.NPS ? (
                 <NPSQuestionForm
@@ -250,7 +250,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.CTA ? (
                 <CTAQuestionForm
@@ -263,7 +263,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.Rating ? (
                 <RatingQuestionForm
@@ -276,7 +276,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.Consent ? (
                 <ConsentQuestionForm
@@ -288,7 +288,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.Date ? (
                 <DateQuestionForm
@@ -301,7 +301,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.PictureSelection ? (
                 <PictureSelectionForm
@@ -314,7 +314,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.FileUpload ? (
                 <FileUploadQuestionForm
@@ -328,7 +328,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
@@ -341,7 +341,7 @@ export default function QuestionCard({
                   setSelectedLanguage={setSelectedLanguage}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               ) : null}
               <div className="mt-4">
@@ -374,7 +374,7 @@ export default function QuestionCard({
                             updateQuestion={updateQuestion}
                             selectedLanguage={selectedLanguage}
                             setSelectedLanguage={setSelectedLanguage}
-                            defaultLanguageSymbol={defaultLanguageSymbol}
+                            defaultLanguageId={defaultLanguageId}
                             onBlur={(e) => {
                               if (!question.buttonLabel) return;
                               let translatedNextButtonLabel = {
@@ -401,7 +401,7 @@ export default function QuestionCard({
                             updateQuestion={updateQuestion}
                             selectedLanguage={selectedLanguage}
                             setSelectedLanguage={setSelectedLanguage}
-                            defaultLanguageSymbol={defaultLanguageSymbol}
+                            defaultLanguageId={defaultLanguageId}
                           />
                         )}
                       </div>
@@ -423,7 +423,7 @@ export default function QuestionCard({
                             updateQuestion={updateQuestion}
                             selectedLanguage={selectedLanguage}
                             setSelectedLanguage={setSelectedLanguage}
-                            defaultLanguageSymbol={defaultLanguageSymbol}
+                            defaultLanguageId={defaultLanguageId}
                           />
                         </div>
                       )}
@@ -433,7 +433,7 @@ export default function QuestionCard({
                       questionIdx={questionIdx}
                       localSurvey={localSurvey}
                       updateQuestion={updateQuestion}
-                      defaultLanguageSymbol={defaultLanguageSymbol}
+                      defaultLanguageId={defaultLanguageId}
                     />
                   </Collapsible.CollapsibleContent>
                 </Collapsible.Root>

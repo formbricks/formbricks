@@ -15,7 +15,7 @@ import { TSurvey, TSurveyMultipleChoiceMultiQuestion, TSurveyQuestion } from "@f
 export const createI18nString = (
   text: string | TI18nString,
   languages: string[],
-  defaultLanguageSymbol: string
+  defaultLanguageId: string
 ): TI18nString => {
   if (typeof text === "object") {
     // It's already an i18n object, so clone it
@@ -29,7 +29,7 @@ export const createI18nString = (
 
     // Remove language keys that are not in the languages array
     Object.keys(i18nString).forEach((key) => {
-      if (key !== defaultLanguageSymbol && languages && !languages.includes(key)) {
+      if (key !== defaultLanguageId && languages && !languages.includes(key)) {
         delete i18nString[key];
       }
     });
@@ -38,12 +38,12 @@ export const createI18nString = (
   } else {
     // It's a regular string, so create a new i18n object
     const i18nString: any = {
-      [defaultLanguageSymbol]: text as string, // Type assertion to assure TypeScript `text` is a string
+      [defaultLanguageId]: text as string, // Type assertion to assure TypeScript `text` is a string
     };
 
     // Initialize all provided languages with empty strings
     languages?.forEach((language) => {
-      if (language !== defaultLanguageSymbol) {
+      if (language !== defaultLanguageId) {
         i18nString[language] = "";
       }
     });
@@ -53,26 +53,26 @@ export const createI18nString = (
 };
 
 // Function to translate a choice label
-export const translateChoice = (choice: any, languages: string[], defaultLanguageSymbol: string) => {
+export const translateChoice = (choice: any, languages: string[], defaultLanguageId: string) => {
   // Assuming choice is a simple object and choice.label is a string.
   return {
     ...choice,
-    label: createI18nString(choice.label, languages, defaultLanguageSymbol),
+    label: createI18nString(choice.label, languages, defaultLanguageId),
   };
 };
 export const translateWelcomeCard = (
   welcomeCard: TSurveyWelcomeCard,
   languages: string[],
-  defaultLanguageSymbol: string
+  defaultLanguageId: string
 ): TSurveyWelcomeCard => {
   const clonedWelcomeCard = structuredClone(welcomeCard);
-  clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages, defaultLanguageSymbol);
-  clonedWelcomeCard.html = createI18nString(welcomeCard.html ?? "", languages, defaultLanguageSymbol);
+  clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages, defaultLanguageId);
+  clonedWelcomeCard.html = createI18nString(welcomeCard.html ?? "", languages, defaultLanguageId);
   if (clonedWelcomeCard.buttonLabel) {
     clonedWelcomeCard.buttonLabel = createI18nString(
       clonedWelcomeCard.buttonLabel,
       languages,
-      defaultLanguageSymbol
+      defaultLanguageId
     );
   }
 
@@ -82,19 +82,19 @@ export const translateWelcomeCard = (
 export const translateThankYouCard = (
   thankYouCard: TSurveyThankYouCard,
   languages: string[],
-  defaultLanguageSymbol: string
+  defaultLanguageId: string
 ): TSurveyThankYouCard => {
   const clonedThankYouCard = structuredClone(thankYouCard);
   clonedThankYouCard.headline = createI18nString(
     thankYouCard.headline ? thankYouCard.headline : "",
     languages,
-    defaultLanguageSymbol
+    defaultLanguageId
   );
   if (clonedThankYouCard.subheader) {
     clonedThankYouCard.subheader = createI18nString(
       thankYouCard.subheader ? thankYouCard.subheader : "",
       languages,
-      defaultLanguageSymbol
+      defaultLanguageId
     );
   }
 
@@ -105,48 +105,44 @@ export const translateThankYouCard = (
 export const translateQuestion = (
   question: TSurveyQuestion,
   languages: string[],
-  defaultLanguageSymbol: string
+  defaultLanguageId: string
 ) => {
   // Clone the question to avoid mutating the original
   const clonedQuestion = structuredClone(question);
 
-  clonedQuestion.headline = createI18nString(question.headline, languages, defaultLanguageSymbol);
+  clonedQuestion.headline = createI18nString(question.headline, languages, defaultLanguageId);
   if (clonedQuestion.subheader) {
-    clonedQuestion.subheader = createI18nString(question.subheader ?? "", languages, defaultLanguageSymbol);
+    clonedQuestion.subheader = createI18nString(question.subheader ?? "", languages, defaultLanguageId);
   }
 
   if (clonedQuestion.buttonLabel) {
-    clonedQuestion.buttonLabel = createI18nString(
-      question.buttonLabel ?? "",
-      languages,
-      defaultLanguageSymbol
-    );
+    clonedQuestion.buttonLabel = createI18nString(question.buttonLabel ?? "", languages, defaultLanguageId);
   }
 
   if (clonedQuestion.backButtonLabel) {
     clonedQuestion.backButtonLabel = createI18nString(
       question.backButtonLabel ?? "",
       languages,
-      defaultLanguageSymbol
+      defaultLanguageId
     );
   }
 
   if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
     (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
       question.choices.map((choice) =>
-        translateChoice(structuredClone(choice), languages, defaultLanguageSymbol)
+        translateChoice(structuredClone(choice), languages, defaultLanguageId)
       );
     (
       clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion
     ).otherOptionPlaceholder = question.otherOptionPlaceholder
-      ? createI18nString(question.otherOptionPlaceholder, languages, defaultLanguageSymbol)
+      ? createI18nString(question.otherOptionPlaceholder, languages, defaultLanguageId)
       : undefined;
   }
   if (question.type === "openText") {
     (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(
       question.placeholder ?? "",
       languages,
-      defaultLanguageSymbol
+      defaultLanguageId
     );
   }
   if (question.type === "cta") {
@@ -154,14 +150,14 @@ export const translateQuestion = (
       (clonedQuestion as TSurveyCTAQuestion).dismissButtonLabel = createI18nString(
         question.dismissButtonLabel,
         languages,
-        defaultLanguageSymbol
+        defaultLanguageId
       );
     }
     if (question.html) {
       (clonedQuestion as TSurveyCTAQuestion).html = createI18nString(
         question.html,
         languages,
-        defaultLanguageSymbol
+        defaultLanguageId
       );
     }
   }
@@ -170,7 +166,7 @@ export const translateQuestion = (
       (clonedQuestion as TSurveyConsentQuestion).html = createI18nString(
         question.html,
         languages,
-        defaultLanguageSymbol
+        defaultLanguageId
       );
     }
 
@@ -178,7 +174,7 @@ export const translateQuestion = (
       (clonedQuestion as TSurveyConsentQuestion).label = createI18nString(
         question.label,
         languages,
-        defaultLanguageSymbol
+        defaultLanguageId
       );
     }
   }
@@ -186,24 +182,24 @@ export const translateQuestion = (
     (clonedQuestion as TSurveyNPSQuestion).lowerLabel = createI18nString(
       question.lowerLabel ?? "",
       languages,
-      defaultLanguageSymbol
+      defaultLanguageId
     );
     (clonedQuestion as TSurveyNPSQuestion).upperLabel = createI18nString(
       question.upperLabel ?? "",
       languages,
-      defaultLanguageSymbol
+      defaultLanguageId
     );
   }
   if (question.type === "rating") {
     (clonedQuestion as TSurveyRatingQuestion).lowerLabel = createI18nString(
       question.lowerLabel ?? "",
       languages,
-      defaultLanguageSymbol
+      defaultLanguageId
     );
     (clonedQuestion as TSurveyRatingQuestion).upperLabel = createI18nString(
       question.upperLabel ?? "",
       languages,
-      defaultLanguageSymbol
+      defaultLanguageId
     );
   }
   return clonedQuestion;
@@ -213,14 +209,14 @@ export const translateQuestion = (
 export const translateSurvey = (
   survey: TSurvey,
   surveyLanguages: TLanguage[],
-  defaultLanguageSymbol: string
+  defaultLanguageId: string
 ): TSurvey => {
   const languages = extractLanguageIds(surveyLanguages);
   const translatedQuestions = survey.questions.map((question) => {
-    return translateQuestion(question, languages, defaultLanguageSymbol);
+    return translateQuestion(question, languages, defaultLanguageId);
   });
-  const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languages, defaultLanguageSymbol);
-  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languages, defaultLanguageSymbol);
+  const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languages, defaultLanguageId);
+  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languages, defaultLanguageId);
   const translatedSurvey = structuredClone(survey);
   return {
     ...translatedSurvey,
@@ -260,13 +256,13 @@ export const getSurveyLanguages = (product: TProduct, survey: TSurvey): TLanguag
   return surveyLanguages;
 };
 
-export const getLocalizedValue = (value: TI18nString | undefined, language: string): string => {
+export const getLocalizedValue = (value: TI18nString | undefined, languageId: string): string => {
   if (!value) {
     return "";
   }
   if (isI18nString(value)) {
-    if (value[language]) {
-      return value[language];
+    if (value[languageId]) {
+      return value[languageId];
     }
     return "";
   }

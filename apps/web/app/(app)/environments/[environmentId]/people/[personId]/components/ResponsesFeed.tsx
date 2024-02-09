@@ -17,14 +17,14 @@ export default function ResponseFeed({
   surveys,
   user,
   environmentTags,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: {
   responses: TResponse[];
   environment: TEnvironment;
   surveys: TSurvey[];
   user: TUser;
   environmentTags: TTag[];
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }) {
   const [fetchedResponses, setFetchedResponses] = useState(responses);
 
@@ -45,13 +45,13 @@ export default function ResponseFeed({
               {survey && (
                 <SingleResponseCard
                   response={response}
-                  survey={checkForRecallInHeadline(survey, defaultLanguageSymbol)}
+                  survey={checkForRecallInHeadline(survey, defaultLanguageId)}
                   user={user}
                   pageType="people"
                   environmentTags={environmentTags}
                   environment={environment}
                   setFetchedResponses={setFetchedResponses}
-                  defaultLanguageSymbol={defaultLanguageSymbol}
+                  defaultLanguageId={defaultLanguageId}
                 />
               )}
             </div>

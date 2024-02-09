@@ -27,7 +27,8 @@ interface LinkSurveyPinScreenProps {
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
-  defaultLanguageSymbol: string;
+  languageId: string;
+  defaultLanguageId: string;
 }
 
 const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
@@ -44,7 +45,8 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     PRIVACY_URL,
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
-    defaultLanguageSymbol,
+    languageId,
+    defaultLanguageId,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -124,9 +126,9 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
           singleUseId={singleUseId}
           singleUseResponse={singleUseResponse}
           webAppUrl={webAppUrl}
-          languages={product.languages}
           verifiedEmail={verifiedEmail}
-          defaultLanguageSymbol={defaultLanguageSymbol}
+          languageId={languageId}
+          defaultLanguageId={defaultLanguageId}
         />
       </MediaBackground>
       <LegalFooter

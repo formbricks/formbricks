@@ -20,7 +20,7 @@ interface EditThankYouCardProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 export default function EditThankYouCard({
@@ -32,7 +32,7 @@ export default function EditThankYouCard({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: EditThankYouCardProps) {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
@@ -120,7 +120,7 @@ export default function EditThankYouCard({
               updateSurvey={updateSurvey}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
-              defaultLanguageSymbol={defaultLanguageSymbol}
+              defaultLanguageId={defaultLanguageId}
             />
 
             <LocalizedInput
@@ -134,7 +134,7 @@ export default function EditThankYouCard({
               updateSurvey={updateSurvey}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
-              defaultLanguageSymbol={defaultLanguageSymbol}
+              defaultLanguageId={defaultLanguageId}
             />
             <div className="mt-4">
               <div className="flex items-center space-x-1">

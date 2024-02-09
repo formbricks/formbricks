@@ -17,14 +17,14 @@ export default function ResponseTimeline({
   environment,
   responses,
   environmentTags,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: {
   surveys: TSurvey[];
   user: TUser;
   responses: TResponse[];
   environment: TEnvironment;
   environmentTags: TTag[];
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }) {
   const [sortedResponses, setSortedResponses] = useState(responses);
   const toggleSortResponses = () => {
@@ -54,7 +54,7 @@ export default function ResponseTimeline({
         surveys={surveys}
         user={user}
         environmentTags={environmentTags}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
     </div>
   );

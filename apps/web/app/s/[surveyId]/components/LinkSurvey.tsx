@@ -1,6 +1,5 @@
 "use client";
 
-import InvalidLanguage from "@/app/s/[surveyId]/components/InvalidLanguage";
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
@@ -9,10 +8,9 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { FormbricksAPI } from "@formbricks/api";
-import { getSurveyLanguages, isSurveyAvailableInSelectedLanguage } from "@formbricks/lib/i18n/utils";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
-import { TLanguage, TProduct } from "@formbricks/types/product";
+import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -30,10 +28,10 @@ interface LinkSurveyProps {
   singleUseId?: string;
   singleUseResponse?: TResponse;
   webAppUrl: string;
-  languages: TLanguage[];
   responseCount?: number;
   verifiedEmail?: string;
-  defaultLanguageSymbol: string;
+  languageId: string;
+  defaultLanguageId: string;
 }
 
 export default function LinkSurvey({
@@ -45,17 +43,15 @@ export default function LinkSurvey({
   singleUseId,
   singleUseResponse,
   webAppUrl,
-  languages,
   responseCount,
   verifiedEmail,
-  defaultLanguageSymbol,
+  languageId,
+  defaultLanguageId,
 }: LinkSurveyProps) {
-  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey, webAppUrl]);
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
-  const languageSymbol = searchParams?.get("lang");
   const suId = searchParams?.get("suId");
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
@@ -65,16 +61,10 @@ export default function LinkSurvey({
   );
 
   const prefillResponseData: TResponseData | undefined = prefillAnswer
-    ? getPrefillResponseData(
-        survey.questions[0],
-        survey,
-        prefillAnswer,
-        languageSymbol ?? defaultLanguageSymbol
-      )
+    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageId)
     : undefined;
 
   const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
-  const surveyLanguages = getSurveyLanguages(product, survey);
 
   const responseQueue = useMemo(
     () =>
@@ -146,9 +136,6 @@ export default function LinkSurvey({
     //emailVerificationStatus === "not-verified"
     return <VerifyEmail singleUseId={suId ?? ""} survey={survey} />;
   }
-  if (languageSymbol && !isSurveyAvailableInSelectedLanguage(languageSymbol, survey)) {
-    return <InvalidLanguage languages={surveyLanguages} surveyUrl={surveyUrl} />;
-  }
 
   return (
     <>
@@ -170,7 +157,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
-          language={languageSymbol ? languageSymbol : defaultLanguageSymbol}
+          languageId={languageId}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
@@ -208,9 +195,7 @@ export default function LinkSurvey({
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
-                language: languageSymbol
-                  ? languages.find((language) => language.id === languageSymbol)?.alias
-                  : languages.find((language) => language.default === true)?.alias,
+                languageId,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",
@@ -231,7 +216,7 @@ export default function LinkSurvey({
           autoFocus={autoFocus}
           prefillResponseData={prefillResponseData}
           responseCount={responseCount}
-          defaultLanguageSymbol={defaultLanguageSymbol}
+          defaultLanguageId={defaultLanguageId}
         />
       </ContentWrapper>
     </>

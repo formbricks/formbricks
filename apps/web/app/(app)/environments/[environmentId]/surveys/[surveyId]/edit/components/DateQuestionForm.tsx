@@ -19,7 +19,7 @@ interface IDateQuestionFormProps {
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 const dateOptions = [
@@ -46,7 +46,7 @@ export default function DateQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: IDateQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageIds = extractLanguageIds(surveyLanguages);
@@ -64,7 +64,7 @@ export default function DateQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
       <div>
         {showSubheader && (
@@ -81,7 +81,7 @@ export default function DateQuestionForm({
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageSymbol={defaultLanguageSymbol}
+                defaultLanguageId={defaultLanguageId}
               />
             </div>
 
@@ -103,7 +103,7 @@ export default function DateQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageIds, defaultLanguageSymbol),
+                subheader: createI18nString("", surveyLanguageIds, defaultLanguageId),
               });
               setShowSubheader(true);
             }}>

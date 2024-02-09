@@ -33,7 +33,7 @@ export type QuestionOption = {
   questionType?: TSurveyQuestionType;
   type: OptionsType;
   id: string;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 };
 export type QuestionOptions = {
   header: OptionsType;
@@ -44,15 +44,10 @@ interface QuestionComboBoxProps {
   options: QuestionOptions[];
   selected: Partial<QuestionOption>;
   onChangeValue: (option: QuestionOption) => void;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
-const SelectedCommandItem = ({
-  label,
-  questionType,
-  type,
-  defaultLanguageSymbol,
-}: Partial<QuestionOption>) => {
+const SelectedCommandItem = ({ label, questionType, type, defaultLanguageId }: Partial<QuestionOption>) => {
   const getIconType = () => {
     switch (type) {
       case OptionsType.QUESTIONS:
@@ -96,7 +91,7 @@ const SelectedCommandItem = ({
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
       <p className="ml-3 truncate text-base text-slate-600">
-        {typeof label === "string" ? label : getLocalizedValue(label, defaultLanguageSymbol ?? "")}
+        {typeof label === "string" ? label : getLocalizedValue(label, defaultLanguageId ?? "")}
       </p>
     </div>
   );
@@ -106,7 +101,7 @@ const QuestionsComboBox = ({
   options,
   selected,
   onChangeValue,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: QuestionComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
   const commandRef = React.useRef(null);
@@ -162,7 +157,7 @@ const QuestionsComboBox = ({
                           label={o.label}
                           type={o.type}
                           questionType={o.questionType}
-                          defaultLanguageSymbol={defaultLanguageSymbol}
+                          defaultLanguageId={defaultLanguageId}
                         />
                       </CommandItem>
                     ))}

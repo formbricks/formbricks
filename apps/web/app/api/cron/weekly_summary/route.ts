@@ -184,7 +184,7 @@ const getNotificationResponse = (
   };
 
   const surveys: Survey[] = [];
-  const defaultLanguageSymbol = getDefaultLanguage(languages).id;
+  const defaultLanguageId = getDefaultLanguage(languages).id;
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
     const surveyData: Survey = {
@@ -207,7 +207,7 @@ const getNotificationResponse = (
         if (answer === null || answer === "" || answer?.length === 0) {
           continue;
         }
-        surveyResponse[getLocalizedValue(headline, defaultLanguageSymbol)] = answer;
+        surveyResponse[getLocalizedValue(headline, defaultLanguageId)] = answer;
       }
       surveyData.responses.push(surveyResponse);
     }

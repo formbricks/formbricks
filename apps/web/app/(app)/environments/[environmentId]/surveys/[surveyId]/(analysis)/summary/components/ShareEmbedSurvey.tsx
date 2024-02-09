@@ -44,7 +44,7 @@ export default function ShareEmbedSurvey({
 }: ShareEmbedSurveyProps) {
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   const { email } = user;
 
   const tabs = [
@@ -58,7 +58,7 @@ export default function ShareEmbedSurvey({
   const linkTextRef = useRef(null);
   const [surveyUrl, setSurveyUrl] = useState("");
   const surveyLanguages = getSurveyLanguages(product, survey);
-  const [language, setLanguage] = useState<string>(defaultLanguageSymbol);
+  const [language, setLanguage] = useState<string>(defaultLanguageId);
   const [showLanguageSelect, setShowLanguageSelect] = useState(false);
 
   const getUrl = useCallback(async () => {
@@ -67,7 +67,7 @@ export default function ShareEmbedSurvey({
       const singleUseId = await generateSingleUseIdAction(survey.id, survey.singleUse.isEncrypted);
       url += "?suId=" + singleUseId;
     }
-    if (language !== defaultLanguageSymbol) {
+    if (language !== defaultLanguageId) {
       if (survey.singleUse?.enabled) {
         url += "&lang=" + language;
       } else {
@@ -75,7 +75,7 @@ export default function ShareEmbedSurvey({
       }
     }
     setSurveyUrl(url);
-  }, [survey, webAppUrl, language, defaultLanguageSymbol]);
+  }, [survey, webAppUrl, language, defaultLanguageId]);
 
   useEffect(() => {
     getUrl();

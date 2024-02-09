@@ -93,7 +93,7 @@ export default function LanguageSwitch({
                             className="flex cursor-pointer items-center text-sm">
                             <Switch
                               id={`switch-${language}`}
-                              value={language.alias}
+                              value={language.id}
                               className="mr-4"
                               checked={surveyLanguages.some((lang) => lang.id === language.id)}
                               onClick={() => toggleLanguage(language)}

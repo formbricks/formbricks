@@ -28,7 +28,7 @@ interface LogicEditorProps {
   questionIdx: number;
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 type LogicConditions = {
@@ -45,18 +45,18 @@ export default function LogicEditor({
   question,
   questionIdx,
   updateQuestion,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: LogicEditorProps): JSX.Element {
   const questionValues = useMemo(() => {
     if ("choices" in question) {
-      return question.choices.map((choice) => getLocalizedValue(choice.label, defaultLanguageSymbol));
+      return question.choices.map((choice) => getLocalizedValue(choice.label, defaultLanguageId));
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
     } else if (question.type === TSurveyQuestionType.NPS) {
       return Array.from({ length: 11 }, (_, i) => (i + 0).toString());
     }
     return [];
-  }, [question, defaultLanguageSymbol]);
+  }, [question, defaultLanguageId]);
 
   const conditions = {
     openText: ["submitted", "skipped"],
@@ -349,10 +349,10 @@ export default function LogicEditor({
                         <SelectItem
                           key={question.id}
                           value={question.id}
-                          title={getLocalizedValue(question.headline, defaultLanguageSymbol)}>
+                          title={getLocalizedValue(question.headline, defaultLanguageId)}>
                           <div className="w-40">
                             <p className="truncate text-left">
-                              {getLocalizedValue(question.headline, defaultLanguageSymbol)}
+                              {getLocalizedValue(question.headline, defaultLanguageId)}
                             </p>
                           </div>
                         </SelectItem>

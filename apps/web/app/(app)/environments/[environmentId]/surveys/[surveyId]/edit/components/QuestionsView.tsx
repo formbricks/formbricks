@@ -52,7 +52,7 @@ export default function QuestionsView({
   }, [localSurvey.questions]);
 
   const [backButtonLabel, setbackButtonLabel] = useState(null);
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
       if (question.headline[selectedLanguage].includes(`recall:${compareId}`)) {
@@ -177,7 +177,7 @@ export default function QuestionsView({
       question.backButtonLabel = backButtonLabel;
     }
     const languageSymbols = Object.keys(surveyLanguages);
-    const translatedSurvey = translateQuestion(question, languageSymbols, defaultLanguageSymbol);
+    const translatedSurvey = translateQuestion(question, languageSymbols, defaultLanguageId);
     updatedSurvey.questions.push({ ...translatedSurvey, isDraft: true });
 
     setLocalSurvey(updatedSurvey);
@@ -213,10 +213,10 @@ export default function QuestionsView({
         // welcomeCard identified as "start"
         return (
           isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
-          (card.html && card.html[defaultLanguageSymbol] === ""
+          (card.html && card.html[defaultLanguageId] === ""
             ? true
             : isLabelValidForAllLanguages(card.html, surveyLanguages)) &&
-          (card.buttonLabel && card.buttonLabel[defaultLanguageSymbol] === ""
+          (card.buttonLabel && card.buttonLabel[defaultLanguageId] === ""
             ? true
             : isLabelValidForAllLanguages(card.buttonLabel, surveyLanguages))
         );
@@ -224,7 +224,7 @@ export default function QuestionsView({
         // thankYouCard identified as "end"
         return (
           isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
-          (card.subheader && card.subheader[defaultLanguageSymbol] === ""
+          (card.subheader && card.subheader[defaultLanguageId] === ""
             ? true
             : isLabelValidForAllLanguages(card.subheader, surveyLanguages))
         );
@@ -275,7 +275,7 @@ export default function QuestionsView({
           surveyLanguages={surveyLanguages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}
-          defaultLanguageSymbol={defaultLanguageSymbol}
+          defaultLanguageId={defaultLanguageId}
         />
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -320,7 +320,7 @@ export default function QuestionsView({
           surveyLanguages={surveyLanguages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}
-          defaultLanguageSymbol={defaultLanguageSymbol}
+          defaultLanguageId={defaultLanguageId}
         />
 
         {localSurvey.type === "link" ? (

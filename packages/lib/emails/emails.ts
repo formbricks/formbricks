@@ -171,7 +171,7 @@ export const sendResponseFinishedEmail = async (
   const team = await getTeamByEnvironmentId(environmentId);
   const product = await getProductByEnvironmentId(environmentId);
   if (!product) return;
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   await sendEmail({
     to: email,
     subject: personEmail
@@ -185,7 +185,7 @@ export const sendResponseFinishedEmail = async (
 
       <hr/>
 
-      ${getQuestionResponseMapping(survey, response, defaultLanguageSymbol)
+      ${getQuestionResponseMapping(survey, response, defaultLanguageId)
         .map(
           (question) =>
             question.answer &&

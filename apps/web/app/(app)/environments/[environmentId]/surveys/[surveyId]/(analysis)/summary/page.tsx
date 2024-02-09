@@ -41,7 +41,7 @@ export default async function Page({ params }) {
   if (!team) {
     throw new Error("Team not found");
   }
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   const surveyLanguages = getSurveyLanguages(product, survey);
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
@@ -52,7 +52,7 @@ export default async function Page({ params }) {
       <SummaryPage
         environment={environment}
         responses={responses}
-        survey={translateSurvey(survey, surveyLanguages, defaultLanguageSymbol)}
+        survey={translateSurvey(survey, surveyLanguages, defaultLanguageId)}
         surveyId={params.surveyId}
         webAppUrl={WEBAPP_URL}
         product={product}

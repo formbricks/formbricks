@@ -20,7 +20,7 @@ interface CTAQuestionFormProps {
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 export default function CTAQuestionForm({
@@ -33,7 +33,7 @@ export default function CTAQuestionForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -54,7 +54,7 @@ export default function CTAQuestionForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
 
       <div className="mt-3">
@@ -72,7 +72,7 @@ export default function CTAQuestionForm({
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
-            defaultLanguageSymbol={defaultLanguageSymbol}
+            defaultLanguageId={defaultLanguageId}
           />
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function CTAQuestionForm({
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageSymbol={defaultLanguageSymbol}
+            defaultLanguageId={defaultLanguageId}
           />
 
           {questionIdx !== 0 && (
@@ -128,7 +128,7 @@ export default function CTAQuestionForm({
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
-              defaultLanguageSymbol={defaultLanguageSymbol}
+              defaultLanguageId={defaultLanguageId}
             />
           )}
         </div>
@@ -165,7 +165,7 @@ export default function CTAQuestionForm({
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
-              defaultLanguageSymbol={defaultLanguageSymbol}
+              defaultLanguageId={defaultLanguageId}
             />
           </div>
         </div>

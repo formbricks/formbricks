@@ -25,7 +25,7 @@ interface OpenQuestionFormProps {
   setSelectedLanguage: (language: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageSymbol: string;
+  defaultLanguageId: string;
 }
 
 export default function MultipleChoiceSingleForm({
@@ -37,7 +37,7 @@ export default function MultipleChoiceSingleForm({
   selectedLanguage,
   setSelectedLanguage,
   surveyLanguages,
-  defaultLanguageSymbol,
+  defaultLanguageId,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -111,7 +111,7 @@ export default function MultipleChoiceSingleForm({
     }
     const newChoice = {
       id: createId(),
-      label: createI18nString("", surveyLanguageIds, defaultLanguageSymbol),
+      label: createI18nString("", surveyLanguageIds, defaultLanguageId),
     };
     if (choiceIdx !== undefined) {
       newChoices.splice(choiceIdx + 1, 0, newChoice);
@@ -129,7 +129,7 @@ export default function MultipleChoiceSingleForm({
       const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
       newChoices.push({
         id: "other",
-        label: createI18nString("Other", surveyLanguageIds, defaultLanguageSymbol),
+        label: createI18nString("Other", surveyLanguageIds, defaultLanguageId),
       });
       updateQuestion(questionIdx, {
         choices: newChoices,
@@ -186,7 +186,7 @@ export default function MultipleChoiceSingleForm({
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageSymbol={defaultLanguageSymbol}
+        defaultLanguageId={defaultLanguageId}
       />
 
       <div>
@@ -204,7 +204,7 @@ export default function MultipleChoiceSingleForm({
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageSymbol={defaultLanguageSymbol}
+                defaultLanguageId={defaultLanguageId}
               />
             </div>
 
@@ -225,7 +225,7 @@ export default function MultipleChoiceSingleForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageIds, defaultLanguageSymbol),
+                subheader: createI18nString("", surveyLanguageIds, defaultLanguageId),
               });
               setShowSubheader(true);
             }}>
@@ -268,7 +268,7 @@ export default function MultipleChoiceSingleForm({
                       isInvalid &&
                       !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
                     }
-                    defaultLanguageSymbol={defaultLanguageSymbol}
+                    defaultLanguageId={defaultLanguageId}
                     className={`${choice.id === "other" ? "border border-dashed" : ""}`}
                   />
                   {choice.id === "other" && (
@@ -281,7 +281,7 @@ export default function MultipleChoiceSingleForm({
                       value={
                         question.otherOptionPlaceholder
                           ? question.otherOptionPlaceholder
-                          : createI18nString("Please specify", surveyLanguageIds, defaultLanguageSymbol)
+                          : createI18nString("Please specify", surveyLanguageIds, defaultLanguageId)
                       }
                       surveyLanguages={surveyLanguages}
                       updateQuestion={updateQuestion}
@@ -291,7 +291,7 @@ export default function MultipleChoiceSingleForm({
                         isInvalid &&
                         !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
                       }
-                      defaultLanguageSymbol={defaultLanguageSymbol}
+                      defaultLanguageId={defaultLanguageId}
                       className="border border-dashed"
                     />
                   )}

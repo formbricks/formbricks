@@ -31,7 +31,7 @@ export default async function GoogleSheet({ params }) {
     throw new Error("Product not found");
   }
 
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   const googleSheetIntegration: TIntegrationGoogleSheets | undefined = integrations?.find(
     (integration): integration is TIntegrationGoogleSheets => integration.type === "googleSheets"
@@ -51,7 +51,7 @@ export default async function GoogleSheet({ params }) {
           spreadSheetArray={spreadSheetArray}
           googleSheetIntegration={googleSheetIntegration}
           webAppUrl={WEBAPP_URL}
-          defaultLanguageSymbol={defaultLanguageSymbol}
+          defaultLanguageId={defaultLanguageId}
         />
       </div>
     </>

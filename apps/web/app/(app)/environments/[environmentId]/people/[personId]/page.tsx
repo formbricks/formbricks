@@ -15,7 +15,7 @@ export default async function PersonPage({ params }) {
   if (!product) {
     throw new Error("Product not found");
   }
-  const defaultLanguageSymbol = getDefaultLanguage(product.languages).id;
+  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   if (!environment) {
     throw new Error("Environment not found");
   }
@@ -31,7 +31,7 @@ export default async function PersonPage({ params }) {
                 environment={environment}
                 personId={params.personId}
                 environmentTags={environmentTags}
-                defaultLanguageSymbol={defaultLanguageSymbol}
+                defaultLanguageId={defaultLanguageId}
               />
               <ActivitySection environmentId={params.environmentId} personId={params.personId} />
             </div>
