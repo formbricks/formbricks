@@ -63,7 +63,7 @@ export default function FileUploadQuestion({
           }
         }
       }}
-      className="w-full">
+      className="w-full ">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />

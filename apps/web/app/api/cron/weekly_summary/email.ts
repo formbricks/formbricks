@@ -16,9 +16,9 @@ const notificationHeader = (
   endYear: number
 ) =>
   `
-  <div style="display: block; padding: 1rem;">
-    <div style="float: left;">
-        <h1>Hey 👋</h1>
+  <div style="display: block; padding: 1rem 0rem;">
+    <div style="float: left; margin-top: 0.5rem;">
+        <h1 style="margin: 0rem;">Hey 👋</h1>
     </div>
     <div style="float: right;">    
         <p style="text-align: right; margin: 0; font-weight: 600;">Weekly Report for ${productName}</p>
@@ -102,37 +102,27 @@ const notificationLiveSurveys = (surveys: Survey[], environmentId: string) => {
       const noResponseLastWeek = isLive && survey.responses.length === 0;
 
       return `
-        <div style="display: block; margin-top:3em;">
-          <a href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
-            survey.id
-          }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color:#1e293b;">
-            <h2 style="text-decoration: underline; display:inline;">${survey.name}</h2>
-          </a>
-          <span style="display: inline; margin-left: 10px; background-color: ${
-            isLive ? "#34D399" : "#cbd5e1"
-          }; color: ${isLive ? "#F3F4F6" : "#1e293b"}; border-radius:99px; padding: 2px 8px; font-size:0.9em">
-            ${displayStatus}
-          </span>
-          ${
-            noResponseLastWeek
-              ? "<p>No new response received this week 🕵️</p>"
-              : createSurveyFields(survey.responses)
-          }
-          ${
-            survey.responseCount >= 0
-              ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
-                  survey.id
-                }/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA">
-                ${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
-              </a>`
-              : ""
-          }
-        <br/></div><br/>`;
+      <div style="display: block; margin-top: 3em;">
+      <a href="${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA" style="color: #1e293b; text-decoration: none;">
+        <h2 style="display: inline; text-decoration: underline;">${survey.name}</h2>
+      </a>
+      <span style="display: inline; margin-left: 10px; background-color: ${isLive ? "#34D399" : "#cbd5e1"}; color: ${isLive ? "#F3F4F6" : "#1e293b"}; border-radius: 99px; padding: 2px 8px; font-size: 0.9em;">
+        ${displayStatus}
+      </span>
+      ${noResponseLastWeek ? "<p>No new response received this week 🕵️</p>" : createSurveyFields(survey.responses)}
+      ${survey.responseCount > 0 ? `<a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA">${noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}</a>` : ""}
+    </div>
+    <br/>
+    `;
     })
     .join("");
 };
 
 const createSurveyFields = (surveyResponses: SurveyResponse[]) => {
+  if (surveyResponses.length === 0)
+    return `<div style="margin-top:1em;">
+  <p style="font-weight: bold; margin:0px;">No Responses yet!</p>  
+</div>`;
   let surveyFields = "";
   const responseCount = surveyResponses.length;
 
