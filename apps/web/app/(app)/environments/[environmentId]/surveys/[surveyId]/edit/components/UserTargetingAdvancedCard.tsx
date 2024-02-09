@@ -1,13 +1,7 @@
 "use client";
 
 import UserTargetingFallback from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/UserTargetingFallback";
-import {
-  CheckCircleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  PencilIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/solid";
+import { CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
@@ -31,6 +25,7 @@ import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
 import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
+import SegmentTitle from "@formbricks/ui/Targeting/SegmentTitle";
 
 interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
@@ -185,13 +180,10 @@ export default function UserTargetingAdvancedCard({
               <div className="w-full">
                 <div className="mb-4">
                   {!segment?.isPrivate ? (
-                    <div className="mb-2 flex items-center gap-6">
-                      <UserGroupIcon className="h-6 w-6 text-slate-700" />
-                      <div className="flex flex-col">
-                        <h3 className="font-medium text-slate-900">{localSurvey.segment?.title}</h3>
-                        <p className="text-sm text-slate-500">{localSurvey.segment?.description}</p>
-                      </div>
-                    </div>
+                    <SegmentTitle
+                      title={localSurvey.segment?.title}
+                      description={localSurvey.segment?.description}
+                    />
                   ) : (
                     <div>
                       <p className="text-sm font-semibold text-slate-800">
@@ -299,13 +291,10 @@ export default function UserTargetingAdvancedCard({
               </div>
             ) : (
               <div className="flex flex-col gap-2 rounded-lg">
-                <div className="mb-2 flex items-center gap-6">
-                  <UserGroupIcon className="h-6 w-6 text-slate-700" />
-                  <div className="flex flex-col">
-                    <h3 className="font-medium text-slate-900">{localSurvey.segment?.title}</h3>
-                    <p className="text-sm text-slate-500">{localSurvey.segment?.description}</p>
-                  </div>
-                </div>
+                <SegmentTitle
+                  title={localSurvey.segment?.title}
+                  description={localSurvey.segment?.description}
+                />
 
                 {segmentEditorViewOnly && segment && (
                   <div className="opacity-60">
