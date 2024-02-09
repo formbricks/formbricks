@@ -1,7 +1,22 @@
+import {
+  TLegacySurvey,
+  TLegacySurveyCTAQuestion,
+  TLegacySurveyChoice,
+  TLegacySurveyConsentQuestion,
+  TLegacySurveyMultipleChoiceMultiQuestion,
+  TLegacySurveyMultipleChoiceSingleQuestion,
+  TLegacySurveyNPSQuestion,
+  TLegacySurveyOpenTextQuestion,
+  TLegacySurveyQuestion,
+  TLegacySurveyRatingQuestion,
+  TLegacySurveyThankYouCard,
+  TLegacySurveyWelcomeCard,
+} from "@formbricks/types/LegacySurvey";
 import { TLanguage, TProduct } from "@formbricks/types/product";
 import {
   TI18nString,
   TSurveyCTAQuestion,
+  TSurveyChoice,
   TSurveyConsentQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
@@ -66,8 +81,12 @@ export const translateWelcomeCard = (
   defaultLanguageId: string
 ): TSurveyWelcomeCard => {
   const clonedWelcomeCard = structuredClone(welcomeCard);
-  clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages, defaultLanguageId);
-  clonedWelcomeCard.html = createI18nString(welcomeCard.html ?? "", languages, defaultLanguageId);
+  if (welcomeCard.headline) {
+    clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages, defaultLanguageId);
+  }
+  if (welcomeCard.html) {
+    clonedWelcomeCard.html = createI18nString(welcomeCard.html, languages, defaultLanguageId);
+  }
   if (clonedWelcomeCard.buttonLabel) {
     clonedWelcomeCard.buttonLabel = createI18nString(
       clonedWelcomeCard.buttonLabel,
@@ -85,17 +104,11 @@ export const translateThankYouCard = (
   defaultLanguageId: string
 ): TSurveyThankYouCard => {
   const clonedThankYouCard = structuredClone(thankYouCard);
-  clonedThankYouCard.headline = createI18nString(
-    thankYouCard.headline ? thankYouCard.headline : "",
-    languages,
-    defaultLanguageId
-  );
-  if (clonedThankYouCard.subheader) {
-    clonedThankYouCard.subheader = createI18nString(
-      thankYouCard.subheader ? thankYouCard.subheader : "",
-      languages,
-      defaultLanguageId
-    );
+  if (thankYouCard.headline) {
+    clonedThankYouCard.headline = createI18nString(thankYouCard.headline, languages, defaultLanguageId);
+  }
+  if (thankYouCard.subheader) {
+    clonedThankYouCard.subheader = createI18nString(thankYouCard.subheader, languages, defaultLanguageId);
   }
 
   return clonedThankYouCard;
@@ -291,4 +304,172 @@ export const extractLanguageIds = (languages: TLanguage[]): string[] => {
 
 export const containsTranslations = (i18nString: TI18nString) => {
   return Object.entries(i18nString).length > 1;
+};
+
+// Helper function to extract a regular string from an i18nString.
+const extractStringFromI18n = (i18nString: TI18nString, defaultLanguageId: string): string => {
+  if (typeof i18nString === "object" && i18nString !== null) {
+    return i18nString[defaultLanguageId] || "";
+  }
+  return i18nString;
+};
+
+// Function to reverse translate a choice
+const reverseTranslateChoice = (choice: TSurveyChoice, defaultLanguageId: string): TLegacySurveyChoice => {
+  return {
+    ...choice,
+    label: extractStringFromI18n(choice.label, defaultLanguageId),
+  };
+};
+
+// Function to reverse translate a question of any type
+const reverseTranslateQuestion = (
+  question: TSurveyQuestion,
+  defaultLanguageId: string
+): TLegacySurveyQuestion => {
+  const clonedQuestion = structuredClone(question) as unknown as TLegacySurveyQuestion;
+  clonedQuestion.headline = extractStringFromI18n(question.headline, defaultLanguageId);
+
+  if (clonedQuestion.subheader) {
+    if (question.subheader) {
+      clonedQuestion.subheader = extractStringFromI18n(question.subheader, defaultLanguageId);
+    }
+  }
+
+  if (clonedQuestion.buttonLabel) {
+    if (question.buttonLabel) {
+      clonedQuestion.buttonLabel = extractStringFromI18n(question.buttonLabel, defaultLanguageId);
+    }
+  }
+
+  if (clonedQuestion.backButtonLabel) {
+    if (question.backButtonLabel) {
+      clonedQuestion.backButtonLabel = extractStringFromI18n(question.backButtonLabel, defaultLanguageId);
+    }
+  }
+
+  // Handle question type-specific fields
+  switch (question.type) {
+    case "multipleChoiceSingle":
+    case "multipleChoiceMulti":
+      (
+        clonedQuestion as TLegacySurveyMultipleChoiceMultiQuestion | TLegacySurveyMultipleChoiceSingleQuestion
+      ).choices = question.choices.map((choice) => reverseTranslateChoice(choice, defaultLanguageId));
+      if (question.otherOptionPlaceholder) {
+        (
+          clonedQuestion as
+            | TLegacySurveyMultipleChoiceMultiQuestion
+            | TLegacySurveyMultipleChoiceSingleQuestion
+        ).otherOptionPlaceholder = extractStringFromI18n(question.otherOptionPlaceholder, defaultLanguageId);
+      }
+      break;
+    case "openText":
+      if (question.placeholder) {
+        (clonedQuestion as TLegacySurveyOpenTextQuestion).placeholder = extractStringFromI18n(
+          question.placeholder,
+          defaultLanguageId
+        );
+      }
+      break;
+    case "nps":
+      (clonedQuestion as TLegacySurveyNPSQuestion).lowerLabel = extractStringFromI18n(
+        question.lowerLabel,
+        defaultLanguageId
+      );
+      (clonedQuestion as TLegacySurveyNPSQuestion).upperLabel = extractStringFromI18n(
+        question.upperLabel,
+        defaultLanguageId
+      );
+      break;
+    case "rating":
+      (clonedQuestion as TLegacySurveyRatingQuestion).lowerLabel = extractStringFromI18n(
+        question.lowerLabel,
+        defaultLanguageId
+      );
+      (clonedQuestion as TLegacySurveyRatingQuestion).upperLabel = extractStringFromI18n(
+        question.upperLabel,
+        defaultLanguageId
+      );
+      break;
+    case "cta":
+      if (question.dismissButtonLabel) {
+        (clonedQuestion as TLegacySurveyCTAQuestion).dismissButtonLabel = extractStringFromI18n(
+          question.dismissButtonLabel,
+          defaultLanguageId
+        );
+      }
+      if (question.html) {
+        (clonedQuestion as TLegacySurveyCTAQuestion).html = extractStringFromI18n(
+          question.html,
+          defaultLanguageId
+        );
+      }
+      break;
+    case "consent":
+      if (question.html) {
+        (clonedQuestion as TLegacySurveyConsentQuestion).html = extractStringFromI18n(
+          question.html,
+          defaultLanguageId
+        );
+      }
+      if (question.label) {
+        (clonedQuestion as TLegacySurveyConsentQuestion).label = extractStringFromI18n(
+          question.label,
+          defaultLanguageId
+        );
+      }
+      break;
+  }
+
+  return clonedQuestion;
+};
+
+// Function to reverse translate a welcome card
+const reverseTranslateWelcomeCard = (
+  welcomeCard: TSurveyWelcomeCard,
+  defaultLanguageId: string
+): TLegacySurveyWelcomeCard => {
+  const clonedWelcomeCard = structuredClone(welcomeCard) as unknown as TLegacySurveyWelcomeCard;
+  clonedWelcomeCard.headline = extractStringFromI18n(welcomeCard.headline, defaultLanguageId);
+  if (welcomeCard.html) {
+    clonedWelcomeCard.html = extractStringFromI18n(welcomeCard.html, defaultLanguageId);
+  }
+  if (welcomeCard.buttonLabel) {
+    clonedWelcomeCard.buttonLabel = extractStringFromI18n(welcomeCard.buttonLabel, defaultLanguageId);
+  }
+
+  return clonedWelcomeCard;
+};
+
+// Function to reverse translate a thank you card
+const reverseTranslateThankYouCard = (
+  thankYouCard: TSurveyThankYouCard,
+  defaultLanguageId: string
+): TLegacySurveyThankYouCard => {
+  const clonedThankYouCard = structuredClone(thankYouCard) as unknown as TLegacySurveyThankYouCard;
+  if (thankYouCard.headline) {
+    clonedThankYouCard.headline = extractStringFromI18n(thankYouCard.headline, defaultLanguageId);
+  }
+  if (thankYouCard.subheader) {
+    clonedThankYouCard.subheader = extractStringFromI18n(thankYouCard.subheader, defaultLanguageId);
+  }
+
+  return clonedThankYouCard;
+};
+
+// Function to reverse translate an entire survey
+export const reverseTranslateSurvey = (survey: TSurvey, defaultLanguageId: string): TLegacySurvey => {
+  const reversedQuestions = survey.questions.map((question) =>
+    reverseTranslateQuestion(question, defaultLanguageId)
+  );
+
+  const reversedWelcomeCard = reverseTranslateWelcomeCard(survey.welcomeCard, defaultLanguageId);
+  const reversedThankYouCard = reverseTranslateThankYouCard(survey.thankYouCard, defaultLanguageId);
+
+  const reversedSurvey = structuredClone(survey) as unknown as TLegacySurvey;
+  reversedSurvey.questions = reversedQuestions;
+  reversedSurvey.welcomeCard = reversedWelcomeCard;
+  reversedSurvey.thankYouCard = reversedThankYouCard;
+
+  return reversedSurvey;
 };

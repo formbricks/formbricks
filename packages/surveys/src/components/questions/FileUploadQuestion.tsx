@@ -66,7 +66,7 @@ export default function FileUploadQuestion({
           }
         }
       }}
-      className="w-full">
+      className="w-full ">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageId)}

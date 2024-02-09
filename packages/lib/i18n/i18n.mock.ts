@@ -1,11 +1,22 @@
 import {
   TSurvey,
+  TSurveyCTAQuestion,
+  TSurveyCalQuestion,
+  TSurveyConsentQuestion,
+  TSurveyDateQuestion,
+  TSurveyFileUploadQuestion,
+  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyNPSQuestion,
+  TSurveyOpenTextQuestion,
+  TSurveyPictureSelectionQuestion,
   TSurveyQuestionType,
+  TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 
-export const mockWelcomeCard = {
+export const mockWelcomeCard: TSurveyWelcomeCard = {
   html: {
     en: '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span style="white-space: pre-wrap;">Thanks for providing your feedback - let\'s go!</span></p>',
   },
@@ -17,7 +28,7 @@ export const mockWelcomeCard = {
   showResponseCount: false,
 } as unknown as TSurveyWelcomeCard;
 
-export const mockOpenTextQuestion = {
+export const mockOpenTextQuestion: TSurveyOpenTextQuestion = {
   id: "lqht9sj5s6andjkmr9k1n54q",
   type: TSurveyQuestionType.OpenText,
   headline: {
@@ -34,7 +45,7 @@ export const mockOpenTextQuestion = {
   },
 };
 
-export const mockSingleSelectQuestion = {
+export const mockSingleSelectQuestion: TSurveyMultipleChoiceSingleQuestion = {
   id: "mvqx8t90np6isb6oel9eamzc",
   type: TSurveyQuestionType.MultipleChoiceSingle,
   choices: [
@@ -62,7 +73,7 @@ export const mockSingleSelectQuestion = {
   shuffleOption: "none",
 };
 
-export const mockMultiSelectQuestion = {
+export const mockMultiSelectQuestion: TSurveyMultipleChoiceMultiQuestion = {
   required: true,
   headline: {
     en: "What's important on vacay?",
@@ -93,7 +104,7 @@ export const mockMultiSelectQuestion = {
   isDraft: true,
 };
 
-export const mockPictureSelectQuestion = {
+export const mockPictureSelectQuestion: TSurveyPictureSelectionQuestion = {
   required: true,
   headline: {
     en: "Which is the cutest puppy?",
@@ -117,7 +128,7 @@ export const mockPictureSelectQuestion = {
   isDraft: true,
 };
 
-export const mockRatingQuestion = {
+export const mockRatingQuestion: TSurveyRatingQuestion = {
   required: true,
   headline: {
     en: "How would you rate My Product",
@@ -138,7 +149,7 @@ export const mockRatingQuestion = {
   isDraft: true,
 };
 
-export const mockNpsQuestion = {
+export const mockNpsQuestion: TSurveyNPSQuestion = {
   required: true,
   headline: {
     en: "How likely are you to recommend My Product to a friend or colleague?",
@@ -154,7 +165,7 @@ export const mockNpsQuestion = {
   isDraft: true,
 };
 
-export const mockCtaQuestion = {
+export const mockCtaQuestion: TSurveyCTAQuestion = {
   required: true,
   headline: {
     en: "You are one of our power users!",
@@ -171,7 +182,7 @@ export const mockCtaQuestion = {
   isDraft: true,
 };
 
-export const mockConsentQuestion = {
+export const mockConsentQuestion: TSurveyConsentQuestion = {
   required: true,
   headline: {
     en: "Terms and Conditions",
@@ -185,7 +196,7 @@ export const mockConsentQuestion = {
   isDraft: true,
 };
 
-export const mockDateQuestion = {
+export const mockDateQuestion: TSurveyDateQuestion = {
   required: true,
   headline: {
     en: "When is your birthday?",
@@ -196,7 +207,7 @@ export const mockDateQuestion = {
   isDraft: true,
 };
 
-export const mockFileUploadQuestion = {
+export const mockFileUploadQuestion: TSurveyFileUploadQuestion = {
   required: true,
   headline: {
     en: "File Upload",
@@ -207,7 +218,7 @@ export const mockFileUploadQuestion = {
   isDraft: true,
 };
 
-export const mockCalQuestion = {
+export const mockCalQuestion: TSurveyCalQuestion = {
   required: true,
   headline: {
     en: "Schedule a call with me",
@@ -221,7 +232,7 @@ export const mockCalQuestion = {
   isDraft: true,
 };
 
-export const mockThankYouCard = {
+export const mockThankYouCard: TSurveyThankYouCard = {
   enabled: true,
   headline: {
     en: "Thank you!",
@@ -235,8 +246,8 @@ export const mockThankYouCard = {
 
 export const mockSurvey: TSurvey = {
   id: "surveyId",
-  createdAt: new Date("2024-02-06T20:12:03.521Z"),
-  updatedAt: new Date("2024-02-06T20:12:03.521Z"),
+  createdAt: "2024-02-06T20:12:03.521Z",
+  updatedAt: "2024-02-06T20:12:03.521Z",
   name: "New Survey",
   type: "link",
   environmentId: "envId",
@@ -304,11 +315,26 @@ export const mockTranslatedWelcomeCard = {
   showResponseCount: false,
 };
 
+export const mockLegacyWelcomeCard = {
+  html: '<p class="fb-editor-paragraph"><br></p><p class="fb-editor-paragraph" dir="ltr"><span style="white-space: pre-wrap;">Thanks for providing your feedback - let\'s go!</span></p>',
+  enabled: true,
+  headline: "Welcome!",
+  timeToFinish: false,
+  showResponseCount: false,
+};
+
 export const mockTranslatedOpenTextQuestion = {
   ...mockOpenTextQuestion,
   headline: { en: "What would you like to know?", de: "" },
   subheader: { en: "This is an example survey.", de: "" },
   placeholder: { en: "Type your answer here...", de: "" },
+};
+
+export const mockLegacyOpenTextQuestion = {
+  ...mockOpenTextQuestion,
+  headline: "What would you like to know?",
+  subheader: "This is an example survey.",
+  placeholder: "Type your answer here...",
 };
 
 export const mockTranslatedSingleSelectQuestion = {
@@ -322,6 +348,16 @@ export const mockTranslatedSingleSelectQuestion = {
   otherOptionPlaceholder: undefined,
 };
 
+export const mockLegacySingleSelectQuestion = {
+  ...mockSingleSelectQuestion,
+  headline: "What do you do?",
+  subheader: "Can't do both.",
+  choices: mockSingleSelectQuestion.choices.map((choice) => ({
+    ...choice,
+    label: choice.label.en,
+  })),
+};
+
 export const mockTranslatedMultiSelectQuestion = {
   ...mockMultiSelectQuestion,
   headline: { en: "What's important on vacay?", de: "" },
@@ -332,10 +368,24 @@ export const mockTranslatedMultiSelectQuestion = {
   otherOptionPlaceholder: undefined,
 };
 
+export const mockLegacyMultiSelectQuestion = {
+  ...mockMultiSelectQuestion,
+  headline: "What's important on vacay?",
+  choices: mockMultiSelectQuestion.choices.map((choice) => ({
+    ...choice,
+    label: choice.label.en,
+  })),
+};
+
 export const mockTranslatedPictureSelectQuestion = {
   ...mockPictureSelectQuestion,
   headline: { en: "Which is the cutest puppy?", de: "" },
   subheader: { en: "You can also pick both.", de: "" },
+};
+export const mockLegacyPictureSelectQuestion = {
+  ...mockPictureSelectQuestion,
+  headline: "Which is the cutest puppy?",
+  subheader: "You can also pick both.",
 };
 
 export const mockTranslatedRatingQuestion = {
@@ -344,6 +394,14 @@ export const mockTranslatedRatingQuestion = {
   subheader: { en: "Don't worry, be honest.", de: "" },
   lowerLabel: { en: "Not good", de: "" },
   upperLabel: { en: "Very good", de: "" },
+};
+
+export const mockLegacyRatingQuestion = {
+  ...mockRatingQuestion,
+  headline: "How would you rate My Product",
+  subheader: "Don't worry, be honest.",
+  lowerLabel: "Not good",
+  upperLabel: "Very good",
 };
 
 export const mockTranslatedNpsQuestion = {
@@ -356,11 +414,25 @@ export const mockTranslatedNpsQuestion = {
   upperLabel: { en: "Extremely likely", de: "" },
 };
 
+export const mockLegacyNpsQuestion = {
+  ...mockNpsQuestion,
+  headline: "How likely are you to recommend My Product to a friend or colleague?",
+  lowerLabel: "Not at all likely",
+  upperLabel: "Extremely likely",
+};
+
 export const mockTranslatedCtaQuestion = {
   ...mockCtaQuestion,
   headline: { en: "You are one of our power users!", de: "" },
   buttonLabel: { en: "Book interview", de: "" },
   dismissButtonLabel: { en: "Skip", de: "" },
+};
+
+export const mockLegacyCtaQuestion = {
+  ...mockCtaQuestion,
+  headline: "You are one of our power users!",
+  buttonLabel: "Book interview",
+  dismissButtonLabel: "Skip",
 };
 
 export const mockTranslatedConsentQuestion = {
@@ -370,14 +442,31 @@ export const mockTranslatedConsentQuestion = {
   dismissButtonLabel: "Skip",
 };
 
+export const mockLegacyConsentQuestion = {
+  ...mockConsentQuestion,
+  headline: "Terms and Conditions",
+  label: "I agree to the terms and conditions",
+  dismissButtonLabel: "Skip",
+};
+
 export const mockTranslatedDateQuestion = {
   ...mockDateQuestion,
   headline: { en: "When is your birthday?", de: "" },
 };
 
+export const mockLegacyDateQuestion = {
+  ...mockDateQuestion,
+  headline: "When is your birthday?",
+};
+
 export const mockTranslatedFileUploadQuestion = {
   ...mockFileUploadQuestion,
   headline: { en: "File Upload", de: "" },
+};
+
+export const mockLegacyFileUploadQuestion = {
+  ...mockFileUploadQuestion,
+  headline: "File Upload",
 };
 
 export const mockTranslatedCalQuestion = {
@@ -386,10 +475,23 @@ export const mockTranslatedCalQuestion = {
   buttonLabel: { en: "Skip", de: "" },
 };
 
+export const mockLegacyCalQuestion = {
+  ...mockCalQuestion,
+  headline: "Schedule a call with me",
+  buttonLabel: "Skip",
+};
+
 export const mockTranslatedThankYouCard = {
   ...mockThankYouCard,
   headline: { en: "Thank you!", de: "" },
   subheader: { en: "We appreciate your feedback.", de: "" },
+  buttonLabel: "Create your own Survey",
+};
+
+export const mockLegacyThankYouCard = {
+  ...mockThankYouCard,
+  headline: "Thank you!",
+  subheader: "We appreciate your feedback.",
   buttonLabel: "Create your own Survey",
 };
 
@@ -410,4 +512,25 @@ export const mockTranslatedSurvey = {
   ],
   welcomeCard: mockTranslatedWelcomeCard,
   thankYouCard: mockTranslatedThankYouCard,
+};
+
+export const mockLegacySurvey = {
+  ...mockSurvey,
+  createdAt: "2024-02-06T20:12:03.521Z",
+  updatedAt: "2024-02-06T20:12:03.521Z",
+  questions: [
+    mockLegacyOpenTextQuestion,
+    mockLegacySingleSelectQuestion,
+    mockLegacyMultiSelectQuestion,
+    mockLegacyPictureSelectQuestion,
+    mockLegacyRatingQuestion,
+    mockLegacyNpsQuestion,
+    mockLegacyCtaQuestion,
+    mockLegacyConsentQuestion,
+    mockLegacyDateQuestion,
+    mockLegacyFileUploadQuestion,
+    mockLegacyCalQuestion,
+  ],
+  welcomeCard: mockLegacyWelcomeCard,
+  thankYouCard: mockLegacyThankYouCard,
 };

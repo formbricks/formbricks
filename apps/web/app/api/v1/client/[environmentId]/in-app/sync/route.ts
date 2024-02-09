@@ -6,34 +6,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, PRICING_APPSURVEYS_FREE_RESPONSES } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
+import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSurveys } from "@formbricks/lib/survey/service";
+import { getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys";
 
 export async function OPTIONS(): Promise<NextResponse> {
   return responses.successResponse({}, true);
 }
 
 export async function GET(
-  _: NextRequest,
+  request: NextRequest,
   { params }: { params: { environmentId: string } }
 ): Promise<NextResponse> {
   try {
-    // validate using zod
-    const environmentIdValidation = ZJsPublicSyncInput.safeParse({
+    const searchParams = request.nextUrl.searchParams;
+    const version =
+      searchParams.get("version") === "undefined" || searchParams.get("version") === null
+        ? undefined
+        : searchParams.get("version");
+    const syncInputValidation = ZJsPublicSyncInput.safeParse({
       environmentId: params.environmentId,
     });
 
-    if (!environmentIdValidation.success) {
+    if (!syncInputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(environmentIdValidation.error),
+        transformErrorToDetails(syncInputValidation.error),
         true
       );
     }
 
-    const { environmentId } = environmentIdValidation.data;
+    const { environmentId } = syncInputValidation.data;
 
     const environment = await getEnvironment(environmentId);
 
@@ -74,11 +81,27 @@ export async function GET(
     if (!product) {
       throw new Error("Product not found");
     }
+    let transformedSurveys: TLegacySurvey[] | TSurvey[];
+    if (!version) {
+      transformedSurveys = await Promise.all(
+        surveys
+          .filter((survey) => survey.status === "inProgress" && survey.type === "web")
+          .map(async (survey) => {
+            const transformedSurvey = await transformToLegacySurvey(
+              survey,
+              getDefaultLanguage(product.languages).id
+            );
+            return transformedSurvey;
+          })
+      );
+    } else {
+      transformedSurveys = surveys.filter(
+        (survey) => survey.status === "inProgress" && survey.type === "web"
+      );
+    }
 
     const state: TJsStateSync = {
-      surveys: !isInAppSurveyLimitReached
-        ? surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web")
-        : [],
+      surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
       person: null,
