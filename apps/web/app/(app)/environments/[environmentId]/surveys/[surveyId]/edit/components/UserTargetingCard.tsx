@@ -13,7 +13,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { cn } from "@formbricks/lib/cn";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentUpdateInput } from "@formbricks/types/segment";
@@ -123,29 +122,25 @@ export default function UserTargetingCard({
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className={cn(
-        open ? "" : "hover:bg-slate-50",
-        "w-full space-y-2 rounded-lg border border-slate-300 bg-white"
-      )}>
-      <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
-        <div className="inline-flex px-4 py-4">
+      className="w-full rounded-lg border border-slate-300 bg-white">
+      <Collapsible.CollapsibleTrigger
+        asChild
+        className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
+        <div className="inline-flex px-4 py-6">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400" />
+            <CheckCircleIcon className="h-8 w-8 text-green-400 " />
           </div>
           <div>
             <p className="font-semibold text-slate-800">Target Audience</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Pre-segment your target audience by attribute, action and device.
-            </p>
+            <p className="mt-1 text-sm text-slate-500">Pre-segment your users with attributes filters.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
-      <Collapsible.CollapsibleContent>
-        <hr className="py-1 text-slate-600" />
-        <div className="flex flex-col gap-2 px-6 pt-2">
-          <div className="mb-2">
-            <UserTargetingFallback segment={segment} />
-          </div>
+      <Collapsible.CollapsibleContent className="min-w-full overflow-auto">
+        <hr className="text-slate-600" />
+
+        <div className="flex flex-col gap-5 p-6">
+          <UserTargetingFallback segment={segment} />
 
           <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
             <div className="flex w-full flex-col gap-2">
@@ -317,30 +312,29 @@ export default function UserTargetingCard({
               )}
             </div>
           </div>
-        </div>
 
-        <div className="ml-6 mt-4 flex w-full gap-3">
-          <Button variant="secondary" size="sm" onClick={() => setLoadSegmentModalOpen(true)}>
-            Load Segment
-          </Button>
-
-          {isSegmentEditorOpen && !!segment?.filters?.length && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => setSaveAsNewSegmentModalOpen(true)}>
-              Save as new Segment
+          <div className="flex w-full gap-3">
+            <Button variant="secondary" size="sm" onClick={() => setLoadSegmentModalOpen(true)}>
+              Load Segment
             </Button>
-          )}
-        </div>
 
-        <div className="px-6 pb-6 pt-3">
-          <UpgradePlanNotice
-            message="For advanced user targeting,"
-            url={`/environments/${environmentId}/settings/billing`}
-            textForUrl="please use Pro (free to get started)."
-          />
+            {isSegmentEditorOpen && !!segment?.filters?.length && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => setSaveAsNewSegmentModalOpen(true)}>
+                Save as new Segment
+              </Button>
+            )}
+          </div>
+          <div className="-mt-1.5">
+            <UpgradePlanNotice
+              message="For advanced user targeting,"
+              url={`/environments/${environmentId}/settings/billing`}
+              textForUrl="please use Pro (free to get started)."
+            />
+          </div>
         </div>
 
         {!!segment && (
