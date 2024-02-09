@@ -6,17 +6,15 @@ const UserTargetingFallback = ({ segment }: { segment: TSegment | null }) => {
   const doFiltersExist = !!segment?.filters?.length;
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="rounded-full border border-slate-200 bg-slate-100 p-2">
-        {doFiltersExist ? (
-          <UsersIcon className="h-5 w-5 text-slate-800" />
-        ) : (
-          <FilterIcon className="h-5 w-5 text-slate-800" />
-        )}
-      </div>
+    <div className="ml-4 flex items-center gap-4">
+      {doFiltersExist ? (
+        <UsersIcon className="h-6 w-6 text-slate-800" />
+      ) : (
+        <FilterIcon className="h-6 w-6 text-slate-800" />
+      )}
 
       <div className="flex flex-col">
-        <h3 className="text-sm font-medium">
+        <h3 className="text-sm font-medium text-slate-900">
           Audience: <span className="font-bold">{doFiltersExist ? "Targeted" : "Everyone"}</span>
         </h3>
         <p className="text-xs text-slate-500">
