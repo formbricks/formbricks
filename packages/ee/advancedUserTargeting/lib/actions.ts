@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { segmentCache } from "@formbricks/lib/segment/cache";
 import {
   cloneSegment,
   createSegment,
@@ -54,6 +55,7 @@ export const createSegmentAction = async ({
     filters,
   });
   surveyCache.revalidate({ id: surveyId });
+  segmentCache.revalidate({ id: segment.id, environmentId });
 
   return segment;
 };
