@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
+import { getLanguageLabel } from "@formbricks/ee/multiLanguage/lib/isoLanguages";
 import { cn } from "@formbricks/lib/cn";
 import { getDefaultLanguage, getSurveyLanguages } from "@formbricks/lib/i18n/utils";
 import { TProduct } from "@formbricks/types/product";
@@ -138,7 +139,7 @@ export default function ShareEmbedSurvey({
                                   setLanguage(language.id);
                                   setShowLanguageSelect(false);
                                 }}>
-                                {language.alias}
+                                {getLanguageLabel(language.id)}
                               </div>
                             );
                           })}

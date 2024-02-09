@@ -3,6 +3,8 @@ import { useState } from "react";
 
 import { TLanguage } from "@formbricks/types/product";
 
+import { getLanguageLabel } from "../lib/isoLanguages";
+
 interface LanguageIndicatorProps {
   selectedLanguageId: string;
   surveyLanguages: TLanguage[];
@@ -31,7 +33,7 @@ export function LanguageIndicator({
         onClick={toggleDropdown}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        {langaugeToBeDisplayed ? langaugeToBeDisplayed.alias : ""}
+        {langaugeToBeDisplayed ? getLanguageLabel(langaugeToBeDisplayed.id) : ""}
         <LanguageIcon className="ml-1 h-3 w-3" />
       </button>
       {showLanguageDropdown && (
@@ -44,7 +46,7 @@ export function LanguageIndicator({
                   type="button"
                   className="m-0 block w-full text-left"
                   onClick={() => changeLanguage(language)}>
-                  {language.alias}
+                  {getLanguageLabel(language.id)}
                 </button>
               )
           )}
