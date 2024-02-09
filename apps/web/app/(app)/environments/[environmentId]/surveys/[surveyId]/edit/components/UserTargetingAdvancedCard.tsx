@@ -9,6 +9,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -342,25 +343,31 @@ export default function UserTargetingAdvancedCard({
                       Clone & Edit Segment
                     </Button>
                   )}
-                  <Button
-                    variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
-                    size="sm"
-                    onClick={() => {
-                      setIsSegmentEditorOpen(true);
-                      setSegmentEditorViewOnly(false);
-                    }}>
-                    Edit Segment
-                    <PencilIcon className="ml-2 h-3 w-3" />
-                  </Button>
-                  {isSegmentUsedInOtherSurveys && (
-                    <p className="text-xs text-slate-600">
-                      This segment is used in other surveys. Make changes{" "}
-                      <Link href={`/environments/${environmentId}/segments`} target="_blank">
-                        here.
-                      </Link>
-                    </p>
+                  {!isSegmentUsedInOtherSurveys && (
+                    <Button
+                      variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
+                      size="sm"
+                      onClick={() => {
+                        setIsSegmentEditorOpen(true);
+                        setSegmentEditorViewOnly(false);
+                      }}>
+                      Edit Segment
+                      <PencilIcon className="ml-2 h-3 w-3" />
+                    </Button>
                   )}
                 </div>
+                {isSegmentUsedInOtherSurveys && (
+                  <p className="mt-1 flex items-center text-xs text-slate-500">
+                    <AlertCircle className="mr-1 inline h-3 w-3" />
+                    This segment is used in other surveys. Make changes{" "}
+                    <Link
+                      href={`/environments/${environmentId}/segments`}
+                      target="_blank"
+                      className="ml-1 underline">
+                      here.
+                    </Link>
+                  </p>
+                )}
               </div>
             )}
           </div>
