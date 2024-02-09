@@ -86,7 +86,6 @@ export default function EditLanguage({
 
   const deleteLanguage = (id: string) => {
     setIsDeleting(true);
-    console.log(id);
     const newLanguages = languages.filter((language) => language.id !== id);
     handleSave(newLanguages);
     setLanguages(newLanguages);

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 
-const ZI18nString = z.record(z.string().length(2), z.string());
+export const ZI18nString = z.record(z.string().length(2), z.string());
 
 export type TI18nString = z.infer<typeof ZI18nString>;
 
@@ -190,13 +190,13 @@ export const ZSurveyNPSLogic = ZSurveyLogicBase.extend({
   value: z.union([z.string(), z.number()]).optional(),
 });
 
-const ZSurveyCTALogic = ZSurveyLogicBase.extend({
+export const ZSurveyCTALogic = ZSurveyLogicBase.extend({
   // "submitted" condition is legacy and should be removed later
   condition: z.enum(["clicked", "submitted", "skipped"]).optional(),
   value: z.undefined(),
 });
 
-const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
+export const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
   condition: z
     .enum([
       "equals",
@@ -212,12 +212,12 @@ const ZSurveyRatingLogic = ZSurveyLogicBase.extend({
   value: z.union([z.string(), z.number()]).optional(),
 });
 
-const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
+export const ZSurveyPictureSelectionLogic = ZSurveyLogicBase.extend({
   condition: z.enum(["submitted", "skipped"]).optional(),
   value: z.undefined(),
 });
 
-const ZSurveyCalLogic = ZSurveyLogicBase.extend({
+export const ZSurveyCalLogic = ZSurveyLogicBase.extend({
   condition: z.enum(["booked", "skipped"]).optional(),
   value: z.undefined(),
 });
@@ -237,7 +237,7 @@ export const ZSurveyLogic = z.union([
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 
-const ZSurveyQuestionBase = z.object({
+export const ZSurveyQuestionBase = z.object({
   id: z.string(),
   type: z.string(),
   headline: ZI18nString,

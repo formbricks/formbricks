@@ -1,6 +1,7 @@
 import { TLanguage } from "@formbricks/types/product";
 
 import {
+  mockLegacySurvey,
   mockSurvey,
   mockThankYouCard,
   mockTranslatedSurvey,
@@ -10,6 +11,7 @@ import {
 } from "./i18n.mock";
 import {
   createI18nString,
+  reverseTranslateSurvey,
   translateChoice,
   translateSurvey,
   translateThankYouCard,
@@ -132,5 +134,13 @@ describe("translateSurvey", () => {
     const defaultLanguage = "en";
     const translatedSurvey = translateSurvey(mockSurvey, languages, defaultLanguage);
     expect(translatedSurvey).toEqual(mockTranslatedSurvey);
+  });
+});
+
+describe("translate to Legacy Survey", () => {
+  it("should translate all questions of a normal survey to Legacy Survey", () => {
+    const defaultLanguage = "en";
+    const translatedSurvey = reverseTranslateSurvey(mockTranslatedSurvey, defaultLanguage);
+    expect(translatedSurvey).toEqual(mockLegacySurvey);
   });
 });

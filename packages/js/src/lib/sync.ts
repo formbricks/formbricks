@@ -1,10 +1,12 @@
 import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys";
 
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";
 
+const version = import.meta.env.VERSION;
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
@@ -15,10 +17,8 @@ const syncWithBackend = async ({
   environmentId,
   userId,
 }: TJsSyncParams): Promise<Result<TJsStateSync, NetworkError>> => {
-  const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}`;
-  const publicUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
-
-  // if user id is available
+  const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}?version=${version}`;
+  const publicUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync?version=${version}`;
 
   if (!userId) {
     // public survey
@@ -75,9 +75,8 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
     } catch (e) {
       // ignore error
     }
-
     let state: TJsState = {
-      surveys: syncResult.value.surveys,
+      surveys: syncResult.value.surveys as TSurvey[],
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
       attributes: oldState?.attributes || {},

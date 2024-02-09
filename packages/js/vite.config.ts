@@ -13,6 +13,7 @@ const config = ({ mode }) => {
   return defineConfig({
     define: {
       "import.meta.env.FORMBRICKS_SURVEYS_SCRIPT_SRC": JSON.stringify(formbricksSurveysScriptSrc),
+      "import.meta.env.VERSION": JSON.stringify(surveysPackageJson.version),
     },
     build: {
       emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build

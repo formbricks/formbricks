@@ -443,13 +443,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/eslint-config-formbricks
 
-  packages:
-
-    dependencies:
-      react-select:
-        specifier: ^5.8.0
-        version: 5.8.0(react-dom@18.2.0)(react@18.2.0)
-
   packages/api:
     devDependencies:
       '@formbricks/tsconfig':
@@ -516,6 +509,9 @@ importers:
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../lib
+      react-select:
+        specifier: ^5.8.0
+        version: 5.8.0(react-dom@18.2.0)(react@18.2.0)
       stripe:
         specifier: ^14.13.0
         version: 14.13.0
