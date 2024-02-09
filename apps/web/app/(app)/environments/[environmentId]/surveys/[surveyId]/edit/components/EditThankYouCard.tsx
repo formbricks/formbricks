@@ -17,8 +17,8 @@ interface EditThankYouCardProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
   isInvalid: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageId: string;
+  setSelectedLanguageId: (languageId: string) => void;
   surveyLanguages: TLanguage[];
   defaultLanguageId: string;
 }
@@ -29,8 +29,8 @@ export default function EditThankYouCard({
   setActiveQuestionId,
   activeQuestionId,
   isInvalid,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageId,
+  setSelectedLanguageId,
   surveyLanguages,
   defaultLanguageId,
 }: EditThankYouCardProps) {
@@ -118,8 +118,8 @@ export default function EditThankYouCard({
               surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateSurvey={updateSurvey}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
+              selectedLanguageId={selectedLanguageId}
+              setSelectedLanguageId={setSelectedLanguageId}
               defaultLanguageId={defaultLanguageId}
             />
 
@@ -132,8 +132,8 @@ export default function EditThankYouCard({
               surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateSurvey={updateSurvey}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
+              selectedLanguageId={selectedLanguageId}
+              setSelectedLanguageId={setSelectedLanguageId}
               defaultLanguageId={defaultLanguageId}
             />
             <div className="mt-4">

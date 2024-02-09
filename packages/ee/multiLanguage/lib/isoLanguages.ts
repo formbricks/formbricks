@@ -738,3 +738,8 @@ export const iso639Languages = [
 ];
 
 export const iso639Identifiers = iso639Languages.map((language) => language.alpha2);
+
+export const getLanguageLabel = (languageId: string) => {
+  const language = iso639Languages.find((lang) => lang.alpha2 === languageId);
+  return `${language?.english}`;
+};

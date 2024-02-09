@@ -27,8 +27,8 @@ interface QuestionsViewProps {
   product: TProduct;
   invalidQuestions: String[] | null;
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageId: string;
+  setSelectedLanguageId: (languageId: string) => void;
   surveyLanguages: TLanguage[];
 }
 
@@ -39,9 +39,9 @@ export default function QuestionsView({
   setLocalSurvey,
   product,
   invalidQuestions,
-  selectedLanguage,
   setInvalidQuestions,
-  setSelectedLanguage,
+  selectedLanguageId,
+  setSelectedLanguageId,
   surveyLanguages,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
@@ -55,8 +55,8 @@ export default function QuestionsView({
   const defaultLanguageId = getDefaultLanguage(product.languages).id;
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
-      if (question.headline[selectedLanguage].includes(`recall:${compareId}`)) {
-        question.headline[selectedLanguage] = question.headline[selectedLanguage].replaceAll(
+      if (question.headline[selectedLanguageId].includes(`recall:${compareId}`)) {
+        question.headline[selectedLanguageId] = question.headline[selectedLanguageId].replaceAll(
           `recall:${compareId}`,
           `recall:${updatedId}`
         );
@@ -127,10 +127,13 @@ export default function QuestionsView({
 
     // check if we are recalling from this question
     updatedSurvey.questions.forEach((question) => {
-      if (question.headline[selectedLanguage].includes(`recall:${questionId}`)) {
-        const recallInfo = extractRecallInfo(getLocalizedValue(question.headline, selectedLanguage));
+      if (question.headline[selectedLanguageId].includes(`recall:${questionId}`)) {
+        const recallInfo = extractRecallInfo(getLocalizedValue(question.headline, selectedLanguageId));
         if (recallInfo) {
-          question.headline[selectedLanguage] = question.headline[selectedLanguage].replace(recallInfo, "");
+          question.headline[selectedLanguageId] = question.headline[selectedLanguageId].replace(
+            recallInfo,
+            ""
+          );
         }
       }
     });
@@ -253,7 +256,7 @@ export default function QuestionsView({
   }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
 
   useEffect(() => {
-    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguage);
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageId);
     if (questionWithEmptyFallback) {
       setActiveQuestionId(questionWithEmptyFallback.id);
       if (activeQuestionId === questionWithEmptyFallback.id) {
@@ -273,8 +276,8 @@ export default function QuestionsView({
           activeQuestionId={activeQuestionId}
           isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
           surveyLanguages={surveyLanguages}
-          setSelectedLanguage={setSelectedLanguage}
-          selectedLanguage={selectedLanguage}
+          setSelectedLanguageId={setSelectedLanguageId}
+          selectedLanguageId={selectedLanguageId}
           defaultLanguageId={defaultLanguageId}
         />
       </div>
@@ -293,8 +296,8 @@ export default function QuestionsView({
                     moveQuestion={moveQuestion}
                     updateQuestion={updateQuestion}
                     duplicateQuestion={duplicateQuestion}
-                    selectedLanguage={selectedLanguage}
-                    setSelectedLanguage={setSelectedLanguage}
+                    selectedLanguageId={selectedLanguageId}
+                    setSelectedLanguageId={setSelectedLanguageId}
                     deleteQuestion={deleteQuestion}
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
@@ -318,8 +321,8 @@ export default function QuestionsView({
           activeQuestionId={activeQuestionId}
           isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
           surveyLanguages={surveyLanguages}
-          setSelectedLanguage={setSelectedLanguage}
-          selectedLanguage={selectedLanguage}
+          setSelectedLanguageId={setSelectedLanguageId}
+          selectedLanguageId={selectedLanguageId}
           defaultLanguageId={defaultLanguageId}
         />
 

@@ -21,8 +21,8 @@ interface FileUploadFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageId: string;
+  setSelectedLanguageId: (languageId: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageId: string;
@@ -35,8 +35,8 @@ export default function FileUploadQuestionForm({
   updateQuestion,
   isInvalid,
   product,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageId,
+  setSelectedLanguageId,
   surveyLanguages,
   defaultLanguageId,
 }: FileUploadFormProps): JSX.Element {
@@ -124,8 +124,8 @@ export default function FileUploadQuestionForm({
         surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageId={selectedLanguageId}
+        setSelectedLanguageId={setSelectedLanguageId}
         defaultLanguageId={defaultLanguageId}
       />
       <div>
@@ -141,8 +141,8 @@ export default function FileUploadQuestionForm({
                 surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageId={selectedLanguageId}
+                setSelectedLanguageId={setSelectedLanguageId}
                 defaultLanguageId={defaultLanguageId}
               />
             </div>

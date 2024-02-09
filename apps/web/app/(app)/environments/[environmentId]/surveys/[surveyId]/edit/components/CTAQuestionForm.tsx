@@ -16,8 +16,8 @@ interface CTAQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageId: string;
+  setSelectedLanguageId: (languageId: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageId: string;
@@ -30,8 +30,8 @@ export default function CTAQuestionForm({
   lastQuestion,
   isInvalid,
   localSurvey,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageId,
+  setSelectedLanguageId,
   surveyLanguages,
   defaultLanguageId,
 }: CTAQuestionFormProps): JSX.Element {
@@ -39,7 +39,7 @@ export default function CTAQuestionForm({
 
   useEffect(() => {
     setFirstRender(true);
-  }, [selectedLanguage]);
+  }, [selectedLanguageId]);
 
   return (
     <form>
@@ -52,8 +52,8 @@ export default function CTAQuestionForm({
         surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageId={selectedLanguageId}
+        setSelectedLanguageId={setSelectedLanguageId}
         defaultLanguageId={defaultLanguageId}
       />
 
@@ -67,8 +67,8 @@ export default function CTAQuestionForm({
             surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageId={selectedLanguageId}
+            setSelectedLanguageId={setSelectedLanguageId}
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
@@ -109,8 +109,8 @@ export default function CTAQuestionForm({
             surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageId={selectedLanguageId}
+            setSelectedLanguageId={setSelectedLanguageId}
             defaultLanguageId={defaultLanguageId}
           />
 
@@ -126,8 +126,8 @@ export default function CTAQuestionForm({
               surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
+              selectedLanguageId={selectedLanguageId}
+              setSelectedLanguageId={setSelectedLanguageId}
               defaultLanguageId={defaultLanguageId}
             />
           )}
@@ -163,8 +163,8 @@ export default function CTAQuestionForm({
               surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
+              selectedLanguageId={selectedLanguageId}
+              setSelectedLanguageId={setSelectedLanguageId}
               defaultLanguageId={defaultLanguageId}
             />
           </div>

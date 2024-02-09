@@ -54,8 +54,8 @@ interface QuestionCardProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageId: string;
+  setSelectedLanguageId: (languageId: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
 }
@@ -71,8 +71,8 @@ export default function QuestionCard({
   activeQuestionId,
   setActiveQuestionId,
   lastQuestion,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageId,
+  setSelectedLanguageId,
   surveyLanguages,
   isInvalid,
 }: QuestionCardProps) {
@@ -103,7 +103,7 @@ export default function QuestionCard({
   const updateEmptyNextButtonLabels = (labelValue: TI18nString) => {
     localSurvey.questions.forEach((q, index) => {
       if (index === localSurvey.questions.length - 1) return;
-      if (!q.buttonLabel || q.buttonLabel[selectedLanguage]?.trim() === "") {
+      if (!q.buttonLabel || q.buttonLabel[selectedLanguageId]?.trim() === "") {
         updateQuestion(index, { buttonLabel: labelValue });
       }
     });
@@ -170,12 +170,12 @@ export default function QuestionCard({
                   </div>
                   <div>
                     <p className="text-sm font-semibold">
-                      {recallToHeadline(question.headline, localSurvey, true, selectedLanguage)[
-                        selectedLanguage
+                      {recallToHeadline(question.headline, localSurvey, true, selectedLanguageId)[
+                        selectedLanguageId
                       ]
                         ? formatTextWithSlashes(
-                            recallToHeadline(question.headline, localSurvey, true, selectedLanguage)[
-                              selectedLanguage
+                            recallToHeadline(question.headline, localSurvey, true, selectedLanguageId)[
+                              selectedLanguageId
                             ] ?? ""
                           )
                         : getTSurveyQuestionTypeName(question.type)}
@@ -207,8 +207,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -220,8 +220,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -233,8 +233,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -246,8 +246,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -259,8 +259,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -272,8 +272,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -284,8 +284,8 @@ export default function QuestionCard({
                   question={question}
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -297,8 +297,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -310,8 +310,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -324,8 +324,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -337,8 +337,8 @@ export default function QuestionCard({
                   questionIdx={questionIdx}
                   updateQuestion={updateQuestion}
                   lastQuestion={lastQuestion}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   defaultLanguageId={defaultLanguageId}
@@ -372,14 +372,14 @@ export default function QuestionCard({
                             surveyLanguages={surveyLanguages}
                             isInvalid={isInvalid}
                             updateQuestion={updateQuestion}
-                            selectedLanguage={selectedLanguage}
-                            setSelectedLanguage={setSelectedLanguage}
+                            selectedLanguageId={selectedLanguageId}
+                            setSelectedLanguageId={setSelectedLanguageId}
                             defaultLanguageId={defaultLanguageId}
                             onBlur={(e) => {
                               if (!question.buttonLabel) return;
                               let translatedNextButtonLabel = {
                                 ...question.buttonLabel,
-                                [selectedLanguage]: e.target.value,
+                                [selectedLanguageId]: e.target.value,
                               };
 
                               if (questionIdx === localSurvey.questions.length - 1) return;
@@ -399,8 +399,8 @@ export default function QuestionCard({
                             surveyLanguages={surveyLanguages}
                             isInvalid={isInvalid}
                             updateQuestion={updateQuestion}
-                            selectedLanguage={selectedLanguage}
-                            setSelectedLanguage={setSelectedLanguage}
+                            selectedLanguageId={selectedLanguageId}
+                            setSelectedLanguageId={setSelectedLanguageId}
                             defaultLanguageId={defaultLanguageId}
                           />
                         )}
@@ -421,8 +421,8 @@ export default function QuestionCard({
                             surveyLanguages={surveyLanguages}
                             isInvalid={isInvalid}
                             updateQuestion={updateQuestion}
-                            selectedLanguage={selectedLanguage}
-                            setSelectedLanguage={setSelectedLanguage}
+                            selectedLanguageId={selectedLanguageId}
+                            setSelectedLanguageId={setSelectedLanguageId}
                             defaultLanguageId={defaultLanguageId}
                           />
                         </div>

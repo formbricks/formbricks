@@ -135,7 +135,7 @@ export default function SurveyEditor({
           product={localProduct}
           responseCount={responseCount}
           surveyLanguages={surveyLanguages}
-          selectedLanguage={selectedLanguageId}
+          selectedLanguageId={selectedLanguageId}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
@@ -162,8 +162,8 @@ export default function SurveyEditor({
                   product={product}
                   invalidQuestions={invalidQuestions}
                   setInvalidQuestions={setInvalidQuestions}
-                  selectedLanguage={selectedLanguageId ? selectedLanguageId : defaultLanguageId}
-                  setSelectedLanguage={setSelectedLanguageId}
+                  selectedLanguageId={selectedLanguageId ? selectedLanguageId : defaultLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   surveyLanguages={surveyLanguages}
                 />
               </>

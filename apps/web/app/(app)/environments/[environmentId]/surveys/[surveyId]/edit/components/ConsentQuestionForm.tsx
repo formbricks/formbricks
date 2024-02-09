@@ -13,8 +13,8 @@ interface ConsentQuestionFormProps {
   question: TSurveyConsentQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageId: string;
+  setSelectedLanguageId: (languageId: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageId: string;
@@ -26,8 +26,8 @@ export default function ConsentQuestionForm({
   updateQuestion,
   isInvalid,
   localSurvey,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageId,
+  setSelectedLanguageId,
   surveyLanguages,
   defaultLanguageId,
 }: ConsentQuestionFormProps): JSX.Element {
@@ -35,7 +35,7 @@ export default function ConsentQuestionForm({
 
   useEffect(() => {
     setFirstRender(true);
-  }, [selectedLanguage]);
+  }, [selectedLanguageId]);
 
   return (
     <form>
@@ -48,8 +48,8 @@ export default function ConsentQuestionForm({
         surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageId={selectedLanguageId}
+        setSelectedLanguageId={setSelectedLanguageId}
         defaultLanguageId={defaultLanguageId}
       />
 
@@ -63,8 +63,8 @@ export default function ConsentQuestionForm({
             surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageId={selectedLanguageId}
+            setSelectedLanguageId={setSelectedLanguageId}
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
@@ -84,8 +84,8 @@ export default function ConsentQuestionForm({
         surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageId={selectedLanguageId}
+        setSelectedLanguageId={setSelectedLanguageId}
         defaultLanguageId={defaultLanguageId}
       />
       {/* <div className="mt-3">

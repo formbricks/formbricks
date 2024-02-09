@@ -4,24 +4,24 @@ import { useState } from "react";
 import { TLanguage } from "@formbricks/types/product";
 
 interface LanguageIndicatorProps {
-  selectedLanguage: string;
+  selectedLanguageId: string;
   surveyLanguages: TLanguage[];
-  setSelectedLanguage: (language: string) => void;
+  setSelectedLanguageId: (languageId: string) => void;
 }
 export function LanguageIndicator({
-  selectedLanguage,
   surveyLanguages,
-  setSelectedLanguage,
+  selectedLanguageId,
+  setSelectedLanguageId,
 }: LanguageIndicatorProps) {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
 
   const toggleDropdown = () => setShowLanguageDropdown((prev) => !prev);
 
   const changeLanguage = (language: TLanguage) => {
-    setSelectedLanguage(language.id);
+    setSelectedLanguageId(language.id);
     setShowLanguageDropdown(false);
   };
-  const langaugeToBeDisplayed = surveyLanguages.find((language) => language.id === selectedLanguage);
+  const langaugeToBeDisplayed = surveyLanguages.find((language) => language.id === selectedLanguageId);
 
   return (
     <div className="absolute right-2 top-2 z-50">
@@ -38,7 +38,7 @@ export function LanguageIndicator({
         <div className="absolute right-0 mt-1 space-y-2 rounded-lg bg-slate-900 p-2 text-xs text-white hover:bg-slate-700">
           {surveyLanguages.map(
             (language) =>
-              language.id !== selectedLanguage && (
+              language.id !== selectedLanguageId && (
                 <button
                   key={language.id}
                   type="button"

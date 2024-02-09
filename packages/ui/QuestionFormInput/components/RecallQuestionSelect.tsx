@@ -31,7 +31,7 @@ interface RecallQuestionSelectProps {
   showQuestionSelect: boolean;
   inputRef: RefObject<HTMLInputElement>;
   recallQuestions: TSurveyQuestion[];
-  selectedLanguage: string;
+  selectedLanguageId: string;
 }
 
 export default function RecallQuestionSelect({
@@ -42,7 +42,7 @@ export default function RecallQuestionSelect({
   showQuestionSelect,
   inputRef,
   recallQuestions,
-  selectedLanguage,
+  selectedLanguageId,
 }: RecallQuestionSelectProps) {
   const [focusedQuestionIdx, setFocusedQuestionIdx] = useState(0); // New state for managing focus
   const isNotAllowedQuestionType = (question: TSurveyQuestion) => {
@@ -77,7 +77,7 @@ export default function RecallQuestionSelect({
   // function to modify headline (recallInfo to corresponding headline)
   const getRecallHeadline = (question: TSurveyQuestion): TSurveyQuestion => {
     let questionTemp = structuredClone(question);
-    questionTemp = replaceRecallInfoWithUnderline(questionTemp, selectedLanguage);
+    questionTemp = replaceRecallInfoWithUnderline(questionTemp, selectedLanguageId);
     return questionTemp;
   };
 
@@ -135,7 +135,7 @@ export default function RecallQuestionSelect({
               }}>
               <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
               <div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                {getLocalizedValue(getRecallHeadline(q).headline, selectedLanguage)}
+                {getLocalizedValue(getRecallHeadline(q).headline, selectedLanguageId)}
               </div>
             </div>
           );

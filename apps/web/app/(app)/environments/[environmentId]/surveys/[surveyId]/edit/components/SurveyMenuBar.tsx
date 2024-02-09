@@ -32,7 +32,7 @@ interface SurveyMenuBarProps {
   product: TProduct;
   responseCount: number;
   surveyLanguages: TLanguage[];
-  selectedLanguage: string;
+  selectedLanguageId: string;
 }
 
 export default function SurveyMenuBar({
@@ -46,7 +46,7 @@ export default function SurveyMenuBar({
   product,
   responseCount,
   surveyLanguages,
-  selectedLanguage,
+  selectedLanguageId,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -192,13 +192,13 @@ export default function SurveyMenuBar({
         question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
-          question.choices.some((element) => element.label[selectedLanguage]?.trim() === "") ||
+          question.choices.some((element) => element.label[selectedLanguageId]?.trim() === "") ||
           question.choices.some((element, index) =>
             question.choices
               .slice(index + 1)
               .some(
                 (nextElement) =>
-                  nextElement.label[selectedLanguage]?.trim() === element.label[selectedLanguage].trim()
+                  nextElement.label[selectedLanguageId]?.trim() === element.label[selectedLanguageId].trim()
               )
           );
 
@@ -253,7 +253,7 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
-    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguage);
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageId);
     if (questionWithEmptyFallback) {
       toast.error("Fallback missing");
       return;

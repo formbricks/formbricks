@@ -6,9 +6,12 @@ import { useEffect, useRef, useState } from "react";
 
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TLanguage } from "@formbricks/types/product";
+import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+
+import { getLanguageLabel } from "../lib/isoLanguages";
 
 interface LanguageSwitchProps {
   productLanguages: TLanguage[];
@@ -86,19 +89,22 @@ export default function LanguageSwitch({
                       className="absolute z-20 mt-2 space-y-4 rounded-md border bg-white p-4"
                       ref={wrapperRef}>
                       {productLanguages.map((language) => {
-                        if (language.default) return;
                         return (
                           <label
-                            htmlFor={`switch-${language}`}
+                            htmlFor={`switch-${language.id}`}
                             className="flex cursor-pointer items-center text-sm">
                             <Switch
-                              id={`switch-${language}`}
+                              id={`switch-${language.id}`}
                               value={language.id}
                               className="mr-4"
                               checked={surveyLanguages.some((lang) => lang.id === language.id)}
                               onClick={() => toggleLanguage(language)}
+                              disabled={language.default}
                             />
-                            {language.alias}
+                            {getLanguageLabel(language.id)}{" "}
+                            {language.default && (
+                              <Badge text="default" type="gray" size="tiny" className="ml-2" />
+                            )}
                           </label>
                         );
                       })}

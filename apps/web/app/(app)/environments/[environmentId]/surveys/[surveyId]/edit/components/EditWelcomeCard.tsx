@@ -19,8 +19,8 @@ interface EditWelcomeCardProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
   isInvalid: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageId: string;
+  setSelectedLanguageId: (languageId: string) => void;
   surveyLanguages: TLanguage[];
   defaultLanguageId: string;
 }
@@ -31,8 +31,8 @@ export default function EditWelcomeCard({
   setActiveQuestionId,
   activeQuestionId,
   isInvalid,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageId,
+  setSelectedLanguageId,
   surveyLanguages,
   defaultLanguageId,
 }: EditWelcomeCardProps) {
@@ -136,8 +136,8 @@ export default function EditWelcomeCard({
                 surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageId={selectedLanguageId}
+                setSelectedLanguageId={setSelectedLanguageId}
                 defaultLanguageId={defaultLanguageId}
               />
             </div>
@@ -151,8 +151,8 @@ export default function EditWelcomeCard({
                   surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   updateQuestion={updateSurvey}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageId={selectedLanguageId}
+                  setSelectedLanguageId={setSelectedLanguageId}
                   firstRender={firstRender}
                   setFirstRender={setFirstRender}
                   questionIdx={-1}
@@ -175,8 +175,8 @@ export default function EditWelcomeCard({
                     surveyLanguages={surveyLanguages}
                     isInvalid={isInvalid}
                     updateSurvey={updateSurvey}
-                    selectedLanguage={selectedLanguage}
-                    setSelectedLanguage={setSelectedLanguage}
+                    selectedLanguageId={selectedLanguageId}
+                    setSelectedLanguageId={setSelectedLanguageId}
                     defaultLanguageId={defaultLanguageId}
                   />
                 </div>

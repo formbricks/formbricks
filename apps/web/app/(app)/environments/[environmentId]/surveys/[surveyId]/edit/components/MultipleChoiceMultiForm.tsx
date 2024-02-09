@@ -24,8 +24,8 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageId: string;
+  setSelectedLanguageId: (languageId: string) => void;
   surveyLanguages: TLanguage[];
   isInvalid: boolean;
   defaultLanguageId: string;
@@ -37,8 +37,8 @@ export default function MultipleChoiceMultiForm({
   updateQuestion,
   isInvalid,
   localSurvey,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageId,
+  setSelectedLanguageId,
   surveyLanguages,
   defaultLanguageId,
 }: OpenQuestionFormProps): JSX.Element {
@@ -83,10 +83,10 @@ export default function MultipleChoiceMultiForm({
       let newL: string | string[] | undefined = logic.value;
       if (Array.isArray(logic.value)) {
         newL = logic.value.map((value) =>
-          newLabel && value === oldLabel[selectedLanguage] ? newLabel : value
+          newLabel && value === oldLabel[selectedLanguageId] ? newLabel : value
         );
       } else {
-        newL = logic.value === oldLabel[selectedLanguage] ? newLabel : logic.value;
+        newL = logic.value === oldLabel[selectedLanguageId] ? newLabel : logic.value;
       }
       newLogic.push({ ...logic, value: newL });
     });
@@ -97,10 +97,10 @@ export default function MultipleChoiceMultiForm({
     for (let i = 0; i < question.choices.length; i++) {
       for (let j = i + 1; j < question.choices.length; j++) {
         if (
-          getLocalizedValue(question.choices[i].label, selectedLanguage).trim() ===
-          getLocalizedValue(question.choices[j].label, selectedLanguage).trim()
+          getLocalizedValue(question.choices[i].label, selectedLanguageId).trim() ===
+          getLocalizedValue(question.choices[j].label, selectedLanguageId).trim()
         ) {
-          return getLocalizedValue(question.choices[i].label, selectedLanguage).trim(); // Return the duplicate label
+          return getLocalizedValue(question.choices[i].label, selectedLanguageId).trim(); // Return the duplicate label
         }
       }
     }
@@ -148,7 +148,7 @@ export default function MultipleChoiceMultiForm({
   const deleteChoice = (choiceIdx: number) => {
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
 
-    const choiceValue = question.choices[choiceIdx].label[selectedLanguage];
+    const choiceValue = question.choices[choiceIdx].label[selectedLanguageId];
     if (isInvalidValue === choiceValue) {
       setisInvalidValue(null);
     }
@@ -190,8 +190,8 @@ export default function MultipleChoiceMultiForm({
         surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageId={selectedLanguageId}
+        setSelectedLanguageId={setSelectedLanguageId}
         defaultLanguageId={defaultLanguageId}
       />
 
@@ -208,8 +208,8 @@ export default function MultipleChoiceMultiForm({
                 surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageId={selectedLanguageId}
+                setSelectedLanguageId={setSelectedLanguageId}
                 defaultLanguageId={defaultLanguageId}
                 className=""
               />
@@ -269,8 +269,8 @@ export default function MultipleChoiceMultiForm({
                     }}
                     surveyLanguages={surveyLanguages}
                     updateChoice={updateChoice}
-                    selectedLanguage={selectedLanguage}
-                    setSelectedLanguage={setSelectedLanguage}
+                    selectedLanguageId={selectedLanguageId}
+                    setSelectedLanguageId={setSelectedLanguageId}
                     isInvalid={
                       isInvalid &&
                       !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageIds)
@@ -292,8 +292,8 @@ export default function MultipleChoiceMultiForm({
                       }
                       surveyLanguages={surveyLanguages}
                       updateQuestion={updateQuestion}
-                      selectedLanguage={selectedLanguage}
-                      setSelectedLanguage={setSelectedLanguage}
+                      selectedLanguageId={selectedLanguageId}
+                      setSelectedLanguageId={setSelectedLanguageId}
                       isInvalid={
                         isInvalid &&
                         !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageIds)
