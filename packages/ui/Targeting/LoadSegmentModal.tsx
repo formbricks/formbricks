@@ -9,7 +9,6 @@ import { formatDate, timeSinceDate } from "@formbricks/lib/time";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import { Button } from "../Button";
 import { Modal } from "../Modal";
 
 type SegmentDetailsProps = {
@@ -77,7 +76,7 @@ const SegmentDetails = ({
     return (
       <div className="group">
         <div className="flex h-16 w-full flex-col items-center justify-center rounded-lg text-slate-700">
-          You have not created a segment yet
+          You have not created a segment yet.
         </div>
       </div>
     );
@@ -86,10 +85,10 @@ const SegmentDetails = ({
   return (
     <div className="flex flex-col">
       <div>
-        <div className="grid h-12 grid-cols-5 content-center rounded-lg text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-3 pl-6">Title</div>
-          <div className="col-span-1 hidden text-center sm:block">Updated</div>
-          <div className="col-span-1 hidden text-center sm:block">Created</div>
+        <div className="grid h-12 grid-cols-5 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
+          <div className="col-span-3 pl-6">Segment</div>
+          <div className="col-span-1 hidden text-center sm:block">Updated at</div>
+          <div className="col-span-1 hidden text-center sm:block">Created at</div>
         </div>
 
         {segmentsArray.map((segment) => (
@@ -151,7 +150,6 @@ const LoadSegmentModal = ({
   open,
   setOpen,
   setStep,
-  step,
   currentSegment,
   segments,
   setSegment,
@@ -171,29 +169,7 @@ const LoadSegmentModal = ({
       }}
       title="Load Segment"
       size="lg">
-      {step === "initial" && (
-        <div>
-          <p className="text-slate-600">Loading a segment overwrites all current filters. Are you sure?</p>
-          <div className="mt-3 space-x-2 text-right">
-            <Button
-              variant="minimal"
-              onClick={() => {
-                handleResetState();
-              }}>
-              Cancel
-            </Button>
-            <Button
-              variant="darkCTA"
-              onClick={() => {
-                setStep("load");
-              }}>
-              Load Segment
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {step === "load" && (
+      <div>
         <SegmentDetails
           surveyId={surveyId}
           setOpen={setOpen}
@@ -203,7 +179,7 @@ const LoadSegmentModal = ({
           setIsSegmentEditorOpen={setIsSegmentEditorOpen}
           onSegmentLoad={onSegmentLoad}
         />
-      )}
+      </div>
     </Modal>
   );
 };

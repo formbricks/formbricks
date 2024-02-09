@@ -28,7 +28,7 @@ export default function AlertDialog({
 }: AlertDialogProps) {
   return (
     <Modal open={open} setOpen={setOpen} title={headerText}>
-      <p>{mainText}</p>
+      <p className="mb-6 text-slate-900">{mainText}</p>
       <div className="space-x-2 text-right">
         <Button variant={declineBtnVariant} onClick={onDecline}>
           {declineBtnLabel || "Discard"}
