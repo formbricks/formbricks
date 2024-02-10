@@ -1,8 +1,7 @@
 import { z } from "zod";
 
-import { ZId } from "./environment";
 import { ZPerson, ZPersonAttributes } from "./people";
-import { ZSurvey } from "./surveys";
+import { ZSurvey, ZSurveyLogicCondition } from "./surveys";
 import { ZTag } from "./tags";
 
 export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
@@ -17,7 +16,7 @@ export const ZResponsePersonAttributes = ZPersonAttributes.nullable();
 
 export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
 
-export const ZFilterCriteria = z.object({
+export const ZResponseFilterCriteria = z.object({
   finished: z.boolean().optional(),
   createdAt: z
     .object({
@@ -28,23 +27,7 @@ export const ZFilterCriteria = z.object({
   data: z
     .record(
       z.object({
-        op: z.enum([
-          "submitted",
-          "skipped",
-          "equals",
-          "notEquals",
-          "lessThan",
-          "lessEqual",
-          "greaterThan",
-          "greaterEqual",
-          "clicked",
-          "accepted",
-          "includesAll",
-          "includesOne",
-          "uploaded",
-          "notUploaded",
-          "booked",
-        ]),
+        op: ZSurveyLogicCondition,
         value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
       })
     )
@@ -52,16 +35,6 @@ export const ZFilterCriteria = z.object({
       const quesIds = Object.keys(arg);
       quesIds.forEach((quesId) => {
         switch (arg[quesId].op) {
-          case "equals":
-          case "booked":
-          case "clicked":
-          case "skipped":
-          case "uploaded":
-          case "accepted":
-          case "submitted":
-          case "notEquals":
-          case "notUploaded":
-            break;
           case "lessThan":
           case "lessEqual":
           case "greaterThan":
@@ -95,13 +68,13 @@ export const ZFilterCriteria = z.object({
 
   tags: z
     .object({
-      applied: z.array(ZId).optional(),
-      notApplied: z.array(ZId).optional(),
+      applied: z.array(z.string()).optional(),
+      notApplied: z.array(z.string()).optional(),
     })
     .optional(),
 });
 
-export type TFilterCriteria = z.infer<typeof ZFilterCriteria>;
+export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
 export const ZResponseNoteUser = z.object({
   id: z.string().cuid2(),

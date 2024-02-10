@@ -2,7 +2,7 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
-import { TFilterCriteria, TResponseTtc } from "@formbricks/types/responses";
+import { TResponseFilterCriteria, TResponseTtc } from "@formbricks/types/responses";
 
 export function calculateTtcTotal(ttc: TResponseTtc) {
   const result = { ...ttc };
@@ -11,7 +11,7 @@ export function calculateTtcTotal(ttc: TResponseTtc) {
   return result;
 }
 
-export const buildWhereClause = (filterCriteria?: TFilterCriteria) => {
+export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Record<string, any>[] = [];
 
   // For finished
@@ -41,10 +41,12 @@ export const buildWhereClause = (filterCriteria?: TFilterCriteria) => {
     const tags: Record<string, any>[] = [];
 
     if (filterCriteria?.tags?.applied) {
-      const appliedTags = filterCriteria.tags.applied.map((tagId) => ({
+      const appliedTags = filterCriteria.tags.applied.map((name) => ({
         tags: {
           some: {
-            tagId,
+            tag: {
+              name,
+            },
           },
         },
       }));
@@ -55,8 +57,10 @@ export const buildWhereClause = (filterCriteria?: TFilterCriteria) => {
       const notAppliedTags = {
         tags: {
           every: {
-            tagId: {
-              notIn: filterCriteria.tags.notApplied,
+            tag: {
+              name: {
+                notIn: filterCriteria.tags.notApplied,
+              },
             },
           },
         },

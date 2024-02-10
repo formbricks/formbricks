@@ -9,13 +9,13 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
-  TFilterCriteria,
   TResponse,
+  TResponseFilterCriteria,
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
-  ZFilterCriteria,
   ZResponse,
+  ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseLegacyInput,
   ZResponseNote,
@@ -397,11 +397,16 @@ export const getResponses = async (
   surveyId: string,
   page?: number,
   batchSize?: number,
-  filterCriteria?: TFilterCriteria
+  filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> => {
   const responses = await unstable_cache(
     async () => {
-      validateInputs([surveyId, ZId], [page, ZOptionalNumber], [filterCriteria, ZFilterCriteria.optional()]);
+      validateInputs(
+        [surveyId, ZId],
+        [page, ZOptionalNumber],
+        [batchSize, ZOptionalNumber],
+        [filterCriteria, ZResponseFilterCriteria.optional()]
+      );
       batchSize = batchSize ?? RESPONSES_PER_PAGE;
 
       try {
