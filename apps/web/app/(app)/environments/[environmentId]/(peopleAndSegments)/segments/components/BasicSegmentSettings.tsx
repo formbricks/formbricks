@@ -123,8 +123,8 @@ const BasicSegmentSettings = ({
 
   if (isAdvancedSegment(segment.filters)) {
     return (
-      <p className="text-sm font-semibold text-slate-800">
-        This is an advanced segment, you cannot edit it. Please upgrade your plan!
+      <p className="italic text-slate-600">
+        This is an advanced segment, you cannot edit it. Please upgrade your plan to edit this segment.
       </p>
     );
   }

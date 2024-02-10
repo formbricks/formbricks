@@ -1,6 +1,6 @@
 "use client";
 
-import UserTargetingFallback from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/UserTargetingFallback";
+import TargetingIndicator from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/TargetingIndicator";
 import { CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle } from "lucide-react";
@@ -158,7 +158,7 @@ export default function UserTargetingAdvancedCard({
         <hr className="text-slate-600" />
 
         <div className="flex flex-col gap-5 p-6">
-          <UserTargetingFallback segment={segment} />
+          <TargetingIndicator segment={segment} />
 
           <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
             {!!segment && (
@@ -177,15 +177,15 @@ export default function UserTargetingAdvancedCard({
             )}
 
             {isSegmentEditorOpen ? (
-              <div className="w-full">
-                <div className="mb-4">
+              <div className="flex w-full flex-col gap-2">
+                <div>
                   {!segment?.isPrivate ? (
                     <SegmentTitle
                       title={localSurvey.segment?.title}
                       description={localSurvey.segment?.description}
                     />
                   ) : (
-                    <div>
+                    <div className="mb-4">
                       <p className="text-sm font-semibold text-slate-800">
                         Send survey to audience who match...
                       </p>
@@ -207,7 +207,7 @@ export default function UserTargetingAdvancedCard({
                   </div>
                 )}
 
-                <div className="mt-4 flex items-center gap-3">
+                <div className="mt-3 flex items-center gap-3">
                   <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                     Add filter
                   </Button>
@@ -312,7 +312,7 @@ export default function UserTargetingAdvancedCard({
                   </div>
                 )}
 
-                <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3 flex items-center gap-3">
                   <Button
                     variant="secondary"
                     size="sm"

@@ -26,7 +26,7 @@ import {
   loadNewBasicSegmentAction,
   updateBasicSegmentAction,
 } from "../actions";
-import UserTargetingFallback from "./UserTargetingFallback";
+import TargetingIndicator from "./TargetingIndicator";
 
 interface UserTargetingCardProps {
   localSurvey: TSurvey;
@@ -135,7 +135,7 @@ export default function UserTargetingCard({
         <hr className="text-slate-600" />
 
         <div className="flex flex-col gap-5 p-6">
-          <UserTargetingFallback segment={segment} />
+          <TargetingIndicator segment={segment} />
 
           <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">
             <div className="flex w-full flex-col gap-2">
@@ -154,22 +154,22 @@ export default function UserTargetingCard({
                     </div>
                   )}
 
-                  <p className="text-sm font-semibold text-slate-800">
-                    This is an advanced segment, you cannot edit it. Please upgrade your plan!
+                  <p className="text-sm italic text-slate-600">
+                    This is an advanced segment. Please upgrade your plan to edit it.
                   </p>
                 </div>
               ) : (
                 <>
                   {isSegmentEditorOpen ? (
-                    <div className="w-full">
-                      <div className="mb-4">
+                    <div className="flex w-full flex-col gap-2">
+                      <div>
                         {!segment?.isPrivate ? (
                           <SegmentTitle
                             title={localSurvey.segment?.title}
                             description={localSurvey.segment?.description}
                           />
                         ) : (
-                          <div>
+                          <div className="mb-4">
                             <p className="text-sm font-semibold text-slate-800">
                               Send survey to audience who match...
                             </p>
@@ -190,7 +190,7 @@ export default function UserTargetingCard({
                         </div>
                       )}
 
-                      <div className="mt-4 flex items-center gap-3">
+                      <div className="mt-3 flex items-center gap-2">
                         <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                           Add filter
                         </Button>
@@ -269,7 +269,7 @@ export default function UserTargetingCard({
                         )}
                         {!isSegmentUsedInOtherSurveys && (
                           <Button
-                            variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}
+                            variant="secondary"
                             size="sm"
                             onClick={() => {
                               setIsSegmentEditorOpen(true);
