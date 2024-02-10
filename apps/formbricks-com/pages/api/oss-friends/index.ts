@@ -11,6 +11,17 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.appsmith.com",
         },
         {
+          name: "Aptabase",
+          description:
+            "Analytics for Apps, open source, simple and privacy-friendly. SDKs for Swift, React Native, Electron, Flutter and many others.",
+          href: "https://aptabase.com",
+        },
+        {
+          name: "Argos",
+          description: "Argos provides the developer tools to debug tests and detect visual regressions..",
+          href: "https://argos-ci.com",
+        },
+        {
           name: "BoxyHQ",
           description:
             "BoxyHQ’s suite of APIs for security and privacy helps engineering teams build and ship compliant cloud applications faster.",
@@ -21,6 +32,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Cal.com is a scheduling tool that helps you schedule meetings without the back-and-forth emails.",
           href: "https://cal.com",
+        },
+        {
+          name: "ClassroomIO.com",
+          description:
+            "ClassroomIO is a no-code tool that allows you build and scale your own teaching platform with ease.",
+          href: "https://www.classroomio.com",
         },
         {
           name: "Crowd.dev",
@@ -103,6 +120,16 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Open source, end-to-end encrypted platform that lets you securely manage secrets and configs across your team, devices, and infrastructure.",
           href: "https://infisical.com",
+        },
+        {
+          name: "Langfuse",
+          description: "Open source LLM engineering platform. Debug, analyze and iterate together.",
+          href: "https://langfuse.com",
+        },
+        {
+          name: "Lost Pixel",
+          description: "Open source visual regression testing alternative to Percy & Chromatic",
+          href: "https://lost-pixel.com",
         },
         {
           name: "Mockoon",

@@ -89,6 +89,7 @@ export const mockDisplay: TDisplay = {
   surveyId: mockSurveyId,
   personId: mockPersonId,
   responseId: mockResponseId,
+  status: null,
 };
 
 export const mockResponse: ResponseMock = {

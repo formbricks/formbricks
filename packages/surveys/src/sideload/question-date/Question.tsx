@@ -50,11 +50,11 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
   }, [format, selectedDate]);
 
   return (
-    <div className="relative h-12">
+    <div className="relative h-40">
       {!datePickerOpen && (
         <div
           onClick={() => setDatePickerOpen(true)}
-          className="relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          className="relative flex h-40 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-slate-50 text-left text-base font-normal text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
           <div className="flex items-center gap-2">
             <CalendarIcon />
             <span>{selectedDate ? formattedDate : "Select a date"}</span>

@@ -29,7 +29,7 @@ export default function Loading() {
           </div>
           <Button
             variant="darkCTA"
-            className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-gray-200">
+            className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
             Loading
           </Button>
         </div>
@@ -64,7 +64,7 @@ export default function Loading() {
           </div>
           <Button
             variant="darkCTA"
-            className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-gray-200">
+            className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
             Loading
           </Button>
         </div>

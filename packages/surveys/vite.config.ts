@@ -4,6 +4,8 @@ import { defineConfig, loadEnv } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+import packageJson from "./package.json";
+
 const buildPackage = process.env.SURVEYS_PACKAGE_BUILD || "surveys";
 
 const entryPoint = buildPackage === "surveys" ? "src/index.ts" : "src/sideload/question-date/index.tsx";
@@ -13,9 +15,15 @@ const fileName = buildPackage === "surveys" ? "index" : "question-date";
 const config = ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
+  const isDevelopment = mode === "dev";
+  const datePickerScriptSrc = isDevelopment
+    ? "http://localhost:3003/question-date.umd.js"
+    : `https://unpkg.com/@formbricks/surveys@^${packageJson.version}/dist/question-date.umd.js`;
+
   return defineConfig({
     define: {
       "process.env": env,
+      "import.meta.env.DATE_PICKER_SCRIPT_SRC": JSON.stringify(datePickerScriptSrc),
     },
     build: {
       emptyOutDir: false,

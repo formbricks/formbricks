@@ -1,19 +1,18 @@
 export const handleFeedbackSubmit = async (YesNo: string, pageUrl: string | null) => {
   const response_data = {
-    data: {
-      isHelpful: YesNo,
-      pageUrl: pageUrl,
-    },
+    isHelpful: YesNo,
+    pageUrl: pageUrl,
   };
 
   const payload = {
-    response: response_data,
     surveyId: process.env.NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID,
+    finished: true,
+    data: response_data,
   };
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/environments/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID}/responses`,
+      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID}/responses`,
       {
         method: "POST",
         headers: {

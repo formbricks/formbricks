@@ -1,3 +1,5 @@
+import { wrapThrowsAsync } from "@formbricks/types/errorHandlers";
+
 import { ErrorHandler, Result } from "./errors";
 import { checkInitialized } from "./initialize";
 
@@ -47,11 +49,23 @@ export class CommandQueue {
         if (initResult && initResult.ok !== true) errorHandler.handle(initResult.error);
       }
 
-      const result = (await currentItem?.command.apply(null, currentItem?.commandArgs)) as Result<void, any>;
+      const executeCommand = async () => {
+        return (await currentItem?.command.apply(null, currentItem?.commandArgs)) as Result<void, any>;
+      };
+
+      const result = await wrapThrowsAsync(executeCommand)();
 
       if (!result) continue;
 
-      if (result.ok !== true) errorHandler.handle(result.error);
+      if (result.ok) {
+        if (result.data && !result.data.ok) {
+          errorHandler.handle(result.data.error);
+        }
+      }
+
+      if (result.ok !== true) {
+        errorHandler.handle(result.error);
+      }
     }
     this.running = false;
     if (this.resolvePromise) {

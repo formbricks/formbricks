@@ -29,10 +29,13 @@ import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } fro
 import { buildWhereClause, calculateTtcTotal } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
+import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
+
+const RESPONSES_PER_PAGE = 10;
 
 export const responseSelection = {
   id: true,
@@ -111,6 +114,9 @@ export const getResponsesByPersonId = async (
           select: responseSelection,
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          orderBy: {
+            updatedAt: "asc",
+          },
         });
 
         if (!responsePrisma) {
@@ -253,6 +259,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       id: response.id,
       personId: response.person?.id,
       surveyId: response.surveyId,
+      singleUseId: singleUseId ? singleUseId : undefined,
     });
 
     responseNoteCache.revalidate({
@@ -353,7 +360,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
         });
 
         if (!responsePrisma) {
-          throw new ResourceNotFoundError("Response", responseId);
+          return null;
         }
 
         const response: TResponse = {
@@ -378,20 +385,24 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     }
   )();
 
-  return {
-    ...formatDateFields(response, ZResponse),
-    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-  } as TResponse;
+  return response
+    ? ({
+        ...formatDateFields(response, ZResponse),
+        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
+      } as TResponse)
+    : null;
 };
 
 export const getResponses = async (
   surveyId: string,
   page?: number,
+  batchSize?: number,
   filterCriteria?: TFilterCriteria
 ): Promise<TResponse[]> => {
   const responses = await unstable_cache(
     async () => {
       validateInputs([surveyId, ZId], [page, ZOptionalNumber], [filterCriteria, ZFilterCriteria.optional()]);
+      batchSize = batchSize ?? RESPONSES_PER_PAGE;
 
       try {
         const responses = await prisma.response.findMany({
@@ -405,8 +416,8 @@ export const getResponses = async (
               createdAt: "desc",
             },
           ],
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          take: page ? batchSize : undefined,
+          skip: page ? batchSize * (page - 1) : undefined,
         });
 
         const transformedResponses: TResponse[] = await Promise.all(
@@ -428,7 +439,7 @@ export const getResponses = async (
         throw error;
       }
     },
-    [`getResponses-${surveyId}`, JSON.stringify(filterCriteria), (page || 0)?.toString()],
+    [`getResponses-${surveyId}-${page}-${batchSize}`, JSON.stringify(filterCriteria)],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -586,7 +597,10 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
 
     deleteDisplayByResponseId(responseId, response.surveyId);
 
+    const survey = await getSurvey(response.surveyId);
+
     responseCache.revalidate({
+      environmentId: survey?.environmentId,
       id: response.id,
       personId: response.person?.id,
       surveyId: response.surveyId,

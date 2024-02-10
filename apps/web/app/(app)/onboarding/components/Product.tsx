@@ -135,7 +135,7 @@ const Product: React.FC<Product> = ({ done, isLoading, environmentId, product })
                             checked
                             readOnly
                             type="radio"
-                            className="h-4 w-4 border border-gray-300 focus:ring-0 focus:ring-offset-0"
+                            className="h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
                             style={{ borderColor: "brandColor", color: "brandColor" }}
                           />
                           <span className="ml-3 font-medium">{choice}</span>

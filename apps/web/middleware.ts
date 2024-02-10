@@ -1,9 +1,38 @@
-import { clientSideApiEndpointsLimiter, loginLimiter, signUpLimiter } from "@/app/middleware/bucket";
-import { clientSideApiRoute, loginRoute, signupRoute } from "@/app/middleware/endpointValidator";
+import {
+  clientSideApiEndpointsLimiter,
+  loginLimiter,
+  shareUrlLimiter,
+  signUpLimiter,
+} from "@/app/middleware/bucket";
+import {
+  clientSideApiRoute,
+  isWebAppRoute,
+  loginRoute,
+  shareUrlRoute,
+  signupRoute,
+} from "@/app/middleware/endpointValidator";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { WEBAPP_URL } from "@formbricks/lib/constants";
+
 export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request });
+
+  if (isWebAppRoute(request.nextUrl.pathname) && !token) {
+    const loginUrl = new URL(
+      `/auth/login?callbackUrl=${encodeURIComponent(request.nextUrl.toString())}`,
+      WEBAPP_URL
+    );
+    return NextResponse.redirect(loginUrl.href);
+  }
+
+  const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
+  if (token && callbackUrl) {
+    return NextResponse.redirect(WEBAPP_URL + callbackUrl);
+  }
+
   if (process.env.NODE_ENV !== "production") {
     return NextResponse.next();
   }
@@ -23,6 +52,8 @@ export async function middleware(request: NextRequest) {
         await signUpLimiter.check(ip);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
         await clientSideApiEndpointsLimiter.check(ip);
+      } else if (shareUrlRoute(request.nextUrl.pathname)) {
+        await shareUrlLimiter.check(ip);
       }
       return res;
     } catch (_e) {
@@ -41,5 +72,9 @@ export const config = {
     "/api/(.*)/client/:path*",
     "/api/v1/js/actions",
     "/api/v1/client/storage",
+    "/share/(.*)/:path",
+    "/environments/:path*",
+    "/api/auth/signout",
+    "/auth/login",
   ],
 };

@@ -21,7 +21,7 @@ const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
         <h1 className="text-4xl font-bold text-slate-800">
           {!!singleUseMessage?.heading ? singleUseMessage?.heading : defaultHeading}
         </h1>
-        <p className="text-lg leading-10 text-gray-500">
+        <p className="text-lg leading-10 text-slate-500">
           {!!singleUseMessage?.subheading ? singleUseMessage?.subheading : defaultSubheading}
         </p>
       </div>

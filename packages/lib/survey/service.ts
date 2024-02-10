@@ -20,6 +20,7 @@ import { personCache } from "../person/cache";
 import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
+import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -31,6 +32,7 @@ export const selectSurvey = {
   name: true,
   type: true,
   environmentId: true,
+  createdBy: true,
   status: true,
   welcomeCard: true,
   questions: true,
@@ -41,6 +43,7 @@ export const selectSurvey = {
   autoClose: true,
   closeOnDate: true,
   delay: true,
+  displayPercentage: true,
   autoComplete: true,
   verifyEmail: true,
   redirectUrl: true,
@@ -49,6 +52,7 @@ export const selectSurvey = {
   surveyClosedMessage: true,
   singleUse: true,
   pin: true,
+  resultShareKey: true,
   triggers: {
     select: {
       actionClass: {
@@ -408,6 +412,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     revalidateSurveyByAttributeClassId([...newFilters, ...removedFilters]);
   }
 
+  surveyData.updatedAt = new Date();
   data = {
     ...surveyData,
     ...data,
@@ -488,12 +493,28 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
   }
 
-  // TODO: Create with triggers & attributeFilters
-  delete surveyBody.triggers;
-  delete surveyBody.attributeFilters;
-  const data: Omit<TSurveyInput, "triggers" | "attributeFilters"> = {
+  const createdBy = surveyBody.createdBy;
+  delete surveyBody.createdBy;
+
+  const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
     ...surveyBody,
+    // TODO: Create with triggers & attributeFilters
+    triggers: undefined,
+    attributeFilters: undefined,
   };
+
+  if (surveyBody.type === "web" && data.thankYouCard) {
+    data.thankYouCard.buttonLabel = "";
+    data.thankYouCard.buttonLink = "";
+  }
+
+  if (createdBy) {
+    data.creator = {
+      connect: {
+        id: createdBy,
+      },
+    };
+  }
 
   const survey = await prisma.survey.create({
     data: {
@@ -512,6 +533,8 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     triggers: survey.triggers.map((trigger) => trigger.actionClass.name),
   };
 
+  await subscribeTeamMembersToSurveyResponses(environmentId, survey.id);
+
   surveyCache.revalidate({
     id: survey.id,
     environmentId: survey.environmentId,
@@ -520,7 +543,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   return transformedSurvey;
 };
 
-export const duplicateSurvey = async (environmentId: string, surveyId: string) => {
+export const duplicateSurvey = async (environmentId: string, surveyId: string, userId: string) => {
   validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
 
@@ -541,6 +564,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       ...existingSurvey,
       id: undefined, // id is auto-generated
       environmentId: undefined, // environmentId is set below
+      createdBy: undefined,
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
       questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
@@ -556,6 +580,11 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string) =
       environment: {
         connect: {
           id: environmentId,
+        },
+      },
+      creator: {
+        connect: {
+          id: userId,
         },
       },
       surveyClosedMessage: existingSurvey.surveyClosedMessage
@@ -685,4 +714,26 @@ export const getSyncSurveys = async (environmentId: string, person: TPerson): Pr
     }
   )();
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+};
+
+export const getSurveyByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
+  try {
+    const survey = await prisma.survey.findFirst({
+      where: {
+        resultShareKey,
+      },
+    });
+
+    if (!survey) {
+      return null;
+    }
+
+    return survey.id;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };

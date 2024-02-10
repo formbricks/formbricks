@@ -1,6 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
+import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ export default function DateQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const defaultDate = value ? new Date(value as string) : undefined;
+  const datePickerScriptSrc = import.meta.env.DATE_PICKER_SCRIPT_SRC;
 
   useEffect(() => {
     // Check if the DatePicker has already been loaded
@@ -47,10 +49,7 @@ export default function DateQuestion({
     if (!window.initDatePicker) {
       const script = document.createElement("script");
 
-      script.src =
-        process.env.SURVEYS_PACKAGE_MODE === "development"
-          ? "http://localhost:3003/question-date.umd.js"
-          : "https://unpkg.com/@formbricks/surveys@^1.4.0/dist/question-date.umd.js";
+      script.src = datePickerScriptSrc;
 
       script.async = true;
 
@@ -120,6 +119,7 @@ export default function DateQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
+      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
 

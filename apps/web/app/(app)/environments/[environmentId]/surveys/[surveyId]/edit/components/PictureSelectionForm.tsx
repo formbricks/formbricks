@@ -1,4 +1,3 @@
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import { useState } from "react";
@@ -7,8 +6,8 @@ import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import FileInput from "@formbricks/ui/FileInput";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface PictureSelectionFormProps {
@@ -17,7 +16,7 @@ interface PictureSelectionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 export default function PictureSelectionForm({
@@ -25,7 +24,7 @@ export default function PictureSelectionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
 }: PictureSelectionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const environmentId = localSurvey.environmentId;
@@ -33,25 +32,29 @@ export default function PictureSelectionForm({
   return (
     <form>
       <QuestionFormInput
+        localSurvey={localSurvey}
         environmentId={environmentId}
-        isInValid={isInValid}
-        question={question}
+        isInvalid={isInvalid}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        type="headline"
       />
-      <div className="mt-3">
+      <div>
         {showSubheader && (
           <>
-            <Label htmlFor="subheader">Description</Label>
-            <div className="mt-2 inline-flex w-full items-center">
-              <Input
-                id="subheader"
-                name="subheader"
-                value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+            <div className="flex w-full items-center">
+              <QuestionFormInput
+                localSurvey={localSurvey}
+                environmentId={environmentId}
+                isInvalid={isInvalid}
+                questionId={question.id}
+                questionIdx={questionIdx}
+                updateQuestion={updateQuestion}
+                type="subheader"
               />
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
                   updateQuestion(questionIdx, { subheader: "" });
@@ -61,7 +64,12 @@ export default function PictureSelectionForm({
           </>
         )}
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            variant="minimal"
+            className="mt-3"
+            type="button"
+            onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -72,7 +80,7 @@ export default function PictureSelectionForm({
           Images{" "}
           <span
             className={cn("text-slate-400", {
-              "text-red-600": isInValid && question.choices?.length < 2,
+              "text-red-600": isInvalid && question.choices?.length < 2,
             })}>
             (Upload at least 2 images)
           </span>

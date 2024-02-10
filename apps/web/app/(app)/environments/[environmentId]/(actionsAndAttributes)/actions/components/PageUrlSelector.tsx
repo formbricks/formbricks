@@ -47,8 +47,8 @@ export const PageUrlSelector = ({
             <Controller
               name="noCodeConfig.[pageUrl].rule"
               control={control}
-              render={({ field: { onChange, value } }) => (
-                <Select onValueChange={onChange} {...value} value={value}>
+              render={({ field: { onChange, value, name } }) => (
+                <Select onValueChange={onChange} {...value} value={value} name={name}>
                   <SelectTrigger className="w-[160px] bg-white">
                     <SelectValue placeholder="Select match type" />
                   </SelectTrigger>
@@ -83,6 +83,7 @@ export const PageUrlSelector = ({
               <Input
                 type="text"
                 value={testUrl}
+                name="noCodeConfig.[pageUrl].testUrl"
                 onChange={(e) => {
                   setTestUrl(e.target.value);
                   setIsMatch("default");

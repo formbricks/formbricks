@@ -1,6 +1,7 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
+import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
 
 import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
@@ -79,6 +80,26 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
     return total;
   }, [results]);
 
+  const averageRating = useMemo(() => {
+    let total = 0;
+    let count = 0;
+    questionSummary.responses.forEach((response) => {
+      if (response.value && typeof response.value === "number") {
+        total += response.value;
+        count += 1;
+      }
+    });
+    const average = count > 0 ? total / count : 0;
+    return parseFloat(average.toFixed(2));
+  }, [questionSummary]);
+
+  const getIconBasedOnScale = useMemo(() => {
+    const scale = questionSummary.question.scale;
+    if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;
+    else if (scale === "star") return <StarIcon fill="rgb(250 204 21)" className="h-4 w-4 text-yellow-400" />;
+    else if (scale === "smiley") return <SmileIcon className="h-4 w-4" />;
+  }, [questionSummary]);
+
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
@@ -92,6 +113,10 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
             {totalResponses} responses
+          </div>
+          <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+            {getIconBasedOnScale}
+            <div>Overall: {averageRating}</div>
           </div>
           {!questionSummary.question.required && (
             <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>

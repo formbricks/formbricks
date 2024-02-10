@@ -1,5 +1,5 @@
 import { formatDistance } from "date-fns";
-import intlFormat from "date-fns/intlFormat";
+import { intlFormat } from "date-fns";
 
 export const convertDateString = (dateString: string) => {
   if (!dateString) {

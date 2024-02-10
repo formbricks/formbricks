@@ -15,7 +15,7 @@ export const withEmailTemplate = (content: string) =>
           font-family: "Poppins", "Helvetica Neue", "Segoe UI", Helvetica,
             sans-serif;
           font-size: 15px;
-          font-weight: 300;
+          font-weight: 500;
           line-height: 26px;
           margin: 0;
           color: #1e293b;
@@ -110,11 +110,12 @@ export const withEmailTemplate = (content: string) =>
         }
   
         a {
-          color: #00c4b8;
+          color: #000000;
         }
         a:hover {
-          color: #00e6ca;
+          color: #000000;
         }
+
         h1,
         h2,
         h3,
@@ -143,7 +144,7 @@ export const withEmailTemplate = (content: string) =>
       "
     >
       <div class="gutter" style="padding: 30px">
-        <a href="https://formbricks.com" target="_blank">
+        <a href="https://formbricks.com?utm_source=email_header&utm_medium=email" target="_blank">
           <img
             src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png"
             alt="Formbricks Logo"
@@ -201,14 +202,14 @@ export const withEmailTemplate = (content: string) =>
           Formbricks ${new Date().getFullYear()}. All rights reserved.<br />
           <a
             style="text-decoration: none"
-            href="https://formbricks.com/imprint"
+            href="https://formbricks.com/imprint?utm_source=email_footer&utm_medium=email"
             target="_blank"
             >Imprint</a
           >
           |
           <a
             style="text-decoration: none"
-            href="https://formbricks.com/privacy-policy"
+            href="https://formbricks.com/privacy-policy?utm_source=email_footer&utm_medium=email"
             target="_blank"
             >Privacy Policy</a
           >

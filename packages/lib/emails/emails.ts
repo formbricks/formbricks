@@ -1,7 +1,8 @@
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 import {
+  DEBUG,
   MAIL_FROM,
   SMTP_HOST,
   SMTP_PASSWORD,
@@ -12,6 +13,8 @@ import {
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
 import { getQuestionResponseMapping } from "../responses";
+import { getOriginalFileNameFromUrl } from "../storage/utils";
+import { getTeamByEnvironmentId } from "../team/service";
 import { withEmailTemplate } from "./email-template";
 
 const nodemailer = require("nodemailer");
@@ -35,6 +38,7 @@ interface TEmailUser {
 export interface LinkSurveyEmailData {
   surveyId: string;
   email: string;
+  suId: string;
   surveyData?: {
     name?: string;
     subheading?: string;
@@ -43,23 +47,25 @@ export interface LinkSurveyEmailData {
 
 export const sendEmail = async (emailData: sendEmailData) => {
   try {
-    if (!IS_SMTP_CONFIGURED) throw new Error("Could not Email: SMTP not configured");
-
-    let transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASSWORD,
-      },
-      // logger: true,
-      // debug: true,
-    });
-    const emailDefaults = {
-      from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
-    };
-    await transporter.sendMail({ ...emailDefaults, ...emailData });
+    if (IS_SMTP_CONFIGURED) {
+      let transporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
+        auth: {
+          user: SMTP_USER,
+          pass: SMTP_PASSWORD,
+        },
+        logger: DEBUG,
+        debug: DEBUG,
+      });
+      const emailDefaults = {
+        from: `Formbricks <${MAIL_FROM || "noreply@formbricks.com"}>`,
+      };
+      await transporter.sendMail({ ...emailDefaults, ...emailData });
+    } else {
+      console.error(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
+    }
   } catch (error) {
     throw error;
   }
@@ -75,11 +81,12 @@ export const sendVerificationEmail = async (user: TEmailUser) => {
   )}`;
   await sendEmail({
     to: user.email,
-    subject: "Welcome to Formbricks 🤍",
-    html: withEmailTemplate(`<h1>Welcome!</h1>
-    To start using Formbricks please verify your email by clicking the button below:<br/><br/>
-    <a class="button" href="${verifyLink}">Confirm email</a><br/>
-    <br/>
+    subject: "Please verify your email to use Formbricks",
+    html: withEmailTemplate(`<h1>Almost there!</h1>
+    To start using Formbricks please verify your email below:<br/><br/>
+    <a class="button" href="${verifyLink}">Verify email</a><br/><br/>
+    You can also click on this link:<br/>
+    <a href="${verifyLink}" style="word-break: break-all; color: #1e293b;">${verifyLink}</a><br/><br/>
     <strong>The link is valid for 24h.</strong><br/><br/>If it has expired please request a new token here:
     <a href="${verificationRequestLink}">Request new verification</a><br/>
     <br/>
@@ -156,44 +163,67 @@ export const sendResponseFinishedEmail = async (
   email: string,
   environmentId: string,
   survey: { id: string; name: string; questions: TSurveyQuestion[] },
-  response: TResponse
+  response: TResponse,
+  responseCount: number
 ) => {
   const personEmail = response.person?.attributes["email"];
+  const team = await getTeamByEnvironmentId(environmentId);
   await sendEmail({
     to: email,
     subject: personEmail
       ? `${personEmail} just completed your ${survey.name} survey ✅`
       : `A response for ${survey.name} was completed ✅`,
     replyTo: personEmail?.toString() || MAIL_FROM,
-    html: withEmailTemplate(`<h1>Hey 👋</h1>Someone just completed your survey <strong>${
-      survey.name
-    }</strong><br/>
+    html: withEmailTemplate(`
+      <h1>Hey 👋</h1>
+      <p>Congrats, you received a new response to your survey!
+      Someone just completed your survey <strong>${survey.name}:</strong><br/></p>
 
-    <hr/>
+      <hr/>
 
-    ${getQuestionResponseMapping(survey, response)
-      .map(
-        (question) =>
-          question.answer &&
-          `<div style="margin-top:1em;">
-          <p style="margin:0px;">${question.question}</p>
-          <p style="font-weight: 500; margin:0px; white-space:pre-wrap">${question.answer}</p>  
-        </div>`
-      )
-      .join("")}
+      ${getQuestionResponseMapping(survey, response)
+        .map(
+          (question) =>
+            question.answer &&
+            `<div style="margin-top:1em;">
+            <p style="margin:0px;">${question.question}</p>
+            ${
+              question.type === TSurveyQuestionType.FileUpload
+                ? typeof question.answer !== "string" &&
+                  question.answer
+                    .map((answer) => {
+                      return `
+                  <div style="position: relative; display: flex; width: 15rem; flex-direction: column; align-items: center; justify-content: center; border-radius: 0.5rem; background-color: #e2e8f0; color: black; margin-top:8px;">
+                    <div style="margin-top: 1rem; color: black;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-file">
+                        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                      </svg>
+                    </div>
+                    <p style="margin-top: 0.5rem; width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1rem; font-size: 0.875rem; color: black;">
+                    ${getOriginalFileNameFromUrl(answer)}
+                    </p>
+                  </div>
+               `;
+                    })
+                    .join("")
+                : `<p style="margin:0px; white-space:pre-wrap"><b>${question.answer}</b></p>`
+            }
+            
+          </div>`
+        )
+        .join("")}
 
-    <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
-      survey.id
-    }/responses?utm_source=emailnotification&utm_medium=email&utm_content=ViewResponsesCTA">View all responses</a>
+      <a class="button" href="${WEBAPP_URL}/environments/${environmentId}/surveys/${
+        survey.id
+      }/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA">${responseCount > 1 ? `View ${responseCount - 1} more ${responseCount === 2 ? "response" : "responses"}` : `View survey summary`}</a>
 
-    <div class="tooltip">
-    <p class='brandcolor'><strong>Start a conversation 💡</strong></p>
-    ${
-      personEmail
-        ? `<p>Hit 'Reply' or reach out manually: ${personEmail}</p>`
-        : "<p>If you set the email address as an attribute in in-app surveys, you can reply directly to the respondent.</p>"
-    }
-    </div>
+      <hr/>
+     
+      <div style="margin-top:0.8em; padding:0.01em 1.6em; text-align:center; font-size:0.8em; line-height:1.2em;">
+      <p><b>Don't want to get these notifications?</b></p>
+      <p>Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}">this form</a>. 
+      <br/> Turn off notifications for <a href="${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedTeamIds&elementId=${team?.id}">all newly created forms</a>.</p></div>
     `),
   });
 };
@@ -213,8 +243,14 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
   const surveyId = data.surveyId;
   const email = data.email;
   const surveyData = data.surveyData;
+  const singleUseId = data.suId ?? null;
   const token = createTokenForLinkSurvey(surveyId, email);
-  const surveyLink = `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+  const getSurveyLink = () => {
+    if (singleUseId) {
+      return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+    }
+    return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+  };
   await sendEmail({
     to: data.email,
     subject: "Your Formbricks Survey",
@@ -222,7 +258,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: LinkSurveyEmailData) =
     Thanks for validating your email. Here is your Survey.<br/><br/>
     <strong>${surveyData?.name}</strong>
     <p>${surveyData?.subheading}</p>
-    <a class="button" href="${surveyLink}">Take survey</a><br/>
+    <a class="button" href="${getSurveyLink()}">Take survey</a><br/>
     <br/>
     All the best,<br/>
     Your Formbricks Team 🤍`),

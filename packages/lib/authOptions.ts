@@ -221,6 +221,7 @@ export const authOptions: NextAuthOptions = {
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
+
         // Default team assignment if env variable is set
         if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
           // check if team exists
@@ -247,7 +248,22 @@ export const authOptions: NextAuthOptions = {
             ...account,
             userId: userProfile.id,
           });
-          await createProduct(team.id, { name: "My Product" });
+          const product = await createProduct(team.id, { name: "My Product" });
+          const updatedNotificationSettings = {
+            ...userProfile.notificationSettings,
+            alert: {
+              ...userProfile.notificationSettings?.alert,
+            },
+            weeklySummary: {
+              ...userProfile.notificationSettings?.weeklySummary,
+              [product.id]: true,
+            },
+          };
+
+          await updateUser(userProfile.id, {
+            notificationSettings: updatedNotificationSettings,
+          });
+
           return true;
         }
       }

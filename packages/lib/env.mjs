@@ -7,6 +7,9 @@ export const env = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
+    CUSTOMER_IO_API_KEY: z.string().optional(),
+    CUSTOMER_IO_SITE_ID: z.string().optional(),
+    NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
     ENCRYPTION_KEY: z.string().length(64).or(z.string().length(32)),
@@ -44,9 +47,6 @@ export const env = createEnv({
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
-    GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
-    GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
-    AZUREAD_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     VERCEL_URL: z.string().optional(),
@@ -96,6 +96,8 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    CUSTOMER_IO_API_KEY: process.env.CUSTOMER_IO_API_KEY,
+    CUSTOMER_IO_SITE_ID: process.env.CUSTOMER_IO_SITE_ID,
     WEBAPP_URL: process.env.WEBAPP_URL,
     DATABASE_URL: process.env.DATABASE_URL,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
@@ -121,8 +123,6 @@ export const env = createEnv({
     PRIVACY_URL: process.env.PRIVACY_URL,
     TERMS_URL: process.env.TERMS_URL,
     IMPRINT_URL: process.env.IMPRINT_URL,
-    GITHUB_AUTH_ENABLED: process.env.GITHUB_AUTH_ENABLED,
-    GOOGLE_AUTH_ENABLED: process.env.GOOGLE_AUTH_ENABLED,
     GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
     GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
@@ -142,11 +142,10 @@ export const env = createEnv({
     VERCEL_URL: process.env.VERCEL_URL,
     SHORT_URL_BASE: process.env.SHORT_URL_BASE,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    AZUREAD_AUTH_ENABLED: process.env.AZUREAD_AUTH_ENABLED,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
-    AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
+    AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     DEFAULT_TEAM_ID: process.env.DEFAULT_TEAM_ID,
     DEFAULT_TEAM_ROLE: process.env.DEFAULT_TEAM_ROLE,
     ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,

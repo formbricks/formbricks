@@ -26,4 +26,14 @@ Sentry.init({
       blockAllMedia: true,
     }),
   ],
+  beforeSend(event, hint) {
+    const error = hint.originalException as Error;
+
+    // @ts-expect-error
+    if (error && error.digest === "NEXT_NOT_FOUND") {
+      return null;
+    }
+
+    return event;
+  },
 });

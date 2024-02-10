@@ -3,11 +3,9 @@ import { useState } from "react";
 
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
-
-import QuestionFormInput from "./QuestionFormInput";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;
@@ -15,7 +13,7 @@ interface IDateQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  isInvalid: boolean;
 }
 
 const dateOptions = [
@@ -37,7 +35,7 @@ export default function DateQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
 }: IDateQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -46,24 +44,28 @@ export default function DateQuestionForm({
     <form>
       <QuestionFormInput
         environmentId={localSurvey.environmentId}
-        isInValid={isInValid}
-        question={question}
+        isInvalid={isInvalid}
+        questionId={question.id}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
+        localSurvey={localSurvey}
+        type="headline"
       />
-      <div className="mt-3">
+      <div>
         {showSubheader && (
           <>
-            <Label htmlFor="subheader">Description</Label>
-            <div className="mt-2 inline-flex w-full items-center">
-              <Input
-                id="subheader"
-                name="subheader"
-                value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
+            <div className="flex w-full items-center">
+              <QuestionFormInput
+                localSurvey={localSurvey}
+                environmentId={localSurvey.environmentId}
+                isInvalid={isInvalid}
+                questionId={question.id}
+                questionIdx={questionIdx}
+                updateQuestion={updateQuestion}
+                type="subheader"
               />
               <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   setShowSubheader(false);
                   updateQuestion(questionIdx, { subheader: "" });
@@ -74,7 +76,12 @@ export default function DateQuestionForm({
         )}
 
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            className="mt-3"
+            variant="minimal"
+            type="button"
+            onClick={() => setShowSubheader(true)}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

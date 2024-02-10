@@ -25,6 +25,8 @@ interface LinkSurveyPinScreenProps {
   webAppUrl: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  IS_FORMBRICKS_CLOUD: boolean;
+  verifiedEmail?: string;
 }
 
 const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
@@ -39,6 +41,8 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
     singleUseResponse,
     IMPRINT_URL,
     PRIVACY_URL,
+    IS_FORMBRICKS_CLOUD,
+    verifiedEmail,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -118,12 +122,15 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
           singleUseId={singleUseId}
           singleUseResponse={singleUseResponse}
           webAppUrl={webAppUrl}
+          verifiedEmail={verifiedEmail}
         />
       </MediaBackground>
       <LegalFooter
         bgColor={survey.styling?.background?.bg || "#ffff"}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
+        IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+        surveyUrl={webAppUrl + "/s/" + survey.id}
       />
     </div>
   );

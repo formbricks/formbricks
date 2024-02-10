@@ -43,7 +43,7 @@ export default function PricingTableComponent({
     setLoadingCustomerPortal(true);
     const sessionUrl = await manageSubscriptionAction(team.id, environmentId);
     router.push(sessionUrl);
-    setLoadingCustomerPortal(true);
+    setLoadingCustomerPortal(false);
   };
 
   const upgradePlan = async (priceLookupKeys: StripePriceLookupKeys[]) => {
@@ -112,7 +112,7 @@ export default function PricingTableComponent({
       unlimited: false,
     },
     {
-      title: "Multi Language Surveys",
+      title: "Multi-Language Surveys",
       comingSoon: true,
     },
     {
@@ -141,7 +141,7 @@ export default function PricingTableComponent({
       unlimited: true,
     },
     {
-      title: "Reusable Segmentscoming",
+      title: "Reusable Segments",
       comingSoon: true,
       unlimited: true,
     },
@@ -153,11 +153,15 @@ export default function PricingTableComponent({
       comingSoon: false,
     },
     {
-      title: "File Uploads upto 1 GB",
+      title: "File Uploads up to 1 GB",
+      comingSoon: false,
+    },
+    {
+      title: "Custom Domain",
       comingSoon: true,
     },
     {
-      title: "Multi Language Surveys",
+      title: "Multi-Language Surveys",
       comingSoon: true,
     },
   ];
@@ -172,6 +176,9 @@ export default function PricingTableComponent({
       <div className="justify-between gap-4 rounded-lg">
         {team.billing.stripeCustomerId ? (
           <div className="flex w-full justify-end">
+            <Button variant="minimal" className="justify-center py-2 shadow-sm" onClick={openCustomerPortal}>
+              Cancel Subscription
+            </Button>
             <Button
               variant="secondary"
               className="justify-center py-2 shadow-sm"
@@ -182,7 +189,7 @@ export default function PricingTableComponent({
           </div>
         ) : (
           <>
-            {/* <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-gray-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
+            {/* <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
               <svg
                 viewBox="0 0 1024 1024"
                 className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
@@ -206,11 +213,11 @@ export default function PricingTableComponent({
                   Launch Special:
                   <br /> Go Unlimited! Forever!
                 </h2>
-                <p className="text-md mt-6 leading-8 text-gray-300">
+                <p className="text-md mt-6 leading-8 text-slate-300">
                   Get access to all pro features and unlimited responses + identified users for a flat fee of
                   only $99/month.
                   <br /> <br />
-                  <span className="text-gray-400">
+                  <span className="text-slate-400">
                     This deal ends on 31st of October 2023 at 11:59 PM PST.
                   </span>
                 </p>
@@ -218,7 +225,7 @@ export default function PricingTableComponent({
               <div className="flex flex-1 flex-col items-center justify-center lg:pr-8">
                 <Button
                   variant="minimal"
-                  className="w-full justify-center bg-white py-2 text-gray-800 shadow-sm"
+                  className="w-full justify-center bg-white py-2 text-slate-800 shadow-sm"
                   loading={upgradingPlan}
                   onClick={() =>
                     upgradePlan([
@@ -232,7 +239,7 @@ export default function PricingTableComponent({
               </div>
             </div> */}
 
-            <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-gray-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
+            <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
               <svg
                 viewBox="0 0 1024 1024"
                 className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
@@ -252,11 +259,13 @@ export default function PricingTableComponent({
                 </defs>
               </svg>
               <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
-                <h2 className="text-2xl font-bold text-white sm:text-3xl">Get the most out of Formbricks</h2>
-                <p className="text-md mt-6 leading-8 text-gray-300">
-                  Get access to all features by upgrading to a paid plan.
+                <h2 className="text-2xl font-bold text-white sm:text-3xl">
+                  Unlock the full power of Formbricks, for free.
+                </h2>
+                <p className="text-md mt-6 leading-8 text-slate-300">
+                  Add a credit card, get access to all features.
                   <br />
-                  With our metered billing you will not be charged until you exceed the free tier limits.{" "}
+                  You will <b>not</b> be charged until you exceed the free tier limits.
                 </p>
               </div>
             </div>
@@ -264,8 +273,8 @@ export default function PricingTableComponent({
         )}
 
         <PricingCard
-          title={"Core & App Surveys"}
-          subtitle={"Get up to 250 free responses every month"}
+          title={"Formbricks Core & Surveys"}
+          subtitle={"Get 250 responses free every month"}
           featureName={ProductFeatureKeys[ProductFeatureKeys.inAppSurvey]}
           monthlyPrice={0}
           actionText={"Starting at"}
@@ -288,7 +297,7 @@ export default function PricingTableComponent({
         />
 
         <PricingCard
-          title={"Link Survey"}
+          title={"Link Survey Pro"}
           subtitle={"Link Surveys include unlimited surveys and responses for free."}
           featureName={ProductFeatureKeys[ProductFeatureKeys.linkSurvey]}
           monthlyPrice={30}
@@ -301,8 +310,8 @@ export default function PricingTableComponent({
         />
 
         <PricingCard
-          title={"User Targeting"}
-          subtitle={"Target up to 2500 users every month"}
+          title={"User Identification"}
+          subtitle={"Identify up to 2.500 users every month"}
           featureName={ProductFeatureKeys[ProductFeatureKeys.userTargeting]}
           monthlyPrice={0}
           actionText={"Starting at"}

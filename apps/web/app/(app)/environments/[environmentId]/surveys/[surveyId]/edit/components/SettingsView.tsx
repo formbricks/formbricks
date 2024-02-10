@@ -47,7 +47,7 @@ export default function SettingsView({
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
-        actionClasses={actionClasses}
+        propActionClasses={actionClasses}
         membershipRole={membershipRole}
       />
 
@@ -63,7 +63,12 @@ export default function SettingsView({
         environmentId={environment.id}
       />
 
-      <StylingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} colours={colours} />
+      <StylingCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        colours={colours}
+        environmentId={environment.id}
+      />
     </div>
   );
 }

@@ -3,8 +3,9 @@
 }
 
 .dp-input-root [class$="wrapper"] {
-  height: 48px;
+  height: 160px;
   display: flex;
+  background: rgb(248 250 252);
   flex-direction: row-reverse;
   gap: 8px;
   justify-content: center;
@@ -43,6 +44,16 @@
 
 .wrapper-hide .react-date-picker__wrapper {
   display: none;
+}
+
+.react-date-picker__calendar--open {
+  position: absolute !important;
+  top: 0 !important;
+}
+
+.calendar-root {
+  position: absolute !important;
+  top: 0 !important;
 }
 
 .calendar-root [class$="navigation"] {

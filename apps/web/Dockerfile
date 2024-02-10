@@ -23,6 +23,8 @@ ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 ARG ENCRYPTION_KEY
 ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
 
+ARG NEXT_PUBLIC_SENTRY_DSN
+
 # Set the working directory
 WORKDIR /app
 
@@ -64,6 +66,10 @@ COPY --from=installer /app/docker/cronjobs /app/docker/cronjobs
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
 USER nextjs
+
+# Prepare volume for uploads
+RUN mkdir -p /home/nextjs/apps/web/uploads/
+VOLUME /home/nextjs/apps/web/uploads/
 
 CMD supercronic -quiet /app/docker/cronjobs & \
     if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \

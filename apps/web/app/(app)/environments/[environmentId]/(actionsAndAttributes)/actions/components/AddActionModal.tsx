@@ -24,7 +24,8 @@ interface AddNoCodeActionModalProps {
   environmentId: string;
   open: boolean;
   setOpen: (v: boolean) => void;
-  setActionClassArray?;
+  actionClasses: TActionClass[];
+  setActionClasses?;
   isViewer: boolean;
 }
 
@@ -45,7 +46,8 @@ export default function AddNoCodeActionModal({
   environmentId,
   open,
   setOpen,
-  setActionClassArray,
+  actionClasses,
+  setActionClasses,
   isViewer,
 }: AddNoCodeActionModalProps) {
   const { register, control, handleSubmit, watch, reset } = useForm();
@@ -56,6 +58,7 @@ export default function AddNoCodeActionModal({
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
   const [type, setType] = useState("noCode");
+  const actionClassNames = actionClasses.map((actionClass) => actionClass.name);
 
   const filterNoCodeConfig = (noCodeConfig: TActionClassNoCodeConfig): TActionClassNoCodeConfig => {
     const { pageUrl, innerHtml, cssSelector } = noCodeConfig;
@@ -92,7 +95,12 @@ export default function AddNoCodeActionModal({
         throw new Error("You are not authorised to perform this action.");
       }
       setIsCreatingAction(true);
-      if (data.name === "") throw new Error("Please give your action a name");
+      if (!data.name || data.name?.trim() === "") {
+        throw new Error("Please give your action a name");
+      }
+      if (data.name && actionClassNames.includes(data.name)) {
+        throw new Error(`Action with name ${data.name} already exist`);
+      }
       if (type === "noCode") {
         if (!isPageUrl && !isCssSelector && !isInnerHtml)
           throw new Error("Please select at least one selector");
@@ -119,11 +127,8 @@ export default function AddNoCodeActionModal({
       }
 
       const newActionClass: TActionClass = await createActionClassAction(updatedAction);
-      if (setActionClassArray) {
-        setActionClassArray((prevActionClassArray: TActionClass[]) => [
-          ...prevActionClassArray,
-          newActionClass,
-        ]);
+      if (setActionClasses) {
+        setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
       }
       reset();
       resetAllStates(false);
@@ -177,12 +182,16 @@ export default function AddNoCodeActionModal({
               <div className="w-full space-y-4">
                 <div className="grid w-full grid-cols-2 gap-x-4">
                   <div className="col-span-1">
-                    <Label>What did your user do?</Label>
-                    <Input placeholder="E.g. Clicked Download" {...register("name", { required: true })} />
+                    <Label htmlFor="actionNameInput">What did your user do?</Label>
+                    <Input id="actionNameInput" placeholder="E.g. Clicked Download" {...register("name")} />
                   </div>
                   <div className="col-span-1">
-                    <Label>Description</Label>
-                    <Input placeholder="User clicked Download Button " {...register("description")} />
+                    <Label htmlFor="actionDescriptionInput">Description</Label>
+                    <Input
+                      id="actionDescriptionInput"
+                      placeholder="User clicked Download Button "
+                      {...register("description")}
+                    />
                   </div>
                 </div>
                 <div>
@@ -228,12 +237,20 @@ export default function AddNoCodeActionModal({
               <div className="w-full space-y-4">
                 <div className="grid w-full grid-cols-2 gap-x-4">
                   <div className="col-span-1">
-                    <Label>Identifier</Label>
-                    <Input placeholder="E.g. clicked-download" {...register("name", { required: true })} />
+                    <Label htmlFor="codeActionNameInput">Identifier</Label>
+                    <Input
+                      id="codeActionNameInput"
+                      placeholder="E.g. clicked-download"
+                      {...register("name", { required: true })}
+                    />
                   </div>
                   <div className="col-span-1">
-                    <Label>Description</Label>
-                    <Input placeholder="User clicked Download Button " {...register("description")} />
+                    <Label htmlFor="codeActionDescriptionInput">Description</Label>
+                    <Input
+                      id="codeActionDescriptionInput"
+                      placeholder="User clicked Download Button"
+                      {...register("description")}
+                    />
                   </div>
                 </div>
                 <hr />
@@ -242,7 +259,7 @@ export default function AddNoCodeActionModal({
                   <AlertTitle>How do Code Actions work?</AlertTitle>
                   <AlertDescription>
                     You can track code action anywhere in your app using{" "}
-                    <span className="rounded bg-gray-100 px-2 py-1 text-xs">
+                    <span className="rounded bg-slate-100 px-2 py-1 text-xs">
                       formbricks.track(&quot;{watch("name")}&quot;)
                     </span>{" "}
                     in your code. Read more in our{" "}

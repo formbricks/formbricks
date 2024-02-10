@@ -11,4 +11,14 @@ Sentry.init({
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
+  beforeSend(event, hint) {
+    const error = hint.originalException as Error;
+
+    // @ts-expect-error
+    if (error && error.digest === "NEXT_NOT_FOUND") {
+      return null;
+    }
+
+    return event;
+  },
 });

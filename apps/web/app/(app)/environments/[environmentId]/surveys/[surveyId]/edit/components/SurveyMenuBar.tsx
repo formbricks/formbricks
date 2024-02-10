@@ -7,10 +7,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
@@ -18,7 +18,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 import { deleteSurveyAction, updateSurveyAction } from "../actions";
-import { validateQuestion } from "./Validation";
+import { isValidUrl, validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
@@ -108,7 +108,7 @@ export default function SurveyMenuBar({
     }
   };
 
-  const validateSurvey = (survey) => {
+  const validateSurvey = (survey: TSurvey) => {
     const existingQuestionIds = new Set();
 
     if (survey.questions.length === 0) {
@@ -117,9 +117,29 @@ export default function SurveyMenuBar({
     }
 
     let pin = survey?.pin;
-    if (pin !== null && pin.toString().length !== 4) {
+    if (pin !== null && pin!.toString().length !== 4) {
       toast.error("PIN must be a four digit number.");
       return;
+    }
+
+    const { thankYouCard } = localSurvey;
+    if (thankYouCard.enabled) {
+      const { buttonLabel, buttonLink } = thankYouCard;
+
+      if (buttonLabel && !buttonLink) {
+        toast.error("Button Link missing on Thank you card.");
+        return;
+      }
+
+      if (!buttonLabel && buttonLink) {
+        toast.error("Button Label missing on Thank you card.");
+        return;
+      }
+
+      if (buttonLink && !isValidUrl(buttonLink)) {
+        toast.error("Invalid URL on Thank You card.");
+        return;
+      }
     }
 
     faultyQuestions = [];
@@ -131,6 +151,7 @@ export default function SurveyMenuBar({
         faultyQuestions.push(question.id);
       }
     }
+
     // if there are any faulty questions, the user won't be allowed to save the survey
     if (faultyQuestions.length > 0) {
       setInvalidQuestions(faultyQuestions);
@@ -172,19 +193,21 @@ export default function SurveyMenuBar({
 
         if (validFields < 2) {
           setInvalidQuestions([question.id]);
-          toast.error("Incomplete logic jumps detected: Please fill or delete them.");
+          toast.error("Incomplete logic jumps detected: Fill or remove them in the Questions tab.");
           return false;
         }
 
         if (question.required && logic.condition === "skipped") {
-          toast.error("You have a missing logic condition. Please update or delete it.");
+          toast.error("A logic condition is missing: Please update or delete it in the Questions tab.");
           return false;
         }
 
         const thisLogic = `${logic.condition}-${logic.value}`;
         if (existingLogicConditions.has(thisLogic)) {
           setInvalidQuestions([question.id]);
-          toast.error("You have 2 competing logic conditons. Please update or delete one.");
+          toast.error(
+            "There are two competing logic conditons: Please update or delete one in the Questions tab."
+          );
           return false;
         }
         existingLogicConditions.add(thisLogic);
@@ -200,17 +223,6 @@ export default function SurveyMenuBar({
       return false;
     }
 
-    /*
-     Check whether the count for autocomplete responses is not less 
-     than the current count of accepted response and also it is not set to 0
-    */
-    if (
-      (survey.autoComplete && survey._count?.responses && survey._count.responses >= survey.autoComplete) ||
-      survey?.autoComplete === 0
-    ) {
-      return false;
-    }
-
     return true;
   };
 
@@ -219,6 +231,12 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
+    if (questionWithEmptyFallback) {
+      toast.error("Fallback missing");
+      return;
+    }
+
     setIsSurveySaving(true);
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {
@@ -260,13 +278,28 @@ export default function SurveyMenuBar({
     }
   };
 
-  function containsEmptyTriggers() {
+  const containsEmptyTriggers = () => {
     return (
       localSurvey.type === "web" &&
       localSurvey.triggers &&
       (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
     );
-  }
+  };
+
+  const handleSurveyPublish = async () => {
+    try {
+      setIsSurveyPublishing(true);
+      if (!validateSurvey(localSurvey)) {
+        setIsSurveyPublishing(false);
+        return;
+      }
+      await updateSurveyAction({ ...localSurvey, status: "inProgress" });
+      router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
+    } catch (error) {
+      toast.error("An error occured while publishing the survey.");
+      setIsSurveyPublishing(false);
+    }
+  };
 
   return (
     <>
@@ -346,15 +379,7 @@ export default function SurveyMenuBar({
               disabled={isSurveySaving || containsEmptyTriggers()}
               variant="darkCTA"
               loading={isSurveyPublishing}
-              onClick={async () => {
-                setIsSurveyPublishing(true);
-                if (!validateSurvey(localSurvey)) {
-                  setIsSurveyPublishing(false);
-                  return;
-                }
-                await updateSurveyAction({ ...localSurvey, status: "inProgress" });
-                router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
-              }}>
+              onClick={handleSurveyPublish}>
               Publish
             </Button>
           )}

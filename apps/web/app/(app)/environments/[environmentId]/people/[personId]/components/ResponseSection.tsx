@@ -25,18 +25,17 @@ export default async function ResponseSection({
   if (!session) {
     throw new Error("No session found");
   }
+  if (!responses) {
+    throw new Error("No responses found");
+  }
 
   return (
-    <>
-      {responses && (
-        <ResponseTimeline
-          user={session.user}
-          surveys={surveys}
-          responses={responses}
-          environment={environment}
-          environmentTags={environmentTags}
-        />
-      )}
-    </>
+    <ResponseTimeline
+      user={session.user}
+      surveys={surveys}
+      responses={responses}
+      environment={environment}
+      environmentTags={environmentTags}
+    />
   );
 }

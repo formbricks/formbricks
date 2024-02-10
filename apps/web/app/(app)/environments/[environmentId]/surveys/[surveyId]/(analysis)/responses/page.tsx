@@ -1,4 +1,3 @@
-import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { getServerSession } from "next-auth";
 
@@ -7,6 +6,8 @@ import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getResponses } from "@formbricks/lib/response/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -16,12 +17,17 @@ export default async function Page({ params }) {
   if (!session) {
     throw new Error("Unauthorized");
   }
-  const [{ responses, survey }, environment] = await Promise.all([
-    getAnalysisData(params.surveyId, params.environmentId),
+  const [responses, survey, environment] = await Promise.all([
+    getResponses(params.surveyId, 1),
+    getSurvey(params.surveyId),
     getEnvironment(params.environmentId),
   ]);
+
   if (!environment) {
     throw new Error("Environment not found");
+  }
+  if (!survey) {
+    throw new Error("Survey not found");
   }
   const product = await getProductByEnvironmentId(environment.id);
   if (!product) {

@@ -12,6 +12,8 @@ const thankYouCardDefault = {
   enabled: true,
   headline: "Thank you!",
   subheader: "We appreciate your feedback.",
+  buttonLabel: "Create your own Survey",
+  buttonLink: "https://formbricks.com/signup",
 };
 
 const hiddenFieldsDefault: TSurveyHiddenFields = {
@@ -2198,7 +2200,6 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Improve Newsletter Content",
-
     category: "Growth",
     objectives: ["increase_conversion", "sharpen_marketing_messaging"],
     description: "Find out how your subscribers like your newsletter content.",
@@ -2504,6 +2505,7 @@ export const minimalSurvey: TSurvey = {
   name: "Minimal Survey",
   type: "web",
   environmentId: "someEnvId1",
+  createdBy: null,
   status: "draft",
   attributeFilters: [],
   displayOption: "displayOnce",
@@ -2520,6 +2522,7 @@ export const minimalSurvey: TSurvey = {
     enabled: false,
   },
   delay: 0, // No delay
+  displayPercentage: null,
   autoComplete: null,
   closeOnDate: null,
   surveyClosedMessage: {
@@ -2528,4 +2531,5 @@ export const minimalSurvey: TSurvey = {
   productOverwrites: null,
   singleUse: null,
   styling: null,
+  resultShareKey: null,
 };

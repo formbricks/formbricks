@@ -46,7 +46,7 @@ const uploadFile = async (
     const json = await response.json();
 
     const { data } = json;
-    const { signedUrl, fileUrl, signingData, presignedFields } = data;
+    const { signedUrl, fileUrl, signingData, presignedFields, updatedFileName } = data;
 
     let requestHeaders: Record<string, string> = {};
 
@@ -55,7 +55,7 @@ const uploadFile = async (
 
       requestHeaders = {
         "X-File-Type": file.type,
-        "X-File-Name": encodeURIComponent(file.name),
+        "X-File-Name": encodeURIComponent(updatedFileName),
         "X-Environment-ID": environmentId ?? "",
         "X-Signature": signature,
         "X-Timestamp": String(timestamp),

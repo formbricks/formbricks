@@ -6,7 +6,7 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { getTodayDate } from "@/app/lib/surveys/surveys";
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 
 interface FilterValue {
   questionType: Partial<QuestionOption>;
@@ -60,7 +60,7 @@ function ResponseFilterProvider({ children }: { children: React.ReactNode }) {
     to: getTodayDate(),
   });
 
-  const resetState = () => {
+  const resetState = useCallback(() => {
     setDateRange({
       from: undefined,
       to: getTodayDate(),
@@ -69,7 +69,7 @@ function ResponseFilterProvider({ children }: { children: React.ReactNode }) {
       filter: [],
       onlyComplete: false,
     });
-  };
+  }, []);
 
   return (
     <ResponseFilterContext.Provider

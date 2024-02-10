@@ -132,6 +132,7 @@ export class ErrorHandler {
   }
 
   public handle(error: any): void {
+    console.warn("🧱 Formbricks - Global error: ", error);
     this.handleError(error);
   }
 }

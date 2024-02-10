@@ -57,8 +57,9 @@ export default function MultipleChoiceSingleQuestion({
   );
 
   useEffect(() => {
-    setOtherSelected(!!value && !question.choices.find((c) => c.label === value));
-  }, [question.id]);
+    const isOtherSelected = value !== undefined && !question.choices.some((choice) => choice.label === value);
+    setOtherSelected(isOtherSelected);
+  }, [question.id, question.choices, value]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
 
@@ -181,7 +182,7 @@ export default function MultipleChoiceSingleQuestion({
                         }, 100);
                       }
                     }}
-                    placeholder="Please specify"
+                    placeholder={question.otherOptionPlaceholder ?? "Please specify"}
                     className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus mt-3 flex h-10 w-full rounded-md border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}

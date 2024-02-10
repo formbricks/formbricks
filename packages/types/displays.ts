@@ -7,7 +7,7 @@ export const ZDisplay = z.object({
   personId: z.string().cuid().nullable(),
   surveyId: z.string().cuid(),
   responseId: z.string().cuid().nullable(),
-  status: z.enum(["seen", "responded"]).optional(),
+  status: z.enum(["seen", "responded"]).nullable(),
 });
 
 export type TDisplay = z.infer<typeof ZDisplay>;
