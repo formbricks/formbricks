@@ -76,7 +76,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
 
   // For Questions Data
   if (filterCriteria?.data) {
-    const data: any[] = [];
+    const data: Prisma.ResponseWhereInput[] = [];
 
     Object.entries(filterCriteria.data).forEach(([key, val]) => {
       switch (val.op) {
@@ -166,14 +166,12 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
           break;
         case "includesOne":
           data.push({
-            OR:
-              Array.isArray(val.value) &&
-              val.value.map((value: string) => ({
-                data: {
-                  path: [key],
-                  array_contains: [value],
-                },
-              })),
+            OR: val.value.map((value: string) => ({
+              data: {
+                path: [key],
+                array_contains: [value],
+              },
+            })),
           });
 
           break;

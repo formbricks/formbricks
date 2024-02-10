@@ -16,6 +16,74 @@ export const ZResponsePersonAttributes = ZPersonAttributes.nullable();
 
 export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
 
+const ZResponseFilterCriteriaDataLessThan = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.lessThan),
+  value: z.number(),
+});
+
+const ZResponseFilterCriteriaDataLessEqual = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.lessEqual),
+  value: z.number(),
+});
+
+const ZResponseFilterCriteriaDataGreaterEqual = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.greaterEqual),
+  value: z.number(),
+});
+
+const ZResponseFilterCriteriaDataGreaterThan = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.greaterThan),
+  value: z.number(),
+});
+
+const ZResponseFilterCriteriaDataIncludesOne = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.includesOne),
+  value: z.array(z.string()),
+});
+
+const ZResponseFilterCriteriaDataIncludesAll = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.includesAll),
+  value: z.array(z.string()),
+});
+
+const ZResponseFilterCriteriaDataEquals = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.equals),
+  value: z.union([z.string(), z.number(), z.array(z.string())]),
+});
+
+const ZResponseFilterCriteriaDataNotEquals = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.notEquals),
+  value: z.union([z.string(), z.number(), z.array(z.string())]),
+});
+
+const ZResponseFilterCriteriaDataAccepted = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.accepted),
+});
+
+const ZResponseFilterCriteriaDataClicked = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.clicked),
+});
+
+const ZResponseFilterCriteriaDataSubmitted = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.submitted),
+});
+
+const ZResponseFilterCriteriaDataSkipped = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.skipped),
+});
+
+const ZResponseFilterCriteriaDataUploaded = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.uploaded),
+});
+
+const ZResponseFilterCriteriaDataNotUploaded = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.notUploaded),
+});
+
+const ZResponseFilterCriteriaDataBooked = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.booked),
+});
+
 export const ZResponseFilterCriteria = z.object({
   finished: z.boolean().optional(),
   createdAt: z
@@ -24,46 +92,27 @@ export const ZResponseFilterCriteria = z.object({
       max: z.date().optional(),
     })
     .optional(),
+
   data: z
     .record(
-      z.object({
-        op: ZSurveyLogicCondition,
-        value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
-      })
+      z.union([
+        ZResponseFilterCriteriaDataLessThan,
+        ZResponseFilterCriteriaDataLessEqual,
+        ZResponseFilterCriteriaDataGreaterEqual,
+        ZResponseFilterCriteriaDataGreaterThan,
+        ZResponseFilterCriteriaDataIncludesOne,
+        ZResponseFilterCriteriaDataIncludesAll,
+        ZResponseFilterCriteriaDataEquals,
+        ZResponseFilterCriteriaDataNotEquals,
+        ZResponseFilterCriteriaDataAccepted,
+        ZResponseFilterCriteriaDataClicked,
+        ZResponseFilterCriteriaDataSubmitted,
+        ZResponseFilterCriteriaDataSkipped,
+        ZResponseFilterCriteriaDataUploaded,
+        ZResponseFilterCriteriaDataNotUploaded,
+        ZResponseFilterCriteriaDataBooked,
+      ])
     )
-    .superRefine((arg, ctx) => {
-      const quesIds = Object.keys(arg);
-      quesIds.forEach((quesId) => {
-        switch (arg[quesId].op) {
-          case "lessThan":
-          case "lessEqual":
-          case "greaterThan":
-          case "greaterEqual":
-            if (typeof arg[quesId].value !== "number") {
-              ctx.addIssue({
-                code: z.ZodIssueCode.invalid_type,
-                expected: "number",
-                received: typeof arg[quesId].value,
-                path: [quesId, "value"],
-                message: `Expected number for ${arg[quesId].op}`,
-              });
-            }
-            break;
-          case "includesOne":
-          case "includesAll":
-            if (!Array.isArray(arg[quesId].value)) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.invalid_type,
-                expected: "array",
-                received: typeof arg[quesId].value,
-                path: [quesId, "value"],
-                message: `Expected array for ${arg[quesId].op}`,
-              });
-            }
-            break;
-        }
-      });
-    })
     .optional(),
 
   tags: z
