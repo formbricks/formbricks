@@ -2,6 +2,7 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  ListBucketsCommand,
   ListObjectsCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
@@ -11,8 +12,7 @@ import { randomUUID } from "crypto";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
 import { unstable_cache } from "next/cache";
-import { join } from "path";
-import path from "path";
+import path, { join } from "path";
 
 import { TAccessType } from "@formbricks/types/storage";
 
@@ -27,6 +27,7 @@ const AWS_BUCKET_NAME = env.S3_BUCKET_NAME!;
 const AWS_REGION = env.S3_REGION!;
 const S3_ACCESS_KEY = env.S3_ACCESS_KEY!;
 const S3_SECRET_KEY = env.S3_SECRET_KEY!;
+const S3_ENDPOINT = env.S3_ENDPOINT_URL!;
 
 // S3Client Singleton
 
@@ -36,7 +37,27 @@ const s3Client = new S3Client({
     secretAccessKey: S3_SECRET_KEY!,
   },
   region: AWS_REGION!,
+  endpoint: S3_ENDPOINT,
 });
+
+export const testS3Connection = async () => {
+  try {
+    const cmd = new ListBucketsCommand({});
+    const result = await s3Client.send(cmd);
+
+    if (!result.Buckets) {
+      throw new Error("Access denied to any buckets");
+    }
+
+    const bucketNames = result.Buckets.map((b) => b.Name);
+
+    if (!bucketNames.includes(AWS_BUCKET_NAME)) {
+      throw new Error("Access denied to bucket");
+    }
+  } catch (error) {
+    throw new Error(`S3: ${error}`);
+  }
+};
 
 const ensureDirectoryExists = async (dirPath: string) => {
   try {
