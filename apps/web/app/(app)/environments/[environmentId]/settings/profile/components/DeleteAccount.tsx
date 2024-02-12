@@ -47,8 +47,8 @@ interface DeleteAccountModalProps {
 function DeleteAccountModal({ setOpen, open, session, IS_FORMBRICKS_CLOUD }: DeleteAccountModalProps) {
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  // Account deletion survey url : https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2
-  const accountDeletionCallbackUrl = IS_FORMBRICKS_CLOUD ? "/s/clri52y3z8f221225wjdhsoo2" : "/auth/login";
+  const deletionSurveyUrl = "https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2";
+  const accountDeletionCallbackUrl = IS_FORMBRICKS_CLOUD ? deletionSurveyUrl : "/auth/login";
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   };
