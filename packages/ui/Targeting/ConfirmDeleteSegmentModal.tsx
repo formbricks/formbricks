@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
 
@@ -17,10 +17,14 @@ const ConfirmDeleteSegmentModal = ({ onDelete, open, segment, setOpen }: Confirm
     await onDelete();
   };
 
+  const segmentHasSurveys = useMemo(() => {
+    return segment.activeSurveys.length > 0 || segment.inactiveSurveys.length > 0;
+  }, [segment.activeSurveys.length, segment.inactiveSurveys.length]);
+
   return (
     <Modal open={open} setOpen={setOpen} title="Delete Segment">
       <div className="text-slate-900">
-        {segment.activeSurveys.length > 0 && (
+        {segmentHasSurveys && (
           <div className="space-y-2">
             <p>If you delete this segment, this will happen:</p>
             <ul className="ml-4 list-disc">
@@ -28,6 +32,10 @@ const ConfirmDeleteSegmentModal = ({ onDelete, open, segment, setOpen }: Confirm
                 This segment will be <b>removed</b> from these surveys:
                 <ol className="my-2 ml-4 list-decimal text-sm">
                   {segment.activeSurveys.map((survey) => (
+                    <li key={survey}>{survey}</li>
+                  ))}
+
+                  {segment.inactiveSurveys.map((survey) => (
                     <li key={survey}>{survey}</li>
                   ))}
                 </ol>

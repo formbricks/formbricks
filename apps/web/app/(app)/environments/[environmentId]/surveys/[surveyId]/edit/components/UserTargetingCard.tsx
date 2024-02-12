@@ -360,7 +360,7 @@ export default function UserTargetingCard({
             step={loadSegmentModalStep}
             setStep={setLoadSegmentModalStep}
             currentSegment={segment}
-            segments={segments.filter((segment) => !isAdvancedSegment(segment.filters))}
+            segments={segments}
             setSegment={setSegment}
             setIsSegmentEditorOpen={setIsSegmentEditorOpen}
             onSegmentLoad={handleLoadNewSegment}

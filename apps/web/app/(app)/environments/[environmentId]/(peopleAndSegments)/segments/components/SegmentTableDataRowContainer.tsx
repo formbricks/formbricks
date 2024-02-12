@@ -1,4 +1,4 @@
-import { getSegmentActiveInactiveSurveys } from "@formbricks/lib/segment/service";
+import { getSurveysBySegmentId } from "@formbricks/lib/survey/service";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment } from "@formbricks/types/segment";
@@ -20,9 +20,15 @@ const SegmentTableDataRowContainer = async ({
   attributeClasses,
   isAdvancedUserTargetingAllowed,
 }: TSegmentTableDataRowProps) => {
-  const { activeSurveys = [], inactiveSurveys = [] } = await getSegmentActiveInactiveSurveys(
-    currentSegment.id
-  );
+  const surveys = await getSurveysBySegmentId(currentSegment.id);
+
+  const activeSurveys = surveys?.length
+    ? surveys.filter((survey) => survey.status === "inProgress").map((survey) => survey.name)
+    : [];
+
+  const inactiveSurveys = surveys?.length
+    ? surveys.filter((survey) => ["draft", "paused"].includes(survey.status)).map((survey) => survey.name)
+    : [];
 
   return (
     <SegmentTableDataRow

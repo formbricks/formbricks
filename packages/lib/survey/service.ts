@@ -794,3 +794,51 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
     throw error;
   }
 };
+
+export const getSurveysBySegmentId = async (segmentId: string): Promise<TSurvey[]> => {
+  const surveys = await unstable_cache(
+    async () => {
+      try {
+        const surveysPrisma = await prisma.survey.findMany({
+          where: { segmentId },
+          select: selectSurvey,
+        });
+
+        const surveys: TSurvey[] = [];
+
+        for (const surveyPrisma of surveysPrisma) {
+          let segment: TSegment | null = null;
+
+          if (surveyPrisma.segment) {
+            segment = {
+              ...surveyPrisma.segment,
+              surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
+            };
+          }
+
+          const transformedSurvey: TSurvey = {
+            ...surveyPrisma,
+            triggers: surveyPrisma.triggers.map((trigger) => trigger.actionClass.name),
+            segment,
+          };
+          surveys.push(transformedSurvey);
+        }
+
+        return surveys;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getSurveysBySegmentId-${segmentId}`],
+    {
+      tags: [surveyCache.tag.bySegmentId(segmentId), segmentCache.tag.byId(segmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return surveys;
+};
