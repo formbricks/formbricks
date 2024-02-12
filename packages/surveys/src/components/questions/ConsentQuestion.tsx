@@ -37,7 +37,7 @@ export default function ConsentQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   return (
-    <div>
+    <div key={question.id}>
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <HtmlBody htmlString={question.html || ""} questionId={question.id} />
