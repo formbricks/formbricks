@@ -1,13 +1,14 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { getPaginatedResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
-import { getFilterResponses } from "@/app/lib/surveys/surveys";
+import { getFilterResponses, getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -25,7 +26,6 @@ interface ResponsePageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
-  responses: TResponse[];
   webAppUrl: string;
   product: TProduct;
   user: TUser;
@@ -38,7 +38,6 @@ const ResponsePage = ({
   environment,
   survey,
   surveyId,
-  responses,
   webAppUrl,
   product,
   user,
@@ -46,7 +45,14 @@ const ResponsePage = ({
   responsesPerPage,
   membershipRole,
 }: ResponsePageProps) => {
+  const [initialResponses, setInitialResponses] = useState<TResponse[]>();
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
+
+  const apiFilters = useMemo(
+    () => getFormattedFilters(selectedFilter, dateRange),
+    [selectedFilter, dateRange]
+  );
+
   const searchParams = useSearchParams();
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey);
@@ -56,6 +62,17 @@ const ResponsePage = ({
       resetState();
     }
   }, [searchParams, resetState]);
+
+  useEffect(() => {
+    const fetchInitialResponses = async () => {
+      const responses = await getPaginatedResponses(surveyId, 1, undefined, apiFilters);
+      console.log({ responses });
+      setInitialResponses(responses);
+    };
+    fetchInitialResponses();
+  }, [surveyId, apiFilters]);
+
+  const responses = useMemo(() => initialResponses || [], [initialResponses]);
 
   // get the filtered array when the selected filter value changes
   const filterResponses: TResponse[] = useMemo(() => {

@@ -1,5 +1,6 @@
 import {
   DateRange,
+  FilterValue,
   SelectedFilterValue,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import {
@@ -9,7 +10,7 @@ import {
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { isWithinInterval } from "date-fns";
 
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -216,6 +217,142 @@ export const generateQuestionAndFilterOptionsForResponseSharing = (
   }
 
   return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
+};
+
+// get the formatted filter expression to fetch filtered responses
+export const getFormattedFilters = (
+  selectedFilter: SelectedFilterValue,
+  dateRange: DateRange
+): TResponseFilterCriteria => {
+  const filters: TResponseFilterCriteria = {};
+
+  const [questions, tags, attributes] = selectedFilter.filter.reduce(
+    (result: [FilterValue[], FilterValue[], FilterValue[]], filter) => {
+      if (filter.questionType?.type === "Questions") {
+        result[0].push(filter);
+      } else if (filter.questionType?.type === "Tags") {
+        result[1].push(filter);
+      } else if (filter.questionType?.type === "Attributes") {
+        result[2].push(filter);
+      }
+      return result;
+    },
+    [[], [], []]
+  );
+
+  // for completed responses
+  if (selectedFilter.onlyComplete) {
+    filters["finished"] = true;
+  }
+
+  // yyyy-mm-dd
+  // for date range responses
+  if (dateRange.from && dateRange.to) {
+    filters["createdAt"] = {
+      min: dateRange.from,
+      max: dateRange.to,
+    };
+  }
+
+  // for tags
+  if (tags.length) {
+    filters["tags"] = {
+      applied: [],
+      notApplied: [],
+    };
+    tags.forEach((tag) => {
+      if (tag.filterType.filterComboBoxValue === "Applied") {
+        filters.tags?.applied?.push(tag.questionType.label ?? "");
+      } else {
+        filters.tags?.notApplied?.push(tag.questionType.label ?? "");
+      }
+    });
+  }
+
+  // for questions
+  if (questions.length) {
+    questions.forEach(({ filterType, questionType }) => {
+      if (!filters.data) filters.data = {};
+      switch (questionType.questionType) {
+        case TSurveyQuestionType.OpenText: {
+          if (filterType.filterComboBoxValue === "Filled out") {
+            filters.data[questionType.id ?? ""] = {
+              op: "submitted",
+            };
+          } else if (filterType.filterComboBoxValue === "Skipped") {
+            filters.data[questionType.id ?? ""] = {
+              op: "skipped",
+            };
+          }
+        }
+        case TSurveyQuestionType.MultipleChoiceSingle:
+        case TSurveyQuestionType.MultipleChoiceMulti: {
+          if (filterType.filterValue === "Includes either") {
+            filters.data[questionType.id ?? ""] = {
+              op: "includesOne",
+              value: filterType.filterComboBoxValue as string[],
+            };
+          } else if (filterType.filterValue === "Includes all") {
+            filters.data[questionType.id ?? ""] = {
+              op: "includesAll",
+              value: filterType.filterComboBoxValue as string[],
+            };
+          }
+        }
+        case TSurveyQuestionType.NPS:
+        case TSurveyQuestionType.Rating: {
+          if (filterType.filterValue === "Is equal to") {
+            filters.data[questionType.id ?? ""] = {
+              op: "equals",
+              value: parseInt(filterType.filterComboBoxValue as string),
+            };
+          } else if (filterType.filterValue === "Is less than") {
+            filters.data[questionType.id ?? ""] = {
+              op: "lessThan",
+              value: parseInt(filterType.filterComboBoxValue as string),
+            };
+          } else if (filterType.filterValue === "Is more than") {
+            filters.data[questionType.id ?? ""] = {
+              op: "greaterThan",
+              value: parseInt(filterType.filterComboBoxValue as string),
+            };
+          } else if (filterType.filterValue === "Submitted") {
+            filters.data[questionType.id ?? ""] = {
+              op: "submitted",
+            };
+          } else if (filterType.filterValue === "Skipped") {
+            filters.data[questionType.id ?? ""] = {
+              op: "skipped",
+            };
+          }
+        }
+        case TSurveyQuestionType.CTA: {
+          if (filterType.filterComboBoxValue === "Clicked") {
+            filters.data[questionType.id ?? ""] = {
+              op: "clicked",
+            };
+          } else if (filterType.filterComboBoxValue === "Dismissed") {
+            filters.data[questionType.id ?? ""] = {
+              op: "skipped",
+            };
+          }
+        }
+        case TSurveyQuestionType.Consent: {
+          if (filterType.filterComboBoxValue === "Accepted") {
+            filters.data[questionType.id ?? ""] = {
+              op: "accepted",
+            };
+          } else if (filterType.filterComboBoxValue === "Dismissed") {
+            filters.data[questionType.id ?? ""] = {
+              op: "skipped",
+            };
+          }
+        }
+      }
+    });
+  }
+
+  return filters;
 };
 
 // get the filtered responses
