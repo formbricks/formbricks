@@ -13,7 +13,7 @@ import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } fr
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createCustomerIoCustomer } from "../customerio";
 import { membershipCache } from "../membership/cache";
-import { updateMembership } from "../membership/service";
+import { deleteMembership, updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -219,10 +219,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
         await deleteTeam(teamId);
       }
 
-      membershipCache.revalidate({
-        userId: id,
-        teamId: teamId,
-      });
+      await deleteMembership(id, teamId);
     }
 
     const deletedUser = await deleteUserById(id);
