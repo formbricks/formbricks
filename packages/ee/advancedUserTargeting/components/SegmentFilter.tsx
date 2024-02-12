@@ -1,4 +1,5 @@
 import {
+  FingerprintIcon,
   MonitorSmartphoneIcon,
   MoreVertical,
   MousePointerClick,
@@ -77,6 +78,8 @@ type TSegmentFilterProps = {
   onMoveFilter: (filterId: string, direction: "up" | "down") => void;
   viewOnly?: boolean;
 };
+
+const isCapitalized = (str: string) => str.charAt(0) === str.charAt(0).toUpperCase();
 
 const SegmentFilterItemConnector = ({
   connector,
@@ -285,7 +288,8 @@ const AttributeSegmentFilter = ({
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
           <SelectValue>
-            <div className="flex items-center gap-1">
+            <div
+              className={cn("flex items-center gap-2", !isCapitalized(attributeClass ?? "") && "lowercase")}>
               <TagIcon className="h-4 w-4 text-sm" />
               <p>{attributeClass}</p>
             </div>
@@ -469,8 +473,8 @@ const PersonSegmentFilter = ({
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white capitalize"
           hideArrow>
           <SelectValue>
-            <div className="flex items-center gap-1">
-              <TagIcon className="h-4 w-4 text-sm" />
+            <div className="flex items-center gap-1 lowercase">
+              <FingerprintIcon className="h-4 w-4 text-sm" />
               <p>{personIdentifier}</p>
             </div>
           </SelectValue>
