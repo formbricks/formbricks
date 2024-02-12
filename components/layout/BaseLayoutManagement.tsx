@@ -5,8 +5,6 @@ import Link from "next/link";
 import { classNames } from "../../lib/utils";
 import MenuProfile from "./MenuProfile";
 import MenuSteps from "./MenuSteps";
-import { useRouter } from "next/router";
-import Loading from "../Loading";
 
 interface BaseLayoutManagementProps {
   title: string;
@@ -34,15 +32,7 @@ export default function BaseLayoutManagement({
     { id: "forms", name: "Sourcings", href: "/" },
     { id: "users", name: "Gestion d'utilisateurs", href: "/users" },
   ];
-  const router = useRouter();
-  const { asPath } = router;
-  if (!user.profileIsValid) {
-    router.push({
-      pathname: `/users/update-profile`,
-      query: { next: asPath }
-    });
-    return <Loading />;
-  }
+
 
   return (
     <>
