@@ -67,17 +67,25 @@ export async function GET(
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSurveys(environmentId, undefined, true),
+      getSurveys(environmentId),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
+
+    console.log("surveys", JSON.stringify(surveys, null, 2));
+
     if (!product) {
       throw new Error("Product not found");
     }
 
     const state: TJsStateSync = {
       surveys: !isInAppSurveyLimitReached
-        ? surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web")
+        ? surveys.filter(
+            (survey) =>
+              survey.status === "inProgress" &&
+              survey.type === "web" &&
+              (!survey.segment || survey.segment.filters.length === 0)
+          )
         : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
