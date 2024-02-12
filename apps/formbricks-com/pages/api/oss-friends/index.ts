@@ -160,6 +160,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.papermark.io/",
         },
         {
+          name: "Prisma",
+          description:
+            "Simplify working with databases. Build, optimize, and grow your app easily with an intuitive data model, type-safety, automated migrations, connection pooling, caching, and real-time db subscriptions.",
+          href: "https://www.prisma.io",
+        },
+        {
           name: "Requestly",
           description:
             "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
