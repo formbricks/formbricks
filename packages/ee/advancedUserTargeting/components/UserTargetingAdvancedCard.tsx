@@ -138,6 +138,16 @@ export default function UserTargetingAdvancedCard({
     return createdSegment;
   };
 
+  const handleSaveSegment = async (data: TSegmentUpdateInput) => {
+    try {
+      if (!segment) throw new Error("Invalid segment");
+      await updateSegmentAction(environmentId, segment?.id, data);
+      toast.success("Segment saved successfully");
+    } catch (err: any) {
+      toast.error(err.message ?? "Error Saving Segment");
+    }
+  };
+
   if (localSurvey.type === "link") {
     return null; // Hide card completely
   }
@@ -217,9 +227,17 @@ export default function UserTargetingAdvancedCard({
                   <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                     Add filter
                   </Button>
-                  <Button variant="secondary" size="sm" onClick={() => {}}>
-                    Save changes
-                  </Button>
+
+                  {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        handleSaveSegment({ filters: segment.filters });
+                      }}>
+                      Save changes
+                    </Button>
+                  )}
                   {/* 
                     {isSegmentEditorOpen && !!segment?.filters?.length && (
                       <Button

@@ -9,7 +9,7 @@ import { toast } from "react-hot-toast";
 
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment, TSegmentUpdateInput } from "@formbricks/types/segment";
+import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
@@ -70,11 +70,17 @@ export default function UserTargetingCard({
     setSegment(updatedSegment);
   };
 
+  const handleEditSegment = () => {
+    setIsSegmentEditorOpen(true);
+    setSegmentEditorViewOnly(false);
+  };
+
   const handleCloneSegment = async () => {
     if (!segment) return;
 
     try {
       const clonedSegment = await cloneBasicSegmentAction(segment.id, localSurvey.id);
+
       setSegment(clonedSegment);
     } catch (err) {
       toast.error(err.message);
@@ -86,13 +92,24 @@ export default function UserTargetingCard({
     return updatedSurvey;
   };
 
-  const handleSaveAsNewSegment = async (
-    environmentId: string,
-    segmentId: string,
-    data: TSegmentUpdateInput
-  ) => {
+  const handleSegmentUpdate = async (environmentId: string, segmentId: string, data: TSegmentUpdateInput) => {
     const updatedSegment = await updateBasicSegmentAction(environmentId, segmentId, data);
     return updatedSegment;
+  };
+
+  const handleSegmentCreate = async (data: TSegmentCreateInput) => {
+    const createdSegment = await createBasicSegmentAction(data);
+    return createdSegment;
+  };
+
+  const handleSaveSegment = async (data: TSegmentUpdateInput) => {
+    try {
+      if (!segment) throw new Error("Invalid segment");
+      await updateBasicSegmentAction(environmentId, segment?.id, data);
+      toast.success("Segment saved successfully");
+    } catch (err) {
+      toast.error(err.message ?? "Error Saving Segment");
+    }
   };
 
   useEffect(() => {
@@ -194,9 +211,17 @@ export default function UserTargetingCard({
                         <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                           Add filter
                         </Button>
-                        <Button variant="secondary" size="sm" onClick={() => setSegmentEditorViewOnly(false)}>
-                          Save changes
-                        </Button>
+
+                        {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              handleSaveSegment({ filters: segment.filters });
+                            }}>
+                            Save changes
+                          </Button>
+                        )}
 
                         {/*                         {isSegmentEditorOpen && !!segment?.filters?.length && (
                           <Button
@@ -263,7 +288,12 @@ export default function UserTargetingCard({
                         </Button>
 
                         {isSegmentUsedInOtherSurveys && (
-                          <Button variant="secondary" size="sm" onClick={() => handleCloneSegment()}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              handleCloneSegment();
+                            }}>
                             Clone & Edit Segment
                           </Button>
                         )}
@@ -272,8 +302,7 @@ export default function UserTargetingCard({
                             variant="secondary"
                             size="sm"
                             onClick={() => {
-                              setIsSegmentEditorOpen(true);
-                              setSegmentEditorViewOnly(false);
+                              handleEditSegment();
                             }}>
                             Edit Segment
                             <PencilIcon className="ml-2 h-3 w-3" />
@@ -355,8 +384,8 @@ export default function UserTargetingCard({
             segment={segment}
             setSegment={setSegment}
             setIsSegmentEditorOpen={setIsSegmentEditorOpen}
-            onCreateSegment={async (data) => createBasicSegmentAction(data)}
-            onUpdateSegment={handleSaveAsNewSegment}
+            onCreateSegment={handleSegmentCreate}
+            onUpdateSegment={handleSegmentUpdate}
           />
         )}
 

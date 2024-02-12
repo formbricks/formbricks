@@ -134,7 +134,9 @@ export const updateBasicSegmentAction = async (
     const parsedFilters = ZSegmentFilters.safeParse(filters);
 
     if (!parsedFilters.success) {
-      throw new Error("Invalid filters");
+      const errMsg =
+        parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
+      throw new Error(errMsg);
     }
   }
 
