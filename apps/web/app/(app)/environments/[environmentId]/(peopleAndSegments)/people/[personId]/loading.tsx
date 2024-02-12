@@ -1,7 +1,7 @@
 import {
   ActivityItemIcon,
   ActivityItemPopover,
-} from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivityItemComponents";
+} from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ActivityItemComponents";
 import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
 import { TrashIcon } from "lucide-react";
 

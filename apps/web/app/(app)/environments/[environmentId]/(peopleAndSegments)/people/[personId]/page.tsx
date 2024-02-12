@@ -1,7 +1,7 @@
-import ActivitySection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ActivitySection";
-import AttributesSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/AttributesSection";
-import HeadingSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/HeadingSection";
-import ResponseSection from "@/app/(app)/environments/[environmentId]/people/[personId]/components/ResponseSection";
+import ActivitySection from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ActivitySection";
+import AttributesSection from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/AttributesSection";
+import HeadingSection from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/HeadingSection";
+import ResponseSection from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ResponseSection";
 
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";

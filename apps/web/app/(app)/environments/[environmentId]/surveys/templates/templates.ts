@@ -2527,7 +2527,6 @@ export const minimalSurvey: TSurvey = {
   environmentId: "someEnvId1",
   createdBy: null,
   status: "draft",
-  attributeFilters: [],
   displayOption: "displayOnce",
   autoClose: null,
   triggers: [],
@@ -2552,4 +2551,5 @@ export const minimalSurvey: TSurvey = {
   singleUse: null,
   styling: null,
   resultShareKey: null,
+  segment: null,
 };
