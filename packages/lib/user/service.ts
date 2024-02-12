@@ -12,7 +12,6 @@ import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } fr
 
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createCustomerIoCustomer } from "../customerio";
-import { membershipCache } from "../membership/cache";
 import { deleteMembership, updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
 import { formatDateFields } from "../utils/datetime";
