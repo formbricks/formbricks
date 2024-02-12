@@ -23,7 +23,7 @@
     "lint": "eslint ./src --fix",
     "post-install": "pnpm generate",
     "predev": "pnpm generate",
-    "data-migration:targeting": "ts-node ./migrations/20240207041922_advanced_targeting/data-migration.ts"
+    "data-migration:advanced-targeting": "ts-node ./migrations/20240207041922_advanced_targeting/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.8.1",
