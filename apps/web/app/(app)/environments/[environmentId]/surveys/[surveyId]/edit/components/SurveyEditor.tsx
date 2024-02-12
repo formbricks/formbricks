@@ -2,7 +2,6 @@
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
@@ -45,7 +44,6 @@ export default function SurveyEditor({
   colours,
   isUserTargetingAllowed = false,
 }: SurveyEditorProps): JSX.Element {
-  const router = useRouter();
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
