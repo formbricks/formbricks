@@ -6,7 +6,6 @@ import { TPerson } from "@formbricks/types/people";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
-  TSurveyAttributeFilter,
   TSurveyInput,
   TSurveyQuestion,
   TSurveyQuestionType,
@@ -116,12 +115,6 @@ export const mockAttributeClass: TAttributeClass = {
   ...commonMockProperties,
 };
 
-export const mockAttributeFilter: TSurveyAttributeFilter = {
-  attributeClassId: mockId,
-  value: "test",
-  condition: "equals",
-};
-
 const mockQuestion: TSurveyQuestion = {
   id: mockId,
   type: TSurveyQuestionType.OpenText,
@@ -196,6 +189,8 @@ export const mockSurveyOutput: SurveyMock = {
   displayPercentage: null,
   createdBy: null,
   pin: null,
+  segment: null,
+  segmentId: null,
   resultShareKey: null,
   ...baseSurveyProperties,
 };
@@ -206,7 +201,6 @@ export const createSurveyInput: TSurveyInput = {
   displayOption: "respondMultiple",
   triggers: [mockActionClass.name],
   ...baseSurveyProperties,
-  attributeFilters: [mockAttributeFilter],
 };
 
 export const updateSurveyInput: TSurvey = {
@@ -221,37 +215,12 @@ export const updateSurveyInput: TSurvey = {
   createdBy: null,
   pin: null,
   resultShareKey: null,
+  segment: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
-  attributeFilters: [mockAttributeFilter],
-};
-
-export const mockSurveyWithAttributesOutput: SurveyMock = {
-  ...mockSurveyOutput,
-  attributeFilters: [
-    {
-      id: mockId,
-      ...mockAttributeFilter,
-    },
-  ],
 };
 
 export const mockTransformedSurveyOutput = {
   ...mockSurveyOutput,
   triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
-};
-
-export const mockTransformedSurveyWithAttributesOutput = {
-  ...mockTransformedSurveyOutput,
-  attributeFilters: [mockAttributeFilter],
-};
-
-export const mockTransformedSurveyWithAttributesIdOutput = {
-  ...mockTransformedSurveyOutput,
-  attributeFilters: [
-    {
-      id: mockId,
-      ...mockAttributeFilter,
-    },
-  ],
 };

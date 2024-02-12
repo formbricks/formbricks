@@ -10,7 +10,6 @@ import {
   getSurvey,
   getSurveys,
   getSurveysByActionClassId,
-  getSurveysByAttributeClassId,
   getSyncSurveys,
   updateSurvey,
 } from "../service";
@@ -23,11 +22,8 @@ import {
   mockPerson,
   mockProduct,
   mockSurveyOutput,
-  mockSurveyWithAttributesOutput,
   mockTeamOutput,
   mockTransformedSurveyOutput,
-  mockTransformedSurveyWithAttributesIdOutput,
-  mockTransformedSurveyWithAttributesOutput,
   mockUser,
   updateSurveyInput,
 } from "./survey.mock";
@@ -71,32 +67,6 @@ describe("Tests for getSurvey", () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.survey.findUnique.mockRejectedValue(new Error(mockErrorMessage));
       await expect(getSurvey(mockId)).rejects.toThrow(Error);
-    });
-  });
-});
-
-describe("Tests for getSurveysByAttributeClassId", () => {
-  describe("Happy Path", () => {
-    it("Returns an array of surveys for a given attributeClassId", async () => {
-      prismaMock.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
-      const surveys = await getSurveysByAttributeClassId(mockId);
-      expect(surveys).toEqual([mockTransformedSurveyOutput]);
-    });
-
-    it("Returns an empty array if no surveys are found", async () => {
-      prismaMock.survey.findMany.mockResolvedValueOnce([]);
-      const surveys = await getSurveysByAttributeClassId(mockId);
-      expect(surveys).toEqual([]);
-    });
-  });
-
-  describe("Sad Path", () => {
-    testInputValidation(getSurveysByAttributeClassId, "123");
-
-    it("should throw an error if there is an unknown error", async () => {
-      const mockErrorMessage = "Unknown error occurred";
-      prismaMock.survey.findMany.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(getSurveysByAttributeClassId(mockId)).rejects.toThrow(Error);
     });
   });
 });
@@ -174,7 +144,7 @@ describe("Tests for updateSurvey", () => {
       prismaMock.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
       prismaMock.survey.update.mockResolvedValueOnce(mockSurveyOutput);
       const updatedSurvey = await updateSurvey(updateSurveyInput);
-      expect(updatedSurvey).toEqual(mockTransformedSurveyWithAttributesOutput);
+      expect(updatedSurvey).toEqual(mockTransformedSurveyOutput);
     });
   });
 
@@ -211,9 +181,9 @@ describe("Tests for updateSurvey", () => {
 describe("Tests for deleteSurvey", () => {
   describe("Happy Path", () => {
     it("Deletes a survey successfully", async () => {
-      prismaMock.survey.delete.mockResolvedValueOnce(mockSurveyWithAttributesOutput);
+      prismaMock.survey.delete.mockResolvedValueOnce(mockSurveyOutput);
       const deletedSurvey = await deleteSurvey(mockId);
-      expect(deletedSurvey).toEqual(mockSurveyWithAttributesOutput);
+      expect(deletedSurvey).toEqual(mockSurveyOutput);
     });
   });
 
@@ -236,7 +206,7 @@ describe("Tests for createSurvey", () => {
 
   describe("Happy Path", () => {
     it("Creates a survey successfully", async () => {
-      prismaMock.survey.create.mockResolvedValueOnce(mockSurveyWithAttributesOutput);
+      prismaMock.survey.create.mockResolvedValueOnce(mockSurveyOutput);
       prismaMock.team.findFirst.mockResolvedValueOnce(mockTeamOutput);
       prismaMock.user.findMany.mockResolvedValueOnce([
         {
@@ -259,7 +229,7 @@ describe("Tests for createSurvey", () => {
         role: "engineer",
       });
       const createdSurvey = await createSurvey(mockId, createSurveyInput);
-      expect(createdSurvey).toEqual(mockTransformedSurveyWithAttributesIdOutput);
+      expect(createdSurvey).toEqual(mockTransformedSurveyOutput);
     });
   });
 
@@ -281,10 +251,10 @@ describe("Tests for duplicateSurvey", () => {
 
   describe("Happy Path", () => {
     it("Duplicates a survey successfully", async () => {
-      prismaMock.survey.findUnique.mockResolvedValueOnce(mockSurveyWithAttributesOutput);
-      prismaMock.survey.create.mockResolvedValueOnce(mockSurveyWithAttributesOutput);
+      prismaMock.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      prismaMock.survey.create.mockResolvedValueOnce(mockSurveyOutput);
       const createdSurvey = await duplicateSurvey(mockId, mockId, mockId);
-      expect(createdSurvey).toEqual(mockSurveyWithAttributesOutput);
+      expect(createdSurvey).toEqual(mockSurveyOutput);
     });
   });
 
@@ -314,13 +284,13 @@ describe("Tests for getSyncedSurveys", () => {
 
     it("Returns synced surveys", async () => {
       prismaMock.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
-      const surveys = await getSyncSurveys(mockId, mockPerson);
+      const surveys = await getSyncSurveys(mockId, mockPerson.id);
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
     });
 
     it("Returns an empty array if no surveys are found", async () => {
       prismaMock.survey.findMany.mockResolvedValueOnce([]);
-      const surveys = await getSyncSurveys(mockId, mockPerson);
+      const surveys = await getSyncSurveys(mockId, mockPerson.id);
       expect(surveys).toEqual([]);
     });
   });
@@ -331,14 +301,14 @@ describe("Tests for getSyncedSurveys", () => {
     it("does not find a Product", async () => {
       prismaMock.product.findFirst.mockResolvedValueOnce(null);
 
-      await expect(getSyncSurveys(mockId, mockPerson)).rejects.toThrow(Error);
+      await expect(getSyncSurveys(mockId, mockPerson.id)).rejects.toThrow(Error);
     });
 
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prismaMock.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
       prismaMock.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(getSyncSurveys(mockId, mockPerson)).rejects.toThrow(Error);
+      await expect(getSyncSurveys(mockId, mockPerson.id)).rejects.toThrow(Error);
     });
   });
 });
