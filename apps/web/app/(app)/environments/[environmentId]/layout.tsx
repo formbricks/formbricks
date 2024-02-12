@@ -10,6 +10,7 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import ToasterClient from "@formbricks/ui/ToasterClient";
 
 import FormbricksClient from "../../components/FormbricksClient";
+import PosthogIdentify from "./components/PosthogIdentify";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);
@@ -24,6 +25,7 @@ export default async function EnvironmentLayout({ children, params }) {
   return (
     <>
       <ResponseFilterProvider>
+        <PosthogIdentify session={session} environmentId={params.environmentId} />
         <FormbricksClient session={session} />
         <ToasterClient />
         <EnvironmentsNavbar

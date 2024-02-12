@@ -6,7 +6,7 @@ interface AnimatedSurveyBgProps {
 }
 
 export default function AnimatedSurveyBg({ handleBgChange, background }: AnimatedSurveyBgProps) {
-  const [color, setColor] = useState(background || "#ffff");
+  const [animation, setAnimation] = useState(background || "/animated-bgs/4K/1_4k.mp4");
   const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
   const animationFiles = {
@@ -69,7 +69,7 @@ export default function AnimatedSurveyBg({ handleBgChange, background }: Animate
   };
 
   const handleBg = (x: string) => {
-    setColor(x);
+    setAnimation(x);
     handleBgChange(x, "animation");
   };
   return (
@@ -92,9 +92,9 @@ export default function AnimatedSurveyBg({ handleBgChange, background }: Animate
                 <source src={`${key}`} type="video/mp4" />
               </video>
               <input
-                className="absolute right-2 top-2 h-4 w-4 rounded-sm bg-white "
+                className="absolute right-2 top-2 h-4 w-4 rounded-sm bg-white"
                 type="checkbox"
-                checked={color === value}
+                checked={animation === value}
                 onChange={() => handleBg(value)}
               />
             </div>

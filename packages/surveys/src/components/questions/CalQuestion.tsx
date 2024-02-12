@@ -48,6 +48,7 @@ export default function CalQuestion({
 
   return (
     <form
+      key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
         if (question.required && !value) {

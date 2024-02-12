@@ -53,12 +53,10 @@ export default function OpenTextQuestion({
     },
     [question.id, autoFocus]
   );
-  const isInputEmpty = (value: string) => {
-    return question.required && !value?.trim();
-  };
 
   return (
     <form
+      key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
         //  if ( validateInput(value as string, question.inputType, question.required)) {
@@ -85,15 +83,6 @@ export default function OpenTextQuestion({
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
             className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && isInputEmpty(value as string)) {
-                e.preventDefault(); // Prevent form submission
-              } else if (e.key === "Enter") {
-                const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                setTtc(updatedttc);
-                onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
-              }
-            }}
             pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
           />

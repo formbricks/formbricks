@@ -37,7 +37,7 @@ export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
 
         <div className="flex flex-col items-center justify-center p-2">
           <FileIcon className="h-6 text-slate-500" />
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-sm text-slate-500 dark:text-slate-400">
             {selected && typeof selected === "string" && decodeURIComponent(selected).split("/").pop()}
           </p>
         </div>
@@ -77,9 +77,11 @@ export const FileUploadResponse = ({ selected }: FileUploadResponseProps) => {
                     </div>
                   </a>
 
-                  <div className="flex flex-col items-center justify-center p-2">
+                  <div className="flex flex-col items-center justify-center p-2 text-center">
                     <FileIcon className="h-6 text-slate-500" />
-                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{fileName}</p>
+                    <p className="mt-2 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-1 text-sm text-slate-500 dark:text-slate-400">
+                      {fileName}
+                    </p>
                   </div>
                 </div>
               );
