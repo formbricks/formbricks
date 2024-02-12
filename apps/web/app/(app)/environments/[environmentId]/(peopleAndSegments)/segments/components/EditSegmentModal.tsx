@@ -19,7 +19,8 @@ interface EditSegmentModalProps {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
-  isAdvancedUserTargetingAllowed: boolean;
+  isAdvancedTargetingAllowed: boolean;
+  isFormbricksCloud: boolean;
 }
 
 export default function EditSegmentModal({
@@ -30,10 +31,11 @@ export default function EditSegmentModal({
   actionClasses,
   attributeClasses,
   segments,
-  isAdvancedUserTargetingAllowed,
+  isAdvancedTargetingAllowed,
+  isFormbricksCloud,
 }: EditSegmentModalProps) {
   const SettingsTab = () => {
-    if (isAdvancedUserTargetingAllowed) {
+    if (isAdvancedTargetingAllowed) {
       return (
         <SegmentSettingsTab
           actionClasses={actionClasses}
@@ -52,6 +54,7 @@ export default function EditSegmentModal({
         environmentId={environmentId}
         initialSegment={currentSegment}
         setOpen={setOpen}
+        isFormbricksCloud={isFormbricksCloud}
       />
     );
   };

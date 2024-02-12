@@ -28,23 +28,25 @@ import {
   updateBasicSegmentAction,
 } from "../actions";
 
-interface UserTargetingCardProps {
+interface TargetingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
   initialSegment?: TSegment;
+  isFormbricksCloud: boolean;
 }
 
-export default function UserTargetingCard({
+export default function TargetingCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
   attributeClasses,
   segments,
   initialSegment,
-}: UserTargetingCardProps) {
+  isFormbricksCloud,
+}: TargetingCardProps) {
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
   const [open, setOpen] = useState(false);
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
@@ -281,9 +283,9 @@ export default function UserTargetingCard({
                           }}>
                           {segmentEditorViewOnly ? "Hide" : "View"} Filters{" "}
                           {segmentEditorViewOnly ? (
-                            <ChevronDownIcon className="ml-2 h-3 w-3" />
-                          ) : (
                             <ChevronUpIcon className="ml-2 h-3 w-3" />
+                          ) : (
+                            <ChevronDownIcon className="ml-2 h-3 w-3" />
                           )}
                         </Button>
 
@@ -344,11 +346,19 @@ export default function UserTargetingCard({
             )}
           </div>
           <div className="-mt-1.5">
-            <UpgradePlanNotice
-              message="For advanced user targeting,"
-              url={`/environments/${environmentId}/settings/billing`}
-              textForUrl="please use Pro (free to get started)."
-            />
+            {isFormbricksCloud ? (
+              <UpgradePlanNotice
+                message="For advanced targeting, please"
+                textForUrl="upgrade to the User Identification plan."
+                url={`/environments/${environmentId}/settings/billing`}
+              />
+            ) : (
+              <UpgradePlanNotice
+                message="For advanced targeting, please"
+                textForUrl="request an Enterprise license."
+                url="https://formbricks.com/docs/self-hosting/enterprise"
+              />
+            )}
           </div>
         </div>
 

@@ -15,12 +15,18 @@ import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
 import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
 import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
+import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 type TCreateSegmentModalProps = {
   environmentId: string;
   attributeClasses: TAttributeClass[];
+  isFormbricksCloud: boolean;
 };
-const BasicCreateSegmentModal = ({ environmentId, attributeClasses }: TCreateSegmentModalProps) => {
+const BasicCreateSegmentModal = ({
+  environmentId,
+  attributeClasses,
+  isFormbricksCloud,
+}: TCreateSegmentModalProps) => {
   const router = useRouter();
   const initialSegmentState = {
     title: "",
@@ -196,6 +202,20 @@ const BasicCreateSegmentModal = ({ environmentId, attributeClasses }: TCreateSeg
                 attributeClasses={attributeClasses}
               />
             </div>
+
+            {isFormbricksCloud ? (
+              <UpgradePlanNotice
+                message="For advanced targeting, please"
+                textForUrl="upgrade to the User Identification plan."
+                url={`/environments/${environmentId}/settings/billing`}
+              />
+            ) : (
+              <UpgradePlanNotice
+                message="For advanced targeting, please"
+                textForUrl="request an Enterprise license."
+                url="https://formbricks.com/docs/self-hosting/enterprise"
+              />
+            )}
 
             <div className="flex justify-end pt-4">
               <div className="flex space-x-2">

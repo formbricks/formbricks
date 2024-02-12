@@ -3,10 +3,10 @@ import SegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSeg
 
 import CreateSegmentModal from "@formbricks/ee/advancedTargeting/components/CreateSegmentModal";
 import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedTargeting/lib/constants";
-import { getAdvancedUserTargetingPermission } from "@formbricks/ee/lib/service";
+import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getSegments } from "@formbricks/lib/segment/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -31,7 +31,7 @@ export default async function SegmentsPage({ params }) {
     throw new Error("Team not found");
   }
 
-  const isAdvancedUserTargetingAllowed = getAdvancedUserTargetingPermission(team);
+  const isAdvancedTargetingAllowed = getAdvancedTargetingPermission(team);
 
   if (!segments) {
     throw new Error("Failed to fetch segments");
@@ -53,7 +53,7 @@ export default async function SegmentsPage({ params }) {
 
   return (
     <>
-      {isAdvancedUserTargetingAllowed ? (
+      {isAdvancedTargetingAllowed ? (
         <CreateSegmentModal
           environmentId={params.environmentId}
           actionClasses={actionClasses}
@@ -61,7 +61,11 @@ export default async function SegmentsPage({ params }) {
           segments={filteredSegments}
         />
       ) : (
-        <BasicCreateSegmentModal attributeClasses={attributeClasses} environmentId={params.environmentId} />
+        <BasicCreateSegmentModal
+          attributeClasses={attributeClasses}
+          environmentId={params.environmentId}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        />
       )}
 
       {filteredSegments.length === 0 ? (
@@ -75,7 +79,7 @@ export default async function SegmentsPage({ params }) {
           segments={filteredSegments}
           actionClasses={actionClasses}
           attributeClasses={attributeClasses}
-          isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
+          isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
         />
       )}
     </>

@@ -288,8 +288,6 @@ model Survey {
 
   segmentId String?
   segment   Segment? @relation(fields: [segmentId], references: [id])
-  /// @zod.custom(imports.ZSurveySingleUse)
-  /// [SurveySingleUse]
 
   /// @zod.custom(imports.ZSurveyProductOverwrites)
   /// [SurveyProductOverwrites]

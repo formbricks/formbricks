@@ -30,6 +30,7 @@ interface SurveyEditorProps {
   membershipRole?: TMembershipRole;
   colours: string[];
   isUserTargetingAllowed?: boolean;
+  isFormbricksCloud: boolean;
 }
 
 export default function SurveyEditor({
@@ -43,6 +44,7 @@ export default function SurveyEditor({
   membershipRole,
   colours,
   isUserTargetingAllowed = false,
+  isFormbricksCloud,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -171,6 +173,7 @@ export default function SurveyEditor({
                 membershipRole={membershipRole}
                 colours={colours}
                 isUserTargetingAllowed={isUserTargetingAllowed}
+                isFormbricksCloud={isFormbricksCloud}
               />
             )}
           </main>

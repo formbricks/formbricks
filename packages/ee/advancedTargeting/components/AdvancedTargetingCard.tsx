@@ -38,7 +38,7 @@ interface UserTargetingAdvancedCardProps {
   initialSegment?: TSegment;
 }
 
-export default function UserTargetingAdvancedCard({
+export function AdvancedTargetingCard({
   localSurvey,
   setLocalSurvey,
   environmentId,
@@ -345,9 +345,9 @@ export default function UserTargetingAdvancedCard({
                     }}>
                     {segmentEditorViewOnly ? "Hide" : "View"} Filters{" "}
                     {segmentEditorViewOnly ? (
-                      <ChevronDownIcon className="ml-2 h-3 w-3" />
-                    ) : (
                       <ChevronUpIcon className="ml-2 h-3 w-3" />
+                    ) : (
+                      <ChevronDownIcon className="ml-2 h-3 w-3" />
                     )}
                   </Button>
 

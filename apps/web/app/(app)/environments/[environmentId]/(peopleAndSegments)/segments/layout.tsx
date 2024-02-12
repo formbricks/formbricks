@@ -1,7 +1,7 @@
 import PeopleSegmentsTabs from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/PeopleSegmentsTabs";
 import { Metadata } from "next";
 
-import { getAdvancedUserTargetingPermission } from "@formbricks/ee/lib/service";
+import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
@@ -16,7 +16,7 @@ export default async function PeopleLayout({ params, children }) {
     throw new Error("Team not found");
   }
 
-  const isUserTargetingAllowed = getAdvancedUserTargetingPermission(team);
+  const isUserTargetingAllowed = getAdvancedTargetingPermission(team);
 
   return (
     <>

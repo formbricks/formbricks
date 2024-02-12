@@ -28,7 +28,7 @@ export const getRoleManagementPermission = (team: TTeam): boolean => {
   else return false;
 };
 
-export const getAdvancedUserTargetingPermission = (team: TTeam): boolean => {
+export const getAdvancedTargetingPermission = (team: TTeam): boolean => {
   if (IS_FORMBRICKS_CLOUD) return team.billing.features.userTargeting.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return getIsEnterpriseEdition();
   else return false;

@@ -134,7 +134,7 @@ export default function PricingTableComponent({
     },
     {
       title: "Advanced Targeting",
-      comingSoon: true,
+      comingSoon: false,
     },
     {
       title: "Unlimited User Identification",
@@ -142,7 +142,7 @@ export default function PricingTableComponent({
     },
     {
       title: "Reusable Segments",
-      comingSoon: true,
+      comingSoon: false,
       unlimited: true,
     },
   ];

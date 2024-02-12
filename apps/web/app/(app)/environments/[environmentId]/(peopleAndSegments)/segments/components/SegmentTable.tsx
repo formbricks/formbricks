@@ -8,13 +8,13 @@ type TSegmentTableProps = {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
-  isAdvancedUserTargetingAllowed: boolean;
+  isAdvancedTargetingAllowed: boolean;
 };
 const SegmentTable = ({
   segments,
   actionClasses,
   attributeClasses,
-  isAdvancedUserTargetingAllowed,
+  isAdvancedTargetingAllowed,
 }: TSegmentTableProps) => {
   return (
     <div className="rounded-lg border border-slate-200">
@@ -30,7 +30,7 @@ const SegmentTable = ({
           segments={segments}
           actionClasses={actionClasses}
           attributeClasses={attributeClasses}
-          isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
+          isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
         />
       ))}
     </div>

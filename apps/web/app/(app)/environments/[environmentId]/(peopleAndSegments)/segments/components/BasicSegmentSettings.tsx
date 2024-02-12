@@ -18,12 +18,14 @@ import { Input } from "@formbricks/ui/Input";
 import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
 import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
 import ConfirmDeleteSegmentModal from "@formbricks/ui/Targeting/ConfirmDeleteSegmentModal";
+import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 type TBasicSegmentSettingsTabProps = {
   environmentId: string;
   setOpen: (open: boolean) => void;
   initialSegment: TSegmentWithSurveyNames;
   attributeClasses: TAttributeClass[];
+  isFormbricksCloud: boolean;
 };
 
 const BasicSegmentSettings = ({
@@ -31,6 +33,7 @@ const BasicSegmentSettings = ({
   initialSegment,
   setOpen,
   attributeClasses,
+  isFormbricksCloud,
 }: TBasicSegmentSettingsTabProps) => {
   const router = useRouter();
 
@@ -203,6 +206,20 @@ const BasicSegmentSettings = ({
                 attributeClasses={attributeClasses}
               />
             </div>
+
+            {isFormbricksCloud ? (
+              <UpgradePlanNotice
+                message="For advanced targeting, please"
+                textForUrl="upgrade to the User Identification plan."
+                url={`/environments/${environmentId}/settings/billing`}
+              />
+            ) : (
+              <UpgradePlanNotice
+                message="For advanced targeting, please"
+                textForUrl="request an Enterprise license."
+                url="https://formbricks.com/docs/self-hosting/enterprise"
+              />
+            )}
 
             <div className="flex w-full items-center justify-between pt-4">
               <Button

@@ -1,3 +1,4 @@
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getSurveysBySegmentId } from "@formbricks/lib/survey/service";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -10,7 +11,7 @@ type TSegmentTableDataRowProps = {
   segments: TSegment[];
   attributeClasses: TAttributeClass[];
   actionClasses: TActionClass[];
-  isAdvancedUserTargetingAllowed: boolean;
+  isAdvancedTargetingAllowed: boolean;
 };
 
 const SegmentTableDataRowContainer = async ({
@@ -18,7 +19,7 @@ const SegmentTableDataRowContainer = async ({
   segments,
   actionClasses,
   attributeClasses,
-  isAdvancedUserTargetingAllowed,
+  isAdvancedTargetingAllowed,
 }: TSegmentTableDataRowProps) => {
   const surveys = await getSurveysBySegmentId(currentSegment.id);
 
@@ -40,7 +41,8 @@ const SegmentTableDataRowContainer = async ({
       segments={segments}
       actionClasses={actionClasses}
       attributeClasses={attributeClasses}
-      isAdvancedUserTargetingAllowed={isAdvancedUserTargetingAllowed}
+      isAdvancedTargetingAllowed={isAdvancedTargetingAllowed}
+      isFormbricksCloud={IS_FORMBRICKS_CLOUD}
     />
   );
 };

@@ -1,4 +1,4 @@
-import AdvancedTargetingCard from "@formbricks/ee/advancedTargeting/components/AdvancedTargetingCard";
+import { AdvancedTargetingCard } from "@formbricks/ee/advancedTargeting/components/AdvancedTargetingCard";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -10,7 +10,7 @@ import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
 import StylingCard from "./StylingCard";
-import UserTargetingCard from "./UserTargetingCard";
+import TargetingCard from "./TargetingCard";
 import WhenToSendCard from "./WhenToSendCard";
 
 interface SettingsViewProps {
@@ -24,6 +24,7 @@ interface SettingsViewProps {
   membershipRole?: TMembershipRole;
   colours: string[];
   isUserTargetingAllowed?: boolean;
+  isFormbricksCloud: boolean;
 }
 
 export default function SettingsView({
@@ -37,6 +38,7 @@ export default function SettingsView({
   membershipRole,
   colours,
   isUserTargetingAllowed = false,
+  isFormbricksCloud,
 }: SettingsViewProps) {
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -44,7 +46,7 @@ export default function SettingsView({
 
       {localSurvey.type === "web" ? (
         !isUserTargetingAllowed ? (
-          <UserTargetingCard
+          <TargetingCard
             key={localSurvey.segment?.id}
             localSurvey={localSurvey}
             setLocalSurvey={setLocalSurvey}
@@ -52,6 +54,7 @@ export default function SettingsView({
             attributeClasses={attributeClasses}
             segments={segments}
             initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
+            isFormbricksCloud={isFormbricksCloud}
           />
         ) : (
           <AdvancedTargetingCard
