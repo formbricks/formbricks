@@ -2,7 +2,6 @@ import { Prisma } from "@prisma/client";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TPerson } from "@formbricks/types/people";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
@@ -14,6 +13,7 @@ import {
 import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
 
+import { selectPerson } from "../../person/service";
 import { selectSurvey } from "../service";
 
 const currentDate = new Date();
@@ -58,19 +58,6 @@ export const mockDisplay = {
   status: null,
 };
 
-// id: true,
-// name: true,
-// email: true,
-// emailVerified: true,
-// imageUrl: true,
-// createdAt: true,
-// updatedAt: true,
-// onboardingCompleted: true,
-// twoFactorEnabled: true,
-// identityProvider: true,
-// objective: true,
-// notificationSettings: true,
-
 export const mockUser: TUser = {
   id: mockId,
   name: "mock User",
@@ -90,10 +77,20 @@ export const mockUser: TUser = {
   },
 };
 
-export const mockPerson: TPerson = {
+export const mockPerson: Prisma.PersonGetPayload<{
+  include: typeof selectPerson;
+}> = {
   id: mockId,
   userId: mockId,
-  attributes: { test: "value" },
+  attributes: [
+    {
+      value: "value",
+      attributeClass: {
+        id: mockId,
+        name: "test",
+      },
+    },
+  ],
   ...commonMockProperties,
 };
 

@@ -284,12 +284,14 @@ describe("Tests for getSyncedSurveys", () => {
 
     it("Returns synced surveys", async () => {
       prismaMock.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
+      prismaMock.person.findUnique.mockResolvedValueOnce(mockPerson);
       const surveys = await getSyncSurveys(mockId, mockPerson.id);
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
     });
 
     it("Returns an empty array if no surveys are found", async () => {
       prismaMock.survey.findMany.mockResolvedValueOnce([]);
+      prismaMock.person.findUnique.mockResolvedValueOnce(mockPerson);
       const surveys = await getSyncSurveys(mockId, mockPerson.id);
       expect(surveys).toEqual([]);
     });
