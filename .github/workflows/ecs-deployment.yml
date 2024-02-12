@@ -115,7 +115,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: prod-webapp-container
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image_tag_sha }}
+          image: ${{ needs.build.outputs.image_tag_sha }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
