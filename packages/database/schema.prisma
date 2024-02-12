@@ -599,5 +599,6 @@ model Segment {
   environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   surveys       Survey[]
 
+  @@unique([environmentId, title])
   @@index([environmentId])
 }

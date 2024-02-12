@@ -105,7 +105,7 @@ export default function SurveyEditor({
 
     const createSegment = async () => {
       const createdSegment = await createSegmentAction({
-        title: "",
+        title: survey.id,
         description: "",
         environmentId: environment.id,
         surveyId: localSurvey.id,
@@ -126,7 +126,9 @@ export default function SurveyEditor({
         throw new Error("Error creating segment");
       }
     }
-  }, [environment.id, isUserTargetingAllowed, localSurvey, router]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [environment.id, isUserTargetingAllowed, localSurvey?.type, survey.id]);
 
   if (!localSurvey) {
     return <Loading />;

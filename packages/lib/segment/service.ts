@@ -340,6 +340,25 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
+    const allSegments = await getSegments(segment.environmentId);
+
+    // Find the last "Copy of" title and extract the number from it
+    const lastCopyTitle = allSegments
+      .map((existingSegment) => existingSegment.title)
+      .filter((title) => title.startsWith(`Copy of ${segment.title}`))
+      .pop();
+
+    let suffix = 1;
+    if (lastCopyTitle) {
+      const match = lastCopyTitle.match(/\((\d+)\)$/);
+      if (match) {
+        suffix = parseInt(match[1], 10) + 1;
+      }
+    }
+
+    // Construct the title for the cloned segment
+    const clonedTitle = `Copy of ${segment.title} (${suffix})`;
+
     // parse the filters and update the user segment
     const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
     if (!parsedFilters.success) {
@@ -348,7 +367,7 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
 
     const clonedSegment = await prisma.segment.create({
       data: {
-        title: `Copy of ${segment.title}`,
+        title: clonedTitle,
         description: segment.description,
         isPrivate: segment.isPrivate,
         environmentId: segment.environmentId,
