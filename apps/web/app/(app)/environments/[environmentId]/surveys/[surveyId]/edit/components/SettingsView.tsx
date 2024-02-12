@@ -1,4 +1,4 @@
-import UserTargetingAdvancedCard from "@formbricks/ee/advancedUserTargeting/components/UserTargetingAdvancedCard";
+import AdvancedTargetingCard from "@formbricks/ee/advancedTargeting/components/AdvancedTargetingCard";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -54,7 +54,7 @@ export default function SettingsView({
             initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
           />
         ) : (
-          <UserTargetingAdvancedCard
+          <AdvancedTargetingCard
             key={localSurvey.segment?.id}
             localSurvey={localSurvey}
             setLocalSurvey={setLocalSurvey}

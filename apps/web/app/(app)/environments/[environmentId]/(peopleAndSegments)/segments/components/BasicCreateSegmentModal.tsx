@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-import { createSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
+import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment } from "@formbricks/types/segment";

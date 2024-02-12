@@ -1,8 +1,8 @@
 import BasicCreateSegmentModal from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/BasicCreateSegmentModal";
 import SegmentTable from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/segments/components/SegmentTable";
 
-import CreateSegmentModal from "@formbricks/ee/advancedUserTargeting/components/CreateSegmentModal";
-import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
+import CreateSegmentModal from "@formbricks/ee/advancedTargeting/components/CreateSegmentModal";
+import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedTargeting/lib/constants";
 import { getAdvancedUserTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";

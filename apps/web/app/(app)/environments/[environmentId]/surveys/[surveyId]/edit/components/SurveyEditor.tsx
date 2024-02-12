@@ -4,7 +4,7 @@ import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import { useEffect, useState } from "react";
 
-import { createSegmentAction } from "@formbricks/ee/advancedUserTargeting/lib/actions";
+import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";

@@ -1,6 +1,6 @@
 {
   "extends": "@formbricks/tsconfig/react-library.json",
-  "include": [".", "../types/*.d.ts", "../ee/advancedUserTargeting/components/SegmentSettingsTab.tsx"],
+  "include": [".", "../types/*.d.ts"],
   "exclude": ["build", "node_modules"],
   "compilerOptions": {
     "lib": ["ES2021.String"],
