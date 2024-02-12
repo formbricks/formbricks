@@ -23,3 +23,5 @@ ALTER TABLE "Survey" ADD CONSTRAINT "Survey_segmentId_fkey" FOREIGN KEY ("segmen
 
 -- AddForeignKey
 ALTER TABLE "Segment" ADD CONSTRAINT "Segment_environmentId_fkey" FOREIGN KEY ("environmentId") REFERENCES "Environment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE UNIQUE INDEX "Segment_environmentId_title_key" ON "Segment"("environmentId", "title");
