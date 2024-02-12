@@ -7,14 +7,11 @@ name: ECS
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch: # Add manual trigger support
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
   IMAGE_NAME: formbricks/formbricks-experimental
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
 
@@ -24,20 +21,13 @@ jobs:
     permissions:
       contents: read
       packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
-      id-token: write
+      id-token: write  # Only necessary for sigstore/fulcio outside PRs
 
     steps:
-      - name: Generate Random NEXTAUTH_SECRET
+      - name: Generate Secrets
         run: |
-          SECRET=$(openssl rand -hex 32)
-          echo "NEXTAUTH_SECRET=$SECRET" >> $GITHUB_ENV
-
-      - name: Generate Random ENCRYPTION_KEY
-        run: |
-          SECRET=$(openssl rand -hex 32)
-          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+          echo "NEXTAUTH_SECRET=$(openssl rand -hex 32)" >> $GITHUB_ENV
+          echo "ENCRYPTION_KEY=$(openssl rand -hex 32)" >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -50,10 +40,9 @@ jobs:
         uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
         with:
           cosign-release: "v2.1.1"
-
       # https://github.com/docker/login-action
       - name: Log into registry
-        uses: docker/login-action@v3 # v3.0.0
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -69,7 +58,6 @@ jobs:
           tags: |
             type=sha,format=long
             type=raw,value=latest,enable={{is_default_branch}}
-
       # Build and push Docker image with Buildx
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
@@ -94,47 +82,11 @@ jobs:
             DATABASE_URL=${{ env.DATABASE_URL }}
             ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
             NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }}
-      
+
       - name: Sign the images with GitHub OIDC Token
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes ${images}
+        run: cosign sign --yes ${{ steps.meta.outputs.tags }}@${{ steps.build-and-push.outputs.digest }}
     outputs:
       image_tag_sha: ${{ steps.meta.outputs.tags }}
-  
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-          
-      - name: Download task definition
-        run: |
-          aws ecs describe-task-definition --task-definition prod-webapp-ecs-service --query taskDefinition > task-definition.json
-
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: prod-webapp-container
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image_tag_sha }}
-
-      # - name: Deploy Amazon ECS task definition
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      #   with:
-      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
-      #     service: prod-webapp-ecs-service
-      #     cluster: prod-core-infra-ecs-cluster
-      #     wait-for-service-stability: true
