@@ -1,6 +1,5 @@
 "use client";
 
-import TargetingIndicator from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/TargetingIndicator";
 import { CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle } from "lucide-react";
@@ -8,24 +7,26 @@ import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import AddFilterModal from "@formbricks/ee/advancedUserTargeting/components/AddFilterModal";
-import SegmentEditor from "@formbricks/ee/advancedUserTargeting/components/SegmentEditor";
-import {
-  cloneSegmentAction,
-  createSegmentAction,
-  loadNewSegmentAction,
-  updateSegmentAction,
-} from "@formbricks/ee/advancedUserTargeting/lib/actions";
-import { ACTIONS_TO_EXCLUDE } from "@formbricks/ee/advancedUserTargeting/lib/constants";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment, TSegmentUpdateInput } from "@formbricks/types/segment";
+import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
 import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
 import SegmentTitle from "@formbricks/ui/Targeting/SegmentTitle";
+import TargetingIndicator from "@formbricks/ui/Targeting/TargetingIndicator";
+
+import {
+  cloneSegmentAction,
+  createSegmentAction,
+  loadNewSegmentAction,
+  updateSegmentAction,
+} from "../lib/actions";
+import { ACTIONS_TO_EXCLUDE } from "../lib/constants";
+import AddFilterModal from "./AddFilterModal";
+import SegmentEditor from "./SegmentEditor";
 
 interface UserTargetingAdvancedCardProps {
   localSurvey: TSurvey;
@@ -87,7 +88,7 @@ export default function UserTargetingAdvancedCard({
     try {
       const clonedSegment = await cloneSegmentAction(segment.id, localSurvey.id);
       setSegment(clonedSegment);
-    } catch (err) {
+    } catch (err: any) {
       toast.error(err.message);
     }
   };
@@ -123,13 +124,18 @@ export default function UserTargetingAdvancedCard({
     return updatedSurvey;
   };
 
-  const handleSaveAsNewSegment = async (
+  const handleSaveAsNewSegmentUpdate = async (
     environmentId: string,
     segmentId: string,
     data: TSegmentUpdateInput
   ) => {
     const updatedSegment = await updateSegmentAction(environmentId, segmentId, data);
     return updatedSegment;
+  };
+
+  const handleSaveAsNewSegmentCreate = async (data: TSegmentCreateInput) => {
+    const createdSegment = await createSegmentAction(data);
+    return createdSegment;
   };
 
   if (localSurvey.type === "link") {
@@ -211,7 +217,7 @@ export default function UserTargetingAdvancedCard({
                   <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                     Add filter
                   </Button>
-                  <Button variant="secondary" size="sm" onClick={() => setSegmentEditorViewOnly(true)}>
+                  <Button variant="secondary" size="sm" onClick={() => {}}>
                     Save changes
                   </Button>
                   {/* 
@@ -262,8 +268,8 @@ export default function UserTargetingAdvancedCard({
                       segment={segment}
                       setSegment={setSegment}
                       setIsSegmentEditorOpen={setIsSegmentEditorOpen}
-                      onCreateSegment={async (data) => createSegmentAction(data)}
-                      onUpdateSegment={handleSaveAsNewSegment}
+                      onCreateSegment={handleSaveAsNewSegmentCreate}
+                      onUpdateSegment={handleSaveAsNewSegmentUpdate}
                     />
                   )}
 

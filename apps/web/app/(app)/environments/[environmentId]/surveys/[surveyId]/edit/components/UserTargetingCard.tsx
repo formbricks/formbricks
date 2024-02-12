@@ -18,6 +18,7 @@ import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
 import LoadSegmentModal from "@formbricks/ui/Targeting/LoadSegmentModal";
 import SaveAsNewSegmentModal from "@formbricks/ui/Targeting/SaveAsNewSegmentModal";
 import SegmentTitle from "@formbricks/ui/Targeting/SegmentTitle";
+import TargetingIndicator from "@formbricks/ui/Targeting/TargetingIndicator";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import {
@@ -26,7 +27,6 @@ import {
   loadNewBasicSegmentAction,
   updateBasicSegmentAction,
 } from "../actions";
-import TargetingIndicator from "./TargetingIndicator";
 
 interface UserTargetingCardProps {
   localSurvey: TSurvey;
