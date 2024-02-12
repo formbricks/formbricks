@@ -72,8 +72,6 @@ export async function GET(
       getProductByEnvironmentId(environmentId),
     ]);
 
-    console.log("surveys", JSON.stringify(surveys, null, 2));
-
     if (!product) {
       throw new Error("Product not found");
     }
