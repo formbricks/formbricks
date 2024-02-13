@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
@@ -53,7 +54,6 @@ export default function TargetingCard({
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.segment?.isPrivate);
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
-  const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [resetAllFiltersModalOpen, setResetAllFiltersModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
 
@@ -209,7 +209,11 @@ export default function TargetingCard({
                         </div>
                       )}
 
-                      <div className="mt-3 flex items-center gap-2">
+                      <div
+                        className={cn(
+                          "mt-3 flex items-center gap-2",
+                          segment?.isPrivate && !segment?.filters?.length && "mt-0"
+                        )}>
                         <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                           Add filter
                         </Button>
@@ -367,8 +371,6 @@ export default function TargetingCard({
             open={loadSegmentModalOpen}
             setOpen={setLoadSegmentModalOpen}
             surveyId={localSurvey.id}
-            step={loadSegmentModalStep}
-            setStep={setLoadSegmentModalStep}
             currentSegment={segment}
             segments={segments}
             setSegment={setSegment}
