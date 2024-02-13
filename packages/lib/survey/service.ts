@@ -8,6 +8,7 @@ import { TActionClass } from "@formbricks/types/actionClasses";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
 
@@ -564,7 +565,15 @@ export const getSyncSurveys = async (
   const surveys = await unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
-      const person = await getPerson(personId);
+      let person: TPerson | null = null;
+
+      if (personId === "legacy") {
+        person = {
+          id: "legacy",
+        } as TPerson;
+      } else {
+        person = await getPerson(personId);
+      }
 
       if (!product) {
         throw new Error("Product not found");
