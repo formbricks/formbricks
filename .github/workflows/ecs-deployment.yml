@@ -122,4 +122,3 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: prod-webapp-ecs-service
           cluster: prod-core-infra-ecs-cluster
-          wait-for-service-stability: true
