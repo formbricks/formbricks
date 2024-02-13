@@ -10,7 +10,65 @@ export const metadata = {
 
 ## v1.6
 
-Formbricks v1.6 comes with a ton of stability improvements and game-changing features. This also involves a few changes in our environment variables. This guide will help you migrate your existing Formbricks instance to v1.6 without any hassles or build errors.
+Formbricks v1.6 comes with a really Advanced Targeting & Segmentation of your end-users along with a ton of stability improvements & features. This also involves a few changes in our environment variables. This guide will help you migrate your existing Formbricks instance to v1.6 without any hassles or build errors.
+
+<Note>
+  This upgrade requires a data migration. Please make sure to backup your database before proceeding with the upgrade.
+  Follow the below steps thoroughly to upgrade your Formbricks instance to v1.6.
+</Note>
+
+### Steps to Migrate
+
+1. **Backup your Database**: This is a crucial step. Please make sure to backup your database before proceeding with the upgrade. You can use the following command to backup your database:
+
+<Col>
+<CodeGroup title="Backup Postgres">
+
+```bash
+docker exec formbricks-quickstart-postgres-1 pg_dump -U postgres -d formbricks > formbricks_backup.sql
+```
+
+</CodeGroup>
+</Col>
+
+2. Stop the running Formbricks instance & remove the related containers:
+
+<Col>
+<CodeGroup title="Stop the containers">
+
+```bash
+docker-compose down
+```
+
+</CodeGroup>
+</Col>
+
+
+3. Restarting the containers will automatically pull the latest version of Formbricks:
+
+<Col>
+<CodeGroup title="Restart the containers">
+
+```bash
+docker-compose up
+```
+</CodeGroup>
+</Col>
+
+4. Migrate the data to the latest schema:
+
+<Col>
+<CodeGroup title="Migrate the data">
+
+```bash
+docker exec formbricks sh -c "pnpm data-migration:advanced-targeting"
+```
+</CodeGroup>
+</Col>
+
+The above command will migrate your data to the latest schema. This is a crucial step and should not be skipped. It might take a few minutes to complete.
+
+5. That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
 
 ### Deprecated Environment Variables
 
