@@ -110,11 +110,12 @@ export const withEmailTemplate = (content: string) =>
         }
   
         a {
-          color: #00c4b8;
+          color: #000000;
         }
         a:hover {
-          color: #00e6ca;
+          color: #000000;
         }
+
         h1,
         h2,
         h3,

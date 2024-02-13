@@ -116,7 +116,7 @@ export const getActionCountInLast7DaysAction = async (actionClassId: string, env
   return await getActionCountInLast7Days(actionClassId);
 };
 
-export const GetActiveInactiveSurveysAction = async (
+export const getActiveInactiveSurveysAction = async (
   actionClassId: string,
   environmentId: string
 ): Promise<{ activeSurveys: string[]; inactiveSurveys: string[] }> => {

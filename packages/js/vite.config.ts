@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
 import surveysPackageJson from "../surveys/package.json";
+import packageJson from "./package.json";
 
 const config = ({ mode }) => {
   const isDevelopment = mode === "dev";
@@ -13,6 +14,7 @@ const config = ({ mode }) => {
   return defineConfig({
     define: {
       "import.meta.env.FORMBRICKS_SURVEYS_SCRIPT_SRC": JSON.stringify(formbricksSurveysScriptSrc),
+      "import.meta.env.VERSION": JSON.stringify(packageJson.version),
     },
     build: {
       emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
