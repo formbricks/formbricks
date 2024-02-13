@@ -54,7 +54,6 @@ export default function TargetingCard({
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.segment?.isPrivate);
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
-  const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [resetAllFiltersModalOpen, setResetAllFiltersModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
 
@@ -372,8 +371,6 @@ export default function TargetingCard({
             open={loadSegmentModalOpen}
             setOpen={setLoadSegmentModalOpen}
             surveyId={localSurvey.id}
-            step={loadSegmentModalStep}
-            setStep={setLoadSegmentModalStep}
             currentSegment={segment}
             segments={segments}
             setSegment={setSegment}
