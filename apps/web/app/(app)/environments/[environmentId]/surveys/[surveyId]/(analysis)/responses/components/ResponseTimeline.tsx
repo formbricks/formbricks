@@ -65,13 +65,13 @@ export default function ResponseTimeline({
         observer.unobserve(currentLoadingRef);
       }
     };
-  }, [responsesPerPage, page, survey.id, fetchedResponses.length, hasMoreResponses]);
+  }, [responsesPerPage, page, survey.id, responses.length, hasMoreResponses]);
 
   return (
     <div className="space-y-4">
-      {survey.type === "web" && fetchedResponses.length === 0 && !environment.widgetSetupCompleted ? (
+      {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
-      ) : fetchedResponses.length === 0 ? (
+      ) : responses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}
@@ -79,7 +79,7 @@ export default function ResponseTimeline({
         />
       ) : (
         <div>
-          {fetchedResponses.map((response) => {
+          {responses.map((response) => {
             return (
               <div key={response.id}>
                 <SingleResponseCard

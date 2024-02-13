@@ -245,7 +245,6 @@ export const getFormattedFilters = (
     filters["finished"] = true;
   }
 
-  // yyyy-mm-dd
   // for date range responses
   if (dateRange.from && dateRange.to) {
     filters["createdAt"] = {
@@ -348,6 +347,23 @@ export const getFormattedFilters = (
             };
           }
         }
+      }
+    });
+  }
+
+  if (attributes.length) {
+    attributes.forEach(({ filterType, questionType }) => {
+      if (!filters.personAttributes) filters.personAttributes = {};
+      if (filterType.filterValue === "Equals") {
+        filters.personAttributes[questionType.label ?? ""] = {
+          op: "equals",
+          value: filterType.filterComboBoxValue as string,
+        };
+      } else if (filterType.filterValue === "Not equals") {
+        filters.personAttributes[questionType.label ?? ""] = {
+          op: "notEquals",
+          value: filterType.filterComboBoxValue as string,
+        };
       }
     });
   }

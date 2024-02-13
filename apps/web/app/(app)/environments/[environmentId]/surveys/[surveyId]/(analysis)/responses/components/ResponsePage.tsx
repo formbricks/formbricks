@@ -45,7 +45,7 @@ const ResponsePage = ({
   responsesPerPage,
   membershipRole,
 }: ResponsePageProps) => {
-  const [initialResponses, setInitialResponses] = useState<TResponse[]>();
+  const [responses, setResponses] = useState<TResponse[]>([]);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const apiFilters = useMemo(
@@ -66,13 +66,10 @@ const ResponsePage = ({
   useEffect(() => {
     const fetchInitialResponses = async () => {
       const responses = await getPaginatedResponses(surveyId, 1, undefined, apiFilters);
-      console.log({ responses });
-      setInitialResponses(responses);
+      setResponses(responses);
     };
     fetchInitialResponses();
   }, [surveyId, apiFilters]);
-
-  const responses = useMemo(() => initialResponses || [], [initialResponses]);
 
   // get the filtered array when the selected filter value changes
   const filterResponses: TResponse[] = useMemo(() => {
@@ -102,7 +99,7 @@ const ResponsePage = ({
       <ResponseTimeline
         environment={environment}
         surveyId={surveyId}
-        responses={filterResponses}
+        responses={responses}
         survey={survey}
         user={user}
         environmentTags={environmentTags}

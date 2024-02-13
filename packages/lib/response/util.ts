@@ -74,6 +74,36 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
     });
   }
 
+  // For Person Attributes
+  if (filterCriteria?.personAttributes) {
+    const personAttributes: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.personAttributes).forEach(([key, val]) => {
+      switch (val.op) {
+        case "equals":
+          personAttributes.push({
+            personAttributes: {
+              path: [key],
+              equals: val.value,
+            },
+          });
+          break;
+        case "notEquals":
+          personAttributes.push({
+            personAttributes: {
+              path: [key],
+              not: val.value,
+            },
+          });
+          break;
+      }
+    });
+
+    whereClause.push({
+      AND: personAttributes,
+    });
+  }
+
   // For Questions Data
   if (filterCriteria?.data) {
     const data: Prisma.ResponseWhereInput[] = [];
@@ -167,13 +197,24 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
         case "includesOne":
           data.push({
             OR: val.value.map((value: string) => ({
-              data: {
-                path: [key],
-                array_contains: [value],
-              },
+              OR: [
+                // for MultipleChoiceMulti
+                {
+                  data: {
+                    path: [key],
+                    array_contains: [value],
+                  },
+                },
+                // for MultipleChoiceSingle
+                {
+                  data: {
+                    path: [key],
+                    equals: value,
+                  },
+                },
+              ],
             })),
           });
-
           break;
         case "uploaded":
           data.push({

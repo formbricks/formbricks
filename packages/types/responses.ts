@@ -93,6 +93,15 @@ export const ZResponseFilterCriteria = z.object({
     })
     .optional(),
 
+  personAttributes: z
+    .record(
+      z.object({
+        op: z.enum(["equals", "notEquals"]),
+        value: z.union([z.string(), z.number()]),
+      })
+    )
+    .optional(),
+
   data: z
     .record(
       z.union([
