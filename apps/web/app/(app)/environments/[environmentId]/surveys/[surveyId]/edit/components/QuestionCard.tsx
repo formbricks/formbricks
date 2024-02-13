@@ -391,6 +391,7 @@ export default function QuestionCard({
                     <Label htmlFor="longAnswer">Long Answer</Label>
                     <Switch
                       id="longAnswer"
+                      disabled={question.inputType !== "text"}
                       checked={question.longAnswer !== false}
                       onClick={(e) => {
                         e.stopPropagation();

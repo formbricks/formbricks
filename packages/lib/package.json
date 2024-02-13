@@ -11,7 +11,7 @@
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
     "test:dev": "jest --coverage --watch",
-    "test": "jest -ci --coverage --no-cache"
+    "test": "jest -ci --coverage --no-cache --silent"
   },
   "dependencies": {
     "@aws-sdk/s3-presigned-post": "3.499.0",

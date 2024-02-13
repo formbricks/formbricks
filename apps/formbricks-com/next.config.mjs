@@ -200,6 +200,11 @@ const nextConfig = {
         destination: "https://app.formbricks.com/auth/signup",
         permanent: true,
       },
+      {
+        source: "/blog/preseed-announcement",
+        destination: "/blog",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
