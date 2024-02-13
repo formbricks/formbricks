@@ -674,7 +674,7 @@ export const getSyncSurveys = async (
         // Evaluate the segment filters
         const result = await evaluateSegment(
           {
-            attributes: person.attributes,
+            attributes: person.attributes ?? {},
             actionIds: personActionClassIds,
             deviceType,
             environmentId,
