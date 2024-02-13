@@ -9,6 +9,7 @@ import { getTeamsByUserId } from "@formbricks/lib/team/service";
 import ClientLogout from "@formbricks/ui/ClientLogout";
 
 export default async function Home() {
+  console.log("runinng");
   const session: Session | null = await getServerSession(authOptions);
 
   if (!session) {
@@ -20,6 +21,7 @@ export default async function Home() {
   }
 
   if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {
+    console.log("onboarding remaining");
     return redirect(`/onboarding`);
   }
 
