@@ -91,7 +91,7 @@ const CustomFilter = ({
       attributes
     );
     setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [totalResponses, survey, setSelectedOptions, environmentTags, attributes]);
+  }, [survey, setSelectedOptions, environmentTags, attributes]);
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
