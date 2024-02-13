@@ -10,7 +10,7 @@ import {
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { isWithinInterval } from "date-fns";
 
-import { TResponse, TResponseFilterCriteria } from "@formbricks/types/responses";
+import { TResponse, TResponseFilterCriteria, TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -35,38 +35,11 @@ const filterOptions = {
   consent: ["Accepted", "Dismissed"],
 };
 
-// creating an object for the attributes in key value format when key is string and value is an string array
-const getPersonAttributes = (responses: TResponse[]): { [key: string]: any[] } | null => {
-  let attributes: { [key: string]: any[] } = {};
-
-  responses.forEach((obj) => {
-    const personAttributes = obj.personAttributes;
-
-    if (personAttributes && Object.keys(personAttributes).length > 0) {
-      for (const [key, value] of Object.entries(personAttributes)) {
-        if (attributes.hasOwnProperty(key)) {
-          if (!attributes[key].includes(value)) {
-            attributes[key].push(value);
-          }
-        } else {
-          attributes[key] = [value];
-        }
-      }
-    }
-  });
-
-  if (Object.keys(attributes).length > 0) {
-    return attributes;
-  } else {
-    return null;
-  }
-};
-
 // creating the options for the filtering to be selected there are three types questions, attributes and tags
 export const generateQuestionAndFilterOptions = (
   survey: TSurvey,
-  responses: TResponse[],
-  environmentTags: TTag[] | undefined
+  environmentTags: TTag[] | undefined,
+  attributes: TSurveyPersonAttributes
 ): {
   questionOptions: QuestionOptions[];
   questionFilterOptions: QuestionFilterOptions[];
@@ -125,77 +98,6 @@ export const generateQuestionAndFilterOptions = (
     });
   }
 
-  const attributes = getPersonAttributes(responses);
-  if (attributes) {
-    questionOptions = [
-      ...questionOptions,
-      {
-        header: OptionsType.ATTRIBUTES,
-        option: Object.keys(attributes).map((a) => {
-          return { label: a, type: OptionsType.ATTRIBUTES, id: a };
-        }),
-      },
-    ];
-    Object.keys(attributes).forEach((a) => {
-      questionFilterOptions.push({
-        type: "Attributes",
-        filterOptions: conditionOptions.userAttributes,
-        filterComboBoxOptions: attributes[a],
-        id: a,
-      });
-    });
-  }
-
-  return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
-};
-
-export const generateQuestionAndFilterOptionsForResponseSharing = (
-  survey: TSurvey,
-  responses: TResponse[]
-): {
-  questionOptions: QuestionOptions[];
-  questionFilterOptions: QuestionFilterOptions[];
-} => {
-  let questionOptions: any = [];
-  let questionFilterOptions: any = [];
-
-  let questionsOptions: any = [];
-
-  survey.questions.forEach((q) => {
-    if (Object.keys(conditionOptions).includes(q.type)) {
-      questionsOptions.push({
-        label: q.headline,
-        questionType: q.type,
-        type: OptionsType.QUESTIONS,
-        id: q.id,
-      });
-    }
-  });
-  questionOptions = [...questionOptions, { header: OptionsType.QUESTIONS, option: questionsOptions }];
-  survey.questions.forEach((q) => {
-    if (Object.keys(conditionOptions).includes(q.type)) {
-      if (
-        q.type === TSurveyQuestionType.MultipleChoiceMulti ||
-        q.type === TSurveyQuestionType.MultipleChoiceSingle
-      ) {
-        questionFilterOptions.push({
-          type: q.type,
-          filterOptions: conditionOptions[q.type],
-          filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
-          id: q.id,
-        });
-      } else {
-        questionFilterOptions.push({
-          type: q.type,
-          filterOptions: conditionOptions[q.type],
-          filterComboBoxOptions: filterOptions[q.type],
-          id: q.id,
-        });
-      }
-    }
-  });
-
-  const attributes = getPersonAttributes(responses);
   if (attributes) {
     questionOptions = [
       ...questionOptions,

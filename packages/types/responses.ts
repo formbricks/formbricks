@@ -16,6 +16,10 @@ export const ZResponsePersonAttributes = ZPersonAttributes.nullable();
 
 export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
 
+export const ZSurveyPersonAttributes = z.record(z.array(z.union([z.string(), z.number()])));
+
+export type TSurveyPersonAttributes = z.infer<typeof ZSurveyPersonAttributes>;
+
 const ZResponseFilterCriteriaDataLessThan = z.object({
   op: z.literal(ZSurveyLogicCondition.Values.lessThan),
   value: z.number(),

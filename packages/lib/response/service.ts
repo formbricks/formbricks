@@ -14,6 +14,7 @@ import {
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
+  TSurveyPersonAttributes,
   ZResponse,
   ZResponseFilterCriteria,
   ZResponseInput,
@@ -391,6 +392,34 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
         notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
       } as TResponse)
     : null;
+};
+
+export const getAttributesFromResponses = async (surveyId: string): Promise<TSurveyPersonAttributes> => {
+  const attributes: TSurveyPersonAttributes = {};
+  const responseAttributes = await prisma.response.findMany({
+    where: {
+      surveyId: surveyId,
+    },
+    select: {
+      personAttributes: true,
+    },
+  });
+
+  responseAttributes.forEach((response) => {
+    Object.keys(response.personAttributes ?? {}).forEach((key) => {
+      if (response.personAttributes && attributes[key]) {
+        attributes[key].push(response.personAttributes[key]);
+      } else if (response.personAttributes) {
+        attributes[key] = [response.personAttributes[key]];
+      }
+    });
+  });
+
+  Object.keys(attributes).forEach((key) => {
+    attributes[key] = Array.from(new Set(attributes[key]));
+  });
+
+  return attributes;
 };
 
 export const getResponses = async (
