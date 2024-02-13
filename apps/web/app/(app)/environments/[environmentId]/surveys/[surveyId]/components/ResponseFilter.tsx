@@ -9,7 +9,6 @@ import { TrashIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 import { TSurveyTSurveyQuestionType } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
