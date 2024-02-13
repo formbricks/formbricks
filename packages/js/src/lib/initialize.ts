@@ -26,9 +26,9 @@ const logger = Logger.getInstance();
 let isInitialized = false;
 
 const setDebugLevel = (c: TJsConfigInput): void => {
-  if (c.debug) {
-    logger.debug(`Setting log level to debug`);
+  if (c.debug || window.location.search.includes("formbricksDebug=true")) {
     logger.configure({ logLevel: "debug" });
+    logger.debug(`Setting log level to debug`);
   }
 };
 
