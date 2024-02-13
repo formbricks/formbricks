@@ -57,7 +57,10 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
             autoPlay
             className={`${baseClasses} object-cover`}
             style={{ filter: `${filterStyle}` }}>
-            <source src={survey.styling?.background?.bg || ""} type="video/mp4" />
+            <source
+              src={survey.styling?.background?.bg || "/animated-bgs/Thumbnails/1_Thumb.mp4"}
+              type="video/mp4"
+            />
           </video>
         );
       case "image":

@@ -1,6 +1,6 @@
 {
   "extends": "@formbricks/tsconfig/react-library.json",
-  "include": ["."],
+  "include": [".", "../types/*.d.ts"],
   "exclude": ["build", "node_modules"],
   "compilerOptions": {
     "lib": ["ES2021.String"],

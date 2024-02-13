@@ -18,7 +18,7 @@ export default function AttributeClassesTable({
 }) {
   const [isAttributeDetailModalOpen, setAttributeDetailModalOpen] = useState(false);
   const [isUploadCSVModalOpen, setUploadCSVModalOpen] = useState(false);
-  const [activeAttributeClass, setActiveAttributeClass] = useState("" as any);
+  const [activeAttributeClass, setActiveAttributeClass] = useState<TAttributeClass | null>(null);
   const [showArchived, setShowArchived] = useState(false);
 
   const displayedAttributeClasses = useMemo(() => {
@@ -33,8 +33,7 @@ export default function AttributeClassesTable({
     return attributeClasses ? attributeClasses.some((ac) => ac.archived) : false;
   }, [attributeClasses]);
 
-  const handleOpenAttributeDetailModalClick = (e, attributeClass) => {
-    e.preventDefault();
+  const handleOpenAttributeDetailModalClick = (attributeClass: TAttributeClass) => {
     setActiveAttributeClass(attributeClass);
     setAttributeDetailModalOpen(true);
   };
@@ -59,20 +58,21 @@ export default function AttributeClassesTable({
         <div className="grid-cols-7">
           {displayedAttributeClasses.map((attributeClass, index) => (
             <button
-              onClick={(e) => {
-                handleOpenAttributeDetailModalClick(e, attributeClass);
-              }}
+              onClick={() => handleOpenAttributeDetailModalClick(attributeClass)}
               className="w-full"
               key={attributeClass.id}>
               {attributeRows[index]}
             </button>
           ))}
         </div>
-        <AttributeDetailModal
-          open={isAttributeDetailModalOpen}
-          setOpen={setAttributeDetailModalOpen}
-          attributeClass={activeAttributeClass}
-        />
+        {activeAttributeClass && (
+          <AttributeDetailModal
+            open={isAttributeDetailModalOpen}
+            setOpen={setAttributeDetailModalOpen}
+            attributeClass={activeAttributeClass}
+          />
+        )}
+
         <UploadAttributesModal open={isUploadCSVModalOpen} setOpen={setUploadCSVModalOpen} />
       </div>
     </>

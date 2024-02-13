@@ -171,7 +171,7 @@ export const resendInvite = async (inviteId: string): Promise<TInvite> => {
     throw new ResourceNotFoundError("Invite", inviteId);
   }
 
-  await sendInviteMemberEmail(inviteId, invite.creator?.name ?? "", invite.name ?? "", invite.email);
+  await sendInviteMemberEmail(inviteId, invite.email, invite.creator?.name ?? "", invite.name ?? "");
 
   const updatedInvite = await prisma.invite.update({
     where: {

@@ -6,38 +6,43 @@ import { Modal } from "../Modal";
 interface AlertDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  confirmWhat: string;
-  onDiscard: () => void;
-  text?: string;
-  confirmButtonLabel: string;
-  onSave?: () => void;
+  headerText: string;
+  mainText: string;
+  confirmBtnLabel: string;
+  declineBtnLabel?: string;
+  declineBtnVariant?: "warn" | "minimal";
+  onDecline: () => void;
+  onConfirm?: () => void;
 }
 
 export default function AlertDialog({
   open,
   setOpen,
-  confirmWhat,
-  onDiscard,
-  text,
-  confirmButtonLabel,
-  onSave,
+  headerText,
+  mainText = "Are you sure? This action cannot be undone.",
+  declineBtnLabel,
+  onDecline,
+  confirmBtnLabel,
+  declineBtnVariant = "minimal",
+  onConfirm,
 }: AlertDialogProps) {
   return (
-    <Modal open={open} setOpen={setOpen} title={`Confirm ${confirmWhat}`}>
-      <p className="mb-6 text-sm">{text || "Are you sure? This action cannot be undone."}</p>
+    <Modal open={open} setOpen={setOpen} title={headerText}>
+      <p className="mb-6 text-slate-900">{mainText}</p>
       <div className="space-x-2 text-right">
-        <Button variant="warn" onClick={onDiscard}>
-          Discard
+        <Button variant={declineBtnVariant} onClick={onDecline}>
+          {declineBtnLabel || "Discard"}
         </Button>
         <Button
           variant="darkCTA"
           onClick={() => {
-            if (onSave) {
-              onSave();
+            if (onConfirm) {
+              onConfirm();
+            } else {
+              setOpen(false);
             }
-            setOpen(false);
           }}>
-          {confirmButtonLabel}
+          {confirmBtnLabel}
         </Button>
       </div>
     </Modal>

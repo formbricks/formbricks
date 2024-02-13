@@ -112,7 +112,7 @@ export default function PricingTableComponent({
       unlimited: false,
     },
     {
-      title: "Multi Language Surveys",
+      title: "Multi-Language Surveys",
       comingSoon: true,
     },
     {
@@ -134,7 +134,7 @@ export default function PricingTableComponent({
     },
     {
       title: "Advanced Targeting",
-      comingSoon: true,
+      comingSoon: false,
     },
     {
       title: "Unlimited User Identification",
@@ -142,7 +142,7 @@ export default function PricingTableComponent({
     },
     {
       title: "Reusable Segments",
-      comingSoon: true,
+      comingSoon: false,
       unlimited: true,
     },
   ];
@@ -153,11 +153,15 @@ export default function PricingTableComponent({
       comingSoon: false,
     },
     {
-      title: "File Uploads upto 1 GB",
+      title: "File Uploads up to 1 GB",
+      comingSoon: false,
+    },
+    {
+      title: "Custom Domain",
       comingSoon: true,
     },
     {
-      title: "Multi Language Surveys",
+      title: "Multi-Language Surveys",
       comingSoon: true,
     },
   ];
@@ -255,11 +259,13 @@ export default function PricingTableComponent({
                 </defs>
               </svg>
               <div className="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-16 lg:text-left">
-                <h2 className="text-2xl font-bold text-white sm:text-3xl">Get the most out of Formbricks</h2>
+                <h2 className="text-2xl font-bold text-white sm:text-3xl">
+                  Unlock the full power of Formbricks, for free.
+                </h2>
                 <p className="text-md mt-6 leading-8 text-slate-300">
-                  Get access to all features by upgrading to a paid plan.
+                  Add a credit card, get access to all features.
                   <br />
-                  With our metered billing you will not be charged until you exceed the free tier limits.{" "}
+                  You will <b>not</b> be charged until you exceed the free tier limits.
                 </p>
               </div>
             </div>
@@ -267,8 +273,8 @@ export default function PricingTableComponent({
         )}
 
         <PricingCard
-          title={"Core & App Surveys"}
-          subtitle={"Get up to 250 free responses every month"}
+          title={"Formbricks Core & Surveys"}
+          subtitle={"Get 250 responses free every month"}
           featureName={ProductFeatureKeys[ProductFeatureKeys.inAppSurvey]}
           monthlyPrice={0}
           actionText={"Starting at"}
@@ -291,7 +297,7 @@ export default function PricingTableComponent({
         />
 
         <PricingCard
-          title={"Link Survey"}
+          title={"Link Survey Pro"}
           subtitle={"Link Surveys include unlimited surveys and responses for free."}
           featureName={ProductFeatureKeys[ProductFeatureKeys.linkSurvey]}
           monthlyPrice={30}
@@ -304,8 +310,8 @@ export default function PricingTableComponent({
         />
 
         <PricingCard
-          title={"User Targeting"}
-          subtitle={"Target up to 2500 users every month"}
+          title={"User Identification"}
+          subtitle={"Identify up to 2.500 users every month"}
           featureName={ProductFeatureKeys[ProductFeatureKeys.userTargeting]}
           monthlyPrice={0}
           actionText={"Starting at"}
@@ -329,15 +335,15 @@ export default function PricingTableComponent({
       </div>
 
       <AlertDialog
-        confirmWhat="that you want to unsubscribe?"
+        headerText="Are you sure that you want to unsubscribe?"
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
-        onDiscard={() => {
+        onConfirm={() => {
           setOpenDeleteModal(false);
         }}
-        text="Your subscription for this product will be canceled at the end of the month. After that, you won't have access to the pro features anymore"
-        onSave={() => handleDeleteSubscription()}
-        confirmButtonLabel="Unsubscribe"
+        mainText="Your subscription for this product will be canceled at the end of the month. After that, you won't have access to the pro features anymore"
+        onDecline={() => handleDeleteSubscription()}
+        confirmBtnLabel="Unsubscribe"
       />
     </div>
   );
