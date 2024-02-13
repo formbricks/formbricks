@@ -50,43 +50,28 @@ export const Hero: React.FC = ({}) => {
             <Image
               src={FlixbusLogo}
               alt="Flixbus Flix Flixtrain Logo"
-              className="rounded-lg pb-1 hover:opacity-100 md:opacity-50"
+              className="rounded-lg pb-1 "
               width={200}
             />
-            <Image
-              src={CalLogoLight}
-              alt="Cal Logo"
-              className="block rounded-lg hover:opacity-100 md:opacity-50 dark:hidden"
-              width={170}
-            />
-            <Image
-              src={CalLogoDark}
-              alt="Cal Logo"
-              className="hidden rounded-lg hover:opacity-100 md:opacity-50 dark:block"
-              width={170}
-            />
+            <Image src={CalLogoLight} alt="Cal Logo" className="block rounded-lg  dark:hidden" width={170} />
+            <Image src={CalLogoDark} alt="Cal Logo" className="hidden rounded-lg  dark:block" width={170} />
             <Image
               src={CrowdLogoLight}
               alt="Crowd.dev Logo"
-              className="block rounded-lg pb-1 hover:opacity-100 md:opacity-50 dark:hidden"
+              className="block rounded-lg pb-1  dark:hidden"
               width={200}
             />
             <Image
               src={CrowdLogoDark}
               alt="Crowd.dev Logo"
-              className="hidden rounded-lg pb-1 hover:opacity-100 md:opacity-50 dark:block"
+              className="hidden rounded-lg pb-1  dark:block"
               width={200}
             />
-            <Image
-              src={NILogoDark}
-              alt="Neverinstall Logo"
-              className="block pb-1 hover:opacity-100 md:opacity-50 dark:hidden"
-              width={200}
-            />
+            <Image src={NILogoDark} alt="Neverinstall Logo" className="block pb-1  dark:hidden" width={200} />
             <Image
               src={NILogoLight}
               alt="Neverinstall Logo"
-              className="hidden  pb-1 hover:opacity-100 md:opacity-50 dark:block"
+              className="hidden  pb-1  dark:block"
               width={200}
             />
           </div>
