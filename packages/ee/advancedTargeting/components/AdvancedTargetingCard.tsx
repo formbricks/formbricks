@@ -7,6 +7,7 @@ import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
@@ -223,7 +224,11 @@ export function AdvancedTargetingCard({
                   </div>
                 )}
 
-                <div className="mt-3 flex items-center gap-3">
+                <div
+                  className={cn(
+                    "mt-3 flex items-center gap-2",
+                    segment?.isPrivate && !segment?.filters?.length && "mt-0"
+                  )}>
                   <Button variant="secondary" size="sm" onClick={() => setAddFilterModalOpen(true)}>
                     Add filter
                   </Button>
