@@ -1,7 +1,6 @@
 import { unstable_cache } from "next/cache";
 
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
+import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 
 export const sendFreeLimitReachedEventToPosthogBiWeekly = async (
   environmentId: string,
@@ -9,12 +8,9 @@ export const sendFreeLimitReachedEventToPosthogBiWeekly = async (
 ): Promise<string> =>
   unstable_cache(
     async () => {
-      const teamDetails = await getTeamDetails(environmentId);
-      if (teamDetails?.teamOwnerId) {
-        await capturePosthogEvent(teamDetails.teamOwnerId, "free limit reached", teamDetails.teamId, {
-          plan,
-        });
-      }
+      await capturePosthogEnvironmentEvent(environmentId, "free limit reached", {
+        plan,
+      });
       return "success";
     },
     [`posthog-${plan}-limitReached-${environmentId}`],

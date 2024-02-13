@@ -62,6 +62,7 @@ export async function copyToOtherEnvironmentAction(
           attributeClass: true,
         },
       },
+      segment: true,
     },
   });
 
@@ -142,6 +143,7 @@ export async function copyToOtherEnvironmentAction(
       id: undefined, // id is auto-generated
       environmentId: undefined, // environmentId is set below
       createdBy: undefined,
+      segmentId: undefined,
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
       questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
@@ -173,6 +175,7 @@ export async function copyToOtherEnvironmentAction(
       productOverwrites: existingSurvey.productOverwrites ?? prismaClient.JsonNull,
       verifyEmail: existingSurvey.verifyEmail ?? prismaClient.JsonNull,
       styling: existingSurvey.styling ?? prismaClient.JsonNull,
+      segment: existingSurvey.segment ? { connect: { id: existingSurvey.segment.id } } : undefined,
     },
   });
 

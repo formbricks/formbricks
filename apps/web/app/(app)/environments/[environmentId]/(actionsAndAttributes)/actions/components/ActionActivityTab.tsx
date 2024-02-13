@@ -11,10 +11,10 @@ import { Label } from "@formbricks/ui/Label";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
 import {
-  GetActiveInactiveSurveysAction,
   getActionCountInLast7DaysAction,
   getActionCountInLast24HoursAction,
   getActionCountInLastHourAction,
+  getActiveInactiveSurveysAction,
 } from "../actions";
 
 interface ActivityTabProps {
@@ -49,7 +49,7 @@ export default function EventActivityTab({ actionClass, environmentId }: Activit
           getActionCountInLastHourAction(actionClass.id, environmentId),
           getActionCountInLast24HoursAction(actionClass.id, environmentId),
           getActionCountInLast7DaysAction(actionClass.id, environmentId),
-          GetActiveInactiveSurveysAction(actionClass.id, environmentId),
+          getActiveInactiveSurveysAction(actionClass.id, environmentId),
         ]);
         setNumEventsLastHour(numEventsLastHourData);
         setNumEventsLast24Hours(numEventsLast24HoursData);
