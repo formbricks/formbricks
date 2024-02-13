@@ -6,9 +6,9 @@ import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
-import { getFilterResponses, getFormattedFilters } from "@/app/lib/surveys/surveys";
+import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -48,6 +48,9 @@ const ResponsePage = ({
   membershipRole,
 }: ResponsePageProps) => {
   const [responses, setResponses] = useState<TResponse[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const apiFilters = useMemo(
@@ -56,9 +59,11 @@ const ResponsePage = ({
   );
 
   const searchParams = useSearchParams();
+
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey);
   }, [survey]);
+
   useEffect(() => {
     if (!searchParams?.get("referer")) {
       resetState();
@@ -67,16 +72,38 @@ const ResponsePage = ({
 
   useEffect(() => {
     const fetchInitialResponses = async () => {
-      const responses = await getPaginatedResponses(surveyId, 1, undefined, apiFilters);
+      const responses = await getPaginatedResponses(surveyId, 1, responsesPerPage, apiFilters);
+      if (responses.length < responsesPerPage) {
+        setHasMore(false);
+      }
       setResponses(responses);
     };
     fetchInitialResponses();
-  }, [surveyId, apiFilters]);
+  }, [surveyId, apiFilters, responsesPerPage]);
 
-  // get the filtered array when the selected filter value changes
-  const filterResponses: TResponse[] = useMemo(() => {
-    return getFilterResponses(responses, selectedFilter, survey, dateRange);
-  }, [selectedFilter, responses, survey, dateRange]);
+  const fetchNextPage = useCallback(async () => {
+    const newPage = page + 1;
+    const newResponses = await getPaginatedResponses(surveyId, newPage, responsesPerPage, apiFilters);
+    if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
+      setHasMore(false);
+    }
+    setResponses([...responses, ...newResponses]);
+    setPage(newPage);
+  }, [apiFilters, page, responses, responsesPerPage, surveyId]);
+
+  const deleteResponse = (responseId: string) => {
+    setResponses(responses.filter((response) => response.id !== responseId));
+  };
+
+  const updateResponse = (responseId: string, updatedResponse: TResponse) => {
+    setResponses(responses.map((response) => (response.id === responseId ? updatedResponse : response)));
+  };
+
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+  }, [selectedFilter, dateRange]);
+
   return (
     <ContentWrapper>
       <SummaryHeader
@@ -92,9 +119,8 @@ const ResponsePage = ({
         <CustomFilter
           environmentTags={environmentTags}
           attributes={attributes}
-          responses={filterResponses}
+          responses={responses}
           survey={survey}
-          totalResponses={responses}
         />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
       </div>
@@ -106,7 +132,10 @@ const ResponsePage = ({
         survey={survey}
         user={user}
         environmentTags={environmentTags}
-        responsesPerPage={responsesPerPage}
+        fetchNextPage={fetchNextPage}
+        hasMore={hasMore}
+        deleteResponse={deleteResponse}
+        updateResponse={updateResponse}
       />
     </ContentWrapper>
   );

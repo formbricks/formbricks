@@ -4,6 +4,7 @@ import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { getPaginatedResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import ResponseFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { fetchFile } from "@/app/lib/fetchFile";
 import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
@@ -48,7 +49,6 @@ interface CustomFilterProps {
   attributes: TSurveyPersonAttributes;
   survey: TSurvey;
   responses: TResponse[];
-  totalResponses: TResponse[];
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -62,13 +62,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({
-  environmentTags,
-  attributes,
-  responses,
-  survey,
-  totalResponses,
-}: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, attributes, responses, survey }: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -89,7 +83,7 @@ const CustomFilter = ({
       attributes
     );
     setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [totalResponses, survey, setSelectedOptions, environmentTags, attributes]);
+  }, [survey, setSelectedOptions, environmentTags, attributes]);
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
@@ -161,9 +155,22 @@ const CustomFilter = ({
     return keys;
   }, []);
 
+  const getAllResponsesInBatches = useCallback(async () => {
+    const BATCH_SIZE = 3000;
+    const responses: TResponse[] = [];
+    for (let page = 1; ; page++) {
+      const batchResponses = await getPaginatedResponses(survey.id, page, BATCH_SIZE);
+      responses.push(...batchResponses);
+      if (batchResponses.length < BATCH_SIZE) {
+        break;
+      }
+    }
+    return responses;
+  }, [survey.id]);
+
   const downloadResponses = useCallback(
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
-      const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
+      const downloadResponse = filter === FilterDownload.ALL ? await getAllResponsesInBatches() : responses;
       const questionNames = survey.questions?.map((question) => question.headline);
       const hiddenFieldIds = survey.hiddenFields.fieldIds;
       const hiddenFieldResponse = {};
@@ -275,7 +282,7 @@ const CustomFilter = ({
 
       URL.revokeObjectURL(downloadUrl);
     },
-    [downloadFileName, responses, totalResponses, survey, extracMetadataKeys]
+    [downloadFileName, extracMetadataKeys, getAllResponsesInBatches, responses, survey]
   );
 
   const handleDateHoveredChange = (date: Date) => {

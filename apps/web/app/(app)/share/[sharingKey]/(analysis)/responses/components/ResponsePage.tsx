@@ -62,7 +62,6 @@ const ResponsePage = ({
         attributes={attributes}
         responses={filterResponses}
         survey={survey}
-        totalResponses={responses}
       />
       <SurveyResultsTabs
         activeId="responses"

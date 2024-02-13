@@ -86,7 +86,6 @@ const SummaryPage = ({
           attributes={attributes}
           responses={filterResponses}
           survey={survey}
-          totalResponses={responses}
         />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
       </div>

@@ -4,7 +4,7 @@ import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getMoreResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { getPaginatedResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { fetchFile } from "@/app/lib/fetchFile";
 import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
 import { createId } from "@paralleldrive/cuid2";
@@ -50,7 +50,6 @@ interface CustomFilterProps {
   attributes: TSurveyPersonAttributes;
   survey: TSurvey;
   responses: TResponse[];
-  totalResponses: TResponse[];
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -64,13 +63,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({
-  environmentTags,
-  attributes,
-  responses,
-  survey,
-  totalResponses,
-}: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, attributes, responses, survey }: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -167,7 +160,7 @@ const CustomFilter = ({
     const BATCH_SIZE = 3000;
     const responses: TResponse[] = [];
     for (let page = 1; ; page++) {
-      const batchResponses = await getMoreResponses(survey.id, page, BATCH_SIZE);
+      const batchResponses = await getPaginatedResponses(survey.id, page, BATCH_SIZE);
       responses.push(...batchResponses);
       if (batchResponses.length < BATCH_SIZE) {
         break;
