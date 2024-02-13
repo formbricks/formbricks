@@ -565,15 +565,7 @@ export const getSyncSurveys = async (
   const surveys = await unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
-      let person: TPerson | null = null;
-
-      if (personId === "legacy") {
-        person = {
-          id: "legacy",
-        } as TPerson;
-      } else {
-        person = await getPerson(personId);
-      }
+      const person = personId === "legacy" ? ({ id: "legacy" } as TPerson) : await getPerson(personId);
 
       if (!product) {
         throw new Error("Product not found");
@@ -634,7 +626,7 @@ export const getSyncSurveys = async (
       const personActionClassIds = Array.from(
         new Set(personActions?.map((action) => action.actionClass?.id ?? ""))
       );
-      const personUserId = person.userId ?? person.attributes.userId ?? "";
+      const personUserId = person.userId ?? person.attributes?.userId ?? "";
 
       // the surveys now have segment filters, so we need to evaluate them
       const surveyPromises = surveys.map(async (survey) => {
@@ -661,7 +653,11 @@ export const getSyncSurveys = async (
 
           // we check if the person meets the attribute filters for all the attribute filters
           const isEligible = attributeFilters.every((attributeFilter) => {
-            const personAttributeValue = person.attributes[attributeFilter.attributeClassName];
+            const personAttributeValue = person?.attributes?.[attributeFilter.attributeClassName];
+            if (!personAttributeValue) {
+              return false;
+            }
+
             if (attributeFilter.operator === "equals") {
               return personAttributeValue === attributeFilter.value;
             } else if (attributeFilter.operator === "notEquals") {
