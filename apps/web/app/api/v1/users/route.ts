@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
-import { EMAIL_VERIFICATION_DISABLED, INVITE_DISABLED, SIGNUP_ENABLED } from "@formbricks/lib/constants";
+import {
+  EMAIL_AUTH_ENABLED,
+  EMAIL_VERIFICATION_DISABLED,
+  INVITE_DISABLED,
+  SIGNUP_ENABLED,
+} from "@formbricks/lib/constants";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/emails/emails";
 import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite } from "@formbricks/lib/invite/service";
@@ -13,7 +18,7 @@ import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
-  if (inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
+  if (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
     return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
   }
   user = { ...user, ...{ email: user.email.toLowerCase() } };
