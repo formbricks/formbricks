@@ -41,6 +41,7 @@ export function Onboarding({ isFormbricksCloud }: { isFormbricksCloud: boolean }
   return (
     <div className="flex h-full w-full flex-col bg-slate-50">
       <OnboardingHeader progress={16} />
+
       <div className="flex h-full items-center justify-center">
         {selectedPathway === null && <PathwaySelect setselectedPathway={setselectedPathway} />}
       </div>

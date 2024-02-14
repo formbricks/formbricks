@@ -1,40 +1,58 @@
+import Image from "next/image";
+
 interface PathwaySelectProps {
   setselectedPathway: (pathway: "link" | "in-app" | null) => void;
 }
 
+type PathwayOptionType = "link" | "in-app";
+
+interface PathwayOptionProps {
+  title: string;
+  description: string;
+  imgSrc?: string;
+  onSelect: () => void;
+}
+
+const PathwayOption: React.FC<PathwayOptionProps> = ({ title, description, imgSrc, onSelect }) => (
+  <div
+    className="flex h-96 w-80 cursor-pointer flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white p-3 shadow-lg transition ease-in-out hover:scale-105"
+    onClick={onSelect}
+    role="button" // Improve accessibility
+    tabIndex={0} // Make it focusable
+  >
+    {imgSrc && <Image src={imgSrc} alt={title} className="rounded-md" />}
+
+    <div className="my-4 space-y-2">
+      <p className="text-xl font-medium text-slate-800">{title}</p>
+      <p className="text-sm text-slate-500">{description}</p>
+    </div>
+  </div>
+);
+
 export default function PathwaySelect({ setselectedPathway }: PathwaySelectProps) {
+  // Helper function to handle selection
+  const handleSelect = (pathway: PathwayOptionType) => {
+    localStorage.setItem("isNewUser", "true");
+    setselectedPathway(pathway);
+  };
+
   return (
     <div className="space-y-16 text-center">
       <div className="space-y-4">
-        <p className="text-4xl font-medium">How would you like to start?</p>
-        <p>You can always use both types of surveys</p>
+        <p className="text-4xl font-medium text-slate-800">How would you like to start?</p>
+        <p className="text-sm text-slate-500">Later, you can always use all types of surveys.</p>
       </div>
-      <div className=" flex space-x-8">
-        <div
-          className="animation flex h-96 w-80 flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white p-3 shadow-lg transition ease-in-out hover:scale-105"
-          onClick={() => {
-            // finishOnboarding();
-            localStorage.setItem("isNewUser", "true");
-            setselectedPathway("link");
-          }}>
-          <div className="h-full w-full rounded-xl bg-gray-500">Image</div>
-          <div className="my-4">
-            <p className="text-lg font-medium">Link Surveys</p>
-            <p className="text-xs">Create a new survey and share it via link.</p>
-          </div>
-        </div>
-        <div
-          className="flex h-96 w-80 flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white  p-3 shadow-lg transition ease-in-out hover:scale-105"
-          onClick={() => {
-            localStorage.setItem("isNewUser", "true");
-            setselectedPathway("in-app");
-          }}>
-          <div className="h-full w-full rounded-xl bg-gray-500">Image</div>
-          <div className="my-4">
-            <p className="text-lg font-medium ">In app surveys</p>
-            <p className="text-xs">Run a targeted survey in a app or a website</p>
-          </div>
-        </div>
+      <div className="flex space-x-8">
+        <PathwayOption
+          title="Link Surveys"
+          description="Create a new survey and share a link."
+          onSelect={() => handleSelect("link")}
+        />
+        <PathwayOption
+          title="In-app Surveys"
+          description="Run a survey on a website or in-app."
+          onSelect={() => handleSelect("in-app")}
+        />
       </div>
     </div>
   );
