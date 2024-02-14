@@ -4,6 +4,7 @@ import { CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "@he
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -48,6 +49,7 @@ export default function TargetingCard({
   initialSegment,
   isFormbricksCloud,
 }: TargetingCardProps) {
+  const router = useRouter();
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
   const [open, setOpen] = useState(false);
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
@@ -108,6 +110,8 @@ export default function TargetingCard({
     try {
       if (!segment) throw new Error("Invalid segment");
       await updateBasicSegmentAction(environmentId, segment?.id, data);
+
+      router.refresh();
       toast.success("Segment saved successfully");
     } catch (err) {
       toast.error(err.message ?? "Error Saving Segment");
