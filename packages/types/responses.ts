@@ -52,12 +52,12 @@ const ZResponseFilterCriteriaDataIncludesAll = z.object({
 
 const ZResponseFilterCriteriaDataEquals = z.object({
   op: z.literal(ZSurveyLogicCondition.Values.equals),
-  value: z.union([z.string(), z.number(), z.array(z.string())]),
+  value: z.union([z.string(), z.number()]),
 });
 
 const ZResponseFilterCriteriaDataNotEquals = z.object({
   op: z.literal(ZSurveyLogicCondition.Values.notEquals),
-  value: z.union([z.string(), z.number(), z.array(z.string())]),
+  value: z.union([z.string(), z.number()]),
 });
 
 const ZResponseFilterCriteriaDataAccepted = z.object({

@@ -7,6 +7,7 @@ import {
 import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { isEqual } from "lodash";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -144,12 +145,21 @@ const ResponseFilter = () => {
 
   const handleApplyFilters = () => {
     clearItem();
-    setSelectedFilter(filterValue);
+    if (!isEqual(filterValue, selectedFilter)) {
+      setSelectedFilter(filterValue);
+    }
     setIsOpen(false);
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      handleApplyFilters();
+    }
+    setIsOpen(open);
+  };
+
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger className="flex min-w-[8rem] items-center justify-between rounded border border-slate-200 bg-white p-3 text-sm text-slate-600 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
         Filter {filterValue.filter.length > 0 && `(${filterValue.filter.length})`}
         <div className="ml-3">

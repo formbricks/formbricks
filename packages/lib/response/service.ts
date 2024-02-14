@@ -395,31 +395,52 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
 };
 
 export const getAttributesFromResponses = async (surveyId: string): Promise<TSurveyPersonAttributes> => {
-  const attributes: TSurveyPersonAttributes = {};
-  const responseAttributes = await prisma.response.findMany({
-    where: {
-      surveyId: surveyId,
-    },
-    select: {
-      personAttributes: true,
-    },
-  });
+  const responses = await unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
 
-  responseAttributes.forEach((response) => {
-    Object.keys(response.personAttributes ?? {}).forEach((key) => {
-      if (response.personAttributes && attributes[key]) {
-        attributes[key].push(response.personAttributes[key]);
-      } else if (response.personAttributes) {
-        attributes[key] = [response.personAttributes[key]];
+      try {
+        let attributes: TSurveyPersonAttributes = {};
+        const responseAttributes = await prisma.response.findMany({
+          where: {
+            surveyId: surveyId,
+          },
+          select: {
+            personAttributes: true,
+          },
+        });
+
+        responseAttributes.forEach((response) => {
+          Object.keys(response.personAttributes ?? {}).forEach((key) => {
+            if (response.personAttributes && attributes[key]) {
+              attributes[key].push(response.personAttributes[key]);
+            } else if (response.personAttributes) {
+              attributes[key] = [response.personAttributes[key]];
+            }
+          });
+        });
+
+        Object.keys(attributes).forEach((key) => {
+          attributes[key] = Array.from(new Set(attributes[key]));
+        });
+
+        return attributes;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
-    });
-  });
+    },
+    [`getAttributesFromResponses-${surveyId}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
 
-  Object.keys(attributes).forEach((key) => {
-    attributes[key] = Array.from(new Set(attributes[key]));
-  });
-
-  return attributes;
+  return responses;
 };
 
 export const getResponses = async (

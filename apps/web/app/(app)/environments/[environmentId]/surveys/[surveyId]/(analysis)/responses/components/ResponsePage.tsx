@@ -102,7 +102,7 @@ const ResponsePage = ({
   useEffect(() => {
     setPage(1);
     setHasMore(true);
-  }, [selectedFilter, dateRange]);
+  }, [apiFilters]);
 
   return (
     <ContentWrapper>

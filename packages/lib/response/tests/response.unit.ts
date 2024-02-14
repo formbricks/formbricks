@@ -1,13 +1,16 @@
 import {
+  getFilteredMockResponses,
   getMockUpdateResponseInput,
   mockDisplay,
   mockEnvironmentId,
   mockMeta,
   mockPerson,
+  mockPersonAttributesData,
   mockPersonId,
   mockResponse,
   mockResponseData,
   mockResponseNote,
+  mockResponsePersonAttributes,
   mockResponseWithMockPerson,
   mockSingleUseId,
   mockSurveyId,
@@ -19,7 +22,12 @@ import { Prisma } from "@prisma/client";
 
 import { prismaMock } from "@formbricks/database/src/jestClient";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { TResponse, TResponseInput, TResponseLegacyInput } from "@formbricks/types/responses";
+import {
+  TResponse,
+  TResponseFilterCriteria,
+  TResponseInput,
+  TResponseLegacyInput,
+} from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 
 import { selectPerson, transformPrismaPerson } from "../../person/service";
@@ -27,6 +35,7 @@ import {
   createResponse,
   createResponseLegacy,
   deleteResponse,
+  getAttributesFromResponses,
   getResponse,
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
@@ -35,6 +44,7 @@ import {
   getResponsesByPersonId,
   updateResponse,
 } from "../service";
+import { buildWhereClause } from "../util";
 import { constantsForTests } from "./constants";
 
 const expectedResponseWithoutPerson: TResponse = {
@@ -305,11 +315,129 @@ describe("Tests for getResponse service", () => {
   });
 });
 
+describe("Tests for getAttributesFromResponses service", () => {
+  describe("Happy Path", () => {
+    it("Retrieves all attributes from responses for a given survey ID", async () => {
+      prismaMock.response.findMany.mockResolvedValue(mockResponsePersonAttributes);
+      const attributes = await getAttributesFromResponses(mockSurveyId);
+      expect(attributes).toEqual(mockPersonAttributesData);
+    });
+
+    it("Returns an empty Object when no responses with attributes are found for the given survey ID", async () => {
+      prismaMock.response.findMany.mockResolvedValue([]);
+
+      const responses = await getAttributesFromResponses(mockSurveyId);
+      expect(responses).toEqual({});
+    });
+  });
+
+  describe("Sad Path", () => {
+    testInputValidation(getAttributesFromResponses, "1");
+
+    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
+      const mockErrorMessage = "Mock error message";
+      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+
+      prismaMock.response.findMany.mockRejectedValue(errToThrow);
+
+      await expect(getAttributesFromResponses(mockSurveyId)).rejects.toThrow(DatabaseError);
+    });
+
+    it("Throws a generic Error for unexpected problems", async () => {
+      const mockErrorMessage = "Mock error message";
+      prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
+
+      await expect(getAttributesFromResponses(mockSurveyId)).rejects.toThrow(Error);
+    });
+  });
+});
+
 describe("Tests for getResponses service", () => {
   describe("Happy Path", () => {
-    it("Fetches all responses for a given survey ID", async () => {
-      const response = await getResponses(mockSurveyId);
+    it("Fetches first 10 responses for a given survey ID", async () => {
+      const response = await getResponses(mockSurveyId, 1, 10);
       expect(response).toEqual([expectedResponseWithoutPerson]);
+    });
+  });
+
+  describe("Tests for getResponses service with filters", () => {
+    describe("Happy Path", () => {
+      it("Fetches all responses for a given survey ID with basic filters", async () => {
+        const whereClause = buildWhereClause({ finished: true });
+        let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
+
+        // @ts-expect-error
+        prismaMock.response.findMany.mockImplementation(async (args) => {
+          expectedWhereClause = args?.where;
+          return getFilteredMockResponses({ finished: true }, false);
+        });
+
+        const response = await getResponses(mockSurveyId, 1, undefined, { finished: true });
+
+        expect(expectedWhereClause).toEqual({ surveyId: mockSurveyId, ...whereClause });
+        expect(response).toEqual(getFilteredMockResponses({ finished: true }));
+      });
+
+      it("Fetches all responses for a given survey ID with complex filters", async () => {
+        const criteria: TResponseFilterCriteria = {
+          finished: false,
+          data: {
+            hagrboqlnynmxh3obl1wvmtl: {
+              op: "equals",
+              value: "Google Search",
+            },
+            uvy0fa96e1xpd10nrj1je662: {
+              op: "includesOne",
+              value: ["Sun ☀️"],
+            },
+          },
+          tags: {
+            applied: ["tag1"],
+            notApplied: ["tag4"],
+          },
+          personAttributes: {
+            "Init Attribute 2": {
+              op: "equals",
+              value: "four",
+            },
+          },
+        };
+        const whereClause = buildWhereClause(criteria);
+        let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
+
+        // @ts-expect-error
+        prismaMock.response.findMany.mockImplementation(async (args) => {
+          expectedWhereClause = args?.where;
+          return getFilteredMockResponses(criteria, false);
+        });
+
+        const response = await getResponses(mockSurveyId, 1, undefined, criteria);
+
+        expect(expectedWhereClause).toEqual({ surveyId: mockSurveyId, ...whereClause });
+        expect(response).toEqual(getFilteredMockResponses(criteria));
+      });
+    });
+
+    describe("Sad Path", () => {
+      it("Fetches all responses for a given survey ID with filters", async () => {
+        const whereClause = buildWhereClause({ finished: true });
+        let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
+
+        // @ts-expect-error
+        prismaMock.response.findMany.mockImplementation(async (args) => {
+          expectedWhereClause = args?.where;
+
+          return getFilteredMockResponses({ finished: true });
+        });
+
+        const response = await getResponses(mockSurveyId, 1, undefined, { finished: true });
+
+        expect(expectedWhereClause).not.toEqual(whereClause);
+        expect(response).not.toEqual(getFilteredMockResponses({ finished: false }));
+      });
     });
   });
 
