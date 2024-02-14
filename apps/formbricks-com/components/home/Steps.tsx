@@ -47,12 +47,7 @@ export const Steps: React.FC = () => {
           <div className="grid md:grid-cols-2 md:items-center md:gap-16">
             <div className="order-last w-full rounded-lg bg-slate-100 p-4 sm:py-8 md:order-first dark:bg-slate-800">
               <div className="flex h-40 items-center justify-center">
-                <Button
-                  variant="primary"
-                  className=""
-                  onClick={() => {
-                    setAddEventModalOpen(true);
-                  }}>
+                <Button variant="primary">
                   <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
                   Add Action
                 </Button>

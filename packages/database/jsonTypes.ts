@@ -1,6 +1,7 @@
 import { TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TIntegrationConfig } from "@formbricks/types/integration";
 import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/responses";
+import { TBaseFilters } from "@formbricks/types/segment";
 import {
   TSurveyClosedMessage,
   TSurveyHiddenFields,
@@ -34,5 +35,6 @@ declare global {
     export type SurveyVerifyEmail = TSurveyVerifyEmail;
     export type TeamBilling = TTeamBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
+    export type SegmentFilter = TBaseFilters;
   }
 }

@@ -15,7 +15,7 @@ const syncWithBackend = async ({
   environmentId,
   userId,
 }: TJsSyncParams): Promise<Result<TJsStateSync, NetworkError>> => {
-  const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}`;
+  const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}?version=${import.meta.env.VERSION}`;
   const publicUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
 
   // if user id is available
@@ -80,7 +80,7 @@ export const sync = async (params: TJsSyncParams): Promise<void> => {
       surveys: syncResult.value.surveys,
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
-      attributes: oldState?.attributes || {},
+      attributes: syncResult.value.person?.attributes || {},
     };
 
     if (!params.userId) {

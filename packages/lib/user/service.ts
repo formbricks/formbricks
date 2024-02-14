@@ -12,7 +12,7 @@ import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } fr
 
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createCustomerIoCustomer } from "../customerio";
-import { updateMembership } from "../membership/service";
+import { deleteMembership, updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -217,6 +217,8 @@ export const deleteUser = async (id: string): Promise<TUser> => {
       } else if (currentUserIsTeamOwner) {
         await deleteTeam(teamId);
       }
+
+      await deleteMembership(id, teamId);
     }
 
     const deletedUser = await deleteUserById(id);

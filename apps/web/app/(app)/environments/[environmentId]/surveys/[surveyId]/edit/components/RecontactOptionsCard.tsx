@@ -194,7 +194,7 @@ export default function RecontactOptionsCard({
                       id="inputDays"
                       value={inputDays === 0 ? 1 : inputDays}
                       onChange={handleRecontactDaysChange}
-                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
                     />
                     days before showing this survey again.
                   </p>

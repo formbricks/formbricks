@@ -8,6 +8,7 @@ import {
 import { PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
+import { add, isAfter, parseISO } from "date-fns";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
 import { unstable_cache } from "next/cache";
@@ -99,6 +100,7 @@ const getS3SignedUrl = async (fileKey: string): Promise<string> => {
 
 export const getS3File = async (fileKey: string): Promise<string> => {
   const signedUrl = await getS3SignedUrl(fileKey);
+  const signedUrlObject = new URL(signedUrl);
 
   // The logic below is to check if the signed url has expired.
   // We do this by parsing the X-Amz-Date and Expires query parameters from the signed url
@@ -106,37 +108,35 @@ export const getS3File = async (fileKey: string): Promise<string> => {
   // If it is, we generate a new signed url and return that instead.
   // We do this because the time-based revalidation for the signed url is not working as expected. (mayve a bug in next.js caching?)
 
-  const amzDate = signedUrl.match(/X-Amz-Date=(.*?)&/)?.[1];
-  const amzExpires = signedUrl.match(/X-Amz-Expires=(.*?)&/)?.[1];
+  const amzDate = signedUrlObject.searchParams.get("X-Amz-Date");
+  const amzExpires = signedUrlObject.searchParams.get("X-Amz-Expires");
 
   if (amzDate && amzExpires) {
-    // Parse the X-Amz-Date and calculate the expiration date
-    const expiryDate = new Date(
-      Date.UTC(
-        parseInt(amzDate.slice(0, 4), 10), // year
-        parseInt(amzDate.slice(4, 6), 10) - 1, // month (0-indexed)
-        parseInt(amzDate.slice(6, 8), 10), // day
-        parseInt(amzDate.slice(9, 11), 10), // hour
-        parseInt(amzDate.slice(11, 13), 10), // minute
-        parseInt(amzDate.slice(13, 15), 10) // second
-      )
-    );
+    const expiresAfterSeconds = parseInt(amzExpires, 10);
+    const currentDate = new Date();
 
-    const expiryDateSeconds = expiryDate.getSeconds();
-    const expiresSeconds = parseInt(amzExpires, 10);
+    // Get the UTC components
+    const yearUTC = currentDate.getUTCFullYear();
+    const monthUTC = (currentDate.getUTCMonth() + 1).toString().padStart(2, "0");
+    const dayUTC = currentDate.getUTCDate().toString().padStart(2, "0");
+    const hoursUTC = currentDate.getUTCHours().toString().padStart(2, "0");
+    const minutesUTC = currentDate.getUTCMinutes().toString().padStart(2, "0");
+    const secondsUTC = currentDate.getUTCSeconds().toString().padStart(2, "0");
 
-    expiryDate.setSeconds(expiryDateSeconds + expiresSeconds);
+    // Construct the date-time string in UTC format
+    const currentDateTimeUTC = `${yearUTC}${monthUTC}${dayUTC}T${hoursUTC}${minutesUTC}${secondsUTC}Z`;
 
-    // Get the current UTC time
-    const now = new Date();
+    const amzSigningDate = parseISO(amzDate);
+    const amzExpiryDate = add(amzSigningDate, { seconds: expiresAfterSeconds });
+    const currentDateISO = parseISO(currentDateTimeUTC);
 
-    // Check if the current time is past the expiration time
-    const isExpired = now > expiryDate;
+    const isExpired = isAfter(currentDateISO, amzExpiryDate);
 
     if (isExpired) {
       // generate a new signed url
       storageCache.revalidate({ fileKey });
-      return await getS3SignedUrl(fileKey);
+      const signedUrlAfterRefetch = await getS3SignedUrl(fileKey);
+      return signedUrlAfterRefetch;
     }
   }
 
