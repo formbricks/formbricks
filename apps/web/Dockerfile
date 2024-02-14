@@ -42,6 +42,10 @@ RUN pnpm install
 RUN pnpm post-install --filter=web...
 RUN pnpm turbo run build --filter=web...
 
+# Transpile TypeScript migration script to JavaScript
+RUN cd packages/database && pnpm generate
+RUN npx tsc packages/database/migrations/20240207041922_advanced_targeting/data-migration.ts --esModuleInterop --outDir packages/database/migrations > /dev/null || true
+
 # Runner stage: Setting up the runtime environment
 FROM node:20-alpine AS runner
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -59,8 +63,19 @@ COPY --from=installer /app/apps/web/package.json .
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./packages/database/migrations
+# COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
+
+# this works
+# Copy node_modules from installer stage
+# COPY --from=installer --chown=nextjs:nextjs /app/node_modules ./node_modules
+
+# exps
+RUN npm install --no-save @paralleldrive/cuid2
+COPY --from=installer --chown=nextjs:nextjs /app/node_modules/prisma/ ./node_modules/prisma/
+COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/ ./node_modules/@prisma/
+
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database ./packages/database
+
 COPY --from=installer /app/docker/cronjobs /app/docker/cronjobs
 
 EXPOSE 3000
