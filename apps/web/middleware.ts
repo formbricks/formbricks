@@ -50,7 +50,6 @@ export async function middleware(request: NextRequest) {
       } else if (signupRoute(request.nextUrl.pathname)) {
         await signUpLimiter(ip);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
-        console.log("clientSideApiEndpointsLimiter IP: ", ip);
         await clientSideApiEndpointsLimiter(ip);
       } else if (shareUrlRoute(request.nextUrl.pathname)) {
         await shareUrlLimiter(ip);

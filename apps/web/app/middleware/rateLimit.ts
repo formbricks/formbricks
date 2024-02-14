@@ -15,8 +15,6 @@ const cloudRateLimiter = (options: Options) => {
 
   return async (token: string) => {
     const currentUsage = tokenCache.get(token) || 0;
-    console.log("cloud rl: currentUsage", currentUsage);
-
     if (currentUsage >= options.allowedPerInterval) {
       throw new Error("Rate limit exceeded");
     }
