@@ -4,8 +4,6 @@
 import { Button } from "@formbricks/ui/Button";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
-import { redirectHomeAction } from "./actions";
-
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   if (process.env.NODE_ENV === "development") {
     console.error(error.message);
@@ -18,7 +16,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
         <Button variant="secondary" onClick={() => reset()} className="mr-2">
           Try again
         </Button>
-        <Button variant="darkCTA" onClick={() => redirectHomeAction()} className="">
+        <Button variant="darkCTA" onClick={() => (window.location.href = "/")}>
           Go to Dashboard
         </Button>
       </div>
