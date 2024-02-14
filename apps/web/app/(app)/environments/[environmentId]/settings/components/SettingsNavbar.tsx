@@ -133,6 +133,13 @@ export default function SettingsNavbar({
             hidden: !isFormbricksCloud || isPricingDisabled,
             current: pathname?.includes("/billing"),
           },
+          {
+            name: "Enterprise License",
+            href: `/environments/${environmentId}/settings/enterprise`,
+            icon: CreditCardIcon,
+            hidden: isFormbricksCloud || isPricingDisabled,
+            current: pathname?.includes("/enterprise"),
+          },
         ],
         hidden: false,
       },
