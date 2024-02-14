@@ -3,13 +3,12 @@
 import { UserGroupIcon } from "@heroicons/react/20/solid";
 import { FilterIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { cn } from "@formbricks/lib/cn";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment } from "@formbricks/types/segment";
+import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
@@ -48,11 +47,8 @@ const CreateSegmentModal = ({
   const [segment, setSegment] = useState<TSegment>(initialSegmentState);
   const [isCreatingSegment, setIsCreatingSegment] = useState(false);
 
-  const [titleError, setTitleError] = useState("");
-
   const handleResetState = () => {
     setSegment(initialSegmentState);
-    setTitleError("");
     setOpen(false);
   };
 
@@ -72,7 +68,7 @@ const CreateSegmentModal = ({
 
   const handleCreateSegment = async () => {
     if (!segment.title) {
-      setTitleError("Title is required");
+      toast.error("Title is required.");
       return;
     }
 
@@ -90,7 +86,13 @@ const CreateSegmentModal = ({
       setIsCreatingSegment(false);
       toast.success("Segment created successfully!");
     } catch (err: any) {
-      toast.error(`${err.message}`);
+      // parse the segment filters to check if they are valid
+      const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+      if (!parsedFilters.success) {
+        toast.error("Invalid filters. Please check the filters and try again.");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
       setIsCreatingSegment(false);
       return;
     }
@@ -99,6 +101,22 @@ const CreateSegmentModal = ({
     setIsCreatingSegment(false);
     router.refresh();
   };
+
+  const isSaveDisabled = useMemo(() => {
+    // check if title is empty
+
+    if (!segment.title) {
+      return true;
+    }
+
+    // parse the filters to check if they are valid
+    const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+    if (!parsedFilters.success) {
+      return true;
+    }
+
+    return false;
+  }, [segment]);
 
   return (
     <>
@@ -147,14 +165,8 @@ const CreateSegmentModal = ({
                         title: e.target.value,
                       }));
                     }}
-                    className={cn(titleError && "border border-red-500 focus:border-red-500")}
+                    className="w-auto"
                   />
-
-                  {titleError && (
-                    <p className="absolute right-1 bg-white text-xs text-red-500" style={{ top: "-8px" }}>
-                      {titleError}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -225,6 +237,7 @@ const CreateSegmentModal = ({
                   variant="darkCTA"
                   type="submit"
                   loading={isCreatingSegment}
+                  disabled={isSaveDisabled}
                   onClick={() => {
                     handleCreateSegment();
                   }}>

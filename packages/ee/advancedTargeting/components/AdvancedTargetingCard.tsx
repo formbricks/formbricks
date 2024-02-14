@@ -213,6 +213,7 @@ export function AdvancedTargetingCard({
                       group={segment.filters}
                       environmentId={environmentId}
                       segment={segment}
+                      // @ts-expect-error -> TODO: Fix this
                       setSegment={setSegment}
                       actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
@@ -332,6 +333,7 @@ export function AdvancedTargetingCard({
                       actionClasses={actionClasses}
                       attributeClasses={attributeClasses}
                       segments={segments}
+                      // @ts-expect-error -> TODO: Fix this
                       setSegment={setSegment}
                       viewOnly={segmentEditorViewOnly}
                     />
