@@ -18,7 +18,7 @@ import { createUser, updateUser } from "@formbricks/lib/user/service";
 
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
-  if (!EMAIL_AUTH_ENABLED || (inviteToken && INVITE_DISABLED) || !SIGNUP_ENABLED) {
+  if (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
     return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
   }
   user = { ...user, ...{ email: user.email.toLowerCase() } };
