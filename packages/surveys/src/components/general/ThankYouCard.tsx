@@ -28,7 +28,7 @@ export default function ThankYouCard({
     if (!buttonLink) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Enter") {
-        window.location.replace(buttonLink);
+        window.top?.location.replace(buttonLink);
       }
     };
     window.addEventListener("keydown", handleKeyDown);

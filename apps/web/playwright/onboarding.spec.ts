@@ -3,48 +3,54 @@ import { expect, test } from "@playwright/test";
 import { signUpAndLogin } from "./utils/helper";
 import { teams, users } from "./utils/mock";
 
-const { role, productName, useCase } = teams.onboarding[0];
+const { productName } = teams.onboarding[0];
 
 test.describe("Onboarding Flow Test", async () => {
-  test("Step by Step", async ({ page }) => {
+  test("link survey", async ({ page }) => {
     const { name, email, password } = users.onboarding[0];
     await signUpAndLogin(page, name, email, password);
     await page.waitForURL("/onboarding");
     await expect(page).toHaveURL("/onboarding");
 
-    await page.getByRole("button", { name: "Begin (1 min)" }).click();
-    await page.getByLabel(role).check();
-    await page.getByRole("button", { name: "Next" }).click();
-
-    await expect(page.getByLabel(useCase)).toBeVisible();
-    await page.getByLabel(useCase).check();
-    await page.getByRole("button", { name: "Next" }).click();
-
-    await expect(page.getByPlaceholder("e.g. Formbricks")).toBeVisible();
-    await page.getByPlaceholder("e.g. Formbricks").fill(productName);
-
-    await page.locator("#color-picker").click();
-    await page.getByLabel("Hue").click();
-
-    await page.locator("div").filter({ hasText: "Create your team's product." }).nth(1).click();
-    await page.getByRole("button", { name: "Done" }).click();
-
+    await page.getByText("ImageLink SurveysCreate a new").click();
+    await page.waitForURL("/onboarding/link/survey");
+    await page.frameLocator("iframe").locator("span").filter({ hasText: "Work 💼" }).first().click();
+    await page.frameLocator("iframe").getByRole("button", { name: "Next" }).click();
+    await page.frameLocator("iframe").locator("span").filter({ hasText: "Conduct reserach" }).first().click();
+    await page.frameLocator("iframe").getByRole("button", { name: "Next" }).click();
+    await page
+      .frameLocator("iframe")
+      .locator("label")
+      .filter({ hasText: "Recommendation (e.g. coworker" })
+      .click();
+    await page.frameLocator("iframe").getByRole("button", { name: "Finish" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
+    await page.locator(".relative > svg").first().click();
     await expect(page.getByText(productName)).toBeVisible();
   });
 
-  test("Skip", async ({ page }) => {
+  test("In app survey", async ({ page }) => {
     const { name, email, password } = users.onboarding[1];
     await signUpAndLogin(page, name, email, password);
     await page.waitForURL("/onboarding");
     await expect(page).toHaveURL("/onboarding");
 
-    await page.getByRole("button", { name: "I'll do it later" }).click();
-    await page.getByRole("button", { name: "I'll do it later" }).click();
+    await page.getByText("ImageIn app surveysRun a").click();
+    await page.waitForURL("/onboarding/inApp/survey");
+    await page.frameLocator("iframe").locator("label").filter({ hasText: "Engineer" }).click();
+    await page.frameLocator("iframe").getByRole("button", { name: "Next" }).click();
+    await page.frameLocator("iframe").locator("label").filter({ hasText: "Increase conversion" }).click();
+    await page.frameLocator("iframe").getByRole("button", { name: "Finish" }).click();
 
+    await page.goto("/onboarding/inApp/connect");
+    await page.waitForURL("/onboarding/inApp/connect");
+
+    await page.goto("/onboarding/inApp/inviteTeamMate");
+    await page.waitForURL("/onboarding/inApp/inviteTeamMate");
+
+    await page.getByRole("button", { name: "I want to have a look around" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
-    await expect(page.getByText("My Product")).toBeVisible();
+    await page.locator(".relative > svg").first().click();
+    await expect(page.getByText(productName)).toBeVisible();
   });
 });

@@ -1,9 +1,8 @@
 interface PathwaySelectProps {
   setselectedPathway: (pathway: "link" | "in-app" | null) => void;
-  setprogress: (progress: number) => void;
 }
 
-export default function PathwaySelect({ setselectedPathway, setprogress }: PathwaySelectProps) {
+export default function PathwaySelect({ setselectedPathway }: PathwaySelectProps) {
   return (
     <div className="space-y-16 text-center">
       <div className="space-y-4">
@@ -14,8 +13,9 @@ export default function PathwaySelect({ setselectedPathway, setprogress }: Pathw
         <div
           className="animation flex h-96 w-80 flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white p-3 shadow-lg transition ease-in-out hover:scale-105"
           onClick={() => {
+            // finishOnboarding();
+            localStorage.setItem("isNewUser", "true");
             setselectedPathway("link");
-            setprogress(50);
           }}>
           <div className="h-full w-full rounded-xl bg-gray-500">Image</div>
           <div className="my-4">
@@ -26,8 +26,8 @@ export default function PathwaySelect({ setselectedPathway, setprogress }: Pathw
         <div
           className="flex h-96 w-80 flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white  p-3 shadow-lg transition ease-in-out hover:scale-105"
           onClick={() => {
+            localStorage.setItem("isNewUser", "true");
             setselectedPathway("in-app");
-            setprogress(50);
           }}>
           <div className="h-full w-full rounded-xl bg-gray-500">Image</div>
           <div className="my-4">

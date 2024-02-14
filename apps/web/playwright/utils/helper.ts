@@ -36,14 +36,24 @@ export const login = async (page: Page, email: string, password: string): Promis
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const skipOnboarding = async (page: Page): Promise<void> => {
+export const finishOnboarding = async (page: Page): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
-  await page.getByRole("button", { name: "I'll do it later" }).click();
-  await page.waitForTimeout(500);
-  await page.getByRole("button", { name: "I'll do it later" }).click();
+
+  await page.getByText("ImageLink SurveysCreate a new").click();
+  await page.waitForURL("/onboarding/link/survey");
+  await page.frameLocator("iframe").locator("span").filter({ hasText: "Work 💼" }).first().click();
+  await page.frameLocator("iframe").getByRole("button", { name: "Next" }).click();
+  await page.frameLocator("iframe").locator("span").filter({ hasText: "Conduct reserach" }).first().click();
+  await page.frameLocator("iframe").getByRole("button", { name: "Next" }).click();
+  await page
+    .frameLocator("iframe")
+    .locator("label")
+    .filter({ hasText: "Recommendation (e.g. coworker" })
+    .click();
+  await page.frameLocator("iframe").getByRole("button", { name: "Finish" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
+  await page.locator(".relative > svg").first().click();
   await expect(page.getByText("My Product")).toBeVisible();
 };
 

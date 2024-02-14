@@ -1,10 +1,13 @@
 "use client";
 
+import OnboardingHeader from "./OnboardingHeader";
+
 export default function OnboardingInAppSurvey() {
   return (
-    <div className="h-full w-full">
+    <div className="flex h-full w-full flex-col">
+      <OnboardingHeader progress={50} />
       <iframe
-        src="http://localhost:3000/s/clsiplow00001bkxr4l9jtlgk"
+        src="https://app.formbricks.com/s/clslmswhch2aepodw008fy1h2"
         frameBorder="0"
         style={{
           width: "100%",

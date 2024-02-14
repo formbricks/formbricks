@@ -2,23 +2,20 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { Onboarding } from "@formbricks/ui/Onboarding";
+import { Connect } from "@formbricks/ui/Onboarding/components/Connect";
+import OnboardingHeader from "@formbricks/ui/Onboarding/components/OnboardingHeader";
 
-export default async function OnboardingPage() {
+export default async function ConnectPage() {
   const session = await getServerSession(authOptions);
   if (!session) {
     redirect("/auth/login");
   }
   const userId = session?.user.id;
   const environment = await getFirstEnvironmentByUserId(userId);
-
-  if (session.user.onboardingCompleted) {
-    redirect("/");
-  }
 
   if (!environment) {
     throw new Error("No environment found for user");
@@ -31,5 +28,11 @@ export default async function OnboardingPage() {
     throw new Error("Failed to get environment, user, or product");
   }
 
-  return <Onboarding isFormbricksCloud={IS_FORMBRICKS_CLOUD} />;
+  return (
+    <div className="flex flex-col items-center">
+      <OnboardingHeader progress={70} />
+
+      <Connect environment={environment} webAppUrl={WEBAPP_URL} />
+    </div>
+  );
 }

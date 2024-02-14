@@ -1,15 +1,33 @@
 "use client";
 
+import { useEffect } from "react";
+import { toast } from "react-hot-toast";
+
+import { updateUserAction } from "../actions";
+
 export default function OnboardingLinkSurvey() {
+  const finishOnboarding = async () => {
+    try {
+      const updatedProfile = { onboardingCompleted: true };
+      await updateUserAction(updatedProfile);
+    } catch (e) {
+      toast.error("An error occured saving your settings.");
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    finishOnboarding();
+  }, []);
+
   return (
-    <div>
+    <div className="h-full w-full">
       <iframe
-        src="http://localhost:3000/s/clsiplow00001bkxr4l9jtlgk"
+        src="https://app.formbricks.com/s/cls34k9860jxexp6gogi4cppo"
         frameBorder="0"
         style={{
           position: "absolute",
-          left: "0",
-          top: "0",
+          inset: "0",
           width: "100%",
           height: "100%",
           border: "0",

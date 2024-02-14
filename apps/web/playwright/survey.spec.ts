@@ -1,7 +1,7 @@
 import { surveys, users } from "@/playwright/utils/mock";
 import { expect, test } from "@playwright/test";
 
-import { signUpAndLogin, skipOnboarding } from "./utils/helper";
+import { finishOnboarding, signUpAndLogin } from "./utils/helper";
 
 test.describe("Survey Create & Submit Response", async () => {
   test.describe.configure({ mode: "serial" });
@@ -11,7 +11,7 @@ test.describe("Survey Create & Submit Response", async () => {
 
   test("Create Survey", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await skipOnboarding(page);
+    await finishOnboarding(page);
 
     await page.getByRole("heading", { name: "Start from Scratch" }).click();
 

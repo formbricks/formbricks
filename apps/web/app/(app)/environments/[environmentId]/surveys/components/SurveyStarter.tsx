@@ -2,7 +2,7 @@
 
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -11,6 +11,7 @@ import { TSurveyInput } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
+import OnboardingModal from "@formbricks/ui/Onboarding/components/OnboardingModal";
 
 import { createSurveyAction } from "../actions";
 
@@ -27,6 +28,15 @@ export default function SurveyStarter({
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
   const router = useRouter();
+  const [isNewUser, setIsNewUser] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isNewUserValue = localStorage.getItem("isNewUser");
+      setIsNewUser(isNewUserValue === "true");
+    }
+  }, []);
+
   const newSurveyFromTemplate = async (template: TTemplate) => {
     setIsCreateSurveyLoading(true);
     const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
@@ -45,8 +55,10 @@ export default function SurveyStarter({
       setIsCreateSurveyLoading(false);
     }
   };
+  if (isNewUser === null) return;
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col py-12">
+      {isNewUser && <OnboardingModal environment={environment} userId={user.id} />}
       {isCreateSurveyLoading ? (
         <LoadingSpinner />
       ) : (

@@ -9,12 +9,12 @@ export const users = {
   onboarding: [
     {
       name: "Onboarding User 1",
-      email: "onboarding1@formbricks.com",
+      email: "onboarding9@formbricks.com",
       password: "iHalLonErFGK$X901R0",
     },
     {
       name: "Onboarding User 2",
-      email: "onboarding2@formbricks.com",
+      email: "onboarding10@formbricks.com",
       password: "231Xh7D&dM8u75EjIYV",
     },
   ],
@@ -78,7 +78,7 @@ export const teams = {
     {
       role: "Founder",
       useCase: "Increase conversion",
-      productName: "Formbricks E2E Test Suite",
+      productName: "My Product",
     },
   ],
 };

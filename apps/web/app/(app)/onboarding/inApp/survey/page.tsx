@@ -5,8 +5,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { Onboarding } from "@formbricks/ui/Onboarding";
-import OnboardingLinkSurvey from "@formbricks/ui/Onboarding/components/OnboardingLinkSurvey";
+import OnboardingInAppSurvey from "@formbricks/ui/Onboarding/components/OnboardingInAppSurvey";
 
 export default async function InAppSurveyOnboardingPage() {
   const session = await getServerSession(authOptions);
@@ -27,5 +26,5 @@ export default async function InAppSurveyOnboardingPage() {
     throw new Error("Failed to get environment, user, or product");
   }
 
-  return <OnboardingLinkSurvey environmentId={environment.id} />;
+  return <OnboardingInAppSurvey />;
 }

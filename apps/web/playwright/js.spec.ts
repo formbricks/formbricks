@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { login, replaceEnvironmentIdInHtml, signUpAndLogin, skipOnboarding } from "./utils/helper";
+import { finishOnboarding, login, replaceEnvironmentIdInHtml, signUpAndLogin } from "./utils/helper";
 import { users } from "./utils/mock";
 
 test.describe("JS Package Test", async () => {
@@ -10,7 +10,7 @@ test.describe("JS Package Test", async () => {
 
   test("Admin creates an In-App Survey", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await skipOnboarding(page);
+    await finishOnboarding(page);
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
