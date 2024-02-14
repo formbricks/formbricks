@@ -4,12 +4,14 @@ version: "3.3"
 x-webapp-url: &webapp_url http://localhost:3000
 
 # PostgreSQL DB for Formbricks to connect to
-x-database-url: &database_url
+x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
+
+x-redis-client-url: &redis_client_url http://webdis:7379
 
 # NextJS Auth
 # @see: https://next-auth.js.org/configuration/options#nextauth_secret
 # You can use: `openssl rand -hex 32` to generate one
-x-nextauth-secret: &nextauth_secret
+x-nextauth-secret: &nextauth_secret luJthrnoDpVgGakjVYlccsZ1FdlwxIWogWIsrxzoQ6E=
 
 # Set this to your public-facing URL, e.g., https://example.com
 # You do not need the NEXTAUTH_URL environment variable in Vercel.
@@ -17,7 +19,7 @@ x-nextauth-url: &nextauth_url http://localhost:3000
 
 # Encryption key
 # You can use: `openssl rand -hex 32` to generate one
-x-encryption-key: &encryption_key
+x-encryption-key: &encryption_key b19a492fe2a9c01debe543f945d8481728e126904f5b54acc53eb0936748fb02
 
 x-mail-from: &mail_from
 x-smtp-host: &smtp_host
@@ -71,6 +73,12 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
 
+  webdis:
+    image: nicolas/webdis
+    ports:
+      - 7379:7379
+    restart: unless-stopped
+
   formbricks:
     restart: always
     build:
@@ -113,6 +121,7 @@ services:
       GOOGLE_CLIENT_ID: *google_client_id
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
+      REDIS_HTTP_CLIENT_URL: *redis_client_url
 
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/

@@ -138,3 +138,5 @@ export const DEBUG = process.env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+export const REDIS_HTTP_CLIENT_URL = env.REDIS_HTTP_CLIENT_URL;

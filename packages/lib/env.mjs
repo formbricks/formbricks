@@ -70,6 +70,7 @@ export const env = createEnv({
     DEFAULT_TEAM_ROLE: z.enum(["owner", "admin", "editor", "developer", "viewer"]).optional(),
     ONBOARDING_DISABLED: z.string().optional(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
+    REDIS_HTTP_CLIENT_URL: z.string().optional(),
   },
 
   /*
@@ -150,5 +151,6 @@ export const env = createEnv({
     DEFAULT_TEAM_ROLE: process.env.DEFAULT_TEAM_ROLE,
     ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
+    REDIS_HTTP_CLIENT_URL: process.env.REDIS_HTTP_CLIENT_URL,
   },
 });
