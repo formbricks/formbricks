@@ -58,7 +58,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=long
-            type=raw,value=latest,enable={{is_default_branch}}
 
       # Build and push Docker image with Buildx
       # https://github.com/docker/build-push-action
@@ -88,7 +87,12 @@ jobs:
         env:
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
-        run: cosign sign --yes ${{ steps.meta.outputs.tags }}@${{ steps.build-and-push.outputs.digest }}
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes ${images}
     
     outputs:
       image_tag_sha: ${{ steps.meta.outputs.tags }}
