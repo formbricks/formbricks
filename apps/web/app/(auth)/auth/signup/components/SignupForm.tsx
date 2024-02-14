@@ -13,25 +13,29 @@ import { useMemo, useRef, useState } from "react";
 import { Button } from "@formbricks/ui/Button";
 import { PasswordInput } from "@formbricks/ui/PasswordInput";
 
+interface SignupFormProps {
+  webAppUrl: string;
+  privacyUrl: string | undefined;
+  termsUrl: string | undefined;
+  passwordResetEnabled: boolean;
+  emailVerificationDisabled: boolean;
+  emailAuthEnabled: boolean;
+  googleOAuthEnabled: boolean;
+  githubOAuthEnabled: boolean;
+  azureOAuthEnabled: boolean;
+}
+
 export const SignupForm = ({
   webAppUrl,
   privacyUrl,
   termsUrl,
   passwordResetEnabled,
   emailVerificationDisabled,
+  emailAuthEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
-}: {
-  webAppUrl: string;
-  privacyUrl: string | undefined;
-  termsUrl: string | undefined;
-  passwordResetEnabled: boolean;
-  emailVerificationDisabled: boolean;
-  googleOAuthEnabled: boolean;
-  githubOAuthEnabled: boolean;
-  azureOAuthEnabled: boolean;
-}) => {
+}: SignupFormProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string>("");
@@ -108,91 +112,92 @@ export const SignupForm = ({
       <div className="text-center">
         <h1 className="mb-4 text-slate-700">Create your Formbricks account</h1>
         <div className="space-y-2">
-          <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
-            {showLogin && (
-              <div>
-                <div className="mb-2 transition-all duration-500 ease-in-out">
-                  <label htmlFor="name" className="sr-only">
-                    Full Name
-                  </label>
-                  <div className="mt-1">
+          {emailAuthEnabled && (
+            <form onSubmit={handleSubmit} ref={formRef} className="space-y-2" onChange={checkFormValidity}>
+              {showLogin && (
+                <div>
+                  <div className="mb-2 transition-all duration-500 ease-in-out">
+                    <label htmlFor="name" className="sr-only">
+                      Full Name
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        ref={nameRef}
+                        id="name"
+                        name="name"
+                        type="text"
+                        autoComplete="given-name"
+                        placeholder="Full Name"
+                        aria-placeholder="Full Name"
+                        required
+                        className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="mb-2 transition-all duration-500 ease-in-out">
+                    <label htmlFor="email" className="sr-only">
+                      Email address
+                    </label>
                     <input
-                      ref={nameRef}
-                      id="name"
-                      name="name"
-                      type="text"
-                      autoComplete="given-name"
-                      placeholder="Full Name"
-                      aria-placeholder="Full Name"
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
                       required
+                      placeholder="work@email.com"
+                      defaultValue={searchParams?.get("email") || ""}
                       className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                     />
                   </div>
-                </div>
-                <div className="mb-2 transition-all duration-500 ease-in-out">
-                  <label htmlFor="email" className="sr-only">
-                    Email address
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    placeholder="work@email.com"
-                    defaultValue={searchParams?.get("email") || ""}
-                    className="focus:border-brand focus:ring-brand block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
-                  />
-                </div>
-                <div className="transition-all duration-500 ease-in-out">
-                  <label htmlFor="password" className="sr-only">
-                    Password
-                  </label>
-                  <PasswordInput
-                    id="password"
-                    name="password"
-                    value={password ? password : ""}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    placeholder="*******"
-                    aria-placeholder="password"
-                    onFocus={() => setIsPasswordFocused(true)}
-                    required
-                    className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
-                  />
-                </div>
-                {passwordResetEnabled && isPasswordFocused && (
-                  <div className="ml-1 text-right transition-all duration-500 ease-in-out">
-                    <Link
-                      href="/auth/forgot-password"
-                      className="hover:text-brand-dark text-xs text-slate-500">
-                      Forgot your password?
-                    </Link>
+                  <div className="transition-all duration-500 ease-in-out">
+                    <label htmlFor="password" className="sr-only">
+                      Password
+                    </label>
+                    <PasswordInput
+                      id="password"
+                      name="password"
+                      value={password ? password : ""}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      placeholder="*******"
+                      aria-placeholder="password"
+                      onFocus={() => setIsPasswordFocused(true)}
+                      required
+                      className="focus:border-brand focus:ring-brand block w-full rounded-md shadow-sm sm:text-sm"
+                    />
                   </div>
-                )}
-                <IsPasswordValid password={password} setIsValid={setIsValid} />
-              </div>
-            )}
-            <Button
-              onClick={(e: any) => {
-                e.preventDefault();
-                if (!showLogin) {
-                  setShowLogin(true);
-                  setButtonEnabled(false);
-                  // Add a slight delay before focusing the input field to ensure it's visible
-                  setTimeout(() => nameRef.current?.focus(), 100);
-                } else if (formRef.current) {
-                  formRef.current.requestSubmit();
-                }
-              }}
-              variant="darkCTA"
-              className="w-full justify-center"
-              loading={signingUp}
-              disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
-              Continue with Email
-            </Button>
-          </form>
-
+                  {passwordResetEnabled && isPasswordFocused && (
+                    <div className="ml-1 text-right transition-all duration-500 ease-in-out">
+                      <Link
+                        href="/auth/forgot-password"
+                        className="hover:text-brand-dark text-xs text-slate-500">
+                        Forgot your password?
+                      </Link>
+                    </div>
+                  )}
+                  <IsPasswordValid password={password} setIsValid={setIsValid} />
+                </div>
+              )}
+              <Button
+                onClick={(e: any) => {
+                  e.preventDefault();
+                  if (!showLogin) {
+                    setShowLogin(true);
+                    setButtonEnabled(false);
+                    // Add a slight delay before focusing the input field to ensure it's visible
+                    setTimeout(() => nameRef.current?.focus(), 100);
+                  } else if (formRef.current) {
+                    formRef.current.requestSubmit();
+                  }
+                }}
+                variant="darkCTA"
+                className="w-full justify-center"
+                loading={signingUp}
+                disabled={formRef.current ? !isButtonEnabled || !isValid : !isButtonEnabled}>
+                Continue with Email
+              </Button>
+            </form>
+          )}
           {googleOAuthEnabled && (
             <>
               <GoogleButton inviteUrl={callbackUrl} />

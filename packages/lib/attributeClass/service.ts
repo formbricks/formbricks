@@ -67,7 +67,13 @@ export const getAttributeClasses = async (
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
         });
 
-        return attributeClasses;
+        return attributeClasses.filter((attributeClass) => {
+          if (attributeClass.name === "userId" && attributeClass.type === "automatic") {
+            return false;
+          }
+
+          return true;
+        });
       } catch (error) {
         throw new DatabaseError(
           `Database error when fetching attributeClasses for environment ${environmentId}`

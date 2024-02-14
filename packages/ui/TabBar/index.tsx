@@ -6,11 +6,12 @@ interface TabBarProps {
   tabs: { id: string; label: string; icon?: React.ReactNode }[];
   activeId: string;
   setActiveId: (id: string) => void;
+  className?: string;
 }
 
-export const TabBar: React.FC<TabBarProps> = ({ tabs, activeId, setActiveId }) => {
+export const TabBar: React.FC<TabBarProps> = ({ tabs, activeId, setActiveId, className = "" }) => {
   return (
-    <div className="flex h-14 w-full items-center justify-center border-b bg-slate-50">
+    <div className={cn("flex h-14 w-full items-center justify-center border-b bg-slate-50", className)}>
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabs.map((tab) => (
           <button

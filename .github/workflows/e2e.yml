@@ -7,29 +7,17 @@ jobs:
     name: Run E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
 
-      - name: Install Docker Compose
-        run: sudo apt-get update && sudo apt-get install -y docker-compose
+      - name: Build & Cache Web Binaries
+        uses: ./.github/actions/cache-build-web
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
 
       - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
-
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
-
-      - name: create .env
-        run: cp .env.example .env
-
-      - name: Generate ENCRYPTION_KEY
-        run: |
-          SECRET=$(openssl rand -hex 32)
-          echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+        run: pnpm install
 
       - name: Start PostgreSQL
         run: |
@@ -43,11 +31,6 @@ jobs:
             sleep 5
           done
           pnpm db:migrate:dev
-
-      - name: Build App in dev mode without external dependencies
-        run: |
-          pnpm build:dev --filter=web...
-
       - name: Serve packages for lazy loading
         run: |
           cd packages/surveys && pnpm serve &
@@ -67,6 +50,17 @@ jobs:
       - name: Test Serve endpoints
         run: |
           curl -s http://localhost:3003
+
+      - name: Cache Playwright
+        uses: actions/cache@v3
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps
 
       - name: Run E2E Tests
         run: |
