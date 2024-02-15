@@ -422,7 +422,7 @@ describe("Tests for getResponses service", () => {
     });
 
     describe("Sad Path", () => {
-      it("Fetches all responses for a given survey ID with filters", async () => {
+      it("Throws an error when the where clause is different and the data is matched when filters are different.", async () => {
         const whereClause = buildWhereClause({ finished: true });
         let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
 
