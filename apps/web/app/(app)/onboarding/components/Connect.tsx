@@ -118,7 +118,7 @@ export function Connect({ environment, webAppUrl }: { environment: TEnvironment;
     if (environment.widgetSetupCompleted) {
       createSurvey();
     }
-  }, []);
+  }, [environment.widgetSetupCompleted]);
 
   const createSurvey = async () => {
     await createSurveyFromTemplate(customSurvey, localEnvironment, "in-app");

@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTemplate } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/Button";
+import { OptionCard } from "@formbricks/ui/OptionCard";
 
 import { createSurveyFromTemplate } from "../actions";
 import { customSurvey, templates } from "./templates";
@@ -22,39 +23,27 @@ interface TemplateOptionProps {
 
 export function OnboardingModal({ environment }: OnboardingModalProps) {
   const [isOpen, setIsOpen] = useState(true);
-  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
   function TemplateOption({ template }: TemplateOptionProps) {
-    const isLoading = loadingStates[template.name] || false;
     return (
-      <div
-        className="cursor-pointer space-y-4 rounded-xl border bg-white p-3 transition ease-in-out hover:scale-105"
-        onClick={() => {
-          newSurveyFromTemplate(template);
-        }}>
-        <div className="h-40 rounded-xl bg-black"></div>
-        <p className="text-lg font-medium">{template.name}</p>
-        <p className="text-xs">{template.description}</p>
-        <Button variant="minimal" className="w-full justify-center border border-black" loading={isLoading}>
-          Start with template
-        </Button>
-      </div>
+      <OptionCard
+        title={template.name}
+        description={template.description}
+        onSelect={() => newSurveyFromTemplate(template)}
+      />
     );
   }
 
   if (!isOpen) return null;
 
   const newSurveyFromTemplate = async (template: TTemplate) => {
-    setLoadingStates((prev) => ({ ...prev, [template.name]: true }));
     localStorage.removeItem("isNewUser");
     try {
       const survey = await createSurveyFromTemplate(template, environment, "link");
       router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
     } catch (e) {
       toast.error("An error occurred creating a new survey");
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, [template.name]: false }));
     }
   };
 
