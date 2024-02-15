@@ -6,23 +6,21 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurveyInput } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
+import { Button } from "@formbricks/ui/Button";
 
-import { Button } from "../../Button";
-import { createSurveyAction } from "../actions";
+import { createSurveyFromTemplate } from "../actions";
 import { customSurvey, templates } from "./templates";
 
 interface OnboardingModalProps {
   environment: TEnvironment;
-  userId: string;
 }
 
 interface TemplateOptionProps {
   template: TTemplate;
 }
 
-export default function OnboardingModal({ environment, userId }: OnboardingModalProps) {
+export function OnboardingModal({ environment }: OnboardingModalProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
   const router = useRouter();
@@ -50,17 +48,8 @@ export default function OnboardingModal({ environment, userId }: OnboardingModal
   const newSurveyFromTemplate = async (template: TTemplate) => {
     setLoadingStates((prev) => ({ ...prev, [template.name]: true }));
     localStorage.removeItem("isNewUser");
-
     try {
-      const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
-      const autoComplete = surveyType === "web" ? 50 : null;
-      const augmentedTemplate: TSurveyInput = {
-        ...template.preset,
-        type: surveyType,
-        autoComplete: autoComplete || undefined,
-        createdBy: userId,
-      };
-      const survey = await createSurveyAction(environment.id, augmentedTemplate);
+      const survey = await createSurveyFromTemplate(template, environment, "link");
       router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
     } catch (e) {
       toast.error("An error occurred creating a new survey");

@@ -1,10 +1,10 @@
-import { Logo } from "../../Logo";
-import { ProgressBar } from "../../ProgressBar";
+import { Logo } from "@formbricks/ui/Logo";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 interface OnboardingHeaderProps {
   progress: number;
 }
-export default function OnboardingHeader({ progress }: OnboardingHeaderProps) {
+export function OnboardingHeader({ progress }: OnboardingHeaderProps) {
   return (
     <div className="mx-auto grid w-full max-w-7xl grid-cols-6 items-center  pt-8">
       <div className="col-span-2">

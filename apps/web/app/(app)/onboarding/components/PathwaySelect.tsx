@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 interface PathwaySelectProps {
-  setselectedPathway: (pathway: "link" | "in-app" | null) => void;
+  setSelectedPathway: (pathway: "link" | "in-app" | null) => void;
 }
 
 type PathwayOptionType = "link" | "in-app";
@@ -29,11 +29,13 @@ const PathwayOption: React.FC<PathwayOptionProps> = ({ title, description, imgSr
   </div>
 );
 
-export default function PathwaySelect({ setselectedPathway }: PathwaySelectProps) {
+export default function PathwaySelect({ setSelectedPathway }: PathwaySelectProps) {
   // Helper function to handle selection
   const handleSelect = (pathway: PathwayOptionType) => {
-    localStorage.setItem("isNewUser", "true");
-    setselectedPathway(pathway);
+    if (pathway === "link") {
+      localStorage.setItem("isNewUser", "true");
+    }
+    setSelectedPathway(pathway);
   };
 
   return (

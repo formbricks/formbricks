@@ -144,7 +144,7 @@ export const sendInviteMemberEmail = async (
       ${inviteMessage} 
       <h2>Get Started in Minutes</h2>
     <ol>
-        <li>Create an account to join {Full Name}'s team.</li>
+        <li>Create an account to join ${inviterName}'s team.</li>
         <li>Connect Formbricks to your app or website via HTML Snippet or NPM in just a few minutes.</li>
         <li>Done ✅</li>
     </ol>

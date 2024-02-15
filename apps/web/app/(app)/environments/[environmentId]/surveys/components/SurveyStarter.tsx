@@ -1,6 +1,7 @@
 "use client";
 
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
+import { OnboardingModal } from "@/app/(app)/onboarding/components/OnboardingModal";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -11,7 +12,6 @@ import { TSurveyInput } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
-import OnboardingModal from "@formbricks/ui/Onboarding/components/OnboardingModal";
 
 import { createSurveyAction } from "../actions";
 
@@ -58,7 +58,7 @@ export default function SurveyStarter({
   if (isNewUser === null) return;
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col py-12">
-      {isNewUser && <OnboardingModal environment={environment} userId={user.id} />}
+      {isNewUser && <OnboardingModal environment={environment} />}
       {isCreateSurveyLoading ? (
         <LoadingSpinner />
       ) : (
