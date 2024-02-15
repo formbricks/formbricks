@@ -104,9 +104,9 @@ export default function SurveyMenuBar({
       description: survey.segment?.description,
     };
 
-    // if the segments in the survey and the localSurvey are different, disable the save button
+    // if the non-private segment in the survey and the localSurvey are different, disable the save button
 
-    if (!isEqual(localSurveySegment, surveySegment)) {
+    if (!localSurvey.segment?.isPrivate && !isEqual(localSurveySegment, surveySegment)) {
       return true;
     }
   }, [containsEmptyTriggers, isSurveySaving, localSurvey.segment, localSurvey.status, survey.segment]);
