@@ -115,10 +115,10 @@ export function Connect({ environment, webAppUrl }: { environment: TEnvironment;
   useVisibilityChange(environment, setLocalEnvironment);
 
   useEffect(() => {
-    if (environment.widgetSetupCompleted) {
+    if (localEnvironment.widgetSetupCompleted) {
       createSurvey();
     }
-  }, [environment.widgetSetupCompleted]);
+  }, [localEnvironment.widgetSetupCompleted]);
 
   const createSurvey = async () => {
     await createSurveyFromTemplate(customSurvey, localEnvironment, "in-app");
