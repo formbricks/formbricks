@@ -9,6 +9,7 @@ import { removeSubscription } from "@formbricks/ee/billing/lib/removeSubscriptio
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { canUserAccessTeam } from "@formbricks/lib/team/auth";
+import { teamCache } from "@formbricks/lib/team/cache";
 import { getTeam } from "@formbricks/lib/team/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
@@ -24,6 +25,8 @@ export async function upgradePlanAction(
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const subscriptionSession = await createSubscription(teamId, environmentId, priceLookupKeys);
+
+  teamCache.revalidate({ id: teamId });
   return subscriptionSession;
 }
 
@@ -58,5 +61,6 @@ export async function removeSubscriptionAction(
 
   const removedSubscription = await removeSubscription(teamId, environmentId, priceLookupKeys);
 
+  teamCache.revalidate({ id: teamId });
   return removedSubscription.url;
 }

@@ -293,7 +293,7 @@ export default function PricingTableComponent({
           perMetricCharge={0.15}
           loading={upgradingPlan}
           onUpgrade={() => upgradePlan([StripePriceLookupKeys.inAppSurvey])}
-          onUbsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.inAppSurvey])}
+          onUnsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.inAppSurvey])}
         />
 
         <PricingCard
@@ -306,7 +306,7 @@ export default function PricingTableComponent({
           paidFeatures={linkSurveysFeatures}
           loading={upgradingPlan}
           onUpgrade={() => upgradePlan([StripePriceLookupKeys.linkSurvey])}
-          onUbsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.linkSurvey])}
+          onUnsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.linkSurvey])}
         />
 
         <PricingCard
@@ -330,7 +330,7 @@ export default function PricingTableComponent({
           perMetricCharge={0.01}
           loading={upgradingPlan}
           onUpgrade={() => upgradePlan([StripePriceLookupKeys.userTargeting])}
-          onUbsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.userTargeting])}
+          onUnsubscribe={(e) => handleUnsubscribe(e, ProductFeatureKeys[ProductFeatureKeys.userTargeting])}
         />
       </div>
 
@@ -338,11 +338,11 @@ export default function PricingTableComponent({
         headerText="Are you sure that you want to unsubscribe?"
         open={openDeleteModal}
         setOpen={setOpenDeleteModal}
-        onConfirm={() => {
+        onDecline={() => {
           setOpenDeleteModal(false);
         }}
-        mainText="Your subscription for this product will be canceled at the end of the month. After that, you won't have access to the pro features anymore"
-        onDecline={() => handleDeleteSubscription()}
+        mainText="Your subscription for this product will be canceled at the End of this Month! After that, you won't have access to the Paid features anymore"
+        onConfirm={() => handleDeleteSubscription()}
         confirmBtnLabel="Unsubscribe"
       />
     </div>
