@@ -89,27 +89,7 @@ export default function SurveyMenuBar({
     if (isSurveySaving) return true;
 
     if (localSurvey.status !== "draft" && containsEmptyTriggers()) return true;
-
-    const localSurveySegment = {
-      id: localSurvey.segment?.id,
-      filters: localSurvey.segment?.filters,
-      title: localSurvey.segment?.title,
-      description: localSurvey.segment?.description,
-    };
-
-    const surveySegment = {
-      id: survey.segment?.id,
-      filters: survey.segment?.filters,
-      title: survey.segment?.title,
-      description: survey.segment?.description,
-    };
-
-    // if the non-private segment in the survey and the localSurvey are different, disable the save button
-
-    if (!localSurvey.segment?.isPrivate && !isEqual(localSurveySegment, surveySegment)) {
-      return true;
-    }
-  }, [containsEmptyTriggers, isSurveySaving, localSurvey.segment, localSurvey.status, survey.segment]);
+  }, [containsEmptyTriggers, isSurveySaving, localSurvey.status]);
 
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: TSurvey["status"]) => {
@@ -287,6 +267,27 @@ export default function SurveyMenuBar({
     }
 
     // validate the user segment filters
+    const localSurveySegment = {
+      id: strippedSurvey.segment?.id,
+      filters: strippedSurvey.segment?.filters,
+      title: strippedSurvey.segment?.title,
+      description: strippedSurvey.segment?.description,
+    };
+
+    const surveySegment = {
+      id: survey.segment?.id,
+      filters: survey.segment?.filters,
+      title: survey.segment?.title,
+      description: survey.segment?.description,
+    };
+
+    // if the non-private segment in the survey and the strippedSurvey are different, don't save
+    if (!strippedSurvey.segment?.isPrivate && !isEqual(localSurveySegment, surveySegment)) {
+      toast.error("Please save the audience filters before saving the survey");
+      setIsSurveySaving(false);
+      return;
+    }
+
     if (!!strippedSurvey.segment?.filters?.length) {
       const parsedFilters = ZSegmentFilters.safeParse(strippedSurvey.segment.filters);
       if (!parsedFilters.success) {
