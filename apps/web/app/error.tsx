@@ -12,15 +12,14 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
       <ErrorComponent />
-      <Button
-        variant="secondary"
-        onClick={
-          // Attempt to recover by trying to re-render the segment
-          () => reset()
-        }
-        className="mt-2">
-        Try again
-      </Button>
+      <div className="mt-2">
+        <Button variant="secondary" onClick={() => reset()} className="mr-2">
+          Try again
+        </Button>
+        <Button variant="darkCTA" onClick={() => (window.location.href = "/")}>
+          Go to Dashboard
+        </Button>
+      </div>
     </div>
   );
 }

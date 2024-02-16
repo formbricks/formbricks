@@ -223,6 +223,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://twenty.com",
         },
         {
+          name: "UnInbox",
+          description:
+            "Modern email for teams and professionals. Bringing the best of email and messaging into a single, modern, and secure platform.",
+          href: "https://uninbox.com",
+        },
+        {
           name: "Unkey",
           description:
             "An API authentication and authorization platform for scaling user facing APIs. Create, verify, and manage low latency API keys in seconds.",
