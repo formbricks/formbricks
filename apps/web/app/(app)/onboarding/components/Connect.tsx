@@ -69,6 +69,13 @@ const ConnectedState = ({ goToProduct }) => {
 };
 
 const NotConnectedState = ({ codeSnippet, goToTeamInvitePage }) => {
+  const [displayHelpButton, setDisplayHelpButton] = useState(false);
+  useEffect(() => {
+    setTimeout(() => {
+      setDisplayHelpButton(true);
+    }, 3000);
+  }, []);
+
   return (
     <div className="flex w-[40rem] flex-col items-center justify-center p-6">
       <div className="space-y-2 text-center">
@@ -107,10 +114,12 @@ const NotConnectedState = ({ codeSnippet, goToTeamInvitePage }) => {
           Use NPM
         </Button>
       </div>
-      <Button className="mt-6" variant="minimal" onClick={goToTeamInvitePage}>
-        I am not sure how to do this
-        <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
+      {displayHelpButton && (
+        <Button className="mt-6" variant="minimal" onClick={goToTeamInvitePage}>
+          I am not sure how to do this
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 };
