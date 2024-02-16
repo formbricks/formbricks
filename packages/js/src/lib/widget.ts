@@ -16,6 +16,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 let setIsError = (_: boolean) => {};
+let setIsProcessingFinished = (_: boolean) => {};
 
 export const renderWidget = async (survey: TSurvey) => {
   if (surveyRunning) {
@@ -40,6 +41,9 @@ export const renderWidget = async (survey: TSurvey) => {
       onResponseSendingFailed: () => {
         setIsError(true);
       },
+      onResponseSentSuccessfully: () => {
+        setIsProcessingFinished(true);
+      },
     },
     surveyState
   );
@@ -51,7 +55,6 @@ export const renderWidget = async (survey: TSurvey) => {
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;
-  const isResponseSubmitted = surveyState.isResponseFinished();
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
   setTimeout(() => {
@@ -63,9 +66,11 @@ export const renderWidget = async (survey: TSurvey) => {
       darkOverlay,
       highlightBorderColor,
       placement,
-      isResponseSubmitted,
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
+      },
+      getSetIsProcessingFinished: (f: (value: boolean) => void) => {
+        setIsProcessingFinished = f;
       },
       onDisplay: async () => {
         const { userId } = config.get();

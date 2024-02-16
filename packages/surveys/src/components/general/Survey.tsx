@@ -29,14 +29,16 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
   getSetIsError,
+  getSetIsProcessingFinished,
   onFileUpload,
   responseCount,
-  isResponseSubmitted,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
   const [showError, setShowError] = useState(false);
+  const [isProcessingFinished, setIsProcessingFinished] = useState(false);
+
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
@@ -84,6 +86,14 @@ export function Survey({
     if (getSetIsError) {
       getSetIsError((value: boolean) => {
         setShowError(value);
+      });
+    }
+  });
+
+  useEffect(() => {
+    if (getSetIsProcessingFinished) {
+      getSetIsProcessingFinished((value: boolean) => {
+        setIsProcessingFinished(value);
       });
     }
   });
@@ -217,6 +227,7 @@ export function Survey({
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
       return (
         <ThankYouCard
+          isProcessingFinished={isProcessingFinished}
           headline={
             typeof survey.thankYouCard.headline === "string"
               ? replaceRecallInfo(survey.thankYouCard.headline)
@@ -232,7 +243,6 @@ export function Survey({
           imageUrl={survey.thankYouCard.imageUrl}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
-          isResponseSubmitted={isResponseSubmitted}
         />
       );
     } else {
@@ -262,7 +272,6 @@ export function Survey({
 
   return (
     <>
-      {console.log(isResponseSubmitted)}
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div className="no-scrollbar flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>

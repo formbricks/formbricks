@@ -13,6 +13,7 @@ interface SurveyProps {
   isBrandingEnabled: boolean;
   activeQuestionId?: string;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
+  getSetIsProcessingFinished?: (getSetIsProcessingFinished: (value: boolean) => void) => void;
   onRetry?: () => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
@@ -25,7 +26,6 @@ interface SurveyProps {
   isRedirectDisabled?: boolean;
   responseCount?: number;
   supportEmail?: string | null;
-  isResponseSubmitted: boolean;
 }
 
 interface SurveyModalProps extends SurveyProps {
