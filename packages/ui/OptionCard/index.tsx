@@ -19,9 +19,9 @@ export const OptionCard: React.FC<PathwayOptionProps> = ({
 }) => (
   <div className="relative">
     <div
-      className="flex h-96 w-80 cursor-pointer flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white p-3 shadow-lg transition ease-in-out hover:scale-105"
+      className="flex w-80 cursor-pointer flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white p-4 shadow-lg transition ease-in-out hover:scale-105"
       onClick={onSelect}
-      role="button" // Improve accessibility
+      role="button"
       tabIndex={0} // Make it focusable
     >
       {imgSrc && <Image src={imgSrc} alt={title} className="rounded-md" />}
