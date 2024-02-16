@@ -71,6 +71,7 @@ export const env = createEnv({
     DEFAULT_TEAM_ROLE: z.enum(["owner", "admin", "editor", "developer", "viewer"]).optional(),
     ONBOARDING_DISABLED: z.string().optional(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
+    IGNORE_RATE_LIMITING: z.enum(["1", "0"]).optional(),
   },
 
   /*
@@ -152,5 +153,6 @@ export const env = createEnv({
     DEFAULT_TEAM_ROLE: process.env.DEFAULT_TEAM_ROLE,
     ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
+    IGNORE_RATE_LIMITING: process.env.IGNORE_RATE_LIMITING,
   },
 });

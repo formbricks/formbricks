@@ -139,3 +139,5 @@ export const DEBUG = process.env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+export const IGNORE_RATE_LIMITING = env.IGNORE_RATE_LIMITING === "1";
