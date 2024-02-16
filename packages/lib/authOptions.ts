@@ -189,31 +189,27 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, account }) {
-      console.log("in jwt", token, account);
-      const existingUser = await getUserByEmail(token?.email!);
+      if (account && account.provider && account.provider === "slack") {
+        const accountAttributes = {
+          accessToken: account.access_token,
+          idToken: account.id_token,
+          refreshToken: account.refresh_token,
+          expiresAt: account.expires_at,
+        };
+        return { ...token, accountAttributes };
+      }
+      const existingUser = await getUserByEmail(token?.email as string);
 
       if (!existingUser) {
         return token;
       }
-
-      let accountAttributes = {};
-
-      if (account && account.provider && account.provider === "slack") {
-        accountAttributes = {
-          accessToken: account.access_token,
-          refreshToken: account.refresh_token,
-          expiresAt: account.expires_at,
-        };
-      }
-
       return {
         ...token,
         profile: existingUser || null,
-        ...accountAttributes,
       };
     },
-    async session({ session, token }) {
-      console.log("sees", token);
+    async session(props) {
+      const { session, token } = props;
       if (token.accountAttributes) {
         // @ts-ignore
         session.user.accessToken = token.accountAttributes.accessToken;
@@ -226,20 +222,11 @@ export const authOptions: NextAuthOptions = {
       session.user.id = token?.id;
       // @ts-expect-error
       session.user = token.profile;
-      console.log("sessioN", session);
 
       return session;
     },
-    // async session({ session, token }) {
-    //   console.log("in session", token);
-    //   // @ts-expect-error
-    //   session.user.id = token?.id;
-    //   // @ts-expect-error
-    //   session.user = token.profile;
-    //
-    //   return session;
-    // },
-    async signIn({ user, account }: any) {
+    async signIn(props: any) {
+      const { user, account } = props;
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           throw new Error("Email Verification is Pending");
@@ -253,7 +240,6 @@ export const authOptions: NextAuthOptions = {
 
       if (account.provider) {
         if (account.provider === "slack") {
-          console.log("chaaaaaaaaaaaaaaaaaaaa");
           return true;
         }
         const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;

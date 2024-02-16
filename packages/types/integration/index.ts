@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
 import { ZIntegrationGoogleSheetsConfig, ZIntegrationGoogleSheetsInput } from "./googleSheet";
 import { ZIntegrationNotionConfig, ZIntegrationNotionInput } from "./notion";
-import { ZIntegrationSlackConfig } from "./slack";
+import { ZIntegrationSlackConfig, ZIntegrationSlackInput } from "./slack";
 
 export * from "./sharedTypes";
 
@@ -43,6 +43,7 @@ export const ZIntegrationInput = z.union([
   ZIntegrationGoogleSheetsInput,
   ZIntegrationAirtableInput,
   ZIntegrationNotionInput,
+  ZIntegrationSlackInput,
 ]);
 export type TIntegrationInput = z.infer<typeof ZIntegrationInput>;
 

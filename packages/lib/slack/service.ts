@@ -3,7 +3,14 @@ import { cache } from "react";
 
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TSlackChannel, TSlackCredential, TSlackIntegration } from "@formbricks/types/integration/slack";
+import {
+  TIntegrationSlack,
+  TSlackChannel,
+  TSlackCredential,
+  TSlackIntegration,
+} from "@formbricks/types/integration/slack";
+
+import { getIntegrationByType } from "../integration/service";
 
 export const fetchChannels = async (key: TSlackCredential): Promise<TSlackChannel[]> => {
   const response = await fetch("https://slack.com/api/conversations.list", {
@@ -33,10 +40,12 @@ export const fetchChannels = async (key: TSlackCredential): Promise<TSlackChanne
 export const getSlackChannels = async (environmentId: string): Promise<TSlackChannel[]> => {
   let channels: TSlackChannel[] = [];
   try {
-    const slackIntegration = await getSlackIntegration(environmentId);
+    const slackIntegration = (await getIntegrationByType(environmentId, "slack")) as TIntegrationSlack;
     if (slackIntegration && slackIntegration.config?.key) {
+      console.log("fetching channels", slackIntegration.config.key);
       channels = await fetchChannels(slackIntegration.config.key);
     }
+
     return channels;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
