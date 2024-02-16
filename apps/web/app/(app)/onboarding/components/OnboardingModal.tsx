@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  customSurvey,
+  templates,
+} from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
 import { ArrowRight, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,34 +15,26 @@ import { Button } from "@formbricks/ui/Button";
 import { OptionCard } from "@formbricks/ui/OptionCard";
 
 import { createSurveyFromTemplate } from "../actions";
-import { customSurvey, templates } from "./templates";
 
 interface OnboardingModalProps {
   environment: TEnvironment;
 }
 
-interface TemplateOptionProps {
-  template: TTemplate;
-}
-
 export function OnboardingModal({ environment }: OnboardingModalProps) {
   const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();
-
-  function TemplateOption({ template }: TemplateOptionProps) {
-    return (
-      <OptionCard
-        title={template.name}
-        description={template.description}
-        onSelect={() => newSurveyFromTemplate(template)}
-      />
-    );
-  }
-
+  const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
+  const filteredTemplates = templates.filter(
+    (template) =>
+      template.name === "Churn Survey" ||
+      template.name === "Feedback Box" ||
+      template.name === "Net Promoter Score (NPS)"
+  );
   if (!isOpen) return null;
 
   const newSurveyFromTemplate = async (template: TTemplate) => {
-    localStorage.removeItem("isNewUser");
+    setLoadingTemplate(template.name);
+    localStorage.removeItem("pathway");
     try {
       const survey = await createSurveyFromTemplate(template, environment, "link");
       router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
@@ -53,7 +49,7 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
         <X
           className="absolute right-0 top-0 m-4 h-6 w-6 cursor-pointer text-slate-500"
           onClick={() => {
-            localStorage.removeItem("isNewUser");
+            localStorage.removeItem("pathway");
             setIsOpen(false);
           }}
         />
@@ -61,6 +57,7 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
           <div className="flex justify-between">
             <p className="text-2xl font-medium">Create your first survey</p>
             <Button
+              loading={loadingTemplate === "Start from scratch"}
               onClick={() => {
                 newSurveyFromTemplate(customSurvey);
               }}>
@@ -68,9 +65,17 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
             </Button>
           </div>
           <div className="mt-4 grid w-full grid-cols-3 grid-rows-1 gap-6">
-            {templates.map((template) => (
-              <TemplateOption key={template.name} template={template} />
-            ))}
+            {filteredTemplates.map((template) => {
+              return (
+                <OptionCard
+                  key={template.name}
+                  title={template.name}
+                  description={template.description}
+                  onSelect={() => newSurveyFromTemplate(template)}
+                  loading={loadingTemplate === template.name}
+                />
+              );
+            })}
           </div>
         </div>
       </div>

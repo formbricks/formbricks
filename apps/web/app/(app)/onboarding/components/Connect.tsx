@@ -1,5 +1,6 @@
 "use client";
 
+import { customSurvey } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
 import { ArrowRight, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,20 +10,14 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/Button";
 
 import { createSurveyFromTemplate, fetchEnvironment, finishOnboardingAction } from "../actions";
-import { customSurvey } from "./templates";
 
 const goToProduct = async (router) => {
   await finishOnboardingAction();
   router.push("/");
 };
 
-const goToTeamInvitePage = async (router, setLoading) => {
-  try {
-    setLoading(true);
-    router.push("/onboarding/inApp/inviteTeamMate");
-  } catch (error) {
-    setLoading(false);
-  }
+const goToTeamInvitePage = async () => {
+  localStorage.setItem("CURRENT_STEP", "5");
 };
 
 // Custom hook for visibility change logic
@@ -44,8 +39,9 @@ const useVisibilityChange = (environment, setLocalEnvironment) => {
 };
 
 const ConnectedState = ({ goToProduct }) => {
+  const [isLoading, setIsLoading] = useState(false);
   return (
-    <div className="mt-12 w-[40rem] text-center">
+    <div className="mt-12 h-full w-[40rem] text-center">
       <div className="space-y-2 text-center">
         <p className="text-2xl font-medium">You&apos;re Connected!</p>
         <p>From now, it only gets easier</p>
@@ -58,7 +54,13 @@ const ConnectedState = ({ goToProduct }) => {
         </div>
       </div>
       <div className="mt-4 text-right">
-        <Button variant="minimal" onClick={goToProduct}>
+        <Button
+          variant="minimal"
+          loading={isLoading}
+          onClick={() => {
+            setIsLoading(true);
+            goToProduct();
+          }}>
           Next <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
@@ -66,7 +68,7 @@ const ConnectedState = ({ goToProduct }) => {
   );
 };
 
-const NotConnectedState = ({ codeSnippet, goToTeamInvitePage, loading }) => {
+const NotConnectedState = ({ codeSnippet, goToTeamInvitePage }) => {
   return (
     <div className="flex w-[40rem] flex-col items-center justify-center p-6">
       <div className="space-y-2 text-center">
@@ -98,8 +100,14 @@ const NotConnectedState = ({ codeSnippet, goToTeamInvitePage, loading }) => {
           target="_blank">
           Step by step manual
         </Button>
+        <Button
+          variant="minimal"
+          href="https://formbricks.com/docs/getting-started/framework-guides"
+          target="_blank">
+          Use NPM
+        </Button>
       </div>
-      <Button className="mt-6" variant="minimal" onClick={goToTeamInvitePage} loading={loading}>
+      <Button className="mt-6" variant="minimal" onClick={goToTeamInvitePage}>
         I am not sure how to do this
         <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
@@ -107,9 +115,14 @@ const NotConnectedState = ({ codeSnippet, goToTeamInvitePage, loading }) => {
   );
 };
 
-export function Connect({ environment, webAppUrl }: { environment: TEnvironment; webAppUrl: string }) {
+interface ConnectProps {
+  environment: TEnvironment;
+  webAppUrl: string;
+  SET_CURRENT_STEP: (currentStep: number) => void;
+}
+
+export function Connect({ environment, webAppUrl, SET_CURRENT_STEP }: ConnectProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [localEnvironment, setLocalEnvironment] = useState(environment);
 
   useVisibilityChange(environment, setLocalEnvironment);
@@ -119,6 +132,15 @@ export function Connect({ environment, webAppUrl }: { environment: TEnvironment;
       createSurvey();
     }
   }, [localEnvironment.widgetSetupCompleted]);
+
+  useEffect(() => {
+    const fetchLatestEnvironmentOnFirstLoad = async () => {
+      const refetchedEnvironment = await fetchEnvironment(environment.id);
+      if (!refetchedEnvironment) return;
+      setLocalEnvironment(refetchedEnvironment);
+    };
+    fetchLatestEnvironmentOnFirstLoad();
+  }, []);
 
   const createSurvey = async () => {
     await createSurveyFromTemplate(customSurvey, localEnvironment, "in-app");
@@ -131,12 +153,21 @@ export function Connect({ environment, webAppUrl }: { environment: TEnvironment;
     <!-- END Formbricks Surveys -->`;
 
   return localEnvironment.widgetSetupCompleted ? (
-    <ConnectedState goToProduct={() => goToProduct(router)} />
+    <ConnectedState
+      goToProduct={() => {
+        localStorage.removeItem("CURRENT_STEP");
+        localStorage.removeItem("pathway");
+        goToProduct(router);
+      }}
+    />
   ) : (
     <NotConnectedState
       codeSnippet={codeSnippet}
-      goToTeamInvitePage={() => goToTeamInvitePage(router, setLoading)}
-      loading={loading}
+      goToTeamInvitePage={() => {
+        SET_CURRENT_STEP(5);
+        localStorage.setItem("CURRENT_STEP", "5");
+        goToTeamInvitePage();
+      }}
     />
   );
 }

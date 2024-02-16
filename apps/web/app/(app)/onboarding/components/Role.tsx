@@ -10,12 +10,12 @@ import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { env } from "@formbricks/lib/env.mjs";
 import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
 
 type RoleProps = {
-  next: () => void;
-  skip: () => void;
   setFormbricksResponseId: (id: string) => void;
   session: Session;
+  SET_CURRENT_STEP: (currentStep: number) => void;
 };
 
 type RoleChoice = {
@@ -23,10 +23,11 @@ type RoleChoice = {
   id: "project_manager" | "engineer" | "founder" | "marketing_specialist" | "other";
 };
 
-const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, session }) => {
+const Role: React.FC<RoleProps> = ({ setFormbricksResponseId, session, SET_CURRENT_STEP }) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const fieldsetRef = useRef<HTMLFieldSetElement>(null);
+  const [otherValue, setOtherValue] = useState("");
 
   useEffect(() => {
     const onKeyDown = handleTabNavigation(fieldsetRef, setSelectedChoice);
@@ -44,13 +45,24 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, sessio
     { label: "Other", id: "other" },
   ];
 
+  const next = () => {
+    SET_CURRENT_STEP(3);
+    localStorage.setItem("CURRENT_STEP", "3");
+  };
+
   const handleNextClick = async () => {
+    if (selectedChoice === "Other" && otherValue.trim() === "") {
+      toast.error("Other value missing");
+      return;
+    }
     if (selectedChoice) {
       const selectedRole = roles.find((role) => role.label === selectedChoice);
       if (selectedRole) {
         try {
           setIsUpdating(true);
-          await updateUserAction({ role: selectedRole.id });
+          await updateUserAction({
+            role: selectedRole.id,
+          });
           setIsUpdating(false);
         } catch (e) {
           setIsUpdating(false);
@@ -59,7 +71,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, sessio
         }
         if (formbricksEnabled && env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID) {
           const res = await createResponse(env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID, session.user.id, {
-            role: selectedRole.label,
+            role: selectedRole.id === "other" ? otherValue : selectedRole.label,
           });
           if (res.ok) {
             const response = res.data;
@@ -75,7 +87,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, sessio
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 px-8">
-      <div className="px-4">
+      <div className="w-full px-4">
         <label htmlFor="choices" className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
           What is your role?
         </label>
@@ -118,6 +130,15 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, sessio
                       {choice.label}
                     </span>
                   </span>
+                  {choice.id === "other" && selectedChoice === "Other" && (
+                    <div className="mt-4 w-full">
+                      <Input
+                        placeholder="Please specify"
+                        value={otherValue}
+                        onChange={(e) => setOtherValue(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </label>
               ))}
             </div>
@@ -125,7 +146,7 @@ const Role: React.FC<RoleProps> = ({ next, skip, setFormbricksResponseId, sessio
         </div>
       </div>
       <div className="mb-24 flex justify-between">
-        <Button size="lg" className="text-slate-500" variant="minimal" onClick={skip} id="role-skip">
+        <Button size="lg" className="text-slate-500" variant="minimal" onClick={next} id="role-skip">
           Skip
         </Button>
         <Button

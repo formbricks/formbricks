@@ -220,25 +220,3 @@ export const templates: TTemplate[] = [
     },
   },
 ];
-
-export const customSurvey: TTemplate = {
-  name: "Start from scratch",
-  description: "Create a survey without template.",
-  preset: {
-    name: "New Survey",
-    welcomeCard: welcomeCardDefault,
-    questions: [
-      {
-        id: createId(),
-        type: TSurveyQuestionType.OpenText,
-        headline: "What would you like to know?",
-        subheader: "This is an example survey.",
-        placeholder: "Type your answer here...",
-        required: true,
-        inputType: "text",
-      },
-    ],
-    thankYouCard: thankYouCardDefault,
-    hiddenFields: hiddenFieldsDefault,
-  },
-};

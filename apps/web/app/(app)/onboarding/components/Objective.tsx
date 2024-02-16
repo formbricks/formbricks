@@ -10,12 +10,12 @@ import { cn } from "@formbricks/lib/cn";
 import { env } from "@formbricks/lib/env.mjs";
 import { TUser, TUserObjective } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
+import { Input } from "@formbricks/ui/Input";
 
 type ObjectiveProps = {
-  next: () => void;
-  skip: () => void;
   formbricksResponseId?: string;
   user: TUser;
+  SET_CURRENT_STEP: (currentStep: number) => void;
 };
 
 type ObjectiveChoice = {
@@ -23,7 +23,7 @@ type ObjectiveChoice = {
   id: TUserObjective;
 };
 
-const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId, user }) => {
+const Objective: React.FC<ObjectiveProps> = ({ formbricksResponseId, user, SET_CURRENT_STEP }) => {
   const objectives: Array<ObjectiveChoice> = [
     { label: "Increase conversion", id: "increase_conversion" },
     { label: "Improve user retention", id: "improve_user_retention" },
@@ -35,6 +35,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
 
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isProfileUpdating, setIsProfileUpdating] = useState(false);
+  const [otherValue, setOtherValue] = useState("");
 
   const fieldsetRef = useRef<HTMLFieldSetElement>(null);
 
@@ -46,7 +47,16 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
     };
   }, [fieldsetRef, setSelectedChoice]);
 
+  const next = () => {
+    SET_CURRENT_STEP(4);
+    localStorage.setItem("CURRENT_STEP", "4");
+  };
+
   const handleNextClick = async () => {
+    if (selectedChoice === "Other" && otherValue.trim() === "") {
+      toast.error("Other value missing");
+      return;
+    }
     if (selectedChoice) {
       const selectedObjective = objectives.find((objective) => objective.label === selectedChoice);
       if (selectedObjective) {
@@ -66,7 +76,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
           const res = await updateResponse(
             formbricksResponseId,
             {
-              objective: selectedObjective.label,
+              objective: selectedObjective.id === "other" ? otherValue : selectedObjective.label,
             },
             true
           );
@@ -122,6 +132,16 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
                       {choice.label}
                     </span>
                   </span>
+                  {choice.id === "other" && selectedChoice === "Other" && (
+                    <div className="mt-4 w-full">
+                      <Input
+                        required
+                        placeholder="Please specify"
+                        value={otherValue}
+                        onChange={(e) => setOtherValue(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </label>
               ))}
             </div>
@@ -129,7 +149,7 @@ const Objective: React.FC<ObjectiveProps> = ({ next, skip, formbricksResponseId,
         </div>
       </div>
       <div className="mb-24 flex justify-between">
-        <Button size="lg" className="text-slate-500" variant="minimal" onClick={skip} id="objective-skip">
+        <Button size="lg" className="text-slate-500" variant="minimal" onClick={next} id="objective-skip">
           Skip
         </Button>
         <Button

@@ -14,6 +14,7 @@ import { finishOnboardingAction, inviteTeamMateAction } from "../actions";
 interface InviteTeamMateProps {
   team: TTeam;
   environmentId: string;
+  SET_CURRENT_STEP: (currentStep: number) => void;
 }
 
 const DEFAULT_INVITE_MESSAGE =
@@ -37,7 +38,7 @@ function InviteMessageInput({ value, onChange }) {
   );
 }
 
-export function InviteTeamMate({ team, environmentId }: InviteTeamMateProps) {
+export function InviteTeamMate({ team, environmentId, SET_CURRENT_STEP }: InviteTeamMateProps) {
   const [formState, setFormState] = useState(INITIAL_FORM_STATE);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -55,6 +56,8 @@ export function InviteTeamMate({ team, environmentId }: InviteTeamMateProps) {
     try {
       await inviteTeamMateAction(team.id, formState.email, "developer", formState.inviteMessage);
       toast.success("Invite sent successful");
+      localStorage.removeItem("pathway");
+      localStorage.removeItem("CURRENT_STEP");
       goToProduct();
     } catch (error) {
       toast.error(error.message || "An unexpected error occurred");
@@ -63,6 +66,8 @@ export function InviteTeamMate({ team, environmentId }: InviteTeamMateProps) {
 
   const goToProduct = async () => {
     setIsLoading(true);
+    localStorage.removeItem("pathway");
+    localStorage.removeItem("CURRENT_STEP");
     try {
       await finishOnboardingAction();
       router.push(`/environments/${environmentId}/surveys`);
@@ -72,6 +77,11 @@ export function InviteTeamMate({ team, environmentId }: InviteTeamMateProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const goBackToConnectPage = () => {
+    SET_CURRENT_STEP(4);
+    localStorage.setItem("CURRENT_STEP", "4");
   };
 
   return (
@@ -95,7 +105,7 @@ export function InviteTeamMate({ team, environmentId }: InviteTeamMateProps) {
           />
         </div>
         <div className="flex w-full justify-between">
-          <Button variant="minimal" onClick={() => router.push(`/onboarding/inApp/connect`)}>
+          <Button variant="minimal" onClick={() => goBackToConnectPage()}>
             Back
           </Button>
           <Button variant="primary" onClick={handleInvite}>

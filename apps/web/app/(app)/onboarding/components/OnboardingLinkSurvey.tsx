@@ -15,10 +15,10 @@ export function OnboardingLinkSurvey() {
 
     // Setup the event listener for the custom event to listen to survey completion
     const handleSurveyCompletion = () => {
-      setFade(false); // Trigger fade-out
-
-      finishOnboarding();
       router.push("/");
+      setFade(false); // Trigger fade-out
+      localStorage.removeItem("CURRENT_STEP");
+      finishOnboarding();
     };
 
     window.addEventListener("SurveyCompleted", handleSurveyCompletion);
@@ -44,7 +44,7 @@ export function OnboardingLinkSurvey() {
           width: "100%",
           height: "100%",
           border: "0",
-          transition: "opacity 2s ease",
+          transition: "opacity 1s ease",
           opacity: fade ? "1" : "0", // 1 for fade in, 0 for fade out
         }}></iframe>
     </div>

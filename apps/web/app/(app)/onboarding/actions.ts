@@ -10,14 +10,14 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { inviteUser } from "@formbricks/lib/invite/service";
 import { canUserAccessProduct } from "@formbricks/lib/product/auth";
 import { getProduct, updateProduct } from "@formbricks/lib/product/service";
-import { createSurvey } from "@formbricks/lib/survey/service";
+import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/team/auth";
 import { updateUser } from "@formbricks/lib/user/service";
 import { TEnvironment } from "@formbricks/types/environment";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductUpdateInput } from "@formbricks/types/product";
-import { TSurveyInput } from "@formbricks/types/surveys";
+import { TSurveyDisplayOption, TSurveyInput, TSurveyStatus, TSurveyType } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUserUpdateInput } from "@formbricks/types/user";
 
@@ -96,30 +96,70 @@ export const createSurveyFromTemplate = async (
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environment.id);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-  const userId = session.user.id;
+  const userHasAccess = await hasUserEnvironmentAccess(session.user.id, environment.id);
+  if (!userHasAccess) throw new AuthorizationError("Not authorized");
 
+  // Set common survey properties
+  const userId = session.user.id;
   const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
   const autoComplete = surveyType === "web" ? 50 : null;
-  const augmentedTemplate: TSurveyInput =
-    pathway === "link"
-      ? {
-          ...template.preset,
-          type: surveyType,
-          autoComplete: autoComplete || undefined,
-          createdBy: userId,
-        }
-      : {
-          ...template.preset,
-          type: surveyType,
-          autoComplete: autoComplete || undefined,
-          createdBy: userId,
-          triggers: ["New Session"],
-          status: "inProgress",
-        };
-  return await createSurvey(environment.id, augmentedTemplate);
+
+  // Construct survey input based on the pathway
+  const surveyInput = constructSurveyInput(
+    pathway,
+    template,
+    surveyType,
+    autoComplete,
+    userId,
+    session.user.name
+  );
+
+  // For in-app pathway, check existing surveys before creation
+  if (pathway === "in-app") {
+    const existingSurveys = await getSurveys(environment.id);
+    if (existingSurveys.length > 0) {
+      return existingSurveys[0];
+    }
+  }
+
+  // Create and return the new survey
+  return await createSurvey(environment.id, surveyInput);
 };
+
+function constructSurveyInput(
+  pathway: "link" | "in-app",
+  template: TTemplate,
+  surveyType: TSurveyType,
+  autoComplete: number | null,
+  userId: string,
+  username: string | null
+) {
+  if (pathway === "link") {
+    return {
+      ...template.preset,
+      type: surveyType,
+      autoComplete: autoComplete || undefined,
+      createdBy: userId,
+    };
+  } else {
+    // "in-app" pathway
+    return {
+      ...template.preset,
+      questions: template.preset.questions.map((question) => ({
+        ...question,
+        headline: `Hello ${username}, this is your example survey!`,
+      })),
+      name: "First survey",
+      type: surveyType,
+      autoComplete: autoComplete || undefined,
+      createdBy: userId,
+      triggers: ["New Session"],
+      status: "inProgress" as TSurveyStatus,
+      displayOption: "respondMultiple" as TSurveyDisplayOption,
+      recontactDays: 0,
+    };
+  }
+}
 
 export async function updateUserAction(updatedUser: TUserUpdateInput) {
   const session = await getServerSession(authOptions);

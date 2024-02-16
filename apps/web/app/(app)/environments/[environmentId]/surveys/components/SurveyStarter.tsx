@@ -32,8 +32,8 @@ export default function SurveyStarter({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const isNewUserValue = localStorage.getItem("isNewUser");
-      setIsNewUser(isNewUserValue === "true");
+      const isNewUserValue = localStorage.getItem("pathway");
+      setIsNewUser(isNewUserValue === "link");
     }
   }, []);
 

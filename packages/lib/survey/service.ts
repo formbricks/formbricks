@@ -31,6 +31,15 @@ import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
 import { anySurveyHasFilters } from "./util";
 
+interface TriggerUpdate {
+  create?: Array<{ actionClassId: string }>;
+  deleteMany?: {
+    actionClassId: {
+      in: string[];
+    };
+  };
+}
+
 export const selectSurvey = {
   id: true,
   createdAt: true,
@@ -97,6 +106,47 @@ const revalidateSurveyByActionClassId = (actionClasses: TActionClass[], actionCl
       actionClassId,
     });
   }
+};
+
+const processTriggerUpdates = (
+  triggers: string[],
+  currentSurveyTriggers: string[],
+  actionClasses: TActionClass[]
+) => {
+  const newTriggers: string[] = [];
+  const removedTriggers: string[] = [];
+
+  // find added triggers
+  for (const trigger of triggers) {
+    if (!trigger || currentSurveyTriggers.includes(trigger)) {
+      continue;
+    }
+    newTriggers.push(trigger);
+  }
+
+  // find removed triggers
+  for (const trigger of currentSurveyTriggers) {
+    if (!triggers.includes(trigger)) {
+      removedTriggers.push(getActionClassIdFromName(actionClasses, trigger));
+    }
+  }
+
+  // Construct the triggers update object
+  const triggersUpdate: TriggerUpdate = {};
+
+  if (newTriggers.length > 0) {
+    triggersUpdate.create = newTriggers.map((trigger) => ({
+      actionClassId: getActionClassIdFromName(actionClasses, trigger),
+    }));
+  }
+
+  if (removedTriggers.length > 0) {
+    triggersUpdate.deleteMany = {
+      actionClassId: { in: removedTriggers },
+    };
+  }
+  revalidateSurveyByActionClassId(actionClasses, [...newTriggers, ...removedTriggers]);
+  return triggersUpdate;
 };
 
 export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
@@ -279,54 +329,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
   const { triggers, environmentId, segment, ...surveyData } = updatedSurvey;
 
-  if (triggers) {
-    const newTriggers: string[] = [];
-    const removedTriggers: string[] = [];
-
-    // find added triggers
-    for (const trigger of triggers) {
-      if (!trigger) {
-        continue;
-      }
-      if (currentSurvey.triggers.find((t) => t === trigger)) {
-        continue;
-      } else {
-        newTriggers.push(trigger);
-      }
-    }
-
-    // find removed triggers
-    for (const trigger of currentSurvey.triggers) {
-      if (triggers.find((t: any) => t === trigger)) {
-        continue;
-      } else {
-        removedTriggers.push(trigger);
-      }
-    }
-    // create new triggers
-    if (newTriggers.length > 0) {
-      data.triggers = {
-        ...(data.triggers || []),
-        create: newTriggers.map((trigger) => ({
-          actionClassId: getActionClassIdFromName(actionClasses, trigger),
-        })),
-      };
-    }
-    // delete removed triggers
-    if (removedTriggers.length > 0) {
-      data.triggers = {
-        ...(data.triggers || []),
-        deleteMany: {
-          actionClassId: {
-            in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
-          },
-        },
-      };
-    }
-
-    // Revalidation for newly added/removed actionClassId
-    revalidateSurveyByActionClassId(actionClasses, [...newTriggers, ...removedTriggers]);
-  }
+  data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
 
   if (segment) {
     // parse the segment filters:
@@ -429,14 +432,15 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     const actionClasses = await getActionClasses(environmentId);
     revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
   }
+  const actionClasses = await getActionClasses(environmentId);
 
   const createdBy = surveyBody.createdBy;
   delete surveyBody.createdBy;
 
   const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
     ...surveyBody,
-    // TODO: Create with triggers & attributeFilters
-    triggers: undefined,
+    // TODO: Create with attributeFilters
+    triggers: surveyBody.triggers ? processTriggerUpdates(surveyBody.triggers, [], actionClasses) : undefined,
     attributeFilters: undefined,
   };
 
