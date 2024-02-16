@@ -58,7 +58,7 @@ export async function middleware(request: NextRequest) {
         const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
         if (envIdAndUserId) {
           const { environmentId, userId } = envIdAndUserId;
-          await syncUserIdentificationLimiter.check(environmentId + "-" + userId);
+          await syncUserIdentificationLimiter.check(`${environmentId}-${userId}`);
         }
       } else if (shareUrlRoute(request.nextUrl.pathname)) {
         await shareUrlLimiter.check(ip);
