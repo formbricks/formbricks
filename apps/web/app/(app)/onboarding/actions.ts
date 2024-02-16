@@ -17,7 +17,14 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductUpdateInput } from "@formbricks/types/product";
-import { TSurveyDisplayOption, TSurveyInput, TSurveyStatus, TSurveyType } from "@formbricks/types/surveys";
+import {
+  TSurveyCTAQuestion,
+  TSurveyDisplayOption,
+  TSurveyInput,
+  TSurveyQuestionType,
+  TSurveyStatus,
+  TSurveyType,
+} from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
 import { TUserUpdateInput } from "@formbricks/types/user";
 
@@ -105,14 +112,7 @@ export const createSurveyFromTemplate = async (
   const autoComplete = surveyType === "web" ? 50 : null;
 
   // Construct survey input based on the pathway
-  const surveyInput = constructSurveyInput(
-    pathway,
-    template,
-    surveyType,
-    autoComplete,
-    userId,
-    session.user.name
-  );
+  const surveyInput = constructSurveyInput(pathway, template, surveyType, autoComplete, userId);
 
   // For in-app pathway, check existing surveys before creation
   if (pathway === "in-app") {
@@ -131,8 +131,7 @@ function constructSurveyInput(
   template: TTemplate,
   surveyType: TSurveyType,
   autoComplete: number | null,
-  userId: string,
-  username: string | null
+  userId: string
 ) {
   if (pathway === "link") {
     return {
@@ -145,10 +144,19 @@ function constructSurveyInput(
     // "in-app" pathway
     return {
       ...template.preset,
-      questions: template.preset.questions.map((question) => ({
-        ...question,
-        headline: `Hello ${username}, this is your example survey!`,
-      })),
+      questions: template.preset.questions.map(
+        (question) =>
+          ({
+            ...question,
+            type: TSurveyQuestionType.CTA,
+            headline: "You did it 🎉",
+            html: "You're all set up. Create your own survey to gather exactly the feedback you need :)",
+            buttonLabel: "Create survey",
+            buttonExternal: true,
+            buttonUrl: "https://app.formbricks.com",
+            imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/meme.png",
+          }) as TSurveyCTAQuestion
+      ),
       name: "First survey",
       type: surveyType,
       autoComplete: autoComplete || undefined,
@@ -156,7 +164,6 @@ function constructSurveyInput(
       triggers: ["New Session"],
       status: "inProgress" as TSurveyStatus,
       displayOption: "respondMultiple" as TSurveyDisplayOption,
-      recontactDays: 0,
     };
   }
 }
