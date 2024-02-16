@@ -74,8 +74,6 @@ export function InviteTeamMate({ team, environmentId, SET_CURRENT_STEP }: Invite
     } catch (error) {
       toast.error("An error occurred saving your settings.");
       console.error(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
