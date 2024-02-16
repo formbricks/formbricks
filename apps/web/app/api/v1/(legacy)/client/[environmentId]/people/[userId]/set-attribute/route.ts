@@ -71,7 +71,7 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
     });
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person),
+      getSyncSurveys(environmentId, person.id),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);

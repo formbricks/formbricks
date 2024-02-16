@@ -1,4 +1,5 @@
 // mock these globally used functions
+import { ValidationError } from "@formbricks/types/errors";
 
 jest.mock("next/cache", () => ({
   __esModule: true,
@@ -20,3 +21,9 @@ beforeEach(() => {
 afterEach(() => {
   jest.clearAllMocks();
 });
+
+export const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {
+  it("it should throw a ValidationError if the inputs are invalid", async () => {
+    await expect(service(...args)).rejects.toThrow(ValidationError);
+  });
+};

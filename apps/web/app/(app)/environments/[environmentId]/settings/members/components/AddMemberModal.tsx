@@ -88,7 +88,7 @@ export default function AddMemberModal({
                   ) : (
                     <UpgradePlanNotice
                       message="To manage access roles for your team,"
-                      url="https://formbricks.com/docs/self-hosting/license"
+                      url="https://formbricks.com/docs/self-hosting/enterprise"
                       textForUrl="get a self-hosting license (free)."
                     />
                   ))}

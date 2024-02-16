@@ -23,8 +23,8 @@ export default function AppPage({}) {
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const isUserId = window.location.href.includes("userId=true");
-      const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
       const attributes = isUserId ? { "Init Attribute 1": "eight", "Init Attribute 2": "two" } : undefined;
+      const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,

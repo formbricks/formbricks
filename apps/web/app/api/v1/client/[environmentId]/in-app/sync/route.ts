@@ -1,3 +1,4 @@
+import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, NextResponse } from "next/server";
@@ -56,6 +57,9 @@ export async function GET(
       const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
       isInAppSurveyLimitReached =
         !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
+      if (isInAppSurveyLimitReached) {
+        await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+      }
     }
 
     if (!environment?.widgetSetupCompleted) {
@@ -67,20 +71,30 @@ export async function GET(
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
+
     if (!product) {
       throw new Error("Product not found");
     }
 
     const state: TJsStateSync = {
       surveys: !isInAppSurveyLimitReached
-        ? surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web")
+        ? surveys.filter(
+            (survey) =>
+              survey.status === "inProgress" &&
+              survey.type === "web" &&
+              (!survey.segment || survey.segment.filters.length === 0)
+          )
         : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
       person: null,
     };
 
-    return responses.successResponse({ ...state }, true);
+    return responses.successResponse(
+      { ...state },
+      true,
+      "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+    );
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);
