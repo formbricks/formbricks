@@ -1,12 +1,7 @@
-// import { TSurvey } from "@formbricks/types/v1/surveys";
-// import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
-// import { Button, Checkbox, Label } from "@formbricks/ui";
 import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/slack/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-// import Modal from "@/components/shared/Modal";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Button } from "@react-email/components";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -14,7 +9,9 @@ import toast from "react-hot-toast";
 
 import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
+import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
 
 interface AddWebhookModalProps {
@@ -165,7 +162,7 @@ export default function AddSlackConnectionModal({
   const DropdownSelector = ({ label, items, selectedItem, setSelectedItem, disabled }) => {
     return (
       <div className="col-span-1">
-        <DropdownMenu.Label htmlFor={label}>{label}</DropdownMenu.Label>
+        <Label htmlFor={label}>{label}</Label>
         <div className="mt-1 flex">
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
@@ -253,7 +250,7 @@ export default function AddSlackConnectionModal({
               </div>
               {selectedSurvey && (
                 <div>
-                  <DropdownMenu.Label htmlFor="Surveys">Questions</DropdownMenu.Label>
+                  <Label htmlFor="Surveys">Questions</Label>
                   <div className="mt-1 rounded-lg border border-slate-200">
                     <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                       {selectedSurvey?.questions.map((question) => (

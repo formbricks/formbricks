@@ -1,15 +1,17 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
+import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
-import { TIntegrationSlackConfig, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
+import { TSlackConfig } from "@formbricks/types/integration/slack";
 
 export async function GET(req: NextRequest, res: NextResponse) {
   const url = req.url;
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("environment"); // Get the value of the 'state' parameter
+
+  console.log("yooooooo", environmentId);
 
   const session = await getServerSession(authOptions);
 
@@ -23,32 +25,38 @@ export async function GET(req: NextRequest, res: NextResponse) {
     };
   }
 
+  console.log(session, session.user);
   console.log("================HERE's the Session===================");
-  console.log(session);
-  const { user } = session;
 
-  const slackCredentials: TIntegrationSlackCredential = {
+  const { user, slack } = session;
+  // @ts-ignore
+  const slackCredentials: TSlackCredential = {
     token_type: "Bearer",
     // @ts-ignore
-    id_token: user.idToken,
+    access_token: slack.accessToken,
     // @ts-ignore
-    access_token: user.accessToken,
+    refresh_token: slack.refreshToken,
     // @ts-ignore
-    refresh_token: user.refreshToken,
-    // @ts-ignore
-    expiry_date: user.expiresAt,
+    expiry_date: slack.expiresAt,
   };
 
-  const slackConfiguration: TIntegrationSlackConfig = {
+  const slackConfiguration: TSlackConfig = {
     data: [],
     key: slackCredentials,
     user: {
-      id: user.id,
-      name: user.name as string,
-      email: user.email as string,
-      avatar: user.imageUrl as string,
+      id: user?.id,
+      name: user?.name as string,
+      email: user?.email as string,
+      avatar: user?.imageUrl as string,
     },
   };
+
+  // @ts-ignore
+  //   const slackIntegrationObject: TSlackIntegration = {
+  //     type: "slack",
+  //     environment: environmentId,
+  //     config: slackConfiguration,
+  //   }
 
   const slackIntegrationObject = {
     type: "slack" as "slack",
@@ -57,7 +65,23 @@ export async function GET(req: NextRequest, res: NextResponse) {
   };
 
   // Add the Slack Integration Object to the Database
-  const result = await createOrUpdateIntegration(environmentId, slackIntegrationObject);
+  const result = await prisma.integration.upsert({
+    where: {
+      type_environmentId: {
+        environmentId,
+        type: "slack",
+      },
+    },
+    update: {
+      ...slackIntegrationObject,
+      environment: { connect: { id: environmentId } },
+    },
+    create: {
+      ...slackIntegrationObject,
+      environment: { connect: { id: environmentId } },
+    },
+  });
+
   if (result) {
     return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack`);
   }

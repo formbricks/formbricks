@@ -4,7 +4,6 @@ import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./sharedTypes";
 
 export const ZSlackCredential = z.object({
   token_type: z.literal("Bearer"),
-  id_token: z.string(),
   expiry_date: z.number(),
   access_token: z.string(),
   refresh_token: z.string(),
@@ -35,7 +34,7 @@ export const ZSlackConfigData = z.object({
 });
 
 export const ZSlackUser = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   name: z.string(),
   email: z.string().email("Not a valid email address"),
   avatar: z.string().url("Avatar must be a url"),
@@ -82,7 +81,6 @@ export const ZSlackConfig = z.object({
 
 export const ZIntegrationSlackCredential = z.object({
   token_type: z.literal("Bearer"),
-  id_token: z.string(),
   expiry_date: z.number(),
   access_token: z.string(),
   refresh_token: z.string(),

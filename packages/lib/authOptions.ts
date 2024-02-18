@@ -1,5 +1,5 @@
 import type { IdentityProvider } from "@prisma/client";
-import type { NextAuthOptions } from "next-auth";
+import { type NextAuthOptions, getServerSession } from "next-auth";
 import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
@@ -139,6 +139,7 @@ export const authOptions: NextAuthOptions = {
           formData.append("client_id", context.provider.clientId ?? "");
           formData.append("client_secret", context.provider.clientSecret ?? "");
 
+          const session = await getServerSession(authOptions);
           try {
             const response = await fetch("https://slack.com/api/oauth.v2.access", {
               method: "POST",
@@ -155,6 +156,7 @@ export const authOptions: NextAuthOptions = {
                 user_id: data.bot_user_id,
                 team_id: data.team.id,
                 team_name: data.team.name,
+                email: session?.user?.email,
               },
             };
           } catch (error) {
@@ -164,11 +166,12 @@ export const authOptions: NextAuthOptions = {
       },
       userinfo: {
         async request(context) {
+          const session = await getServerSession(authOptions);
+
+          console.log("session............", session);
           return {
-            name: "bot_user",
             sub: "bot_user",
-            email: "bot_user@gmail.com",
-            image: "bot_user",
+            ...session?.user,
           };
         },
       },
@@ -188,15 +191,16 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, account, session }) {
+      let slackAttributes = {};
       if (account && account.provider && account.provider === "slack") {
-        const accountAttributes = {
+        slackAttributes = {
           accessToken: account.access_token,
           idToken: account.id_token,
           refreshToken: account.refresh_token,
           expiresAt: account.expires_at,
+          provider: account.provider,
         };
-        return { ...token, accountAttributes };
       }
       const existingUser = await getUserByEmail(token?.email as string);
 
@@ -206,24 +210,24 @@ export const authOptions: NextAuthOptions = {
       return {
         ...token,
         profile: existingUser || null,
+        slack: (token && token?.slack) ?? slackAttributes,
       };
     },
     async session(props) {
       const { session, token } = props;
-      if (token.accountAttributes) {
-        // @ts-ignore
-        session.user.accessToken = token.accountAttributes.accessToken;
-        // @ts-ignore
-        session.user.refreshToken = token.accountAttributes.refreshToken;
-        // @ts-ignore
-        session.user.expiresAt = token.accountAttributes.expiresAt;
-      }
       // @ts-expect-error
       session.user.id = token?.id;
       // @ts-expect-error
-      session.user = token.profile;
+      session.user = token?.profile;
 
-      return session;
+      return {
+        ...session,
+        slack: {
+          accessToken: token.slack?.accessToken,
+          refreshToken: token.slack?.refreshToken,
+          expiresAt: token.slack?.expiresAt,
+        },
+      };
     },
     async signIn(props: any) {
       const { user, account } = props;
