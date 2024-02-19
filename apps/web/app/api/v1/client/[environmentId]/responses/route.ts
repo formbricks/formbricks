@@ -49,6 +49,7 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     headers().get("CF-IPCountry") ||
     headers().get("X-Vercel-IP-Country") ||
     headers().get("CloudFront-Viewer-Country") ||
+    headers().get("AWS-Lambda-Country") ||
     undefined;
   const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 

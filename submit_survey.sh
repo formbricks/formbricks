@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Base URL for the API
-BASE_URL="https://queue.formbricks.com/api/v1/client/clrq7m814000amfrtwgbgms4e/responses"
+BASE_URL="https://queue.formbricks.com/api/v1/client/clssrjim3000ao4uz5aal74kn/responses"
 
 # Content-Type header
 CONTENT_TYPE="Content-Type: application/json"
@@ -11,7 +11,7 @@ INCREMENTAL_NUMBER=$1
 
 # Survey response data with the incremental number
 DATA_RAW="{
-  \"surveyId\": \"cls1498ym000wvbbse7pjri8b\",
+  \"surveyId\": \"clssrqluj0000v5kf975pmznb\",
   \"finished\": true,
   \"data\": {
       \"weqyag4iooty2scmgmv73emp\": \"clicked\",
@@ -24,4 +24,4 @@ DATA_RAW="{
 }"
 
 # Sending the request
-response=$(curl -s -w "%{http_code}" -o /dev/null --location --request POST "$BASE_URL" --header "$CONTENT_TYPE" --data-raw "$DATA_RAW")
+response=$(curl -s -w "%{http_code}" -o /dev/null --location --request POST "$BASE_URL" --header "$CONTENT_TYPE" --header "$COUNTRY" --header "$FORWARDED" --data-raw "$DATA_RAW")
