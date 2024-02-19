@@ -5,7 +5,7 @@ import {
   getRemoveLinkBrandingPermission,
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { DEFAULT_BRAND_COLOR, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -86,7 +86,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           product={product}
           canRemoveBranding={canRemoveInAppBranding}
           environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         />
       </SettingsCard>
     </div>

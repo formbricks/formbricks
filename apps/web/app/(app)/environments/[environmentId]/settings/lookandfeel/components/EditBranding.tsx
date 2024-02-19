@@ -15,7 +15,6 @@ interface EditFormbricksBrandingProps {
   product: TProduct;
   canRemoveBranding: boolean;
   environmentId: string;
-  isFormbricksCloud?: boolean;
 }
 
 export function EditFormbricksBranding({
@@ -23,7 +22,6 @@ export function EditFormbricksBranding({
   product,
   canRemoveBranding,
   environmentId,
-  isFormbricksCloud,
 }: EditFormbricksBrandingProps) {
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
     type === "linkSurvey" ? product.linkSurveyBranding : product.inAppSurveyBranding
@@ -71,7 +69,7 @@ export function EditFormbricksBranding({
               />
             </div>
           )}
-          {type !== "linkSurvey" && isFormbricksCloud && (
+          {type !== "linkSurvey" && (
             <UpgradePlanNotice
               message="To remove the Formbricks branding from In-app Surveys, please"
               textForUrl="upgrade your plan."
