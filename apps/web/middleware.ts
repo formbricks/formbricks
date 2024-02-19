@@ -17,7 +17,7 @@ import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
 
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" || RATE_LIMITING_DISABLED) {
     return NextResponse.next();
   }
 
