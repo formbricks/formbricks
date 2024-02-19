@@ -19,7 +19,7 @@ export const OptionCard: React.FC<PathwayOptionProps> = ({
 }) => (
   <div className="relative">
     <div
-      className="flex w-80 cursor-pointer flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white p-4 shadow-lg transition ease-in-out hover:scale-105"
+      className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white p-4 shadow-lg transition ease-in-out hover:scale-105"
       onClick={onSelect}
       role="button"
       tabIndex={0} // Make it focusable

@@ -103,9 +103,11 @@ export function Onboarding({
   };
 
   return (
-    <div className="bg-yellow-20 flex h-full w-full flex-col items-center bg-slate-50">
+    <div className="bg-yellow-20 flex h-full w-full flex-col items-center">
       <OnboardingHeader progress={progress} />
-      <div className="flex h-full w-full items-center justify-center">{renderOnboardingStep()}</div>
+      <div className="flex h-full w-full items-center justify-center  bg-slate-50">
+        {renderOnboardingStep()}
+      </div>
     </div>
   );
 }

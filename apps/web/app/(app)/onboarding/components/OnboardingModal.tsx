@@ -28,7 +28,7 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
     (template) =>
       template.name === "Churn Survey" ||
       template.name === "Feedback Box" ||
-      template.name === "Net Promoter Score (NPS)"
+      template.name === "Improve Trial Conversion"
   );
   if (!isOpen) return null;
 
