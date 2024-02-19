@@ -93,7 +93,7 @@ export class ResponseQueue {
               responseId: response.data.id,
             });
           } catch (error) {
-            console.log("Failed to update display, proceeding with the response.", error);
+            console.error("Failed to update display, proceeding with the response.", error);
           }
         }
         this.surveyState.updateResponseId(response.data.id);
