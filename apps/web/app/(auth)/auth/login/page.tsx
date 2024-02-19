@@ -5,6 +5,7 @@ import { Metadata } from "next";
 
 import {
   AZURE_OAUTH_ENABLED,
+  EMAIL_AUTH_ENABLED,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
@@ -25,6 +26,7 @@ export default function SignInPage() {
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
           <SigninForm
+            emailAuthEnabled={EMAIL_AUTH_ENABLED}
             publicSignUpEnabled={SIGNUP_ENABLED}
             passwordResetEnabled={!PASSWORD_RESET_DISABLED}
             googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}

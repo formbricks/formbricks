@@ -260,6 +260,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     };
 
     responseCache.revalidate({
+      environmentId: environmentId,
       id: response.id,
       personId: response.person?.id,
       surveyId: response.surveyId,
