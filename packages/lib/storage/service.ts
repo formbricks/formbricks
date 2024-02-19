@@ -29,15 +29,19 @@ const AWS_BUCKET_NAME = env.S3_BUCKET_NAME!;
 const AWS_REGION = env.S3_REGION!;
 const S3_ACCESS_KEY = env.S3_ACCESS_KEY!;
 const S3_SECRET_KEY = env.S3_SECRET_KEY!;
+const S3_ENDPOINT = env.S3_ENDPOINT;
 
 // S3Client Singleton
 
 export const s3Client = new S3Client({
   credentials: {
-    accessKeyId: S3_ACCESS_KEY,
+    accessKeyId: S3_ACCESS_KEY!,
     secretAccessKey: S3_SECRET_KEY!,
   },
   region: AWS_REGION!,
+  ...(S3_ENDPOINT && {
+    endpoint: S3_ENDPOINT,
+  }),
 });
 
 const ensureDirectoryExists = async (dirPath: string) => {
@@ -63,15 +67,15 @@ type TGetFileResponse = {
 type TGetSignedUrlResponse =
   | { signedUrl: string; fileUrl: string; presignedFields: Object }
   | {
-      signedUrl: string;
-      updatedFileName: string;
-      fileUrl: string;
-      signingData: {
-        signature: string;
-        timestamp: number;
-        uuid: string;
-      };
+    signedUrl: string;
+    updatedFileName: string;
+    fileUrl: string;
+    signingData: {
+      signature: string;
+      timestamp: number;
+      uuid: string;
     };
+  };
 
 const getS3SignedUrl = async (fileKey: string): Promise<string> => {
   const [_, accessType] = fileKey.split("/");

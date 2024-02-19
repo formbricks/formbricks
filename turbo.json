@@ -113,6 +113,7 @@
         "S3_SECRET_KEY",
         "S3_REGION",
         "S3_BUCKET_NAME",
+        "S3_ENDPOINT",
         "SENTRY_DSN",
         "SHORT_URL_BASE",
         "SIGNUP_DISABLED",
