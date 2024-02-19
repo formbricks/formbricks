@@ -62,6 +62,7 @@ export const env = createEnv({
     S3_SECRET_KEY: z.string().optional(),
     S3_REGION: z.string().optional(),
     S3_BUCKET_NAME: z.string().optional(),
+    S3_ENDPOINT: z.string().optional(),
     NOTION_OAUTH_CLIENT_ID: z.string().optional(),
     NOTION_OAUTH_CLIENT_SECRET: z.string().optional(),
     AZUREAD_CLIENT_SECRET: z.string().optional(),
