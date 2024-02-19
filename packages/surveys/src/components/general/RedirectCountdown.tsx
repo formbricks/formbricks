@@ -18,7 +18,7 @@ export default function RedirectCountDown({ redirectUrl, isRedirectDisabled }: R
           if (prevTime <= 0) {
             clearInterval(interval);
             if (!isRedirectDisabled) {
-              window.location.href = redirectUrl;
+              window.top?.location.replace(redirectUrl);
             }
             return 0;
           }
