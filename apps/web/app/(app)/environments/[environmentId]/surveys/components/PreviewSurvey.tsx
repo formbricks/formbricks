@@ -209,7 +209,7 @@ export default function PreviewSurvey({
                     survey={survey}
                     brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
-                    isBrandingEnabled={product.inAppSurveyBranding}
+                    isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
@@ -278,7 +278,7 @@ export default function PreviewSurvey({
                   survey={survey}
                   brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
-                  isBrandingEnabled={product.inAppSurveyBranding}
+                  isBrandingEnabled={product.linkSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
