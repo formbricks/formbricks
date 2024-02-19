@@ -4,7 +4,7 @@ import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
@@ -77,6 +77,10 @@ export default function RatingQuestion({
     />
   );
 
+  useEffect(() => {
+    setHoveredNumber(0);
+  }, [question.id, setHoveredNumber]);
+
   return (
     <form
       key={question.id}
@@ -112,7 +116,7 @@ export default function RatingQuestion({
                       value === number ? "bg-accent-selected-bg border-border-highlight z-10" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
-                      "text-heading hover:bg-accent-bg focus:bg-accent-bg block h-full w-full border focus:outline-none"
+                      "text-heading md:hover:bg-accent-bg focus:bg-accent-bg block h-full w-full border focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -130,7 +134,7 @@ export default function RatingQuestion({
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
                         : "text-slate-300",
-                      "hover:text-amber-400"
+                      "md:hover:text-amber-400"
                     )}
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
