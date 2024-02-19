@@ -94,7 +94,7 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
   if (isAppSurveyLimitReached) {
     surveys = [];
   } else if (isPerson) {
-    surveys = await getSyncSurveys(environmentId, person as TPerson);
+    surveys = await getSyncSurveys(environmentId, (person as TPerson).id);
   } else {
     surveys = await getSurveys(environmentId);
     surveys = surveys.filter((survey) => survey.type === "web" && survey.status === "inProgress");

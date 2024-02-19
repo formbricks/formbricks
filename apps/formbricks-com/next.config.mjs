@@ -156,11 +156,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: "/cla",
-        destination: "https://formbricks.com/clmyhzfrymr4ko00hycsg1tvx",
-        permanent: true,
-      },
-      {
         source: "/docs/contributing/gitpod",
         destination: "/docs/contributing/setup#gitpod",
         permanent: true,
@@ -203,6 +198,11 @@ const nextConfig = {
       {
         source: "/signup",
         destination: "https://app.formbricks.com/auth/signup",
+        permanent: true,
+      },
+      {
+        source: "/blog/preseed-announcement",
+        destination: "/blog",
         permanent: true,
       },
     ];

@@ -82,6 +82,20 @@ export const timeSince = (dateString: string) => {
   });
 };
 
+export const timeSinceDate = (date: Date) => {
+  return formatDistance(date, new Date(), {
+    addSuffix: true,
+  });
+};
+
+export const formatDate = (date: Date) => {
+  return intlFormat(date, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
 export const timeSinceConditionally = (dateString: string) => {
   return new Date().getTime() - new Date(dateString).getTime() > 14 * 24 * 60 * 60 * 1000
     ? convertDateTimeStringShort(dateString)

@@ -28,6 +28,7 @@ import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } fro
 import { calculateTtcTotal } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
+import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -259,6 +260,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     };
 
     responseCache.revalidate({
+      environmentId: environmentId,
       id: response.id,
       personId: response.person?.id,
       surveyId: response.surveyId,
@@ -363,7 +365,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
         });
 
         if (!responsePrisma) {
-          throw new ResourceNotFoundError("Response", responseId);
+          return null;
         }
 
         const response: TResponse = {
@@ -388,10 +390,12 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     }
   )();
 
-  return {
-    ...formatDateFields(response, ZResponse),
-    notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
-  } as TResponse;
+  return response
+    ? ({
+        ...formatDateFields(response, ZResponse),
+        notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
+      } as TResponse)
+    : null;
 };
 
 export const getResponses = async (
@@ -596,7 +600,10 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
 
     deleteDisplayByResponseId(responseId, response.surveyId);
 
+    const survey = await getSurvey(response.surveyId);
+
     responseCache.revalidate({
+      environmentId: survey?.environmentId,
       id: response.id,
       personId: response.person?.id,
       surveyId: response.surveyId,

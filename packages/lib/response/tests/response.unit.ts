@@ -280,7 +280,8 @@ describe("Tests for getResponse service", () => {
 
     it("Throws ResourceNotFoundError if no response is found", async () => {
       prismaMock.response.findUnique.mockResolvedValue(null);
-      await expect(getResponse(mockResponse.id)).rejects.toThrow(ResourceNotFoundError);
+      const response = await getResponse(mockResponse.id);
+      expect(response).toBeNull();
     });
 
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {

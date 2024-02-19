@@ -24,12 +24,14 @@ type TSigninFormState = {
 };
 
 export const SigninForm = ({
+  emailAuthEnabled,
   publicSignUpEnabled,
   passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
 }: {
+  emailAuthEnabled: boolean;
   publicSignUpEnabled: boolean;
   passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
@@ -185,21 +187,23 @@ export const SigninForm = ({
                 )}
               </div>
             )}
-            <Button
-              onClick={() => {
-                if (!showLogin) {
-                  setShowLogin(true);
-                  // Add a slight delay before focusing the input field to ensure it's visible
-                  setTimeout(() => emailRef.current?.focus(), 100);
-                } else if (formRef.current) {
-                  formRef.current.requestSubmit();
-                }
-              }}
-              variant="darkCTA"
-              className="w-full justify-center"
-              loading={loggingIn}>
-              {totpLogin ? "Submit" : "Login with Email"}
-            </Button>
+            {emailAuthEnabled && (
+              <Button
+                onClick={() => {
+                  if (!showLogin) {
+                    setShowLogin(true);
+                    // Add a slight delay before focusing the input field to ensure it's visible
+                    setTimeout(() => emailRef.current?.focus(), 100);
+                  } else if (formRef.current) {
+                    formRef.current.requestSubmit();
+                  }
+                }}
+                variant="darkCTA"
+                className="w-full justify-center"
+                loading={loggingIn}>
+                {totpLogin ? "Submit" : "Login with Email"}
+              </Button>
+            )}
           </form>
 
           {googleOAuthEnabled && !totpLogin && (

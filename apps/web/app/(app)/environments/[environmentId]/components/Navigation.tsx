@@ -120,11 +120,10 @@ export default function Navigation({
         hidden: false,
       },
       {
-        name: "People",
+        name: "People & Segments",
         href: `/environments/${environment.id}/people`,
         icon: CustomersIcon,
-        current: pathname?.includes("/people"),
-        hidden: false,
+        current: pathname?.includes("/people") || pathname?.includes("/segments"),
       },
       {
         name: "Actions & Attributes",
@@ -151,7 +150,7 @@ export default function Navigation({
     [environment.id, pathname, isViewer]
   );
 
-  const dropdownnavigation = [
+  const dropdownNavigation = [
     {
       title: "Survey",
       links: [
@@ -459,7 +458,7 @@ export default function Navigation({
                       </DropdownMenuPortal>
                     </DropdownMenuSub>
 
-                    {dropdownnavigation.map((item) => (
+                    {dropdownNavigation.map((item) => (
                       <DropdownMenuGroup key={item.title}>
                         <DropdownMenuSeparator />
                         {item.links.map(
@@ -504,7 +503,7 @@ export default function Navigation({
                       )}
                       <DropdownMenuItem
                         onClick={async () => {
-                          await signOut();
+                          await signOut({ callbackUrl: "/auth/login" });
                           await formbricksLogout();
                         }}>
                         <div className="flex h-full w-full items-center">

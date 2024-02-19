@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import {
   AZURE_OAUTH_ENABLED,
+  EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
@@ -51,6 +52,7 @@ export default function SignUpPage({
               privacyUrl={PRIVACY_URL}
               passwordResetEnabled={!PASSWORD_RESET_DISABLED}
               emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
+              emailAuthEnabled={EMAIL_AUTH_ENABLED}
               googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
               githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
               azureOAuthEnabled={AZURE_OAUTH_ENABLED}

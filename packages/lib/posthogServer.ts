@@ -5,10 +5,9 @@ const enabled =
   process.env.NEXT_PUBLIC_POSTHOG_API_HOST &&
   process.env.NEXT_PUBLIC_POSTHOG_API_KEY;
 
-export const capturePosthogEvent = async (
-  userId: string,
+export const capturePosthogEnvironmentEvent = async (
+  environmentId: string,
   eventName: string,
-  teamId?: string,
   properties: any = {}
 ) => {
   if (
@@ -23,12 +22,11 @@ export const capturePosthogEvent = async (
       host: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
     });
     client.capture({
+      distinctId: environmentId,
       event: eventName,
-      distinctId: userId,
-      groups: teamId ? { company: teamId } : {},
+      groups: { environment: environmentId },
       properties,
     });
-
     await client.shutdownAsync();
   } catch (error) {
     console.error("error sending posthog event:", error);
