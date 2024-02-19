@@ -116,7 +116,8 @@ export default function RatingQuestion({
                       value === number ? "bg-accent-selected-bg border-border-highlight z-10" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
-                      "text-heading md:hover:bg-accent-bg focus:bg-accent-bg block h-full w-full border focus:outline-none"
+                      hoveredNumber === number ? "bg-accent-bg " : "",
+                      "text-heading focus:bg-accent-bg block h-full w-full border focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -134,7 +135,7 @@ export default function RatingQuestion({
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
                         : "text-slate-300",
-                      "md:hover:text-amber-400"
+                      hoveredNumber === number ? "text-amber-400 " : ""
                     )}
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
