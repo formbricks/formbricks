@@ -23,7 +23,7 @@ const variantStyles = {
     "rounded-full bg-slate-900 py-1 px-3 text-white hover:bg-slate-700 dark:bg-teal-500 dark:text-white dark:hover:bg-teal-400",
   outline:
     "rounded-full py-1 px-3 text-slate-700 ring-1 ring-inset ring-slate-900/10 hover:bg-slate-900/2.5 hover:text-slate-900 dark:text-slate-400 dark:ring-white/10 dark:hover:bg-white/5 dark:hover:text-white",
-  text: "text-teal-500 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-600",
+  text: "text-teal-500 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300",
 };
 
 type ButtonProps = {

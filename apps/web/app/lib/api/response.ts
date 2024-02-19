@@ -114,16 +114,22 @@ const unauthorizedResponse = (cors: boolean = false) =>
     }
   );
 
-const successResponse = (data: Object, cors: boolean = false) =>
-  NextResponse.json(
+const successResponse = (data: Object, cors: boolean = false, cache: string = "private, no-store") => {
+  const responseHeaders = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return NextResponse.json(
     {
       data,
     } as ApiSuccessResponse<typeof data>,
     {
       status: 200,
-      ...(cors && { headers: corsHeaders }),
+      headers: responseHeaders,
     }
   );
+};
 
 const internalServerErrorResponse = (message: string, cors: boolean = false) =>
   NextResponse.json(
