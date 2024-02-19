@@ -19,14 +19,14 @@ export default async function Home() {
     return <ClientLogout />;
   }
 
-  if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {
-    return redirect(`/onboarding`);
-  }
-
   const teams = await getTeamsByUserId(session.user.id);
   if (!teams || teams.length === 0) {
     console.error("Failed to get teams, redirecting to create-first-team");
     return redirect("/create-first-team");
+  }
+
+  if (!ONBOARDING_DISABLED && !session.user.onboardingCompleted) {
+    return redirect(`/onboarding`);
   }
 
   let environment;
