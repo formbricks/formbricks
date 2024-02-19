@@ -3,9 +3,11 @@ import {
   loginLimiter,
   shareUrlLimiter,
   signUpLimiter,
+  syncUserIdentificationLimiter,
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
+  isSyncWithUserIdentificationEndpoint,
   isWebAppRoute,
   loginRoute,
   shareUrlRoute,
@@ -52,6 +54,12 @@ export async function middleware(request: NextRequest) {
         await signUpLimiter.check(ip);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
         await clientSideApiEndpointsLimiter.check(ip);
+
+        const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
+        if (envIdAndUserId) {
+          const { environmentId, userId } = envIdAndUserId;
+          await syncUserIdentificationLimiter.check(`${environmentId}-${userId}`);
+        }
       } else if (shareUrlRoute(request.nextUrl.pathname)) {
         await shareUrlLimiter.check(ip);
       }
