@@ -16,3 +16,11 @@ export const shareUrlRoute = (url: string): boolean => {
 
 export const isWebAppRoute = (url: string): boolean =>
   url.startsWith("/environments") && url !== "/api/auth/signout";
+
+export const isSyncWithUserIdentificationEndpoint = (
+  url: string
+): { environmentId: string; userId: string } | false => {
+  const regex = /\/api\/v1\/client\/([^/]+)\/in-app\/sync\/([^/]+)/;
+  const match = url.match(regex);
+  return match ? { environmentId: match[1], userId: match[2] } : false;
+};
