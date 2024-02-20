@@ -21,7 +21,7 @@ export const PricingCard = ({
   perMetricCharge,
   loading,
   onUpgrade,
-  onUbsubscribe,
+  onUnsubscribe: onUbsubscribe,
 }: {
   title: string;
   subtitle: string;
@@ -41,7 +41,7 @@ export const PricingCard = ({
   perMetricCharge?: number;
   loading: boolean;
   onUpgrade: any;
-  onUbsubscribe: any;
+  onUnsubscribe: any;
 }) => {
   const featureNameKey = featureName as keyof typeof team.billing.features;
   return (
