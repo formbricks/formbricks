@@ -2,8 +2,12 @@ import { createId } from "@paralleldrive/cuid2";
 
 import {
   TSurvey,
+  TSurveyCTAQuestion,
+  TSurveyDisplayOption,
   TSurveyHiddenFields,
   TSurveyQuestionType,
+  TSurveyStatus,
+  TSurveyType,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
@@ -2552,4 +2556,27 @@ export const minimalSurvey: TSurvey = {
   styling: null,
   resultShareKey: null,
   segment: null,
+};
+
+export const firstSurvey = {
+  ...customSurvey.preset,
+  questions: customSurvey.preset.questions.map(
+    (question) =>
+      ({
+        ...question,
+        type: TSurveyQuestionType.CTA,
+        headline: "You did it 🎉",
+        html: "You're all set up. Create your own survey to gather exactly the feedback you need :)",
+        buttonLabel: "Create survey",
+        buttonExternal: true,
+        buttonUrl: "https://app.formbricks.com",
+        imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/meme.png",
+      }) as TSurveyCTAQuestion
+  ),
+  name: "First survey",
+  type: "web" as TSurveyType,
+  autoComplete: 50,
+  triggers: ["New Session"],
+  status: "inProgress" as TSurveyStatus,
+  displayOption: "respondMultiple" as TSurveyDisplayOption,
 };

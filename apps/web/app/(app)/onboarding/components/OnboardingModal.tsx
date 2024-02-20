@@ -36,7 +36,7 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
     setLoadingTemplate(template.name);
     localStorage.removeItem("pathway");
     try {
-      const survey = await createSurveyFromTemplate(template, environment, "link");
+      const survey = await createSurveyFromTemplate(template, environment);
       router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
     } catch (e) {
       toast.error("An error occurred creating a new survey");

@@ -1,6 +1,5 @@
 "use client";
 
-import { customSurvey } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
 import { ArrowRight, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,7 +8,7 @@ import { toast } from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/Button";
 
-import { createSurveyFromTemplate, fetchEnvironment, finishOnboardingAction } from "../actions";
+import { fetchEnvironment, finishOnboardingAction } from "../actions";
 
 const goToProduct = async (router) => {
   await finishOnboardingAction();
@@ -137,12 +136,6 @@ export function Connect({ environment, webAppUrl, SET_CURRENT_STEP }: ConnectPro
   useVisibilityChange(environment, setLocalEnvironment);
 
   useEffect(() => {
-    if (localEnvironment.widgetSetupCompleted) {
-      createSurvey();
-    }
-  }, [localEnvironment.widgetSetupCompleted]);
-
-  useEffect(() => {
     const fetchLatestEnvironmentOnFirstLoad = async () => {
       const refetchedEnvironment = await fetchEnvironment(environment.id);
       if (!refetchedEnvironment) return;
@@ -150,10 +143,6 @@ export function Connect({ environment, webAppUrl, SET_CURRENT_STEP }: ConnectPro
     };
     fetchLatestEnvironmentOnFirstLoad();
   }, []);
-
-  const createSurvey = async () => {
-    await createSurveyFromTemplate(customSurvey, localEnvironment, "in-app");
-  };
 
   const codeSnippet = `<!-- START Formbricks Surveys -->
     <script type="text/javascript">
