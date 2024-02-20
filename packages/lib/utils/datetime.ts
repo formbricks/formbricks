@@ -28,7 +28,6 @@ export function formatDateFields<T extends z.ZodRawShape>(
   const formattedObject = { ...object };
 
   for (const key in schemaFields) {
-    console.log({ schemaFields, key });
     if (Object.prototype.hasOwnProperty.call(schemaFields, key) && isZodDate(schemaFields[key])) {
       const dateStr = (formattedObject as any)[key];
       try {

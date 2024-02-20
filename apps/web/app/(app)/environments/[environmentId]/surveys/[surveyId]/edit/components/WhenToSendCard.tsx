@@ -1,6 +1,7 @@
 "use client";
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
+import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useCallback, useEffect, useState } from "react";
@@ -24,7 +25,7 @@ import { TabBar } from "@formbricks/ui/TabBar";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
   propActionClasses: TActionClass[];
   membershipRole?: TMembershipRole;
@@ -43,7 +44,9 @@ export default function WhenToSendCard({
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
-  const [activeTab, setActiveTab] = useState("inline");
+  const [activeTriggerTab, setActiveTriggerTab] = useState(
+    !!localSurvey?.inlineTriggers ? "inline" : "relation"
+  );
   const tabs = [
     {
       id: "inline",
@@ -82,8 +85,10 @@ export default function WhenToSendCard({
   );
 
   const removeTriggerEvent = (idx: number) => {
+    console.log("removeTriggerEvent", { idx, localSurvey });
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
+    console.log({ updatedSurvey });
     setLocalSurvey(updatedSurvey);
   };
 
@@ -166,6 +171,15 @@ export default function WhenToSendCard({
     }
   }, [addTriggerEvent, localSurvey.triggers.length]);
 
+  // // if the triggers is an empty array, or an array with an empty string, remove the empty string
+  // useEffect(() => {
+  //   if (!!localSurvey.triggers.length) return;
+
+  //   if (localSurvey.triggers.length === 1 && localSurvey.triggers[0] === "") {
+  //     setLocalSurvey((prevSurvey) => ({ ...prevSurvey, triggers: [] }));
+  //   }
+  // }, [localSurvey.triggers, setLocalSurvey]);
+
   if (localSurvey.type === "link") {
     return null; // Hide card completely
   }
@@ -204,10 +218,18 @@ export default function WhenToSendCard({
 
           <div className="p-3">
             <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
-              <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} tabStyle="button" />
+              <TabBar
+                tabs={tabs}
+                activeId={activeTriggerTab}
+                setActiveId={setActiveTriggerTab}
+                tabStyle="button"
+                className="bg-slate-100"
+              />
               <div className="p-3">
-                {activeTab === "inline" ? (
-                  <p>Inline</p>
+                {activeTriggerTab === "inline" ? (
+                  <div className="flex flex-col">
+                    <InlineTriggers localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+                  </div>
                 ) : (
                   <>
                     {!isAddEventModalOpen &&

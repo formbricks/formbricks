@@ -423,7 +423,13 @@ export async function deleteSurvey(surveyId: string) {
 }
 
 export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
+  console.log({ surveyBody });
   validateInputs([environmentId, ZId]);
+
+  // if the survey body has both triggers and inlineTriggers, we throw an error
+  if (surveyBody.triggers && surveyBody.inlineTriggers) {
+    throw new InvalidInputError("Survey body cannot have both triggers and inlineTriggers");
+  }
 
   if (surveyBody.triggers) {
     const actionClasses = await getActionClasses(environmentId);

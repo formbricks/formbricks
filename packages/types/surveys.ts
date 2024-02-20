@@ -404,12 +404,8 @@ const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
 export const ZSurveyInlineTriggers = z.object({
-  codeActionInfo: z.object({ identifier: z.string() }).optional(),
-  noCodeActionInfo: z
-    .object({
-      config: ZNoCodeConfig,
-    })
-    .optional(),
+  codeConfig: z.object({ identifier: z.string() }).optional(),
+  noCodeConfig: ZNoCodeConfig.omit({ type: true }).optional(),
 });
 
 export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
@@ -449,13 +445,17 @@ export const ZSurvey = z.object({
 
 export const ZSurveyWithRefinements = ZSurvey.refine(
   (survey) => {
-    if (survey.type === "email" && survey.status === "completed") {
+    // Survey cannot have both triggers and inlineTriggers
+    if (
+      !!survey.triggers?.length &&
+      (survey.inlineTriggers?.codeConfig || survey.inlineTriggers?.noCodeConfig)
+    ) {
       return false;
     }
 
     return true;
   },
-  { message: "Email surveys cannot be completed" }
+  { message: "Survey cannot have both triggers and inlineTriggers" }
 );
 
 export const ZSurveyInput = z
