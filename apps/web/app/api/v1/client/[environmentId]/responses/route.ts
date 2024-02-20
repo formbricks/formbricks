@@ -45,6 +45,12 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     delete responseInput.personId;
   }
 
+  const invalid = headers().get("shubham");
+  if (invalid) {
+    console.log("sending 500 error on header,", invalid);
+    return responses.internalServerErrorResponse("hi shubham");
+  }
+
   const agent = UAParser(request.headers.get("user-agent"));
   const country = IS_FORMBRICKS_CLOUD
     ? headers().get("X-Vercel-IP-Country") ||
