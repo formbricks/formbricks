@@ -90,7 +90,9 @@ const ResponseFilter = () => {
   };
 
   const handleClearAllFilters = () => {
-    setFilterValue({ ...filterValue, filter: [] });
+    setFilterValue((filterValue) => ({ ...filterValue, filter: [] }));
+    setSelectedFilter((selectedFilters) => ({ ...selectedFilters, filter: [] }));
+    setIsOpen(false);
   };
 
   const handleDeleteFilter = (index: number) => {
