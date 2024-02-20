@@ -1,13 +1,62 @@
-import z from "zod";
+import z, {
+  AnyZodObject,
+  Effect,
+  UnknownKeysParam,
+  ZodEffects,
+  ZodObject,
+  ZodRawShape,
+  ZodType,
+  ZodTypeAny,
+  ZodTypeDef,
+  objectInputType,
+  objectOutputType,
+} from "zod";
 
 import { ZActionClass } from "./actionClasses";
 import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
 import { ZProduct } from "./product";
-import { ZSurvey } from "./surveys";
+import { ZSurvey, ZSurveyWithRefinements } from "./surveys";
 
-const ZSurveyWithTriggers = ZSurvey.extend({
-  triggers: z.array(ZActionClass).or(z.array(z.string())),
-});
+export const mergeWithEffect = <
+  Incoming extends AnyZodObject,
+  T extends ZodRawShape,
+  UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
+  Catchall extends ZodTypeAny = ZodTypeAny,
+  Output = objectOutputType<T, Catchall, UnknownKeys>,
+  Input = objectInputType<T, Catchall, UnknownKeys>,
+>(
+  a: ZodEffects<ZodObject<T, UnknownKeys, Catchall, Output, Input>>,
+  b: Incoming
+) => {
+  return addEffect(a.innerType().merge(b), a._def.effect);
+};
+
+export const addEffect = <
+  Output = unknown,
+  Def extends ZodTypeDef = ZodTypeDef,
+  Input = Output,
+  Base extends ZodType<Output, Def, Input> = ZodType<Output, Def, Input>,
+>(
+  base: Base,
+  effect: Effect<unknown>
+) => {
+  switch (effect.type) {
+    case "preprocess":
+      return z.preprocess(effect.transform, base);
+    case "transform":
+      return base.transform(effect.transform);
+    case "refinement":
+      return base.superRefine(effect.refinement);
+  }
+};
+
+// This is a hack to get around the fact that Zod doesn't support merging (z.extend) with effects.
+const ZSurveyWithTriggers = mergeWithEffect(
+  ZSurveyWithRefinements,
+  z.object({
+    triggers: z.array(ZActionClass).or(z.array(z.string())),
+  })
+);
 
 export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
 

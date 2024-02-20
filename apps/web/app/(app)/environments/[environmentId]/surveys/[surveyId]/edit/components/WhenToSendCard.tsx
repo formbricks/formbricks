@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui/Select";
+import { TabBar } from "@formbricks/ui/TabBar";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
@@ -41,6 +42,19 @@ export default function WhenToSendCard({
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
+
+  const [activeTab, setActiveTab] = useState("inline");
+  const tabs = [
+    {
+      id: "inline",
+      label: "Custom Actions",
+    },
+    {
+      id: "relation",
+      label: "Saved Actions",
+    },
+  ];
+
   const { isViewer } = getAccessFlags(membershipRole);
 
   const autoClose = localSurvey.autoClose !== null;
@@ -187,57 +201,69 @@ export default function WhenToSendCard({
 
         <Collapsible.CollapsibleContent>
           <hr className="py-1 text-slate-600" />
+
           <div className="p-3">
-            {!isAddEventModalOpen &&
-              localSurvey.triggers?.map((triggerEventClass, idx) => (
-                <div className="mt-2" key={idx}>
-                  <div className="inline-flex items-center">
-                    <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
-                    <Select
-                      value={triggerEventClass}
-                      onValueChange={(actionClassName) => setTriggerEvent(idx, actionClassName)}>
-                      <SelectTrigger className="w-[240px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <button
-                          type="button"
-                          className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
-                          value="none"
-                          onClick={() => {
-                            setAddEventModalOpen(true);
-                            setActiveIndex(idx);
-                          }}>
-                          <PlusIcon className="mr-1 h-5 w-5" />
-                          Add Action
-                        </button>
-                        <SelectSeparator />
-                        {actionClasses.map((actionClass) => (
-                          <SelectItem
-                            value={actionClass.name}
-                            key={actionClass.name}
-                            title={actionClass.description ? actionClass.description : ""}>
-                            {actionClass.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="mx-2 text-sm">action is performed</p>
-                    <button type="button" onClick={() => removeTriggerEvent(idx)}>
-                      <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            <div className="px-6 py-4">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  addTriggerEvent();
-                }}>
-                <PlusIcon className="mr-2 h-4 w-4" />
-                Add condition
-              </Button>
+            <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
+              <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} tabStyle="button" />
+              <div className="p-3">
+                {activeTab === "inline" ? (
+                  <p>Inline</p>
+                ) : (
+                  <>
+                    {!isAddEventModalOpen &&
+                      localSurvey.triggers?.map((triggerEventClass, idx) => (
+                        <div className="mt-2" key={idx}>
+                          <div className="inline-flex items-center">
+                            <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
+                            <Select
+                              value={triggerEventClass}
+                              onValueChange={(actionClassName) => setTriggerEvent(idx, actionClassName)}>
+                              <SelectTrigger className="w-[240px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <button
+                                  type="button"
+                                  className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
+                                  value="none"
+                                  onClick={() => {
+                                    setAddEventModalOpen(true);
+                                    setActiveIndex(idx);
+                                  }}>
+                                  <PlusIcon className="mr-1 h-5 w-5" />
+                                  Add Action
+                                </button>
+                                <SelectSeparator />
+                                {actionClasses.map((actionClass) => (
+                                  <SelectItem
+                                    value={actionClass.name}
+                                    key={actionClass.name}
+                                    title={actionClass.description ? actionClass.description : ""}>
+                                    {actionClass.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="mx-2 text-sm">action is performed</p>
+                            <button type="button" onClick={() => removeTriggerEvent(idx)}>
+                              <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    <div className="px-6 py-4">
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          addTriggerEvent();
+                        }}>
+                        <PlusIcon className="mr-2 h-4 w-4" />
+                        Add condition
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="ml-2 flex items-center space-x-1 px-4 pb-4"></div>

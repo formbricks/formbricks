@@ -28,6 +28,7 @@ export function formatDateFields<T extends z.ZodRawShape>(
   const formattedObject = { ...object };
 
   for (const key in schemaFields) {
+    console.log({ schemaFields, key });
     if (Object.prototype.hasOwnProperty.call(schemaFields, key) && isZodDate(schemaFields[key])) {
       const dateStr = (formattedObject as any)[key];
       try {
@@ -42,6 +43,7 @@ export function formatDateFields<T extends z.ZodRawShape>(
 
   return formattedObject as z.infer<typeof zodSchema>;
 }
+
 export const formatDateWithOrdinal = (date: Date): string => {
   const getOrdinalSuffix = (day: number) => {
     const suffixes = ["th", "st", "nd", "rd"];

@@ -2,10 +2,10 @@ import { Label } from "@radix-ui/react-dropdown-menu";
 import clsx from "clsx";
 import { Control, Controller, UseFormRegister } from "react-hook-form";
 
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
+import { AdvancedOptionToggle } from "../AdvancedOptionToggle";
+import { Button } from "../Button";
+import { Input } from "../Input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../Select";
 
 interface PageUrlSelectorProps {
   isPageUrl: boolean;
@@ -19,7 +19,7 @@ interface PageUrlSelectorProps {
   register: UseFormRegister<any>;
 }
 
-export const PageUrlSelector = ({
+const PageUrlSelector = ({
   isPageUrl,
   setIsPageUrl,
   control,
@@ -115,3 +115,5 @@ export const PageUrlSelector = ({
     </AdvancedOptionToggle>
   );
 };
+
+export default PageUrlSelector;

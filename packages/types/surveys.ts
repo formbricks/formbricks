@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ZNoCodeConfig } from "./actionClasses";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 import { ZSegment } from "./segment";
@@ -402,6 +403,17 @@ const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
+export const ZSurveyInlineTriggers = z.object({
+  codeActionInfo: z.object({ identifier: z.string() }).optional(),
+  noCodeActionInfo: z
+    .object({
+      config: ZNoCodeConfig,
+    })
+    .optional(),
+});
+
+export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
+
 export const ZSurvey = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -414,6 +426,7 @@ export const ZSurvey = z.object({
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
   triggers: z.array(z.string()),
+  inlineTriggers: ZSurveyInlineTriggers.optional(),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
@@ -434,26 +447,50 @@ export const ZSurvey = z.object({
   displayPercentage: z.number().min(1).max(100).nullable(),
 });
 
-export const ZSurveyInput = z.object({
-  name: z.string(),
-  type: ZSurveyType.optional(),
-  createdBy: z.string().cuid().optional(),
-  status: ZSurveyStatus.optional(),
-  displayOption: ZSurveyDisplayOption.optional(),
-  autoClose: z.number().optional(),
-  redirectUrl: z.string().url().optional(),
-  recontactDays: z.number().optional(),
-  welcomeCard: ZSurveyWelcomeCard.optional(),
-  questions: ZSurveyQuestions.optional(),
-  thankYouCard: ZSurveyThankYouCard.optional(),
-  hiddenFields: ZSurveyHiddenFields,
-  delay: z.number().optional(),
-  autoComplete: z.number().optional(),
-  closeOnDate: z.date().optional(),
-  surveyClosedMessage: ZSurveyClosedMessage.optional(),
-  verifyEmail: ZSurveyVerifyEmail.optional(),
-  triggers: z.array(z.string()).optional(),
-});
+export const ZSurveyWithRefinements = ZSurvey.refine(
+  (survey) => {
+    if (survey.type === "email" && survey.status === "completed") {
+      return false;
+    }
+
+    return true;
+  },
+  { message: "Email surveys cannot be completed" }
+);
+
+export const ZSurveyInput = z
+  .object({
+    name: z.string(),
+    type: ZSurveyType.optional(),
+    createdBy: z.string().cuid().optional(),
+    status: ZSurveyStatus.optional(),
+    displayOption: ZSurveyDisplayOption.optional(),
+    autoClose: z.number().optional(),
+    redirectUrl: z.string().url().optional(),
+    recontactDays: z.number().optional(),
+    welcomeCard: ZSurveyWelcomeCard.optional(),
+    questions: ZSurveyQuestions.optional(),
+    thankYouCard: ZSurveyThankYouCard.optional(),
+    hiddenFields: ZSurveyHiddenFields,
+    delay: z.number().optional(),
+    autoComplete: z.number().optional(),
+    closeOnDate: z.date().optional(),
+    surveyClosedMessage: ZSurveyClosedMessage.optional(),
+    verifyEmail: ZSurveyVerifyEmail.optional(),
+    triggers: z.array(z.string()).optional(),
+    inlineTriggers: ZSurveyInlineTriggers.optional(),
+  })
+  .refine(
+    (survey) => {
+      // Survey cannot have both triggers and inlineTriggers
+      if (survey.triggers && survey.inlineTriggers) {
+        return false;
+      }
+
+      return true;
+    },
+    { message: "Survey cannot have both triggers and inlineTriggers" }
+  );
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
