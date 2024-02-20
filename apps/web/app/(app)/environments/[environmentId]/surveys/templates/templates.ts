@@ -2573,9 +2573,9 @@ export const firstSurvey = {
         imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/meme.png",
       }) as TSurveyCTAQuestion
   ),
-  name: "First survey",
+  name: "Example survey",
   type: "web" as TSurveyType,
-  autoComplete: 50,
+  autoComplete: 2,
   triggers: ["New Session"],
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,

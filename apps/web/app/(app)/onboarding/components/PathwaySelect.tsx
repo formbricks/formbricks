@@ -1,4 +1,7 @@
 import { finishOnboardingAction } from "@/app/(app)/onboarding/actions";
+import InappMockup from "@/images/onboarding-in-app-survey.png";
+import LinkMockup from "@/images/onboarding-link-survey.webp";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { OptionCard } from "@formbricks/ui/OptionCard";
@@ -54,15 +57,17 @@ export default function PathwaySelect({
           description="Create a new survey and share a link."
           onSelect={() => {
             handleSelect("link");
-          }}
-        />
+          }}>
+          <Image src={LinkMockup} alt="" height={350} />
+        </OptionCard>
         <OptionCard
           title="In-app Surveys"
           description="Run a survey on a website or in-app."
           onSelect={() => {
             handleSelect("in-app");
-          }}
-        />
+          }}>
+          <Image src={InappMockup} alt="" height={350} />
+        </OptionCard>
       </div>
     </div>
   );

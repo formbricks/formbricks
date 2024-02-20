@@ -48,10 +48,10 @@ const ConnectedState = ({ goToProduct }) => {
         <p className="text-2xl font-medium">You&apos;re connected!</p>
         <p className="text-sm text-slate-700">From now on it&apos;s a piece of cake 🍰</p>
       </div>
-      <div className="border-brand w-full space-y-8 rounded-lg border bg-teal-50 p-8 text-center">
+      <div className="w-full space-y-8 rounded-lg border border-emerald-300 bg-emerald-50 p-8 text-center">
         <Image src={Dance} alt="Dance" className="rounded-lg" />
 
-        <p className="text-lg font-semibold">Connection successful ✅</p>
+        <p className="text-lg font-semibold text-emerald-900">Connection successful ✅</p>
       </div>
       <div className="mt-4 text-right">
         <Button

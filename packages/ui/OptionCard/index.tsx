@@ -1,34 +1,32 @@
-import Image from "next/image";
-
 import LoadingSpinner from "../LoadingSpinner";
 
 interface PathwayOptionProps {
   title: string;
   description: string;
-  imgSrc?: string;
   loading?: boolean;
   onSelect: () => void;
+  children?: React.ReactNode;
 }
 
 export const OptionCard: React.FC<PathwayOptionProps> = ({
   title,
   description,
-  imgSrc,
+  children,
   onSelect,
   loading,
 }) => (
   <div className="relative">
     <div
-      className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-slate-300 bg-white p-4 shadow-lg transition ease-in-out hover:scale-105"
+      className="shadow-card flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-300 ease-in-out hover:scale-105 hover:border-slate-300"
       onClick={onSelect}
       role="button"
-      tabIndex={0} // Make it focusable
-    >
-      {imgSrc && <Image src={imgSrc} alt={title} className="rounded-md" />}
-
-      <div className="my-4 space-y-2">
-        <p className="text-xl font-medium text-slate-800">{title}</p>
-        <p className="text-sm text-slate-500">{description}</p>
+      tabIndex={0}>
+      <div className="space-y-4">
+        {children}
+        <div className="space-y-2">
+          <p className="text-xl font-medium text-slate-800">{title}</p>
+          <p className="text-sm text-slate-500">{description}</p>
+        </div>
       </div>
     </div>
     {loading && (

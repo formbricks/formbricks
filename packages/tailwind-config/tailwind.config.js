@@ -21,6 +21,9 @@ module.exports = {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
       },
+      boxShadow: {
+        card: "0px 2px 51px -19px rgba(30,41,59,0.43)",
+      },
       colors: {
         brand: {
           DEFAULT: "#00E6CA",
