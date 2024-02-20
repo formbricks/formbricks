@@ -422,7 +422,7 @@ export const ZSurvey = z.object({
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
   triggers: z.array(z.string()),
-  inlineTriggers: ZSurveyInlineTriggers.optional(),
+  inlineTriggers: ZSurveyInlineTriggers.nullable(),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
@@ -445,11 +445,17 @@ export const ZSurvey = z.object({
 
 export const ZSurveyWithRefinements = ZSurvey.refine(
   (survey) => {
+    console.log(survey.triggers, survey.inlineTriggers);
+    let hasTriggers = !!survey.triggers?.length;
+    const hasInlineTriggers = survey.inlineTriggers?.codeConfig || survey.inlineTriggers?.noCodeConfig;
+
+    // if the triggers array has a single empty string, it means the survey has no triggers
+    if (survey.triggers?.length === 1 && survey.triggers[0] === "") {
+      hasTriggers = false;
+    }
+
     // Survey cannot have both triggers and inlineTriggers
-    if (
-      !!survey.triggers?.length &&
-      (survey.inlineTriggers?.codeConfig || survey.inlineTriggers?.noCodeConfig)
-    ) {
+    if (hasTriggers && hasInlineTriggers) {
       return false;
     }
 

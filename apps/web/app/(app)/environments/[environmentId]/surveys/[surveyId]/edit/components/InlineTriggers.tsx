@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const updateInlineTriggers = (
   localSurvey: TSurvey,
-  update: (inlineTriggers: TSurveyInlineTriggers | undefined) => Partial<TSurveyInlineTriggers>
+  update: (inlineTriggers: TSurveyInlineTriggers | null) => Partial<TSurveyInlineTriggers>
 ): TSurvey => {
   return {
     ...localSurvey,
@@ -202,8 +202,10 @@ const PageUrlSelector = ({
         description="If a user visits a specific URL"
         childBorder={false}>
         <div className="flex w-full gap-2">
-          <div className="">
-            <Select onValueChange={onMatchChange}>
+          <div>
+            <Select
+              onValueChange={onMatchChange}
+              defaultValue={localSurvey.inlineTriggers?.noCodeConfig?.pageUrl?.rule || "exactMatch"}>
               <SelectTrigger className="w-[160px] bg-white">
                 <SelectValue placeholder="Select match type" />
               </SelectTrigger>
@@ -309,7 +311,7 @@ const InlineTriggers = ({
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
 }) => {
-  const [isNoCodeAction, setIsNoCodeAction] = useState(false);
+  const [isNoCodeAction, setIsNoCodeAction] = useState(!!localSurvey.inlineTriggers?.noCodeConfig);
 
   const onNoCodeActionToggle = (checked: boolean) => {
     setIsNoCodeAction(!isNoCodeAction);

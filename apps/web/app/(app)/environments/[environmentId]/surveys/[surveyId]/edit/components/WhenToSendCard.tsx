@@ -4,7 +4,7 @@ import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(acti
 import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -85,10 +85,8 @@ export default function WhenToSendCard({
   );
 
   const removeTriggerEvent = (idx: number) => {
-    console.log("removeTriggerEvent", { idx, localSurvey });
     const updatedSurvey = { ...localSurvey };
     updatedSurvey.triggers = [...localSurvey.triggers.slice(0, idx), ...localSurvey.triggers.slice(idx + 1)];
-    console.log({ updatedSurvey });
     setLocalSurvey(updatedSurvey);
   };
 
@@ -171,14 +169,18 @@ export default function WhenToSendCard({
     }
   }, [addTriggerEvent, localSurvey.triggers.length]);
 
-  // // if the triggers is an empty array, or an array with an empty string, remove the empty string
-  // useEffect(() => {
-  //   if (!!localSurvey.triggers.length) return;
+  const noTriggerIndicator = useMemo(() => {
+    const noTriggers = !localSurvey.triggers || !!localSurvey.triggers.length || !localSurvey.triggers[0];
+    const noInlineTriggers =
+      !localSurvey.inlineTriggers ||
+      (!localSurvey.inlineTriggers?.codeConfig && !localSurvey.inlineTriggers?.noCodeConfig);
 
-  //   if (localSurvey.triggers.length === 1 && localSurvey.triggers[0] === "") {
-  //     setLocalSurvey((prevSurvey) => ({ ...prevSurvey, triggers: [] }));
-  //   }
-  // }, [localSurvey.triggers, setLocalSurvey]);
+    if (noTriggers && noInlineTriggers) {
+      return true;
+    }
+
+    return false;
+  }, [localSurvey.inlineTriggers, localSurvey.triggers]);
 
   if (localSurvey.type === "link") {
     return null; // Hide card completely
@@ -199,7 +201,7 @@ export default function WhenToSendCard({
           className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
+              {noTriggerIndicator ? (
                 <div className="h-8 w-8 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
                 <CheckCircleIcon className="h-8 w-8 text-green-400" />

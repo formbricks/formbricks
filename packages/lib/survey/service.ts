@@ -75,6 +75,7 @@ export const selectSurvey = {
       },
     },
   },
+  inlineTriggers: true,
   segment: {
     include: {
       surveys: {
@@ -423,7 +424,6 @@ export async function deleteSurvey(surveyId: string) {
 }
 
 export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
-  console.log({ surveyBody });
   validateInputs([environmentId, ZId]);
 
   // if the survey body has both triggers and inlineTriggers, we throw an error
@@ -513,6 +513,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
           actionClassId: getActionClassIdFromName(actionClasses, trigger),
         })),
       },
+      inlineTriggers: existingSurvey.inlineTriggers ?? undefined,
       environment: {
         connect: {
           id: environmentId,
