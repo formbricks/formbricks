@@ -5,8 +5,13 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getPaginatedResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { fetchFile } from "@/app/lib/fetchFile";
-import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
+import {
+  generateQuestionAndFilterOptions,
+  getFormattedFilters,
+  getTodayDate,
+} from "@/app/lib/surveys/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { differenceInDays, format, subDays } from "date-fns";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
@@ -15,7 +20,7 @@ import toast from "react-hot-toast";
 
 import { getTodaysDateFormatted } from "@formbricks/lib/time";
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TResponse, TSurveyPersonAttributes } from "@formbricks/types/responses";
+import { TResponse, TResponseFilterCriteria, TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { Calendar } from "@formbricks/ui/Calendar";
@@ -64,7 +69,7 @@ const getDifferenceOfDays = (from, to) => {
 };
 
 const CustomFilter = ({ environmentTags, attributes, responses, survey }: CustomFilterProps) => {
-  const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
+  const { selectedFilter, setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
       ? getDifferenceOfDays(dateRange.from, dateRange.to)
@@ -85,6 +90,8 @@ const CustomFilter = ({ environmentTags, attributes, responses, survey }: Custom
     );
     setSelectedOptions({ questionFilterOptions, questionOptions });
   }, [survey, setSelectedOptions, environmentTags, attributes]);
+
+  const filters = useMemo(() => getFormattedFilters(selectedFilter, dateRange), [selectedFilter, dateRange]);
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
@@ -363,6 +370,18 @@ const CustomFilter = ({ environmentTags, attributes, responses, survey }: Custom
     setSelectingDate(DateSelected.FROM);
   };
 
+  const handleDowndloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
+    try {
+      const responseFilters = filter === FilterDownload.ALL ? {} : filters;
+      const fileUrl = await getResponsesDownloadUrlAction(survey.id, filetype, responseFilters);
+      if (fileUrl) {
+        window.open(fileUrl, "_blank");
+      }
+    } catch (error) {
+      toast.error("Error downloading responses");
+    }
+  };
+
   useClickOutside(datePickerRef, () => handleDatePickerClose());
 
   return (
@@ -449,28 +468,28 @@ const CustomFilter = ({ environmentTags, attributes, responses, survey }: Custom
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.ALL, "csv");
+                  handleDowndloadResponses(FilterDownload.ALL, "csv");
                 }}>
                 <p className="text-slate-700">All responses (CSV)</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.ALL, "xlsx");
+                  handleDowndloadResponses(FilterDownload.ALL, "xlsx");
                 }}>
                 <p className="text-slate-700">All responses (Excel)</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.FILTER, "csv");
+                  handleDowndloadResponses(FilterDownload.FILTER, "csv");
                 }}>
                 <p className="text-slate-700">Current selection (CSV)</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.FILTER, "xlsx");
+                  handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
                 }}>
                 <p className="text-slate-700">Current selection (Excel)</p>
               </DropdownMenuItem>

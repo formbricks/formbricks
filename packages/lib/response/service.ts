@@ -1,5 +1,6 @@
 import "server-only";
 
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -24,19 +25,29 @@ import {
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { IS_S3_CONFIGURED, ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, UPLOADS_DIR } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
+import { env } from "../env.mjs";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
-import { buildWhereClause, calculateTtcTotal } from "../response/util";
+import {
+  buildWhereClause,
+  calculateTtcTotal,
+  extractSurveyDetails,
+  getResponsesFileName,
+  getResponsesJSON,
+} from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
+import { putFileToLocalStorage, s3Client } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { formatDateFields } from "../utils/datetime";
+import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 
 const RESPONSES_PER_PAGE = 10;
+const AWS_BUCKET_NAME = env.S3_BUCKET_NAME!;
 
 export const responseSelection = {
   id: true,
@@ -505,6 +516,83 @@ export const getResponses = async (
     ...formatDateFields(response, ZResponse),
     notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
+};
+
+export const getResponseDownloadUrl = async (
+  surveyId: string,
+  format: "csv" | "xlsx",
+  filterCriteria?: TResponseFilterCriteria
+): Promise<string> => {
+  try {
+    validateInputs([surveyId, ZId], [format, ZString], [filterCriteria, ZResponseFilterCriteria.optional()]);
+    const survey = await getSurvey(surveyId);
+    const environmentId = survey?.environmentId as string;
+
+    const accessType = "private";
+    const batchSize = 3000;
+    const responseCount = await getResponseCountBySurveyId(surveyId);
+    const pages = Math.ceil(responseCount / batchSize);
+
+    const responsesArray = await Promise.all(
+      Array.from({ length: pages }, (_, i) => {
+        return getResponses(surveyId, i + 1, batchSize, filterCriteria);
+      })
+    );
+    const responses = responsesArray.flat();
+
+    const { metaDataFields, questions, hiddenFields, userAttributes } = extractSurveyDetails(
+      survey!,
+      responses
+    );
+
+    const headers = [
+      "No.",
+      "Response ID",
+      "Timestamp",
+      "Finished",
+      "Survey ID",
+      "User ID",
+      "Notes",
+      "Tags",
+      ...metaDataFields,
+      ...questions,
+      ...hiddenFields,
+      ...userAttributes,
+    ];
+
+    const jsonData = getResponsesJSON(survey!, responses, questions, userAttributes, hiddenFields);
+
+    const fileName = getResponsesFileName(survey?.name || "", format);
+    let fileBuffer: Buffer;
+
+    if (format === "xlsx") {
+      fileBuffer = convertToXlsxBuffer(headers, jsonData);
+    } else {
+      const csvFile = await convertToCsv(headers, jsonData);
+      fileBuffer = Buffer.from(csvFile);
+    }
+
+    if (IS_S3_CONFIGURED) {
+      const input = {
+        Body: fileBuffer,
+        Bucket: AWS_BUCKET_NAME,
+        Key: `${environmentId}/private/${fileName}`,
+      };
+
+      const command = new PutObjectCommand(input);
+      await s3Client.send(command);
+    } else {
+      await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
+    }
+
+    return `${process.env.WEBAPP_URL}/storage/${environmentId}/private/${fileName}`;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 export const getResponsesByEnvironmentId = async (

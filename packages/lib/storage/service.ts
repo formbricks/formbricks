@@ -31,7 +31,7 @@ const S3_SECRET_KEY = env.S3_SECRET_KEY!;
 
 // S3Client Singleton
 
-const s3Client = new S3Client({
+export const s3Client = new S3Client({
   credentials: {
     accessKeyId: S3_ACCESS_KEY,
     secretAccessKey: S3_SECRET_KEY!,
