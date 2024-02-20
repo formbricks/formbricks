@@ -228,7 +228,10 @@ export const getUploadSignedUrl = async (
     return {
       signedUrl,
       presignedFields,
-      fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
+      // fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
+      fileUrl: !IS_FORMBRICKS_CLOUD
+        ? `/storage/${environmentId}/${accessType}/${updatedFileName}`
+        : new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
     };
   } catch (err) {
     throw err;
