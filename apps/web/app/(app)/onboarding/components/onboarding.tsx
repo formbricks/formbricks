@@ -38,13 +38,10 @@ export function Onboarding({
   const [CURRENT_STEP, SET_CURRENT_STEP] = useState<number | null>(null);
 
   useEffect(() => {
-    console.log("out");
     if (typeof window !== "undefined") {
-      console.log("in");
       // Access localStorage only when window is available
       const pathwayValueFromLocalStorage = localStorage.getItem("pathway");
       const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("CURRENT_STEP") ?? "1");
-      console.log(currentStepValueFromLocalStorage);
 
       setSelectedPathway(pathwayValueFromLocalStorage);
       SET_CURRENT_STEP(currentStepValueFromLocalStorage);
@@ -91,7 +88,12 @@ export function Onboarding({
         );
       case 4:
         return (
-          <Connect environment={environment} webAppUrl={webAppUrl} SET_CURRENT_STEP={SET_CURRENT_STEP} />
+          <Connect
+            environment={environment}
+            webAppUrl={webAppUrl}
+            SET_CURRENT_STEP={SET_CURRENT_STEP}
+            isFormbricksCloud={isFormbricksCloud}
+          />
         );
       case 5:
         return (

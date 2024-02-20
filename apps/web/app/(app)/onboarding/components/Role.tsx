@@ -133,6 +133,8 @@ const Role: React.FC<RoleProps> = ({ setFormbricksResponseId, session, SET_CURRE
                   {choice.id === "other" && selectedChoice === "Other" && (
                     <div className="mt-4 w-full">
                       <Input
+                        className="bg-white"
+                        autoFocus
                         placeholder="Please specify"
                         value={otherValue}
                         onChange={(e) => setOtherValue(e.target.value)}
