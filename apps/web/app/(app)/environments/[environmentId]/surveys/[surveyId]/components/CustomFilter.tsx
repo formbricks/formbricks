@@ -4,18 +4,18 @@ import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getMoreResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { fetchFile } from "@/app/lib/fetchFile";
 import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
 import { createId } from "@paralleldrive/cuid2";
-import { differenceInDays, format, subDays } from "date-fns";
+import { differenceInDays, format, startOfDay, subDays } from "date-fns";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { getTodaysDateFormatted } from "@formbricks/lib/time";
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { Calendar } from "@formbricks/ui/Calendar";
@@ -47,9 +47,9 @@ enum FilterDropDownLabels {
 
 interface CustomFilterProps {
   environmentTags: TTag[];
+  attributes: TSurveyPersonAttributes;
   survey: TSurvey;
   responses: TResponse[];
-  totalResponses: TResponse[];
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -63,7 +63,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, attributes, responses, survey }: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -80,11 +80,11 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
   useEffect(() => {
     const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
       survey,
-      totalResponses,
-      environmentTags
+      environmentTags,
+      attributes
     );
     setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [totalResponses, survey, setSelectedOptions, environmentTags]);
+  }, [survey, setSelectedOptions, environmentTags, attributes]);
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
@@ -160,7 +160,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     const BATCH_SIZE = 3000;
     const responses: TResponse[] = [];
     for (let page = 1; ; page++) {
-      const batchResponses = await getMoreResponses(survey.id, page, BATCH_SIZE);
+      const batchResponses = await getResponsesAction(survey.id, page, BATCH_SIZE);
       responses.push(...batchResponses);
       if (batchResponses.length < BATCH_SIZE) {
         break;
@@ -404,7 +404,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
                 className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_7_DAYS);
-                  setDateRange({ from: subDays(new Date(), 7), to: getTodayDate() });
+                  setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
                 }}>
                 <p className="text-slate-700">Last 7 days</p>
               </DropdownMenuItem>
@@ -412,7 +412,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
                 className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_30_DAYS);
-                  setDateRange({ from: subDays(new Date(), 30), to: getTodayDate() });
+                  setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
                 }}>
                 <p className="text-slate-700">Last 30 days</p>
               </DropdownMenuItem>
