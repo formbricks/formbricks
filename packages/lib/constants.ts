@@ -135,7 +135,14 @@ export const SHARE_RATE_LIMIT = {
   allowedPerInterval: 30,
 };
 
+export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
+  interval: 60 * 1000, // 1 minute
+  allowedPerInterval: 5,
+};
+
 export const DEBUG = process.env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";

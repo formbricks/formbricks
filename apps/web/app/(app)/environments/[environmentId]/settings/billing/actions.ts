@@ -24,6 +24,7 @@ export async function upgradePlanAction(
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const subscriptionSession = await createSubscription(teamId, environmentId, priceLookupKeys);
+
   return subscriptionSession;
 }
 
