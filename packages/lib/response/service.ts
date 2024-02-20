@@ -585,7 +585,7 @@ export const getResponseDownloadUrl = async (
       await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
     }
 
-    return `${process.env.WEBAPP_URL}/storage/${environmentId}/private/${fileName}`;
+    return `${process.env.WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
