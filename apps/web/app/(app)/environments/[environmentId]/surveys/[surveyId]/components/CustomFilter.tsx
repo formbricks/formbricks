@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TResponse, TSurveyPersonAttributes } from "@formbricks/types/responses";
+import { TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { Calendar } from "@formbricks/ui/Calendar";
@@ -50,7 +50,6 @@ interface CustomFilterProps {
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
   survey: TSurvey;
-  responses: TResponse[];
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -64,7 +63,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, attributes, responses, survey }: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps) => {
   const { selectedFilter, setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
