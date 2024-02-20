@@ -157,7 +157,7 @@ function constructSurveyInput(
             imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/meme.png",
           }) as TSurveyCTAQuestion
       ),
-      name: "First survey",
+      name: "Welcome survey",
       type: surveyType,
       autoComplete: autoComplete || undefined,
       createdBy: userId,

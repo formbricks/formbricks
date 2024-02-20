@@ -135,6 +135,8 @@ const Objective: React.FC<ObjectiveProps> = ({ formbricksResponseId, user, SET_C
                   {choice.id === "other" && selectedChoice === "Other" && (
                     <div className="mt-4 w-full">
                       <Input
+                        className="bg-white"
+                        autoFocus
                         required
                         placeholder="Please specify"
                         value={otherValue}
