@@ -44,19 +44,22 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-500 bg-opacity-30 backdrop-blur-md">
-      <div className="relative w-[70rem] rounded-xl bg-slate-50 p-10">
-        <X
-          className="absolute right-0 top-0 m-4 h-6 w-6 cursor-pointer text-slate-500"
-          onClick={() => {
-            localStorage.removeItem("pathway");
-            setIsOpen(false);
-          }}
-        />
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-800 bg-opacity-80 backdrop-blur-sm">
+      <div className="shadow-card-lg relative flex h-[85vh] w-[85vw] flex-col items-center justify-center rounded-xl bg-slate-50 p-10">
+        <div className="absolute right-2 top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md p-1 text-slate-500 hover:bg-slate-200">
+          <X
+            onClick={() => {
+              localStorage.removeItem("pathway");
+              setIsOpen(false);
+            }}
+          />
+        </div>
         <div className="p-6">
-          <div className="flex justify-between">
+          <div className="flex items-center justify-between">
             <p className="text-2xl font-medium">Create your first survey</p>
             <Button
+              size="lg"
+              variant="darkCTA"
               loading={loadingTemplate === "Start from scratch"}
               onClick={() => {
                 newSurveyFromTemplate(customSurvey);
@@ -68,6 +71,7 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
             {filteredTemplates.map((template) => {
               return (
                 <OptionCard
+                  size="sm"
                   key={template.name}
                   title={template.name}
                   description={template.description}

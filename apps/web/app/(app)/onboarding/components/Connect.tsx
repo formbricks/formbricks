@@ -87,7 +87,7 @@ const NotConnectedState = ({ environment, webAppUrl, isFormbricksCloud, goToTeam
       />
 
       <Button
-        className="opacity-0 transition-all delay-[1500ms] duration-500 ease-in-out group-hover:opacity-100"
+        className="opacity-0 transition-all delay-[3000ms] duration-500 ease-in-out group-hover:opacity-100"
         variant="minimal"
         onClick={goToTeamInvitePage}>
         I am not sure how to do this

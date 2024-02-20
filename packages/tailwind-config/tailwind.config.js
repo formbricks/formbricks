@@ -22,7 +22,9 @@ module.exports = {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
       },
       boxShadow: {
-        card: "0px 2px 51px -19px rgba(30,41,59,0.43)",
+        "card-sm": "0px 0.5px 12px -5px rgba(30,41,59,0.20)",
+        "card-md": "0px 1px 25px -10px rgba(30,41,59,0.30)",
+        "card-lg": "0px 2px 51px -19px rgba(30,41,59,0.40)",
       },
       colors: {
         brand: {

@@ -1,7 +1,6 @@
 "use client";
 
 import jsPackageJson from "@/../../packages/js/package.json";
-import packageJson from "@/package.json";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -19,7 +18,6 @@ const tabs = [
 export default function SetupInstructionsOnboarding({
   environmentId,
   webAppUrl,
-  isFormbricksCloud,
 }: {
   environmentId: string;
   webAppUrl: string;
@@ -56,11 +54,13 @@ export default function SetupInstructionsOnboarding({
       <div className="">
         {activeTab === "npm" ? (
           <div className="prose prose-slate">
-            <CodeBlock language="sh">npm install @formbricks/js --save</CodeBlock>
+            <CodeBlock customEditorClass="!bg-white" language="sh">
+              npm install @formbricks/js --save
+            </CodeBlock>
             <p className="text-sm text-slate-700">
               Import Formbricks and initialize the widget in your Component (e.g. App.tsx):
             </p>
-            <CodeBlock language="js">{`import formbricks from "@formbricks/js";
+            <CodeBlock customEditorClass="!bg-white" language="js">{`import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -70,6 +70,7 @@ if (typeof window !== "undefined") {
   });
 }`}</CodeBlock>
             <Button
+              className="mt-3"
               variant="secondary"
               href="https://formbricks.com/docs/getting-started/framework-guides#react-js"
               target="_blank">
@@ -79,9 +80,11 @@ if (typeof window !== "undefined") {
         ) : activeTab === "html" ? (
           <div className="prose prose-slate">
             <p className="-mb-1 mt-6 text-sm text-slate-700">
-              Insert this code into the <code>{`<head>`}</code> tag of your website:
+              Insert this code into the &lt;head&gt; tag of your website:
             </p>
-            <CodeBlock language="js">{htmlSnippet}</CodeBlock>
+            <CodeBlock customEditorClass="!bg-white" language="js">
+              {htmlSnippet}
+            </CodeBlock>
             <div className="mt-4 space-x-2">
               <Button
                 variant="darkCTA"
@@ -100,14 +103,6 @@ if (typeof window !== "undefined") {
             </div>
           </div>
         ) : null}
-        {!isFormbricksCloud && (
-          <div>
-            <hr className="my-3" />
-            <p className="flex w-full justify-end text-sm text-slate-700">
-              Formbricks version: {packageJson.version}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

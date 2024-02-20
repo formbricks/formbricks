@@ -14,12 +14,14 @@ interface CodeBlockProps {
   children: React.ReactNode;
   language: string;
   customCodeClass?: string;
+  customEditorClass?: string;
   showCopyToClipboard?: boolean;
 }
 
 const CodeBlock: React.FC<CodeBlockProps> = ({
   children,
   language,
+  customEditorClass = "",
   customCodeClass = "",
   showCopyToClipboard = true,
 }) => {
@@ -41,7 +43,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           />
         </div>
       )}
-      <pre className="!bg-white">
+      <pre className={customEditorClass}>
         <code className={cn(`language-${language} whitespace-pre-wrap`, customCodeClass)}>{children}</code>
       </pre>
     </div>

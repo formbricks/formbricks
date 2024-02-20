@@ -53,6 +53,7 @@ export default function PathwaySelect({
       </div>
       <div className="flex space-x-8">
         <OptionCard
+          size="lg"
           title="Link Surveys"
           description="Create a new survey and share a link."
           onSelect={() => {
@@ -61,6 +62,7 @@ export default function PathwaySelect({
           <Image src={LinkMockup} alt="" height={350} />
         </OptionCard>
         <OptionCard
+          size="lg"
           title="In-app Surveys"
           description="Run a survey on a website or in-app."
           onSelect={() => {
