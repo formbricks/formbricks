@@ -11,6 +11,7 @@ import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TLanguage, TProduct } from "@formbricks/types/product";
+import { ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
@@ -267,16 +268,23 @@ export default function SurveyMenuBar({
         const { isDraft, ...rest } = question;
         return rest;
       }),
-      attributeFilters: localSurvey.attributeFilters.filter((attributeFilter) => {
-        if (attributeFilter.attributeClassId && attributeFilter.value) {
-          return true;
-        }
-      }),
     };
-
     if (!validateSurvey(localSurvey)) {
       setIsSurveySaving(false);
       return;
+    }
+
+    // validate the user segment filters
+    if (!!strippedSurvey.segment?.filters?.length) {
+      const parsedFilters = ZSegmentFilters.safeParse(strippedSurvey.segment.filters);
+      if (!parsedFilters.success) {
+        const errMsg =
+          parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message ||
+          "Invalid targeting: Please check your audience filters";
+        setIsSurveySaving(false);
+        toast.error(errMsg);
+        return;
+      }
     }
 
     try {
@@ -426,16 +434,18 @@ export default function SurveyMenuBar({
           }}
         />
         <AlertDialog
-          confirmWhat="Survey changes"
+          headerText="Confirm Survey Changes"
           open={isConfirmDialogOpen}
           setOpen={setConfirmDialogOpen}
-          onDiscard={() => {
+          mainText="You have unsaved changes in your survey. Would you like to save them before leaving?"
+          confirmBtnLabel="Save"
+          declineBtnLabel="Discard"
+          declineBtnVariant="warn"
+          onDecline={() => {
             setConfirmDialogOpen(false);
             router.back();
           }}
-          text="You have unsaved changes in your survey. Would you like to save them before leaving?"
-          confirmButtonLabel="Save"
-          onSave={() => saveSurveyAction(true)}
+          onConfirm={() => saveSurveyAction(true)}
         />
       </div>
     </>

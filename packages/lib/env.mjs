@@ -32,6 +32,7 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
+    EMAIL_AUTH_DISABLED: z.enum(["1", "0"]).optional(),
     PRIVACY_URL: z
       .string()
       .url()
@@ -70,6 +71,7 @@ export const env = createEnv({
     DEFAULT_TEAM_ROLE: z.enum(["owner", "admin", "editor", "developer", "viewer"]).optional(),
     ONBOARDING_DISABLED: z.string().optional(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
+    RATE_LIMITING_DISABLED: z.enum(["1", "0"]).optional(),
   },
 
   /*
@@ -119,6 +121,7 @@ export const env = createEnv({
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     SIGNUP_DISABLED: process.env.SIGNUP_DISABLED,
+    EMAIL_AUTH_DISABLED: process.env.EMAIL_AUTH_DISABLED,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,
     TERMS_URL: process.env.TERMS_URL,
@@ -150,5 +153,6 @@ export const env = createEnv({
     DEFAULT_TEAM_ROLE: process.env.DEFAULT_TEAM_ROLE,
     ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
+    RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
   },
 });

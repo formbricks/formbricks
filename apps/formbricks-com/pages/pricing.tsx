@@ -23,7 +23,6 @@ const inProductSurveys = {
     { name: "30+ Templates", free: true, paid: true },
     { name: "Unlimited Responses per Survey", free: false, paid: true },
     { name: "Team Role Management", free: false, paid: true },
-    { name: "Advanced User Targeting", free: false, paid: true, comingSoon: true },
     { name: "Multi Language Surveys", free: false, paid: true, comingSoon: true },
   ],
   endRow: {
@@ -58,11 +57,11 @@ const userSegmentation = {
     { name: "Identify Users", free: true, paid: true },
     { name: "Collect Events", free: true, paid: true },
     { name: "Collect Attributes", free: true, paid: true },
-    { name: "Advanced User Targeting", free: false, paid: true, comingSoon: true },
-    { name: "Reusable Segments", free: false, paid: true, comingSoon: true },
+    { name: "Reusable Segments", free: true, paid: true },
+    { name: "Advanced Targeting", free: false, paid: true },
   ],
   endRow: {
-    title: "User Segmentation like Segment",
+    title: "User Segmentation",
     free: "Free",
     paid: (
       <div>

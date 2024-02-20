@@ -44,6 +44,7 @@ export const AZUREAD_CLIENT_SECRET = env.AZUREAD_CLIENT_SECRET;
 export const AZUREAD_TENANT_ID = env.AZUREAD_TENANT_ID;
 
 export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
+export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
 export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
@@ -134,7 +135,14 @@ export const SHARE_RATE_LIMIT = {
   allowedPerInterval: 30,
 };
 
+export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
+  interval: 60 * 1000, // 1 minute
+  allowedPerInterval: 5,
+};
+
 export const DEBUG = process.env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";

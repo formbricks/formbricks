@@ -2,11 +2,9 @@ import { Prisma } from "@prisma/client";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TPerson } from "@formbricks/types/people";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
-  TSurveyAttributeFilter,
   TSurveyInput,
   TSurveyQuestion,
   TSurveyQuestionType,
@@ -15,6 +13,7 @@ import {
 import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
 
+import { selectPerson } from "../../person/service";
 import { selectSurvey } from "../service";
 
 const currentDate = new Date();
@@ -60,19 +59,6 @@ export const mockDisplay = {
   status: null,
 };
 
-// id: true,
-// name: true,
-// email: true,
-// emailVerified: true,
-// imageUrl: true,
-// createdAt: true,
-// updatedAt: true,
-// onboardingCompleted: true,
-// twoFactorEnabled: true,
-// identityProvider: true,
-// objective: true,
-// notificationSettings: true,
-
 export const mockUser: TUser = {
   id: mockId,
   name: "mock User",
@@ -92,10 +78,20 @@ export const mockUser: TUser = {
   },
 };
 
-export const mockPerson: TPerson = {
+export const mockPerson: Prisma.PersonGetPayload<{
+  include: typeof selectPerson;
+}> = {
   id: mockId,
   userId: mockId,
-  attributes: { test: "value" },
+  attributes: [
+    {
+      value: "value",
+      attributeClass: {
+        id: mockId,
+        name: "test",
+      },
+    },
+  ],
   ...commonMockProperties,
 };
 
@@ -115,12 +111,6 @@ export const mockAttributeClass: TAttributeClass = {
   description: "mock action class",
   archived: false,
   ...commonMockProperties,
-};
-
-export const mockAttributeFilter: TSurveyAttributeFilter = {
-  attributeClassId: mockId,
-  value: "test",
-  condition: "equals",
 };
 
 const mockQuestion: TSurveyQuestion = {
@@ -197,6 +187,8 @@ export const mockSurveyOutput: SurveyMock = {
   displayPercentage: null,
   createdBy: null,
   pin: null,
+  segment: null,
+  segmentId: null,
   resultShareKey: null,
   ...baseSurveyProperties,
 };
@@ -207,7 +199,6 @@ export const createSurveyInput: TSurveyInput = {
   displayOption: "respondMultiple",
   triggers: [mockActionClass.name],
   ...baseSurveyProperties,
-  attributeFilters: [mockAttributeFilter],
 };
 
 export const updateSurveyInput: TSurvey = {
@@ -222,37 +213,12 @@ export const updateSurveyInput: TSurvey = {
   createdBy: null,
   pin: null,
   resultShareKey: null,
+  segment: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
-  attributeFilters: [mockAttributeFilter],
-};
-
-export const mockSurveyWithAttributesOutput: SurveyMock = {
-  ...mockSurveyOutput,
-  attributeFilters: [
-    {
-      id: mockId,
-      ...mockAttributeFilter,
-    },
-  ],
 };
 
 export const mockTransformedSurveyOutput = {
   ...mockSurveyOutput,
   triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
-};
-
-export const mockTransformedSurveyWithAttributesOutput = {
-  ...mockTransformedSurveyOutput,
-  attributeFilters: [mockAttributeFilter],
-};
-
-export const mockTransformedSurveyWithAttributesIdOutput = {
-  ...mockTransformedSurveyOutput,
-  attributeFilters: [
-    {
-      id: mockId,
-      ...mockAttributeFilter,
-    },
-  ],
 };

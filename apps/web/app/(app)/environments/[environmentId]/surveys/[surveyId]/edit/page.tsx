@@ -1,15 +1,16 @@
 import { getServerSession } from "next-auth";
 
-import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
+import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { colours } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, colours } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
@@ -33,7 +34,7 @@ export default async function SurveysEditPage({ params }) {
     responseCount,
     team,
     session,
-    isEnterpriseEdition,
+    segments,
   ] = await Promise.all([
     getSurvey(params.surveyId),
     getProductByEnvironmentId(params.environmentId),
@@ -43,7 +44,7 @@ export default async function SurveysEditPage({ params }) {
     getResponseCountBySurveyId(params.surveyId),
     getTeamByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
-    getIsEnterpriseEdition(),
+    getSegments(params.environmentId),
   ]);
 
   if (!session) {
@@ -58,6 +59,8 @@ export default async function SurveysEditPage({ params }) {
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
   const isSurveyCreationDeletionDisabled = isViewer;
 
+  const isUserTargetingAllowed = getAdvancedTargetingPermission(team);
+
   if (
     !survey ||
     !environment ||
@@ -70,18 +73,18 @@ export default async function SurveysEditPage({ params }) {
   }
 
   return (
-    <>
-      <SurveyEditor
-        survey={survey}
-        product={product}
-        environment={environment}
-        actionClasses={actionClasses}
-        attributeClasses={attributeClasses}
-        responseCount={responseCount}
-        membershipRole={currentUserMembership?.role}
-        isEnterpriseEdition={isEnterpriseEdition}
-        colours={colours}
-      />
-    </>
+    <SurveyEditor
+      survey={survey}
+      product={product}
+      environment={environment}
+      actionClasses={actionClasses}
+      attributeClasses={attributeClasses}
+      responseCount={responseCount}
+      membershipRole={currentUserMembership?.role}
+      colours={colours}
+      segments={segments}
+      isUserTargetingAllowed={isUserTargetingAllowed}
+      isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+    />
   );
 }

@@ -1,7 +1,7 @@
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, userAgent } from "next/server";
 
 import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
@@ -38,11 +38,9 @@ export async function GET(
   }
 ): Promise<NextResponse> {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const version =
-      searchParams.get("version") === "undefined" || searchParams.get("version") === null
-        ? undefined
-        : searchParams.get("version");
+    const { device } = userAgent(request);
+    const apiVersion = request.nextUrl.searchParams.get("version");
+
     // validate using zod
 
     const inputValidation = ZJsPeopleUserIdInput.safeParse({
@@ -120,7 +118,9 @@ export async function GET(
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person, version ?? undefined),
+      getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
+        version: apiVersion ?? undefined,
+      }),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
@@ -131,7 +131,7 @@ export async function GET(
 
     // return state
     const state: TJsStateSync = {
-      person: { id: person.id, userId: person.userId },
+      person: { id: person.id, userId: person.userId, attributes: person.attributes },
       surveys: !isInAppSurveyLimitReached ? surveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,

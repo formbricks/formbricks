@@ -31,6 +31,7 @@ const welcomeCardDefault = {
 
 export const testTemplate: TTemplate = {
   name: "Test template",
+  category: "Product Experience",
   description: "Test template consisting of all questions",
   preset: {
     name: "Test template",
@@ -42,6 +43,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter some text:" },
         required: true,
         inputType: "text",
+        longAnswer: false,
       },
       {
         id: createId(),
@@ -50,6 +52,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter some text:" },
         required: false,
         inputType: "text",
+        longAnswer: false,
       },
 
       {
@@ -59,6 +62,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter an email" },
         required: true,
         inputType: "email",
+        longAnswer: false,
       },
       {
         id: createId(),
@@ -67,6 +71,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter an email" },
         required: false,
         inputType: "email",
+        longAnswer: false,
       },
       {
         id: createId(),
@@ -75,6 +80,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter a number" },
         required: true,
         inputType: "number",
+        longAnswer: false,
       },
       {
         id: createId(),
@@ -83,6 +89,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter a number" },
         required: false,
         inputType: "number",
+        longAnswer: false,
       },
       {
         id: createId(),
@@ -91,6 +98,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter a phone number" },
         required: true,
         inputType: "phone",
+        longAnswer: false,
       },
       {
         id: createId(),
@@ -99,6 +107,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter a phone number" },
         required: false,
         inputType: "phone",
+        longAnswer: false,
       },
       {
         id: createId(),
@@ -107,6 +116,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter a url" },
         required: true,
         inputType: "url",
+        longAnswer: false,
       },
       {
         id: createId(),
@@ -115,6 +125,7 @@ export const testTemplate: TTemplate = {
         subheader: { en: "Please enter a url" },
         required: false,
         inputType: "url",
+        longAnswer: false,
       },
       {
         id: createId(),
@@ -2527,7 +2538,6 @@ export const minimalSurvey: TSurvey = {
   environmentId: "someEnvId1",
   createdBy: null,
   status: "draft",
-  attributeFilters: [],
   displayOption: "displayOnce",
   autoClose: null,
   triggers: [],
@@ -2552,4 +2562,5 @@ export const minimalSurvey: TSurvey = {
   singleUse: null,
   styling: null,
   resultShareKey: null,
+  segment: null,
 };

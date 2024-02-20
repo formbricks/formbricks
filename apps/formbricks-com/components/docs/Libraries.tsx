@@ -42,7 +42,7 @@ export function Libraries() {
           <a
             key={library.name}
             href={library.href}
-            className="flex flex-row-reverse gap-6 rounded-2xl p-6 transition-all duration-100 ease-in-out hover:cursor-pointer hover:bg-slate-100/50">
+            className="flex flex-row-reverse gap-6 rounded-2xl p-6 transition-all duration-100 ease-in-out hover:cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50">
             <div className="flex-auto">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{library.name}</h3>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{library.description}</p>

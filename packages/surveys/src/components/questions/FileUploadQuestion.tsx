@@ -48,6 +48,7 @@ export default function FileUploadQuestion({
 
   return (
     <form
+      key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);

@@ -5,6 +5,8 @@ import CrowdLogoLight from "@/images/clients/crowd-logo-light.svg";
 import FlixbusLogo from "@/images/clients/flixbus-white.svg";
 import NILogoDark from "@/images/clients/niLogoDark.svg";
 import NILogoLight from "@/images/clients/niLogoWhite.svg";
+import OptimoleLogo from "@/images/clients/optimole-logo.svg";
+import ThemeisleLogo from "@/images/clients/themeisle-logo.webp";
 import AnimationFallback from "@/public/animations/opensource-xm-platform-formbricks-fallback.png";
 import { ShieldCheckIcon, StarIcon } from "@heroicons/react/24/outline";
 import { usePlausible } from "next-plausible";
@@ -45,48 +47,42 @@ export const Hero: React.FC = ({}) => {
           </span>
         </p>
 
-        <div className="mx-auto mt-5 max-w-2xl items-center px-4 sm:flex sm:justify-center md:mt-6 md:space-x-8 md:px-0">
-          <div className="grid grid-cols-4 items-center gap-6 pt-2 md:gap-8">
+        <div className="mx-auto mt-5 max-w-3xl items-center px-4 sm:flex sm:justify-center md:mt-6 md:space-x-8 md:px-0">
+          <div className="grid grid-cols-6 items-center gap-6 pt-2 md:gap-8">
             <Image
               src={FlixbusLogo}
               alt="Flixbus Flix Flixtrain Logo"
-              className="rounded-lg pb-1 hover:opacity-100 md:opacity-50"
+              className="rounded-lg pb-1 "
               width={200}
             />
-            <Image
-              src={CalLogoLight}
-              alt="Cal Logo"
-              className="block rounded-lg hover:opacity-100 md:opacity-50 dark:hidden"
-              width={170}
-            />
-            <Image
-              src={CalLogoDark}
-              alt="Cal Logo"
-              className="hidden rounded-lg hover:opacity-100 md:opacity-50 dark:block"
-              width={170}
-            />
+            <Image src={CalLogoLight} alt="Cal Logo" className="block rounded-lg  dark:hidden" width={170} />
+            <Image src={CalLogoDark} alt="Cal Logo" className="hidden rounded-lg  dark:block" width={170} />
+            <Image src={ThemeisleLogo} alt="Neverinstall Logo" className="pb-1" width={200} />
+
             <Image
               src={CrowdLogoLight}
               alt="Crowd.dev Logo"
-              className="block rounded-lg pb-1 hover:opacity-100 md:opacity-50 dark:hidden"
+              className="block rounded-lg pb-1  dark:hidden"
               width={200}
             />
             <Image
               src={CrowdLogoDark}
               alt="Crowd.dev Logo"
-              className="hidden rounded-lg pb-1 hover:opacity-100 md:opacity-50 dark:block"
+              className="hidden rounded-lg pb-1  dark:block"
               width={200}
             />
+            <Image src={OptimoleLogo} alt="Neverinstall Logo" className="pb-1" width={200} />
+            <Image src={NILogoDark} alt="Neverinstall Logo" className="block pb-1  dark:hidden" width={200} />
             <Image
-              src={NILogoDark}
+              src={NILogoLight}
               alt="Neverinstall Logo"
-              className="block pb-1 hover:opacity-100 md:opacity-50 dark:hidden"
+              className="hidden  pb-1  dark:block"
               width={200}
             />
             <Image
               src={NILogoLight}
               alt="Neverinstall Logo"
-              className="hidden  pb-1 hover:opacity-100 md:opacity-50 dark:block"
+              className="hidden  pb-1  dark:block"
               width={200}
             />
           </div>

@@ -40,7 +40,7 @@ export default function CTAQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   return (
-    <div>
+    <div key={question.id}>
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageId)}

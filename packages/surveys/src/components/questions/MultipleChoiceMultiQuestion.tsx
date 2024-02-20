@@ -117,6 +117,7 @@ export default function MultipleChoiceMultiQuestion({
 
   return (
     <form
+      key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
         const newValue = (value as string[])?.filter((item) => {

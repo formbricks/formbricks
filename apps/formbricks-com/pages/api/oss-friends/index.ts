@@ -160,6 +160,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.papermark.io/",
         },
         {
+          name: "Prisma",
+          description:
+            "Simplify working with databases. Build, optimize, and grow your app easily with an intuitive data model, type-safety, automated migrations, connection pooling, caching, and real-time db subscriptions.",
+          href: "https://www.prisma.io",
+        },
+        {
           name: "Requestly",
           description:
             "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
@@ -215,6 +221,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "A modern CRM offering the flexibility of open-source, advanced features and sleek design.",
           href: "https://twenty.com",
+        },
+        {
+          name: "UnInbox",
+          description:
+            "Modern email for teams and professionals. Bringing the best of email and messaging into a single, modern, and secure platform.",
+          href: "https://uninbox.com",
         },
         {
           name: "Unkey",
