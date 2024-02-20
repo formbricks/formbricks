@@ -1,7 +1,7 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getPaginatedResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
@@ -53,10 +53,7 @@ const ResponsePage = ({
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
-  const apiFilters = useMemo(
-    () => getFormattedFilters(selectedFilter, dateRange),
-    [selectedFilter, dateRange]
-  );
+  const filters = useMemo(() => getFormattedFilters(selectedFilter, dateRange), [selectedFilter, dateRange]);
 
   const searchParams = useSearchParams();
 
@@ -72,24 +69,24 @@ const ResponsePage = ({
 
   useEffect(() => {
     const fetchInitialResponses = async () => {
-      const responses = await getPaginatedResponses(surveyId, 1, responsesPerPage, apiFilters);
+      const responses = await getResponsesAction(surveyId, 1, responsesPerPage, filters);
       if (responses.length < responsesPerPage) {
         setHasMore(false);
       }
       setResponses(responses);
     };
     fetchInitialResponses();
-  }, [surveyId, apiFilters, responsesPerPage]);
+  }, [surveyId, filters, responsesPerPage]);
 
   const fetchNextPage = useCallback(async () => {
     const newPage = page + 1;
-    const newResponses = await getPaginatedResponses(surveyId, newPage, responsesPerPage, apiFilters);
+    const newResponses = await getResponsesAction(surveyId, newPage, responsesPerPage, filters);
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
       setHasMore(false);
     }
     setResponses([...responses, ...newResponses]);
     setPage(newPage);
-  }, [apiFilters, page, responses, responsesPerPage, surveyId]);
+  }, [filters, page, responses, responsesPerPage, surveyId]);
 
   const deleteResponse = (responseId: string) => {
     setResponses(responses.filter((response) => response.id !== responseId));
@@ -102,7 +99,7 @@ const ResponsePage = ({
   useEffect(() => {
     setPage(1);
     setHasMore(true);
-  }, [apiFilters]);
+  }, [filters]);
 
   return (
     <ContentWrapper>

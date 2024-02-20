@@ -4,7 +4,7 @@ import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getPaginatedResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { fetchFile } from "@/app/lib/fetchFile";
 import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
 import { createId } from "@paralleldrive/cuid2";
@@ -160,7 +160,7 @@ const CustomFilter = ({ environmentTags, attributes, responses, survey }: Custom
     const BATCH_SIZE = 3000;
     const responses: TResponse[] = [];
     for (let page = 1; ; page++) {
-      const batchResponses = await getPaginatedResponses(survey.id, page, BATCH_SIZE);
+      const batchResponses = await getResponsesAction(survey.id, page, BATCH_SIZE);
       responses.push(...batchResponses);
       if (batchResponses.length < BATCH_SIZE) {
         break;

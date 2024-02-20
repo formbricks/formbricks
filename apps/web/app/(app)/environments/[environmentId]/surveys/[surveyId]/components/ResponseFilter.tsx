@@ -59,15 +59,10 @@ const ResponseFilter = () => {
   // when filter is opened and added a filter without selecting any option clear out that value
   const clearItem = () => {
     setFilterValue({
-      filter: [
-        ...filterValue.filter.filter(
-          (s) =>
-            s.questionType.hasOwnProperty("label") &&
-            (Array.isArray(s.filterType.filterComboBoxValue)
-              ? s.filterType.filterComboBoxValue.length
-              : s.filterType.filterComboBoxValue)
-        ),
-      ],
+      filter: filterValue.filter.filter((s) => {
+        // keep the filter if questionType is selected and filterComboBoxValue is selected
+        return s.questionType.hasOwnProperty("label") && s.filterType.filterComboBoxValue?.length;
+      }),
       onlyComplete: filterValue.onlyComplete,
     });
   };

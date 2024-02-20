@@ -6,7 +6,7 @@ import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getAttributesFromResponses } from "@formbricks/lib/response/service";
+import { getResponsePersonAttributes } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -39,7 +39,7 @@ export default async function Page({ params }) {
   }
   const tags = await getTagsByEnvironmentId(params.environmentId);
   const team = await getTeamByEnvironmentId(params.environmentId);
-  const attributes = await getAttributesFromResponses(params.surveyId);
+  const attributes = await getResponsePersonAttributes(params.surveyId);
 
   if (!team) {
     throw new Error("Team not found");

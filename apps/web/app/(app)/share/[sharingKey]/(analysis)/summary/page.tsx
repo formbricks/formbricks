@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { REVALIDATION_INTERVAL, TEXT_RESPONSES_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getAttributesFromResponses } from "@formbricks/lib/response/service";
+import { getResponsePersonAttributes } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
@@ -40,7 +40,7 @@ export default async function Page({ params }) {
   }
 
   const tags = await getTagsByEnvironmentId(environment.id);
-  const attributes = await getAttributesFromResponses(surveyId);
+  const attributes = await getResponsePersonAttributes(surveyId);
 
   return (
     <>

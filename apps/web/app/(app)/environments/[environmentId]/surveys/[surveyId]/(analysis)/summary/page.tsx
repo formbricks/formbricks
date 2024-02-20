@@ -7,7 +7,7 @@ import { TEXT_RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getAttributesFromResponses } from "@formbricks/lib/response/service";
+import { getResponsePersonAttributes } from "@formbricks/lib/response/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -45,7 +45,7 @@ export default async function Page({ params }) {
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   const tags = await getTagsByEnvironmentId(params.environmentId);
-  const attributes = await getAttributesFromResponses(params.surveyId);
+  const attributes = await getResponsePersonAttributes(params.surveyId);
 
   return (
     <>
