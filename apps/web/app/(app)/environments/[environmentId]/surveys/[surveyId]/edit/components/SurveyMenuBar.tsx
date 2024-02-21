@@ -317,7 +317,7 @@ export default function SurveyMenuBar({
     }
 
     return false;
-  }, [localSurvey.inlineTriggers, localSurvey.triggers, localSurvey.type]);
+  }, [localSurvey]);
 
   const handleSurveyPublish = async () => {
     try {
