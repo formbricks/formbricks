@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { timeSince } from "@formbricks/lib/time";
+import { convertDateString } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -130,10 +130,10 @@ export default function SurveyCard({
 
         <div className="col-span-4 grid w-full grid-cols-5 place-items-center">
           <div className="col-span-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-            {timeSince(survey.createdAt.toString())}
+            {convertDateString(survey.createdAt.toString())}
           </div>
           <div className="col-span-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-            {timeSince(survey.updatedAt.toString())}
+            {convertDateString(survey.updatedAt.toString())}
           </div>
           <div className="place-self-end">
             <SurveyDropDownMenu
