@@ -69,7 +69,7 @@ const ConnectedState = ({ goToProduct }) => {
 
 const NotConnectedState = ({ environment, webAppUrl, isFormbricksCloud, goToTeamInvitePage }) => {
   return (
-    <div className="mb-8 w-full max-w-xl space-y-8">
+    <div className="group mb-8 w-full max-w-xl space-y-8">
       <OnboardingTitle
         title="Connect your app or website"
         subtitle="It takes just a few minutes to set it up."

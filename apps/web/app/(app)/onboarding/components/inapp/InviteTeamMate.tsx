@@ -80,7 +80,7 @@ export function InviteTeamMate({ team, environmentId, SET_CURRENT_STEP }: Invite
   };
 
   return (
-    <div className="mb-8 w-full max-w-xl space-y-8">
+    <div className="group mb-8 w-full max-w-xl space-y-8">
       <OnboardingTitle
         title="Invite your team to help out"
         subtitle="Ask your tech-savvy co-worker to finish the setup:"

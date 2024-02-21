@@ -145,7 +145,7 @@ export function Onboarding({
   return (
     <div className="flex h-full w-full flex-col items-center bg-slate-50">
       <OnboardingHeader progress={progress} />
-      <div className="group mt-20 flex w-full justify-center bg-slate-50">
+      <div className="mt-20 flex w-full justify-center bg-slate-50">
         {renderOnboardingStep()}
         {iframeVisible && (
           <iframe

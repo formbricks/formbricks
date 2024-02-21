@@ -15,7 +15,7 @@ export function OnboardingHeader({ progress }: OnboardingHeaderProps) {
         <div className="relative grow overflow-hidden rounded-full bg-slate-200">
           <ProgressBar progress={progress / 100} barColor="bg-brand-dark" height={2} />
         </div>
-        <span className="">{progress}% complete</span>
+        <span className="text-sm text-slate-800">{progress}% complete</span>
       </div>
     </div>
   );

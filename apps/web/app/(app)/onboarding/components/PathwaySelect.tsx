@@ -40,7 +40,7 @@ export default function PathwaySelect({
     <div className="space-y-16 text-center">
       <OnboardingTitle
         title="How would you like to start?"
-        subtitle="Later, you can always use all types of surveys."
+        subtitle="You can always use all types of surveys later on."
       />
       <div className="flex space-x-8">
         <OptionCard
