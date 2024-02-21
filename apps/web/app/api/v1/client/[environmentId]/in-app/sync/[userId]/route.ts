@@ -136,7 +136,11 @@ export async function GET(
       product,
     };
 
-    return responses.successResponse({ ...state }, true);
+    return responses.successResponse(
+      { ...state },
+      true,
+      "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+    );
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
