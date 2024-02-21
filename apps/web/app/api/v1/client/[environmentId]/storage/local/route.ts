@@ -19,7 +19,7 @@ interface Context {
 }
 
 export async function OPTIONS(): Promise<NextResponse> {
-  return NextResponse.json(
+  return Response.json(
     {},
     {
       headers: {

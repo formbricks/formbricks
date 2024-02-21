@@ -1,5 +1,4 @@
 import { NextApiResponse } from "next";
-import { NextResponse } from "next/server";
 
 export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
@@ -30,7 +29,7 @@ const corsHeaders = {
 };
 
 const badRequestResponse = (message: string, details?: { [key: string]: string }, cors: boolean = false) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "bad_request",
       message,
@@ -56,7 +55,7 @@ const methodNotAllowedResponse = (
   allowedMethods: string[],
   cors: boolean = false
 ) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "method_not_allowed",
       message: `The HTTP ${res.req?.method} method is not supported by this route.`,
@@ -71,7 +70,7 @@ const methodNotAllowedResponse = (
   );
 
 const notFoundResponse = (resourceType: string, resourceId: string, cors: boolean = false) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "not_found",
       message: `${resourceType} not found`,
@@ -87,7 +86,7 @@ const notFoundResponse = (resourceType: string, resourceId: string, cors: boolea
   );
 
 const notAuthenticatedResponse = (cors: boolean = false) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "not_authenticated",
       message: "Not authenticated",
@@ -102,7 +101,7 @@ const notAuthenticatedResponse = (cors: boolean = false) =>
   );
 
 const unauthorizedResponse = (cors: boolean = false) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "unauthorized",
       message: "You are not authorized to access this resource",
@@ -120,7 +119,7 @@ const successResponse = (data: Object, cors: boolean = false, cache: string = "p
     "Cache-Control": cache,
   };
 
-  return NextResponse.json(
+  return Response.json(
     {
       data,
     } as ApiSuccessResponse<typeof data>,
@@ -132,7 +131,7 @@ const successResponse = (data: Object, cors: boolean = false, cache: string = "p
 };
 
 const internalServerErrorResponse = (message: string, cors: boolean = false) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "internal_server_error",
       message,

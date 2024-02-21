@@ -13,7 +13,6 @@ import {
 } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
-import { sync } from "./sync";
 import { closeSurvey } from "./widget";
 
 const config = Config.getInstance();
@@ -23,7 +22,7 @@ export const updatePersonAttribute = async (
   key: string,
   value: string
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
-  const { apiHost, environmentId, userId } = config.get();
+  const { environmentId, userId } = config.get();
   if (!userId) {
     return err({
       code: "missing_person",
@@ -53,13 +52,8 @@ export const updatePersonAttribute = async (
     });
   }
 
-  logger.debug("Attribute updated. Syncing...");
-
-  await sync({
-    environmentId: environmentId,
-    apiHost: apiHost,
-    userId: userId,
-  });
+  // skipping additional sync for now as the server response is cached
+  // we need to figure out how to handle this in the future to get more recent state data before next sync
 
   return okVoid();
 };
