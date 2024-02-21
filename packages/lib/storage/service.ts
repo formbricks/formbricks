@@ -17,7 +17,7 @@ import path from "path";
 
 import { TAccessType } from "@formbricks/types/storage";
 
-import { IS_FORMBRICKS_CLOUD, IS_S3_CONFIGURED, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
+import { IS_S3_CONFIGURED, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
 import { generateLocalSignedUrl } from "../crypto";
 import { env } from "../env.mjs";
 import { storageCache } from "./cache";
@@ -188,14 +188,6 @@ export const getUploadSignedUrl = async (
   if (!IS_S3_CONFIGURED) {
     try {
       const { signature, timestamp, uuid } = generateLocalSignedUrl(updatedFileName, environmentId, fileType);
-      let fileUrl = "";
-
-      // self-hosted and no S3
-      if (!IS_FORMBRICKS_CLOUD) {
-        fileUrl = `/storage/${environmentId}/${accessType}/${updatedFileName}`;
-      } else {
-        fileUrl = new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href;
-      }
 
       return {
         signedUrl:
@@ -208,7 +200,7 @@ export const getUploadSignedUrl = async (
           uuid,
         },
         updatedFileName,
-        fileUrl,
+        fileUrl: `/storage/${environmentId}/${accessType}/${updatedFileName}`,
       };
     } catch (err) {
       throw err;
@@ -228,10 +220,7 @@ export const getUploadSignedUrl = async (
     return {
       signedUrl,
       presignedFields,
-      // fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
-      fileUrl: !IS_FORMBRICKS_CLOUD
-        ? `/storage/${environmentId}/${accessType}/${updatedFileName}`
-        : new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
+      fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
     };
   } catch (err) {
     throw err;

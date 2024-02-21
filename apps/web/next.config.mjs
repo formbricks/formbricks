@@ -27,10 +27,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
-      // {
-      //   protocol: "http",
-      //   hostname: "localhost",
-      // },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
       {
         protocol: "https",
         hostname: "app.formbricks.com",
@@ -116,6 +116,25 @@ if (process.env.WEBAPP_URL) {
   nextConfig.images.remotePatterns.push({
     protocol: "https",
     hostname: getHostname(process.env.WEBAPP_URL),
+  });
+} else {
+  // The WEBAPP_URL is not set, so we allow all origins
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: "**",
+  });
+}
+
+// if S3 env variables are set, add the S3 bucket as a remote pattern
+if (
+  process.env.S3_BUCKET_NAME &&
+  process.env.S3_REGION &&
+  process.env.S3_ACCESS_KEY &&
+  process.env.S3_SECRET_KEY
+) {
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: `${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com`,
   });
 }
 
