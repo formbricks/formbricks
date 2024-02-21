@@ -10,11 +10,10 @@ const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
 
-const syncWithBackend = async ({
-  apiHost,
-  environmentId,
-  userId,
-}: TJsSyncParams): Promise<Result<TJsStateSync, NetworkError>> => {
+const syncWithBackend = async (
+  { apiHost, environmentId, userId }: TJsSyncParams,
+  noCache: boolean
+): Promise<Result<TJsStateSync, NetworkError>> => {
   const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}?version=${import.meta.env.VERSION}`;
   const publicUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
 
@@ -41,7 +40,13 @@ const syncWithBackend = async ({
 
   // userId is available, call the api with the `userId` param
 
-  const response = await fetch(url);
+  let fetchOptions: RequestInit = {};
+
+  if (noCache) {
+    fetchOptions.cache = "no-cache";
+  }
+
+  const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
     const jsonRes = await response.json();
@@ -61,9 +66,9 @@ const syncWithBackend = async ({
   return ok(state as TJsStateSync);
 };
 
-export const sync = async (params: TJsSyncParams): Promise<void> => {
+export const sync = async (params: TJsSyncParams, noCache = false): Promise<void> => {
   try {
-    const syncResult = await syncWithBackend(params);
+    const syncResult = await syncWithBackend(params, noCache);
     if (syncResult?.ok !== true) {
       logger.error(`Sync failed: ${JSON.stringify(syncResult.error)}`);
       throw syncResult.error;
