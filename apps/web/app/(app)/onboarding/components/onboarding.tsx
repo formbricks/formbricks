@@ -1,10 +1,10 @@
 "use client";
 
-import { Connect } from "@/app/(app)/onboarding/components/Connect";
-import { InviteTeamMate } from "@/app/(app)/onboarding/components/InviteTeamMate";
-import Objective from "@/app/(app)/onboarding/components/Objective";
-import { OnboardingLinkSurvey } from "@/app/(app)/onboarding/components/OnboardingLinkSurvey";
-import Role from "@/app/(app)/onboarding/components/Role";
+import { ConnectWithFormbricks } from "@/app/(app)/onboarding/components/inapp/ConnectWithFormbricks";
+import { InviteTeamMate } from "@/app/(app)/onboarding/components/inapp/InviteTeamMate";
+import Objective from "@/app/(app)/onboarding/components/inapp/SurveyObjective";
+import Role from "@/app/(app)/onboarding/components/inapp/SurveyRole";
+import { SurveyiFrameHandling } from "@/app/(app)/onboarding/components/link/SurveyiFrameHandling";
 import { Session } from "next-auth";
 import { useEffect, useState } from "react";
 
@@ -12,8 +12,8 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
 
-import { OnboardingHeader } from "./OnboardingHeader";
 import PathwaySelect from "./PathwaySelect";
+import { OnboardingHeader } from "./ProgressBar";
 
 interface OnboardingProps {
   isFormbricksCloud: boolean;
@@ -36,7 +36,6 @@ export function Onboarding({
   const [progress, setProgress] = useState<number>(16);
   const [formbricksResponseId, setFormbricksResponseId] = useState<string | undefined>();
   const [CURRENT_STEP, SET_CURRENT_STEP] = useState<number | null>(null);
-  const [hideOnboardingHeader, setHideOnboardingHeader] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") {
       // Access localStorage only when window is available
@@ -70,10 +69,10 @@ export function Onboarding({
         );
       case 2:
         return selectedPathway === "link" ? (
-          <OnboardingLinkSurvey
+          <SurveyiFrameHandling
             environmentId={environment.id}
-            setHideOnboardingHeader={setHideOnboardingHeader}
             isFormbricksCloud={isFormbricksCloud}
+            SET_CURRENT_STEP={SET_CURRENT_STEP}
           />
         ) : (
           <Role
@@ -92,7 +91,7 @@ export function Onboarding({
         );
       case 4:
         return (
-          <Connect
+          <ConnectWithFormbricks
             environment={environment}
             webAppUrl={webAppUrl}
             SET_CURRENT_STEP={SET_CURRENT_STEP}
@@ -100,7 +99,13 @@ export function Onboarding({
           />
         );
       case 5:
-        return (
+        return selectedPathway === "link" ? (
+          <SurveyiFrameHandling
+            environmentId={environment.id}
+            isFormbricksCloud={isFormbricksCloud}
+            SET_CURRENT_STEP={SET_CURRENT_STEP}
+          />
+        ) : (
           <InviteTeamMate environmentId={environment.id} team={team} SET_CURRENT_STEP={SET_CURRENT_STEP} />
         );
       default:
@@ -109,11 +114,9 @@ export function Onboarding({
   };
 
   return (
-    <div className="bg-yellow-20 flex h-full w-full flex-col items-center">
-      {!hideOnboardingHeader && <OnboardingHeader progress={progress} />}
-      <div className="flex h-full w-full items-center justify-center  bg-slate-50">
-        {renderOnboardingStep()}
-      </div>
+    <div className="flex h-full w-full flex-col items-center bg-slate-50">
+      <OnboardingHeader progress={progress} />
+      <div className="group mt-20 flex w-full justify-center bg-slate-50">{renderOnboardingStep()}</div>
     </div>
   );
 }

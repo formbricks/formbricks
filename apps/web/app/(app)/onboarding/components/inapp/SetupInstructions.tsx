@@ -31,8 +31,8 @@ export default function SetupInstructionsOnboarding({
 <!-- END Formbricks Surveys -->`;
 
   return (
-    <div className="w-[36rem] px-6">
-      <div className="flex h-14 w-full items-center justify-center rounded-md border border-slate-100 bg-white">
+    <div>
+      <div className="flex h-14 w-full items-center justify-center rounded-md border border-slate-200 bg-white">
         <nav className="flex h-full w-full items-center space-x-4 p-1.5" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
@@ -40,7 +40,7 @@ export default function SetupInstructionsOnboarding({
               onClick={() => setActiveId(tab.id)}
               className={cn(
                 tab.id === activeTab
-                  ? " bg-slate-50 font-semibold text-slate-900"
+                  ? " bg-slate-100 font-semibold text-slate-900"
                   : "text-slate-500  transition-all duration-300 hover:bg-slate-50 hover:text-slate-700",
                 "flex h-full w-full items-center justify-center rounded-md px-3 py-2 text-center text-sm font-medium"
               )}
@@ -54,13 +54,15 @@ export default function SetupInstructionsOnboarding({
       <div className="">
         {activeTab === "npm" ? (
           <div className="prose prose-slate">
-            <CodeBlock customEditorClass="!bg-white" language="sh">
+            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
               npm install @formbricks/js --save
             </CodeBlock>
             <p className="text-sm text-slate-700">
               Import Formbricks and initialize the widget in your Component (e.g. App.tsx):
             </p>
-            <CodeBlock customEditorClass="!bg-white" language="js">{`import formbricks from "@formbricks/js";
+            <CodeBlock
+              customEditorClass="!bg-white border border-slate-200"
+              language="js">{`import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.init({
@@ -82,7 +84,7 @@ if (typeof window !== "undefined") {
             <p className="-mb-1 mt-6 text-sm text-slate-700">
               Insert this code into the &lt;head&gt; tag of your website:
             </p>
-            <CodeBlock customEditorClass="!bg-white" language="js">
+            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
               {htmlSnippet}
             </CodeBlock>
             <div className="mt-4 space-x-2">

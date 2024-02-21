@@ -1,5 +1,6 @@
 "use client";
 
+import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,7 +10,7 @@ import { TTeam } from "@formbricks/types/teams";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
-import { finishOnboardingAction, inviteTeamMateAction } from "../actions";
+import { finishOnboardingAction, inviteTeamMateAction } from "../../actions";
 
 interface InviteTeamMateProps {
   team: TTeam;
@@ -79,43 +80,45 @@ export function InviteTeamMate({ team, environmentId, SET_CURRENT_STEP }: Invite
   };
 
   return (
-    <div className="group flex h-full flex-col items-center justify-between p-6">
-      <div className="mt-12 w-[30rem] space-y-4 text-center">
+    <div className="mb-8 w-full max-w-xl space-y-8">
+      <OnboardingTitle
+        title="Invite your team to help out"
+        subtitle="Ask your tech-savvy co-worker to finish the setup:"
+      />
+      <div className="flex h-[65vh] flex-col justify-between">
         <div className="space-y-4">
-          <div className="space-y-4 text-center text-slate-800">
-            <p className="text-2xl font-medium">Invite your team to help out</p>
-            <p className="text-sm text-slate-700">Ask your tech-savvy co-worker to finish the setup:</p>
-          </div>
-
           <Input
+            tabIndex={0}
             placeholder="engineering@acme.com"
             className="w-full bg-white"
             value={formState.email}
             onChange={(e) => handleInputChange(e, "email")}
           />
+
+          <InviteMessageInput
+            value={formState.inviteMessage}
+            onChange={(e) => handleInputChange(e, "inviteMessage")}
+          />
+
+          <div className="flex w-full justify-between">
+            <Button variant="minimal" onClick={() => goBackToConnectPage()}>
+              Back
+            </Button>
+            <Button variant="darkCTA" onClick={handleInvite}>
+              Invite
+            </Button>
+          </div>
         </div>
-
-        <InviteMessageInput
-          value={formState.inviteMessage}
-          onChange={(e) => handleInputChange(e, "inviteMessage")}
-        />
-
-        <div className="flex w-full justify-between">
-          <Button variant="minimal" onClick={() => goBackToConnectPage()}>
-            Back
-          </Button>
-          <Button variant="darkCTA" onClick={handleInvite}>
-            Invite
+        <div className="mt-auto flex justify-center">
+          <Button
+            className="opacity-0 transition-all delay-[3000ms] duration-500 ease-in-out group-hover:opacity-100"
+            variant="minimal"
+            onClick={goToProduct}
+            loading={isLoading}>
+            I want to have a look around first <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </div>
-      <Button
-        className="opacity-0 transition-all delay-[3000ms] duration-500 ease-in-out group-hover:opacity-100"
-        variant="minimal"
-        onClick={goToProduct}
-        loading={isLoading}>
-        I want to have a look around first <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
     </div>
   );
 }

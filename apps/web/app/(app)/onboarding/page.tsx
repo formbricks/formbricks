@@ -1,4 +1,4 @@
-import { Onboarding } from "@/app/(app)/onboarding/components/onboarding";
+import { Onboarding } from "@/app/(app)/onboarding/components/Onboarding";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { updateUserAction } from "@/app/(app)/onboarding/actions";
+import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
 import { handleTabNavigation } from "@/app/(app)/onboarding/utils";
 import { createResponse, formbricksEnabled } from "@/app/lib/formbricks";
 import { Session } from "next-auth";
@@ -86,73 +87,66 @@ const Role: React.FC<RoleProps> = ({ setFormbricksResponseId, session, SET_CURRE
   };
 
   return (
-    <div className="flex w-full max-w-xl flex-col gap-8 px-8">
-      <div className="w-full px-4">
-        <label htmlFor="choices" className="mb-1.5 block text-base font-semibold leading-6 text-slate-900">
-          What is your role?
-        </label>
-        <label className="block text-sm font-normal leading-6 text-slate-500">
-          Make your Formbricks experience more personalised.
-        </label>
-        <div className="mt-4">
-          <fieldset id="choices" aria-label="What is your role?" ref={fieldsetRef}>
-            <legend className="sr-only">Choices</legend>
-            <div className=" relative space-y-2 rounded-md">
-              {roles.map((choice) => (
-                <label
-                  key={choice.id}
-                  htmlFor={choice.id}
-                  className={cn(
-                    selectedChoice === choice.label
-                      ? "z-10 border-slate-400 bg-slate-100"
-                      : "border-slate-200",
-                    "relative flex cursor-pointer flex-col rounded-md border p-4 hover:bg-slate-100 focus:outline-none"
-                  )}>
-                  <span className="flex items-center text-sm">
-                    <input
-                      type="radio"
-                      id={choice.id}
-                      value={choice.label}
-                      name="role"
-                      checked={choice.label === selectedChoice}
-                      className="checked:text-brand-dark focus:text-brand-dark h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
-                      aria-labelledby={`${choice.id}-label`}
-                      onChange={(e) => {
-                        setSelectedChoice(e.currentTarget.value);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleNextClick();
-                        }
-                      }}
-                    />
-                    <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                      {choice.label}
-                    </span>
-                  </span>
-                  {choice.id === "other" && selectedChoice === "Other" && (
-                    <div className="mt-4 w-full">
-                      <Input
-                        className="bg-white"
-                        autoFocus
-                        placeholder="Please specify"
-                        value={otherValue}
-                        onChange={(e) => setOtherValue(e.target.value)}
-                      />
-                    </div>
-                  )}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+    <div className="flex w-full max-w-xl flex-col gap-8">
+      <OnboardingTitle
+        title="What is your role?"
+        subtitle="Make your Formbricks experience more personalised."
+      />
+      <fieldset id="choices" aria-label="What is your role?" ref={fieldsetRef}>
+        <legend className="sr-only">Choices</legend>
+        <div className="relative space-y-2 rounded-md">
+          {roles.map((choice) => (
+            <label
+              key={choice.id}
+              htmlFor={choice.id}
+              className={cn(
+                selectedChoice === choice.label
+                  ? "z-10 border-slate-400 bg-slate-100"
+                  : "border-slate-200  bg-white hover:bg-slate-50",
+                "relative flex cursor-pointer flex-col rounded-md border  p-4 focus:outline-none"
+              )}>
+              <span className="flex items-center">
+                <input
+                  type="radio"
+                  id={choice.id}
+                  value={choice.label}
+                  name="role"
+                  checked={choice.label === selectedChoice}
+                  className="checked:text-brand-dark focus:text-brand-dark h-4 w-4 border border-slate-300 focus:ring-0 focus:ring-offset-0"
+                  aria-labelledby={`${choice.id}-label`}
+                  onChange={(e) => {
+                    setSelectedChoice(e.currentTarget.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleNextClick();
+                    }
+                  }}
+                />
+                <span id={`${choice.id}-label`} className="ml-3 text-sm text-slate-700">
+                  {choice.label}
+                </span>
+              </span>
+              {choice.id === "other" && selectedChoice === "Other" && (
+                <div className="mt-4 w-full">
+                  <Input
+                    className="bg-white"
+                    autoFocus
+                    placeholder="Please specify"
+                    value={otherValue}
+                    onChange={(e) => setOtherValue(e.target.value)}
+                  />
+                </div>
+              )}
+            </label>
+          ))}
         </div>
-      </div>
-      <div className="mb-24 flex justify-between">
-        <Button size="lg" className="text-slate-500" variant="minimal" onClick={next} id="role-skip">
+      </fieldset>
+      <div className="flex justify-between">
+        <Button className="text-slate-500" variant="minimal" onClick={next} id="role-skip">
           Skip
         </Button>
         <Button
-          size="lg"
           variant="darkCTA"
           loading={isUpdating}
           disabled={!selectedChoice}

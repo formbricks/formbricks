@@ -1,3 +1,4 @@
+import OnboardingTitle from "@/app/(app)/onboarding/components/OnboardingTitle";
 import InappMockup from "@/images/onboarding-in-app-survey.png";
 import LinkMockup from "@/images/onboarding-link-survey.webp";
 import Image from "next/image";
@@ -37,10 +38,10 @@ export default function PathwaySelect({
 
   return (
     <div className="space-y-16 text-center">
-      <div className="space-y-4">
-        <p className="text-4xl font-medium text-slate-800">How would you like to start?</p>
-        <p className="text-sm text-slate-500">Later, you can always use all types of surveys.</p>
-      </div>
+      <OnboardingTitle
+        title="How would you like to start?"
+        subtitle="Later, you can always use all types of surveys."
+      />
       <div className="flex space-x-8">
         <OptionCard
           size="lg"

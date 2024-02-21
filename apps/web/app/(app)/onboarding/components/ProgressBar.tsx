@@ -6,7 +6,7 @@ interface OnboardingHeaderProps {
 }
 export function OnboardingHeader({ progress }: OnboardingHeaderProps) {
   return (
-    <div className="fixed z-50 mx-auto grid  w-full max-w-7xl grid-cols-6 items-center pt-8">
+    <div className="sticky z-50 mx-3 mt-6 grid w-full max-w-6xl grid-cols-6 items-center rounded-xl border border-slate-200 bg-white px-6 py-3">
       <div className="col-span-2">
         <Logo className="ml-4 w-1/2" />
       </div>
@@ -15,7 +15,7 @@ export function OnboardingHeader({ progress }: OnboardingHeaderProps) {
         <div className="relative grow overflow-hidden rounded-full bg-slate-200">
           <ProgressBar progress={progress / 100} barColor="bg-brand-dark" height={2} />
         </div>
-        <span className="font-medium">{progress}% complete</span>
+        <span className="">{progress}% complete</span>
       </div>
     </div>
   );

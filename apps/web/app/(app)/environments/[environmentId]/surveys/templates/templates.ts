@@ -562,7 +562,6 @@ export const templates: TTemplate[] = [
   },
   {
     name: "Churn Survey",
-
     category: "Increase Revenue",
     objectives: ["sharpen_marketing_messaging", "improve_user_retention"],
     description: "Find out why people cancel their subscriptions. These insights are pure gold!",
@@ -1525,7 +1524,7 @@ export const templates: TTemplate[] = [
     objectives: ["support_sales"],
     description: "Measure the Net Promoter Score of your product or service.",
     preset: {
-      name: "{{productName}} NPS",
+      name: "NPS Survey",
       welcomeCard: welcomeCardDefault,
       questions: [
         {
@@ -1597,7 +1596,7 @@ export const templates: TTemplate[] = [
     objectives: ["increase_user_adoption", "improve_user_retention"],
     description: "Gather comprehensive feedback on your product or service.",
     preset: {
-      name: "{{productName}} Feedback Survey",
+      name: "Feedback Survey",
       welcomeCard: welcomeCardDefault,
       questions: [
         {

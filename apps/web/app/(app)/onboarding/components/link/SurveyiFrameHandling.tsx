@@ -1,20 +1,20 @@
 "use client";
 
-import { OnboardingModal } from "@/app/(app)/onboarding/components/OnboardingModal";
+import { CreateFirstSurvey } from "@/app/(app)/onboarding/components/link/CreateFirstSurvey";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface OnboardingLinkSurveyProps {
+interface SurveyiFrameHandlingProps {
   environmentId: string;
-  setHideOnboardingHeader: (hide: boolean) => void;
   isFormbricksCloud: boolean;
+  SET_CURRENT_STEP: (currentStep: number) => void;
 }
 
-export function OnboardingLinkSurvey({
+export function SurveyiFrameHandling({
   environmentId,
-  setHideOnboardingHeader,
   isFormbricksCloud,
-}: OnboardingLinkSurveyProps) {
+  SET_CURRENT_STEP,
+}: SurveyiFrameHandlingProps) {
   const [fade, setFade] = useState(false); // State to control fade-in and fade-out
   const router = useRouter();
   const [showOnboardingModal, setShowOnboardingModal] = useState(!isFormbricksCloud);
@@ -27,8 +27,8 @@ export function OnboardingLinkSurvey({
       setTimeout(() => {
         setIframeVisible(false); // Hide the iframe after fade-out
       }, 1000);
+      SET_CURRENT_STEP(5); // Update progress bar after survey complete
       setShowOnboardingModal(true);
-      setHideOnboardingHeader(true);
       setFade(false); // Trigger fade-out
     };
 
@@ -41,17 +41,11 @@ export function OnboardingLinkSurvey({
     };
   }, [router]);
 
-  useEffect(() => {
-    if (showOnboardingModal) {
-      setHideOnboardingHeader(true);
-    }
-  }, [showOnboardingModal]);
-
   return (
     <div className="h-full w-full">
       {iframeVisible && (
         <iframe
-          src="http://localhost:3000/s/clsvp9och001geqy0pueuq8ox"
+          src="http://localhost:3000/s/clsui9a7x0000fbh5orp0g7c5"
           frameBorder="0"
           style={{
             inset: "0",
@@ -64,7 +58,7 @@ export function OnboardingLinkSurvey({
             opacity: fade ? "1" : "0", // 1 for fade in, 0 for fade out
           }}></iframe>
       )}
-      {showOnboardingModal && <OnboardingModal environmentId={environmentId} />}
+      {showOnboardingModal && <CreateFirstSurvey environmentId={environmentId} />}
     </div>
   );
 }

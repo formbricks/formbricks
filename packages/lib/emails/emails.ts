@@ -139,7 +139,7 @@ export const sendInviteMemberEmail = async (
   if (isOnboardingInvite && inviteMessage) {
     await sendEmail({
       to: email,
-      subject: `${inviterName} needs a hand setting up Formbricks 🙌  Can you help out?`,
+      subject: `${inviterName} needs a hand setting up Formbricks.  Can you help out?`,
       html: withEmailTemplate(`Hey 👋,<br/><br/>
       ${inviteMessage} 
       <h2>Get Started in Minutes</h2>
