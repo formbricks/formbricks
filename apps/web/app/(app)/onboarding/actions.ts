@@ -13,7 +13,6 @@ import { getProduct, updateProduct } from "@formbricks/lib/product/service";
 import { createSurvey } from "@formbricks/lib/survey/service";
 import { verifyUserRoleAccess } from "@formbricks/lib/team/auth";
 import { updateUser } from "@formbricks/lib/user/service";
-import { TEnvironment } from "@formbricks/types/environment";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProductUpdateInput } from "@formbricks/types/product";
@@ -88,11 +87,11 @@ export async function fetchEnvironment(id: string) {
   return await getEnvironment(id);
 }
 
-export const createSurveyFromTemplate = async (template: TTemplate, environment: TEnvironment) => {
+export const createSurveyFromTemplate = async (template: TTemplate, environmentId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
-  const userHasAccess = await hasUserEnvironmentAccess(session.user.id, environment.id);
+  const userHasAccess = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!userHasAccess) throw new AuthorizationError("Not authorized");
 
   // Set common survey properties
@@ -105,7 +104,7 @@ export const createSurveyFromTemplate = async (template: TTemplate, environment:
     createdBy: userId,
   };
   // Create and return the new survey
-  return await createSurvey(environment.id, surveyInput);
+  return await createSurvey(environmentId, surveyInput);
 };
 
 export async function updateUserAction(updatedUser: TUserUpdateInput) {

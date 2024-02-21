@@ -9,19 +9,19 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { TEnvironment } from "@formbricks/types/environment";
 import { TTemplate } from "@formbricks/types/templates";
 import { Button } from "@formbricks/ui/Button";
 import { OptionCard } from "@formbricks/ui/OptionCard";
 
-import { createSurveyFromTemplate } from "../actions";
+import { createSurveyFromTemplate, finishOnboardingAction } from "../actions";
 
 interface OnboardingModalProps {
-  environment: TEnvironment;
+  environmentId: string;
 }
 
-export function OnboardingModal({ environment }: OnboardingModalProps) {
+export function OnboardingModal({ environmentId }: OnboardingModalProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [isRouting, setIsRouting] = useState(false);
   const router = useRouter();
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
   const filteredTemplates = templates.filter(
@@ -30,16 +30,30 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
       template.name === "Feedback Box" ||
       template.name === "Improve Trial Conversion"
   );
+
   if (!isOpen) return null;
 
   const newSurveyFromTemplate = async (template: TTemplate) => {
     setLoadingTemplate(template.name);
-    localStorage.removeItem("pathway");
+    await finishOnboardingAction();
     try {
-      const survey = await createSurveyFromTemplate(template, environment);
-      router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
+      const survey = await createSurveyFromTemplate(template, environmentId);
+      router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
     } catch (e) {
       toast.error("An error occurred creating a new survey");
+    }
+  };
+
+  const finishOnboardingAndNavigate = async () => {
+    try {
+      setIsRouting(true);
+      router.push(`/`);
+      await finishOnboardingAction();
+      setIsOpen(false);
+      setIsRouting(false);
+    } catch (error) {
+      toast.error("Some error occured");
+      setIsRouting(false);
     }
   };
 
@@ -47,12 +61,13 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-800 bg-opacity-80 backdrop-blur-sm">
       <div className="shadow-card-lg relative flex h-[85vh] w-[85vw] flex-col items-center justify-center rounded-xl bg-slate-50 p-10">
         <div className="absolute right-2 top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md p-1 text-slate-500 hover:bg-slate-200">
-          <X
-            onClick={() => {
-              localStorage.removeItem("pathway");
-              setIsOpen(false);
-            }}
-          />
+          <Button
+            onClick={finishOnboardingAndNavigate}
+            variant="minimal"
+            loading={isRouting}
+            className="border-none">
+            <X className="h-4 w-4" />
+          </Button>
         </div>
         <div className="p-6">
           <div className="flex items-center justify-between">
@@ -60,7 +75,6 @@ export function OnboardingModal({ environment }: OnboardingModalProps) {
             <Button
               size="lg"
               variant="darkCTA"
-              loading={loadingTemplate === "Start from scratch"}
               onClick={() => {
                 newSurveyFromTemplate(customSurvey);
               }}>

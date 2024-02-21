@@ -6,7 +6,7 @@ interface OnboardingHeaderProps {
 }
 export function OnboardingHeader({ progress }: OnboardingHeaderProps) {
   return (
-    <div className="mx-auto grid w-full max-w-7xl grid-cols-6 items-center  pt-8">
+    <div className="fixed z-50 mx-auto grid  w-full max-w-7xl grid-cols-6 items-center pt-8">
       <div className="col-span-2">
         <Logo className="ml-4 w-1/2" />
       </div>

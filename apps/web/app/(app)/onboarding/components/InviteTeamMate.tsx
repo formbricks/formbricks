@@ -56,8 +56,6 @@ export function InviteTeamMate({ team, environmentId, SET_CURRENT_STEP }: Invite
     try {
       await inviteTeamMateAction(team.id, formState.email, "developer", formState.inviteMessage);
       toast.success("Invite sent successful");
-      localStorage.removeItem("pathway");
-      localStorage.removeItem("CURRENT_STEP");
       goToProduct();
     } catch (error) {
       toast.error(error.message || "An unexpected error occurred");
@@ -66,8 +64,6 @@ export function InviteTeamMate({ team, environmentId, SET_CURRENT_STEP }: Invite
 
   const goToProduct = async () => {
     setIsLoading(true);
-    localStorage.removeItem("pathway");
-    localStorage.removeItem("CURRENT_STEP");
     try {
       await finishOnboardingAction();
       router.push(`/environments/${environmentId}/surveys`);

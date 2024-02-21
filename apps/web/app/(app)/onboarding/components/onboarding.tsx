@@ -36,7 +36,7 @@ export function Onboarding({
   const [progress, setProgress] = useState<number>(16);
   const [formbricksResponseId, setFormbricksResponseId] = useState<string | undefined>();
   const [CURRENT_STEP, SET_CURRENT_STEP] = useState<number | null>(null);
-
+  const [hideOnboardingHeader, setHideOnboardingHeader] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined") {
       // Access localStorage only when window is available
@@ -70,7 +70,11 @@ export function Onboarding({
         );
       case 2:
         return selectedPathway === "link" ? (
-          <OnboardingLinkSurvey />
+          <OnboardingLinkSurvey
+            environmentId={environment.id}
+            setHideOnboardingHeader={setHideOnboardingHeader}
+            isFormbricksCloud={isFormbricksCloud}
+          />
         ) : (
           <Role
             setFormbricksResponseId={setFormbricksResponseId}
@@ -106,7 +110,7 @@ export function Onboarding({
 
   return (
     <div className="bg-yellow-20 flex h-full w-full flex-col items-center">
-      <OnboardingHeader progress={progress} />
+      {!hideOnboardingHeader && <OnboardingHeader progress={progress} />}
       <div className="flex h-full w-full items-center justify-center  bg-slate-50">
         {renderOnboardingStep()}
       </div>

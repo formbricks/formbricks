@@ -1,8 +1,6 @@
-import { finishOnboardingAction } from "@/app/(app)/onboarding/actions";
 import InappMockup from "@/images/onboarding-in-app-survey.png";
 import LinkMockup from "@/images/onboarding-link-survey.webp";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 import { OptionCard } from "@formbricks/ui/OptionCard";
 
@@ -19,18 +17,10 @@ export default function PathwaySelect({
   SET_CURRENT_STEP,
   isFormbricksCloud,
 }: PathwaySelectProps) {
-  const router = useRouter();
-
   const handleSelect = async (pathway: PathwayOptionType) => {
     if (pathway === "link") {
-      if (isFormbricksCloud) {
-        SET_CURRENT_STEP(2);
-        localStorage.setItem("CURRENT_STEP", "2");
-      } else {
-        await finishOnboardingAction();
-        localStorage.setItem("pathway", "link");
-        router.push("/");
-      }
+      SET_CURRENT_STEP(2);
+      localStorage.setItem("CURRENT_STEP", "2");
       localStorage.setItem("pathway", "link");
     } else {
       localStorage.setItem("pathway", "in-app");

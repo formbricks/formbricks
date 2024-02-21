@@ -122,8 +122,6 @@ export function Connect({ environment, webAppUrl, SET_CURRENT_STEP, isFormbricks
   return localEnvironment.widgetSetupCompleted ? (
     <ConnectedState
       goToProduct={() => {
-        localStorage.removeItem("CURRENT_STEP");
-        localStorage.removeItem("pathway");
         goToProduct(router);
       }}
     />

@@ -1,7 +1,6 @@
 "use client";
 
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
-import { OnboardingModal } from "@/app/(app)/onboarding/components/OnboardingModal";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -28,13 +27,10 @@ export default function SurveyStarter({
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
   const router = useRouter();
-  const [isNewUser, setIsNewUser] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isNewUserValue = localStorage.getItem("pathway");
-      setIsNewUser(isNewUserValue === "link");
-    }
+    localStorage.removeItem("pathway");
+    localStorage.removeItem("CURRENT_STEP");
   }, []);
 
   const newSurveyFromTemplate = async (template: TTemplate) => {
@@ -55,10 +51,8 @@ export default function SurveyStarter({
       setIsCreateSurveyLoading(false);
     }
   };
-  if (isNewUser === null) return;
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col py-12">
-      {isNewUser && <OnboardingModal environment={environment} />}
       {isCreateSurveyLoading ? (
         <LoadingSpinner />
       ) : (

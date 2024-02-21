@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -29,6 +29,12 @@ export default function SurveysList({
 }: SurveysListProps) {
   const [filteredSurveys, setFilteredSurveys] = useState<TSurvey[]>(surveys);
   const [orientation, setOrientation] = useState("grid");
+
+  useEffect(() => {
+    localStorage.removeItem("pathway");
+    localStorage.removeItem("CURRENT_STEP");
+  }, []);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between">
