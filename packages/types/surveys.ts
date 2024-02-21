@@ -445,7 +445,6 @@ export const ZSurvey = z.object({
 
 export const ZSurveyWithRefinements = ZSurvey.refine(
   (survey) => {
-    console.log(survey.triggers, survey.inlineTriggers);
     let hasTriggers = !!survey.triggers?.length;
     const hasInlineTriggers = survey.inlineTriggers?.codeConfig || survey.inlineTriggers?.noCodeConfig;
 

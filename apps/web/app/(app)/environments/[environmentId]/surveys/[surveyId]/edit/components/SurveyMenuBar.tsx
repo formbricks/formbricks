@@ -228,7 +228,6 @@ export default function SurveyMenuBar({
   };
 
   const saveSurveyAction = async (shouldNavigateBack = false) => {
-    console.log({ localSurvey });
     if (localSurvey.questions.length === 0) {
       toast.error("Please add at least one question.");
       return;
