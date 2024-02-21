@@ -67,6 +67,7 @@ export default function SurveysList({
               {filteredSurveys.map((survey) => {
                 return (
                   <SurveyCard
+                    key={survey.id}
                     survey={survey}
                     environment={environment}
                     otherEnvironment={otherEnvironment}
@@ -83,6 +84,7 @@ export default function SurveysList({
               {filteredSurveys.map((survey) => {
                 return (
                   <SurveyCard
+                    key={survey.id}
                     survey={survey}
                     environment={environment}
                     otherEnvironment={otherEnvironment}

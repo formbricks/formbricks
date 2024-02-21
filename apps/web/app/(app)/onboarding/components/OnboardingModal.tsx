@@ -4,7 +4,11 @@ import {
   customSurvey,
   templates,
 } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
+import ChurnImage from "@/images/onboarding-churn.png";
+import FeedbackImage from "@/images/onboarding-collect-feedback.png";
+import NPSImage from "@/images/onboarding-nps.png";
 import { ArrowRight, X } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -24,12 +28,15 @@ export function OnboardingModal({ environmentId }: OnboardingModalProps) {
   const [isRouting, setIsRouting] = useState(false);
   const router = useRouter();
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
-  const filteredTemplates = templates.filter(
-    (template) =>
-      template.name === "Churn Survey" ||
-      template.name === "Feedback Box" ||
-      template.name === "Improve Trial Conversion"
-  );
+  const templateOrder = ["Collect Feedback", "Net Promoter Score (NPS)", "Churn Survey"];
+  const templateImages = {
+    "Collect Feedback": FeedbackImage,
+    "Net Promoter Score (NPS)": NPSImage,
+    "Churn Survey": ChurnImage,
+  };
+  const filteredTemplates = templates
+    .filter((template) => templateOrder.includes(template.name))
+    .sort((a, b) => templateOrder.indexOf(a.name) - templateOrder.indexOf(b.name));
 
   if (!isOpen) return null;
 
@@ -58,7 +65,7 @@ export function OnboardingModal({ environmentId }: OnboardingModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-800 bg-opacity-80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950 bg-opacity-80 backdrop-blur-md">
       <div className="shadow-card-lg relative flex h-[85vh] w-[85vw] flex-col items-center justify-center rounded-xl bg-slate-50 p-10">
         <div className="absolute right-2 top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md p-1 text-slate-500 hover:bg-slate-200">
           <Button
@@ -70,7 +77,7 @@ export function OnboardingModal({ environmentId }: OnboardingModalProps) {
           </Button>
         </div>
         <div className="p-6">
-          <div className="flex items-center justify-between">
+          <div className="mb-8 flex items-end justify-between">
             <p className="text-2xl font-medium">Create your first survey</p>
             <Button
               size="lg"
@@ -83,6 +90,7 @@ export function OnboardingModal({ environmentId }: OnboardingModalProps) {
           </div>
           <div className="mt-4 grid w-full grid-cols-3 grid-rows-1 gap-6">
             {filteredTemplates.map((template) => {
+              const TemplateImage = templateImages[template.name];
               return (
                 <OptionCard
                   size="sm"
@@ -90,8 +98,13 @@ export function OnboardingModal({ environmentId }: OnboardingModalProps) {
                   title={template.name}
                   description={template.description}
                   onSelect={() => newSurveyFromTemplate(template)}
-                  loading={loadingTemplate === template.name}
-                />
+                  loading={loadingTemplate === template.name}>
+                  <Image
+                    src={TemplateImage}
+                    alt={template.name}
+                    className="rounded-md border border-slate-300"
+                  />
+                </OptionCard>
               );
             })}
           </div>
