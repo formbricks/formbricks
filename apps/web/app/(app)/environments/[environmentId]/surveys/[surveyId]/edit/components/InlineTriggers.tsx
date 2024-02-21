@@ -1,8 +1,8 @@
 import { MatchType } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/lib/testURLmatch";
+import { HelpCircleIcon } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 
-import { TSurvey } from "@formbricks/types/surveys";
-import { TSurveyInlineTriggers } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyInlineTriggers } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Input } from "@formbricks/ui/Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
@@ -370,6 +370,10 @@ const InlineTriggers = ({
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="mx-4 mt-2 flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">
+        <HelpCircleIcon className="h-3 w-3" />
+        <span className="text-xs">Custom Actions can only be used in this survey. They are not saved.</span>
+      </div>
       <CodeActionSelector localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
       <AdvancedOptionToggle

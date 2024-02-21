@@ -231,7 +231,7 @@ export default function WhenToSendCard({
         <Collapsible.CollapsibleContent>
           <hr className="py-1 text-slate-600" />
 
-          <div className="px-8 py-8 pt-7">
+          <div className="px-3 pb-3 pt-1">
             <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
               <TabBar
                 tabs={tabs}
