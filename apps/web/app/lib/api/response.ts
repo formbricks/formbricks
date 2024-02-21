@@ -153,6 +153,29 @@ const internalServerErrorResponse = (
   );
 };
 
+const tooManyRequestsResponse = (
+  message: string,
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      code: "internal_server_error",
+      message,
+      details: {},
+    } as ApiErrorResponse,
+    {
+      status: 429,
+      headers,
+    }
+  );
+};
+
 export const responses = {
   badRequestResponse,
   internalServerErrorResponse,
@@ -162,4 +185,5 @@ export const responses = {
   unauthorizedResponse,
   notFoundResponse,
   successResponse,
+  tooManyRequestsResponse,
 };
