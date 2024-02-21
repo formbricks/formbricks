@@ -1,6 +1,5 @@
 import "server-only";
 
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -25,20 +24,19 @@ import {
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 
-import { IS_S3_CONFIGURED, ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, UPLOADS_DIR } from "../constants";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
-import { env } from "../env.mjs";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
 import {
   buildWhereClause,
   calculateTtcTotal,
   extractSurveyDetails,
   getResponsesFileName,
-  getResponsesJSON,
+  getResponsesJson,
 } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
-import { putFileToLocalStorage, s3Client } from "../storage/service";
+import { putFile } from "../storage/service";
 import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { formatDateFields } from "../utils/datetime";
@@ -47,7 +45,6 @@ import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 
 const RESPONSES_PER_PAGE = 10;
-const AWS_BUCKET_NAME = env.S3_BUCKET_NAME!;
 
 export const responseSelection = {
   id: true,
@@ -526,7 +523,12 @@ export const getResponseDownloadUrl = async (
   try {
     validateInputs([surveyId, ZId], [format, ZString], [filterCriteria, ZResponseFilterCriteria.optional()]);
     const survey = await getSurvey(surveyId);
-    const environmentId = survey?.environmentId as string;
+
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    const environmentId = survey.environmentId as string;
 
     const accessType = "private";
     const batchSize = 3000;
@@ -541,7 +543,7 @@ export const getResponseDownloadUrl = async (
     const responses = responsesArray.flat();
 
     const { metaDataFields, questions, hiddenFields, userAttributes } = extractSurveyDetails(
-      survey!,
+      survey,
       responses
     );
 
@@ -560,7 +562,7 @@ export const getResponseDownloadUrl = async (
       ...userAttributes,
     ];
 
-    const jsonData = getResponsesJSON(survey!, responses, questions, userAttributes, hiddenFields);
+    const jsonData = getResponsesJson(survey, responses, questions, userAttributes, hiddenFields);
 
     const fileName = getResponsesFileName(survey?.name || "", format);
     let fileBuffer: Buffer;
@@ -572,18 +574,7 @@ export const getResponseDownloadUrl = async (
       fileBuffer = Buffer.from(csvFile);
     }
 
-    if (IS_S3_CONFIGURED) {
-      const input = {
-        Body: fileBuffer,
-        Bucket: AWS_BUCKET_NAME,
-        Key: `${environmentId}/private/${fileName}`,
-      };
-
-      const command = new PutObjectCommand(input);
-      await s3Client.send(command);
-    } else {
-      await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
-    }
+    await putFile(fileName, fileBuffer, accessType, environmentId);
 
     return `${process.env.WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`;
   } catch (error) {

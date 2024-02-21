@@ -317,19 +317,14 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
   const metaDataFields = extracMetadataKeys(responses[0].meta);
   const questions = survey.questions.map((question, idx) => `${idx + 1}. ${question.headline}`);
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
-  let userAttributes: string[] = [];
-
-  if (survey.type === "web") {
-    // extracting unique user attributes from responses
-    userAttributes = Array.from(
-      new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat())
-    );
-  }
+  const userAttributes = Array.from(
+    new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat())
+  );
 
   return { metaDataFields, questions, hiddenFields, userAttributes };
 };
 
-export const getResponsesJSON = (
+export const getResponsesJson = (
   survey: TSurvey,
   responses: TResponse[],
   questions: string[],
