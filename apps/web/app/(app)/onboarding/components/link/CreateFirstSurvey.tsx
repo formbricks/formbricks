@@ -72,6 +72,7 @@ export function CreateFirstSurvey({ environmentId }: CreateFirstSurveyProps) {
       <Button
         size="lg"
         variant="secondary"
+        loading={loadingTemplate === "Start from scratch"}
         onClick={() => {
           newSurveyFromTemplate(customSurvey);
         }}>
