@@ -22,7 +22,22 @@ export const trackAction = async (
   name: string,
   properties: TJsActionInput["properties"] = {}
 ): Promise<Result<void, NetworkError>> => {
-  const { userId } = config.get();
+  const {
+    userId,
+    state: { surveys = [] },
+  } = config.get();
+
+  // if surveys have a inline triggers, we need to check the name of the action in the code action config
+  surveys.forEach(async (survey) => {
+    const { inlineTriggers } = survey;
+    const { codeConfig } = inlineTriggers ?? {};
+
+    if (name === codeConfig?.identifier) {
+      await renderWidget(survey);
+      return;
+    }
+  });
+
   const input: TJsActionInput = {
     environmentId: config.get().environmentId,
     userId,

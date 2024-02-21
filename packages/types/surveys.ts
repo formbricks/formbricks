@@ -410,6 +410,23 @@ export const ZSurveyInlineTriggers = z.object({
 
 export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
 
+export const surveyHasBothTriggers = (survey: TSurvey) => {
+  // if the triggers array has a single empty string, it means the survey has no triggers
+  if (survey.triggers?.[0] === "") {
+    return false;
+  }
+
+  const hasTriggers = survey.triggers?.length > 0;
+  const hasInlineTriggers = !!survey.inlineTriggers?.codeConfig || !!survey.inlineTriggers?.noCodeConfig;
+
+  // Survey cannot have both triggers and inlineTriggers
+  if (hasTriggers && hasInlineTriggers) {
+    return true;
+  }
+
+  return false;
+};
+
 export const ZSurvey = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -443,25 +460,9 @@ export const ZSurvey = z.object({
   displayPercentage: z.number().min(1).max(100).nullable(),
 });
 
-export const ZSurveyWithRefinements = ZSurvey.refine(
-  (survey) => {
-    let hasTriggers = !!survey.triggers?.length;
-    const hasInlineTriggers = survey.inlineTriggers?.codeConfig || survey.inlineTriggers?.noCodeConfig;
-
-    // if the triggers array has a single empty string, it means the survey has no triggers
-    if (survey.triggers?.length === 1 && survey.triggers[0] === "") {
-      hasTriggers = false;
-    }
-
-    // Survey cannot have both triggers and inlineTriggers
-    if (hasTriggers && hasInlineTriggers) {
-      return false;
-    }
-
-    return true;
-  },
-  { message: "Survey cannot have both triggers and inlineTriggers" }
-);
+export const ZSurveyWithRefinements = ZSurvey.refine((survey) => !surveyHasBothTriggers(survey), {
+  message: "Survey cannot have both triggers and inlineTriggers",
+});
 
 export const ZSurveyInput = z
   .object({
@@ -487,8 +488,16 @@ export const ZSurveyInput = z
   })
   .refine(
     (survey) => {
+      // if the triggers array has a single empty string, it means the survey has no triggers
+      if (survey.triggers?.[0] === "") {
+        return true;
+      }
+
+      const hasTriggers = !!survey.triggers?.length;
+      const hasInlineTriggers = !!survey.inlineTriggers?.codeConfig || !!survey.inlineTriggers?.noCodeConfig;
+
       // Survey cannot have both triggers and inlineTriggers
-      if (survey.triggers && survey.inlineTriggers) {
+      if (hasTriggers && hasInlineTriggers) {
         return false;
       }
 

@@ -169,8 +169,8 @@ export default function WhenToSendCard({
     }
   }, [addTriggerEvent, localSurvey.triggers.length]);
 
-  const noTriggerIndicator = useMemo(() => {
-    const noTriggers = !localSurvey.triggers || !!localSurvey.triggers.length || !localSurvey.triggers[0];
+  const containsEmptyTriggers = useMemo(() => {
+    const noTriggers = !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
     const noInlineTriggers =
       !localSurvey.inlineTriggers ||
       (!localSurvey.inlineTriggers?.codeConfig && !localSurvey.inlineTriggers?.noCodeConfig);
@@ -180,7 +180,20 @@ export default function WhenToSendCard({
     }
 
     return false;
-  }, [localSurvey.inlineTriggers, localSurvey.triggers]);
+  }, [localSurvey]);
+
+  // for inline triggers, if both the codeConfig and noCodeConfig are empty, we consider it as empty
+  useEffect(() => {
+    const inlineTriggers = localSurvey?.inlineTriggers ?? {};
+    if (Object.keys(inlineTriggers).length === 0) {
+      setLocalSurvey((prevSurvey) => {
+        return {
+          ...prevSurvey,
+          inlineTriggers: null,
+        };
+      });
+    }
+  }, [localSurvey?.inlineTriggers, setLocalSurvey]);
 
   if (localSurvey.type === "link") {
     return null; // Hide card completely
@@ -201,7 +214,7 @@ export default function WhenToSendCard({
           className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {noTriggerIndicator ? (
+              {containsEmptyTriggers ? (
                 <div className="h-8 w-8 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
                 <CheckCircleIcon className="h-8 w-8 text-green-400" />
@@ -219,7 +232,7 @@ export default function WhenToSendCard({
           <hr className="py-1 text-slate-600" />
 
           <div className="p-3">
-            <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
+            <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100 pb-4">
               <TabBar
                 tabs={tabs}
                 activeId={activeTriggerTab}
@@ -290,7 +303,10 @@ export default function WhenToSendCard({
               </div>
             </div>
 
-            <div className="ml-2 flex items-center space-x-1 px-4 pb-4"></div>
+            <div className="ml-2 flex flex-col gap-1 p-4">
+              <h3 className="font-semibold text-slate-800">Survey Display Settings</h3>
+              <p className="text-sm text-slate-500">Add a delay or auto-close the survey</p>
+            </div>
             <AdvancedOptionToggle
               htmlId="delay"
               isChecked={delay}

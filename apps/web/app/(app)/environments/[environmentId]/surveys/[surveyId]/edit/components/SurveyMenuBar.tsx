@@ -4,14 +4,15 @@ import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surve
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { surveyHasBothTriggers } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType, ZSurveyInlineTriggers } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
@@ -247,6 +248,7 @@ export default function SurveyMenuBar({
         return rest;
       }),
     };
+
     if (!validateSurvey(localSurvey)) {
       setIsSurveySaving(false);
       return;
@@ -263,6 +265,22 @@ export default function SurveyMenuBar({
         toast.error(errMsg);
         return;
       }
+    }
+
+    // if inlineTriggers are present validate with zod
+    if (!!strippedSurvey.inlineTriggers) {
+      const parsedInlineTriggers = ZSurveyInlineTriggers.safeParse(strippedSurvey.inlineTriggers);
+      if (!parsedInlineTriggers.success) {
+        toast.error("Invalid Custom Actions: Please check your custom actions");
+        return;
+      }
+    }
+
+    // validate that both triggers and inlineTriggers are not present
+    if (surveyHasBothTriggers(strippedSurvey)) {
+      setIsSurveySaving(false);
+      toast.error("Survey cannot have both custom and saved actions, please remove one.");
+      return;
     }
 
     try {
@@ -286,13 +304,20 @@ export default function SurveyMenuBar({
     }
   };
 
-  const containsEmptyTriggers = () => {
-    return (
-      localSurvey.type === "web" &&
-      localSurvey.triggers &&
-      (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
-    );
-  };
+  const containsEmptyTriggers = useMemo(() => {
+    if (localSurvey.type !== "web") return false;
+
+    const noTriggers = !localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0];
+    const noInlineTriggers =
+      !localSurvey.inlineTriggers ||
+      (!localSurvey.inlineTriggers?.codeConfig && !localSurvey.inlineTriggers?.noCodeConfig);
+
+    if (noTriggers && noInlineTriggers) {
+      return true;
+    }
+
+    return false;
+  }, [localSurvey.inlineTriggers, localSurvey.triggers, localSurvey.type]);
 
   const handleSurveyPublish = async () => {
     try {
@@ -364,7 +389,7 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
+            disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers)}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
@@ -384,7 +409,7 @@ export default function SurveyMenuBar({
           )}
           {localSurvey.status === "draft" && !audiencePrompt && (
             <Button
-              disabled={isSurveySaving || containsEmptyTriggers()}
+              disabled={isSurveySaving || containsEmptyTriggers}
               variant="darkCTA"
               loading={isSurveyPublishing}
               onClick={handleSurveyPublish}>

@@ -1,5 +1,5 @@
 import { MatchType } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/lib/testURLmatch";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { TSurvey } from "@formbricks/types/surveys";
 import { TSurveyInlineTriggers } from "@formbricks/types/surveys";
@@ -43,14 +43,19 @@ const CodeActionSelector = ({
 
   const onCodeActionToggle = (checked: boolean) => {
     setIsCodeAction(!isCodeAction);
+
     // reset the code action state if the user toggles off
     if (!checked) {
-      const updatedSurvey = updateInlineTriggers(localSurvey, (triggers) => ({
-        ...triggers,
-        codeConfig: undefined,
-      }));
+      setLocalSurvey((prevSurvey) => {
+        const { codeConfig, ...withoutCodeAction } = prevSurvey.inlineTriggers ?? {};
 
-      setLocalSurvey(updatedSurvey);
+        return {
+          ...prevSurvey,
+          inlineTriggers: {
+            ...withoutCodeAction,
+          },
+        };
+      });
     }
   };
 
@@ -104,15 +109,20 @@ const CssSelector = ({
 
   const onCssSelectorToggle = (checked: boolean) => {
     setIsCssSelector(!isCssSelector);
+
     // reset the css selector state if the user toggles off
     if (!checked) {
-      const updatedSurvey = updateInlineTriggers(localSurvey, (triggers) => ({
-        ...triggers,
-        noCodeConfig: {
-          ...triggers?.noCodeConfig,
-          cssSelector: undefined,
-        },
-      }));
+      const updatedSurvey = updateInlineTriggers(localSurvey, (triggers) => {
+        const { noCodeConfig } = triggers ?? {};
+        const { cssSelector, ...withoutCssSelector } = noCodeConfig ?? {};
+
+        return {
+          ...triggers,
+          noCodeConfig: {
+            ...withoutCssSelector,
+          },
+        };
+      });
 
       setLocalSurvey(updatedSurvey);
     }
@@ -179,13 +189,17 @@ const PageUrlSelector = ({
     setIsPageUrl(!isPageUrl);
     // reset the page url state if the user toggles off
     if (!checked) {
-      const updatedSurvey = updateInlineTriggers(localSurvey, (triggers) => ({
-        ...triggers,
-        noCodeConfig: {
-          ...triggers?.noCodeConfig,
-          pageUrl: undefined,
-        },
-      }));
+      const updatedSurvey = updateInlineTriggers(localSurvey, (triggers) => {
+        const { noCodeConfig } = triggers ?? {};
+        const { pageUrl, ...withoutPageUrl } = noCodeConfig ?? {};
+
+        return {
+          ...triggers,
+          noCodeConfig: {
+            ...withoutPageUrl,
+          },
+        };
+      });
 
       setLocalSurvey(updatedSurvey);
     }
@@ -264,13 +278,17 @@ const InnerHtmlSelector = ({
     setIsInnerHtml(!isInnerHtml);
     // reset the inner html state if the user toggles off
     if (!checked) {
-      const updatedSurvey = updateInlineTriggers(localSurvey, (triggers) => ({
-        ...triggers,
-        noCodeConfig: {
-          ...triggers?.noCodeConfig,
-          innerHtml: undefined,
-        },
-      }));
+      const updatedSurvey = updateInlineTriggers(localSurvey, (triggers) => {
+        const { noCodeConfig } = triggers ?? {};
+        const { innerHtml, ...withoutInnerHtml } = noCodeConfig ?? {};
+
+        return {
+          ...triggers,
+          noCodeConfig: {
+            ...withoutInnerHtml,
+          },
+        };
+      });
 
       setLocalSurvey(updatedSurvey);
     }
@@ -313,18 +331,42 @@ const InlineTriggers = ({
 }) => {
   const [isNoCodeAction, setIsNoCodeAction] = useState(!!localSurvey.inlineTriggers?.noCodeConfig);
 
-  const onNoCodeActionToggle = (checked: boolean) => {
-    setIsNoCodeAction(!isNoCodeAction);
-    if (!checked) {
-      setLocalSurvey((prevSurvey) => ({
-        ...prevSurvey,
-        inlineTriggers: {
-          ...prevSurvey.inlineTriggers,
-          noCodeConfig: undefined,
-        },
-      }));
+  const onNoCodeActionToggle = useCallback(
+    (checked: boolean) => {
+      setIsNoCodeAction(checked);
+
+      if (!checked) {
+        setLocalSurvey((prevSurvey) => {
+          const { noCodeConfig, ...withoutNoCodeConfig } = prevSurvey.inlineTriggers ?? {};
+
+          return {
+            ...prevSurvey,
+            inlineTriggers: {
+              ...withoutNoCodeConfig,
+            },
+          };
+        });
+      }
+    },
+    [setLocalSurvey]
+  );
+
+  // inside the no code config, if no selector is present, then the no code action is not present
+  useEffect(() => {
+    const noCodeConfig = localSurvey.inlineTriggers?.noCodeConfig ?? {};
+    if (Object.keys(noCodeConfig).length === 0) {
+      setLocalSurvey((prevSurvey) => {
+        const { noCodeConfig, ...withoutNoCodeConfig } = prevSurvey.inlineTriggers ?? {};
+
+        return {
+          ...prevSurvey,
+          inlineTriggers: {
+            ...withoutNoCodeConfig,
+          },
+        };
+      });
     }
-  };
+  }, [localSurvey.inlineTriggers?.noCodeConfig, setLocalSurvey]);
 
   return (
     <div className="flex flex-col gap-4">
