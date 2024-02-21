@@ -171,7 +171,11 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
       const responseFilters = filter === FilterDownload.ALL ? {} : filters;
       const fileUrl = await getResponsesDownloadUrlAction(survey.id, filetype, responseFilters);
       if (fileUrl) {
-        window.open(fileUrl, "_blank");
+        const link = document.createElement("a");
+        link.href = fileUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
     } catch (error) {
       toast.error("Error downloading responses");
