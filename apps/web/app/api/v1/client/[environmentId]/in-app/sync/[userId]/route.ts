@@ -103,12 +103,20 @@ export async function GET(
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
         // if it's a new person and MAU limit is reached, throw an error
-        throw new Error(errorMessage);
+        return responses.internalServerErrorResponse(
+          errorMessage,
+          true,
+          "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+        );
       } else {
         // check if person has been active this month
         const latestAction = await getLatestActionByPersonId(person.id);
         if (!latestAction || new Date(latestAction.createdAt).getMonth() !== new Date().getMonth()) {
-          throw new Error(errorMessage);
+          return responses.internalServerErrorResponse(
+            errorMessage,
+            true,
+            "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+          );
         }
       }
     }

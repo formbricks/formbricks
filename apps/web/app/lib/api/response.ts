@@ -114,7 +114,7 @@ const unauthorizedResponse = (cors: boolean = false) =>
   );
 
 const successResponse = (data: Object, cors: boolean = false, cache: string = "private, no-store") => {
-  const responseHeaders = {
+  const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
   };
@@ -125,13 +125,22 @@ const successResponse = (data: Object, cors: boolean = false, cache: string = "p
     } as ApiSuccessResponse<typeof data>,
     {
       status: 200,
-      headers: responseHeaders,
+      headers,
     }
   );
 };
 
-const internalServerErrorResponse = (message: string, cors: boolean = false) =>
-  Response.json(
+const internalServerErrorResponse = (
+  message: string,
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       code: "internal_server_error",
       message,
@@ -139,9 +148,10 @@ const internalServerErrorResponse = (message: string, cors: boolean = false) =>
     } as ApiErrorResponse,
     {
       status: 500,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
+};
 
 export const responses = {
   badRequestResponse,
