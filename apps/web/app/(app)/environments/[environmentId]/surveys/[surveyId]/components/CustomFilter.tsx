@@ -10,7 +10,7 @@ import {
   getFormattedFilters,
   getTodayDate,
 } from "@/app/lib/surveys/surveys";
-import { differenceInDays, format, subDays } from "date-fns";
+import { differenceInDays, format, startOfDay, subDays } from "date-fns";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -219,7 +219,7 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
                 className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_7_DAYS);
-                  setDateRange({ from: subDays(new Date(), 7), to: getTodayDate() });
+                  setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
                 }}>
                 <p className="text-slate-700">Last 7 days</p>
               </DropdownMenuItem>
@@ -227,7 +227,7 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
                 className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_30_DAYS);
-                  setDateRange({ from: subDays(new Date(), 30), to: getTodayDate() });
+                  setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
                 }}>
                 <p className="text-slate-700">Last 30 days</p>
               </DropdownMenuItem>

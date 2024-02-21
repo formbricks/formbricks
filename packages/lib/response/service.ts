@@ -406,7 +406,7 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     : null;
 };
 
-export const getAttributesFromResponses = async (surveyId: string): Promise<TSurveyPersonAttributes> => {
+export const getResponsePersonAttributes = async (surveyId: string): Promise<TSurveyPersonAttributes> => {
   const responses = await unstable_cache(
     async () => {
       validateInputs([surveyId, ZId]);
@@ -425,9 +425,9 @@ export const getAttributesFromResponses = async (surveyId: string): Promise<TSur
         responseAttributes.forEach((response) => {
           Object.keys(response.personAttributes ?? {}).forEach((key) => {
             if (response.personAttributes && attributes[key]) {
-              attributes[key].push(response.personAttributes[key]);
+              attributes[key].push(response.personAttributes[key].toString());
             } else if (response.personAttributes) {
-              attributes[key] = [response.personAttributes[key]];
+              attributes[key] = [response.personAttributes[key].toString()];
             }
           });
         });
@@ -506,7 +506,7 @@ export const getResponses = async (
         throw error;
       }
     },
-    [`getResponses-${surveyId}-${page}-${batchSize}`, JSON.stringify(filterCriteria)],
+    [`getResponses-${surveyId}-${page}-${batchSize}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

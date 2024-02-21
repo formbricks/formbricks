@@ -36,11 +36,11 @@ import {
   createResponse,
   createResponseLegacy,
   deleteResponse,
-  getAttributesFromResponses,
   getResponse,
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
   getResponseDownloadUrl,
+  getResponsePersonAttributes,
   getResponses,
   getResponsesByEnvironmentId,
   getResponsesByPersonId,
@@ -321,20 +321,20 @@ describe("Tests for getAttributesFromResponses service", () => {
   describe("Happy Path", () => {
     it("Retrieves all attributes from responses for a given survey ID", async () => {
       prismaMock.response.findMany.mockResolvedValue(mockResponsePersonAttributes);
-      const attributes = await getAttributesFromResponses(mockSurveyId);
+      const attributes = await getResponsePersonAttributes(mockSurveyId);
       expect(attributes).toEqual(mockPersonAttributesData);
     });
 
     it("Returns an empty Object when no responses with attributes are found for the given survey ID", async () => {
       prismaMock.response.findMany.mockResolvedValue([]);
 
-      const responses = await getAttributesFromResponses(mockSurveyId);
+      const responses = await getResponsePersonAttributes(mockSurveyId);
       expect(responses).toEqual({});
     });
   });
 
   describe("Sad Path", () => {
-    testInputValidation(getAttributesFromResponses, "1");
+    testInputValidation(getResponsePersonAttributes, "1");
 
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
@@ -345,14 +345,14 @@ describe("Tests for getAttributesFromResponses service", () => {
 
       prismaMock.response.findMany.mockRejectedValue(errToThrow);
 
-      await expect(getAttributesFromResponses(mockSurveyId)).rejects.toThrow(DatabaseError);
+      await expect(getResponsePersonAttributes(mockSurveyId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected problems", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(getAttributesFromResponses(mockSurveyId)).rejects.toThrow(Error);
+      await expect(getResponsePersonAttributes(mockSurveyId)).rejects.toThrow(Error);
     });
   });
 });

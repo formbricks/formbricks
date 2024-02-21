@@ -29,7 +29,7 @@ export async function getMoreResponses(
   return responses;
 }
 
-export async function getPaginatedResponses(
+export async function getResponsesAction(
   surveyId: string,
   page: number,
   batchSize?: number,
