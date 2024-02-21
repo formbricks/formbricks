@@ -14,11 +14,10 @@ import { ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
-import { deleteSurveyAction, updateSurveyAction } from "../actions";
+import { updateSurveyAction } from "../actions";
 import { isValidUrl, validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
@@ -46,12 +45,9 @@ export default function SurveyMenuBar({
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
 
   let faultyQuestions: String[] = [];
@@ -84,25 +80,8 @@ export default function SurveyMenuBar({
     setLocalSurvey(updatedSurvey);
   };
 
-  const deleteSurvey = async (surveyId) => {
-    try {
-      await deleteSurveyAction(surveyId);
-      router.refresh();
-      setDeleteDialogOpen(false);
-      router.back();
-    } catch (error) {
-      console.error("An error occurred deleting the survey");
-      toast.error("An error occurred deleting the survey");
-    }
-  };
-
   const handleBack = () => {
-    const createdAt = new Date(localSurvey.createdAt).getTime();
-    const updatedAt = new Date(localSurvey.updatedAt).getTime();
-
-    if (createdAt === updatedAt && localSurvey.status === "draft") {
-      setDeleteDialogOpen(true);
-    } else if (!isEqual(localSurvey, survey)) {
+    if (!isEqual(localSurvey, survey)) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
@@ -392,25 +371,6 @@ export default function SurveyMenuBar({
             </Button>
           )}
         </div>
-        <DeleteDialog
-          deleteWhat="Draft"
-          open={isDeleteDialogOpen}
-          setOpen={setDeleteDialogOpen}
-          onDelete={async () => {
-            setIsDeleting(true);
-            await deleteSurvey(localSurvey.id);
-            setIsDeleting(false);
-          }}
-          text="Do you want to delete this draft?"
-          isDeleting={isDeleting}
-          isSaving={isSaving}
-          useSaveInsteadOfCancel={true}
-          onSave={async () => {
-            setIsSaving(true);
-            await saveSurveyAction(true);
-            setIsSaving(false);
-          }}
-        />
         <AlertDialog
           headerText="Confirm Survey Changes"
           open={isConfirmDialogOpen}
