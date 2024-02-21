@@ -125,19 +125,6 @@ if (process.env.WEBAPP_URL) {
   });
 }
 
-// if S3 env variables are set, add the S3 bucket as a remote pattern
-if (
-  process.env.S3_BUCKET_NAME &&
-  process.env.S3_REGION &&
-  process.env.S3_ACCESS_KEY &&
-  process.env.S3_SECRET_KEY
-) {
-  nextConfig.images.remotePatterns.push({
-    protocol: "https",
-    hostname: `${process.env.S3_BUCKET_NAME}.s3.${process.env.S3_REGION}.amazonaws.com`,
-  });
-}
-
 const sentryOptions = {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
