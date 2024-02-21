@@ -53,7 +53,10 @@ const ResponsePage = ({
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
-  const filters = useMemo(() => getFormattedFilters(selectedFilter, dateRange), [selectedFilter, dateRange]);
+  const filters = useMemo(
+    () => getFormattedFilters(survey, selectedFilter, dateRange),
+    [survey, selectedFilter, dateRange]
+  );
 
   const searchParams = useSearchParams();
 
