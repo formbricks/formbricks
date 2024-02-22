@@ -29,7 +29,7 @@ export const IMPRINT_URL = env.IMPRINT_URL;
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
 
-export const GOOGLE_OAUTH_ENABLED = env.GOOGLE_CLIENT_ID && env.GITHUB_SECRET ? true : false;
+export const GOOGLE_OAUTH_ENABLED = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? true : false;
 export const GITHUB_OAUTH_ENABLED = env.GITHUB_ID && env.GITHUB_SECRET ? true : false;
 export const AZURE_OAUTH_ENABLED =
   env.AZUREAD_CLIENT_ID && env.AZUREAD_CLIENT_SECRET && env.AZUREAD_TENANT_ID ? true : false;
@@ -135,7 +135,14 @@ export const SHARE_RATE_LIMIT = {
   allowedPerInterval: 30,
 };
 
+export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
+  interval: 60 * 1000, // 1 minute
+  allowedPerInterval: 5,
+};
+
 export const DEBUG = process.env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";

@@ -35,6 +35,7 @@ export default function NPSQuestion({
   setTtc,
 }: NPSQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
+  const [hoveredNumber, setHoveredNumber] = useState(-1);
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -58,6 +59,8 @@ export default function NPSQuestion({
               <label
                 key={number}
                 tabIndex={idx + 1}
+                onMouseOver={() => setHoveredNumber(number)}
+                onMouseLeave={() => setHoveredNumber(-1)}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
                     const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -67,7 +70,8 @@ export default function NPSQuestion({
                 }}
                 className={cn(
                   value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
-                  "bg-survey-bg text-heading hover:bg-accent-bg relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 first:rounded-l-md last:rounded-r-md focus:outline-none"
+                  "bg-survey-bg text-heading relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 first:rounded-l-md last:rounded-r-md focus:outline-none",
+                  hoveredNumber === number ? "bg-accent-bg" : ""
                 )}>
                 <input
                   type="radio"

@@ -109,6 +109,14 @@ export const getTodaysDateFormatted = (seperator: string) => {
   return formattedDate;
 };
 
+export const getTodaysDateTimeFormatted = (seperator: string) => {
+  const date = new Date();
+  const formattedDate = date.toISOString().split("T")[0].split("-").join(seperator);
+  const formattedTime = date.toTimeString().split(" ")[0].split(":").join(seperator);
+
+  return [formattedDate, formattedTime].join(seperator);
+};
+
 export function convertDatesInObject(obj: any) {
   for (let key in obj) {
     if ((key === "createdAt" || key === "updatedAt") && !isNaN(Date.parse(obj[key]))) {

@@ -21,7 +21,7 @@ export const PricingCard = ({
   perMetricCharge,
   loading,
   onUpgrade,
-  onUbsubscribe,
+  onUnsubscribe,
 }: {
   title: string;
   subtitle: string;
@@ -41,7 +41,7 @@ export const PricingCard = ({
   perMetricCharge?: number;
   loading: boolean;
   onUpgrade: any;
-  onUbsubscribe: any;
+  onUnsubscribe: any;
 }) => {
   const featureNameKey = featureName as keyof typeof team.billing.features;
   return (
@@ -56,7 +56,7 @@ export const PricingCard = ({
               <Badge text="Subscribed" size="normal" type="success" />
               <Button
                 variant="secondary"
-                onClick={(e) => onUbsubscribe(e)}
+                onClick={(e) => onUnsubscribe(e)}
                 className="absolute right-12 top-10">
                 Unsubscribe
               </Button>

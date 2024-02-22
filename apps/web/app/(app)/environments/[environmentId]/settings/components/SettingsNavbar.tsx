@@ -4,6 +4,7 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import {
   AdjustmentsVerticalIcon,
   BellAlertIcon,
+  BoltIcon,
   CreditCardIcon,
   DocumentCheckIcon,
   DocumentMagnifyingGlassIcon,
@@ -132,6 +133,13 @@ export default function SettingsNavbar({
             icon: CreditCardIcon,
             hidden: !isFormbricksCloud || isPricingDisabled,
             current: pathname?.includes("/billing"),
+          },
+          {
+            name: "Enterprise License",
+            href: `/environments/${environmentId}/settings/enterprise`,
+            icon: BoltIcon,
+            hidden: isFormbricksCloud || isPricingDisabled,
+            current: pathname?.includes("/enterprise"),
           },
         ],
         hidden: false,
