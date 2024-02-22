@@ -49,21 +49,18 @@ export function Onboarding({
   }, [CURRENT_STEP, iframeLoaded, selectedPathway]);
 
   useEffect(() => {
-    // Only execute this logic if the iframe is intended to be visible
     if (iframeVisible) {
-      setFade(true); // Start with fading in the iframe
+      setFade(true);
 
       const handleSurveyCompletion = () => {
-        // Logic to run when the survey is completed
-        setFade(false); // Start fade-out effect
+        setFade(false);
 
         setTimeout(() => {
-          setIframeVisible(false); // Hide the iframe after fade-out effect is complete
-          SET_CURRENT_STEP(5); // Assuming you want to move to the next step after survey completion
-        }, 1000); // Adjust timeout duration based on your fade-out CSS transition
+          setIframeVisible(false);
+          SET_CURRENT_STEP(5);
+        }, 1000);
       };
 
-      // Setup the event listener for the custom event to listen to survey completion
       window.addEventListener("SurveyCompleted", handleSurveyCompletion);
 
       // Cleanup function to remove the event listener
@@ -71,7 +68,7 @@ export function Onboarding({
         window.removeEventListener("SurveyCompleted", handleSurveyCompletion);
       };
     }
-  }, [iframeVisible, CURRENT_STEP]); // Depend on iframeVisible and CURRENT_STEP to re-evaluate when needed
+  }, [iframeVisible, CURRENT_STEP]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -149,7 +146,7 @@ export function Onboarding({
         {renderOnboardingStep()}
         {iframeVisible && (
           <iframe
-            src="http://localhost:3000/s/clsui9a7x0000fbh5orp0g7c5"
+            src={`http://localhost:3000/s/clsx27dp0000ebmbe053svzz2?userId=${session.user.email}`}
             onLoad={() => setIframeLoaded(true)}
             style={{
               inset: "0",

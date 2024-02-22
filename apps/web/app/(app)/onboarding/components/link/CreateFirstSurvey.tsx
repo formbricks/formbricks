@@ -52,8 +52,7 @@ export function CreateFirstSurvey({ environmentId }: CreateFirstSurveyProps) {
   return (
     <div className="flex flex-col items-center space-y-16">
       <OnboardingTitle title="Create your first survey" subtitle="Pick a template or start from scratch." />
-
-      <div className="grid w-full max-w-6xl grid-cols-3 grid-rows-1 gap-6">
+      <div className="grid w-11/12 max-w-6xl grid-cols-3 grid-rows-1 gap-6">
         {filteredTemplates.map((template) => {
           const TemplateImage = templateImages[template.name];
           return (
