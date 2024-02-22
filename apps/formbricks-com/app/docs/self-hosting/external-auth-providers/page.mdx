@@ -92,6 +92,19 @@ Make sure the Redirect URI for your OIDC Client is set to `{WEBAPP_URL}/api/auth
 
 2. Update these environment variables in your `docker-compose.yml` or pass it directly to the running container.
 
+An example configuration for a FusionAuth OpenID Connect in Formbricks would look like:
+<Col>
+<CodeGroup title="Formbricks Env for FusionAuth OIDC">
+```yml {{ title: '.env' }}
+OIDC_CLIENT_ID=59cada54-56d4-4aa8-a5e7-5823bbe0e5b7
+OIDC_CLIENT_SECRET=4f4dwP0ZoOAqMW8fM9290A7uIS3E8Xg29xe1umhlB_s
+OIDC_ISSUER=http://localhost:9011
+OIDC_DISPLAY_NAME=FusionAuth
+OIDC_SIGNING_ALGORITHM=HS256
+```
+</CodeGroup>
+</Col>
+
 3. Set an environment variable `OIDC_DISPLAY_NAME` to the display name of your OIDC provider.
 
 4. Restart your Formbricks instance.
