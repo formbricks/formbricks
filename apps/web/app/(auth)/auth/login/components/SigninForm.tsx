@@ -3,6 +3,7 @@
 import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
 import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
 import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import { OpenIdButton } from "@/app/(auth)/auth/components/OpenIdButton";
 import TwoFactor from "@/app/(auth)/auth/login/components/TwoFactor";
 import TwoFactorBackup from "@/app/(auth)/auth/login/components/TwoFactorBackup";
 import { XCircleIcon } from "@heroicons/react/24/solid";
@@ -30,6 +31,8 @@ export const SigninForm = ({
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
+  oidcOAuthEnabled,
+  oidcDisplayName,
 }: {
   emailAuthEnabled: boolean;
   publicSignUpEnabled: boolean;
@@ -37,6 +40,8 @@ export const SigninForm = ({
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
   azureOAuthEnabled: boolean;
+  oidcOAuthEnabled: boolean;
+  oidcDisplayName?: string;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -221,6 +226,12 @@ export const SigninForm = ({
           {azureOAuthEnabled && !totpLogin && (
             <>
               <AzureButton inviteUrl={callbackUrl} />
+            </>
+          )}
+
+          {oidcOAuthEnabled && !totpLogin && (
+            <>
+              <OpenIdButton inviteUrl={callbackUrl} text={`Continue with ${oidcDisplayName}`} />
             </>
           )}
         </div>
