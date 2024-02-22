@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -28,7 +28,14 @@ export default function SurveysList({
   userId,
 }: SurveysListProps) {
   const [filteredSurveys, setFilteredSurveys] = useState<TSurvey[]>(surveys);
-  const [orientation, setOrientation] = useState("grid");
+  // Initialize orientation state from localStorage or default to 'grid'
+  const [orientation, setOrientation] = useState(() => localStorage.getItem("surveyOrientation") || "grid");
+
+  // Save orientation to localStorage
+  useEffect(() => {
+    localStorage.setItem("surveyOrientation", orientation);
+  }, [orientation]);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between">

@@ -8,7 +8,7 @@ import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/
 import { getTodayDate } from "@/app/lib/surveys/surveys";
 import { createContext, useCallback, useContext, useState } from "react";
 
-interface FilterValue {
+export interface FilterValue {
   questionType: Partial<QuestionOption>;
   filterType: {
     filterValue: string | undefined;

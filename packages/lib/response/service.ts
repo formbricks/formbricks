@@ -10,10 +10,13 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
+  TResponseFilterCriteria,
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
+  TSurveyPersonAttributes,
   ZResponse,
+  ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseLegacyInput,
   ZResponseNote,
@@ -24,7 +27,7 @@ import { TTag } from "@formbricks/types/tags";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
-import { calculateTtcTotal } from "../response/util";
+import { buildWhereClause, calculateTtcTotal } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
 import { getSurvey } from "../survey/service";
@@ -392,19 +395,76 @@ export const getResponse = async (responseId: string): Promise<TResponse | null>
     : null;
 };
 
+export const getResponsePersonAttributes = async (surveyId: string): Promise<TSurveyPersonAttributes> => {
+  const responses = await unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
+
+      try {
+        let attributes: TSurveyPersonAttributes = {};
+        const responseAttributes = await prisma.response.findMany({
+          where: {
+            surveyId: surveyId,
+          },
+          select: {
+            personAttributes: true,
+          },
+        });
+
+        responseAttributes.forEach((response) => {
+          Object.keys(response.personAttributes ?? {}).forEach((key) => {
+            if (response.personAttributes && attributes[key]) {
+              attributes[key].push(response.personAttributes[key].toString());
+            } else if (response.personAttributes) {
+              attributes[key] = [response.personAttributes[key].toString()];
+            }
+          });
+        });
+
+        Object.keys(attributes).forEach((key) => {
+          attributes[key] = Array.from(new Set(attributes[key]));
+        });
+
+        return attributes;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getAttributesFromResponses-${surveyId}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return responses;
+};
+
 export const getResponses = async (
   surveyId: string,
   page?: number,
-  batchSize?: number
+  batchSize?: number,
+  filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> => {
   const responses = await unstable_cache(
     async () => {
-      validateInputs([surveyId, ZId], [page, ZOptionalNumber]);
+      validateInputs(
+        [surveyId, ZId],
+        [page, ZOptionalNumber],
+        [batchSize, ZOptionalNumber],
+        [filterCriteria, ZResponseFilterCriteria.optional()]
+      );
       batchSize = batchSize ?? RESPONSES_PER_PAGE;
+
       try {
         const responses = await prisma.response.findMany({
           where: {
             surveyId,
+            ...buildWhereClause(filterCriteria),
           },
           select: responseSelection,
           orderBy: [
@@ -417,7 +477,7 @@ export const getResponses = async (
         });
 
         const transformedResponses: TResponse[] = await Promise.all(
-          responses.map(async (responsePrisma) => {
+          responses.map((responsePrisma) => {
             return {
               ...responsePrisma,
               person: responsePrisma.person ? transformPrismaPerson(responsePrisma.person) : null,
@@ -435,13 +495,12 @@ export const getResponses = async (
         throw error;
       }
     },
-    [`getResponses-${surveyId}-${page}-${batchSize}`],
+    [`getResponses-${surveyId}-${page}-${batchSize}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-
   return responses.map((response) => ({
     ...formatDateFields(response, ZResponse),
     notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
