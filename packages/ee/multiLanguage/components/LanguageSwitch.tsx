@@ -10,20 +10,20 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 
-import { getLanguageNameFromCode } from "../lib/isoLanguages";
+import { getLanguageLabel } from "../lib/isoLanguages";
 
 interface LanguageSwitchProps {
   surveyLanguages: TSurveyLanguage[];
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
 }
 export default function LanguageSwitch({
   surveyLanguages,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: LanguageSwitchProps) {
-  if (selectedLanguage === "default") {
-    selectedLanguage =
+  if (selectedLanguageCode === "default") {
+    selectedLanguageCode =
       surveyLanguages.find((surveyLanguage) => {
         return surveyLanguage.default === true;
       })?.language.code ?? "default";
@@ -48,14 +48,12 @@ export default function LanguageSwitch({
                 key={surveyLanguage.language.id}
                 className="m-0 p-0"
                 onClick={() => {
-                  setSelectedLanguage(surveyLanguage.language.code);
+                  setSelectedLanguageCode(surveyLanguage.language.code);
                 }}>
                 <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
                   <span
-                    className={`h-4 w-4 rounded-full border ${surveyLanguage.language.code === selectedLanguage ? "bg-brand-dark outline-brand-dark border-black outline" : "border-white"}`}></span>
-                  <p className="font-normal text-white">
-                    {getLanguageNameFromCode(surveyLanguage.language.code)}
-                  </p>
+                    className={`h-4 w-4 rounded-full border ${surveyLanguage.language.code === selectedLanguageCode ? "bg-brand-dark outline-brand-dark border-black outline" : "border-white"}`}></span>
+                  <p className="font-normal text-white">{getLanguageLabel(surveyLanguage.language.code)}</p>
                 </div>
               </DropdownMenuItem>
             ))

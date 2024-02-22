@@ -16,8 +16,8 @@ interface EditThankYouCardProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
   isInvalid: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
 }
 
 export default function EditThankYouCard({
@@ -26,8 +26,8 @@ export default function EditThankYouCard({
   setActiveQuestionId,
   activeQuestionId,
   isInvalid,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: EditThankYouCardProps) {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
@@ -112,8 +112,8 @@ export default function EditThankYouCard({
               questionIdx={localSurvey.questions.length}
               isInvalid={isInvalid}
               updateSurvey={updateSurvey}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
             />
 
             <LocalizedInput
@@ -124,8 +124,8 @@ export default function EditThankYouCard({
               questionIdx={localSurvey.questions.length}
               isInvalid={isInvalid}
               updateSurvey={updateSurvey}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
             />
             <div className="mt-4">
               <div className="flex items-center space-x-1">

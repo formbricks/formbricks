@@ -3,30 +3,30 @@ import { useState } from "react";
 
 import { TSurveyLanguage } from "@formbricks/types/surveys";
 
-import { getLanguageNameFromCode } from "../lib/isoLanguages";
+import { getLanguageLabel } from "../lib/isoLanguages";
 
 interface LanguageIndicatorProps {
-  selectedLanguage: string;
+  selectedLanguageCode: string;
   surveyLanguages: TSurveyLanguage[];
-  setSelectedLanguage: (language: string) => void;
+  setSelectedLanguageCode: (languageCode: string) => void;
 }
 export function LanguageIndicator({
-  selectedLanguage,
   surveyLanguages,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: LanguageIndicatorProps) {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
 
   const toggleDropdown = () => setShowLanguageDropdown((prev) => !prev);
 
   const changeLanguage = (language: TSurveyLanguage) => {
-    setSelectedLanguage(language.language.code);
+    setSelectedLanguageCode(language.language.code);
     setShowLanguageDropdown(false);
   };
   const langaugeToBeDisplayed = surveyLanguages.find((language) => {
-    return selectedLanguage === "default"
+    return selectedLanguageCode === "default"
       ? language.default === true
-      : language.language.code === selectedLanguage;
+      : language.language.code === selectedLanguageCode;
   });
 
   return (
@@ -37,7 +37,7 @@ export function LanguageIndicator({
         onClick={toggleDropdown}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
-        {langaugeToBeDisplayed ? getLanguageNameFromCode(langaugeToBeDisplayed?.language.code) : ""}
+        {langaugeToBeDisplayed ? getLanguageLabel(langaugeToBeDisplayed?.language.code) : ""}
         <ChevronDown className="ml-1 h-4 w-4" />
       </button>
       {showLanguageDropdown && (
@@ -50,7 +50,7 @@ export function LanguageIndicator({
                   type="button"
                   className="m-0 block w-full text-left"
                   onClick={() => changeLanguage(language)}>
-                  {getLanguageNameFromCode(language.language.code)}
+                  {getLanguageLabel(language.language.code)}
                 </button>
               )
           )}

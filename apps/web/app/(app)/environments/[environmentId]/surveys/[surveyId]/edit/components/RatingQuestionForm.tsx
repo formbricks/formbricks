@@ -16,8 +16,8 @@ interface RatingQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
 }
 
@@ -27,8 +27,8 @@ export default function RatingQuestionForm({
   updateQuestion,
   isInvalid,
   localSurvey,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: RatingQuestionFormProps) {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -43,8 +43,8 @@ export default function RatingQuestionForm({
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
 
       <div>
@@ -59,8 +59,8 @@ export default function RatingQuestionForm({
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
 
@@ -137,8 +137,8 @@ export default function RatingQuestionForm({
             questionIdx={questionIdx}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
           />
         </div>
         <div className="flex-1">
@@ -151,8 +151,8 @@ export default function RatingQuestionForm({
             questionIdx={questionIdx}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
           />
         </div>
       </div>
@@ -169,8 +169,8 @@ export default function RatingQuestionForm({
               placeholder={"skip"}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
             />
           </div>
         )}

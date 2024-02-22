@@ -12,8 +12,8 @@ interface ConsentQuestionFormProps {
   question: TSurveyConsentQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
 }
 
@@ -23,14 +23,14 @@ export default function ConsentQuestionForm({
   updateQuestion,
   isInvalid,
   localSurvey,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
   useEffect(() => {
     setFirstRender(true);
-  }, [selectedLanguage]);
+  }, [selectedLanguageCode]);
 
   return (
     <form>
@@ -42,8 +42,8 @@ export default function ConsentQuestionForm({
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
 
       <div className="mt-3">
@@ -55,8 +55,8 @@ export default function ConsentQuestionForm({
             localSurvey={localSurvey}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
@@ -74,8 +74,8 @@ export default function ConsentQuestionForm({
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
       {/* <div className="mt-3">
         <Label htmlFor="buttonLabel">Button Label</Label>

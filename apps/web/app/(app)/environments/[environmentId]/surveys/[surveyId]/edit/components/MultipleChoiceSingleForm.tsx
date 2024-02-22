@@ -20,8 +20,8 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
 }
 
@@ -31,8 +31,8 @@ export default function MultipleChoiceSingleForm({
   updateQuestion,
   isInvalid,
   localSurvey,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
@@ -63,10 +63,10 @@ export default function MultipleChoiceSingleForm({
     for (let i = 0; i < question.choices.length; i++) {
       for (let j = i + 1; j < question.choices.length; j++) {
         if (
-          getLocalizedValue(question.choices[i].label, selectedLanguage).trim() ===
-          getLocalizedValue(question.choices[j].label, selectedLanguage).trim()
+          getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim() ===
+          getLocalizedValue(question.choices[j].label, selectedLanguageCode).trim()
         ) {
-          return getLocalizedValue(question.choices[i].label, selectedLanguage).trim(); // Return the duplicate label
+          return getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim(); // Return the duplicate label
         }
       }
     }
@@ -90,7 +90,7 @@ export default function MultipleChoiceSingleForm({
       if (Array.isArray(logic.value)) {
         newL = logic.value.map((value) => (value === oldLabel ? newLabel : value));
       } else {
-        newL = logic.value === getLocalizedValue(oldLabel, selectedLanguage) ? newLabel : logic.value;
+        newL = logic.value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : logic.value;
       }
       newLogic.push({ ...logic, value: newL });
     });
@@ -137,7 +137,7 @@ export default function MultipleChoiceSingleForm({
 
   const deleteChoice = (choiceIdx: number) => {
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
-    const choiceValue = question.choices[choiceIdx].label[selectedLanguage];
+    const choiceValue = question.choices[choiceIdx].label[selectedLanguageCode];
     if (isInvalidValue === choiceValue) {
       setisInvalidValue(null);
     }
@@ -178,8 +178,8 @@ export default function MultipleChoiceSingleForm({
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
 
       <div>
@@ -194,8 +194,8 @@ export default function MultipleChoiceSingleForm({
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
 
@@ -252,8 +252,8 @@ export default function MultipleChoiceSingleForm({
                       }
                     }}
                     updateChoice={updateChoice}
-                    selectedLanguage={selectedLanguage}
-                    setSelectedLanguage={setSelectedLanguage}
+                    selectedLanguageCode={selectedLanguageCode}
+                    setSelectedLanguageCode={setSelectedLanguageCode}
                     isInvalid={
                       isInvalid &&
                       !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
@@ -273,8 +273,8 @@ export default function MultipleChoiceSingleForm({
                           : createI18nString("Please specify", surveyLanguageCodes)
                       }
                       updateQuestion={updateQuestion}
-                      selectedLanguage={selectedLanguage}
-                      setSelectedLanguage={setSelectedLanguage}
+                      selectedLanguageCode={selectedLanguageCode}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
                       isInvalid={
                         isInvalid &&
                         !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)

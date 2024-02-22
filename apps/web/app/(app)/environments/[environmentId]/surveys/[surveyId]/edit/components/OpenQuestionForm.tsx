@@ -35,8 +35,8 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
 }
 
@@ -46,8 +46,8 @@ export default function OpenQuestionForm({
   updateQuestion,
   isInvalid,
   localSurvey,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
@@ -71,8 +71,8 @@ export default function OpenQuestionForm({
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
 
       <div>
@@ -87,8 +87,8 @@ export default function OpenQuestionForm({
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
 
@@ -125,7 +125,7 @@ export default function OpenQuestionForm({
           id="placeholder"
           name="placeholder"
           value={
-            question.placeholder && question.placeholder[selectedLanguage]
+            question.placeholder && question.placeholder[selectedLanguageCode]
               ? question.placeholder
               : createI18nString(defaultPlaceholder, surveyLanguageCodes)
           }
@@ -133,8 +133,8 @@ export default function OpenQuestionForm({
           questionIdx={questionIdx}
           isInvalid={isInvalid}
           updateQuestion={updateQuestion}
-          selectedLanguage={selectedLanguage}
-          setSelectedLanguage={setSelectedLanguage}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
         />
       </div>
 

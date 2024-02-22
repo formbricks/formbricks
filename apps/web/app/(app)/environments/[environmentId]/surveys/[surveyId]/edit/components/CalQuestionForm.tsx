@@ -14,8 +14,8 @@ interface CalQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
 }
 
@@ -24,8 +24,8 @@ export default function CalQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
   isInvalid,
 }: CalQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
@@ -41,8 +41,8 @@ export default function CalQuestionForm({
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
       <div>
         {showSubheader && (
@@ -56,8 +56,8 @@ export default function CalQuestionForm({
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
 

@@ -19,8 +19,8 @@ interface LocalizedEditorProps {
   localSurvey: TSurvey;
   isInvalid: boolean;
   updateQuestion: any;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
   questionIdx: number;
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
@@ -31,8 +31,8 @@ export const LocalizedEditor = ({
   localSurvey,
   isInvalid,
   updateQuestion,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
   questionIdx,
   firstRender,
   setFirstRender,
@@ -45,21 +45,21 @@ export const LocalizedEditor = ({
       ? value["default"]?.trim() !== "" &&
         isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === "default"
+        selectedLanguageCode === "default"
       : isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === "default");
+        selectedLanguageCode === "default");
 
   return (
     <div className="relative w-full">
       <Editor
-        key={`${questionIdx}-${selectedLanguage}`}
-        getText={() => md.render(value ? value[selectedLanguage] ?? "" : "")}
+        key={`${questionIdx}-${selectedLanguageCode}`}
+        getText={() => md.render(value ? value[selectedLanguageCode] ?? "" : "")}
         setText={(v: string) => {
           if (!value) return;
           let translatedHtml = {
             ...value,
-            [selectedLanguage]: v,
+            [selectedLanguageCode]: v,
           };
           if (questionIdx === -1) {
             // welcome card
@@ -76,12 +76,12 @@ export const LocalizedEditor = ({
       {hasi18n && localSurvey.languages?.length > 1 && (
         <div>
           <LanguageIndicator
-            selectedLanguage={selectedLanguage}
+            selectedLanguageCode={selectedLanguageCode}
             surveyLanguages={localSurvey.languages}
-            setSelectedLanguage={setSelectedLanguage}
+            setSelectedLanguageCode={setSelectedLanguageCode}
           />
 
-          {value && selectedLanguage !== "default" && value["default"] && (
+          {value && selectedLanguageCode !== "default" && value["default"] && (
             <div className="mt-1 flex text-xs text-gray-500">
               <strong>Translate:</strong>
               <label

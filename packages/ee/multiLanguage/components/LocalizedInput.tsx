@@ -11,12 +11,12 @@ interface LocalizedInputProps {
   localSurvey: TSurvey;
   placeholder?: string;
   label?: string;
-  selectedLanguage: string;
+  selectedLanguageCode: string;
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
   updateSurvey?: (data: Partial<TSurveyQuestion>) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyChoice>) => void;
   questionIdx: number;
-  setSelectedLanguage: (language: string) => void;
+  setSelectedLanguageCode: (language: string) => void;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   maxLength?: number;
   defaultValue?: string;
@@ -29,12 +29,12 @@ const LocalizedInput = ({
   localSurvey,
   placeholder,
   label,
-  selectedLanguage,
+  selectedLanguageCode,
   updateQuestion,
   updateSurvey,
   updateChoice,
   questionIdx,
-  setSelectedLanguage,
+  setSelectedLanguageCode,
   onBlur,
   maxLength,
   className,
@@ -60,10 +60,10 @@ const LocalizedInput = ({
       ? value["default"]?.trim() !== "" &&
         isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === "default"
+        selectedLanguageCode === "default"
       : isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === "default");
+        selectedLanguageCode === "default");
 
   return (
     <div className="relative w-full">
@@ -78,14 +78,14 @@ const LocalizedInput = ({
         updateQuestion={updateQuestion}
         updateSurvey={updateSurvey}
         updateChoice={updateChoice}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
         maxLength={maxLength}
         placeholder={placeholder}
         onBlur={onBlur}
         className={className}
       />
-      {value && selectedLanguage !== "default" && value["default"] && (
+      {value && selectedLanguageCode !== "default" && value["default"] && (
         <div className="mt-1 text-xs text-gray-500">
           <strong>Translate:</strong> {recallToHeadline(value, localSurvey, false, "default")["default"]}
         </div>

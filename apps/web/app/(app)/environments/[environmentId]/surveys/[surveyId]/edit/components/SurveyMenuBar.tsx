@@ -11,7 +11,7 @@ import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyLanguage, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
@@ -31,8 +31,7 @@ interface SurveyMenuBarProps {
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
   responseCount: number;
-  surveyLanguages: TSurveyLanguage[];
-  selectedLanguage: string;
+  selectedLanguageCode: string;
 }
 
 export default function SurveyMenuBar({
@@ -45,8 +44,7 @@ export default function SurveyMenuBar({
   setInvalidQuestions,
   product,
   responseCount,
-  surveyLanguages,
-  selectedLanguage,
+  selectedLanguageCode,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -123,16 +121,16 @@ export default function SurveyMenuBar({
     }
     if (survey.thankYouCard.enabled) {
       if (
-        !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", surveyLanguages) ||
+        !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", survey.languages) ||
         (survey.thankYouCard.subheader &&
           survey.thankYouCard.subheader[defaultLanguageCode] !== "" &&
-          !isLabelValidForAllLanguages(survey.thankYouCard.subheader, surveyLanguages))
+          !isLabelValidForAllLanguages(survey.thankYouCard.subheader, survey.languages))
       ) {
         faultyQuestions.push("end");
       }
     }
     if (survey.welcomeCard.enabled) {
-      if (!isLabelValidForAllLanguages(survey.welcomeCard.headline, surveyLanguages)) {
+      if (!isLabelValidForAllLanguages(survey.welcomeCard.headline, survey.languages)) {
         faultyQuestions.push("start");
       }
     }
@@ -164,7 +162,7 @@ export default function SurveyMenuBar({
 
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
-      const isValid = validateQuestion(question, surveyLanguages);
+      const isValid = validateQuestion(question, survey.languages);
 
       if (!isValid) {
         faultyQuestions.push(question.id);
@@ -192,13 +190,14 @@ export default function SurveyMenuBar({
         question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
-          question.choices.some((element) => element.label[selectedLanguage]?.trim() === "") ||
+          question.choices.some((element) => element.label[selectedLanguageCode]?.trim() === "") ||
           question.choices.some((element, index) =>
             question.choices
               .slice(index + 1)
               .some(
                 (nextElement) =>
-                  nextElement.label[selectedLanguage]?.trim() === element.label[selectedLanguage].trim()
+                  nextElement.label[selectedLanguageCode]?.trim() ===
+                  element.label[selectedLanguageCode].trim()
               )
           );
 
@@ -253,7 +252,7 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
-    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguage);
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
     if (questionWithEmptyFallback) {
       toast.error("Fallback missing");
       return;

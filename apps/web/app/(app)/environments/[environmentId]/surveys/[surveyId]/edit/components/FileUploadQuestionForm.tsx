@@ -22,8 +22,8 @@ interface FileUploadFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
 }
 
@@ -34,8 +34,8 @@ export default function FileUploadQuestionForm({
   updateQuestion,
   isInvalid,
   product,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
@@ -120,8 +120,8 @@ export default function FileUploadQuestionForm({
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
       <div>
         {showSubheader && (
@@ -135,8 +135,8 @@ export default function FileUploadQuestionForm({
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
 

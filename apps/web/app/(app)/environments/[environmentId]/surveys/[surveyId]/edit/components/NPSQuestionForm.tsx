@@ -14,8 +14,8 @@ interface NPSQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
 }
 
@@ -26,8 +26,8 @@ export default function NPSQuestionForm({
   lastQuestion,
   isInvalid,
   localSurvey,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: NPSQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -41,8 +41,8 @@ export default function NPSQuestionForm({
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
 
       <div>
@@ -57,8 +57,8 @@ export default function NPSQuestionForm({
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
 
@@ -100,8 +100,8 @@ export default function NPSQuestionForm({
             questionIdx={questionIdx}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
           />
         </div>
         <div className="w-full">
@@ -113,8 +113,8 @@ export default function NPSQuestionForm({
             questionIdx={questionIdx}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
           />
         </div>
       </div>
@@ -131,8 +131,8 @@ export default function NPSQuestionForm({
             placeholder={lastQuestion ? "Finish" : "Next"}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
           />
         </div>
       )}

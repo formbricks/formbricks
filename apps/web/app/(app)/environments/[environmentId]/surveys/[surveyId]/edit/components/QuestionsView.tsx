@@ -28,8 +28,8 @@ interface QuestionsViewProps {
   product: TProduct;
   invalidQuestions: String[] | null;
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
 }
@@ -41,9 +41,9 @@ export default function QuestionsView({
   setLocalSurvey,
   product,
   invalidQuestions,
-  selectedLanguage,
   setInvalidQuestions,
-  setSelectedLanguage,
+  setSelectedLanguageCode,
+  selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
 }: QuestionsViewProps) {
@@ -58,8 +58,8 @@ export default function QuestionsView({
   const defaultLanguageCode = "default";
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
-      if (question.headline[selectedLanguage].includes(`recall:${compareId}`)) {
-        question.headline[selectedLanguage] = question.headline[selectedLanguage].replaceAll(
+      if (question.headline[selectedLanguageCode].includes(`recall:${compareId}`)) {
+        question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replaceAll(
           `recall:${compareId}`,
           `recall:${updatedId}`
         );
@@ -130,10 +130,13 @@ export default function QuestionsView({
 
     // check if we are recalling from this question
     updatedSurvey.questions.forEach((question) => {
-      if (question.headline[selectedLanguage].includes(`recall:${questionId}`)) {
-        const recallInfo = extractRecallInfo(getLocalizedValue(question.headline, selectedLanguage));
+      if (question.headline[selectedLanguageCode].includes(`recall:${questionId}`)) {
+        const recallInfo = extractRecallInfo(getLocalizedValue(question.headline, selectedLanguageCode));
         if (recallInfo) {
-          question.headline[selectedLanguage] = question.headline[selectedLanguage].replace(recallInfo, "");
+          question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replace(
+            recallInfo,
+            ""
+          );
         }
       }
     });
@@ -256,7 +259,7 @@ export default function QuestionsView({
   }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
 
   useEffect(() => {
-    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguage);
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
     if (questionWithEmptyFallback) {
       setActiveQuestionId(questionWithEmptyFallback.id);
       if (activeQuestionId === questionWithEmptyFallback.id) {
@@ -275,8 +278,8 @@ export default function QuestionsView({
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
           isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
-          setSelectedLanguage={setSelectedLanguage}
-          selectedLanguage={selectedLanguage}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          selectedLanguageCode={selectedLanguageCode}
         />
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -294,8 +297,8 @@ export default function QuestionsView({
                     moveQuestion={moveQuestion}
                     updateQuestion={updateQuestion}
                     duplicateQuestion={duplicateQuestion}
-                    selectedLanguage={selectedLanguage}
-                    setSelectedLanguage={setSelectedLanguage}
+                    selectedLanguageCode={selectedLanguageCode}
+                    setSelectedLanguageCode={setSelectedLanguageCode}
                     deleteQuestion={deleteQuestion}
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
@@ -317,8 +320,8 @@ export default function QuestionsView({
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
           isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
-          setSelectedLanguage={setSelectedLanguage}
-          selectedLanguage={selectedLanguage}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          selectedLanguageCode={selectedLanguageCode}
         />
 
         {localSurvey.type === "link" ? (
@@ -337,7 +340,7 @@ export default function QuestionsView({
           activeQuestionId={activeQuestionId}
           isMultiLanguageAllowed={isMultiLanguageAllowed}
           isFormbricksCloud={isFormbricksCloud}
-          setSelectedLanguage={setSelectedLanguage}
+          setSelectedLanguageCode={setSelectedLanguageCode}
         />
       </div>
     </div>

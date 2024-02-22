@@ -18,8 +18,8 @@ interface EditWelcomeCardProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId: string | null;
   isInvalid: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
 }
 
 export default function EditWelcomeCard({
@@ -28,8 +28,8 @@ export default function EditWelcomeCard({
   setActiveQuestionId,
   activeQuestionId,
   isInvalid,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: EditWelcomeCardProps) {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
@@ -130,8 +130,8 @@ export default function EditWelcomeCard({
                 questionIdx={-1}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
             <div className="mt-3">
@@ -143,8 +143,8 @@ export default function EditWelcomeCard({
                   localSurvey={localSurvey}
                   isInvalid={isInvalid}
                   updateQuestion={updateSurvey}
-                  selectedLanguage={selectedLanguage}
-                  setSelectedLanguage={setSelectedLanguage}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   firstRender={firstRender}
                   setFirstRender={setFirstRender}
                   questionIdx={-1}
@@ -165,8 +165,8 @@ export default function EditWelcomeCard({
                     placeholder={"Next"}
                     isInvalid={isInvalid}
                     updateSurvey={updateSurvey}
-                    selectedLanguage={selectedLanguage}
-                    setSelectedLanguage={setSelectedLanguage}
+                    selectedLanguageCode={selectedLanguageCode}
+                    setSelectedLanguageCode={setSelectedLanguageCode}
                   />
                 </div>
               </div>

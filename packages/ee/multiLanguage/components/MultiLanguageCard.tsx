@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@formbricks/ui/Switch";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
-import { getLanguageNameFromCode } from "../lib/isoLanguages";
+import { getLanguageLabel } from "../lib/isoLanguages";
 import ConfirmRemoveTranslationsModal from "./ConfirmRemoveTranslationsModal";
 
 interface HiddenFieldsCardProps {
@@ -24,7 +24,7 @@ interface HiddenFieldsCardProps {
   setActiveQuestionId: (questionId: string | null) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
-  setSelectedLanguage: (language: string) => void;
+  setSelectedLanguageCode: (language: string) => void;
 }
 
 const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
@@ -35,7 +35,7 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
   setLocalSurvey,
   isMultiLanguageAllowed,
   isFormbricksCloud,
-  setSelectedLanguage,
+  setSelectedLanguageCode,
 }) => {
   const environmentId = localSurvey.environmentId;
   const open = activeQuestionId == "multiLanguage";
@@ -195,7 +195,7 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
                                 key={language.id}
                                 className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
                                 value={language.code}>
-                                {`${getLanguageNameFromCode(language.code)} (${language.code})`}
+                                {`${getLanguageLabel(language.code)} (${language.code})`}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -221,16 +221,16 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
                                     }}
                                   />
                                   <Label htmlFor="hidden-fields-toggle" className="font-bold">
-                                    {getLanguageNameFromCode(language.code)}
+                                    {getLanguageLabel(language.code)}
                                   </Label>
                                   {surveyLanguageCodes.includes(language.code) && (
                                     <p
                                       className="cursor-pointer text-xs underline"
                                       onClick={() => {
-                                        setSelectedLanguage(language.code);
+                                        setSelectedLanguageCode(language.code);
                                         setActiveQuestionId(localSurvey.questions[0]?.id);
                                       }}>
-                                      Edit {getLanguageNameFromCode(language.code)} translations
+                                      Edit {getLanguageLabel(language.code)} translations
                                     </p>
                                   )}
                                 </div>

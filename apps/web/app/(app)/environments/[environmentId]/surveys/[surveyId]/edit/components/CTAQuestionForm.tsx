@@ -15,8 +15,8 @@ interface CTAQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
 }
 
@@ -27,14 +27,14 @@ export default function CTAQuestionForm({
   lastQuestion,
   isInvalid,
   localSurvey,
-  selectedLanguage,
-  setSelectedLanguage,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
   useEffect(() => {
     setFirstRender(true);
-  }, [selectedLanguage]);
+  }, [selectedLanguageCode]);
 
   return (
     <form>
@@ -46,8 +46,8 @@ export default function CTAQuestionForm({
         questionIdx={questionIdx}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
 
       <div className="mt-3">
@@ -59,8 +59,8 @@ export default function CTAQuestionForm({
             localSurvey={localSurvey}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
@@ -99,8 +99,8 @@ export default function CTAQuestionForm({
             placeholder={lastQuestion ? "Finish" : "Next"}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
-            selectedLanguage={selectedLanguage}
-            setSelectedLanguage={setSelectedLanguage}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
           />
 
           {questionIdx !== 0 && (
@@ -114,8 +114,8 @@ export default function CTAQuestionForm({
               placeholder={"Back"}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
             />
           )}
         </div>
@@ -149,8 +149,8 @@ export default function CTAQuestionForm({
               placeholder={"skip"}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
+              selectedLanguageCode={selectedLanguageCode}
+              setSelectedLanguageCode={setSelectedLanguageCode}
             />
           </div>
         </div>

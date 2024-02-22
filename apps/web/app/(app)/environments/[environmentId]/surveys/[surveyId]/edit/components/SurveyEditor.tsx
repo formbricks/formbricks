@@ -56,7 +56,7 @@ export default function SurveyEditor({
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
-  const [selectedLanguageId, setSelectedLanguageId] = useState<string>("default");
+  const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
 
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
@@ -87,7 +87,7 @@ export default function SurveyEditor({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey?.id, localSurvey?.questions.length, selectedLanguageId, localSurvey?.languages]);
+  }, [localSurvey?.id, localSurvey?.questions.length, selectedLanguageCode, localSurvey?.languages]);
 
   useEffect(() => {
     const listener = () => {
@@ -155,10 +155,10 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (!localSurvey) return;
-    if (!extractLanguageCodes(localSurvey.languages).includes(selectedLanguageId)) {
-      setSelectedLanguageId("default");
+    if (!extractLanguageCodes(localSurvey.languages).includes(selectedLanguageCode)) {
+      setSelectedLanguageCode("default");
     }
-  }, [localSurvey?.languages, selectedLanguageId]);
+  }, [localSurvey?.languages, selectedLanguageCode]);
 
   if (!localSurvey) {
     return <Loading />;
@@ -177,8 +177,7 @@ export default function SurveyEditor({
           setInvalidQuestions={setInvalidQuestions}
           product={localProduct}
           responseCount={responseCount}
-          surveyLanguages={localSurvey.languages}
-          selectedLanguage={selectedLanguageId}
+          selectedLanguageCode={selectedLanguageCode}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
@@ -189,8 +188,8 @@ export default function SurveyEditor({
                 <div className="mt-20">
                   <LanguageSwitch
                     surveyLanguages={localSurvey.languages ?? []}
-                    selectedLanguage={selectedLanguageId ? selectedLanguageId : "default"}
-                    setSelectedLanguage={setSelectedLanguageId}
+                    selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
+                    setSelectedLanguageCode={setSelectedLanguageCode}
                   />
                 </div>
                 <QuestionsView
@@ -201,8 +200,8 @@ export default function SurveyEditor({
                   product={product}
                   invalidQuestions={invalidQuestions}
                   setInvalidQuestions={setInvalidQuestions}
-                  selectedLanguage={selectedLanguageId ? selectedLanguageId : "default"}
-                  setSelectedLanguage={setSelectedLanguageId}
+                  selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isMultiLanguageAllowed={isMultiLanguageAllowed}
                   isFormbricksCloud={isFormbricksCloud}
                 />
@@ -231,7 +230,7 @@ export default function SurveyEditor({
               product={localProduct}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
-              languageId={selectedLanguageId}
+              languageId={selectedLanguageCode}
               onFileUpload={async (file) => file.name}
             />
           </aside>
