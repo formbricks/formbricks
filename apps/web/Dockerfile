@@ -1,5 +1,21 @@
-# Installer stage: Building the application
-FROM node:20-alpine AS installer
+FROM node:20-alpine AS base
+
+#
+## step 1: Prune monorepo
+#
+FROM base AS builder
+RUN apk add --no-cache libc6-compat
+RUN apk update
+# Set working directory
+WORKDIR /app
+RUN yarn global add turbo
+COPY . .
+RUN turbo prune @formbricks/web --docker
+
+#
+## step 2: Install & build
+#
+FROM base AS installer
 
 # Enable corepack and prepare pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -28,22 +44,27 @@ ARG NEXT_PUBLIC_SENTRY_DSN
 # Set the working directory
 WORKDIR /app
 
-# Copy the application files
-COPY . .
-
-# Create a .env file
-RUN touch /app/apps/web/.env
+# Copy the package information
+COPY .gitignore .gitignore
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
 # Install the dependencies
 RUN pnpm install
 
+# Prepare the build
+COPY --from=builder /app/out/full/ .
+# Create a .env file
+RUN touch /app/apps/web/.env
 
 # Build the project
 RUN pnpm post-install --filter=web...
 RUN pnpm turbo run build --filter=web...
 
-# Runner stage: Setting up the runtime environment
-FROM node:20-alpine AS runner
+#
+## step 3: setup production runner
+#
+FROM base AS runner
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 RUN apk add --no-cache curl \
