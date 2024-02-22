@@ -60,7 +60,7 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
           apiHost: config.get().apiHost,
           userId,
         },
-        false
+        true
       );
     }
   }
