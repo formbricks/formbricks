@@ -503,23 +503,13 @@ describe("Tests for getResponseDownloadUrl service", () => {
       expect(fileExtension).not.toEqual("xlsx");
     });
 
-    it("Throws DatabaseError on PrismaClientKnownRequestError, when the getSurvey fails", async () => {
-      const mockErrorMessage = "Mock error message";
-      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
-        clientVersion: "0.0.1",
-      });
-      prismaMock.survey.findUnique.mockRejectedValue(errToThrow);
-
-      await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
-    });
-
     it("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponseCountBySurveyId fails", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: "P2002",
         clientVersion: "0.0.1",
       });
+      prismaMock.survey.findUnique.mockResolvedValue(mockSurveyOutput);
       prismaMock.response.count.mockRejectedValue(errToThrow);
 
       await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
@@ -531,6 +521,9 @@ describe("Tests for getResponseDownloadUrl service", () => {
         code: "P2002",
         clientVersion: "0.0.1",
       });
+
+      prismaMock.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prismaMock.response.count.mockResolvedValue(1);
       prismaMock.response.findMany.mockRejectedValue(errToThrow);
 
       await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
@@ -539,8 +532,8 @@ describe("Tests for getResponseDownloadUrl service", () => {
     it("Throws a generic Error for unexpected problems", async () => {
       const mockErrorMessage = "Mock error message";
 
-      // error from getResponses
-      prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
+      // error from getSurvey
+      prismaMock.survey.findUnique.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponseDownloadUrl(mockSurveyId, "xlsx")).rejects.toThrow(Error);
     });
