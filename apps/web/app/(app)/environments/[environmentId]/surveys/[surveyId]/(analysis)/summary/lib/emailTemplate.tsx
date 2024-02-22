@@ -15,7 +15,7 @@ import { CalendarDaysIcon } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getDefaultLanguage, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
@@ -25,7 +25,6 @@ interface EmailTemplateProps {
   survey: TSurvey;
   surveyUrl: string;
   brandColor: string;
-  defaultLanguageId: string;
 }
 
 export const getEmailTemplateHtml = async (surveyId) => {
@@ -37,20 +36,11 @@ export const getEmailTemplateHtml = async (surveyId) => {
   if (!product) {
     throw new Error("Product not found");
   }
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   const brandColor = product.brandColor;
   const surveyUrl = WEBAPP_URL + "/s/" + survey.id;
-  const html = render(
-    <EmailTemplate
-      survey={survey}
-      surveyUrl={surveyUrl}
-      brandColor={brandColor}
-      defaultLanguageId={defaultLanguageId}
-    />,
-    {
-      pretty: true,
-    }
-  );
+  const html = render(<EmailTemplate survey={survey} surveyUrl={surveyUrl} brandColor={brandColor} />, {
+    pretty: true,
+  });
   const doctype =
     '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
   const htmlCleaned = html.toString().replace(doctype, "");
@@ -58,20 +48,20 @@ export const getEmailTemplateHtml = async (surveyId) => {
   return htmlCleaned;
 };
 
-const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: EmailTemplateProps) => {
+const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) => {
   const url = `${surveyUrl}?preview=true`;
   const urlWithPrefilling = `${surveyUrl}?preview=true&`;
-
+  const defaultLanguageCode = "default";
   const firstQuestion = survey.questions[0];
   switch (firstQuestion.type) {
     case TSurveyQuestionType.OpenText:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
           </Text>
           <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
           <Section className="mt-4 block h-20 w-full rounded-lg border border-solid border-slate-200 bg-slate-50" />
           <EmailFooter />
@@ -81,19 +71,19 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
           </Text>
           <Container className="m-0 text-sm font-normal leading-6 text-slate-500">
             <Text
               className="m-0 p-0"
               dangerouslySetInnerHTML={{
-                __html: getLocalizedValue(firstQuestion.html, defaultLanguageId) || "",
+                __html: getLocalizedValue(firstQuestion.html, defaultLanguageCode) || "",
               }}></Text>
           </Container>
 
           <Container className="m-0 mt-4 block w-full max-w-none rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 font-medium text-slate-800">
             <Text className="m-0 inline-block">
-              {getLocalizedValue(firstQuestion.label, defaultLanguageId)}
+              {getLocalizedValue(firstQuestion.label, defaultLanguageCode)}
             </Text>
           </Container>
           <Container className="mx-0 mt-4 flex max-w-none justify-end">
@@ -121,10 +111,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section>
             <Text className="m-0 block text-base font-semibold leading-6 text-slate-800">
-              {getLocalizedValue(firstQuestion.headline, defaultLanguageId)}
+              {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
             </Text>
             <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
-              {getLocalizedValue(firstQuestion.subheader, defaultLanguageId)}
+              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
             </Text>
             <Container className="mx-0 mt-4 flex w-max flex-col">
               <Section className="block overflow-hidden rounded-md border border-slate-200">
@@ -141,12 +131,12 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
                 <Row>
                   <Column>
                     <Text className="m-0 inline-block w-max p-0">
-                      {getLocalizedValue(firstQuestion.lowerLabel, defaultLanguageId)}
+                      {getLocalizedValue(firstQuestion.lowerLabel, defaultLanguageCode)}
                     </Text>
                   </Column>
                   <Column className="text-right">
                     <Text className="m-0 inline-block w-max p-0 text-right">
-                      {getLocalizedValue(firstQuestion.upperLabel, defaultLanguageId)}
+                      {getLocalizedValue(firstQuestion.upperLabel, defaultLanguageCode)}
                     </Text>
                   </Column>
                 </Row>
@@ -160,13 +150,13 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
           </Text>
           <Container className="mt-2 text-sm font-normal leading-6 text-slate-500">
             <Text
               className="m-0 p-0"
               dangerouslySetInnerHTML={{
-                __html: getLocalizedValue(firstQuestion.html, defaultLanguageId) || "",
+                __html: getLocalizedValue(firstQuestion.html, defaultLanguageCode) || "",
               }}></Text>
           </Container>
 
@@ -175,7 +165,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
               <EmailButton
                 href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}
                 className="inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium text-black">
-                {getLocalizedValue(firstQuestion.dismissButtonLabel, defaultLanguageId) || "Skip"}
+                {getLocalizedValue(firstQuestion.dismissButtonLabel, defaultLanguageCode) || "Skip"}
               </EmailButton>
             )}
             <EmailButton
@@ -184,7 +174,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
                 "bg-brand-color inline-flex cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium",
                 isLight(brandColor) ? "text-black" : "text-white"
               )}>
-              {getLocalizedValue(firstQuestion.buttonLabel, defaultLanguageId)}
+              {getLocalizedValue(firstQuestion.buttonLabel, defaultLanguageCode)}
             </EmailButton>
           </Container>
           <EmailFooter />
@@ -195,10 +185,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Section className=" w-full">
             <Text className="m-0  block text-base font-semibold leading-6 text-slate-800">
-              {getLocalizedValue(firstQuestion.headline, defaultLanguageId)}
+              {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
             </Text>
             <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
-              {getLocalizedValue(firstQuestion.subheader, defaultLanguageId)}
+              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
             </Text>
             <Container className="mx-0 mt-4 w-full items-center justify-center">
               <Section
@@ -231,12 +221,12 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
                 <Row>
                   <Column>
                     <Text className="m-0 inline-block p-0">
-                      {getLocalizedValue(firstQuestion.lowerLabel, defaultLanguageId)}
+                      {getLocalizedValue(firstQuestion.lowerLabel, defaultLanguageCode)}
                     </Text>
                   </Column>
                   <Column className="text-right">
                     <Text className="m-0 inline-block  p-0 text-right">
-                      {getLocalizedValue(firstQuestion.upperLabel, defaultLanguageId)}
+                      {getLocalizedValue(firstQuestion.upperLabel, defaultLanguageCode)}
                     </Text>
                   </Column>
                 </Row>
@@ -250,17 +240,17 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
           </Text>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
               <Section
                 className="mt-2 block w-full rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 text-slate-800"
                 key={choice.id}>
-                {getLocalizedValue(choice.label, defaultLanguageId)}
+                {getLocalizedValue(choice.label, defaultLanguageCode)}
               </Section>
             ))}
           </Container>
@@ -271,10 +261,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
           </Text>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices
@@ -284,7 +274,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
                   key={choice.id}
                   className="mt-2 block rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 text-slate-800 hover:bg-slate-100"
                   href={`${urlWithPrefilling}${firstQuestion.id}=${choice.label}`}>
-                  {getLocalizedValue(choice.label, defaultLanguageId)}
+                  {getLocalizedValue(choice.label, defaultLanguageCode)}
                 </Link>
               ))}
           </Container>
@@ -295,10 +285,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
           </Text>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
           <Section className="mx-0">
             {firstQuestion.choices.map((choice) =>
@@ -324,7 +314,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
             You have been invited to schedule a meet via cal.com Open Survey to continue{" "}
@@ -336,10 +326,10 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor, defaultLanguageId }: Ema
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
           </Text>
           <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageId)}
+            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
           <Section className="mt-4 flex h-12 w-full items-center justify-center rounded-lg border border-solid border-slate-200 bg-white">
             <CalendarDaysIcon className="mb-1 inline h-4 w-4" />

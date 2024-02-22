@@ -286,9 +286,8 @@ model Survey {
   /// @zod.custom(imports.ZSurveyClosedMessage)
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
-
-  segmentId String?
-  segment   Segment? @relation(fields: [segmentId], references: [id])
+  segmentId           String?
+  segment             Segment?                @relation(fields: [segmentId], references: [id])
 
   /// @zod.custom(imports.ZSurveyProductOverwrites)
   /// [SurveyProductOverwrites]
@@ -306,8 +305,9 @@ model Survey {
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
   pin               String?
-  resultShareKey    String? @unique
+  resultShareKey    String?          @unique
   displayPercentage Int?
+  languages         SurveyLanguage[]
 
   @@index([environmentId])
 }
@@ -421,9 +421,7 @@ model Product {
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
-  /// @zod.custom(imports.ZLanguages)
-  /// [Languages]
-  languages            Json            @default("[{\"id\":\"en\",\"default\":true,\"alias\":null}]")
+  languages            Language[]
 
   @@unique([teamId, name])
   @@index([teamId])
@@ -603,4 +601,30 @@ model Segment {
 
   @@unique([environmentId, title])
   @@index([environmentId])
+}
+
+model Language {
+  id             String           @id @default(cuid())
+  createdAt      DateTime         @default(now()) @map(name: "created_at")
+  updatedAt      DateTime         @updatedAt @map(name: "updated_at")
+  code           String
+  alias          String?
+  product        Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId      String
+  SurveyLanguage SurveyLanguage[]
+
+  @@unique([productId, code])
+}
+
+model SurveyLanguage {
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  languageId String
+  surveyId   String
+  survey     Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  default    Boolean  @default(false)
+  enabled    Boolean  @default(true)
+
+  @@id([languageId, surveyId])
+  @@index([surveyId])
+  @@index([languageId])
 }

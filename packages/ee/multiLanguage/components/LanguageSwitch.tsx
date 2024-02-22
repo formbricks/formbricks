@@ -1,140 +1,69 @@
 "use client";
 
-import { ArrowUpRightIcon, ChevronDownIcon, ChevronUpIcon, LanguageIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
-import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TLanguage } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/Button";
-import { Switch } from "@formbricks/ui/Switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { TSurveyLanguage } from "@formbricks/types/surveys";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@formbricks/ui/DropdownMenu";
+
+import { getLanguageNameFromCode } from "../lib/isoLanguages";
 
 interface LanguageSwitchProps {
-  productLanguages: TLanguage[];
-  setSurveyLanguages: (languages: TLanguage[]) => void;
-  i18n: boolean;
-  setI18n: (i18n: boolean) => void;
-  surveyLanguages: TLanguage[];
-  environmentId: string;
-  isEnterpriseEdition: boolean;
+  surveyLanguages: TSurveyLanguage[];
+  selectedLanguage: string;
+  setSelectedLanguage: (language: string) => void;
 }
 export default function LanguageSwitch({
-  productLanguages,
-  setSurveyLanguages,
-  i18n,
-  setI18n,
   surveyLanguages,
-  environmentId,
-  isEnterpriseEdition,
+  selectedLanguage,
+  setSelectedLanguage,
 }: LanguageSwitchProps) {
-  const [translationsEnabled, setTranslationsEnabled] = useState(i18n);
-  const [showLanguageToggle, setshowLanguageToggle] = useState(false);
-
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  useClickOutside(wrapperRef, () => {
-    setshowLanguageToggle(false);
-  });
-
-  const toggleLanguage = (language: TLanguage) => {
-    const languageCode = language.id;
-    if (surveyLanguages.some((lang) => lang.id === languageCode)) {
-      const updateArray = surveyLanguages.filter((lang) => lang.id !== languageCode);
-      setSurveyLanguages(updateArray);
-    } else {
-      const updateArray = [...surveyLanguages, language];
-      setSurveyLanguages(updateArray);
-    }
-  };
-
-  // if there is a change in languages belonging to a particular product, then accordingly update the currently selected languages
-  useEffect(() => {
-    let updatedLanguagesArray = surveyLanguages.filter((lang) =>
-      productLanguages.some((allLang) => allLang.id === lang.id)
-    );
-
-    if (updatedLanguagesArray.length !== surveyLanguages.length) {
-      setSurveyLanguages(updatedLanguagesArray);
-    }
-  }, [productLanguages, surveyLanguages]);
-
+  if (selectedLanguage === "default") {
+    selectedLanguage =
+      surveyLanguages.find((surveyLanguage) => {
+        return surveyLanguage.default === true;
+      })?.language.code ?? "default";
+  }
   return (
-    <div className="flex justify-end">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <div className="z-10 flex w-full items-end justify-end px-7 pt-3">
-              {translationsEnabled ? (
-                <div>
-                  <div
-                    className="flex cursor-pointer items-center space-x-2 rounded-lg border bg-white p-2 px-4 hover:bg-slate-50"
-                    onClick={() => {
-                      if (!isEnterpriseEdition) return;
-                      setshowLanguageToggle(!showLanguageToggle);
-                    }}>
-                    <span className="text-sm">Translation Settings</span>
-                    <span>
-                      {showLanguageToggle ? (
-                        <ChevronUpIcon className="h-4 w-4" />
-                      ) : (
-                        <ChevronDownIcon className="h-4 w-4" />
-                      )}
-                    </span>
-                  </div>
-                  {showLanguageToggle && (
-                    <div
-                      className="absolute z-20 mt-2 space-y-4 rounded-md border bg-white p-4"
-                      ref={wrapperRef}>
-                      {productLanguages.map((language) => {
-                        if (language.default) return;
-                        return (
-                          <label
-                            htmlFor={`switch-${language}`}
-                            className="flex cursor-pointer items-center text-sm">
-                            <Switch
-                              id={`switch-${language}`}
-                              value={language.id}
-                              className="mr-4"
-                              checked={surveyLanguages.some((lang) => lang.id === language.id)}
-                              onClick={() => toggleLanguage(language)}
-                            />
-                            {language.alias}
-                          </label>
-                        );
-                      })}
-                      <div className="w-full rounded-md px-5 py-2 hover:bg-slate-50">
-                        <Link
-                          href={`/environments/${environmentId}/settings/language`}
-                          target="_blank"
-                          className=" flex w-full items-center gap-x-1.5 text-sm">
-                          Add Language <ArrowUpRightIcon className="h-3 w-3" />
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={!isEnterpriseEdition}
-                  onClick={() => {
-                    setTranslationsEnabled(!translationsEnabled);
-                    setI18n(true);
-                  }}>
-                  Add Translation
-                  <LanguageIcon className="ml-1 h-4 w-4" />
-                </Button>
-              )}
+    <div className="mx-8 flex h-10 justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          asChild
+          className="surveyFilterDropdown h-full cursor-pointer border border-slate-700 outline-none hover:bg-slate-900">
+          <div className="min-w-auto h-8 rounded-md border sm:flex sm:px-2">
+            <div className="hidden w-full items-center justify-between px-2 hover:text-white sm:flex">
+              <span className="text-sm">Select Language</span>
+              <ChevronDownIcon className="ml-2 h-4 w-4" />
             </div>
-          </TooltipTrigger>
-          {!isEnterpriseEdition && (
-            <TooltipContent>
-              <p>You need an enterprise lisence to use this feature</p>
-            </TooltipContent>
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="bg-black p-2">
+          {surveyLanguages.length > 0 ? (
+            surveyLanguages.map((surveyLanguage) => (
+              <DropdownMenuItem
+                key={surveyLanguage.language.id}
+                className="m-0 p-0"
+                onClick={() => {
+                  setSelectedLanguage(surveyLanguage.language.code);
+                }}>
+                <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
+                  <span
+                    className={`h-4 w-4 rounded-full border ${surveyLanguage.language.code === selectedLanguage ? "bg-brand-dark outline-brand-dark border-black outline" : "border-white"}`}></span>
+                  <p className="font-normal text-white">
+                    {getLanguageNameFromCode(surveyLanguage.language.code)}
+                  </p>
+                </div>
+              </DropdownMenuItem>
+            ))
+          ) : (
+            <p className="p-2 text-sm font-normal text-white">No languages to select</p>
           )}
-        </Tooltip>
-      </TooltipProvider>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

@@ -8,11 +8,10 @@ import { toast } from "react-hot-toast";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import {
   createI18nString,
-  extractLanguageIds,
+  extractLanguageCodes,
   isLabelValidForAllLanguages,
 } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TLanguage } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -26,9 +25,7 @@ interface OpenQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageId: string;
 }
 
 export default function MultipleChoiceMultiForm({
@@ -39,15 +36,13 @@ export default function MultipleChoiceMultiForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  surveyLanguages,
-  defaultLanguageId,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const questionRef = useRef<HTMLInputElement>(null);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
-  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   const shuffleOptionsTypes = {
     none: {
@@ -116,7 +111,7 @@ export default function MultipleChoiceMultiForm({
     }
     const newChoice = {
       id: createId(),
-      label: createI18nString("", surveyLanguageIds, defaultLanguageId),
+      label: createI18nString("", surveyLanguageCodes),
     };
     if (choiceIdx !== undefined) {
       newChoices.splice(choiceIdx + 1, 0, newChoice);
@@ -134,7 +129,7 @@ export default function MultipleChoiceMultiForm({
       const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
       newChoices.push({
         id: "other",
-        label: createI18nString("Other", surveyLanguageIds, defaultLanguageId),
+        label: createI18nString("Other", surveyLanguageCodes),
       });
       updateQuestion(questionIdx, {
         choices: newChoices,
@@ -187,12 +182,10 @@ export default function MultipleChoiceMultiForm({
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageId={defaultLanguageId}
       />
 
       <div>
@@ -205,13 +198,10 @@ export default function MultipleChoiceMultiForm({
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageId={defaultLanguageId}
-                className=""
               />
             </div>
 
@@ -232,7 +222,7 @@ export default function MultipleChoiceMultiForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageIds, defaultLanguageId),
+                subheader: createI18nString("", surveyLanguageCodes),
               });
               setShowSubheader(true);
             }}>
@@ -267,15 +257,13 @@ export default function MultipleChoiceMultiForm({
                         setisInvalidValue(null);
                       }
                     }}
-                    surveyLanguages={surveyLanguages}
                     updateChoice={updateChoice}
                     selectedLanguage={selectedLanguage}
                     setSelectedLanguage={setSelectedLanguage}
                     isInvalid={
                       isInvalid &&
-                      !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageIds)
+                      !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageCodes)
                     }
-                    defaultLanguageId={defaultLanguageId}
                     className={`${choice.id === "other" ? "border border-dashed" : ""}`}
                   />
                   {choice.id === "other" && (
@@ -288,17 +276,15 @@ export default function MultipleChoiceMultiForm({
                       value={
                         question.otherOptionPlaceholder
                           ? question.otherOptionPlaceholder
-                          : createI18nString("Please specify", surveyLanguageIds, defaultLanguageId)
+                          : createI18nString("Please specify", surveyLanguageCodes)
                       }
-                      surveyLanguages={surveyLanguages}
                       updateQuestion={updateQuestion}
                       selectedLanguage={selectedLanguage}
                       setSelectedLanguage={setSelectedLanguage}
                       isInvalid={
                         isInvalid &&
-                        !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageIds)
+                        !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguageCodes)
                       }
-                      defaultLanguageId={defaultLanguageId}
                       className="border border-dashed"
                     />
                   )}

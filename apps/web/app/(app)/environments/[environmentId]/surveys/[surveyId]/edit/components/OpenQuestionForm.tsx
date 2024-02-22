@@ -11,8 +11,7 @@ import {
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString, extractLanguageIds } from "@formbricks/lib/i18n/utils";
-import { TLanguage } from "@formbricks/types/product";
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,
@@ -38,9 +37,7 @@ interface OpenQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageId: string;
 }
 
 export default function OpenQuestionForm({
@@ -51,20 +48,14 @@ export default function OpenQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  surveyLanguages,
-  defaultLanguageId,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
-  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
       inputType: inputType,
-      placeholder: createI18nString(
-        getPlaceholderByInputType(inputType),
-        surveyLanguageIds,
-        defaultLanguageId
-      ),
+      placeholder: createI18nString(getPlaceholderByInputType(inputType), surveyLanguageCodes),
       longAnswer: inputType === "text" ? question.longAnswer : false,
     };
     updateQuestion(questionIdx, updatedAttributes);
@@ -78,12 +69,10 @@ export default function OpenQuestionForm({
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageId={defaultLanguageId}
       />
 
       <div>
@@ -96,12 +85,10 @@ export default function OpenQuestionForm({
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageId={defaultLanguageId}
               />
             </div>
 
@@ -122,7 +109,7 @@ export default function OpenQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageIds, defaultLanguageId),
+                subheader: createI18nString("", surveyLanguageCodes),
               });
               setShowSubheader(true);
             }}>
@@ -140,16 +127,14 @@ export default function OpenQuestionForm({
           value={
             question.placeholder && question.placeholder[selectedLanguage]
               ? question.placeholder
-              : createI18nString(defaultPlaceholder, surveyLanguageIds, defaultLanguageId)
+              : createI18nString(defaultPlaceholder, surveyLanguageCodes)
           }
-          surveyLanguages={surveyLanguages}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
           isInvalid={isInvalid}
           updateQuestion={updateQuestion}
           selectedLanguage={selectedLanguage}
           setSelectedLanguage={setSelectedLanguage}
-          defaultLanguageId={defaultLanguageId}
         />
       </div>
 

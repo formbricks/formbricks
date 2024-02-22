@@ -10,7 +10,6 @@ interface QuestionSkipProps {
   status: string;
   questions: TSurveyQuestion[];
   isFirstQuestionAnswered?: boolean;
-  defaultLanguageId: string;
 }
 
 export default function QuestionSkip({
@@ -18,7 +17,6 @@ export default function QuestionSkip({
   status,
   questions,
   isFirstQuestionAnswered,
-  defaultLanguageId,
 }: QuestionSkipProps) {
   return (
     <div>
@@ -69,7 +67,7 @@ export default function QuestionSkip({
                       <p className="my-2" key={questionId}>
                         {getLocalizedValue(
                           questions.find((question) => question.id === questionId)!.headline,
-                          defaultLanguageId
+                          "default"
                         )}
                       </p>
                     );
@@ -97,7 +95,7 @@ export default function QuestionSkip({
                       <p className="my-2" key={questionId}>
                         {getLocalizedValue(
                           questions.find((question) => question.id === questionId)!.headline,
-                          defaultLanguageId
+                          "default"
                         )}
                       </p>
                     );

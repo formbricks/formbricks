@@ -15,14 +15,12 @@ interface DateQuestionSummary {
   questionSummary: TSurveyQuestionSummary<TSurveyDateQuestion>;
   environmentId: string;
   responsesPerPage: number;
-  defaultLanguageId: string;
 }
 
 export default function DateQuestionSummary({
   questionSummary,
   environmentId,
   responsesPerPage,
-  defaultLanguageId,
 }: DateQuestionSummary) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
   const [displayCount, setDisplayCount] = useState(responsesPerPage);
@@ -30,7 +28,7 @@ export default function DateQuestionSummary({
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={getLocalizedValue(questionSummary.question.headline, defaultLanguageId)} />
+        <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
             {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}

@@ -33,7 +33,6 @@ export function Survey({
   getSetIsError,
   onFileUpload,
   responseCount,
-  defaultLanguageId,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -117,7 +116,7 @@ export function Survey({
             (choice) => getLocalizedValue(choice.label, languageId) === responseValue
           );
           if (choice) {
-            if (evaluateCondition(logic, getLocalizedValue(choice.label, defaultLanguageId))) {
+            if (evaluateCondition(logic, getLocalizedValue(choice.label, "default"))) {
               return logic.destination;
             }
           }

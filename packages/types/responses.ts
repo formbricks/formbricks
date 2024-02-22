@@ -120,7 +120,7 @@ export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
   data: ZResponseData,
-  languageId: z.string().optional(),
+  languageCode: z.string().optional(),
   ttc: ZResponseTtc.optional(),
   meta: z
     .object({

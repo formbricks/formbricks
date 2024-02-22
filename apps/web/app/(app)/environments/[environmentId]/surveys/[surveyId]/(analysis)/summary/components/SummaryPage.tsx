@@ -11,7 +11,6 @@ import { getFilterResponses } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
@@ -54,11 +53,10 @@ const SummaryPage = ({
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey, defaultLanguageId);
-  }, [survey, product.languages, defaultLanguageId]);
+    return checkForRecallInHeadline(survey, "default");
+  }, [survey, product.languages]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -88,7 +86,6 @@ const SummaryPage = ({
           responses={filterResponses}
           survey={survey}
           totalResponses={responses}
-          defaultLanguageId={defaultLanguageId}
         />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
       </div>
@@ -100,14 +97,7 @@ const SummaryPage = ({
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />
-      {showDropOffs && (
-        <SummaryDropOffs
-          survey={survey}
-          responses={responses}
-          displayCount={displayCount}
-          defaultLanguageId={defaultLanguageId}
-        />
-      )}
+      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
       <SummaryList
         responses={filterResponses}
         survey={survey}

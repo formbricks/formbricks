@@ -11,7 +11,6 @@ import { getFilterResponses } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
@@ -45,7 +44,6 @@ const SummaryPage = ({
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -66,7 +64,6 @@ const SummaryPage = ({
         responses={filterResponses}
         survey={survey}
         totalResponses={responses}
-        defaultLanguageId={defaultLanguageId}
       />
       <SurveyResultsTabs
         activeId="summary"
@@ -81,14 +78,7 @@ const SummaryPage = ({
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />
-      {showDropOffs && (
-        <SummaryDropOffs
-          survey={survey}
-          responses={responses}
-          displayCount={displayCount}
-          defaultLanguageId={defaultLanguageId}
-        />
-      )}
+      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
       <SummaryList
         responses={filterResponses}
         survey={survey}

@@ -33,3 +33,9 @@ export const getAdvancedTargetingPermission = (team: TTeam): boolean => {
   else if (!IS_FORMBRICKS_CLOUD) return getIsEnterpriseEdition();
   else return false;
 };
+
+export const getMultiLanguagePermission = (team: TTeam): boolean => {
+  if (IS_FORMBRICKS_CLOUD) return team.billing.features.multiLanguage.status !== "inactive";
+  else if (!IS_FORMBRICKS_CLOUD) return getIsEnterpriseEdition();
+  else return false;
+};

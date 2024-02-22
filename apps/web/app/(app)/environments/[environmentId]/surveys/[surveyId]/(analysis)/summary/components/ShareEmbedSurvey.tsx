@@ -14,9 +14,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
+import { getLanguageNameFromCode } from "@formbricks/ee/multiLanguage/lib/isoLanguages";
 import { cn } from "@formbricks/lib/cn";
-import { getDefaultLanguage, getSurveyLanguages } from "@formbricks/lib/i18n/utils";
-import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
@@ -31,20 +30,11 @@ interface ShareEmbedSurveyProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   webAppUrl: string;
-  product: TProduct;
   user: TUser;
 }
-export default function ShareEmbedSurvey({
-  survey,
-  open,
-  setOpen,
-  webAppUrl,
-  product,
-  user,
-}: ShareEmbedSurveyProps) {
+export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, user }: ShareEmbedSurveyProps) {
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   const { email } = user;
 
   const tabs = [
@@ -57,8 +47,8 @@ export default function ShareEmbedSurvey({
   const [showInitialPage, setShowInitialPage] = useState(true);
   const linkTextRef = useRef(null);
   const [surveyUrl, setSurveyUrl] = useState("");
-  const surveyLanguages = getSurveyLanguages(product, survey);
-  const [language, setLanguage] = useState<string>(defaultLanguageId);
+  const surveyLanguages = survey.languages ?? [];
+  const [language, setLanguage] = useState<string>("default");
   const [showLanguageSelect, setShowLanguageSelect] = useState(false);
 
   const getUrl = useCallback(async () => {
@@ -67,7 +57,7 @@ export default function ShareEmbedSurvey({
       const singleUseId = await generateSingleUseIdAction(survey.id, survey.singleUse.isEncrypted);
       url += "?suId=" + singleUseId;
     }
-    if (language !== defaultLanguageId) {
+    if (language !== "default") {
       if (survey.singleUse?.enabled) {
         url += "&lang=" + language;
       } else {
@@ -75,7 +65,7 @@ export default function ShareEmbedSurvey({
       }
     }
     setSurveyUrl(url);
-  }, [survey, webAppUrl, language, defaultLanguageId]);
+  }, [survey, webAppUrl, language]);
 
   useEffect(() => {
     getUrl();
@@ -130,15 +120,15 @@ export default function ShareEmbedSurvey({
                     <div className="relative">
                       {showLanguageSelect && (
                         <div className="absolute left-0 right-0 top-12 rounded-lg border bg-slate-900 p-1 text-sm text-white">
-                          {surveyLanguages.map((language) => {
+                          {surveyLanguages.map((surveyLanguage) => {
                             return (
                               <div
                                 className="rounded-md px-1 py-2 hover:cursor-pointer hover:bg-slate-700"
                                 onClick={() => {
-                                  setLanguage(language.id);
+                                  setLanguage(surveyLanguage.language.code);
                                   setShowLanguageSelect(false);
                                 }}>
-                                {language.alias}
+                                {getLanguageNameFromCode(surveyLanguage.language.code)}
                               </div>
                             );
                           })}

@@ -49,7 +49,6 @@ interface CustomFilterProps {
   survey: TSurvey;
   responses: TResponse[];
   totalResponses: TResponse[];
-  defaultLanguageId: string;
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -63,13 +62,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({
-  environmentTags,
-  responses,
-  survey,
-  totalResponses,
-  defaultLanguageId,
-}: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -118,7 +111,7 @@ const CustomFilter = ({
           if (answer) {
             updatedResponse.push({
               id: createId(),
-              question: getLocalizedValue(question.headline, defaultLanguageId),
+              question: getLocalizedValue(question.headline, "default"),
               type: question.type,
               scale: question.scale,
               range: question.range,
@@ -166,7 +159,7 @@ const CustomFilter = ({
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
       const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
       const questionNames = survey.questions?.map((question) =>
-        getLocalizedValue(question.headline, defaultLanguageId)
+        getLocalizedValue(question.headline, "default")
       );
       const hiddenFieldIds = survey.hiddenFields.fieldIds;
       const hiddenFieldResponse = {};
@@ -350,7 +343,7 @@ const CustomFilter = ({
     <>
       <div className="relative mb-12 flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
-          <ResponseFilter defaultLanguageId={defaultLanguageId} />
+          <ResponseFilter />
           <DropdownMenu
             onOpenChange={(value) => {
               value && handleDatePickerClose();

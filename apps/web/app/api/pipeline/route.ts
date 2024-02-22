@@ -6,7 +6,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { sendResponseFinishedEmail } from "@formbricks/lib/emails/emails";
-import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
@@ -41,7 +40,6 @@ export async function POST(request: Request) {
   const { environmentId, surveyId, event, response } = inputValidation.data;
   const product = await getProductByEnvironmentId(environmentId);
   if (!product) return;
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   // get all webhooks of this environment where event in triggers
   const webhooks = await prisma.webhook.findMany({
@@ -120,7 +118,7 @@ export async function POST(request: Request) {
           questions: true,
         },
       });
-      handleIntegrations(integrations, inputValidation.data, surveyData, defaultLanguageId);
+      handleIntegrations(integrations, inputValidation.data, surveyData);
     }
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {

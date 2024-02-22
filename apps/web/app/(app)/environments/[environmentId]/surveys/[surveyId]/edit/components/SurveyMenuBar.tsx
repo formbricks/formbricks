@@ -7,12 +7,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TLanguage, TProduct } from "@formbricks/types/product";
+import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyLanguage, TSurveyQuestionType } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
@@ -32,7 +31,7 @@ interface SurveyMenuBarProps {
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
   responseCount: number;
-  surveyLanguages: TLanguage[];
+  surveyLanguages: TSurveyLanguage[];
   selectedLanguage: string;
 }
 
@@ -58,7 +57,7 @@ export default function SurveyMenuBar({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
+  const defaultLanguageCode = "default";
 
   let faultyQuestions: String[] = [];
 
@@ -126,7 +125,7 @@ export default function SurveyMenuBar({
       if (
         !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", surveyLanguages) ||
         (survey.thankYouCard.subheader &&
-          survey.thankYouCard.subheader[defaultLanguageId] !== "" &&
+          survey.thankYouCard.subheader[defaultLanguageCode] !== "" &&
           !isLabelValidForAllLanguages(survey.thankYouCard.subheader, surveyLanguages))
       ) {
         faultyQuestions.push("end");

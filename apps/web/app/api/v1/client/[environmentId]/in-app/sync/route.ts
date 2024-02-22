@@ -6,7 +6,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, PRICING_APPSURVEYS_FREE_RESPONSES } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
-import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -88,10 +87,7 @@ export async function GET(
         surveys
           .filter((survey) => survey.status === "inProgress" && survey.type === "web")
           .map(async (survey) => {
-            const transformedSurvey = await transformToLegacySurvey(
-              survey,
-              getDefaultLanguage(product.languages).id
-            );
+            const transformedSurvey = await transformToLegacySurvey(survey);
             return transformedSurvey;
           })
       );

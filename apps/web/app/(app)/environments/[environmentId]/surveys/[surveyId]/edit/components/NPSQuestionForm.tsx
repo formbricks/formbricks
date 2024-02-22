@@ -4,8 +4,7 @@ import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString, extractLanguageIds } from "@formbricks/lib/i18n/utils";
-import { TLanguage } from "@formbricks/types/product";
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 
@@ -17,9 +16,7 @@ interface NPSQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageId: string;
 }
 
 export default function NPSQuestionForm({
@@ -31,11 +28,9 @@ export default function NPSQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  surveyLanguages,
-  defaultLanguageId,
 }: NPSQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
-  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   return (
     <form>
       <LocalizedInput
@@ -44,12 +39,10 @@ export default function NPSQuestionForm({
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageId={defaultLanguageId}
       />
 
       <div>
@@ -62,12 +55,10 @@ export default function NPSQuestionForm({
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageId={defaultLanguageId}
               />
             </div>
 
@@ -88,7 +79,7 @@ export default function NPSQuestionForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageIds, defaultLanguageId),
+                subheader: createI18nString("", surveyLanguageCodes),
               });
               setShowSubheader(true);
             }}>
@@ -107,12 +98,10 @@ export default function NPSQuestionForm({
             value={question.lowerLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
-            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageId={defaultLanguageId}
           />
         </div>
         <div className="w-full">
@@ -122,12 +111,10 @@ export default function NPSQuestionForm({
             value={question.upperLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
-            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageId={defaultLanguageId}
           />
         </div>
       </div>
@@ -142,12 +129,10 @@ export default function NPSQuestionForm({
             questionIdx={questionIdx}
             maxLength={48}
             placeholder={lastQuestion ? "Finish" : "Next"}
-            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageId={defaultLanguageId}
           />
         </div>
       )}

@@ -5,8 +5,7 @@ import { getLocalizedValue } from "./i18n/utils";
 
 export const getQuestionResponseMapping = (
   survey: { questions: TSurveyQuestion[] },
-  response: TResponse,
-  defaultLanguageId: string
+  response: TResponse
 ): { question: string; answer: string | string[]; type: TSurveyQuestionType }[] => {
   const questionResponseMapping: {
     question: string;
@@ -34,7 +33,7 @@ export const getQuestionResponseMapping = (
     };
 
     questionResponseMapping.push({
-      question: getLocalizedValue(question.headline, defaultLanguageId),
+      question: getLocalizedValue(question.headline, "default"),
       answer: getAnswer(),
       type: question.type,
     });

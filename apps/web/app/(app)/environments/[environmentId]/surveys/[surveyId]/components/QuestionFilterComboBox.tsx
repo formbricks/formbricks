@@ -26,7 +26,6 @@ type QuestionFilterComboBoxProps = {
   type: OptionsType.METADATA | TSurveyQuestionType | "Attributes" | "tags" | "language" | undefined;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
-  defaultLanguageId: string;
 };
 
 const QuestionFilterComboBox = ({
@@ -38,12 +37,12 @@ const QuestionFilterComboBox = ({
   onChangeFilterValue,
   type,
   handleRemoveMultiSelect,
-  defaultLanguageId,
   disabled = false,
 }: QuestionFilterComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
   const [openFilterValue, setOpenFilterValue] = React.useState<boolean>(false);
   const commandRef = React.useRef(null);
+  const defaultLanguageCode = "default";
   useClickOutside(commandRef, () => setOpen(false));
 
   // multiple when question type is multi selection
@@ -155,20 +154,20 @@ const QuestionFilterComboBox = ({
                     onSelect={() => {
                       !isMultiple
                         ? onChangeFilterComboBoxValue(
-                            typeof o === "object" ? getLocalizedValue(o, defaultLanguageId) : o
+                            typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
                           )
                         : onChangeFilterComboBoxValue(
                             Array.isArray(filterComboBoxValue)
                               ? [
                                   ...filterComboBoxValue,
-                                  typeof o === "object" ? getLocalizedValue(o, defaultLanguageId) : o,
+                                  typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
                                 ]
-                              : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageId) : o]
+                              : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
                           );
                       !isMultiple && setOpen(false);
                     }}
                     className="cursor-pointer">
-                    {typeof o === "object" ? getLocalizedValue(o, defaultLanguageId) : o}
+                    {typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}
                   </CommandItem>
                 ))}
               </CommandGroup>

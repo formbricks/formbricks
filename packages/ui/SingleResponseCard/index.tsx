@@ -42,7 +42,6 @@ export interface SingleResponseCardProps {
   environmentTags: TTag[];
   environment: TEnvironment;
   setFetchedResponses?: React.Dispatch<React.SetStateAction<TResponse[]>>;
-  defaultLanguageId: string;
 }
 
 interface TooltipRendererProps {
@@ -82,7 +81,6 @@ export default function SingleResponseCard({
   environmentTags,
   environment,
   setFetchedResponses,
-  defaultLanguageId,
 }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
@@ -337,7 +335,6 @@ export default function SingleResponseCard({
               questions={survey.questions}
               status={"welcomeCard"}
               isFirstQuestionAnswered={isFirstQuestionAnswered}
-              defaultLanguageId={defaultLanguageId}
             />
           )}
           <div className="space-y-6">
@@ -367,7 +364,7 @@ export default function SingleResponseCard({
                 <div key={`${question.id}`}>
                   {isValidValue(response.data[question.id]) ? (
                     <p className="text-sm text-slate-500">
-                      {getLocalizedValue(question.headline, defaultLanguageId)}
+                      {getLocalizedValue(question.headline, "default")}
                     </p>
                   ) : (
                     <QuestionSkip
@@ -380,7 +377,6 @@ export default function SingleResponseCard({
                           ? "skipped"
                           : "aborted"
                       }
-                      defaultLanguageId={defaultLanguageId}
                     />
                   )}
                   {typeof response.data[question.id] !== "object" ? (

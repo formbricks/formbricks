@@ -4,7 +4,7 @@ import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[su
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 import PictureChoiceSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 
-import { getDefaultLanguage, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TLanguage } from "@formbricks/types/product";
 import { TResponse } from "@formbricks/types/responses";
@@ -52,15 +52,14 @@ export default function SummaryList({
   responsesPerPage,
   languages,
 }: SummaryListProps) {
-  const defaultLanguageId = getDefaultLanguage(languages).id;
-
+  const defaultLanguageCode = "default";
   const getLanguageSymbol = (languages, language) => {
     for (let languageSymbol in languages) {
       if (languages.hasOwnProperty(languageSymbol) && languages[languageSymbol] === language) {
         return languageSymbol;
       }
     }
-    return defaultLanguageId;
+    return defaultLanguageCode;
   };
   const checkForI18n = (response: TResponse, id, survey: TSurvey) => {
     const languageSymbol = getLanguageSymbol(languages, response.language);
@@ -71,7 +70,7 @@ export default function SummaryList({
         choiceValues.push(
           getLocalizedValue(
             question.choices.find((choice) => choice.label[languageSymbol] === data)?.label,
-            defaultLanguageId
+            defaultLanguageCode
           )
         );
       });
@@ -81,7 +80,7 @@ export default function SummaryList({
       (question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion)?.choices.find(
         (choice) => choice.label[languageSymbol] === response.data[id]
       )?.label,
-      defaultLanguageId
+      defaultLanguageCode
     );
   };
 
@@ -125,7 +124,6 @@ export default function SummaryList({
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
                   environmentId={environment.id}
                   responsesPerPage={responsesPerPage}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }
@@ -144,7 +142,6 @@ export default function SummaryList({
                   environmentId={environment.id}
                   surveyType={survey.type}
                   responsesPerPage={responsesPerPage}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }
@@ -153,7 +150,6 @@ export default function SummaryList({
                 <NPSSummary
                   key={questionSummary.question.id}
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyNPSQuestion>}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }
@@ -162,7 +158,6 @@ export default function SummaryList({
                 <CTASummary
                   key={questionSummary.question.id}
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCTAQuestion>}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }
@@ -171,7 +166,6 @@ export default function SummaryList({
                 <RatingSummary
                   key={questionSummary.question.id}
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyRatingQuestion>}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }
@@ -180,7 +174,6 @@ export default function SummaryList({
                 <ConsentSummary
                   key={questionSummary.question.id}
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyConsentQuestion>}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }
@@ -189,7 +182,6 @@ export default function SummaryList({
                 <PictureChoiceSummary
                   key={questionSummary.question.id}
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyPictureSelectionQuestion>}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }
@@ -200,7 +192,6 @@ export default function SummaryList({
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyDateQuestion>}
                   environmentId={environment.id}
                   responsesPerPage={responsesPerPage}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }
@@ -210,7 +201,6 @@ export default function SummaryList({
                   key={questionSummary.question.id}
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyFileUploadQuestion>}
                   environmentId={environment.id}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }
@@ -221,7 +211,6 @@ export default function SummaryList({
                   key={questionSummary.question.id}
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCalQuestion>}
                   environmentId={environment.id}
-                  defaultLanguageId={defaultLanguageId}
                 />
               );
             }

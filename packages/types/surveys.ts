@@ -2,9 +2,10 @@ import { z } from "zod";
 
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
+import { ZLanguage } from "./product";
 import { ZSegment } from "./segment";
 
-export const ZI18nString = z.record(z.string().length(2), z.string());
+export const ZI18nString = z.record(z.string(), z.string());
 
 export type TI18nString = z.infer<typeof ZI18nString>;
 
@@ -377,6 +378,14 @@ export const ZSurveyQuestion = z.union([
   ZSurveyCalQuestion,
 ]);
 
+export const ZSurveyLanguage = z.object({
+  language: ZLanguage,
+  default: z.boolean(),
+  enabled: z.boolean(),
+});
+
+export type TSurveyLanguage = z.infer<typeof ZSurveyLanguage>;
+
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
 
 export const ZSurveyQuestions = z.array(ZSurveyQuestion);
@@ -425,6 +434,7 @@ export const ZSurvey = z.object({
   pin: z.string().nullable().optional(),
   resultShareKey: z.string().nullable(),
   displayPercentage: z.number().min(1).max(100).nullable(),
+  languages: z.array(ZSurveyLanguage),
 });
 
 export const ZSurveyInput = z.object({
@@ -446,6 +456,7 @@ export const ZSurveyInput = z.object({
   surveyClosedMessage: ZSurveyClosedMessage.optional(),
   verifyEmail: ZSurveyVerifyEmail.optional(),
   triggers: z.array(z.string()).optional(),
+  languages: z.array(ZSurveyLanguage),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

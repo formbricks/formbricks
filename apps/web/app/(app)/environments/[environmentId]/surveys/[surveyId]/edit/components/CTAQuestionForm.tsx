@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { TLanguage } from "@formbricks/types/product";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -18,9 +17,7 @@ interface CTAQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageId: string;
 }
 
 export default function CTAQuestionForm({
@@ -32,8 +29,6 @@ export default function CTAQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  surveyLanguages,
-  defaultLanguageId,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -49,12 +44,10 @@ export default function CTAQuestionForm({
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageId={defaultLanguageId}
       />
 
       <div className="mt-3">
@@ -64,7 +57,6 @@ export default function CTAQuestionForm({
             id="subheader"
             value={question.html}
             localSurvey={localSurvey}
-            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
@@ -72,7 +64,6 @@ export default function CTAQuestionForm({
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
-            defaultLanguageId={defaultLanguageId}
           />
         </div>
       </div>
@@ -106,12 +97,10 @@ export default function CTAQuestionForm({
             questionIdx={questionIdx}
             maxLength={48}
             placeholder={lastQuestion ? "Finish" : "Next"}
-            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
-            defaultLanguageId={defaultLanguageId}
           />
 
           {questionIdx !== 0 && (
@@ -123,12 +112,10 @@ export default function CTAQuestionForm({
               questionIdx={questionIdx}
               maxLength={48}
               placeholder={"Back"}
-              surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
-              defaultLanguageId={defaultLanguageId}
             />
           )}
         </div>
@@ -160,12 +147,10 @@ export default function CTAQuestionForm({
               localSurvey={localSurvey}
               questionIdx={questionIdx}
               placeholder={"skip"}
-              surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
-              defaultLanguageId={defaultLanguageId}
             />
           </div>
         </div>

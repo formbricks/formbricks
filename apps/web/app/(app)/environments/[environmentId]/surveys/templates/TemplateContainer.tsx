@@ -3,7 +3,6 @@
 import { replacePresetPlaceholders } from "@/app/lib/templates";
 import { useEffect, useState } from "react";
 
-import { getDefaultLanguage, translateSurvey } from "@formbricks/lib/i18n/utils";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import type { TTemplate } from "@formbricks/types/templates";
@@ -30,8 +29,6 @@ export default function TemplateContainerWithPreview({
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
-  const defaultLanguage = { id: "en", alias: "English", default: true };
   useEffect(() => {
     if (product && templates?.length) {
       const newTemplate = replacePresetPlaceholders(templates[0], product);
@@ -75,18 +72,13 @@ export default function TemplateContainerWithPreview({
           {activeTemplate && (
             <div className="my-6 flex h-[90%] w-full flex-col items-center justify-center">
               <PreviewSurvey
-                survey={translateSurvey(
-                  { ...minimalSurvey, ...activeTemplate.preset },
-                  [defaultLanguage],
-                  defaultLanguageId
-                )}
+                survey={{ ...minimalSurvey, ...activeTemplate.preset }}
                 activeQuestionId={activeQuestionId}
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
-                languageId={"en"}
+                languageId={"default"}
                 onFileUpload={async (file) => file.name}
-                defaultLanguageId={defaultLanguageId}
               />
             </div>
           )}

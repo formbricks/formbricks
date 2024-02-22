@@ -1,4 +1,4 @@
-import { getDefaultLanguage, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TProduct } from "@formbricks/types/product";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 import { TTemplate } from "@formbricks/types/templates";
@@ -9,17 +9,17 @@ export const replaceQuestionPresetPlaceholders = (
 ): TSurveyQuestion => {
   if (!product) return question;
   const newQuestion = structuredClone(question);
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
+  const defaultLanguageCode = "default";
   if (newQuestion.headline) {
-    newQuestion.headline[defaultLanguageId] = getLocalizedValue(
+    newQuestion.headline[defaultLanguageCode] = getLocalizedValue(
       newQuestion.headline,
-      defaultLanguageId
+      defaultLanguageCode
     ).replace("{{productName}}", product.name);
   }
   if (newQuestion.subheader) {
-    newQuestion.subheader[defaultLanguageId] = getLocalizedValue(
+    newQuestion.subheader[defaultLanguageCode] = getLocalizedValue(
       newQuestion.subheader,
-      defaultLanguageId
+      defaultLanguageCode
     )?.replace("{{productName}}", product.name);
   }
   return newQuestion;

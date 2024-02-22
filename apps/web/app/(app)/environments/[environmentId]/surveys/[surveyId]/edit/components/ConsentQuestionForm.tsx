@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { TLanguage } from "@formbricks/types/product";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 
@@ -15,9 +14,7 @@ interface ConsentQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageId: string;
 }
 
 export default function ConsentQuestionForm({
@@ -28,8 +25,6 @@ export default function ConsentQuestionForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  surveyLanguages,
-  defaultLanguageId,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -45,12 +40,10 @@ export default function ConsentQuestionForm({
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageId={defaultLanguageId}
       />
 
       <div className="mt-3">
@@ -60,7 +53,6 @@ export default function ConsentQuestionForm({
             id="subheader"
             value={question.html}
             localSurvey={localSurvey}
-            surveyLanguages={surveyLanguages}
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguage={selectedLanguage}
@@ -68,7 +60,6 @@ export default function ConsentQuestionForm({
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             questionIdx={questionIdx}
-            defaultLanguageId={defaultLanguageId}
           />
         </div>
       </div>
@@ -81,12 +72,10 @@ export default function ConsentQuestionForm({
         value={question.label}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageId={defaultLanguageId}
       />
       {/* <div className="mt-3">
         <Label htmlFor="buttonLabel">Button Label</Label>

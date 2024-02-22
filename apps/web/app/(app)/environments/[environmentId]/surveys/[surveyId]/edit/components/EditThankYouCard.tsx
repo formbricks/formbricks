@@ -5,7 +5,6 @@ import { useState } from "react";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
-import { TLanguage } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -19,8 +18,6 @@ interface EditThankYouCardProps {
   isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
-  defaultLanguageId: string;
 }
 
 export default function EditThankYouCard({
@@ -31,8 +28,6 @@ export default function EditThankYouCard({
   isInvalid,
   selectedLanguage,
   setSelectedLanguage,
-  surveyLanguages,
-  defaultLanguageId,
 }: EditThankYouCardProps) {
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
@@ -115,12 +110,10 @@ export default function EditThankYouCard({
               value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
-              surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateSurvey={updateSurvey}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
-              defaultLanguageId={defaultLanguageId}
             />
 
             <LocalizedInput
@@ -129,12 +122,10 @@ export default function EditThankYouCard({
               value={localSurvey.thankYouCard.subheader}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
-              surveyLanguages={surveyLanguages}
               isInvalid={isInvalid}
               updateSurvey={updateSurvey}
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
-              defaultLanguageId={defaultLanguageId}
             />
             <div className="mt-4">
               <div className="flex items-center space-x-1">

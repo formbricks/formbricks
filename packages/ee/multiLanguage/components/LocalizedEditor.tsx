@@ -3,12 +3,11 @@ import type { Dispatch, SetStateAction } from "react";
 
 import {
   containsTranslations,
-  extractLanguageIds,
+  extractLanguageCodes,
   isLabelValidForAllLanguages,
 } from "@formbricks/lib/i18n/utils";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TLanguage } from "@formbricks/types/product";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 import { Editor } from "@formbricks/ui/Editor";
 
@@ -23,10 +22,8 @@ interface LocalizedEditorProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   questionIdx: number;
-  surveyLanguages: TLanguage[];
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
-  defaultLanguageId: string;
 }
 export const LocalizedEditor = ({
   id,
@@ -37,23 +34,21 @@ export const LocalizedEditor = ({
   selectedLanguage,
   setSelectedLanguage,
   questionIdx,
-  surveyLanguages,
   firstRender,
   setFirstRender,
-  defaultLanguageId,
 }: LocalizedEditorProps) => {
   const hasi18n = value ? containsTranslations(value) : false;
-  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
+  const surveyLanguageIds = extractLanguageCodes(localSurvey.languages);
   const isInComplete =
     value !== undefined &&
     (id === "subheader"
-      ? value[defaultLanguageId]?.trim() !== "" &&
+      ? value["default"]?.trim() !== "" &&
         isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === defaultLanguageId
+        selectedLanguage === "default"
       : isInvalid &&
         !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguage === defaultLanguageId);
+        selectedLanguage === "default");
 
   return (
     <div className="relative w-full">
@@ -78,22 +73,22 @@ export const LocalizedEditor = ({
         firstRender={firstRender}
         setFirstRender={setFirstRender}
       />
-      {hasi18n && surveyLanguages.length > 1 && (
+      {hasi18n && localSurvey.languages?.length > 1 && (
         <div>
           <LanguageIndicator
             selectedLanguage={selectedLanguage}
-            surveyLanguages={surveyLanguages}
+            surveyLanguages={localSurvey.languages}
             setSelectedLanguage={setSelectedLanguage}
           />
 
-          {value && selectedLanguage !== defaultLanguageId && value[defaultLanguageId] && (
+          {value && selectedLanguage !== "default" && value["default"] && (
             <div className="mt-1 flex text-xs text-gray-500">
               <strong>Translate:</strong>
               <label
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
-                    recallToHeadline(value, localSurvey, false, defaultLanguageId)[defaultLanguageId] ?? ""
+                    recallToHeadline(value, localSurvey, false, "default")["default"] ?? ""
                   ),
                 }}></label>
             </div>

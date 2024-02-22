@@ -13,7 +13,6 @@ import { RatingResponse } from "@formbricks/ui/RatingResponse";
 
 interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummary<TSurveyRatingQuestion>;
-  defaultLanguageId: string;
 }
 
 interface ChoiceResult {
@@ -22,7 +21,7 @@ interface ChoiceResult {
   percentage: number;
 }
 
-export default function RatingSummary({ questionSummary, defaultLanguageId }: RatingSummaryProps) {
+export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   const results: ChoiceResult[] = useMemo(() => {
@@ -105,7 +104,7 @@ export default function RatingSummary({ questionSummary, defaultLanguageId }: Ra
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={getLocalizedValue(questionSummary.question.headline, defaultLanguageId)} />
+        <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">

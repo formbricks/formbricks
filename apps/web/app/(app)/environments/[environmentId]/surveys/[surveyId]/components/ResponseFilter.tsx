@@ -21,7 +21,7 @@ export type QuestionFilterOptions = {
   id: string;
 };
 
-const ResponseFilter = ({ defaultLanguageId }: { defaultLanguageId: string }) => {
+const ResponseFilter = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const { selectedFilter, setSelectedFilter, selectedOptions } = useResponseFilter();
 
@@ -169,7 +169,6 @@ const ResponseFilter = ({ defaultLanguageId }: { defaultLanguageId: string }) =>
                   options={questionComboBoxOptions}
                   selected={s.questionType}
                   onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
-                  defaultLanguageId={defaultLanguageId}
                 />
                 <QuestionFilterComboBox
                   key={`${s.questionType.id}-${i}`}
@@ -198,7 +197,6 @@ const ResponseFilter = ({ defaultLanguageId }: { defaultLanguageId: string }) =>
                   onChangeFilterComboBoxValue={(value) => handleOnChangeFilterComboBoxValue(value, i)}
                   onChangeFilterValue={(value) => handleOnChangeFilterValue(value, i)}
                   disabled={!s?.questionType?.label}
-                  defaultLanguageId={defaultLanguageId}
                 />
               </div>
               <div className="flex w-full items-center justify-end gap-1 md:w-auto">

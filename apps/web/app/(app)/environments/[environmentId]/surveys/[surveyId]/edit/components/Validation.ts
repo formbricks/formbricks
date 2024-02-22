@@ -1,10 +1,10 @@
 // extend this object in order to add more validation rules
-import { extractLanguageIds, getDefaultLanguage } from "@formbricks/lib/i18n/utils";
-import { TLanguage } from "@formbricks/types/product";
+import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
   TI18nString,
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
+  TSurveyLanguage,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyPictureSelectionQuestion,
@@ -12,8 +12,11 @@ import {
 } from "@formbricks/types/surveys";
 
 // Utility function to check if label is valid for all required languages
-const isLabelValidForAllLanguages = (label: string | TI18nString, surveyLanguages: TLanguage[]): boolean => {
-  const languages = extractLanguageIds(surveyLanguages);
+const isLabelValidForAllLanguages = (
+  label: string | TI18nString,
+  surveyLanguages: TSurveyLanguage[]
+): boolean => {
+  const languages = extractLanguageCodes(surveyLanguages);
   if (typeof label === "string") {
     return label.trim() !== "";
   } else {
@@ -24,30 +27,30 @@ const isLabelValidForAllLanguages = (label: string | TI18nString, surveyLanguage
 // Validation logic for multiple choice questions
 const handleI18nCheckForMultipleChoice = (
   question: TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion,
-  languages: TLanguage[]
+  languages: TSurveyLanguage[]
 ): boolean => {
   return question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
 };
 
 // Validation rules
 const validationRules = {
-  multipleChoiceMulti: (question: TSurveyMultipleChoiceMultiQuestion, languages: TLanguage[]) => {
+  multipleChoiceMulti: (question: TSurveyMultipleChoiceMultiQuestion, languages: TSurveyLanguage[]) => {
     return handleI18nCheckForMultipleChoice(question, languages);
   },
-  multipleChoiceSingle: (question: TSurveyMultipleChoiceSingleQuestion, languages: TLanguage[]) => {
+  multipleChoiceSingle: (question: TSurveyMultipleChoiceSingleQuestion, languages: TSurveyLanguage[]) => {
     return handleI18nCheckForMultipleChoice(question, languages);
   },
-  consent: (question: TSurveyConsentQuestion, languages: TLanguage[]) => {
+  consent: (question: TSurveyConsentQuestion, languages: TSurveyLanguage[]) => {
     return isLabelValidForAllLanguages(question.label, languages);
   },
   pictureSelection: (question: TSurveyPictureSelectionQuestion) => {
     return question.choices.length >= 2;
   },
   // Assuming headline is of type TI18nString
-  defaultValidation: (question: TSurveyQuestion, languages: TLanguage[]) => {
+  defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[]) => {
     let isValid = isLabelValidForAllLanguages(question.headline, languages);
     let isValidCTADismissLabel = true;
-    const defaultLanguageId = getDefaultLanguage(languages).id;
+    const defaultLanguageCode = "default";
     if (question.type === "cta" && !question.required) {
       isValidCTADismissLabel = isLabelValidForAllLanguages(
         (question as TSurveyCTAQuestion).dismissButtonLabel ?? "",
@@ -65,7 +68,7 @@ const validationRules = {
     ];
 
     for (const field of fieldsToValidate) {
-      if (question[field] && question[field][defaultLanguageId]) {
+      if (question[field] && question[field][defaultLanguageCode]) {
         isValid =
           isValid && isLabelValidForAllLanguages(question[field], languages) && isValidCTADismissLabel;
       }
@@ -76,7 +79,7 @@ const validationRules = {
 };
 
 // Main validation function
-const validateQuestion = (question: TSurveyQuestion, surveyLanguages: TLanguage[]): boolean => {
+const validateQuestion = (question: TSurveyQuestion, surveyLanguages: TSurveyLanguage[]): boolean => {
   const specificValidation = validationRules[question.type];
   const defaultValidation = validationRules.defaultValidation;
 

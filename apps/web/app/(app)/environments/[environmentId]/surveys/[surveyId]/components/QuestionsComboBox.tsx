@@ -33,7 +33,6 @@ export type QuestionOption = {
   questionType?: TSurveyQuestionType;
   type: OptionsType;
   id: string;
-  defaultLanguageId: string;
 };
 export type QuestionOptions = {
   header: OptionsType;
@@ -44,10 +43,9 @@ interface QuestionComboBoxProps {
   options: QuestionOptions[];
   selected: Partial<QuestionOption>;
   onChangeValue: (option: QuestionOption) => void;
-  defaultLanguageId: string;
 }
 
-const SelectedCommandItem = ({ label, questionType, type, defaultLanguageId }: Partial<QuestionOption>) => {
+const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOption>) => {
   const getIconType = () => {
     switch (type) {
       case OptionsType.QUESTIONS:
@@ -91,18 +89,13 @@ const SelectedCommandItem = ({ label, questionType, type, defaultLanguageId }: P
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
       <p className="ml-3 truncate text-base text-slate-600">
-        {typeof label === "string" ? label : getLocalizedValue(label, defaultLanguageId ?? "")}
+        {typeof label === "string" ? label : getLocalizedValue(label, "default")}
       </p>
     </div>
   );
 };
 
-const QuestionsComboBox = ({
-  options,
-  selected,
-  onChangeValue,
-  defaultLanguageId,
-}: QuestionComboBoxProps) => {
+const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
   const commandRef = React.useRef(null);
   const [inputValue, setInputValue] = React.useState("");
@@ -153,12 +146,7 @@ const QuestionsComboBox = ({
                           setOpen(false);
                         }}
                         className="cursor-pointer">
-                        <SelectedCommandItem
-                          label={o.label}
-                          type={o.type}
-                          questionType={o.questionType}
-                          defaultLanguageId={defaultLanguageId}
-                        />
+                        <SelectedCommandItem label={o.label} type={o.type} questionType={o.questionType} />
                       </CommandItem>
                     ))}
                   </CommandGroup>

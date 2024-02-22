@@ -29,13 +29,23 @@ export const renderWidget = async (survey: TSurvey) => {
   }
 
   const product = config.get().state.product;
-  const defaultLanguageId = product.languages.find((language) => language.default === true)?.id;
+  const attributes = config.get().state.attributes;
 
-  if (!defaultLanguageId) {
-    throw new Error("Default language not found");
-  }
+  const getLanguageCode = (): string => {
+    const language = attributes.language;
+    if (!language) return "default";
+    else {
+      const selectedLanguage = survey.languages.find((surveyLanguage) => {
+        return surveyLanguage.language.code === language || surveyLanguage.language.alias === language;
+      });
+      if (selectedLanguage?.default) {
+        return "default";
+      }
+      return selectedLanguage ? selectedLanguage.language.code : "default";
+    }
+  };
 
-  const languageId = config.get().language ?? defaultLanguageId;
+  const languageId = getLanguageCode();
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
   const responseQueue = new ResponseQueue(
@@ -69,7 +79,6 @@ export const renderWidget = async (survey: TSurvey) => {
       languageId,
       highlightBorderColor,
       placement,
-      defaultLanguageId,
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
       },

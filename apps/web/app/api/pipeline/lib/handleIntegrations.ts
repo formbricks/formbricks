@@ -13,16 +13,15 @@ import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 export async function handleIntegrations(
   integrations: TIntegration[],
   data: TPipelineInput,
-  surveyData: TSurvey,
-  defaultLanguageId: string
+  surveyData: TSurvey
 ) {
   for (const integration of integrations) {
     switch (integration.type) {
       case "googleSheets":
-        await handleGoogleSheetsIntegration(integration as TIntegrationGoogleSheets, data, defaultLanguageId);
+        await handleGoogleSheetsIntegration(integration as TIntegrationGoogleSheets, data);
         break;
       case "airtable":
-        await handleAirtableIntegration(integration as TIntegrationAirtable, data, defaultLanguageId);
+        await handleAirtableIntegration(integration as TIntegrationAirtable, data);
         break;
       case "notion":
         await handleNotionIntegration(integration as TIntegrationNotion, data, surveyData);
@@ -31,15 +30,11 @@ export async function handleIntegrations(
   }
 }
 
-async function handleAirtableIntegration(
-  integration: TIntegrationAirtable,
-  data: TPipelineInput,
-  defaultLanguageId: string
-) {
+async function handleAirtableIntegration(integration: TIntegrationAirtable, data: TPipelineInput) {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], defaultLanguageId);
+        const values = await extractResponses(data, element.questionIds as string[]);
 
         await airtableWriteData(integration.config.key, element, values);
       }
@@ -47,26 +42,18 @@ async function handleAirtableIntegration(
   }
 }
 
-async function handleGoogleSheetsIntegration(
-  integration: TIntegrationGoogleSheets,
-  data: TPipelineInput,
-  defaultLanguageId: string
-) {
+async function handleGoogleSheetsIntegration(integration: TIntegrationGoogleSheets, data: TPipelineInput) {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[], defaultLanguageId);
+        const values = await extractResponses(data, element.questionIds as string[]);
         await writeData(integration.config.key, element.spreadsheetId, values);
       }
     }
   }
 }
 
-async function extractResponses(
-  data: TPipelineInput,
-  questionIds: string[],
-  defaultLanguageId: string
-): Promise<string[][]> {
+async function extractResponses(data: TPipelineInput, questionIds: string[]): Promise<string[][]> {
   const responses: string[] = [];
   const questions: string[] = [];
   const survey = await getSurvey(data.surveyId);
@@ -81,7 +68,7 @@ async function extractResponses(
     }
 
     const question = survey?.questions.find((q) => q.id === questionId);
-    questions.push(getLocalizedValue(question?.headline, defaultLanguageId) || "");
+    questions.push(getLocalizedValue(question?.headline, "default") || "");
   }
 
   return [responses, questions];

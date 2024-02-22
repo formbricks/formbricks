@@ -104,13 +104,7 @@ const SummaryHeader = ({
           <DropdownMenuContent align="end" className="p-2">
             {survey.type === "link" && (
               <>
-                <ResultsShareButton
-                  className="flex w-full justify-center p-1"
-                  survey={survey}
-                  webAppUrl={webAppUrl}
-                  product={product}
-                  user={user}
-                />
+                <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />
                 <DropdownMenuSeparator />
               </>
             )}
@@ -189,19 +183,12 @@ const SummaryHeader = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <SuccessMessage
-        environment={environment}
-        survey={survey}
-        webAppUrl={webAppUrl}
-        product={product}
-        user={user}
-      />
+      <SuccessMessage environment={environment} survey={survey} webAppUrl={webAppUrl} user={user} />
       {showShareSurveyModal && (
         <ShareEmbedSurvey
           survey={survey}
           open={showShareSurveyModal}
           setOpen={setShowShareSurveyModal}
-          product={product}
           webAppUrl={webAppUrl}
           user={user}
         />

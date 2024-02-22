@@ -6,10 +6,11 @@ import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
-import { getDefaultLanguage, translateQuestion } from "@formbricks/lib/i18n/utils";
+import MultiLanguageCard from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
+import { extractLanguageCodes, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TLanguage, TProduct } from "@formbricks/types/product";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 import AddQuestionButton from "./AddQuestionButton";
@@ -29,7 +30,8 @@ interface QuestionsViewProps {
   setInvalidQuestions: (invalidQuestions: String[] | null) => void;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
+  isMultiLanguageAllowed?: boolean;
+  isFormbricksCloud: boolean;
 }
 
 export default function QuestionsView({
@@ -42,7 +44,8 @@ export default function QuestionsView({
   selectedLanguage,
   setInvalidQuestions,
   setSelectedLanguage,
-  surveyLanguages,
+  isMultiLanguageAllowed,
+  isFormbricksCloud,
 }: QuestionsViewProps) {
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
@@ -50,9 +53,9 @@ export default function QuestionsView({
       return acc;
     }, {});
   }, [localSurvey.questions]);
-
+  const surveyLanguages = localSurvey.languages;
   const [backButtonLabel, setbackButtonLabel] = useState(null);
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
+  const defaultLanguageCode = "default";
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
       if (question.headline[selectedLanguage].includes(`recall:${compareId}`)) {
@@ -176,9 +179,9 @@ export default function QuestionsView({
     if (backButtonLabel) {
       question.backButtonLabel = backButtonLabel;
     }
-    const languageSymbols = Object.keys(surveyLanguages);
-    const translatedSurvey = translateQuestion(question, languageSymbols, defaultLanguageId);
-    updatedSurvey.questions.push({ ...translatedSurvey, isDraft: true });
+    const languageSymbols = extractLanguageCodes(localSurvey.languages);
+    const translatedQuestion = translateQuestion(question, languageSymbols);
+    updatedSurvey.questions.push({ ...translatedQuestion, isDraft: true });
 
     setLocalSurvey(updatedSurvey);
     setActiveQuestionId(question.id);
@@ -213,10 +216,10 @@ export default function QuestionsView({
         // welcomeCard identified as "start"
         return (
           isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
-          (card.html && card.html[defaultLanguageId] === ""
+          (card.html && card.html[defaultLanguageCode] === ""
             ? true
             : isLabelValidForAllLanguages(card.html, surveyLanguages)) &&
-          (card.buttonLabel && card.buttonLabel[defaultLanguageId] === ""
+          (card.buttonLabel && card.buttonLabel[defaultLanguageCode] === ""
             ? true
             : isLabelValidForAllLanguages(card.buttonLabel, surveyLanguages))
         );
@@ -224,7 +227,7 @@ export default function QuestionsView({
         // thankYouCard identified as "end"
         return (
           isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
-          (card.subheader && card.subheader[defaultLanguageId] === ""
+          (card.subheader && card.subheader[defaultLanguageCode] === ""
             ? true
             : isLabelValidForAllLanguages(card.subheader, surveyLanguages))
         );
@@ -272,10 +275,8 @@ export default function QuestionsView({
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
           isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
-          surveyLanguages={surveyLanguages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}
-          defaultLanguageId={defaultLanguageId}
         />
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -299,7 +300,6 @@ export default function QuestionsView({
                     activeQuestionId={activeQuestionId}
                     setActiveQuestionId={setActiveQuestionId}
                     lastQuestion={questionIdx === localSurvey.questions.length - 1}
-                    surveyLanguages={surveyLanguages}
                     isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
                   />
                 ))}
@@ -317,10 +317,8 @@ export default function QuestionsView({
           setActiveQuestionId={setActiveQuestionId}
           activeQuestionId={activeQuestionId}
           isInvalid={invalidQuestions ? invalidQuestions.includes("end") : false}
-          surveyLanguages={surveyLanguages}
           setSelectedLanguage={setSelectedLanguage}
           selectedLanguage={selectedLanguage}
-          defaultLanguageId={defaultLanguageId}
         />
 
         {localSurvey.type === "link" ? (
@@ -331,6 +329,16 @@ export default function QuestionsView({
             activeQuestionId={activeQuestionId}
           />
         ) : null}
+        <MultiLanguageCard
+          localSurvey={localSurvey}
+          product={product}
+          setLocalSurvey={setLocalSurvey}
+          setActiveQuestionId={setActiveQuestionId}
+          activeQuestionId={activeQuestionId}
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
+          isFormbricksCloud={isFormbricksCloud}
+          setSelectedLanguage={setSelectedLanguage}
+        />
       </div>
     </div>
   );

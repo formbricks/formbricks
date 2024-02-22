@@ -23,6 +23,17 @@ export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
     }
   }
 
+  if (survey.languages) {
+    survey.languages.forEach((surveyLanguage) => {
+      if (typeof surveyLanguage.language.createdAt === "string") {
+        surveyLanguage.language.createdAt = new Date(surveyLanguage.language.createdAt);
+      }
+      if (typeof surveyLanguage.language.updatedAt === "string") {
+        surveyLanguage.language.updatedAt = new Date(surveyLanguage.language.updatedAt);
+      }
+    });
+  }
+
   return survey;
 };
 

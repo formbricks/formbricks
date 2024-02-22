@@ -9,7 +9,6 @@ interface AdvancedSettingsProps {
   questionIdx: number;
   localSurvey: TSurvey;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  defaultLanguageId: string;
 }
 
 export default function AdvancedSettings({
@@ -17,7 +16,6 @@ export default function AdvancedSettings({
   questionIdx,
   localSurvey,
   updateQuestion,
-  defaultLanguageId,
 }: AdvancedSettingsProps) {
   return (
     <div>
@@ -27,7 +25,6 @@ export default function AdvancedSettings({
           updateQuestion={updateQuestion}
           localSurvey={localSurvey}
           questionIdx={questionIdx}
-          defaultLanguageId={defaultLanguageId}
         />
       </div>
 

@@ -1,13 +1,11 @@
 "use client";
 
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { InformationCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { AlertTriangle, ArrowUpRight, Info, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import Select from "react-select";
 
-import { getDefaultLanguage } from "@formbricks/lib/i18n/utils";
-import { TLanguage, TProduct } from "@formbricks/types/product";
+import { TLanguage, TLanguageInput, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
@@ -15,7 +13,7 @@ import { Label } from "@formbricks/ui/Label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
-import { updateProductAction } from "../lib/actions";
+import { createLanguageAction, deleteLanguageAction, updateLanguageAction } from "../lib/actions";
 import { iso639Languages } from "../lib/isoLanguages";
 
 interface EditLanguageProps {
@@ -25,25 +23,32 @@ interface EditLanguageProps {
   isEnterpriseEdition: boolean;
 }
 
+const customStyles = {
+  control: (provided) => ({
+    ...provided,
+    backgroundColor: "white",
+    width: "100%",
+    height: "100%",
+    borderRadius: "5px",
+    border: "",
+    borderColor: "#cbd5e1",
+  }),
+};
+
 export default function EditLanguage({
   product,
   environmentId,
   isFormbricksCloud,
   isEnterpriseEdition,
 }: EditLanguageProps) {
-  const [defaultSymbol, setdefaultSymbol] = useState(getDefaultLanguage(product.languages).id);
-  const initialLanguages = product.languages.sort((key1, key2) =>
-    key1.id === defaultSymbol ? -1 : key2.id === defaultSymbol ? 1 : 0
-  );
-
-  const [languages, setLanguages] = useState<TLanguage[]>(initialLanguages);
+  const [languages, setLanguages] = useState<TLanguage[]>(product.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteModalOpenIndex, setDeleteModalOpenIndex] = useState<number | null>(null);
   const languageOptions = iso639Languages.map((language) => ({
     value: language.alpha2,
-    label: `${language.alpha2} (${language.english})`,
+    label: `${language.english}`,
   }));
 
   const checkIfDuplicateExists = (arr: string[]) => {
@@ -51,167 +56,172 @@ export default function EditLanguage({
   };
 
   useEffect(() => {
-    if (isEditing) return;
-    setLanguages(
-      languages.sort((key1, key2) => (key1.id === defaultSymbol ? -1 : key2.id === defaultSymbol ? 1 : 0))
-    );
-  }, [isEditing, languages]);
+    setLanguages(product.languages);
+  }, [product.languages]);
 
   const validateLanguage = (languages: TLanguage[]) => {
-    const languageIDs = languages.map((language) => language.id.toLowerCase().trim());
+    const languageCodes = languages.map((language) => language.code.toLowerCase().trim());
     const languageAliases = languages
-      .filter((l) => l.alias !== null)
-      .map((l) => (l.alias || "").toLowerCase().trim());
-    if (checkIfDuplicateExists(languageAliases) || checkIfDuplicateExists(languageIDs)) {
-      toast.error("Duplicate language or language ID");
+      .filter((language) => language.alias)
+      .map((language) => language.alias!.toLowerCase().trim());
+
+    if (languageCodes.includes("")) {
+      toast.error("Please select a Language", { duration: 2000 });
       return false;
     }
+
+    // Check for duplicates within the languageCodes and languageAliases
+    if (checkIfDuplicateExists(languageAliases) || checkIfDuplicateExists(languageCodes)) {
+      toast.error("Duplicate language or language ID", { duration: 4000 });
+      return false;
+    }
+
+    // Check if any alias matches the identifier of any added languages
+    if (languageCodes.some((code) => languageAliases.includes(code))) {
+      toast.error(
+        "There is a conflict between the identifier of an added language and one for your aliases. Aliases and identifiers cannot be identical.",
+        { duration: 6000 }
+      );
+      return false;
+    }
+
+    // Check if the chosen alias matches an ISO identifier of a language that hasn’t been added
+    for (let alias of languageAliases) {
+      if (iso639Languages.some((language) => language.alpha2 === alias && !languageCodes.includes(alias))) {
+        toast.error(
+          "There is a conflict between the selected alias and another language that has this identifier. Please add the language with this identifier to your product instead to avoid inconsistencies.",
+          { duration: 6000 }
+        );
+        return false;
+      }
+    }
+
     return true;
   };
 
   const addNewLanguageField = () => {
     if (!isEnterpriseEdition) return;
-    setLanguages((prevLanguages) => [
-      ...prevLanguages,
-      {
-        id: "",
-        alias: null,
-        default: false,
-      },
-    ]);
+    const newLanguage = {
+      id: "new",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      code: "",
+      alias: "",
+    };
+    setLanguages([...languages, newLanguage]);
     setIsEditing(true);
   };
 
-  const deleteLanguage = (id: string) => {
+  const deleteLanguage = async (languageId: string) => {
     setIsDeleting(true);
-    const newLanguages = languages.filter((language) => language.id !== id);
-    handleSave(newLanguages);
-    setLanguages(newLanguages);
-    setIsDeleting(false);
-    setDeleteModalOpenIndex(null);
+    try {
+      await deleteLanguageAction(product.id, environmentId, languageId);
+      const newLanguages = languages.filter((language) => language.id !== languageId);
+      setLanguages(newLanguages);
+      toast.success("Language deleted successfully");
+    } catch (error) {
+      toast.error("Error deleting language");
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpenIndex(null);
+    }
   };
 
-  const handleOnChange = (index: number, type: "id" | "alias", value: string) => {
+  const handleOnChange = (index: number, type: "code" | "alias", value: string) => {
     setIsEditing(true);
     const newLanguages = [...languages];
-    if (index === 0 && type === "id") {
-      // meaning default language symbol is being changed
-      setdefaultSymbol(value);
-    }
     newLanguages[index][type] = value;
     setLanguages(newLanguages);
   };
 
-  const updateLanguages = () => {
+  const handleSave = async () => {
     if (!validateLanguage(languages)) {
       return;
     }
-    handleSave(languages);
-  };
-
-  const markAsDefault = (languageId: string) => {
-    if (confirm(`Are you sure you want to change the default language to "${languageId}"?`)) {
-      const newLanguages = [...languages];
-      const defaultLanguage = newLanguages.find((language) => language.id === defaultSymbol);
-      if (defaultLanguage) {
-        defaultLanguage.default = false;
-      }
-      const newDefaultLanguage = newLanguages.find((language) => language.id === languageId);
-      if (newDefaultLanguage) {
-        newDefaultLanguage.default = true;
-        setdefaultSymbol(newDefaultLanguage.id);
-      }
-      setLanguages(newLanguages);
-      handleSave(newLanguages);
-    }
-  };
-
-  const handleSave = async (languages: TLanguage[]) => {
+    setIsUpdating(true);
     try {
-      setIsUpdating(true);
-      await updateProductAction(product.id, { languages });
-      setIsEditing(false);
-      setIsUpdating(false);
-      toast.success("Lanuages updated successfully");
+      await Promise.all(
+        languages.map(async (language) => {
+          const languageInput: TLanguageInput = { code: language.code, alias: language.alias };
+          if (language.id === "new") {
+            await createLanguageAction(product.id, environmentId, languageInput);
+          } else {
+            await updateLanguageAction(product.id, environmentId, language.id, languageInput);
+          }
+        })
+      );
+      toast.success("Languages updated successfully");
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      }
+      toast.error("Error saving language");
+    } finally {
       setIsUpdating(false);
+      setIsEditing(false);
     }
   };
 
-  const isLanguageSelectDisable = (index: number) => {
-    if (!isEditing) return true;
-    else {
-      if (index < product.languages.length) {
-        return true;
-      }
-    }
+  const AliasTooltip = () => {
+    return (
+      <TooltipProvider delayDuration={80}>
+        <Tooltip>
+          <TooltipTrigger tabIndex={-1}>
+            <div>
+              <Info className="h-4 w-4 text-slate-400" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            The alias is an alternate name to identify the language in link surveys and the SDK.
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   };
 
   return (
     <div className="flex flex-col">
       <div className="flex ">
         <div className="space-y-4">
-          <div className="flex w-full space-x-4">
-            <Label className="w-48" htmlFor="languagesId">
-              Language ID
-            </Label>
-            <Label htmlFor="Alias">
-              Alias{" "}
-              <TooltipProvider delayDuration={80}>
-                <Tooltip>
-                  <TooltipTrigger tabIndex={-1}>
-                    <div>
-                      <InformationCircleIcon className="h-5 w-5 text-slate-400" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    The alias is an alternate name to identify the language in link surveys and the SDK.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          <div className="grid w-full grid-cols-4 gap-4">
+            <Label htmlFor="languagesId">Language</Label>
+            <Label htmlFor="languagesId">Identifier</Label>
+            <Label htmlFor="Alias" className="flex items-center space-x-2">
+              <span>Alias</span> <AliasTooltip />
             </Label>
           </div>
-
-          {languages.map((language, index) => {
-            return (
-              <div key={index} className="flex items-center space-x-6">
-                <div className="flex items-center">
+          {languages.length > 0 ? (
+            languages.map((language, index) => {
+              return (
+                <div key={index} className="grid grid-cols-4 gap-4">
                   <Select
-                    className="h-full w-48"
-                    value={languageOptions.find((option) => option.value === language.id)}
+                    className="flex"
+                    value={languageOptions.find((option) => option.value === language.code)}
                     onChange={(selectedOption) => {
                       if (!selectedOption) return;
-                      handleOnChange(index, "id", selectedOption.value);
+                      handleOnChange(index, "code", selectedOption.value);
                     }}
                     options={languageOptions}
-                    isDisabled={!isEnterpriseEdition || isLanguageSelectDisable(index)}
+                    isDisabled={!isEnterpriseEdition || index <= product.languages.length - 1}
                     isSearchable={true}
-                    placeholder="English (en)"
+                    placeholder="English"
+                    styles={customStyles}
                   />
-                </div>
-                <div className="flex h-12 ">
-                  <div className="relative h-full">
-                    <Input
-                      disabled={!isEnterpriseEdition}
-                      className="h-full w-40"
-                      value={language.alias || ""}
-                      placeholder="not provided"
-                      onChange={(e) => handleOnChange(index, "alias", e.target.value)}
-                    />
-                  </div>
-                </div>
-                {language.default !== true ? (
+                  <Input disabled={true} className="h-full" value={language.code} />
+                  <Input
+                    disabled={!isEnterpriseEdition}
+                    className="h-full"
+                    value={language.alias || ""}
+                    placeholder="not provided"
+                    onChange={(e) => handleOnChange(index, "alias", e.target.value)}
+                  />
                   <div>
-                    <TrashIcon
-                      className="h-4 w-4 cursor-pointer text-slate-400"
+                    <Button
+                      disabled={isEditing}
+                      variant="warn"
                       onClick={() => {
                         if (isEditing) return;
                         setDeleteModalOpenIndex(index);
-                      }}
-                    />
+                      }}>
+                      Remove
+                    </Button>
                     <DeleteDialog
                       open={deleteModalOpenIndex === index}
                       setOpen={(open) => {
@@ -222,45 +232,38 @@ export default function EditLanguage({
                       isDeleting={isDeleting}
                     />
                   </div>
-                ) : (
-                  <div className="h-6 w-6"></div>
-                )}
-                {language.default === false ? (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={index === product.languages.length || isEditing}
-                    className="whitespace-nowrap"
-                    onClick={() => markAsDefault(language.id)}
-                    loading={isUpdating}>
-                    Mark as default
-                  </Button>
-                ) : (
-                  <span className="rounded-2xl bg-slate-500 px-3 py-1 text-sm text-white">Default</span>
-                )}
-              </div>
-            );
-          })}
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm text-slate-500">You have not yet added a language</p>
+          )}
         </div>
       </div>
       {isEditing && (
-        <p className="pt-1 text-sm text-amber-600">
-          Unsaved changes <ExclamationTriangleIcon className="inline h-3 w-3" />{" "}
+        <p className="my-2 pt-1 text-sm text-amber-600">
+          Unsaved changes <AlertTriangle className="inline h-3 w-3" />{" "}
         </p>
       )}
-      {isEditing ? (
-        <Button variant="darkCTA" className="mt-4 w-fit" onClick={updateLanguages} loading={isUpdating}>
-          Save
-        </Button>
-      ) : (
+      {!isEditing && (
         <Button
-          variant="darkCTA"
+          variant="secondary"
           className="my-4 w-fit"
           onClick={addNewLanguageField}
           disabled={!isEnterpriseEdition}>
           Add Language
+          <PlusIcon className="ml-2 h-4 w-4" />
         </Button>
       )}
+      <div className="space-x-4">
+        <Button variant="darkCTA" disabled={!isEditing} onClick={handleSave} loading={isUpdating}>
+          Save changes
+        </Button>
+        <Button variant="secondary">
+          Read Multi-Language docs
+          <ArrowUpRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
       {!isEnterpriseEdition &&
         (!isFormbricksCloud ? (
           <UpgradePlanNotice

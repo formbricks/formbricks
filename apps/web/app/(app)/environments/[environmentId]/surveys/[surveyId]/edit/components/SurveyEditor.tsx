@@ -2,23 +2,18 @@
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
+import { isEqual } from "lodash";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
-import {
-  containsTranslations,
-  extractLanguageIds,
-  getDefaultLanguage,
-  getSurveyLanguages,
-  translateSurvey,
-} from "@formbricks/lib/i18n/utils";
+import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
-import { TLanguage, TProduct } from "@formbricks/types/product";
+import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -37,9 +32,9 @@ interface SurveyEditorProps {
   segments: TSegment[];
   responseCount: number;
   membershipRole?: TMembershipRole;
-  isEnterpriseEdition: boolean;
   colours: string[];
   isUserTargetingAllowed?: boolean;
+  isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
 }
 
@@ -52,7 +47,7 @@ export default function SurveyEditor({
   segments,
   responseCount,
   membershipRole,
-  isEnterpriseEdition,
+  isMultiLanguageAllowed,
   colours,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
@@ -61,12 +56,7 @@ export default function SurveyEditor({
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
-  const [i18n, setI18n] = useState(false);
-  const defaultLanguage = getDefaultLanguage(product.languages);
-  const defaultLanguageId = defaultLanguage.id;
-  const [surveyLanguages, setSurveyLanguages] = useState<TLanguage[]>([defaultLanguage]);
-  const [productLanguages, setProductLanguages] = useState<TLanguage[]>(product.languages ?? defaultLanguage);
-  const [selectedLanguageId, setSelectedLanguageId] = useState<string>(defaultLanguageId);
+  const [selectedLanguageId, setSelectedLanguageId] = useState<string>("default");
   const surveyEditorRef = useRef(null);
 
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
@@ -81,19 +71,23 @@ export default function SurveyEditor({
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
-      if (containsTranslations(survey.questions[0].headline)) {
-        const surveyLanguages = getSurveyLanguages(product, survey);
-        setSurveyLanguages(surveyLanguages);
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey, localSurvey, product.languages]);
 
   useEffect(() => {
     if (!localSurvey) return;
-    setLocalSurvey(translateSurvey(localSurvey, surveyLanguages, defaultLanguageId));
+
+    const translatedSurvey = translateSurvey(localSurvey, localSurvey.languages);
+
+    // Check if the translated survey is different from the current localSurvey
+    // You can implement a deep comparison function or use a library like lodash
+    if (!isEqual(translatedSurvey, localSurvey)) {
+      setLocalSurvey(translatedSurvey);
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n, localSurvey?.id, localSurvey?.questions.length, selectedLanguageId, surveyLanguages]);
+  }, [localSurvey?.id, localSurvey?.questions.length, selectedLanguageId, localSurvey?.languages]);
 
   useEffect(() => {
     const listener = () => {
@@ -102,7 +96,6 @@ export default function SurveyEditor({
           const latestProduct = await refetchProduct(localProduct.id);
           if (latestProduct) {
             setLocalProduct(latestProduct);
-            setProductLanguages(latestProduct.languages);
           }
         };
         fetchLatestProduct();
@@ -161,10 +154,11 @@ export default function SurveyEditor({
   }, [environment.id, isUserTargetingAllowed, localSurvey?.type, survey.id]);
 
   useEffect(() => {
-    if (!extractLanguageIds(surveyLanguages).includes(selectedLanguageId)) {
-      setSelectedLanguageId(defaultLanguageId);
+    if (!localSurvey) return;
+    if (!extractLanguageCodes(localSurvey.languages).includes(selectedLanguageId)) {
+      setSelectedLanguageId("default");
     }
-  }, [surveyLanguages, selectedLanguageId, defaultLanguageId]);
+  }, [localSurvey?.languages, selectedLanguageId]);
 
   if (!localSurvey) {
     return <Loading />;
@@ -183,7 +177,7 @@ export default function SurveyEditor({
           setInvalidQuestions={setInvalidQuestions}
           product={localProduct}
           responseCount={responseCount}
-          surveyLanguages={surveyLanguages}
+          surveyLanguages={localSurvey.languages}
           selectedLanguage={selectedLanguageId}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
@@ -192,15 +186,11 @@ export default function SurveyEditor({
 
             {activeView === "questions" ? (
               <>
-                <div className="mt-16">
+                <div className="mt-20">
                   <LanguageSwitch
-                    productLanguages={productLanguages}
-                    surveyLanguages={surveyLanguages}
-                    setSurveyLanguages={setSurveyLanguages}
-                    i18n={surveyLanguages.length > 1}
-                    setI18n={setI18n}
-                    environmentId={environment.id}
-                    isEnterpriseEdition={isEnterpriseEdition}
+                    surveyLanguages={localSurvey.languages ?? []}
+                    selectedLanguage={selectedLanguageId ? selectedLanguageId : "default"}
+                    setSelectedLanguage={setSelectedLanguageId}
                   />
                 </div>
                 <QuestionsView
@@ -211,9 +201,10 @@ export default function SurveyEditor({
                   product={product}
                   invalidQuestions={invalidQuestions}
                   setInvalidQuestions={setInvalidQuestions}
-                  selectedLanguage={selectedLanguageId ? selectedLanguageId : defaultLanguageId}
+                  selectedLanguage={selectedLanguageId ? selectedLanguageId : "default"}
                   setSelectedLanguage={setSelectedLanguageId}
-                  surveyLanguages={surveyLanguages}
+                  isMultiLanguageAllowed={isMultiLanguageAllowed}
+                  isFormbricksCloud={isFormbricksCloud}
                 />
               </>
             ) : (
@@ -242,7 +233,6 @@ export default function SurveyEditor({
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
               languageId={selectedLanguageId}
               onFileUpload={async (file) => file.name}
-              defaultLanguageId={defaultLanguageId}
             />
           </aside>
         </div>

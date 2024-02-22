@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
-import { TLanguage } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
@@ -21,8 +20,6 @@ interface EditWelcomeCardProps {
   isInvalid: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
-  defaultLanguageId: string;
 }
 
 export default function EditWelcomeCard({
@@ -33,8 +30,6 @@ export default function EditWelcomeCard({
   isInvalid,
   selectedLanguage,
   setSelectedLanguage,
-  surveyLanguages,
-  defaultLanguageId,
 }: EditWelcomeCardProps) {
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
@@ -133,12 +128,10 @@ export default function EditWelcomeCard({
                 label="Headline"
                 localSurvey={localSurvey}
                 questionIdx={-1}
-                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageId={defaultLanguageId}
               />
             </div>
             <div className="mt-3">
@@ -148,7 +141,6 @@ export default function EditWelcomeCard({
                   id="html"
                   value={localSurvey.welcomeCard.html}
                   localSurvey={localSurvey}
-                  surveyLanguages={surveyLanguages}
                   isInvalid={isInvalid}
                   updateQuestion={updateSurvey}
                   selectedLanguage={selectedLanguage}
@@ -156,7 +148,6 @@ export default function EditWelcomeCard({
                   firstRender={firstRender}
                   setFirstRender={setFirstRender}
                   questionIdx={-1}
-                  defaultLanguageId={defaultLanguageId}
                 />
               </div>
             </div>
@@ -172,12 +163,10 @@ export default function EditWelcomeCard({
                     questionIdx={-1}
                     maxLength={48}
                     placeholder={"Next"}
-                    surveyLanguages={surveyLanguages}
                     isInvalid={isInvalid}
                     updateSurvey={updateSurvey}
                     selectedLanguage={selectedLanguage}
                     setSelectedLanguage={setSelectedLanguage}
-                    defaultLanguageId={defaultLanguageId}
                   />
                 </div>
               </div>

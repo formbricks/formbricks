@@ -5,7 +5,7 @@ import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { containsTranslations, extractLanguageIds, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { containsTranslations, extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import {
   extractId,
   extractRecallInfo,
@@ -17,7 +17,6 @@ import {
   replaceRecallInfoWithUnderline,
   useSyncScroll,
 } from "@formbricks/lib/utils/recall";
-import { TLanguage } from "@formbricks/types/product";
 import {
   TI18nString,
   TSurvey,
@@ -48,8 +47,6 @@ interface QuestionFormInputProps {
   isInvalid?: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
-  defaultLanguageId: string;
   label?: string;
   maxLength?: number;
   placeholder?: string;
@@ -71,12 +68,10 @@ const QuestionFormInput = ({
   label,
   selectedLanguage,
   setSelectedLanguage,
-  surveyLanguages,
   maxLength,
   placeholder,
   onBlur,
   className,
-  defaultLanguageId,
 }: QuestionFormInputProps) => {
   const isChoice = id.includes("choice");
   let choiceIdx: number | null;
@@ -93,7 +88,7 @@ const QuestionFormInput = ({
   }
   const isThankYouCard = questionId === "end";
   const isWelcomeCard = questionId === "start";
-  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
+  const surveyLanguageIds = extractLanguageCodes(localSurvey.languages);
 
   const question: TSurveyQuestion | TSurveyThankYouCard = isThankYouCard
     ? localSurvey.thankYouCard
@@ -110,27 +105,24 @@ const QuestionFormInput = ({
       return (
         (question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion).choices[
           choiceIdx
-        ].label || createI18nString("", surveyLanguageIds, defaultLanguageId)
+        ].label || createI18nString("", surveyLanguageIds)
       );
     }
     if (isThankYouCard) {
       const thankYouCard = localSurvey.thankYouCard;
       return (
         (thankYouCard[id as keyof typeof thankYouCard] as TI18nString) ||
-        createI18nString("", surveyLanguageIds, defaultLanguageId)
+        createI18nString("", surveyLanguageIds)
       );
     }
     if (isWelcomeCard) {
       const welcomeCard = localSurvey.welcomeCard;
       return (
         (welcomeCard[id as keyof typeof welcomeCard] as TI18nString) ||
-        createI18nString("", surveyLanguageIds, defaultLanguageId)
+        createI18nString("", surveyLanguageIds)
       );
     }
-    return (
-      (question[id as keyof typeof question] as TI18nString) ||
-      createI18nString("", surveyLanguageIds, defaultLanguageId)
-    );
+    return (question[id as keyof typeof question] as TI18nString) || createI18nString("", surveyLanguageIds);
   };
 
   const [text, setText] = useState(getQuestionTextBasedOnType());
@@ -445,10 +437,10 @@ const QuestionFormInput = ({
               maxLength={maxLength ?? undefined}
               isInvalid={isInvalid && text[selectedLanguage].trim() === ""}
             />
-            {hasi18n && surveyLanguages?.length > 1 && (
+            {hasi18n && localSurvey.languages?.length > 1 && (
               <LanguageIndicator
                 selectedLanguage={selectedLanguage}
-                surveyLanguages={surveyLanguages}
+                surveyLanguages={localSurvey.languages}
                 setSelectedLanguage={setSelectedLanguage}
               />
             )}

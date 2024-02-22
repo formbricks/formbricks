@@ -13,6 +13,7 @@ export const ZTeamBilling = z.object({
     inAppSurvey: ZSubscription,
     linkSurvey: ZSubscription,
     userTargeting: ZSubscription,
+    multiLanguage: ZSubscription,
   }),
 });
 

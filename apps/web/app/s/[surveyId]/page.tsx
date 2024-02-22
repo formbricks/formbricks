@@ -1,5 +1,4 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import InvalidLanguage from "@/app/s/[surveyId]/components/InvalidLanguage";
 import LegalFooter from "@/app/s/[surveyId]/components/LegalFooter";
 import LinkSurvey from "@/app/s/[surveyId]/components/LinkSurvey";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
@@ -11,7 +10,6 @@ import { notFound } from "next/navigation";
 
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL } from "@formbricks/lib/constants";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getDefaultLanguage, isSurveyAvailableInSelectedLanguage } from "@formbricks/lib/i18n/utils";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
@@ -94,7 +92,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   const survey = await getSurvey(params.surveyId);
 
   const suId = searchParams.suId;
-  const languageSymbol = searchParams.lang;
+  const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
 
@@ -164,13 +162,20 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     throw new Error("Product not found");
   }
 
-  let languageId;
-  if (languageSymbol) {
-    languageId = product.languages.find((l) => l.alias === languageSymbol || l.id === languageSymbol);
-  }
-  if (!languageId || !isSurveyAvailableInSelectedLanguage(languageId, survey)) {
-    return <InvalidLanguage />;
-  }
+  const getLanguageCode = (): string => {
+    if (!langParam) return "default";
+    else {
+      const selectedLanguage = survey.languages.find((surveyLanguage) => {
+        return surveyLanguage.language.code === langParam || surveyLanguage.language.alias === langParam;
+      });
+      if (selectedLanguage?.default) {
+        return "default";
+      }
+      return selectedLanguage ? selectedLanguage.language.code : "default";
+    }
+  };
+
+  const languageCode = getLanguageCode();
 
   const userId = searchParams.userId;
   if (userId) {
@@ -183,12 +188,11 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
 
   // question pre filling: Check if the first question is prefilled and if it is valid
   const prefillAnswer = searchParams[survey.questions[0].id];
   const isPrefilledAnswerValid = prefillAnswer
-    ? checkValidity(survey!.questions[0], prefillAnswer, languageId)
+    ? checkValidity(survey!.questions[0], prefillAnswer, languageCode)
     : false;
 
   if (isSurveyPinProtected) {
@@ -206,8 +210,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
-        languageId={languageId}
-        defaultLanguageId={defaultLanguageId}
+        languageCode={languageCode}
       />
     );
   }
@@ -226,8 +229,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           webAppUrl={WEBAPP_URL}
           responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
           verifiedEmail={verifiedEmail}
-          languageId={languageId}
-          defaultLanguageId={defaultLanguageId}
+          languageCode={languageCode}
         />
       </MediaBackground>
       <LegalFooter

@@ -8,7 +8,8 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import { TLanguage } from "@formbricks/types/product";
+import { getLanguageNameFromCode } from "@formbricks/ee/multiLanguage/lib/isoLanguages";
+import { TSurveyLanguage } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 
 interface LinkTabProps {
@@ -16,7 +17,7 @@ interface LinkTabProps {
   webAppUrl: string;
   generateNewSingleUseLink: () => void;
   isSingleUseLinkSurvey: boolean;
-  surveyLanguages: TLanguage[];
+  surveyLanguages: TSurveyLanguage[];
   setLanguage: (langauge: string) => void;
 }
 
@@ -83,15 +84,15 @@ export default function LinkTab({
               <div className="relative">
                 {showLanguageSelect && (
                   <div className="absolute left-0 right-0 top-12 z-30 rounded-lg border bg-slate-900 p-1 text-sm text-white">
-                    {surveyLanguages.map((language) => {
+                    {surveyLanguages.map((surveyLanguage) => {
                       return (
                         <div
                           className="rounded-md px-1 py-2 hover:cursor-pointer hover:bg-slate-700"
                           onClick={() => {
-                            setLanguage(language.id);
+                            setLanguage(surveyLanguage.language.code);
                             setShowLanguageSelect(false);
                           }}>
-                          {language.alias}
+                          {getLanguageNameFromCode(surveyLanguage.language.code)}
                         </div>
                       );
                     })}

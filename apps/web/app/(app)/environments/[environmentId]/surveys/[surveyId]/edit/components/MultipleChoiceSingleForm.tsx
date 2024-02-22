@@ -7,9 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
-import { createI18nString, extractLanguageIds } from "@formbricks/lib/i18n/utils";
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TLanguage } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
@@ -23,9 +22,7 @@ interface OpenQuestionFormProps {
   lastQuestion: boolean;
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
-  surveyLanguages: TLanguage[];
   isInvalid: boolean;
-  defaultLanguageId: string;
 }
 
 export default function MultipleChoiceSingleForm({
@@ -36,16 +33,14 @@ export default function MultipleChoiceSingleForm({
   localSurvey,
   selectedLanguage,
   setSelectedLanguage,
-  surveyLanguages,
-  defaultLanguageId,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
   const questionRef = useRef<HTMLInputElement>(null);
-  const surveyLanguageIds = extractLanguageIds(surveyLanguages);
-
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
+  const surveyLanguages = localSurvey.languages ?? [];
   const shuffleOptionsTypes = {
     none: {
       id: "none",
@@ -111,7 +106,7 @@ export default function MultipleChoiceSingleForm({
     }
     const newChoice = {
       id: createId(),
-      label: createI18nString("", surveyLanguageIds, defaultLanguageId),
+      label: createI18nString("", surveyLanguageCodes),
     };
     if (choiceIdx !== undefined) {
       newChoices.splice(choiceIdx + 1, 0, newChoice);
@@ -129,7 +124,7 @@ export default function MultipleChoiceSingleForm({
       const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
       newChoices.push({
         id: "other",
-        label: createI18nString("Other", surveyLanguageIds, defaultLanguageId),
+        label: createI18nString("Other", surveyLanguageCodes),
       });
       updateQuestion(questionIdx, {
         choices: newChoices,
@@ -181,12 +176,10 @@ export default function MultipleChoiceSingleForm({
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
-        surveyLanguages={surveyLanguages}
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguage={selectedLanguage}
         setSelectedLanguage={setSelectedLanguage}
-        defaultLanguageId={defaultLanguageId}
       />
 
       <div>
@@ -199,12 +192,10 @@ export default function MultipleChoiceSingleForm({
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
-                surveyLanguages={surveyLanguages}
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                defaultLanguageId={defaultLanguageId}
               />
             </div>
 
@@ -225,7 +216,7 @@ export default function MultipleChoiceSingleForm({
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
-                subheader: createI18nString("", surveyLanguageIds, defaultLanguageId),
+                subheader: createI18nString("", surveyLanguageCodes),
               });
               setShowSubheader(true);
             }}>
@@ -260,7 +251,6 @@ export default function MultipleChoiceSingleForm({
                         setisInvalidValue(null);
                       }
                     }}
-                    surveyLanguages={surveyLanguages}
                     updateChoice={updateChoice}
                     selectedLanguage={selectedLanguage}
                     setSelectedLanguage={setSelectedLanguage}
@@ -268,7 +258,6 @@ export default function MultipleChoiceSingleForm({
                       isInvalid &&
                       !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
                     }
-                    defaultLanguageId={defaultLanguageId}
                     className={`${choice.id === "other" ? "border border-dashed" : ""}`}
                   />
                   {choice.id === "other" && (
@@ -281,9 +270,8 @@ export default function MultipleChoiceSingleForm({
                       value={
                         question.otherOptionPlaceholder
                           ? question.otherOptionPlaceholder
-                          : createI18nString("Please specify", surveyLanguageIds, defaultLanguageId)
+                          : createI18nString("Please specify", surveyLanguageCodes)
                       }
-                      surveyLanguages={surveyLanguages}
                       updateQuestion={updateQuestion}
                       selectedLanguage={selectedLanguage}
                       setSelectedLanguage={setSelectedLanguage}
@@ -291,7 +279,6 @@ export default function MultipleChoiceSingleForm({
                         isInvalid &&
                         !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
                       }
-                      defaultLanguageId={defaultLanguageId}
                       className="border border-dashed"
                     />
                   )}

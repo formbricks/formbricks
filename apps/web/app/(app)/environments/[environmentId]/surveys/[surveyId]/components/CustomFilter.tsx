@@ -51,7 +51,6 @@ interface CustomFilterProps {
   survey: TSurvey;
   responses: TResponse[];
   totalResponses: TResponse[];
-  defaultLanguageId: string;
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -65,13 +64,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({
-  environmentTags,
-  responses,
-  survey,
-  totalResponses,
-  defaultLanguageId,
-}: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -83,7 +76,7 @@ const CustomFilter = ({
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
-
+  const defaultLanguageCode = "default";
   // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
   useEffect(() => {
     const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
@@ -120,7 +113,7 @@ const CustomFilter = ({
           if (answer) {
             updatedResponse.push({
               id: createId(),
-              question: getLocalizedValue(question.headline, defaultLanguageId),
+              question: getLocalizedValue(question.headline, defaultLanguageCode),
               type: question.type,
               scale: question.scale,
               range: question.range,
@@ -182,7 +175,7 @@ const CustomFilter = ({
       const downloadResponse = filter === FilterDownload.ALL ? await getAllResponsesInBatches() : responses;
 
       const questionNames = survey.questions?.map((question) =>
-        getLocalizedValue(question.headline, defaultLanguageId)
+        getLocalizedValue(question.headline, defaultLanguageCode)
       );
       const hiddenFieldIds = survey.hiddenFields.fieldIds;
       const hiddenFieldResponse = {};
@@ -380,7 +373,7 @@ const CustomFilter = ({
     <>
       <div className="relative mb-12 flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
-          <ResponseFilter defaultLanguageId={defaultLanguageId} />
+          <ResponseFilter />
           <DropdownMenu
             onOpenChange={(value) => {
               value && handleDatePickerClose();

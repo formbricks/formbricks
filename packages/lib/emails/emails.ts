@@ -11,7 +11,6 @@ import {
   SMTP_USER,
   WEBAPP_URL,
 } from "../constants";
-import { getDefaultLanguage } from "../i18n/utils";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
 import { getProductByEnvironmentId } from "../product/service";
 import { getQuestionResponseMapping } from "../responses";
@@ -172,7 +171,6 @@ export const sendResponseFinishedEmail = async (
   const team = await getTeamByEnvironmentId(environmentId);
   const product = await getProductByEnvironmentId(environmentId);
   if (!product) return;
-  const defaultLanguageId = getDefaultLanguage(product.languages).id;
   await sendEmail({
     to: email,
     subject: personEmail
@@ -186,7 +184,7 @@ export const sendResponseFinishedEmail = async (
 
       <hr/>
 
-      ${getQuestionResponseMapping(survey, response, defaultLanguageId)
+      ${getQuestionResponseMapping(survey, response)
         .map(
           (question) =>
             question.answer &&

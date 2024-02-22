@@ -18,7 +18,7 @@ import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
-import { getDefaultLanguage, reverseTranslateSurvey } from "../i18n/utils";
+import { reverseTranslateSurvey } from "../i18n/utils";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { productCache } from "../product/cache";
@@ -61,6 +61,21 @@ export const selectSurvey = {
   singleUse: true,
   pin: true,
   resultShareKey: true,
+  languages: {
+    select: {
+      default: true,
+      enabled: true,
+      language: {
+        select: {
+          id: true,
+          code: true,
+          alias: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
+  },
   triggers: {
     select: {
       actionClass: {
@@ -132,7 +147,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         surveySegment = formatDateFields(
           {
             ...surveyPrisma.segment,
-            surveys: surveyPrisma.segment.surveys.map((survey: TSurvey) => survey.id),
+            surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
           },
           ZSegment
         );
@@ -266,15 +281,12 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const transformToLegacySurvey = async (
-  survey: TSurvey,
-  defaultLanguageId: string
-): Promise<TLegacySurvey> => {
+export const transformToLegacySurvey = async (survey: TSurvey): Promise<TLegacySurvey> => {
   const transformedSurvey = await unstable_cache(
     async () => {
-      return reverseTranslateSurvey(survey, defaultLanguageId);
+      return reverseTranslateSurvey(survey);
     },
-    [`transformToLegacySurvey-${survey}-${defaultLanguageId}`],
+    [`transformToLegacySurvey-${survey}`],
     {
       tags: [surveyCache.tag.byId(survey.id)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -298,7 +310,48 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const { triggers, environmentId, segment, ...surveyData } = updatedSurvey;
+  const { triggers, environmentId, segment, languages, ...surveyData } = updatedSurvey;
+
+  if (languages) {
+    // Process languages update logic here
+    // Extract currentLanguageIds and updatedLanguageIds
+    const currentLanguageIds = currentSurvey.languages
+      ? currentSurvey.languages.map((l) => l.language.id)
+      : [];
+    const updatedLanguageIds = updatedSurvey.languages
+      ? updatedSurvey.languages.map((l) => l.language.id)
+      : [];
+
+    // Determine languages to add and remove
+    const languagesToAdd = updatedLanguageIds.filter((id) => !currentLanguageIds.includes(id));
+    const languagesToRemove = currentLanguageIds.filter((id) => !updatedLanguageIds.includes(id));
+
+    const defaultLanguageId = updatedSurvey.languages.find((l) => l.default)?.language.id;
+
+    // Prepare data for Prisma update
+    data.languages = {};
+
+    // Update existing languages for default value changes
+    data.languages.updateMany = currentSurvey.languages.map((surveyLanguage) => ({
+      where: { languageId: surveyLanguage.language.id },
+      data: { default: surveyLanguage.language.id === defaultLanguageId },
+    }));
+
+    // Add new languages
+    if (languagesToAdd.length > 0) {
+      data.languages.create = languagesToAdd.map((languageId) => ({
+        languageId: languageId,
+        default: languageId === defaultLanguageId,
+      }));
+    }
+
+    // Remove languages no longer associated with the survey
+    if (languagesToRemove.length > 0) {
+      data.languages.deleteMany = languagesToRemove.map((languageId) => ({
+        languageId: languageId,
+      }));
+    }
+  }
 
   if (triggers) {
     const newTriggers: string[] = [];
@@ -395,7 +448,6 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
       id: modifiedSurvey.id,
       environmentId: modifiedSurvey.environmentId,
     });
-
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
