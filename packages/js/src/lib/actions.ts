@@ -6,6 +6,7 @@ import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { sync } from "./sync";
+import { getIsDebug } from "./utils";
 import { renderWidget } from "./widget";
 
 const logger = Logger.getInstance();
@@ -18,16 +19,12 @@ const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
   return randomNum <= displayPercentage;
 };
 
-export const trackAction = async (
-  name: string,
-  properties: TJsActionInput["properties"] = {}
-): Promise<Result<void, NetworkError>> => {
+export const trackAction = async (name: string): Promise<Result<void, NetworkError>> => {
   const { userId } = config.get();
   const input: TJsActionInput = {
     environmentId: config.get().environmentId,
     userId,
     name,
-    properties: properties || {},
   };
 
   // don't send actions to the backend if the person is not identified
@@ -53,12 +50,19 @@ export const trackAction = async (
       });
     }
 
-    // sync again
-    await sync({
-      environmentId: config.get().environmentId,
-      apiHost: config.get().apiHost,
-      userId,
-    });
+    // we skip the resync on a new action since this leads to too many requests if the user has a lot of actions
+    // also this always leads to a second sync call on the `New Session` action
+    // when debug: sync after every action for testing purposes
+    if (getIsDebug()) {
+      await sync(
+        {
+          environmentId: config.get().environmentId,
+          apiHost: config.get().apiHost,
+          userId,
+        },
+        true
+      );
+    }
   }
 
   logger.debug(`Formbricks: Action "${name}" tracked`);

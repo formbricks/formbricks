@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { prisma } from "@formbricks/database";
 import {
   EMAIL_AUTH_ENABLED,
@@ -19,7 +17,7 @@ import { createUser, updateUser } from "@formbricks/lib/user/service";
 export async function POST(request: Request) {
   let { inviteToken, ...user } = await request.json();
   if (!EMAIL_AUTH_ENABLED || inviteToken ? INVITE_DISABLED : !SIGNUP_ENABLED) {
-    return NextResponse.json({ error: "Signup disabled" }, { status: 403 });
+    return Response.json({ error: "Signup disabled" }, { status: 403 });
   }
   user = { ...user, ...{ email: user.email.toLowerCase() } };
 
@@ -44,7 +42,7 @@ export async function POST(request: Request) {
       });
 
       if (!invite) {
-        return NextResponse.json({ error: "Invalid invite ID" }, { status: 400 });
+        return Response.json({ error: "Invalid invite ID" }, { status: 400 });
       }
 
       // assign user to existing team
@@ -60,7 +58,7 @@ export async function POST(request: Request) {
       await sendInviteAcceptedEmail(invite.creator.name, user.name, invite.creator.email);
       await deleteInvite(inviteId);
 
-      return NextResponse.json(user);
+      return Response.json(user);
     }
 
     // User signs up without invite
@@ -103,10 +101,10 @@ export async function POST(request: Request) {
       await sendVerificationEmail(user);
     }
 
-    return NextResponse.json(user);
+    return Response.json(user);
   } catch (e) {
     if (e.code === "P2002") {
-      return NextResponse.json(
+      return Response.json(
         {
           error: "user with this email address already exists",
           errorCode: e.code,
@@ -114,7 +112,7 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     } else {
-      return NextResponse.json(
+      return Response.json(
         {
           error: e.message,
           errorCode: e.code,

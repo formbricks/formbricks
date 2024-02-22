@@ -29,7 +29,6 @@ export default function AppPage({}) {
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
-        debug: true,
         attributes,
       });
       window.formbricks = formbricks;
@@ -105,8 +104,8 @@ export default function AppPage({}) {
               Reset person / pull data from Formbricks app
             </h3>
             <p className="text-slate-700 dark:text-slate-300">
-              On formbricks.reset() a few things happen: <strong>New person is created</strong> and{" "}
-              <strong>surveys & no-code actions are pulled from Formbricks:</strong>.
+              On formbricks.reset() the local state will <strong>be deleted</strong> and formbricks gets{" "}
+              <strong>reinitialized</strong>.
             </p>
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
