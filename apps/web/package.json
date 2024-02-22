@@ -12,14 +12,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@formbricks/api": "workspace:*",
-    "@formbricks/database": "workspace:*",
-    "@formbricks/ee": "workspace:*",
-    "@formbricks/js": "workspace:*",
-    "@formbricks/lib": "workspace:*",
-    "@formbricks/surveys": "workspace:*",
-    "@formbricks/types": "workspace:*",
-    "@formbricks/ui": "workspace:*",
     "@headlessui/react": "^1.7.18",
     "@heroicons/react": "^2.1.1",
     "@json2csv/node": "^7.0.5",
@@ -59,6 +51,15 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@formbricks/api": "workspace:*",
+    "@formbricks/database": "workspace:*",
+    "@formbricks/ee": "workspace:*",
+    "@formbricks/js": "workspace:*",
+    "@formbricks/lib": "workspace:*",
+    "@formbricks/surveys": "workspace:*",
+    "@formbricks/tailwind-config": "workspace:*",
+    "@formbricks/types": "workspace:*",
+    "@formbricks/ui": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@types/bcryptjs": "^2.4.6",
     "@types/lodash": "^4.14.202",

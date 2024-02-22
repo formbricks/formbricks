@@ -21,7 +21,7 @@ FROM base AS installer
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev
+RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 
 # Install Supercronic (cron for containers without super user privileges)
 RUN apk add --no-cache curl \
@@ -61,6 +61,9 @@ RUN touch /app/apps/web/.env
 RUN pnpm post-install --filter=web...
 RUN pnpm turbo run build --filter=web...
 
+# Extract Prisma version
+RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
+
 #
 ## step 3: setup production runner
 #
@@ -82,7 +85,8 @@ COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/we
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./packages/database/migrations
-COPY --from=installer /app/docker/cronjobs /app/docker/cronjobs
+COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
+COPY /docker/cronjobs /app/docker/cronjobs
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
@@ -92,9 +96,10 @@ USER nextjs
 RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
-CMD supercronic -quiet /app/docker/cronjobs & \
+CMD PRISMA_VERSION=$(cat prisma_version.txt) && \
+    supercronic -quiet /app/docker/cronjobs & \
     if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
-        pnpm dlx prisma migrate deploy && \
+        pnpm dlx prisma@$PRISMA_VERSION migrate deploy && \
         exec node apps/web/server.js; \
     else \
         echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!" >&2; \

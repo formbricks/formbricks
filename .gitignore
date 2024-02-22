@@ -40,6 +40,7 @@ packages/database/zod
 
 # turbo
 .turbo
+out/
 
 # nixos stuff
 .direnv
