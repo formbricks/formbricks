@@ -3,7 +3,7 @@
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
@@ -18,7 +18,7 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return Response.json(
     {},
     {
@@ -32,7 +32,7 @@ export async function OPTIONS(): Promise<NextResponse> {
   );
 }
 
-export async function POST(req: NextRequest, context: Context): Promise<NextResponse> {
+export async function POST(req: NextRequest, context: Context): Promise<Response> {
   const environmentId = context.params.environmentId;
 
   const accessType = "private"; // private files are accessible only by authorized users
