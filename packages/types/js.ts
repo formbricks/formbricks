@@ -94,7 +94,6 @@ export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
 export const ZJsConfigInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  debug: z.boolean().optional(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string().optional(),
   attributes: ZPersonAttributes.optional(),
