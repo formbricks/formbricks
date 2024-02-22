@@ -113,12 +113,7 @@ const ResponsePage = ({
         membershipRole={membershipRole}
       />
       <div className="flex gap-1.5">
-        <CustomFilter
-          environmentTags={environmentTags}
-          attributes={attributes}
-          responses={responses}
-          survey={survey}
-        />
+        <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
       </div>
       <SurveyResultsTabs activeId="responses" environmentId={environment.id} surveyId={surveyId} />
