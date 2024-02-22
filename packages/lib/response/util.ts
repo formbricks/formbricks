@@ -2,7 +2,10 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
-import { TResponseFilterCriteria, TResponseTtc } from "@formbricks/types/responses";
+import { TResponse, TResponseFilterCriteria, TResponseTtc } from "@formbricks/types/responses";
+import { TSurvey } from "@formbricks/types/surveys";
+
+import { getTodaysDateTimeFormatted } from "../time";
 
 export function calculateTtcTotal(ttc: TResponseTtc) {
   const result = { ...ttc };
@@ -287,4 +290,95 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
   }
 
   return { AND: whereClause };
+};
+
+export const getResponsesFileName = (surveyName: string, extension: string) => {
+  const formattedDateString = getTodaysDateTimeFormatted("-");
+  return `export-${surveyName.split(" ").join("-")}-${formattedDateString}.${extension}`.toLocaleLowerCase();
+};
+
+export const extracMetadataKeys = (obj: TResponse["meta"]) => {
+  let keys: string[] = [];
+
+  Object.entries(obj ?? {}).forEach(([key, value]) => {
+    if (typeof value === "object" && value !== null) {
+      Object.entries(value).forEach(([subKey]) => {
+        keys.push(key + " - " + subKey);
+      });
+    } else {
+      keys.push(key);
+    }
+  });
+
+  return keys;
+};
+
+export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
+  const metaDataFields = extracMetadataKeys(responses[0].meta);
+  const questions = survey.questions.map((question, idx) => `${idx + 1}. ${question.headline}`);
+  const hiddenFields = survey.hiddenFields?.fieldIds || [];
+  const userAttributes = Array.from(
+    new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat())
+  );
+
+  return { metaDataFields, questions, hiddenFields, userAttributes };
+};
+
+export const getResponsesJson = (
+  survey: TSurvey,
+  responses: TResponse[],
+  questions: string[],
+  userAttributes: string[],
+  hiddenFields: string[]
+): Record<string, string | number>[] => {
+  const jsonData: Record<string, string | number>[] = [];
+
+  responses.forEach((response, idx) => {
+    // basic response details
+    jsonData.push({
+      "No.": idx + 1,
+      "Response ID": response.id,
+      Timestamp: response.createdAt.toDateString(),
+      Finished: response.finished ? "Yes" : "No",
+      "Survey ID": response.surveyId,
+      "User ID": response.person?.userId || "",
+      Notes: response.notes.map((note) => `${note.user.name}: ${note.text}`).join("\n"),
+      Tags: response.tags.map((tag) => tag.name).join(", "),
+    });
+
+    // meta details
+    Object.entries(response.meta ?? {}).forEach(([key, value]) => {
+      if (typeof value === "object" && value !== null) {
+        Object.entries(value).forEach(([subKey, subValue]) => {
+          jsonData[idx][key + " - " + subKey] = subValue;
+        });
+      } else {
+        jsonData[idx][key] = value;
+      }
+    });
+
+    // survey response data
+    questions.forEach((question, i) => {
+      const questionId = survey?.questions[i].id || "";
+      const answer = response.data[questionId];
+      jsonData[idx][question] = Array.isArray(answer) ? answer.join("; ") : answer;
+    });
+
+    // user attributes
+    userAttributes.forEach((attribute) => {
+      jsonData[idx][attribute] = response.personAttributes?.[attribute] || "";
+    });
+
+    // hidden fields
+    hiddenFields.forEach((field) => {
+      const value = response.data[field];
+      if (Array.isArray(value)) {
+        jsonData[idx][field] = value.join("; ");
+      } else {
+        jsonData[idx][field] = value;
+      }
+    });
+  });
+
+  return jsonData;
 };
