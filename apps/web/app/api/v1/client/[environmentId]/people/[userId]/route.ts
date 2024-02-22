@@ -39,6 +39,20 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       person = await createPerson(environmentId, userId);
     }
 
+    // Check if the person is already up to date
+    const updatedAtttributes = inputValidation.data.attributes;
+    const oldAttributes = person.attributes;
+    let isUpToDate = true;
+    for (const key in updatedAtttributes) {
+      if (updatedAtttributes[key] !== oldAttributes[key]) {
+        isUpToDate = false;
+        break;
+      }
+    }
+    if (isUpToDate) {
+      return responses.successResponse({}, true);
+    }
+
     await updatePerson(person.id, inputValidation.data);
 
     return responses.successResponse({}, true);
