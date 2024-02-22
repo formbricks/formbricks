@@ -147,7 +147,7 @@ export async function GET(
     return responses.successResponse(
       { ...state },
       true,
-      "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+      "public, s-maxage=100, max-age=110, stale-while-revalidate=100, stale-if-error=100"
     );
   } catch (error) {
     console.error(error);

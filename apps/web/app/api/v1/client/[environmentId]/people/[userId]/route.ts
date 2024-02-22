@@ -50,12 +50,24 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       }
     }
     if (isUpToDate) {
-      return responses.successResponse({}, true);
+      return responses.successResponse(
+        {
+          changed: false,
+          message: "No updates were necessary; the person is already up to date.",
+        },
+        true
+      );
     }
 
     await updatePerson(person.id, inputValidation.data);
 
-    return responses.successResponse({}, true);
+    return responses.successResponse(
+      {
+        changed: true,
+        message: "The person was successfully updated.",
+      },
+      true
+    );
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);

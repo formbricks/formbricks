@@ -127,7 +127,6 @@ export const ZJsActionInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string().optional(),
   name: z.string(),
-  properties: z.record(z.string()),
 });
 
 export type TJsActionInput = z.infer<typeof ZJsActionInput>;

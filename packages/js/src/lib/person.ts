@@ -23,6 +23,7 @@ export const updatePersonAttribute = async (
   key: string,
   value: string
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
+  console.log("update attribute");
   const { apiHost, environmentId, userId } = config.get();
   if (!userId) {
     return err({
@@ -41,6 +42,7 @@ export const updatePersonAttribute = async (
     apiHost,
     environmentId,
   });
+
   const res = await api.client.people.update(userId, input);
 
   if (!res.ok) {
@@ -52,16 +54,20 @@ export const updatePersonAttribute = async (
       responseMessage: res.error.message,
     });
   }
-  logger.debug("Attribute updated. Syncing...");
 
-  await sync(
-    {
-      environmentId: environmentId,
-      apiHost: apiHost,
-      userId: userId,
-    },
-    true
-  );
+  console.log("Attribute call made. Changed:", res.data.changed);
+
+  if (res.data.changed) {
+    logger.debug("Attribute updated. Syncing...");
+    await sync(
+      {
+        environmentId: environmentId,
+        apiHost: apiHost,
+        userId: userId,
+      },
+      true
+    );
+  }
 
   return okVoid();
 };
