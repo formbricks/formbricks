@@ -74,6 +74,7 @@ const CodeActionSelector = ({
             onChange={(e) => onChange(e.target.value)}
             className="bg-white"
             placeholder="Identifier e.g. clicked-download"
+            id="codeActionIdentifierInput"
           />
         </div>
       </AdvancedOptionToggle>
@@ -131,7 +132,7 @@ const CssSelector = ({
   return (
     <div>
       <AdvancedOptionToggle
-        htmlId="CssSelector"
+        htmlId="cssSelectorToggle"
         isChecked={isCssSelector}
         onToggle={onCssSelectorToggle}
         customContainerClass="p-0"
@@ -145,6 +146,7 @@ const CssSelector = ({
             onChange={(e) => onChange(e.target.value)}
             className="bg-white"
             placeholder="Add .css-class or #css-id"
+            id="cssSelectorInput"
           />
         </div>
       </AdvancedOptionToggle>
@@ -208,7 +210,7 @@ const PageUrlSelector = ({
   return (
     <div>
       <AdvancedOptionToggle
-        htmlId="PageURL"
+        htmlId="pageURLToggle"
         isChecked={isPageUrl}
         onToggle={onPageUrlToggle}
         title="Page URL"
@@ -240,6 +242,7 @@ const PageUrlSelector = ({
               onChange={(e) => onPageUrlChange(e.target.value)}
               className="bg-white"
               placeholder="e.g. https://app.com/dashboard"
+              id="pageURLInput"
             />
           </div>
         </div>
@@ -297,7 +300,7 @@ const InnerHtmlSelector = ({
   return (
     <div>
       <AdvancedOptionToggle
-        htmlId="InnerText"
+        htmlId="innerHTMLToggle"
         isChecked={isInnerHtml}
         onToggle={onInnerHtmlToggle}
         customContainerClass="p-0"
@@ -313,6 +316,7 @@ const InnerHtmlSelector = ({
                 onChange={(e) => onChange(e.target.value)}
                 className="bg-white"
                 placeholder="e.g. 'Install App'"
+                id="innerHTMLInput"
               />
             </div>
           </div>

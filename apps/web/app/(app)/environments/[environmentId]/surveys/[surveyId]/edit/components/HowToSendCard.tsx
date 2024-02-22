@@ -82,7 +82,10 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
         open ? "" : "hover:bg-slate-50",
         "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
       )}>
-      <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
+      <Collapsible.CollapsibleTrigger
+        asChild
+        className="h-full w-full cursor-pointer"
+        id="howToSendCardTrigger">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
@@ -112,7 +115,8 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                     : option.id === localSurvey.type
                       ? "border-brand-dark cursor-pointer bg-slate-50"
                       : "cursor-pointer bg-slate-50"
-                )}>
+                )}
+                id={`howToSendCardOption-${option.id}`}>
                 <RadioGroupItem
                   value={option.id}
                   id={option.id}
