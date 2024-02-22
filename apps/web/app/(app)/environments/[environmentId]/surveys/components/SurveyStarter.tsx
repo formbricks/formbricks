@@ -31,11 +31,12 @@ export default function SurveyStarter({
     setIsCreateSurveyLoading(true);
     const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
     const autoComplete = surveyType === "web" ? 50 : null;
-    const augmentedTemplate = {
+    const augmentedTemplate: TSurveyInput = {
       ...template.preset,
       type: surveyType,
-      autoComplete,
-    } as TSurveyInput;
+      autoComplete: autoComplete || undefined,
+      createdBy: user.id,
+    };
     try {
       const survey = await createSurveyAction(environmentId, augmentedTemplate);
       router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);

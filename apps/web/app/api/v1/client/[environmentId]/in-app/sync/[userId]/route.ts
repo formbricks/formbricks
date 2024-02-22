@@ -1,6 +1,7 @@
+import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse, userAgent } from "next/server";
 
 import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
@@ -26,7 +27,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 }
 
 export async function GET(
-  _: Request,
+  request: NextRequest,
   {
     params,
   }: {
@@ -37,6 +38,9 @@ export async function GET(
   }
 ): Promise<NextResponse> {
   try {
+    const { device } = userAgent(request);
+    const apiVersion = request.nextUrl.searchParams.get("version");
+
     // validate using zod
     const inputValidation = ZJsPeopleUserIdInput.safeParse({
       environmentId: params.environmentId,
@@ -95,6 +99,7 @@ export async function GET(
         person = await createPerson(environmentId, userId);
       }
     } else {
+      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "userTargeting");
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
         // if it's a new person and MAU limit is reached, throw an error
@@ -107,9 +112,14 @@ export async function GET(
         }
       }
     }
+    if (isInAppSurveyLimitReached) {
+      await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+    }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person),
+      getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
+        version: apiVersion ?? undefined,
+      }),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
@@ -120,7 +130,7 @@ export async function GET(
 
     // return state
     const state: TJsStateSync = {
-      person: { id: person.id, userId: person.userId },
+      person: { id: person.id, userId: person.userId, attributes: person.attributes },
       surveys: !isInAppSurveyLimitReached ? surveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,

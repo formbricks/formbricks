@@ -6,10 +6,9 @@ import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
 import { getPerson } from "@formbricks/lib/person/service";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { ZId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
@@ -46,7 +45,11 @@ export async function POST(request: Request, context: Context): Promise<NextResp
   }
 
   const agent = UAParser(request.headers.get("user-agent"));
-  const country = headers().get("CF-IPCountry") || headers().get("X-Vercel-IP-Country") || undefined;
+  const country =
+    headers().get("CF-IPCountry") ||
+    headers().get("X-Vercel-IP-Country") ||
+    headers().get("CloudFront-Viewer-Country") ||
+    undefined;
   const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
   if (!inputValidation.success) {
@@ -72,8 +75,6 @@ export async function POST(request: Request, context: Context): Promise<NextResp
       true
     );
   }
-
-  const teamDetails = await getTeamDetails(survey.environmentId);
 
   let response: TResponse;
   try {
@@ -117,14 +118,10 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     });
   }
 
-  if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "response created", teamDetails.teamId, {
-      surveyId: response.surveyId,
-      surveyType: survey.type,
-    });
-  } else {
-    console.warn("Posthog capture not possible. No team owner found");
-  }
+  await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
+    surveyId: response.surveyId,
+    surveyType: survey.type,
+  });
 
   return responses.successResponse({ id: response.id }, true);
 }

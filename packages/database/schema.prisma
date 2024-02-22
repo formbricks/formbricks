@@ -257,6 +257,8 @@ model Survey {
   type                SurveyType              @default(web)
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId       String
+  creator             User?                   @relation(fields: [createdBy], references: [id])
+  createdBy           String?
   status              SurveyStatus            @default(draft)
   /// @zod.custom(imports.ZSurveyWelcomeCard)
   /// [SurveyWelcomeCard]
@@ -283,18 +285,22 @@ model Survey {
   /// @zod.custom(imports.ZSurveyClosedMessage)
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
-  /// @zod.custom(imports.ZSurveySingleUse)
-  /// [SurveySingleUse]
+
+  segmentId String?
+  segment   Segment? @relation(fields: [segmentId], references: [id])
 
   /// @zod.custom(imports.ZSurveyProductOverwrites)
   /// [SurveyProductOverwrites]
   productOverwrites Json?
+
   /// @zod.custom(imports.ZSurveyStyling)
   /// [SurveyStyling]
-  styling           Json?
+  styling Json?
+
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
-  singleUse         Json?   @default("{\"enabled\": false, \"isEncrypted\": true}")
+  singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
+
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
@@ -384,6 +390,7 @@ model Environment {
   apiKeys              ApiKey[]
   webhooks             Webhook[]
   tags                 Tag[]
+  segments             Segment[]
   integration          Integration[]
 
   @@index([productId])
@@ -564,6 +571,7 @@ model User {
   /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
+  surveys                   Survey[]
 
   @@index([email])
 }
@@ -573,4 +581,22 @@ model ShortUrl {
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @updatedAt @map(name: "updated_at")
   url       String   @unique
+}
+
+model Segment {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now()) @map(name: "created_at")
+  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
+  title         String
+  description   String?
+  isPrivate     Boolean     @default(true)
+  /// @zod.custom(imports.ZSegmentFilters)
+  /// [SegmentFilter]
+  filters       Json        @default("[]")
+  environmentId String
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  surveys       Survey[]
+
+  @@unique([environmentId, title])
+  @@index([environmentId])
 }
