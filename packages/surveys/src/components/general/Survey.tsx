@@ -37,7 +37,8 @@ export function Survey({
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
   const [showError, setShowError] = useState(false);
-  const [isProcessingFinished, setIsProcessingFinished] = useState(false);
+  //flag state to store whether response processing has been completed or not
+  const [areResponsesProcessed, setAreResponsesProcessed] = useState(false);
 
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
@@ -93,7 +94,9 @@ export function Survey({
   useEffect(() => {
     if (getSetIsProcessingFinished) {
       getSetIsProcessingFinished((value: boolean) => {
-        setIsProcessingFinished(value);
+        if (activeQuestionId === "end") {
+          setAreResponsesProcessed(value);
+        }
       });
     }
   });
@@ -227,7 +230,7 @@ export function Survey({
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
       return (
         <ThankYouCard
-          isProcessingFinished={isProcessingFinished}
+          areResponsesProcessed={areResponsesProcessed}
           headline={
             typeof survey.thankYouCard.headline === "string"
               ? replaceRecallInfo(survey.thankYouCard.headline)

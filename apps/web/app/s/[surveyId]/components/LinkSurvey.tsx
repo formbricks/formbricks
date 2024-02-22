@@ -74,6 +74,7 @@ export default function LinkSurvey({
             setIsError(true);
           },
           onResponseSentSuccessfully: () => {
+            //when response of current question is processed successfully
             setIsProcessingFinished(true);
           },
           setSurveyState: setSurveyState,

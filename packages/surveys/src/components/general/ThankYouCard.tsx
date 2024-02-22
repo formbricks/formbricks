@@ -13,7 +13,7 @@ interface ThankYouCardProps {
   buttonLabel?: string;
   buttonLink?: string;
   imageUrl?: string;
-  isProcessingFinished: boolean;
+  areResponsesProcessed: boolean;
 }
 
 export default function ThankYouCard({
@@ -24,10 +24,10 @@ export default function ThankYouCard({
   buttonLabel,
   buttonLink,
   imageUrl,
-  isProcessingFinished,
+  areResponsesProcessed,
 }: ThankYouCardProps) {
   useEffect(() => {
-    if (!buttonLink || !isProcessingFinished) return;
+    if (!buttonLink || !areResponsesProcessed) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Enter") {
         window.location.href = buttonLink;
@@ -68,7 +68,7 @@ export default function ThankYouCard({
         <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
-        {buttonLabel && isProcessingFinished && (
+        {buttonLabel && areResponsesProcessed && (
           <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
             <Button
               buttonLabel={buttonLabel}
