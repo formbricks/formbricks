@@ -92,14 +92,13 @@ export function Survey({
   });
 
   useEffect(() => {
+    if (questionId !== "end") return;
     if (getSetIsProcessingFinished) {
       getSetIsProcessingFinished((value: boolean) => {
-        if (activeQuestionId === "end") {
-          setAreResponsesProcessed(value);
-        }
+        setAreResponsesProcessed(value);
       });
     }
-  });
+  }, [questionId]);
 
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
