@@ -231,8 +231,8 @@ export default function WhenToSendCard({
         <Collapsible.CollapsibleContent>
           <hr className="py-1 text-slate-600" />
 
-          <div className="p-3">
-            <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100 pb-4">
+          <div className="px-3 pb-3 pt-1">
+            <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
               <TabBar
                 tabs={tabs}
                 activeId={activeTriggerTab}
@@ -303,7 +303,7 @@ export default function WhenToSendCard({
               </div>
             </div>
 
-            <div className="ml-2 flex flex-col gap-1 p-4">
+            <div className="mb-4 mt-8 space-y-1 px-4">
               <h3 className="font-semibold text-slate-800">Survey Display Settings</h3>
               <p className="text-sm text-slate-500">Add a delay or auto-close the survey</p>
             </div>
