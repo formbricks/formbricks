@@ -1,3 +1,5 @@
+import { createId } from "@paralleldrive/cuid2";
+
 import { FormbricksAPI } from "@formbricks/api";
 import { TResponseUpdate } from "@formbricks/types/responses";
 
@@ -78,7 +80,9 @@ export class ResponseQueue {
       if (this.surveyState.responseId !== null) {
         await this.api.client.response.update({ ...responseUpdate, responseId: this.surveyState.responseId });
       } else {
+        const newResponseId = createId();
         const response = await this.api.client.response.create({
+          id: newResponseId,
           ...responseUpdate,
           surveyId: this.surveyState.surveyId,
           userId: this.surveyState.userId || null,
@@ -88,9 +92,9 @@ export class ResponseQueue {
           throw new Error("Could not create response");
         }
         if (this.surveyState.displayId) {
-          await this.api.client.display.update(this.surveyState.displayId, { responseId: response.data.id });
+          await this.api.client.display.update(this.surveyState.displayId, { responseId: newResponseId });
         }
-        this.surveyState.updateResponseId(response.data.id);
+        this.surveyState.updateResponseId(newResponseId);
         if (this.config.setSurveyState) {
           this.config.setSurveyState(this.surveyState);
         }

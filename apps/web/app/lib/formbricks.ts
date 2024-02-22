@@ -1,3 +1,5 @@
+import { createId } from "@paralleldrive/cuid2";
+
 import formbricks from "@formbricks/js";
 import { env } from "@formbricks/lib/env.mjs";
 
@@ -12,7 +14,9 @@ export const createResponse = async (
   finished: boolean = false
 ): Promise<any> => {
   const api = formbricks.getApi();
+  const id = createId();
   return await api.client.response.create({
+    id,
     surveyId,
     userId,
     finished,

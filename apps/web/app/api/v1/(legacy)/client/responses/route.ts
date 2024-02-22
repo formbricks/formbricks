@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponseLegacy } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -22,11 +23,17 @@ export async function POST(request: Request): Promise<NextResponse> {
     responseInput.personId = null;
   }
   const agent = UAParser(request.headers.get("user-agent"));
-  const country =
-    headers().get("CF-IPCountry") ||
-    headers().get("X-Vercel-IP-Country") ||
-    headers().get("CloudFront-Viewer-Country") ||
-    undefined;
+  const country = IS_FORMBRICKS_CLOUD
+    ? headers().get("X-Vercel-IP-Country") ||
+      headers().get("CloudFront-Viewer-Country") ||
+      headers().get("AWS-Lambda-Country") ||
+      undefined
+    : headers().get("CF-IPCountry") ||
+      headers().get("X-Vercel-IP-Country") ||
+      headers().get("CloudFront-Viewer-Country") ||
+      headers().get("AWS-Lambda-Country") ||
+      undefined;
+
   const inputValidation = ZResponseLegacyInput.safeParse(responseInput);
 
   if (!inputValidation.success) {

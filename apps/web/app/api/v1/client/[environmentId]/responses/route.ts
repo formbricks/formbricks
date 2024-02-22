@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
@@ -44,12 +45,23 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     delete responseInput.personId;
   }
 
+  const invalid = headers().get("shubham");
+  if (invalid) {
+    console.log("sending 500 error on header,", invalid);
+    return responses.internalServerErrorResponse("hi shubham");
+  }
+
   const agent = UAParser(request.headers.get("user-agent"));
-  const country =
-    headers().get("CF-IPCountry") ||
-    headers().get("X-Vercel-IP-Country") ||
-    headers().get("CloudFront-Viewer-Country") ||
-    undefined;
+  const country = IS_FORMBRICKS_CLOUD
+    ? headers().get("X-Vercel-IP-Country") ||
+      headers().get("CloudFront-Viewer-Country") ||
+      headers().get("AWS-Lambda-Country") ||
+      undefined
+    : headers().get("CF-IPCountry") ||
+      headers().get("X-Vercel-IP-Country") ||
+      headers().get("CloudFront-Viewer-Country") ||
+      headers().get("AWS-Lambda-Country") ||
+      undefined;
   const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
   if (!inputValidation.success) {
