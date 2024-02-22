@@ -13,6 +13,7 @@ import {
 } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
+import { sync } from "./sync";
 import { closeSurvey } from "./widget";
 
 const config = Config.getInstance();
@@ -22,7 +23,7 @@ export const updatePersonAttribute = async (
   key: string,
   value: string
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
-  const { environmentId, userId } = config.get();
+  const { apiHost, environmentId, userId } = config.get();
   if (!userId) {
     return err({
       code: "missing_person",
@@ -37,8 +38,8 @@ export const updatePersonAttribute = async (
   };
 
   const api = new FormbricksAPI({
-    apiHost: config.get().apiHost,
-    environmentId: config.get().environmentId,
+    apiHost,
+    environmentId,
   });
   const res = await api.client.people.update(userId, input);
 
@@ -51,9 +52,16 @@ export const updatePersonAttribute = async (
       responseMessage: res.error.message,
     });
   }
+  logger.debug("Attribute updated. Syncing...");
 
-  // skipping additional sync for now as the server response is cached
-  // we need to figure out how to handle this in the future to get more recent state data before next sync
+  await sync(
+    {
+      environmentId: environmentId,
+      apiHost: apiHost,
+      userId: userId,
+    },
+    true
+  );
 
   return okVoid();
 };
