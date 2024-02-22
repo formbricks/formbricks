@@ -72,10 +72,11 @@ export const env = createEnv({
     ONBOARDING_DISABLED: z.string().optional(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
     RATE_LIMITING_DISABLED: z.enum(["1", "0"]).optional(),
-    OIDC_DISPLAY_NAME:z.string().optional(),
+    OIDC_DISPLAY_NAME: z.string().optional(),
     OIDC_CLIENT_ID: z.string().optional(),
     OIDC_CLIENT_SECRET: z.string().optional(),
     OIDC_ISSUER: z.string().optional(),
+    OIDC_SIGNING_ALGORITHM: z.string().optional(),
   },
 
   /*
@@ -162,5 +163,6 @@ export const env = createEnv({
     OIDC_CLIENT_ID: process.env.OIDC_CLIENT_ID,
     OIDC_CLIENT_SECRET: process.env.OIDC_CLIENT_SECRET,
     OIDC_ISSUER: process.env.OIDC_ISSUER,
+    OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
   },
 });

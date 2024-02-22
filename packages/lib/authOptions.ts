@@ -15,6 +15,7 @@ import {
   OIDC_CLIENT_SECRET,
   OIDC_DISPLAY_NAME,
   OIDC_ISSUER,
+  OIDC_SIGNING_ALGORITHM,
 } from "./constants";
 import { env } from "./env.mjs";
 import { verifyToken } from "./jwt";
@@ -146,6 +147,9 @@ export const authOptions: NextAuthOptions = {
       wellKnown: `${OIDC_ISSUER}/.well-known/openid-configuration`,
       authorization: { params: { scope: "openid email profile" } },
       idToken: true,
+      client: {
+        id_token_signed_response_alg: OIDC_SIGNING_ALGORITHM || "RS256",
+      },
       checks: ["pkce", "state"],
       profile: (profile) => {
         return {
@@ -186,7 +190,7 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
 
-      if (!user.email || !user.name || account.type !== "oauth") {
+      if (!user.email || account.type !== "oauth") {
         return false;
       }
 
@@ -239,7 +243,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const userProfile = await createUser({
-          name: user.name,
+          name: user.name || user.email.split("@")[0],
           email: user.email,
           emailVerified: new Date(Date.now()),
           onboardingCompleted: false,
