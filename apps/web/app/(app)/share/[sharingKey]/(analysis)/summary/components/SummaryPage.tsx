@@ -13,7 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
@@ -26,6 +26,7 @@ interface SummaryPageProps {
   product: TProduct;
   sharingKey: string;
   environmentTags: TTag[];
+  attributes: TSurveyPersonAttributes;
   displayCount: number;
   responsesPerPage: number;
 }
@@ -38,6 +39,7 @@ const SummaryPage = ({
   product,
   sharingKey,
   environmentTags,
+  attributes,
   displayCount,
   responsesPerPage: openTextResponsesPerPage,
 }: SummaryPageProps) => {
@@ -61,9 +63,9 @@ const SummaryPage = ({
       <SummaryHeader survey={survey} product={product} />
       <CustomFilter
         environmentTags={environmentTags}
+        attributes={attributes}
         responses={filterResponses}
         survey={survey}
-        totalResponses={responses}
       />
       <SurveyResultsTabs
         activeId="summary"

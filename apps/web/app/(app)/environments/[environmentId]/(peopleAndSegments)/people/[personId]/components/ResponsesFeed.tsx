@@ -29,6 +29,17 @@ export default function ResponseFeed({
   useEffect(() => {
     setFetchedResponses(responses);
   }, [responses]);
+
+  const deleteResponse = (responseId: string) => {
+    setFetchedResponses(responses.filter((response) => response.id !== responseId));
+  };
+
+  const updateResponse = (responseId: string, updatedResponse: TResponse) => {
+    setFetchedResponses(
+      responses.map((response) => (response.id === responseId ? updatedResponse : response))
+    );
+  };
+
   return (
     <>
       {fetchedResponses.length === 0 ? (
@@ -48,7 +59,8 @@ export default function ResponseFeed({
                   pageType="people"
                   environmentTags={environmentTags}
                   environment={environment}
-                  setFetchedResponses={setFetchedResponses}
+                  deleteResponse={deleteResponse}
+                  updateResponse={updateResponse}
                 />
               )}
             </div>

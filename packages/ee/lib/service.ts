@@ -12,7 +12,7 @@ export const getIsEnterpriseEdition = (): boolean => {
 
 export const getRemoveInAppBrandingPermission = (team: TTeam): boolean => {
   if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
-  else if (!IS_FORMBRICKS_CLOUD) return getIsEnterpriseEdition();
+  else if (!IS_FORMBRICKS_CLOUD) return true;
   else return false;
 };
 
