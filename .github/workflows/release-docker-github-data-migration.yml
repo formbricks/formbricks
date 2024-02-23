@@ -66,7 +66,8 @@ jobs:
 
       - name: Sign the published Docker image
         if: ${{ github.event_name != 'pull_request' }}
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+        run: |
+          IFS=',' read -ra TAG_ARRAY <<< "${{ steps.meta.outputs.tags }}"
+          for tag in "${TAG_ARRAY[@]}"; do
+            cosign sign --yes ghcr.io/${{ env.IMAGE_NAME }}:${tag}
+          done
