@@ -4,15 +4,19 @@ import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surve
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
-import { surveyHasBothTriggers } from "@formbricks/types/surveys";
-import { TSurvey, TSurveyQuestionType, ZSurveyInlineTriggers } from "@formbricks/types/surveys";
+import {
+  TSurvey,
+  TSurveyQuestionType,
+  ZSurveyInlineTriggers,
+  surveyHasBothTriggers,
+} from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
