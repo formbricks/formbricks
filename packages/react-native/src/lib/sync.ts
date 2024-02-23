@@ -1,7 +1,7 @@
 import type { NetworkError, Result } from "@formbricks/lib/errors";
 import { err, ok } from "@formbricks/lib/errors";
 import { Logger } from "@formbricks/lib/logger";
-import type { TJsState, TJsStateSync } from "@formbricks/types/js";
+import type { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
 import type { TRNSyncParams } from "@formbricks/types/react-native";
 
 import { Config } from "./config";
@@ -9,9 +9,9 @@ import { Config } from "./config";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-export const sync = async (params: TRNSyncParams): Promise<void> => {
+export const sync = async (params: TRNSyncParams, noCache = false): Promise<void> => {
   try {
-    const syncResult = await syncWithBackend(params);
+    const syncResult = await syncWithBackend(params, noCache);
     if (syncResult?.ok !== true) {
       logger.error(`Sync failed: ${JSON.stringify(syncResult.error)}`);
       throw syncResult.error;
@@ -48,15 +48,22 @@ export const sync = async (params: TRNSyncParams): Promise<void> => {
     throw error;
   }
 };
+const syncWithBackend = async (
+  { apiHost, environmentId, userId }: TJsSyncParams,
+  noCache: boolean
+): Promise<Result<TJsStateSync, NetworkError>> => {
+  const baseUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
 
-export const syncWithBackend = async ({
-  apiHost,
-  environmentId,
-  userId,
-}: TRNSyncParams): Promise<Result<TJsStateSync, NetworkError>> => {
-  const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}`;
+  let fetchOptions: RequestInit = {};
+
+  if (noCache) {
+    fetchOptions.cache = "no-cache";
+    logger.debug("No cache option set for sync");
+  }
   // userId is available, call the api with the `userId` param
-  const response = await fetch(url);
+  const url = `${baseUrl}/${userId}`;
+
+  const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
     const jsonRes = await response.json();

@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, LogBox, StyleSheet, Text, View } from "react-native";
 
 import Formbricks, { track } from "@formbricks/react-native";
@@ -9,7 +9,7 @@ LogBox.ignoreAllLogs();
 export default function App() {
   const [text, setText] = useState("Formbricks React Native SDK Demo");
   const config = {
-    environmentId: "cls9j2dox000ahde62sjgfw08",
+    environmentId: "clsy35z2l0009mt7owuzkhenk",
     apiHost: "http://192.168.4.30:3000",
     debug: true,
     userId: "111",
@@ -17,6 +17,7 @@ export default function App() {
       userId: "111",
     },
   };
+
   return (
     <View style={styles.container}>
       <Text>{text}</Text>
@@ -28,7 +29,6 @@ export default function App() {
         }}
       />
       <StatusBar style="auto" />
-
       <Formbricks initializationConfig={config} />
     </View>
   );

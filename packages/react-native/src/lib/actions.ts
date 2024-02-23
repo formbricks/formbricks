@@ -18,16 +18,12 @@ const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
   return randomNum <= displayPercentage;
 };
 
-export const trackAction = async (
-  name: string,
-  properties: TJsActionInput["properties"] = {}
-): Promise<Result<void, NetworkError>> => {
+export const trackAction = async (name: string): Promise<Result<void, NetworkError>> => {
   const { userId } = config.get();
   const input: TJsActionInput = {
     environmentId: config.get().environmentId,
     userId,
     name,
-    properties: properties || {},
   };
 
   // don't send actions to the backend if the person is not identified

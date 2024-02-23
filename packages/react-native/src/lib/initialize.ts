@@ -81,11 +81,14 @@ export const initialize = async (
     if (existingConfig.expiresAt < new Date()) {
       logger.debug("Configuration expired.");
 
-      await sync({
-        apiHost: c.apiHost,
-        environmentId: c.environmentId,
-        userId: c.userId,
-      });
+      await sync(
+        {
+          apiHost: c.apiHost,
+          environmentId: c.environmentId,
+          userId: c.userId,
+        },
+        true
+      );
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
       config.update(existingConfig);
