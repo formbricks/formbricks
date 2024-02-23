@@ -29,7 +29,7 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
   getSetIsError,
-  getSetIsProcessingFinished,
+  getSetIsResponseSendingFinished,
   onFileUpload,
   responseCount,
 }: SurveyBaseProps) {
@@ -37,8 +37,8 @@ export function Survey({
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
   const [showError, setShowError] = useState(false);
-  //flag state to store whether response processing has been completed or not
-  const [areResponsesProcessed, setAreResponsesProcessed] = useState(false);
+  // flag state to store whether response processing has been completed or not
+  const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(false);
 
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
@@ -89,16 +89,15 @@ export function Survey({
         setShowError(value);
       });
     }
-  });
+  }, [getSetIsError]);
 
   useEffect(() => {
-    if (questionId !== "end") return;
-    if (getSetIsProcessingFinished) {
-      getSetIsProcessingFinished((value: boolean) => {
-        setAreResponsesProcessed(value);
+    if (getSetIsResponseSendingFinished) {
+      getSetIsResponseSendingFinished((value: boolean) => {
+        setIsResponseSendingFinished(value);
       });
     }
-  }, [questionId]);
+  }, [getSetIsResponseSendingFinished]);
 
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
@@ -229,7 +228,7 @@ export function Survey({
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
       return (
         <ThankYouCard
-          areResponsesProcessed={areResponsesProcessed}
+          isResponseSendingFinished={isResponseSendingFinished}
           headline={
             typeof survey.thankYouCard.headline === "string"
               ? replaceRecallInfo(survey.thankYouCard.headline)

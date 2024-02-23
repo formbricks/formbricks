@@ -16,7 +16,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 let setIsError = (_: boolean) => {};
-let setIsProcessingFinished = (_: boolean) => {};
+let setIsResponseSendingFinished = (_: boolean) => {};
 
 export const renderWidget = async (survey: TSurvey) => {
   if (surveyRunning) {
@@ -41,8 +41,8 @@ export const renderWidget = async (survey: TSurvey) => {
       onResponseSendingFailed: () => {
         setIsError(true);
       },
-      onResponseSentSuccessfully: () => {
-        setIsProcessingFinished(true);
+      onResponseSendingFinished: () => {
+        setIsResponseSendingFinished(true);
       },
     },
     surveyState
@@ -69,8 +69,8 @@ export const renderWidget = async (survey: TSurvey) => {
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
       },
-      getSetIsProcessingFinished: (f: (value: boolean) => void) => {
-        setIsProcessingFinished = f;
+      getSetIsResponseSendingFinished: (f: (value: boolean) => void) => {
+        setIsResponseSendingFinished = f;
       },
       onDisplay: async () => {
         const { userId } = config.get();

@@ -7,7 +7,7 @@ export interface SurveyBaseProps {
   isBrandingEnabled: boolean;
   activeQuestionId?: string;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
-  getSetIsProcessingFinished?: (getSetIsProcessingFinishedgetSetError: (value: boolean) => void) => void;
+  getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
