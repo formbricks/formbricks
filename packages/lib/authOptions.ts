@@ -9,7 +9,14 @@ import { prisma } from "@formbricks/database";
 
 import { createAccount } from "./account/service";
 import { verifyPassword } from "./auth/util";
-import { EMAIL_VERIFICATION_DISABLED } from "./constants";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  OIDC_CLIENT_ID,
+  OIDC_CLIENT_SECRET,
+  OIDC_DISPLAY_NAME,
+  OIDC_ISSUER,
+  OIDC_SIGNING_ALGORITHM,
+} from "./constants";
 import { env } from "./env.mjs";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
@@ -131,6 +138,28 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.AZUREAD_CLIENT_SECRET || "",
       tenantId: env.AZUREAD_TENANT_ID || "",
     }),
+    {
+      id: "openid",
+      name: OIDC_DISPLAY_NAME || "OpenId",
+      type: "oauth",
+      clientId: OIDC_CLIENT_ID || "",
+      clientSecret: OIDC_CLIENT_SECRET || "",
+      wellKnown: `${OIDC_ISSUER}/.well-known/openid-configuration`,
+      authorization: { params: { scope: "openid email profile" } },
+      idToken: true,
+      client: {
+        id_token_signed_response_alg: OIDC_SIGNING_ALGORITHM || "RS256",
+      },
+      checks: ["pkce", "state"],
+      profile: (profile) => {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+        };
+      },
+    },
   ],
   callbacks: {
     async jwt({ token }) {
@@ -161,7 +190,7 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
 
-      if (!user.email || !user.name || account.type !== "oauth") {
+      if (!user.email || account.type !== "oauth") {
         return false;
       }
 
@@ -214,7 +243,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const userProfile = await createUser({
-          name: user.name,
+          name: user.name || user.email.split("@")[0],
           email: user.email,
           emailVerified: new Date(Date.now()),
           onboardingCompleted: false,

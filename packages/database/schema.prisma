@@ -498,6 +498,7 @@ enum IdentityProvider {
   github
   google
   azuread
+  openid
 }
 
 model Account {

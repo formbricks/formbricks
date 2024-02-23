@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
@@ -10,7 +9,7 @@ import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyRespo
 
 const BATCH_SIZE = 500;
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(): Promise<Response> {
   // Check authentication
   if (headers().get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();

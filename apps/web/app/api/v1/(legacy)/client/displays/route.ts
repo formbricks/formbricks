@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { createDisplayLegacy } from "@formbricks/lib/display/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
@@ -8,11 +7,11 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { TDisplay, ZDisplayLegacyCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: Request): Promise<Response> {
   const jsonInput = await request.json();
   if (jsonInput.personId === "legacy") {
     delete jsonInput.personId;

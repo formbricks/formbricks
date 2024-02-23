@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { updateDisplay } from "@formbricks/lib/display/service";
 import { ZDisplayUpdateInput } from "@formbricks/types/displays";
@@ -12,11 +11,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function PUT(request: Request, context: Context): Promise<NextResponse> {
+export async function PUT(request: Request, context: Context): Promise<Response> {
   const { displayId, environmentId } = context.params;
   const jsonInput = await request.json();
   const inputValidation = ZDisplayUpdateInput.safeParse({

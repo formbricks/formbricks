@@ -1,6 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import * as z from "zod";
 
 import { connectAirtable, fetchAirtableAuthToken } from "@formbricks/lib/airtable/service";
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
       email,
       key,
     });
-    return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`);
+    return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`);
   } catch (error) {
     console.error(error);
     responses.internalServerErrorResponse(error);
