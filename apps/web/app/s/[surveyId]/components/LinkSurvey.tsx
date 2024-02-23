@@ -18,7 +18,7 @@ import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 let setIsError = (_: boolean) => {};
-let setIsProcessingFinished = (_: boolean) => {};
+let setIsResponseSendingFinished = (_: boolean) => {};
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -73,9 +73,9 @@ export default function LinkSurvey({
           onResponseSendingFailed: () => {
             setIsError(true);
           },
-          onResponseSentSuccessfully: () => {
+          onResponseSendingFinished: () => {
             // when response of current question is processed successfully
-            setIsProcessingFinished(true);
+            setIsResponseSendingFinished(true);
           },
           setSurveyState: setSurveyState,
         },
@@ -162,8 +162,8 @@ export default function LinkSurvey({
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
           }}
-          getSetIsProcessingFinished={(f: (value: boolean) => void) => {
-            setIsProcessingFinished = f;
+          getSetIsResponseSendingFinished={(f: (value: boolean) => void) => {
+            setIsResponseSendingFinished = f;
           }}
           onRetry={() => {
             setIsError(false);
