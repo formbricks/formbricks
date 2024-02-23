@@ -138,7 +138,11 @@ export async function GET(
 
     // return state
     const state: TJsStateSync = {
-      person: { id: person.id, userId: person.userId, attributes: person.attributes },
+      person: {
+        id: person.id,
+        userId: person.userId,
+        attributes: apiVersion ? undefined : {},
+      },
       surveys: !isInAppSurveyLimitReached ? surveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,

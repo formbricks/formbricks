@@ -129,13 +129,6 @@ export const updatePersonAttributes = async (
   });
 };
 
-export const isExistingAttribute = (key: string, value: string): boolean => {
-  if (config.get().state.attributes[key] === value) {
-    return true;
-  }
-  return false;
-};
-
 export const setPersonUserId = async (): Promise<
   Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>
 > => {
@@ -148,11 +141,6 @@ export const setPersonAttribute = async (
   value: any
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
   logger.debug("Setting attribute: " + key + " to value: " + value);
-  // check if attribute already exists with this value
-  if (isExistingAttribute(key, value.toString())) {
-    logger.debug("Attribute already set to this value. Skipping update.");
-    return okVoid();
-  }
 
   const result = await updatePersonAttribute(key, value.toString());
 
