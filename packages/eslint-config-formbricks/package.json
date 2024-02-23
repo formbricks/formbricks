@@ -15,6 +15,6 @@
     "eslint-plugin-react": "7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "eslint-plugin-storybook": "^0.6.15"
+    "eslint-plugin-storybook": "^0.8.0"
   }
 }
