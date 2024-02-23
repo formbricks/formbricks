@@ -47,10 +47,13 @@ export const Formbricks = ({ initializationConfig }: FormbricksProps) => {
       }}>
       <WebView
         source={{
-          uri: `http://localhost:3000/s/${survey.id}?mobile=true&userId=${initializationConfig.userId}`,
+          uri: `http://192.168.4.30:3000/s/${survey.id}?mobile=true&userId=${initializationConfig.userId}`,
         }}
         style={{ flex: 1 }}
         contentMode="mobile"
+        onShouldStartLoadWithRequest={(event) => {
+          return event.url.startsWith("http://192.168.4.30:3000/s/");
+        }}
         onMessage={(event) => {
           try {
             const data = JSON.parse(event.nativeEvent.data) as {

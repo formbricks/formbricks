@@ -10,11 +10,11 @@ export default function App() {
   const [text, setText] = useState("Formbricks React Native SDK Demo");
   const config = {
     environmentId: "cls9j2dox000ahde62sjgfw08",
-    apiHost: "http://localhost:3000",
+    apiHost: "http://192.168.4.30:3000",
     debug: true,
-    userId: "123456",
+    userId: "111",
     attributes: {
-      userId: "123456",
+      userId: "111",
     },
   };
   return (
