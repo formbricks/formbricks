@@ -1,21 +1,20 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { NextResponse } from "next/server";
 
 import { updateResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
 export async function PUT(
   request: Request,
   { params }: { params: { responseId: string } }
-): Promise<NextResponse> {
+): Promise<Response> {
   const { responseId } = params;
 
   if (!responseId) {

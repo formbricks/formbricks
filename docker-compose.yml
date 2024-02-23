@@ -4,12 +4,12 @@ version: "3.3"
 x-webapp-url: &webapp_url http://localhost:3000
 
 # PostgreSQL DB for Formbricks to connect to
-x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
+x-database-url: &database_url
 
 # NextJS Auth
 # @see: https://next-auth.js.org/configuration/options#nextauth_secret
 # You can use: `openssl rand -hex 32` to generate one
-x-nextauth-secret: &nextauth_secret 10ee8bc17d40a457544cf373affbab16
+x-nextauth-secret: &nextauth_secret
 
 # Set this to your public-facing URL, e.g., https://example.com
 # You do not need the NEXTAUTH_URL environment variable in Vercel.
@@ -17,7 +17,7 @@ x-nextauth-url: &nextauth_url http://localhost:3000
 
 # Encryption key
 # You can use: `openssl rand -hex 32` to generate one
-x-encryption-key: &encryption_key 1b3d888592454d23b520040950654669
+x-encryption-key: &encryption_key
 
 x-mail-from: &mail_from
 x-smtp-host: &smtp_host
@@ -40,6 +40,9 @@ x-password-reset-disabled: &password_reset_disabled 1
 # Signup. Disable the ability for new users to create an account.
 x-signup-disabled: &signup_disabled 0
 
+# Email login. Disable the ability for users to login with email.
+x-auth-disabled: &email_auth_disabled 0
+
 # Team Invite. Disable the ability for invited users to create an account.
 x-invite-disabled: &invite_disabled 0
 
@@ -48,11 +51,9 @@ x-privacy-url: &privacy_url
 x-terms-url: &terms_url
 x-imprint-url: &imprint_url
 
-x-github-auth-enabled: &github_auth_enabled 0 # Configure Github Login
 x-github-id: &github_id
 x-github-secret: &github_secret
 
-x-google-auth-enabled: &google_auth_enabled 0 # Configure Google Login
 x-google-client-id: &google_client_id
 x-google-client-secret: &google_client_secret
 
@@ -62,7 +63,7 @@ x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Disa
 x-next-public-sentry-dsn: &next_public_sentry_dsn # Enable Sentry Error Tracking
 
 
-x-cron-secret: &cron_secret YOUR_CRON_SECRET # Set this to a random string to secure your cron endpoints
+x-cron-secret: &cron_secret # Set this to a random string to secure your cron endpoints
 
 services:
   postgres:
@@ -106,14 +107,13 @@ services:
       IMPRINT_URL: *imprint_url
       EMAIL_VERIFICATION_DISABLED: *email_verification_disabled
       PASSWORD_RESET_DISABLED: *password_reset_disabled
+      EMAIL_AUTH_DISABLED: *email_auth_disabled
       SIGNUP_DISABLED: *signup_disabled
       INVITE_DISABLED: *invite_disabled
       SENTRY_IGNORE_API_RESOLUTION_ERROR: *sentry_ignore_api_resolution_error
       NEXT_PUBLIC_SENTRY_DSN: *next_public_sentry_dsn
-      GITHUB_AUTH_ENABLED: *github_auth_enabled
       GITHUB_ID: *github_id
       GITHUB_SECRET: *github_secret
-      GOOGLE_AUTH_ENABLED: *google_auth_enabled
       GOOGLE_CLIENT_ID: *google_client_id
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret

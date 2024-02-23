@@ -5,6 +5,7 @@ interface RevalidateProps {
   attributeClassId?: string;
   actionClassId?: string;
   environmentId?: string;
+  segmentId?: string;
 }
 
 export const surveyCache = {
@@ -21,8 +22,11 @@ export const surveyCache = {
     byActionClassId(actionClassId: string) {
       return `actionClasses-${actionClassId}-surveys`;
     },
+    bySegmentId(segmentId: string) {
+      return `segments-${segmentId}-surveys`;
+    },
   },
-  revalidate({ id, attributeClassId, actionClassId, environmentId }: RevalidateProps): void {
+  revalidate({ id, attributeClassId, actionClassId, environmentId, segmentId }: RevalidateProps): void {
     if (id) {
       revalidateTag(this.tag.byId(id));
     }
@@ -37,6 +41,10 @@ export const surveyCache = {
 
     if (environmentId) {
       revalidateTag(this.tag.byEnvironmentId(environmentId));
+    }
+
+    if (segmentId) {
+      revalidateTag(this.tag.bySegmentId(segmentId));
     }
   },
 };

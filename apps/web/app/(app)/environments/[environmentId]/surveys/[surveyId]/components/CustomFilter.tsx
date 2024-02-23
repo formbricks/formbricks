@@ -4,18 +4,19 @@ import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getMoreResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
-import { fetchFile } from "@/app/lib/fetchFile";
-import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
-import { createId } from "@paralleldrive/cuid2";
-import { differenceInDays, format, subDays } from "date-fns";
+import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
+import {
+  generateQuestionAndFilterOptions,
+  getFormattedFilters,
+  getTodayDate,
+} from "@/app/lib/surveys/surveys";
+import { differenceInDays, format, startOfDay, subDays } from "date-fns";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import { getTodaysDateFormatted } from "@formbricks/lib/time";
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TResponse } from "@formbricks/types/responses";
+import { TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { Calendar } from "@formbricks/ui/Calendar";
@@ -47,9 +48,8 @@ enum FilterDropDownLabels {
 
 interface CustomFilterProps {
   environmentTags: TTag[];
+  attributes: TSurveyPersonAttributes;
   survey: TSurvey;
-  responses: TResponse[];
-  totalResponses: TResponse[];
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -63,8 +63,8 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
-  const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
+const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps) => {
+  const { selectedFilter, setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
       ? getDifferenceOfDays(dateRange.from, dateRange.to)
@@ -80,67 +80,15 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
   useEffect(() => {
     const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
       survey,
-      totalResponses,
-      environmentTags
+      environmentTags,
+      attributes
     );
     setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [totalResponses, survey, setSelectedOptions, environmentTags]);
+  }, [survey, setSelectedOptions, environmentTags, attributes]);
+
+  const filters = useMemo(() => getFormattedFilters(selectedFilter, dateRange), [selectedFilter, dateRange]);
 
   const datePickerRef = useRef<HTMLDivElement>(null);
-
-  const getMatchQandA = (responses: TResponse[], survey: TSurvey) => {
-    if (survey && responses) {
-      // Create a mapping of question IDs to their headlines
-      const questionIdToHeadline = {};
-      survey.questions.forEach((question) => {
-        questionIdToHeadline[question.id] = question.headline;
-      });
-
-      // Replace question IDs with question headlines in response data
-      const updatedResponses = responses.map((response) => {
-        const updatedResponse: Array<{
-          id: string;
-          question: string;
-          answer: string;
-          type: string;
-          scale?: "number" | "star" | "smiley";
-          range?: number;
-        }> = []; // Specify the type of updatedData
-        // iterate over survey questions and build the updated response
-        for (const question of survey.questions) {
-          const answer = response.data[question.id];
-          if (answer) {
-            updatedResponse.push({
-              id: createId(),
-              question: question.headline,
-              type: question.type,
-              scale: question.scale,
-              range: question.range,
-              answer: answer as string,
-            });
-          }
-        }
-        return { ...response, responses: updatedResponse };
-      });
-
-      const updatedResponsesWithTags = updatedResponses.map((response) => ({
-        ...response,
-        tags: response.tags?.map((tag) => tag),
-      }));
-
-      return updatedResponsesWithTags;
-    }
-    return [];
-  };
-
-  const downloadFileName = useMemo(() => {
-    if (survey) {
-      const formattedDateString = getTodaysDateFormatted("_");
-      return `${survey.name.split(" ").join("_")}_responses_${formattedDateString}`.toLocaleLowerCase();
-    }
-
-    return "my_survey_responses";
-  }, [survey]);
 
   const extracMetadataKeys = useCallback((obj, parentKey = "") => {
     let keys: string[] = [];
@@ -155,151 +103,6 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
 
     return keys;
   }, []);
-
-  const getAllResponsesInBatches = useCallback(async () => {
-    const BATCH_SIZE = 3000;
-    const responses: TResponse[] = [];
-    for (let page = 1; ; page++) {
-      const batchResponses = await getMoreResponses(survey.id, page, BATCH_SIZE);
-      responses.push(...batchResponses);
-      if (batchResponses.length < BATCH_SIZE) {
-        break;
-      }
-    }
-    return responses;
-  }, [survey.id]);
-
-  const downloadResponses = useCallback(
-    async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
-      const downloadResponse = filter === FilterDownload.ALL ? await getAllResponsesInBatches() : responses;
-
-      const questionNames = survey.questions?.map((question) => question.headline);
-      const hiddenFieldIds = survey.hiddenFields.fieldIds;
-      const hiddenFieldResponse = {};
-      let metaDataFields = extracMetadataKeys(downloadResponse[0].meta);
-      const userAttributes = ["Init Attribute 1", "Init Attribute 2"];
-      const matchQandA = getMatchQandA(downloadResponse, survey);
-      const jsonData = matchQandA.map((response) => {
-        const basicInfo = {
-          "Response ID": response.id,
-          Timestamp: response.createdAt,
-          Finished: response.finished,
-          "User ID": response.person?.userId,
-          "Survey ID": response.surveyId,
-        };
-        const metaDataKeys = extracMetadataKeys(response.meta);
-        let metaData = {};
-        metaDataKeys.forEach((key) => {
-          if (!metaDataFields.includes(key)) metaDataFields.push(key);
-          if (response.meta) {
-            if (key.includes("-")) {
-              const nestedKeyArray = key.split("-");
-              metaData[key] = response.meta[nestedKeyArray[0].trim()][nestedKeyArray[1].trim()] ?? "";
-            } else {
-              metaData[key] = response.meta[key] ?? "";
-            }
-          }
-        });
-
-        const personAttributes = response.personAttributes;
-        if (hiddenFieldIds && hiddenFieldIds.length > 0) {
-          hiddenFieldIds.forEach((hiddenFieldId) => {
-            hiddenFieldResponse[hiddenFieldId] = response.data[hiddenFieldId] ?? "";
-          });
-        }
-        const tags = { Tags: response.tags.map((tag) => tag.name).join(", ") };
-        const notes = {
-          Notes: response.notes.map((note) => `${note.user.name}: ${note.text}`).join("\n"),
-        };
-
-        const fileResponse = {
-          ...basicInfo,
-          ...metaData,
-          ...personAttributes,
-          ...hiddenFieldResponse,
-          ...tags,
-          ...notes,
-        };
-        // Map each question name to its corresponding answer
-        questionNames.forEach((questionName: string) => {
-          const matchingQuestion = response.responses.find((question) => question.question === questionName);
-          let transformedAnswer = "";
-          if (matchingQuestion) {
-            const answer = matchingQuestion.answer;
-            if (Array.isArray(answer)) {
-              transformedAnswer = answer.join("; ");
-            } else {
-              transformedAnswer = answer;
-            }
-          }
-          fileResponse[questionName] = matchingQuestion ? transformedAnswer : "";
-        });
-
-        return fileResponse;
-      });
-
-      // Fields which will be used as column headers in the file
-      const fields = [
-        "Response ID",
-        "Timestamp",
-        "Finished",
-        "Survey ID",
-        "User ID",
-        "Notes",
-        "Tags",
-        ...metaDataFields,
-        ...questionNames,
-        ...(hiddenFieldIds ?? []),
-        ...(survey.type === "web" ? userAttributes : []),
-      ];
-
-      let response;
-
-      try {
-        response = await fetchFile(
-          {
-            json: jsonData,
-            fields,
-            fileName: downloadFileName,
-          },
-          filetype
-        );
-      } catch (err) {
-        toast.error(`Error downloading ${filetype === "csv" ? "CSV" : "Excel"}`);
-        return;
-      }
-
-      let blob: Blob;
-      if (filetype === "csv") {
-        blob = new Blob([response.fileResponse], { type: "text/csv;charset=utf-8;" });
-      } else if (filetype === "xlsx") {
-        const binaryString = atob(response["fileResponse"]);
-        const byteArray = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          byteArray[i] = binaryString.charCodeAt(i);
-        }
-        blob = new Blob([byteArray], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-      } else {
-        throw new Error(`Unsupported filetype: ${filetype}`);
-      }
-
-      const downloadUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = `${downloadFileName}.${filetype}`;
-
-      document.body.appendChild(link);
-      link.click();
-
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(downloadUrl);
-    },
-    [downloadFileName, responses, survey, extracMetadataKeys, getAllResponsesInBatches]
-  );
 
   const handleDateHoveredChange = (date: Date) => {
     if (selectingDate === DateSelected.FROM) {
@@ -363,6 +166,22 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     setSelectingDate(DateSelected.FROM);
   };
 
+  const handleDowndloadResponses = async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
+    try {
+      const responseFilters = filter === FilterDownload.ALL ? {} : filters;
+      const fileUrl = await getResponsesDownloadUrlAction(survey.id, filetype, responseFilters);
+      if (fileUrl) {
+        const link = document.createElement("a");
+        link.href = fileUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      toast.error("Error downloading responses");
+    }
+  };
+
   useClickOutside(datePickerRef, () => handleDatePickerClose());
 
   return (
@@ -404,7 +223,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
                 className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_7_DAYS);
-                  setDateRange({ from: subDays(new Date(), 7), to: getTodayDate() });
+                  setDateRange({ from: startOfDay(subDays(new Date(), 7)), to: getTodayDate() });
                 }}>
                 <p className="text-slate-700">Last 7 days</p>
               </DropdownMenuItem>
@@ -412,7 +231,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
                 className="hover:ring-0"
                 onClick={() => {
                   setFilterRange(FilterDropDownLabels.LAST_30_DAYS);
-                  setDateRange({ from: subDays(new Date(), 30), to: getTodayDate() });
+                  setDateRange({ from: startOfDay(subDays(new Date(), 30)), to: getTodayDate() });
                 }}>
                 <p className="text-slate-700">Last 30 days</p>
               </DropdownMenuItem>
@@ -449,28 +268,28 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.ALL, "csv");
+                  handleDowndloadResponses(FilterDownload.ALL, "csv");
                 }}>
                 <p className="text-slate-700">All responses (CSV)</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.ALL, "xlsx");
+                  handleDowndloadResponses(FilterDownload.ALL, "xlsx");
                 }}>
                 <p className="text-slate-700">All responses (Excel)</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.FILTER, "csv");
+                  handleDowndloadResponses(FilterDownload.FILTER, "csv");
                 }}>
                 <p className="text-slate-700">Current selection (CSV)</p>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="hover:ring-0"
                 onClick={() => {
-                  downloadResponses(FilterDownload.FILTER, "xlsx");
+                  handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
                 }}>
                 <p className="text-slate-700">Current selection (Excel)</p>
               </DropdownMenuItem>

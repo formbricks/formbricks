@@ -24,7 +24,7 @@ export class Config {
 
   public update(newConfig: TJsConfigUpdateInput): void {
     if (newConfig) {
-      const expiresAt = new Date(new Date().getTime() + 15 * 60000); // 15 minutes in the future
+      const expiresAt = new Date(new Date().getTime() + 2 * 60000); // 2 minutes from now
 
       this.config = {
         ...this.config,

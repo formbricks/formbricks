@@ -28,16 +28,31 @@ export const IMPRINT_URL = env.IMPRINT_URL;
 
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
-export const GOOGLE_OAUTH_ENABLED = env.GOOGLE_AUTH_ENABLED === "1";
-export const GITHUB_OAUTH_ENABLED = env.GITHUB_AUTH_ENABLED === "1";
-export const AZURE_OAUTH_ENABLED = env.AZUREAD_AUTH_ENABLED === "1";
+
+export const GOOGLE_OAUTH_ENABLED = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? true : false;
+export const GITHUB_OAUTH_ENABLED = env.GITHUB_ID && env.GITHUB_SECRET ? true : false;
+export const AZURE_OAUTH_ENABLED =
+  env.AZUREAD_CLIENT_ID && env.AZUREAD_CLIENT_SECRET && env.AZUREAD_TENANT_ID ? true : false;
+export const OIDC_OAUTH_ENABLED =
+  env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_ISSUER ? true : false;
 
 export const GITHUB_ID = env.GITHUB_ID;
 export const GITHUB_SECRET = env.GITHUB_SECRET;
 export const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
 export const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 
+export const AZUREAD_CLIENT_ID = env.AZUREAD_CLIENT_ID;
+export const AZUREAD_CLIENT_SECRET = env.AZUREAD_CLIENT_SECRET;
+export const AZUREAD_TENANT_ID = env.AZUREAD_TENANT_ID;
+
+export const OIDC_CLIENT_ID = env.OIDC_CLIENT_ID;
+export const OIDC_CLIENT_SECRET = env.OIDC_CLIENT_SECRET;
+export const OIDC_ISSUER = env.OIDC_ISSUER;
+export const OIDC_DISPLAY_NAME = env.OIDC_DISPLAY_NAME;
+export const OIDC_SIGNING_ALGORITHM = env.OIDC_SIGNING_ALGORITHM;
+
 export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
+export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 
 export const GOOGLE_SHEETS_CLIENT_ID = env.GOOGLE_SHEETS_CLIENT_ID;
@@ -121,14 +136,21 @@ export const LOGIN_RATE_LIMIT = {
 };
 export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 5 * 60 * 1000, // 5 minutes
-  allowedPerInterval: 100,
+  allowedPerInterval: 200,
 };
 export const SHARE_RATE_LIMIT = {
   interval: 60 * 60 * 1000, // 60 minutes
   allowedPerInterval: 30,
 };
 
+export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
+  interval: 60 * 1000, // 1 minute
+  allowedPerInterval: 5,
+};
+
 export const DEBUG = process.env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";

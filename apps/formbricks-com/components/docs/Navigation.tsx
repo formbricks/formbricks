@@ -207,6 +207,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Identify Users", href: "/docs/link-surveys/user-identification" },
       { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
       { title: "Source Tracking", href: "/docs/link-surveys/source-tracking" },
+      { title: "Hidden Fields", href: "/docs/link-surveys/hidden-fields" },
     ],
   },
   {
@@ -242,7 +243,8 @@ export const navigation: Array<NavGroup> = [
       { title: "Advanced Setup", href: "/docs/self-hosting/docker" },
       { title: "Configure", href: "/docs/self-hosting/external-auth-providers" },
       { title: "Migration Guide", href: "/docs/self-hosting/migration-guide" },
-      { title: "Self-hosting License", href: "/docs/self-hosting/license" },
+      { title: "License", href: "/docs/self-hosting/license" },
+      { title: "Enterprise License", href: "/docs/self-hosting/enterprise" },
     ],
   },
   {

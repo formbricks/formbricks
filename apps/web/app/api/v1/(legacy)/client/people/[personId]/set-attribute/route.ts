@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
@@ -18,11 +17,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(req: Request, context: Context): Promise<NextResponse> {
+export async function POST(req: Request, context: Context): Promise<Response> {
   try {
     const { personId, environmentId } = context.params;
     const jsonInput = await req.json();
@@ -70,7 +69,7 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
     });
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person),
+      getSyncSurveys(environmentId, person.id),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);

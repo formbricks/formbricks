@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
@@ -185,5 +184,5 @@ export async function POST(request: Request) {
     await updateSurveyStatus(surveyId);
   }
 
-  return NextResponse.json({ data: {} });
+  return Response.json({ data: {} });
 }

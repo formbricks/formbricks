@@ -3,6 +3,7 @@
 import { AzureButton } from "@/app/(auth)/auth/components/AzureButton";
 import { GithubButton } from "@/app/(auth)/auth/components/GithubButton";
 import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
+import { OpenIdButton } from "@/app/(auth)/auth/components/OpenIdButton";
 import TwoFactor from "@/app/(auth)/auth/login/components/TwoFactor";
 import TwoFactorBackup from "@/app/(auth)/auth/login/components/TwoFactorBackup";
 import { XCircleIcon } from "@heroicons/react/24/solid";
@@ -24,17 +25,23 @@ type TSigninFormState = {
 };
 
 export const SigninForm = ({
+  emailAuthEnabled,
   publicSignUpEnabled,
   passwordResetEnabled,
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
+  oidcOAuthEnabled,
+  oidcDisplayName,
 }: {
+  emailAuthEnabled: boolean;
   publicSignUpEnabled: boolean;
   passwordResetEnabled: boolean;
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
   azureOAuthEnabled: boolean;
+  oidcOAuthEnabled: boolean;
+  oidcDisplayName?: string;
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -185,21 +192,23 @@ export const SigninForm = ({
                 )}
               </div>
             )}
-            <Button
-              onClick={() => {
-                if (!showLogin) {
-                  setShowLogin(true);
-                  // Add a slight delay before focusing the input field to ensure it's visible
-                  setTimeout(() => emailRef.current?.focus(), 100);
-                } else if (formRef.current) {
-                  formRef.current.requestSubmit();
-                }
-              }}
-              variant="darkCTA"
-              className="w-full justify-center"
-              loading={loggingIn}>
-              {totpLogin ? "Submit" : "Login with Email"}
-            </Button>
+            {emailAuthEnabled && (
+              <Button
+                onClick={() => {
+                  if (!showLogin) {
+                    setShowLogin(true);
+                    // Add a slight delay before focusing the input field to ensure it's visible
+                    setTimeout(() => emailRef.current?.focus(), 100);
+                  } else if (formRef.current) {
+                    formRef.current.requestSubmit();
+                  }
+                }}
+                variant="darkCTA"
+                className="w-full justify-center"
+                loading={loggingIn}>
+                {totpLogin ? "Submit" : "Login with Email"}
+              </Button>
+            )}
           </form>
 
           {googleOAuthEnabled && !totpLogin && (
@@ -217,6 +226,12 @@ export const SigninForm = ({
           {azureOAuthEnabled && !totpLogin && (
             <>
               <AzureButton inviteUrl={callbackUrl} />
+            </>
+          )}
+
+          {oidcOAuthEnabled && !totpLogin && (
+            <>
+              <OpenIdButton inviteUrl={callbackUrl} text={`Continue with ${oidcDisplayName}`} />
             </>
           )}
         </div>

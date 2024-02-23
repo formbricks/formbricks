@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 
 import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { createWebhook, getWebhooks } from "@formbricks/lib/webhook/service";
@@ -21,7 +20,7 @@ export async function GET() {
   // get webhooks from database
   try {
     const webhooks = await getWebhooks(apiKeyData.environmentId);
-    return NextResponse.json({ data: webhooks });
+    return Response.json({ data: webhooks });
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

@@ -14,10 +14,10 @@ Formbricks v1.2 ships a lot of features targeting our Link Surveys. We have also
 
 ### New Environment Variables
 
-| Environment Variable | Required | Recommended Generation         | Comments                                                    |
-| -------------------- | -------- | ------------------------------ | ----------------------------------------------------------- |
-| ENCRYPTION_KEY       | true     | `openssl rand -hex 32`         | Needed for 2 Factor Authentication                          |
-| SHORT_URL_BASE       | false    | `<your-short-base-url>`        | Needed if you want to enable shorter links for Link Surveys |
+| Environment Variable | Required | Recommended Generation  | Comments                                                    |
+| -------------------- | -------- | ----------------------- | ----------------------------------------------------------- |
+| ENCRYPTION_KEY       | true     | `openssl rand -hex 32`  | Needed for 2 Factor Authentication                          |
+| SHORT_URL_BASE       | false    | `<your-short-base-url>` | Needed if you want to enable shorter links for Link Surveys |
 
 ### Deprecated / Removed Environment Variables
 
@@ -112,6 +112,9 @@ x-environment: &environment
 
     # Uncomment the below and set it to 1 to disable Signups
     # SIGNUP_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable loging in with email
+    # EMAIL_AUTH_DISABLED:
 
     # Uncomment the below and set it to 1 to disable Invites
     # INVITE_DISABLED:

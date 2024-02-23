@@ -18,17 +18,11 @@ import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } 
 import { checkPageUrl } from "./noCodeActions";
 import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
+import { getIsDebug } from "./utils";
 import { addWidgetContainer, closeSurvey } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
-
-const setDebugLevel = (c: TJsConfigInput): void => {
-  if (c.debug) {
-    logger.debug(`Setting log level to debug`);
-    logger.configure({ logLevel: "debug" });
-  }
-};
 
 export const initialize = async (
   c: TJsConfigInput
@@ -38,7 +32,9 @@ export const initialize = async (
     return okVoid();
   }
 
-  setDebugLevel(c);
+  if (getIsDebug()) {
+    logger.configure({ logLevel: "debug" });
+  }
 
   ErrorHandler.getInstance().printStatus();
 

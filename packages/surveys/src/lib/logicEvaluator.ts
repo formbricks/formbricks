@@ -24,11 +24,11 @@ export function evaluateCondition(logic: TSurveyLogic, responseValue: any): bool
         logic.value.every((v) => responseValue.includes(v))
       );
     case "includesOne":
-      return (
-        Array.isArray(responseValue) &&
-        Array.isArray(logic.value) &&
-        logic.value.some((v) => responseValue.includes(v))
-      );
+      if (!Array.isArray(logic.value)) return false;
+      return Array.isArray(responseValue)
+        ? logic.value.some((v) => responseValue.includes(v))
+        : logic.value.includes(responseValue);
+
     case "accepted":
       return responseValue === "accepted";
     case "clicked":
