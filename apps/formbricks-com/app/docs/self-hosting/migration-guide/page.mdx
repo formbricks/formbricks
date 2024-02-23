@@ -13,7 +13,7 @@ export const metadata = {
 Formbricks v1.6 comes with a really Advanced Targeting & Segmentation of your end-users along with a ton of stability improvements & features. This also involves a few changes in our environment variables. This guide will help you migrate your existing Formbricks instance to v1.6 without any hassles or build errors.
 
 <Note>
-  This upgrade requires a data migration. Please make sure to backup your database before proceeding with the upgrade.
+  This upgrade requires a **data migration**. Please make sure to backup your database before proceeding with the upgrade.
   Follow the below steps thoroughly to upgrade your Formbricks instance to v1.6.
 </Note>
 
@@ -25,7 +25,7 @@ Formbricks v1.6 comes with a really Advanced Targeting & Segmentation of your en
 <CodeGroup title="Backup Postgres">
 
 ```bash
-docker exec formbricks-quickstart-postgres-1 pg_dump -U postgres -d formbricks > formbricks_pre_advanced_targeting.sql
+docker exec formbricks-quickstart-postgres-1 pg_dump -U postgres -d formbricks > formbricks_pre_v1.6_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 </CodeGroup>
@@ -55,13 +55,21 @@ docker-compose up
 </CodeGroup>
 </Col>
 
-4. Migrate the data to the latest schema:
+4. Now in a separate terminal, Migrate the data to the latest schema:
+
+<Note>
+To find your Docker Network name for your Postgres Database, find it using `docker network ps`
+</Note>
 
 <Col>
 <CodeGroup title="Migrate the data">
 
 ```bash
-docker exec formbricks sh -c "pnpm data-migration:advanced-targeting"
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v1.6" \
+  ghcr.io/formbricks/data-migrations:v1.6
 ```
 </CodeGroup>
 </Col>
