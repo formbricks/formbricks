@@ -8,9 +8,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
-import CssSelector from "@formbricks/ui/Actions/CssSelector";
-import InnerHtmlSelector from "@formbricks/ui/Actions/InnerHtmlSelector";
-import PageUrlSelector from "@formbricks/ui/Actions/PageUrlSelector";
+import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";

@@ -1,7 +1,7 @@
 import { UseFormRegister } from "react-hook-form";
 
-import { AdvancedOptionToggle } from "../AdvancedOptionToggle";
-import { Input } from "../Input";
+import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
+import { Input } from "../../Input";
 
 interface InnerHtmlSelectorProps {
   isInnerHtml: boolean;
@@ -9,7 +9,7 @@ interface InnerHtmlSelectorProps {
   register: UseFormRegister<any>;
 }
 
-const InnerHtmlSelector = ({ isInnerHtml, setIsInnerHtml, register }: InnerHtmlSelectorProps) => {
+export const InnerHtmlSelector = ({ isInnerHtml, setIsInnerHtml, register }: InnerHtmlSelectorProps) => {
   return (
     <AdvancedOptionToggle
       htmlId="InnerText"
@@ -35,5 +35,3 @@ const InnerHtmlSelector = ({ isInnerHtml, setIsInnerHtml, register }: InnerHtmlS
     </AdvancedOptionToggle>
   );
 };
-
-export default InnerHtmlSelector;

@@ -1,7 +1,7 @@
 import { UseFormRegister } from "react-hook-form";
 
-import { AdvancedOptionToggle } from "../AdvancedOptionToggle";
-import { Input } from "../Input";
+import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
+import { Input } from "../../Input";
 
 interface CssSelectorProps {
   isCssSelector: boolean;
@@ -9,7 +9,7 @@ interface CssSelectorProps {
   register: UseFormRegister<any>;
 }
 
-const CssSelector = ({ isCssSelector, setIsCssSelector, register }: CssSelectorProps) => {
+export const CssSelector = ({ isCssSelector, setIsCssSelector, register }: CssSelectorProps) => {
   return (
     <AdvancedOptionToggle
       htmlId="CssSelector"
@@ -31,5 +31,3 @@ const CssSelector = ({ isCssSelector, setIsCssSelector, register }: CssSelectorP
     </AdvancedOptionToggle>
   );
 };
-
-export default CssSelector;
