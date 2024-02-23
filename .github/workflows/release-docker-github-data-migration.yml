@@ -1,4 +1,4 @@
-name: Docker
+name: Docker for Data Migrations
 
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
@@ -14,7 +14,7 @@ on:
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
-  IMAGE_NAME: formbricks/data-migrations
+  IMAGE_NAME: shubhampalriwala/data-migrations
   DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
 jobs:
