@@ -143,7 +143,6 @@ export async function GET(
         : {
             id: person.id,
             userId: person.userId,
-            attributes: {},
           },
       surveys: !isInAppSurveyLimitReached ? surveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
