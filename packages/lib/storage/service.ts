@@ -201,7 +201,7 @@ export const getUploadSignedUrl = async (
           uuid,
         },
         updatedFileName,
-        fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
+        fileUrl: `/storage/${environmentId}/${accessType}/${updatedFileName}`,
       };
     } catch (err) {
       throw err;

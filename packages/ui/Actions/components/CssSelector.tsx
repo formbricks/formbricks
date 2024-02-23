@@ -1,7 +1,7 @@
 import { UseFormRegister } from "react-hook-form";
 
-import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Input } from "@formbricks/ui/Input";
+import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
+import { Input } from "../../Input";
 
 interface CssSelectorProps {
   isCssSelector: boolean;
