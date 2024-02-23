@@ -14,7 +14,7 @@ on:
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
-  IMAGE_NAME: shubhampalriwala/data-migrations
+  IMAGE_NAME: formbricks/data-migrations
   DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
 
 jobs:
