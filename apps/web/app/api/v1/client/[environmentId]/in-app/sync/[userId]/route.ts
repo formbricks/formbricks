@@ -1,7 +1,7 @@
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextRequest, NextResponse, userAgent } from "next/server";
+import { NextRequest, userAgent } from "next/server";
 
 import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
@@ -22,7 +22,7 @@ import {
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
@@ -36,7 +36,7 @@ export async function GET(
       userId: string;
     };
   }
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     const { device } = userAgent(request);
     const apiVersion = request.nextUrl.searchParams.get("version");
@@ -103,12 +103,20 @@ export async function GET(
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
         // if it's a new person and MAU limit is reached, throw an error
-        throw new Error(errorMessage);
+        return responses.tooManyRequestsResponse(
+          errorMessage,
+          true,
+          "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+        );
       } else {
         // check if person has been active this month
         const latestAction = await getLatestActionByPersonId(person.id);
         if (!latestAction || new Date(latestAction.createdAt).getMonth() !== new Date().getMonth()) {
-          throw new Error(errorMessage);
+          return responses.tooManyRequestsResponse(
+            errorMessage,
+            true,
+            "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+          );
         }
       }
     }
@@ -136,7 +144,11 @@ export async function GET(
       product,
     };
 
-    return responses.successResponse({ ...state }, true);
+    return responses.successResponse(
+      { ...state },
+      true,
+      "public, s-maxage=100, max-age=110, stale-while-revalidate=100, stale-if-error=100"
+    );
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
