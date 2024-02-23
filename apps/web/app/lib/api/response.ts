@@ -1,5 +1,4 @@
 import { NextApiResponse } from "next";
-import { NextResponse } from "next/server";
 
 export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
@@ -30,7 +29,7 @@ const corsHeaders = {
 };
 
 const badRequestResponse = (message: string, details?: { [key: string]: string }, cors: boolean = false) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "bad_request",
       message,
@@ -56,7 +55,7 @@ const methodNotAllowedResponse = (
   allowedMethods: string[],
   cors: boolean = false
 ) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "method_not_allowed",
       message: `The HTTP ${res.req?.method} method is not supported by this route.`,
@@ -71,7 +70,7 @@ const methodNotAllowedResponse = (
   );
 
 const notFoundResponse = (resourceType: string, resourceId: string, cors: boolean = false) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "not_found",
       message: `${resourceType} not found`,
@@ -87,7 +86,7 @@ const notFoundResponse = (resourceType: string, resourceId: string, cors: boolea
   );
 
 const notAuthenticatedResponse = (cors: boolean = false) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "not_authenticated",
       message: "Not authenticated",
@@ -102,7 +101,7 @@ const notAuthenticatedResponse = (cors: boolean = false) =>
   );
 
 const unauthorizedResponse = (cors: boolean = false) =>
-  NextResponse.json(
+  Response.json(
     {
       code: "unauthorized",
       message: "You are not authorized to access this resource",
@@ -115,24 +114,33 @@ const unauthorizedResponse = (cors: boolean = false) =>
   );
 
 const successResponse = (data: Object, cors: boolean = false, cache: string = "private, no-store") => {
-  const responseHeaders = {
+  const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
   };
 
-  return NextResponse.json(
+  return Response.json(
     {
       data,
     } as ApiSuccessResponse<typeof data>,
     {
       status: 200,
-      headers: responseHeaders,
+      headers,
     }
   );
 };
 
-const internalServerErrorResponse = (message: string, cors: boolean = false) =>
-  NextResponse.json(
+const internalServerErrorResponse = (
+  message: string,
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       code: "internal_server_error",
       message,
@@ -140,9 +148,33 @@ const internalServerErrorResponse = (message: string, cors: boolean = false) =>
     } as ApiErrorResponse,
     {
       status: 500,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
+};
+
+const tooManyRequestsResponse = (
+  message: string,
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      code: "internal_server_error",
+      message,
+      details: {},
+    } as ApiErrorResponse,
+    {
+      status: 429,
+      headers,
+    }
+  );
+};
 
 export const responses = {
   badRequestResponse,
@@ -153,4 +185,5 @@ export const responses = {
   unauthorizedResponse,
   notFoundResponse,
   successResponse,
+  tooManyRequestsResponse,
 };

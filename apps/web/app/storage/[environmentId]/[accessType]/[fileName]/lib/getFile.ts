@@ -16,6 +16,8 @@ const getFile = async (environmentId: string, accessType: string, fileName: stri
         headers: {
           "Content-Type": metaData.contentType,
           "Content-Disposition": "attachment",
+          "Cache-Control": "public, max-age=1200, s-maxage=1200, stale-while-revalidate=300",
+          Vary: "Accept-Encoding",
         },
       });
     } catch (err) {

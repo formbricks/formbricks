@@ -4,7 +4,7 @@
 import { responses } from "@/app/lib/api/response";
 import { getServerSession } from "next-auth";
 import { headers } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
@@ -13,7 +13,7 @@ import { env } from "@formbricks/lib/env.mjs";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<Response> {
   const accessType = "public"; // public files are accessible by anyone
   const headersList = headers();
 
