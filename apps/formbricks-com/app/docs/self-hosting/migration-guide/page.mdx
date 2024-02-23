@@ -8,7 +8,92 @@ export const metadata = {
 
 # Migration Guide
 
-## v1.1 -> v1.2
+## v1.6
+
+Formbricks v1.6 comes with a big new features like Advanced Targeting & Segmentation of your end-users along with on-the-fly triggers for surveys and a ton of stability improvements & features. This also involves a few changes in our environment variables. This guide will help you migrate your existing Formbricks instance to v1.6 without any hassles or build errors.
+
+<Note>
+  This upgrade requires a **data migration**. Please make sure to backup your database before proceeding with
+  the upgrade. Follow the below steps thoroughly to upgrade your Formbricks instance to v1.6.
+</Note>
+
+### Steps to Migrate
+
+This guide is for users who are self-hosting Formbricks using our one-click setup. If you are using a different setup, you might adjust the commands accordingly.
+
+To run all these steps, please navigate to the `formbricks` folder where your `docker-compose.yml` file is located.
+
+1. **Backup your Database**: This is a crucial step. Please make sure to backup your database before proceeding with the upgrade. You can use the following command to backup your database:
+
+<Col>
+<CodeGroup title="Backup Postgres">
+
+```bash
+docker exec formbricks-quickstart-postgres-1 pg_dump -U postgres -d formbricks > formbricks_pre_v1.6_$(date +%Y%m%d_%H%M%S).sql
+```
+
+</CodeGroup>
+</Col>
+
+2. Stop the running Formbricks instance & remove the related containers:
+
+<Col>
+<CodeGroup title="Stop the containers">
+
+```bash
+docker-compose down
+```
+
+</CodeGroup>
+</Col>
+
+3. Restarting the containers will automatically pull the latest version of Formbricks:
+
+<Col>
+<CodeGroup title="Restart the containers">
+
+```bash
+docker-compose up -d
+```
+
+</CodeGroup>
+</Col>
+
+4. Now let's migrate the data to the latest schema:
+
+<Note>To find your Docker Network name for your Postgres Database, find it using `docker network ps`</Note>
+
+<Col>
+<CodeGroup title="Migrate the data">
+
+```bash
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v1.6" \
+  ghcr.io/formbricks/data-migrations:v1.6
+```
+
+</CodeGroup>
+</Col>
+
+The above command will migrate your data to the latest schema. This is a crucial step to migrate your existing data to the new structure. Only if the script runs successful, changes are made to the database. The script can safely run multiple times.
+
+5. That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
+
+### In-App Surveys with @formbricks/js
+
+If you are using the `@formbricks/js` package, please make sure to update it to version 1.6.0 to use the latest features and improvements.
+
+### Deprecated Environment Variables
+
+| Environment Variable | Comments                                                                                                                                                        |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GITHUB_AUTH_ENABLED  | Was used to enable GitHub OAuth, but from v1.6, you can just set the `GITHUB_ID` and `GITHUB_SECRET` environment variables.                                     |
+| GOOGLE_AUTH_ENABLED  | Was used to enable Google OAuth, but from v1.6, you can just set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables.                       |
+| AZUREAD_AUTH_ENABLED | Was used to enable AzureAD OAuth, but from v1.6, you can just set the `AZUREAD_CLIENT_ID`, `AZUREAD_CLIENT_SECRET` & `AZUREAD_TENANT_ID` environment variables. |
+
+## v1.2
 
 Formbricks v1.2 ships a lot of features targeting our Link Surveys. We have also improved our security posture to be as robust as ever. However, it also comes with a few breaking changes specifically with the environment variables. This guide will help you migrate your existing Formbricks instance to v1.2 without any hassles or build errors.
 
@@ -25,7 +110,7 @@ Formbricks v1.2 ships a lot of features targeting our Link Surveys. We have also
 | -------------------- | ------------------------------------------------------------------------- |
 | SURVEY_BASE_URL      | The WEBAPP_URL is now used to determine the survey base url in all places |
 
-## v1.0 -> v1.1
+## v1.1
 
 Formbricks v1.1 includes a lot of new features and improvements. However, it also comes with a few breaking changes specifically with the environment variables. This guide will help you migrate your existing Formbricks instance to v1.1 without losing any data.
 
@@ -139,6 +224,7 @@ x-environment: &environment
     # GOOGLE_CLIENT_SECRET:
 
 ```
+
 </CodeGroup>
 </Col>
 Did we miss something? Are you still facing issues migrating your app? [Join our Discord!](https://formbricks.com/discord) We'd be happy to help!
