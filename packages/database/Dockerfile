@@ -22,10 +22,18 @@ WORKDIR /app
 # Enable corepack and prepare pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+ARG UPGRADE_TO_VERSION
+ENV UPGRADE_TO_VERSION=$UPGRADE_TO_VERSION
+
 # Install necessary build tools and compilers
 # RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev
 
 COPY --from=builder /app/out/full/ .
 
 RUN pnpm install
+
+CMD ["sh", "-c", "cd packages/database && pnpm data-migration:${UPGRADE_TO_VERSION}"]
 
