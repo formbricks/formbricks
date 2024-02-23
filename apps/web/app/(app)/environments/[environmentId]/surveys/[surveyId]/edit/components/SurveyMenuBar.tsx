@@ -4,7 +4,7 @@ import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surve
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
@@ -76,6 +76,20 @@ export default function SurveyMenuBar({
       window.removeEventListener("beforeunload", handleWindowClose);
     };
   }, [localSurvey, survey]);
+
+  const containsEmptyTriggers = useCallback(() => {
+    return (
+      localSurvey.type === "web" &&
+      localSurvey.triggers &&
+      (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
+    );
+  }, [localSurvey.triggers, localSurvey.type]);
+
+  const disableSave = useMemo(() => {
+    if (isSurveySaving) return true;
+
+    if (localSurvey.status !== "draft" && containsEmptyTriggers()) return true;
+  }, [containsEmptyTriggers, isSurveySaving, localSurvey.status]);
 
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: TSurvey["status"]) => {
@@ -253,6 +267,27 @@ export default function SurveyMenuBar({
     }
 
     // validate the user segment filters
+    const localSurveySegment = {
+      id: strippedSurvey.segment?.id,
+      filters: strippedSurvey.segment?.filters,
+      title: strippedSurvey.segment?.title,
+      description: strippedSurvey.segment?.description,
+    };
+
+    const surveySegment = {
+      id: survey.segment?.id,
+      filters: survey.segment?.filters,
+      title: survey.segment?.title,
+      description: survey.segment?.description,
+    };
+
+    // if the non-private segment in the survey and the strippedSurvey are different, don't save
+    if (!strippedSurvey.segment?.isPrivate && !isEqual(localSurveySegment, surveySegment)) {
+      toast.error("Please save the audience filters before saving the survey");
+      setIsSurveySaving(false);
+      return;
+    }
+
     if (!!strippedSurvey.segment?.filters?.length) {
       const parsedFilters = ZSegmentFilters.safeParse(strippedSurvey.segment.filters);
       if (!parsedFilters.success) {
@@ -284,14 +319,6 @@ export default function SurveyMenuBar({
       toast.error(`Error saving changes`);
       return;
     }
-  };
-
-  const containsEmptyTriggers = () => {
-    return (
-      localSurvey.type === "web" &&
-      localSurvey.triggers &&
-      (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
-    );
   };
 
   const handleSurveyPublish = async () => {
@@ -364,7 +391,8 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
+            // disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
+            disabled={disableSave}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
