@@ -49,12 +49,12 @@ export default function WhenToSendCard({
   );
   const tabs = [
     {
-      id: "inline",
-      label: "Custom Actions",
-    },
-    {
       id: "relation",
       label: "Saved Actions",
+    },
+    {
+      id: "inline",
+      label: "Custom Actions",
     },
   ];
 
