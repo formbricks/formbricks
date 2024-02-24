@@ -23,7 +23,7 @@
     "lint": "eslint ./src --fix",
     "post-install": "pnpm generate",
     "predev": "pnpm generate",
-    "data-migration:advanced-targeting": "ts-node ./migrations/20240207041922_advanced_targeting/data-migration.ts"
+    "data-migration:1.6": "ts-node ./migrations/20240207041922_advanced_targeting/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.8.1",
@@ -37,6 +37,7 @@
     "prisma": "^5.8.1",
     "prisma-dbml-generator": "^0.10.0",
     "prisma-json-types-generator": "^3.0.3",
+    "ts-node": "^10.9.2",
     "zod": "^3.22.4",
     "zod-prisma": "^0.5.4"
   }
