@@ -1,7 +1,6 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { createAttributeClass, getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { TAttributeClass, ZAttributeClassInput } from "@formbricks/types/attributeClasses";
@@ -21,7 +20,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: Request): Promise<Response> {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();

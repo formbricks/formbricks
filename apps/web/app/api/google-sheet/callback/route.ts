@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { google } from "googleapis";
-import { NextRequest, NextResponse } from "next/server";
 
 import {
   GOOGLE_SHEETS_CLIENT_ID,
@@ -10,7 +9,7 @@ import {
 } from "@formbricks/lib/constants";
 import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   const url = req.url;
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
@@ -66,6 +65,6 @@ export async function GET(req: NextRequest) {
   const result = await createOrUpdateIntegration(environmentId, googleSheetIntegration);
 
   if (result) {
-    return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/google-sheets`);
+    return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/google-sheets`);
   }
 }

@@ -20,17 +20,3 @@ export async function GET(request: Request) {
 }
 
 // Please use the client API to create a new person
-
-/* export async function POST(request: Request): Promise<NextResponse> {
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    const person: TPerson = await createPerson(authentication.environmentId);
-    return responses.successResponse(person);
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
-    }
-    throw error;
-  }
-} */
