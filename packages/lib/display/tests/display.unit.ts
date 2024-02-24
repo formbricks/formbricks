@@ -1,4 +1,4 @@
-import { mockPerson } from "../../response/tests/__mocks__/data.mock";
+import { mockPerson } from "../../response/tests/__mocks__/response.mock";
 import {
   mockDisplay,
   mockDisplayInput,
@@ -12,7 +12,7 @@ import {
   mockDisplayWithResponseId,
   mockResponseId,
   mockSurveyId,
-} from "./__mocks__/data.mock";
+} from "./__mocks__/display.mock";
 
 import { Prisma } from "@prisma/client";
 

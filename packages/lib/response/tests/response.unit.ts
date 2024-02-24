@@ -16,7 +16,7 @@ import {
   mockSurveyId,
   mockTags,
   mockUserId,
-} from "./__mocks__/data.mock";
+} from "./__mocks__/response.mock";
 
 import { Prisma } from "@prisma/client";
 

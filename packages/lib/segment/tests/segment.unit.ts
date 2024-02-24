@@ -11,6 +11,7 @@ import {
 } from "./__mocks__/segment.mock";
 
 import { Prisma } from "@prisma/client";
+import MockDate from "mockdate";
 
 import { prismaMock } from "@formbricks/database/src/jestClient";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -29,6 +30,14 @@ import {
 function addOrSubractDays(date: Date, number: number) {
   return new Date(new Date().setDate(date.getDate() - number));
 }
+
+beforeAll(() => {
+  MockDate.set("2024-02-24T10:24:57.980Z");
+});
+
+afterAll(() => {
+  MockDate.reset();
+});
 
 beforeEach(() => {
   prismaMock.segment.findUnique.mockResolvedValue(mockSegmentPrisma);
