@@ -18,6 +18,7 @@
     "@formbricks/js": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/surveys": "workspace:*",
+    "@formbricks/tailwind-config": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@headlessui/react": "^1.7.18",
