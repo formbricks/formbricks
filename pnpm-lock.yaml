@@ -655,8 +655,8 @@ importers:
         specifier: ^2.2.2
         version: 2.2.2
       '@t3-oss/env-nextjs':
-        specifier: ^0.9.2
-        version: 0.9.2(typescript@5.3.3)(zod@3.22.4)
+        specifier: ^0.8.0
+        version: 0.8.0(typescript@5.3.3)(zod@3.22.4)
       aws-crt:
         specifier: ^1.21.1
         version: 1.21.1
@@ -9248,8 +9248,8 @@ packages:
     resolution: {integrity: sha512-myfUej5naTBWnqOCc/MdVOLVjXUXtIA+NpDrDBKJtLLg2shUjBu3cZmB/85RyitKc55+lUUyl7oRfLOvkr2hsw==}
     dev: false
 
-  /@t3-oss/env-core@0.9.2(typescript@5.3.3)(zod@3.22.4):
-    resolution: {integrity: sha512-KgWXljUTHgO3o7GMZQPAD5+P+HqpauMNNHowlm7V2b9IeMitSUpNKwG6xQrup/xARWHTdxRVIl0mSI4wCevQhQ==}
+  /@t3-oss/env-core@0.8.0(typescript@5.3.3)(zod@3.22.4):
+    resolution: {integrity: sha512-Tc1pg0KH/tJeI0Z1s/Isp1VsGDj1N03ZAYFV8GjWgMxytF/ve0Dv+opjmTapHICRv8qiB1Y/fsTjkWNMpKPRCQ==}
     peerDependencies:
       typescript: '>=5.0.0'
       zod: ^3.0.0
@@ -9261,8 +9261,8 @@ packages:
       zod: 3.22.4
     dev: false
 
-  /@t3-oss/env-nextjs@0.9.2(typescript@5.3.3)(zod@3.22.4):
-    resolution: {integrity: sha512-dklHrgKLESStNVB67Jdbu6osxDYA+xNKaPBRerlnkEvzbCccSKMvZENx6EZebJuR4snqB3/yRykNMn/bdIAyiQ==}
+  /@t3-oss/env-nextjs@0.8.0(typescript@5.3.3)(zod@3.22.4):
+    resolution: {integrity: sha512-bJyoE8of4QmqZN7a49iLJAbUq4graScb9ezXzvnuIVr9JP43C093vmy55hT1uZL533CwiPz8zo1INwyAS6qnHw==}
     peerDependencies:
       typescript: '>=5.0.0'
       zod: ^3.0.0
@@ -9270,7 +9270,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@t3-oss/env-core': 0.9.2(typescript@5.3.3)(zod@3.22.4)
+      '@t3-oss/env-core': 0.8.0(typescript@5.3.3)(zod@3.22.4)
       typescript: 5.3.3
       zod: 3.22.4
     dev: false
