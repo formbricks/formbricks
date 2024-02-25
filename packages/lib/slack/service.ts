@@ -82,7 +82,12 @@ function isSlackIntegration(integration: any): integration is TSlackIntegration 
   return integration.type === "slack";
 }
 
-export async function writeDataToSlack(credentials: TSlackCredential, channelId: string, values: string[][]) {
+export async function writeDataToSlack(
+  credentials: TSlackCredential,
+  channelId: string,
+  values: string[][],
+  surveyName: string
+) {
   try {
     const [responses, questions] = values;
     let blockResponse = [
@@ -90,7 +95,7 @@ export async function writeDataToSlack(credentials: TSlackCredential, channelId:
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `${questions[0]}`,
+          text: `${surveyName}\n`,
         },
       },
       {

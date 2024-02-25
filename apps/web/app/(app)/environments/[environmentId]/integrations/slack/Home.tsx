@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -9,16 +10,8 @@ import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 
-// import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
-// import DeleteDialog from "@/components/shared/DeleteDialog";
-// import EmptySpaceFiller from "@/components/shared/EmptySpaceFiller";
-// import { timeSince } from "@formbricks/lib/time";
-// import { TEnvironment } from "@formbricks/types/v1/environment";
-// import { TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
-// import { Button } from "@formbricks/ui";
-// import { useState } from "react";
-// import toast from "react-hot-toast";
-//
+import { deleteIntegrationAction } from "../actions";
+
 interface HomeProps {
   environment: TEnvironment;
   slackIntegration: TSlackIntegration;
@@ -45,27 +38,25 @@ export default function Home({
   const [isDeleting, setisDeleting] = useState(false);
 
   const handleDeleteIntegration = async () => {
-    console.log("I am deleting");
-    // try {
-    //   setisDeleting(true);
-    //   await deleteIntegrationAction(slackIntegration.id);
-    //   setIsConnected(false);
-    //   toast.success("Integration removed successfully");
-    // } catch (error) {
-    //   toast.error(error.message);
-    // } finally {
-    //   setisDeleting(false);
-    //   setIsDeleteIntegrationModalOpen(false);
-    // }
+    try {
+      setisDeleting(true);
+      await deleteIntegrationAction(slackIntegration.id);
+      setIsConnected(false);
+      toast.success("Integration removed successfully");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setisDeleting(false);
+      setIsDeleteIntegrationModalOpen(false);
+    }
   };
 
   const editIntegration = (index: number) => {
-    console.log("I am deleting");
-    // setSelectedIntegration({
-    //   ...slackIntegration.config.data[index],
-    //   index: index,
-    // });
-    // setOpenAddIntegrationModal(true);
+    setSelectedIntegration({
+      ...slackIntegration.config.data[index],
+      index: index,
+    });
+    setOpenAddIntegrationModal(true);
   };
 
   return (
@@ -88,7 +79,7 @@ export default function Home({
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
           }}>
-          Map New Channel
+          Map new Channel
         </Button>
       </div>
       {!integrationArray || integrationArray.length === 0 ? (

@@ -3,44 +3,45 @@
 import AddSlackConnectionModal from "@/app/(app)/environments/[environmentId]/integrations/slack/AddIntegrationModal";
 import Connect from "@/app/(app)/environments/[environmentId]/integrations/slack/Connect";
 import Home from "@/app/(app)/environments/[environmentId]/integrations/slack/Home";
-// import { TEnvironment } from "@formbricks/types/v1/environment";
-// import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/v1/integrations";
-// import { TSurvey } from "@formbricks/types/v1/surveys";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import { TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
+
+import { refreshChannelAction } from "./actions";
 
 interface SlackWrapperProps {
   enabled: boolean;
   environment: TEnvironment;
   surveys: TSurvey[];
-  channels: TSlackChannel[];
-  environmentId: string;
-  slackIntegration: TSlackIntegration | undefined;
+  channelsArray: TIntegrationItem[];
+  slackIntegration?: TSlackIntegration;
   webAppUrl: string;
 }
 
 export default function SlackWrapper({
   enabled,
   environment,
-  environmentId,
   surveys,
-  channels,
+  channelsArray,
   slackIntegration,
   webAppUrl,
 }: SlackWrapperProps) {
   const [isConnected, setIsConnected] = useState(slackIntegration ? slackIntegration.config?.key : false);
+  const [slackChannels, setSlackChannels] = useState(channelsArray);
   const [isModalOpen, setModalOpen] = useState<boolean>(false);
   const [selectedIntegration, setSelectedIntegration] = useState<
     (TSlackConfigData & { index: number }) | null
   >(null);
 
   const refreshSheet = async () => {
-    console.log("refreshing connections");
+    const latestSlackChannels = await refreshChannelAction(environment.id);
+    setSlackChannels(latestSlackChannels);
   };
 
+  console.log("is conneeeeeeected!!!!!!!!", isConnected);
   return isConnected && slackIntegration ? (
     <>
       <AddSlackConnectionModal
@@ -48,7 +49,7 @@ export default function SlackWrapper({
         surveys={surveys}
         open={isModalOpen}
         setOpen={setModalOpen}
-        channels={channels}
+        channels={slackChannels}
         slackIntegration={slackIntegration}
         selectedIntegration={selectedIntegration}
       />
@@ -60,9 +61,8 @@ export default function SlackWrapper({
         setSelectedIntegration={setSelectedIntegration}
         refreshSheet={refreshSheet}
       />
-      {/* <Connect enabled={enabled} environmentId={environmentId} webAppUrl={webAppUrl} /> */}
     </>
   ) : (
-    <Connect enabled={enabled} environmentId={environmentId} webAppUrl={webAppUrl} />
+    <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
   );
 }

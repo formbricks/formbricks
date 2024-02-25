@@ -1,5 +1,3 @@
-// import GoBackButton from "@/components/shared/GoBackButton";
-// import { TSlackChannel, TSlackIntegration } from "@formbricks/types/v1/integrations";
 import SlackWrapper from "@/app/(app)/environments/[environmentId]/integrations/slack/SlackWrapper";
 
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -7,7 +5,8 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { TSlackChannel, TSlackIntegration } from "@formbricks/types/integration/slack";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function Slack({ params }) {
@@ -19,18 +18,20 @@ export default async function Slack({ params }) {
     getEnvironment(params.environmentId),
   ]);
 
-  const slackIntegration: TSlackIntegration | undefined = integrations?.find(
-    (integration): integration is TSlackIntegration => integration.type === "slack"
+  const slackIntegration: TIntegrationSlack | undefined = integrations?.find(
+    (integration): integration is TIntegrationSlack => integration.type === "slack"
   );
 
-  let channelArray: TSlackChannel[] = [];
+  let channelsArray: TIntegrationItem[] = [];
   if (slackIntegration && slackIntegration.config.key) {
-    channelArray = await getSlackChannels(params.environmentId);
+    channelsArray = await getSlackChannels(params.environmentId);
   }
 
   if (!environment) {
     throw new Error("Environment not found");
   }
+
+  console.log("isadfafd conneeeeeeected!!!!!!!!", slackIntegration);
 
   return (
     <>
@@ -39,11 +40,10 @@ export default async function Slack({ params }) {
         <SlackWrapper
           enabled={enabled}
           environment={environment}
-          channels={channelArray}
+          channelsArray={channelsArray}
           surveys={surveys}
           slackIntegration={slackIntegration}
           webAppUrl={WEBAPP_URL}
-          environmentId={params.environmentId}
         />
       </div>
     </>

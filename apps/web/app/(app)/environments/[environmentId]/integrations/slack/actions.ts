@@ -1,20 +1,18 @@
 "use server";
 
-import { getSpreadSheets } from "@formbricks/lib/googleSheet/service";
-import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
-import { TSlackIntegration } from "@formbricks/types/v1/integrations";
+import { getServerSession } from "next-auth";
 
-export async function upsertIntegrationAction(
-  environmentId: string,
-  integrationData: Partial<TSlackIntegration>
-) {
-  return await createOrUpdateIntegration(environmentId, integrationData);
-}
+import { authOptions } from "@formbricks/lib/authOptions";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getSlackChannels } from "@formbricks/lib/slack/service";
+import { AuthorizationError } from "@formbricks/types/errors";
 
-export async function deleteIntegrationAction(integrationId: string) {
-  return await deleteIntegration(integrationId);
-}
+export async function refreshChannelAction(environmentId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
 
-export async function refreshSheetAction(environmentId: string) {
-  return await getSpreadSheets(environmentId);
+  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await getSlackChannels(environmentId);
 }

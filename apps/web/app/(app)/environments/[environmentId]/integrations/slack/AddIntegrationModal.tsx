@@ -7,12 +7,19 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
-import { TSlackChannel, TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
+import {
+  TIntegrationSlackInput,
+  TSlackChannel,
+  TSlackConfigData,
+  TSlackIntegration,
+} from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
+
+import { createOrUpdateIntegrationAction } from "../actions";
 
 interface AddWebhookModalProps {
   environmentId: string;
@@ -51,7 +58,7 @@ export default function AddSlackConnectionModal({
   const [selectedChannel, setSelectedChannel] = useState<TSlackChannel | null>(null);
   const [isDeleting, setIsDeleting] = useState<any>(null);
   const existingIntegrationData = slackIntegration?.config?.data;
-  const slackIntegrationData: Partial<TSlackIntegration> = {
+  const slackIntegrationData: TIntegrationSlackInput = {
     type: "slack",
     config: {
       key: slackIntegration?.config?.key,
@@ -116,7 +123,7 @@ export default function AddSlackConnectionModal({
         // create action
         slackIntegrationData.config!.data.push(integrationData);
       }
-      await upsertIntegrationAction(environmentId, slackIntegrationData);
+      await createOrUpdateIntegrationAction(environmentId, slackIntegrationData);
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
       setOpen(false);
@@ -149,7 +156,7 @@ export default function AddSlackConnectionModal({
     slackIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await upsertIntegrationAction(environmentId, slackIntegrationData);
+      await createOrUpdateIntegrationAction(environmentId, slackIntegrationData);
       toast.success("Integration removed successfully");
       setOpen(false);
     } catch (error) {

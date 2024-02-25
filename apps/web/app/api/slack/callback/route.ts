@@ -4,14 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 import { TSlackConfig } from "@formbricks/types/integration/slack";
 
 export async function GET(req: NextRequest, res: NextResponse) {
   const url = req.url;
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
   const environmentId = queryParams.get("environment"); // Get the value of the 'state' parameter
-
-  console.log("yooooooo", environmentId);
 
   const session = await getServerSession(authOptions);
 
@@ -24,9 +23,6 @@ export async function GET(req: NextRequest, res: NextResponse) {
       },
     };
   }
-
-  console.log(session, session.user);
-  console.log("================HERE's the Session===================");
 
   const { user, slack } = session;
   // @ts-ignore
@@ -51,36 +47,13 @@ export async function GET(req: NextRequest, res: NextResponse) {
     },
   };
 
-  // @ts-ignore
-  //   const slackIntegrationObject: TSlackIntegration = {
-  //     type: "slack",
-  //     environment: environmentId,
-  //     config: slackConfiguration,
-  //   }
-
   const slackIntegrationObject = {
     type: "slack" as "slack",
     environment: environmentId,
     config: slackConfiguration,
   };
 
-  // Add the Slack Integration Object to the Database
-  const result = await prisma.integration.upsert({
-    where: {
-      type_environmentId: {
-        environmentId,
-        type: "slack",
-      },
-    },
-    update: {
-      ...slackIntegrationObject,
-      environment: { connect: { id: environmentId } },
-    },
-    create: {
-      ...slackIntegrationObject,
-      environment: { connect: { id: environmentId } },
-    },
-  });
+  const result = await createOrUpdateIntegration(environmentId, slackIntegrationObject);
 
   if (result) {
     return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack`);

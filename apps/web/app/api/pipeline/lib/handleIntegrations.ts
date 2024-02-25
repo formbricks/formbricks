@@ -62,8 +62,8 @@ async function handleSlackIntegration(integration: TIntegrationSlack, data: TPip
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
         const values = await extractResponses(data, element.questionIds);
-        console.log(values, element.channelId);
-        await writeDataToSlack(integration.config.key, element.channelId, values);
+        const survey = await getSurvey(element.surveyId);
+        await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
       }
     }
   }

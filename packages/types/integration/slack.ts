@@ -48,11 +48,6 @@ export const ZIntegrationSlackConfig = z.object({
 
 export type TIntegrationSlackConfig = z.infer<typeof ZIntegrationSlackConfig>;
 
-export const ZSlackChannel = z.object({
-  name: z.string(),
-  id: z.string(),
-});
-
 export const ZSlackIntegration = z.object({
   id: z.string(),
   type: z.literal("slack"),
@@ -92,4 +87,3 @@ export type TSlackConfig = z.infer<typeof ZSlackConfig>;
 export type TSlackConfigData = z.infer<typeof ZSlackConfigData>;
 export type TSlackIntegration = z.infer<typeof ZSlackIntegration>;
 export type TSlackUser = z.infer<typeof ZSlackUser>;
-export type TSlackChannel = z.infer<typeof ZSlackChannel>;
