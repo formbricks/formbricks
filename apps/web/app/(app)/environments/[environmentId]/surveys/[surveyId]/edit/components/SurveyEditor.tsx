@@ -166,7 +166,6 @@ export default function SurveyEditor({
 
   return (
     <>
-      {console.log(localSurvey)}
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
@@ -223,6 +222,7 @@ export default function SurveyEditor({
               />
             )}
           </main>
+
           <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6 md:flex md:flex-col">
             <PreviewSurvey
               survey={localSurvey}

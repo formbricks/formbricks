@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ZNoCodeConfig } from "./actionClasses";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 import { ZLanguage } from "./product";
@@ -404,6 +405,30 @@ const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
+export const ZSurveyInlineTriggers = z.object({
+  codeConfig: z.object({ identifier: z.string() }).optional(),
+  noCodeConfig: ZNoCodeConfig.omit({ type: true }).optional(),
+});
+
+export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
+
+export const surveyHasBothTriggers = (survey: TSurvey) => {
+  // if the triggers array has a single empty string, it means the survey has no triggers
+  if (survey.triggers?.[0] === "") {
+    return false;
+  }
+
+  const hasTriggers = survey.triggers?.length > 0;
+  const hasInlineTriggers = !!survey.inlineTriggers?.codeConfig || !!survey.inlineTriggers?.noCodeConfig;
+
+  // Survey cannot have both triggers and inlineTriggers
+  if (hasTriggers && hasInlineTriggers) {
+    return true;
+  }
+
+  return false;
+};
+
 export const ZSurvey = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -416,6 +441,7 @@ export const ZSurvey = z.object({
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
   triggers: z.array(z.string()),
+  inlineTriggers: ZSurveyInlineTriggers.nullable(),
   redirectUrl: z.string().url().nullable(),
   recontactDays: z.number().nullable(),
   welcomeCard: ZSurveyWelcomeCard,
@@ -437,26 +463,51 @@ export const ZSurvey = z.object({
   languages: z.array(ZSurveyLanguage),
 });
 
-export const ZSurveyInput = z.object({
-  name: z.string(),
-  type: ZSurveyType.optional(),
-  createdBy: z.string().cuid().optional(),
-  status: ZSurveyStatus.optional(),
-  displayOption: ZSurveyDisplayOption.optional(),
-  autoClose: z.number().optional(),
-  redirectUrl: z.string().url().optional(),
-  recontactDays: z.number().optional(),
-  welcomeCard: ZSurveyWelcomeCard.optional(),
-  questions: ZSurveyQuestions.optional(),
-  thankYouCard: ZSurveyThankYouCard.optional(),
-  hiddenFields: ZSurveyHiddenFields,
-  delay: z.number().optional(),
-  autoComplete: z.number().optional(),
-  closeOnDate: z.date().optional(),
-  surveyClosedMessage: ZSurveyClosedMessage.optional(),
-  verifyEmail: ZSurveyVerifyEmail.optional(),
-  triggers: z.array(z.string()).optional(),
+export const ZSurveyWithRefinements = ZSurvey.refine((survey) => !surveyHasBothTriggers(survey), {
+  message: "Survey cannot have both triggers and inlineTriggers",
 });
+
+export const ZSurveyInput = z
+  .object({
+    name: z.string(),
+    type: ZSurveyType.optional(),
+    createdBy: z.string().cuid().optional(),
+    status: ZSurveyStatus.optional(),
+    displayOption: ZSurveyDisplayOption.optional(),
+    autoClose: z.number().optional(),
+    redirectUrl: z.string().url().optional(),
+    recontactDays: z.number().optional(),
+    welcomeCard: ZSurveyWelcomeCard.optional(),
+    questions: ZSurveyQuestions.optional(),
+    thankYouCard: ZSurveyThankYouCard.optional(),
+    hiddenFields: ZSurveyHiddenFields,
+    delay: z.number().optional(),
+    autoComplete: z.number().optional(),
+    closeOnDate: z.date().optional(),
+    surveyClosedMessage: ZSurveyClosedMessage.optional(),
+    verifyEmail: ZSurveyVerifyEmail.optional(),
+    triggers: z.array(z.string()).optional(),
+    inlineTriggers: ZSurveyInlineTriggers.optional(),
+  })
+  .refine(
+    (survey) => {
+      // if the triggers array has a single empty string, it means the survey has no triggers
+      if (survey.triggers?.[0] === "") {
+        return true;
+      }
+
+      const hasTriggers = !!survey.triggers?.length;
+      const hasInlineTriggers = !!survey.inlineTriggers?.codeConfig || !!survey.inlineTriggers?.noCodeConfig;
+
+      // Survey cannot have both triggers and inlineTriggers
+      if (hasTriggers && hasInlineTriggers) {
+        return false;
+      }
+
+      return true;
+    },
+    { message: "Survey cannot have both triggers and inlineTriggers" }
+  );
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 

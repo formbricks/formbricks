@@ -98,7 +98,6 @@ export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
 export const ZJsConfigInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  debug: z.boolean().optional(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string().optional(),
   language: z.string().optional(),
@@ -134,7 +133,6 @@ export const ZJsActionInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string().optional(),
   name: z.string(),
-  properties: z.record(z.string()),
 });
 
 export type TJsActionInput = z.infer<typeof ZJsActionInput>;

@@ -1,18 +1,17 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { updateDisplayLegacy } from "@formbricks/lib/display/service";
 import { ZDisplayLegacyUpdateInput } from "@formbricks/types/displays";
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
 export async function PUT(
   request: Request,
   { params }: { params: { displayId: string } }
-): Promise<NextResponse> {
+): Promise<Response> {
   const { displayId } = params;
   if (!displayId) {
     return responses.badRequestResponse("Missing displayId", undefined, true);

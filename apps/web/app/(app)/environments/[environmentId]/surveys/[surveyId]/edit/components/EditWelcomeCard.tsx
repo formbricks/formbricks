@@ -34,8 +34,9 @@ export default function EditWelcomeCard({
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
-  // const [open, setOpen] = useState(false);
+
   let open = activeQuestionId == "start";
+
   const setOpen = (e) => {
     if (e) {
       setActiveQuestionId("start");
@@ -44,7 +45,7 @@ export default function EditWelcomeCard({
     }
   };
 
-  const updateSurvey = (data) => {
+  const updateSurvey = (data: Partial<TSurvey["welcomeCard"]>) => {
     setLocalSurvey({
       ...localSurvey,
       welcomeCard: {
@@ -53,6 +54,7 @@ export default function EditWelcomeCard({
       },
     });
   };
+
   useEffect(() => {
     setFirstRender(true);
   }, [localSurvey.thankYouCard]);
@@ -183,9 +185,7 @@ export default function EditWelcomeCard({
                 />
               </div>
               <div className="flex-column">
-                <Label htmlFor="timeToFinish" className="">
-                  Time to Finish
-                </Label>
+                <Label htmlFor="timeToFinish">Time to Finish</Label>
                 <div className="text-sm text-slate-500 dark:text-slate-400">
                   Display an estimate of completion time for survey
                 </div>
@@ -204,9 +204,7 @@ export default function EditWelcomeCard({
                   />
                 </div>
                 <div className="flex-column">
-                  <Label htmlFor="showResponseCount" className="">
-                    Show Response Count
-                  </Label>
+                  <Label htmlFor="showResponseCount">Show Response Count</Label>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
                     Display number of responses for survey
                   </div>

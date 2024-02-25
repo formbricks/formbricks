@@ -195,12 +195,14 @@ export const closeSurvey = async (): Promise<void> => {
 
   // for identified users we sync to get the latest surveys
   try {
-    await sync({
-      apiHost: config.get().apiHost,
-      environmentId: config.get().environmentId,
-      userId: config.get().userId,
-      language: config.get().language,
-    });
+    await sync(
+      {
+        apiHost: config.get().apiHost,
+        environmentId: config.get().environmentId,
+        userId: config.get().userId,
+      },
+      true
+    );
     surveyRunning = false;
   } catch (e) {
     errorHandler.handle(e);

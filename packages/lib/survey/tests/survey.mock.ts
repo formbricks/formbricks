@@ -190,6 +190,7 @@ export const mockSurveyOutput: SurveyMock = {
   segment: null,
   segmentId: null,
   resultShareKey: null,
+  inlineTriggers: null,
   ...baseSurveyProperties,
 };
 
@@ -214,6 +215,7 @@ export const updateSurveyInput: TSurvey = {
   pin: null,
   resultShareKey: null,
   segment: null,
+  inlineTriggers: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

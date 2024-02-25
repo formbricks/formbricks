@@ -1,9 +1,12 @@
 export const getOriginalFileNameFromUrl = (fileURL: string) => {
   try {
-    const fileNameFromURL = new URL(fileURL).pathname.split("/").pop();
-    const fileExt = fileNameFromURL?.split(".").pop();
-    const originalFileName = fileNameFromURL?.split("--fid--")[0];
-    const fileId = fileNameFromURL?.split("--fid--")[1];
+    const fileNameFromURL = fileURL.startsWith("/storage/")
+      ? fileURL.split("/").pop()
+      : new URL(fileURL).pathname.split("/").pop();
+
+    const fileExt = fileNameFromURL?.split(".").pop() ?? "";
+    const originalFileName = fileNameFromURL?.split("--fid--")[0] ?? "";
+    const fileId = fileNameFromURL?.split("--fid--")[1] ?? "";
 
     if (!fileId) {
       const fileName = originalFileName ? decodeURIComponent(originalFileName || "") : "";

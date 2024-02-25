@@ -236,41 +236,41 @@ export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string
 };
 
 // Helper function to extract a regular string from an i18nString.
-const extractStringFromI18n = (i18nString: TI18nString): string => {
+const extractStringFromI18n = (i18nString: TI18nString, languageCode: string): string => {
   if (typeof i18nString === "object" && i18nString !== null) {
-    return i18nString["default"] || "";
+    return i18nString[languageCode] || "";
   }
   return i18nString;
 };
 
 // Function to reverse translate a choice
-const reverseTranslateChoice = (choice: TSurveyChoice): TLegacySurveyChoice => {
+const reverseTranslateChoice = (choice: TSurveyChoice, languageCode: string): TLegacySurveyChoice => {
   return {
     ...choice,
-    label: extractStringFromI18n(choice.label),
+    label: extractStringFromI18n(choice.label, languageCode),
   };
 };
 
 // Function to reverse translate a question of any type
-const reverseTranslateQuestion = (question: TSurveyQuestion): TLegacySurveyQuestion => {
+const reverseTranslateQuestion = (question: TSurveyQuestion, languageCode: string): TLegacySurveyQuestion => {
   const clonedQuestion = structuredClone(question) as unknown as TLegacySurveyQuestion;
-  clonedQuestion.headline = extractStringFromI18n(question.headline);
+  clonedQuestion.headline = extractStringFromI18n(question.headline, languageCode);
 
   if (clonedQuestion.subheader) {
     if (question.subheader) {
-      clonedQuestion.subheader = extractStringFromI18n(question.subheader);
+      clonedQuestion.subheader = extractStringFromI18n(question.subheader, languageCode);
     }
   }
 
   if (clonedQuestion.buttonLabel) {
     if (question.buttonLabel) {
-      clonedQuestion.buttonLabel = extractStringFromI18n(question.buttonLabel);
+      clonedQuestion.buttonLabel = extractStringFromI18n(question.buttonLabel, languageCode);
     }
   }
 
   if (clonedQuestion.backButtonLabel) {
     if (question.backButtonLabel) {
-      clonedQuestion.backButtonLabel = extractStringFromI18n(question.backButtonLabel);
+      clonedQuestion.backButtonLabel = extractStringFromI18n(question.backButtonLabel, languageCode);
     }
   }
 
@@ -280,46 +280,69 @@ const reverseTranslateQuestion = (question: TSurveyQuestion): TLegacySurveyQuest
     case "multipleChoiceMulti":
       (
         clonedQuestion as TLegacySurveyMultipleChoiceMultiQuestion | TLegacySurveyMultipleChoiceSingleQuestion
-      ).choices = question.choices.map((choice) => reverseTranslateChoice(choice));
+      ).choices = question.choices.map((choice) => reverseTranslateChoice(choice, languageCode));
       if (question.otherOptionPlaceholder) {
         (
           clonedQuestion as
             | TLegacySurveyMultipleChoiceMultiQuestion
             | TLegacySurveyMultipleChoiceSingleQuestion
-        ).otherOptionPlaceholder = extractStringFromI18n(question.otherOptionPlaceholder);
+        ).otherOptionPlaceholder = extractStringFromI18n(question.otherOptionPlaceholder, languageCode);
       }
       break;
     case "openText":
       if (question.placeholder) {
         (clonedQuestion as TLegacySurveyOpenTextQuestion).placeholder = extractStringFromI18n(
-          question.placeholder
+          question.placeholder,
+          languageCode
         );
       }
       break;
     case "nps":
-      (clonedQuestion as TLegacySurveyNPSQuestion).lowerLabel = extractStringFromI18n(question.lowerLabel);
-      (clonedQuestion as TLegacySurveyNPSQuestion).upperLabel = extractStringFromI18n(question.upperLabel);
+      (clonedQuestion as TLegacySurveyNPSQuestion).lowerLabel = extractStringFromI18n(
+        question.lowerLabel,
+        languageCode
+      );
+      (clonedQuestion as TLegacySurveyNPSQuestion).upperLabel = extractStringFromI18n(
+        question.upperLabel,
+        languageCode
+      );
       break;
     case "rating":
-      (clonedQuestion as TLegacySurveyRatingQuestion).lowerLabel = extractStringFromI18n(question.lowerLabel);
-      (clonedQuestion as TLegacySurveyRatingQuestion).upperLabel = extractStringFromI18n(question.upperLabel);
+      (clonedQuestion as TLegacySurveyRatingQuestion).lowerLabel = extractStringFromI18n(
+        question.lowerLabel,
+        languageCode
+      );
+      (clonedQuestion as TLegacySurveyRatingQuestion).upperLabel = extractStringFromI18n(
+        question.upperLabel,
+        languageCode
+      );
       break;
     case "cta":
       if (question.dismissButtonLabel) {
         (clonedQuestion as TLegacySurveyCTAQuestion).dismissButtonLabel = extractStringFromI18n(
-          question.dismissButtonLabel
+          question.dismissButtonLabel,
+          languageCode
         );
       }
       if (question.html) {
-        (clonedQuestion as TLegacySurveyCTAQuestion).html = extractStringFromI18n(question.html);
+        (clonedQuestion as TLegacySurveyCTAQuestion).html = extractStringFromI18n(
+          question.html,
+          languageCode
+        );
       }
       break;
     case "consent":
       if (question.html) {
-        (clonedQuestion as TLegacySurveyConsentQuestion).html = extractStringFromI18n(question.html);
+        (clonedQuestion as TLegacySurveyConsentQuestion).html = extractStringFromI18n(
+          question.html,
+          languageCode
+        );
       }
       if (question.label) {
-        (clonedQuestion as TLegacySurveyConsentQuestion).label = extractStringFromI18n(question.label);
+        (clonedQuestion as TLegacySurveyConsentQuestion).label = extractStringFromI18n(
+          question.label,
+          languageCode
+        );
       }
       break;
   }
@@ -328,38 +351,47 @@ const reverseTranslateQuestion = (question: TSurveyQuestion): TLegacySurveyQuest
 };
 
 // Function to reverse translate a welcome card
-const reverseTranslateWelcomeCard = (welcomeCard: TSurveyWelcomeCard): TLegacySurveyWelcomeCard => {
+const reverseTranslateWelcomeCard = (
+  welcomeCard: TSurveyWelcomeCard,
+  languageCode: string
+): TLegacySurveyWelcomeCard => {
   const clonedWelcomeCard = structuredClone(welcomeCard) as unknown as TLegacySurveyWelcomeCard;
-  clonedWelcomeCard.headline = extractStringFromI18n(welcomeCard.headline);
+  clonedWelcomeCard.headline = extractStringFromI18n(welcomeCard.headline, languageCode);
   if (welcomeCard.html) {
-    clonedWelcomeCard.html = extractStringFromI18n(welcomeCard.html);
+    clonedWelcomeCard.html = extractStringFromI18n(welcomeCard.html, languageCode);
   }
   if (welcomeCard.buttonLabel) {
-    clonedWelcomeCard.buttonLabel = extractStringFromI18n(welcomeCard.buttonLabel);
+    clonedWelcomeCard.buttonLabel = extractStringFromI18n(welcomeCard.buttonLabel, languageCode);
   }
 
   return clonedWelcomeCard;
 };
 
 // Function to reverse translate a thank you card
-const reverseTranslateThankYouCard = (thankYouCard: TSurveyThankYouCard): TLegacySurveyThankYouCard => {
+const reverseTranslateThankYouCard = (
+  thankYouCard: TSurveyThankYouCard,
+  languageCode: string
+): TLegacySurveyThankYouCard => {
   const clonedThankYouCard = structuredClone(thankYouCard) as unknown as TLegacySurveyThankYouCard;
   if (thankYouCard.headline) {
-    clonedThankYouCard.headline = extractStringFromI18n(thankYouCard.headline);
+    clonedThankYouCard.headline = extractStringFromI18n(thankYouCard.headline, languageCode);
   }
   if (thankYouCard.subheader) {
-    clonedThankYouCard.subheader = extractStringFromI18n(thankYouCard.subheader);
+    clonedThankYouCard.subheader = extractStringFromI18n(thankYouCard.subheader, languageCode);
   }
 
   return clonedThankYouCard;
 };
 
 // Function to reverse translate an entire survey
-export const reverseTranslateSurvey = (survey: TSurvey): TLegacySurvey => {
-  const reversedQuestions = survey.questions.map((question) => reverseTranslateQuestion(question));
+export const reverseTranslateSurvey = (survey: TSurvey, languageCode?: string): TLegacySurvey => {
+  const targetLanguageCode = languageCode ?? "default";
+  const reversedQuestions = survey.questions.map((question) =>
+    reverseTranslateQuestion(question, targetLanguageCode)
+  );
 
-  const reversedWelcomeCard = reverseTranslateWelcomeCard(survey.welcomeCard);
-  const reversedThankYouCard = reverseTranslateThankYouCard(survey.thankYouCard);
+  const reversedWelcomeCard = reverseTranslateWelcomeCard(survey.welcomeCard, targetLanguageCode);
+  const reversedThankYouCard = reverseTranslateThankYouCard(survey.thankYouCard, targetLanguageCode);
 
   const reversedSurvey = structuredClone(survey) as unknown as TLegacySurvey;
   reversedSurvey.questions = reversedQuestions;

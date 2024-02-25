@@ -4,15 +4,15 @@ version: "3.3"
 x-webapp-url: &webapp_url http://localhost:3000
 
 # PostgreSQL DB for Formbricks to connect to
-x-database-url: &database_url
+x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
 
 # NextJS Auth
 # @see: https://next-auth.js.org/configuration/options#nextauth_secret
 # You can use: `openssl rand -hex 32` to generate one
 x-nextauth-secret: &nextauth_secret
+  # Set this to your public-facing URL, e.g., https://example.com
+  # You do not need the NEXTAUTH_URL environment variable in Vercel.
 
-# Set this to your public-facing URL, e.g., https://example.com
-# You do not need the NEXTAUTH_URL environment variable in Vercel.
 x-nextauth-url: &nextauth_url http://localhost:3000
 
 # Encryption key
@@ -64,6 +64,7 @@ x-next-public-sentry-dsn: &next_public_sentry_dsn # Enable Sentry Error Tracking
 
 
 x-cron-secret: &cron_secret # Set this to a random string to secure your cron endpoints
+
 
 services:
   postgres:

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
@@ -37,5 +38,11 @@ export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
   return survey;
 };
 
-export const anySurveyHasFilters = (surveys: TSurvey[]) =>
-  !surveys.every((survey) => !survey.segment?.filters?.length);
+export const anySurveyHasFilters = (surveys: TSurvey[] | TLegacySurvey[]): boolean => {
+  return surveys.some((survey) => {
+    if ("segment" in survey && survey.segment) {
+      return survey.segment.filters && survey.segment.filters.length > 0;
+    }
+    return false;
+  });
+};

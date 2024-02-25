@@ -29,6 +29,11 @@ export const users = {
       email: "MLSurvey16@formbricks.com",
       password: "Y1I*EpURUSb32j5XijP",
     },
+    {
+      name: "Survey User 2",
+      email: "survey2@formbricks.com",
+      password: "Y1I*EpURUSb32j5XijP",
+    },
   ],
   js: [
     {
@@ -198,6 +203,8 @@ export const surveys = {
     },
   },
 };
+
+export type CreateSurveyParams = typeof surveys.createAndSubmit;
 
 export const actions = {
   create: {

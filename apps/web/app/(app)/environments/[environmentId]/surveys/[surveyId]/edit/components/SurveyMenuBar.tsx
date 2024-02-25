@@ -4,21 +4,25 @@ import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surve
 import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import {
+  TSurvey,
+  TSurveyQuestionType,
+  ZSurveyInlineTriggers,
+  surveyHasBothTriggers,
+} from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
-import { deleteSurveyAction, updateSurveyAction } from "../actions";
+import { updateSurveyAction } from "../actions";
 import { isLabelValidForAllLanguages, isValidUrl, validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
@@ -48,12 +52,9 @@ export default function SurveyMenuBar({
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
-  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
   const defaultLanguageCode = "default";
 
@@ -80,6 +81,27 @@ export default function SurveyMenuBar({
     };
   }, [localSurvey, survey]);
 
+  const containsEmptyTriggers = useMemo(() => {
+    if (localSurvey.type !== "web") return false;
+
+    const noTriggers = !localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0];
+    const noInlineTriggers =
+      !localSurvey.inlineTriggers ||
+      (!localSurvey.inlineTriggers?.codeConfig && !localSurvey.inlineTriggers?.noCodeConfig);
+
+    if (noTriggers && noInlineTriggers) {
+      return true;
+    }
+
+    return false;
+  }, [localSurvey]);
+
+  const disableSave = useMemo(() => {
+    if (isSurveySaving) return true;
+
+    if (localSurvey.status !== "draft" && containsEmptyTriggers) return true;
+  }, [containsEmptyTriggers, isSurveySaving, localSurvey.status]);
+
   // write a function which updates the local survey status
   const updateLocalSurveyStatus = (status: TSurvey["status"]) => {
     const updatedSurvey = { ...localSurvey };
@@ -87,25 +109,8 @@ export default function SurveyMenuBar({
     setLocalSurvey(updatedSurvey);
   };
 
-  const deleteSurvey = async (surveyId) => {
-    try {
-      await deleteSurveyAction(surveyId);
-      router.refresh();
-      setDeleteDialogOpen(false);
-      router.back();
-    } catch (error) {
-      console.error("An error occurred deleting the survey");
-      toast.error("An error occurred deleting the survey");
-    }
-  };
-
   const handleBack = () => {
-    const createdAt = new Date(localSurvey.createdAt).getTime();
-    const updatedAt = new Date(localSurvey.updatedAt).getTime();
-
-    if (createdAt === updatedAt && localSurvey.status === "draft") {
-      setDeleteDialogOpen(true);
-    } else if (!isEqual(localSurvey, survey)) {
+    if (!isEqual(localSurvey, survey)) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
@@ -267,12 +272,34 @@ export default function SurveyMenuBar({
         return rest;
       }),
     };
+
     if (!validateSurvey(localSurvey)) {
       setIsSurveySaving(false);
       return;
     }
 
     // validate the user segment filters
+    const localSurveySegment = {
+      id: strippedSurvey.segment?.id,
+      filters: strippedSurvey.segment?.filters,
+      title: strippedSurvey.segment?.title,
+      description: strippedSurvey.segment?.description,
+    };
+
+    const surveySegment = {
+      id: survey.segment?.id,
+      filters: survey.segment?.filters,
+      title: survey.segment?.title,
+      description: survey.segment?.description,
+    };
+
+    // if the non-private segment in the survey and the strippedSurvey are different, don't save
+    if (!strippedSurvey.segment?.isPrivate && !isEqual(localSurveySegment, surveySegment)) {
+      toast.error("Please save the audience filters before saving the survey");
+      setIsSurveySaving(false);
+      return;
+    }
+
     if (!!strippedSurvey.segment?.filters?.length) {
       const parsedFilters = ZSegmentFilters.safeParse(strippedSurvey.segment.filters);
       if (!parsedFilters.success) {
@@ -283,6 +310,22 @@ export default function SurveyMenuBar({
         toast.error(errMsg);
         return;
       }
+    }
+
+    // if inlineTriggers are present validate with zod
+    if (!!strippedSurvey.inlineTriggers) {
+      const parsedInlineTriggers = ZSurveyInlineTriggers.safeParse(strippedSurvey.inlineTriggers);
+      if (!parsedInlineTriggers.success) {
+        toast.error("Invalid Custom Actions: Please check your custom actions");
+        return;
+      }
+    }
+
+    // validate that both triggers and inlineTriggers are not present
+    if (surveyHasBothTriggers(strippedSurvey)) {
+      setIsSurveySaving(false);
+      toast.error("Survey cannot have both custom and saved actions, please remove one.");
+      return;
     }
 
     try {
@@ -304,14 +347,6 @@ export default function SurveyMenuBar({
       toast.error(`Error saving changes`);
       return;
     }
-  };
-
-  const containsEmptyTriggers = () => {
-    return (
-      localSurvey.type === "web" &&
-      localSurvey.triggers &&
-      (localSurvey.triggers[0] === "" || localSurvey.triggers.length === 0)
-    );
   };
 
   const handleSurveyPublish = async () => {
@@ -384,7 +419,8 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
+            // disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
+            disabled={disableSave}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
             loading={isSurveySaving}
@@ -404,7 +440,7 @@ export default function SurveyMenuBar({
           )}
           {localSurvey.status === "draft" && !audiencePrompt && (
             <Button
-              disabled={isSurveySaving || containsEmptyTriggers()}
+              disabled={isSurveySaving || containsEmptyTriggers}
               variant="darkCTA"
               loading={isSurveyPublishing}
               onClick={handleSurveyPublish}>
@@ -412,25 +448,6 @@ export default function SurveyMenuBar({
             </Button>
           )}
         </div>
-        <DeleteDialog
-          deleteWhat="Draft"
-          open={isDeleteDialogOpen}
-          setOpen={setDeleteDialogOpen}
-          onDelete={async () => {
-            setIsDeleting(true);
-            await deleteSurvey(localSurvey.id);
-            setIsDeleting(false);
-          }}
-          text="Do you want to delete this draft?"
-          isDeleting={isDeleting}
-          isSaving={isSaving}
-          useSaveInsteadOfCancel={true}
-          onSave={async () => {
-            setIsSaving(true);
-            await saveSurveyAction(true);
-            setIsSaving(false);
-          }}
-        />
         <AlertDialog
           headerText="Confirm Survey Changes"
           open={isConfirmDialogOpen}

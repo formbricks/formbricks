@@ -21,6 +21,7 @@ export {
   ZSurveyStyling,
   ZSurveyVerifyEmail,
   ZSurveySingleUse,
+  ZSurveyInlineTriggers,
 } from "@formbricks/types/surveys";
 
 export { ZSegmentFilters } from "@formbricks/types/segment";

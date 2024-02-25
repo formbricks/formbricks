@@ -11,14 +11,14 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyInput, ZSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyInput, ZSurvey, ZSurveyWithRefinements } from "@formbricks/types/surveys";
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
-import { reverseTranslateSurvey } from "../i18n/utils";
+import { reverseTranslateSurvey, translateSurvey } from "../i18n/utils";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { productCache } from "../product/cache";
@@ -92,6 +92,7 @@ export const selectSurvey = {
       },
     },
   },
+  inlineTriggers: true,
   segment: {
     include: {
       surveys: {
@@ -281,10 +282,14 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const transformToLegacySurvey = async (survey: TSurvey): Promise<TLegacySurvey> => {
+export const transformToLegacySurvey = async (
+  survey: TSurvey,
+  languageCode?: string
+): Promise<TLegacySurvey> => {
   const transformedSurvey = await unstable_cache(
     async () => {
-      return reverseTranslateSurvey(survey);
+      const targetLanguage = languageCode ?? "default";
+      return reverseTranslateSurvey(survey, targetLanguage);
     },
     [`transformToLegacySurvey-${survey}`],
     {
@@ -297,8 +302,28 @@ export const transformToLegacySurvey = async (survey: TSurvey): Promise<TLegacyS
   return formatDateFields(transformedSurvey, ZLegacySurvey);
 };
 
-export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
-  validateInputs([updatedSurvey, ZSurvey]);
+export const transformToSurveyWithDefaultLanguageOnly = async (survey: TSurvey): Promise<TSurvey> => {
+  const transformedSurvey = await unstable_cache(
+    async () => {
+      if (!survey.languages || survey.languages.length === 0) {
+        //survey do not have any translations
+        return survey;
+      }
+      return translateSurvey(survey, []);
+    },
+    [`transformToSurveyWithDefaultLanguageOnly-${survey}`],
+    {
+      tags: [surveyCache.tag.byId(survey.id)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
+  // https://github.com/vercel/next.js/issues/51613
+  return formatDateFields(transformedSurvey, ZSurvey);
+};
+
+export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
+  validateInputs([updatedSurvey, ZSurveyWithRefinements]);
 
   const surveyId = updatedSurvey.id;
   let data: any = {};
@@ -458,7 +483,7 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
 
     throw error;
   }
-}
+};
 
 export async function deleteSurvey(surveyId: string) {
   validateInputs([surveyId, ZId]);
@@ -498,6 +523,11 @@ export async function deleteSurvey(surveyId: string) {
 
 export const createSurvey = async (environmentId: string, surveyBody: TSurveyInput): Promise<TSurvey> => {
   validateInputs([environmentId, ZId]);
+
+  // if the survey body has both triggers and inlineTriggers, we throw an error
+  if (surveyBody.triggers && surveyBody.inlineTriggers) {
+    throw new InvalidInputError("Survey body cannot have both triggers and inlineTriggers");
+  }
 
   if (surveyBody.triggers) {
     const actionClasses = await getActionClasses(environmentId);
@@ -588,6 +618,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
           actionClassId: getActionClassIdFromName(actionClasses, trigger),
         })),
       },
+      inlineTriggers: existingSurvey.inlineTriggers ?? undefined,
       environment: {
         connect: {
           id: environmentId,
@@ -633,10 +664,11 @@ export const getSyncSurveys = async (
   environmentId: string,
   personId: string,
   deviceType: "phone" | "desktop" = "desktop",
+  isMultiLanguageAllowed: boolean,
   options?: {
     version?: string;
   }
-): Promise<TSurvey[]> => {
+): Promise<TSurvey[] | TLegacySurvey[]> => {
   validateInputs([environmentId, ZId]);
 
   const surveys = await unstable_cache(
@@ -652,7 +684,7 @@ export const getSyncSurveys = async (
         throw new Error("Person not found");
       }
 
-      let surveys = await getSurveys(environmentId);
+      let surveys: TSurvey[] | TLegacySurvey[] = await getSurveys(environmentId);
 
       // filtered surveys for running and web
       surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
@@ -693,6 +725,32 @@ export const getSyncSurveys = async (
           return true;
         }
       });
+
+      if (options?.version) {
+        if (!isMultiLanguageAllowed) {
+          // Scenario 1: Version available, multi-language not allowed
+          surveys = await Promise.all(surveys.map(transformToSurveyWithDefaultLanguageOnly));
+        }
+        // Scenario 2: Version available, multi-language allowed (no transformation needed)
+      } else {
+        if (!isMultiLanguageAllowed) {
+          // Scenario 3: No version, multi-language not allowed
+          surveys = await Promise.all(surveys.map((survey) => transformToLegacySurvey(survey, "default")));
+        } else {
+          // Scenario 4: No version, multi-language allowed
+          surveys = await Promise.all(
+            surveys.map((survey) => {
+              const languageCodeOrAlias = (person.attributes?.language ?? "default") as string;
+              const selectedLanguage = survey.languages.find(
+                (surveyLanguage) =>
+                  surveyLanguage.language.code === languageCodeOrAlias ||
+                  surveyLanguage.language.alias === languageCodeOrAlias
+              );
+              return transformToLegacySurvey(survey, selectedLanguage?.language.code ?? "default");
+            })
+          );
+        }
+      }
 
       // if no surveys have segment filters, return the surveys
       if (!anySurveyHasFilters(surveys)) {
@@ -785,7 +843,11 @@ export const getSyncSurveys = async (
     }
   )();
 
-  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+  if (options?.version) {
+    return surveys.map((survey) => formatDateFields(survey as TSurvey, ZSurvey));
+  } else {
+    return surveys.map((survey) => formatDateFields(survey as TLegacySurvey, ZLegacySurvey));
+  }
 };
 
 export const getSurveyByResultShareKey = async (resultShareKey: string): Promise<string | null> => {

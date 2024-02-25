@@ -277,6 +277,9 @@ model Survey {
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?
   triggers            SurveyTrigger[]
+  /// @zod.custom(imports.ZSurveyInlineTriggers)
+  /// [SurveyInlineTriggers]
+  inlineTriggers      Json?
   attributeFilters    SurveyAttributeFilter[]
   displays            Display[]
   autoClose           Int?
