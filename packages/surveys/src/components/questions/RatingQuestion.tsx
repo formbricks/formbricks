@@ -32,7 +32,7 @@ interface RatingQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  languageId: string;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -45,7 +45,7 @@ export default function RatingQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  languageId,
+  languageCode,
   ttc,
   setTtc,
 }: RatingQuestionProps) {
@@ -96,12 +96,12 @@ export default function RatingQuestion({
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
-        headline={getLocalizedValue(question.headline, languageId)}
+        headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
         required={question.required}
       />
       <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageId) : ""}
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
         questionId={question.id}
       />
       <div className="mb-4 mt-6 flex items-center justify-center">
@@ -189,8 +189,8 @@ export default function RatingQuestion({
             ))}
           </div>
           <div className="text-subheading flex justify-between px-1.5 text-xs leading-6">
-            <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, languageId)}</p>
-            <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, languageId)}</p>
+            <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
+            <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, languageCode)}</p>
           </div>
         </fieldset>
       </div>
@@ -199,7 +199,7 @@ export default function RatingQuestion({
         {!isFirstQuestion && (
           <BackButton
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageId)}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -211,7 +211,7 @@ export default function RatingQuestion({
         {(!question.required || value) && (
           <SubmitButton
             tabIndex={question.range + 1}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageId)}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

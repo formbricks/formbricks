@@ -1,11 +1,8 @@
 import DOMPurify from "dompurify";
 import type { Dispatch, SetStateAction } from "react";
+import { useMemo } from "react";
 
-import {
-  containsTranslations,
-  extractLanguageCodes,
-  isLabelValidForAllLanguages,
-} from "@formbricks/lib/i18n/utils";
+import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { md } from "@formbricks/lib/markdownIt";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TI18nString, TSurvey } from "@formbricks/types/surveys";
@@ -25,6 +22,19 @@ interface LocalizedEditorProps {
   firstRender: boolean;
   setFirstRender?: Dispatch<SetStateAction<boolean>>;
 }
+
+const checkIfValueIsIncomplete = (
+  id: string,
+  isInvalid: boolean,
+  surveyLanguageCodes: string[],
+  value?: TI18nString
+) => {
+  const labelIds = ["subheader"];
+  if (value === undefined) return false;
+  const isDefaultIncomplete = labelIds.includes(id) ? value["default"]?.trim() !== "" : false;
+  return isInvalid && !isLabelValidForAllLanguages(value, surveyLanguageCodes) && isDefaultIncomplete;
+};
+
 export const LocalizedEditor = ({
   id,
   value,
@@ -37,18 +47,14 @@ export const LocalizedEditor = ({
   firstRender,
   setFirstRender,
 }: LocalizedEditorProps) => {
-  const hasi18n = value ? containsTranslations(value) : false;
-  const surveyLanguageIds = extractLanguageCodes(localSurvey.languages);
-  const isInComplete =
-    value !== undefined &&
-    (id === "subheader"
-      ? value["default"]?.trim() !== "" &&
-        isInvalid &&
-        !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguageCode === "default"
-      : isInvalid &&
-        !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguageCode === "default");
+  const surveyLanguageCodes = useMemo(
+    () => extractLanguageCodes(localSurvey.languages),
+    [localSurvey.languages]
+  );
+  const isInComplete = useMemo(
+    () => checkIfValueIsIncomplete(id, isInvalid, surveyLanguageCodes, value),
+    [id, isInvalid, surveyLanguageCodes, value, selectedLanguageCode]
+  );
 
   return (
     <div className="relative w-full">
@@ -73,7 +79,7 @@ export const LocalizedEditor = ({
         firstRender={firstRender}
         setFirstRender={setFirstRender}
       />
-      {hasi18n && localSurvey.languages?.length > 1 && (
+      {localSurvey.languages?.length > 1 && (
         <div>
           <LanguageIndicator
             selectedLanguageCode={selectedLanguageCode}

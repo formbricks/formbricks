@@ -134,6 +134,11 @@ export const ZResponseFilterCriteria = z.object({
       notApplied: z.array(z.string()).optional(),
     })
     .optional(),
+  languages: z
+    .object({
+      includes: z.array(z.string()).optional(),
+    })
+    .optional(),
 });
 
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
@@ -242,7 +247,7 @@ export type TResponseWithSurvey = z.infer<typeof ZResponseWithSurvey>;
 export const ZResponseUpdate = z.object({
   finished: z.boolean(),
   data: ZResponseData,
-  languageCode: z.string().optional(),
+  language: z.string().optional(),
   ttc: ZResponseTtc.optional(),
   meta: z
     .object({

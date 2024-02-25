@@ -29,7 +29,7 @@ export function Survey({
   onRetry = () => {},
   isRedirectDisabled = false,
   prefillResponseData,
-  languageId,
+  languageCode,
   getSetIsError,
   onFileUpload,
   responseCount,
@@ -57,7 +57,7 @@ export function Survey({
   const showProgressBar = !survey.styling?.hideProgressBar;
 
   useEffect(() => {
-    if (activeQuestionId === "hidden") return;
+    if (activeQuestionId === "hidden" || activeQuestionId === "multiLanguage") return;
     if (activeQuestionId === "start" && !survey.welcomeCard.enabled) {
       setQuestionId(survey?.questions[0]?.id);
       return;
@@ -113,7 +113,7 @@ export function Survey({
           currentQuestion.type === "multipleChoiceMulti"
         ) {
           const choice = currentQuestion.choices.find(
-            (choice) => getLocalizedValue(choice.label, languageId) === responseValue
+            (choice) => getLocalizedValue(choice.label, languageCode) === responseValue
           );
           if (choice) {
             if (evaluateCondition(logic, getLocalizedValue(choice.label, "default"))) {
@@ -178,18 +178,18 @@ export function Survey({
 
   const parseRecallInformation = (question: TSurveyQuestion) => {
     const modifiedQuestion = structuredClone(question);
-    if (question.headline && question.headline[languageId]?.includes("recall:")) {
-      modifiedQuestion.headline[languageId] = replaceRecallInfo(
-        getLocalizedValue(modifiedQuestion.headline, languageId)
+    if (question.headline && question.headline[languageCode]?.includes("recall:")) {
+      modifiedQuestion.headline[languageCode] = replaceRecallInfo(
+        getLocalizedValue(modifiedQuestion.headline, languageCode)
       );
     }
     if (
       question.subheader &&
-      question.subheader[languageId]?.includes("recall:") &&
+      question.subheader[languageCode]?.includes("recall:") &&
       modifiedQuestion.subheader
     ) {
-      modifiedQuestion.subheader[languageId] = replaceRecallInfo(
-        getLocalizedValue(modifiedQuestion.subheader, languageId)
+      modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
+        getLocalizedValue(modifiedQuestion.subheader, languageCode)
       );
     }
     return modifiedQuestion;
@@ -227,7 +227,7 @@ export function Survey({
           buttonLabel={survey.welcomeCard.buttonLabel}
           onSubmit={onSubmit}
           survey={survey}
-          languageId={languageId}
+          languageCode={languageCode}
           responseCount={responseCount}
         />
       );
@@ -241,7 +241,7 @@ export function Survey({
           imageUrl={survey.thankYouCard.imageUrl}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
-          languageId={languageId}
+          languageCode={languageCode}
           replaceRecallInfo={replaceRecallInfo}
         />
       );
@@ -264,7 +264,7 @@ export function Survey({
                 : currentQuestion.id === survey?.questions[0]?.id
             }
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
-            languageId={languageId}
+            languageCode={languageCode}
           />
         )
       );
@@ -273,6 +273,8 @@ export function Survey({
 
   return (
     <>
+      {console.log(languageCode)}
+      {console.log(survey)}
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div className="no-scrollbar flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>

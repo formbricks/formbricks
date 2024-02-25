@@ -16,20 +16,20 @@ import * as React from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TI18nString, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@formbricks/ui/Command";
 import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 
 export enum OptionsType {
   QUESTIONS = "Questions",
-  TAGS = "tags",
+  TAGS = "Tags",
   ATTRIBUTES = "Attributes",
-  LANGUAGE = "language",
+  LANGUAGE = "Language",
   METADATA = "Metadata",
 }
 
 export type QuestionOption = {
-  label: string | TI18nString;
+  label: string;
   questionType?: TSurveyQuestionType;
   type: OptionsType;
   id: string;

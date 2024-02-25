@@ -8,13 +8,14 @@ import { cn } from "@formbricks/lib/cn";
 import { TLanguage, TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
+import ConfirmationModal from "@formbricks/ui/ConfirmationModal";
+import DefaultTag from "@formbricks/ui/DefaultTag";
 import { Label } from "@formbricks/ui/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 import { Switch } from "@formbricks/ui/Switch";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import { getLanguageLabel } from "../lib/isoLanguages";
-import ConfirmRemoveTranslationsModal from "./ConfirmRemoveTranslationsModal";
 
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;
@@ -39,6 +40,7 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
 }) => {
   const environmentId = localSurvey.environmentId;
   const open = activeQuestionId == "multiLanguage";
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(
     localSurvey.languages ? localSurvey.languages.length > 1 : false
   );
@@ -50,6 +52,7 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
       return language.default === true;
     })?.language
   );
+  const [defaultLanguageCodeTemp, setdefaultLanguageCodeTemp] = useState("");
 
   const setOpen = (open: boolean) => {
     if (open) {
@@ -93,6 +96,7 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
       }
 
       setDefaultLanguage(language);
+      setIsConfirmationModalOpen(false);
       updateSurvey({ languages: newLanguages });
     }
   };
@@ -181,25 +185,40 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
                   <div className="space-y-4">
                     <div className="space-y-4">
                       <p className="text-sm">1. Choose the default language for this survey</p>
-                      <div className="w-48">
-                        <Select
-                          value={`${defaultLanguage?.code}`}
-                          defaultValue={`${defaultLanguage?.code}`}
-                          onValueChange={(languageCode) => handleDefaultLanguageChange(languageCode)}>
-                          <SelectTrigger className="xs:w-[180px] xs:text-base w-full px-4 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {product.languages.map((language) => (
-                              <SelectItem
-                                key={language.id}
-                                className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
-                                value={language.code}>
-                                {`${getLanguageLabel(language.code)} (${language.code})`}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="flex items-center space-x-4">
+                        <div className=" w-48 ">
+                          <Select
+                            value={`${defaultLanguage?.code}`}
+                            defaultValue={`${defaultLanguage?.code}`}
+                            disabled={defaultLanguage ? true : false}
+                            onValueChange={(languageCode) => {
+                              setdefaultLanguageCodeTemp(languageCode);
+                              setIsConfirmationModalOpen(true);
+                            }}>
+                            <SelectTrigger className="xs:w-[180px] xs:text-base w-full px-4 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {product.languages.map((language) => (
+                                <SelectItem
+                                  key={language.id}
+                                  className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                                  value={language.code}>
+                                  {`${getLanguageLabel(language.code)} (${language.code})`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <ConfirmationModal
+                            open={isConfirmationModalOpen}
+                            setOpen={setIsConfirmationModalOpen}
+                            title={`Save ${getLanguageLabel(defaultLanguageCodeTemp)} as default language`}
+                            text={`Once set, default value cannot be change untill you re-enable translations, are you sure?`}
+                            buttonText="Save default language"
+                            onConfirm={() => handleDefaultLanguageChange(defaultLanguageCodeTemp)}
+                          />
+                        </div>
+                        <DefaultTag />
                       </div>
                     </div>
 
@@ -251,15 +270,18 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
               target="_blank">
               Add Language <ArrowUpRight className="ml-2 h-5 w-5" />
             </Button>
-            <ConfirmRemoveTranslationsModal
+            <ConfirmationModal
+              title={"Disable translations"}
               open={openRemoveTranslationModal}
               setOpen={setOpenRemoveTranslationModal}
-              onDelete={() => {
+              text={"This action will remove all the translations from this survey. Are you sure?"}
+              onConfirm={() => {
                 setLocalSurvey({ ...localSurvey, languages: [] });
                 setOpenRemoveTranslationModal(false);
                 setIsMultiLanguageActivated(false);
                 setDefaultLanguage(undefined);
               }}
+              buttonText="Confirm"
             />
           </div>
         </Collapsible.CollapsibleContent>

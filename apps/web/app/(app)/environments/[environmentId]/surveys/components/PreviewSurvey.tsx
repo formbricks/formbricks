@@ -29,7 +29,7 @@ interface PreviewSurveyProps {
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
-  languageId: string;
+  languageCode: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
@@ -68,7 +68,7 @@ export default function PreviewSurvey({
   previewType,
   product,
   environment,
-  languageId,
+  languageCode,
   onFileUpload,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -214,7 +214,7 @@ export default function PreviewSurvey({
                     isBrandingEnabled={product.inAppSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
-                    languageId={languageId}
+                    languageCode={languageCode}
                     onFileUpload={onFileUpload}
                   />
                 </Modal>
@@ -228,7 +228,7 @@ export default function PreviewSurvey({
                       isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       onFileUpload={onFileUpload}
-                      languageId={languageId}
+                      languageCode={languageCode}
                       responseCount={42}
                     />
                   </div>
@@ -285,7 +285,7 @@ export default function PreviewSurvey({
                   isBrandingEnabled={product.inAppSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
-                  languageId={languageId}
+                  languageCode={languageCode}
                   onFileUpload={onFileUpload}
                 />
               </Modal>
@@ -300,7 +300,7 @@ export default function PreviewSurvey({
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
-                    languageId={languageId}
+                    languageCode={languageCode}
                     responseCount={42}
                   />
                 </div>

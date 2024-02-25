@@ -10,40 +10,11 @@ import {
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { isWithinInterval } from "date-fns";
 
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getLanguageLabel } from "@formbricks/ee/multiLanguage/lib/isoLanguages";
 import { TResponse, TResponseFilterCriteria, TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
-
-export const generateQuestionsAndAttributes = (survey: TSurvey, responses: TResponse[]) => {
-  let questionNames: string[] = [];
-
-  if (survey?.questions) {
-    questionNames = survey.questions.map((question) => getLocalizedValue(question.headline, "en"));
-  }
-
-  const attributeMap: Record<string, Record<string, string | number>> = {};
-
-  if (responses) {
-    responses.forEach((response) => {
-      const { person } = response;
-      if (person !== null) {
-        const { id, attributes } = person;
-        Object.keys(attributes).forEach((attributeName) => {
-          if (!attributeMap.hasOwnProperty(attributeName)) {
-            attributeMap[attributeName] = {};
-          }
-          attributeMap[attributeName][id] = attributes[attributeName];
-        });
-      }
-    });
-  }
-  return {
-    questionNames,
-    attributeMap,
-  };
-};
 
 const conditionOptions = {
   openText: ["is"],
@@ -52,10 +23,10 @@ const conditionOptions = {
   nps: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
   rating: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
   cta: ["is"],
-  tags: ["Includes all", "Includes either"],
+  tags: ["is"],
+  languages: ["includes"],
   userAttributes: ["Equals", "Not equals"],
   consent: ["is"],
-  languages: ["includes"],
 };
 const filterOptions = {
   openText: ["Filled out", "Skipped"],
@@ -83,7 +54,7 @@ export const generateQuestionAndFilterOptions = (
   survey.questions.forEach((q) => {
     if (Object.keys(conditionOptions).includes(q.type)) {
       questionsOptions.push({
-        label: getLocalizedValue(q.headline, "en"),
+        label: q.headline,
         questionType: q.type,
         type: OptionsType.QUESTIONS,
         id: q.id,
@@ -129,6 +100,30 @@ export const generateQuestionAndFilterOptions = (
     });
   }
 
+  if (survey.languages) {
+    questionOptions = [
+      ...questionOptions,
+      {
+        header: OptionsType.LANGUAGE,
+        option: survey.languages.map((surveyLanguage) => {
+          return {
+            label: getLanguageLabel(surveyLanguage.language.code),
+            type: OptionsType.LANGUAGE,
+            id: surveyLanguage.language.code,
+          };
+        }),
+      },
+    ];
+    survey.languages.forEach((sl) => {
+      questionFilterOptions.push({
+        type: "Language",
+        filterOptions: conditionOptions.languages,
+        filterComboBoxOptions: sl.language.code,
+        id: sl.language.code,
+      });
+    });
+  }
+
   if (attributes) {
     questionOptions = [
       ...questionOptions,
@@ -149,35 +144,6 @@ export const generateQuestionAndFilterOptions = (
     });
   }
 
-  if (Object.keys(survey.questions[0].headline).length > 1) {
-    // If so, add the LANGUAGES filter to the questionOptions array.
-    questionOptions.push({
-      header: OptionsType.METADATA,
-      option: [
-        { label: "Language", type: "language", id: "language" },
-        { label: "Tags", type: "tags", id: "tags" },
-      ],
-    });
-    questionFilterOptions.push({
-      type: "language",
-      filterOptions: conditionOptions.languages,
-      filterComboBoxOptions: Array.from(
-        new Set(
-          responses.filter((response) => response.language != null).map((response) => response.language)
-        )
-      ),
-      id: "language",
-    });
-    if (tagsOptions && tagsOptions.length > 0) {
-      questionFilterOptions.push({
-        type: "tags",
-        filterOptions: conditionOptions.tags,
-        filterComboBoxOptions: tagsOptions,
-        id: "tags",
-      });
-    }
-  }
-
   return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
 };
 
@@ -188,18 +154,20 @@ export const getFormattedFilters = (
 ): TResponseFilterCriteria => {
   const filters: TResponseFilterCriteria = {};
 
-  const [questions, tags, attributes] = selectedFilter.filter.reduce(
-    (result: [FilterValue[], FilterValue[], FilterValue[]], filter) => {
+  const [questions, tags, attributes, languages] = selectedFilter.filter.reduce(
+    (result: [FilterValue[], FilterValue[], FilterValue[], FilterValue[]], filter) => {
       if (filter.questionType?.type === "Questions") {
         result[0].push(filter);
       } else if (filter.questionType?.type === "Tags") {
         result[1].push(filter);
       } else if (filter.questionType?.type === "Attributes") {
         result[2].push(filter);
+      } else if (filter.questionType?.type === "Language") {
+        result[3].push(filter);
       }
       return result;
     },
-    [[], [], []]
+    [[], [], [], []]
   );
 
   // for completed responses
@@ -351,6 +319,7 @@ export const getFilterResponses = (
       }),
     };
   });
+
   // filtering the responses according to the value selected
   selectedFilter.filter.forEach((filter) => {
     if (filter.questionType?.type === "Questions") {
@@ -540,37 +509,19 @@ export const getFilterResponses = (
           break;
       }
     }
-
-    if (filter.questionType?.label === "Language") {
-      if (filter?.filterType?.filterComboBoxValue && filter?.filterType?.filterComboBoxValue?.length > 0) {
-        toBeFilterResponses = toBeFilterResponses.filter((response) => {
-          const language = response.language;
-          if (!language) return false;
-          if (filter?.filterType?.filterComboBoxValue?.includes(language)) {
-            return true;
+    if (filter.questionType?.type === "Tags") {
+      toBeFilterResponses = toBeFilterResponses.filter((response) => {
+        const tagNames = response.tags.map((tag) => tag.name);
+        if (filter?.filterType?.filterComboBoxValue) {
+          if (filter?.filterType?.filterComboBoxValue === "Applied") {
+            if (filter?.questionType?.label) return tagNames.includes(filter.questionType.label);
           }
-        });
-      } else {
+          if (filter?.filterType?.filterComboBoxValue === "Not applied") {
+            if (filter?.questionType?.label) return !tagNames.includes(filter?.questionType?.label);
+          }
+        }
         return true;
-      }
-    }
-    if (filter.questionType?.label === "Tags") {
-      if (filter?.filterType?.filterComboBoxValue && filter?.filterType?.filterComboBoxValue?.length > 0) {
-        toBeFilterResponses = toBeFilterResponses.filter((response) => {
-          const tagNames = response.tags.map((tag) => tag.name);
-          const filterTags = filter?.filterType?.filterComboBoxValue as string[];
-          if (filter?.filterType?.filterValue === "Includes all") {
-            // Check if all filter tags are included in the response's tags
-            return filterTags!.every((tag) => tagNames.includes(tag));
-          }
-          if (filter?.filterType?.filterValue === "Includes either") {
-            // Check if at least one of the filter tags is included in the response's tags
-            return filterTags!.some((tag) => tagNames.includes(tag));
-          }
-        });
-      } else {
-        return true;
-      }
+      });
     }
     if (filter.questionType?.type === "Attributes") {
       toBeFilterResponses = toBeFilterResponses.filter((response) => {
@@ -579,23 +530,16 @@ export const getFilterResponses = (
             response.personAttributes && Object.keys(response.personAttributes).length > 0
               ? response.personAttributes
               : null;
-          if (
-            typeof filter?.questionType?.label === "string" &&
-            attributes &&
-            Object.prototype.hasOwnProperty.call(attributes, filter?.questionType?.label)
-          ) {
-            const attributeValue = attributes[filter?.questionType?.label];
-
+          if (attributes && attributes.hasOwnProperty(filter?.questionType?.label)) {
             if (filter?.filterType?.filterValue === "Equals") {
-              return attributeValue === filter?.filterType?.filterComboBoxValue;
+              return attributes[filter?.questionType?.label] === filter?.filterType?.filterComboBoxValue;
             }
-
             if (filter?.filterType?.filterValue === "Not equals") {
-              return attributeValue !== filter?.filterType?.filterComboBoxValue;
+              return attributes[filter?.questionType?.label] !== filter?.filterType?.filterComboBoxValue;
             }
+          } else {
+            return false;
           }
-
-          return false;
         }
         return true;
       });

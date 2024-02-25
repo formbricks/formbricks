@@ -51,7 +51,8 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
-
+  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => surveyLanguage.default === true)
+    ?.language.code;
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
@@ -155,7 +156,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
-          languageId={languageCode}
+          languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
@@ -193,7 +194,7 @@ export default function LinkSurvey({
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
-                languageCode,
+                language: languageCode === "default" ? defaultLanguageCode : languageCode,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",

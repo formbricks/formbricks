@@ -19,7 +19,7 @@ interface PictureSelectionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  languageId: string;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -32,7 +32,7 @@ export default function PictureSelectionQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  languageId,
+  languageCode,
   ttc,
   setTtc,
 }: PictureSelectionProps) {
@@ -101,12 +101,12 @@ export default function PictureSelectionQuestion({
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
-        headline={getLocalizedValue(question.headline, languageId)}
+        headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
         required={question.required}
       />
       <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageId) : ""}
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
         questionId={question.id}
       />
       <div className="mt-4">
@@ -177,7 +177,7 @@ export default function PictureSelectionQuestion({
         {!isFirstQuestion && (
           <BackButton
             tabIndex={questionChoices.length + 3}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageId)}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -188,7 +188,7 @@ export default function PictureSelectionQuestion({
         <div></div>
         <SubmitButton
           tabIndex={questionChoices.length + 2}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageId)}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
         />

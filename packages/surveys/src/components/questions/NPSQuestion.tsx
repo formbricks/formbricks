@@ -20,7 +20,7 @@ interface NPSQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  languageId: string;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -33,7 +33,7 @@ export default function NPSQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  languageId,
+  languageCode,
   ttc,
   setTtc,
 }: NPSQuestionProps) {
@@ -53,12 +53,12 @@ export default function NPSQuestion({
       }}>
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
-        headline={getLocalizedValue(question.headline, languageId)}
+        headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
         required={question.required}
       />
       <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageId) : ""}
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
         questionId={question.id}
       />{" "}
       <div className="my-4">
@@ -109,8 +109,8 @@ export default function NPSQuestion({
             ))}
           </div>
           <div className="text-info-text flex justify-between px-1.5 text-xs leading-6">
-            <p>{getLocalizedValue(question.lowerLabel, languageId)}</p>
-            <p>{getLocalizedValue(question.upperLabel, languageId)}</p>
+            <p>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
+            <p>{getLocalizedValue(question.upperLabel, languageCode)}</p>
           </div>
         </fieldset>
       </div>
@@ -118,7 +118,7 @@ export default function NPSQuestion({
         {!isFirstQuestion && (
           <BackButton
             tabIndex={isLastQuestion ? 12 : 13}
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageId)}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -130,7 +130,7 @@ export default function NPSQuestion({
         {!question.required && (
           <SubmitButton
             tabIndex={12}
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageId)}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

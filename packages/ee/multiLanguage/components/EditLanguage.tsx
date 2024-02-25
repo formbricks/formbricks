@@ -5,15 +5,20 @@ import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import Select from "react-select";
 
-import { TLanguage, TLanguageInput, TProduct } from "@formbricks/types/product";
+import { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
-import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
+import ConfirmationModal from "@formbricks/ui/ConfirmationModal";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
-import { createLanguageAction, deleteLanguageAction, updateLanguageAction } from "../lib/actions";
+import {
+  createLanguageAction,
+  deleteLanguageAction,
+  getSurveysUsingGivenLanguageAction,
+  updateLanguageAction,
+} from "../lib/actions";
 import { iso639Languages } from "../lib/isoLanguages";
 
 interface EditLanguageProps {
@@ -35,6 +40,23 @@ const customStyles = {
   }),
 };
 
+const AliasTooltip = () => {
+  return (
+    <TooltipProvider delayDuration={80}>
+      <Tooltip>
+        <TooltipTrigger tabIndex={-1}>
+          <div>
+            <Info className="h-4 w-4 text-slate-400" />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          The alias is an alternate name to identify the language in link surveys and the SDK.
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
 export default function EditLanguage({
   product,
   environmentId,
@@ -45,7 +67,10 @@ export default function EditLanguage({
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteModalOpenIndex, setDeleteModalOpenIndex] = useState<number | null>(null);
+  const [canRemoveSelectedLanguage, setCanRemoveSelectedLanguage] = useState(false);
+  const [confirmationModalText, setConfirmationModalText] = useState("");
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+
   const languageOptions = iso639Languages.map((language) => ({
     value: language.alpha2,
     label: `${language.english}`,
@@ -112,6 +137,32 @@ export default function EditLanguage({
     setIsEditing(true);
   };
 
+  const handleConfirmationModal = async (languageId: string) => {
+    try {
+      const surveysUsingGivenLanguage = await getSurveysUsingGivenLanguageAction(product.id, languageId);
+      console.log(surveysUsingGivenLanguage);
+      if (surveysUsingGivenLanguage.length > 0) {
+        console.log("inside");
+        setIsConfirmationModalOpen(true);
+        setCanRemoveSelectedLanguage(false);
+        const surveyList = surveysUsingGivenLanguage.map((surveyName) => `• ${surveyName}`).join("\n");
+        setConfirmationModalText(
+          `You cannot remove this language since it’s still used in these surveys:\n\n${surveyList}\n\nPlease remove the language from these surveys in order to remove it from the product.`
+        );
+        return;
+      } else {
+        setIsConfirmationModalOpen(true);
+        setCanRemoveSelectedLanguage(true);
+        setConfirmationModalText(
+          " If you remove this language, it can no longer be used inside your surveys. Are you sure? "
+        );
+      }
+    } catch (error) {
+      toast.error("Error deleting language");
+      setIsConfirmationModalOpen(false);
+    }
+  };
+
   const deleteLanguage = async (languageId: string) => {
     setIsDeleting(true);
     try {
@@ -123,7 +174,6 @@ export default function EditLanguage({
       toast.error("Error deleting language");
     } finally {
       setIsDeleting(false);
-      setDeleteModalOpenIndex(null);
     }
   };
 
@@ -135,21 +185,18 @@ export default function EditLanguage({
   };
 
   const handleSave = async () => {
-    if (!validateLanguage(languages)) {
-      return;
-    }
+    if (!validateLanguage(languages)) return;
+
     setIsUpdating(true);
+    const updatePromises = languages.map((language) => {
+      const languageInput = { code: language.code, alias: language.alias };
+      return language.id === "new"
+        ? createLanguageAction(product.id, environmentId, languageInput)
+        : updateLanguageAction(product.id, environmentId, language.id, languageInput);
+    });
+
     try {
-      await Promise.all(
-        languages.map(async (language) => {
-          const languageInput: TLanguageInput = { code: language.code, alias: language.alias };
-          if (language.id === "new") {
-            await createLanguageAction(product.id, environmentId, languageInput);
-          } else {
-            await updateLanguageAction(product.id, environmentId, language.id, languageInput);
-          }
-        })
-      );
+      await Promise.all(updatePromises);
       toast.success("Languages updated successfully");
     } catch (error) {
       toast.error("Error saving language");
@@ -157,23 +204,6 @@ export default function EditLanguage({
       setIsUpdating(false);
       setIsEditing(false);
     }
-  };
-
-  const AliasTooltip = () => {
-    return (
-      <TooltipProvider delayDuration={80}>
-        <Tooltip>
-          <TooltipTrigger tabIndex={-1}>
-            <div>
-              <Info className="h-4 w-4 text-slate-400" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            The alias is an alternate name to identify the language in link surveys and the SDK.
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
   };
 
   return (
@@ -216,22 +246,20 @@ export default function EditLanguage({
                     <Button
                       disabled={isEditing}
                       variant="warn"
-                      onClick={() => {
-                        if (isEditing) return;
-                        setDeleteModalOpenIndex(index);
-                      }}>
+                      onClick={() => handleConfirmationModal(language.id)}
+                      loading={isDeleting}>
                       Remove
                     </Button>
-                    <DeleteDialog
-                      open={deleteModalOpenIndex === index}
-                      setOpen={(open) => {
-                        if (!open) setDeleteModalOpenIndex(null);
-                      }}
-                      deleteWhat="Language"
-                      onDelete={() => deleteLanguage(language.id)}
-                      isDeleting={isDeleting}
-                    />
                   </div>
+                  <ConfirmationModal
+                    title={"Delete language"}
+                    open={isConfirmationModalOpen}
+                    setOpen={setIsConfirmationModalOpen}
+                    text={confirmationModalText}
+                    buttonText={"Remove Language"}
+                    isButtonDisabled={!canRemoveSelectedLanguage}
+                    onConfirm={async () => deleteLanguage(language.id)}
+                  />
                 </div>
               );
             })

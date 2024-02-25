@@ -30,6 +30,8 @@ export async function GET(
     const syncInputValidation = ZJsPublicSyncInput.safeParse({
       environmentId: params.environmentId,
     });
+    console.log("running");
+    console.log({ version });
 
     if (!syncInputValidation.success) {
       return responses.badRequestResponse(
@@ -82,29 +84,31 @@ export async function GET(
       throw new Error("Product not found");
     }
     let transformedSurveys: TLegacySurvey[] | TSurvey[];
+
     if (!version) {
+      console.log("reversetranslating");
       transformedSurveys = await Promise.all(
         surveys
           .filter((survey) => survey.status === "inProgress" && survey.type === "web")
-          .map(async (survey) => {
-            const transformedSurvey = await transformToLegacySurvey(survey);
-            return transformedSurvey;
-          })
+          .map(transformToLegacySurvey)
       );
     } else {
+      console;
       transformedSurveys = surveys.filter(
         (survey) => survey.status === "inProgress" && survey.type === "web"
       );
     }
 
+    const filterCondition = (survey: TLegacySurvey | TSurvey) =>
+      survey.status === "inProgress" &&
+      survey.type === "web" &&
+      (!survey.segment || survey.segment.filters.length === 0);
+
     const state: TJsStateSync = {
       surveys: !isInAppSurveyLimitReached
-        ? surveys.filter(
-            (survey) =>
-              survey.status === "inProgress" &&
-              survey.type === "web" &&
-              (!survey.segment || survey.segment.filters.length === 0)
-          )
+        ? version
+          ? (transformedSurveys as TSurvey[]).filter(filterCondition)
+          : (transformedSurveys as TLegacySurvey[]).filter(filterCondition)
         : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,

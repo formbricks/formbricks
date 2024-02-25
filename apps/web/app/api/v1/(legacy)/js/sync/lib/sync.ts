@@ -6,6 +6,7 @@ import {
   PRICING_USERTARGETING_FREE_MTU,
 } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { reverseTranslateSurvey } from "@formbricks/lib/i18n/utils";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys, getSyncSurveys } from "@formbricks/lib/survey/service";
@@ -21,7 +22,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 
 export const transformLegacySurveys = (surveys: TSurvey[]): TSurveyWithTriggers[] => {
   const updatedSurveys = surveys.map((survey) => {
-    const updatedSurvey: any = { ...survey };
+    const updatedSurvey: any = { ...reverseTranslateSurvey(survey) };
     updatedSurvey.triggers = updatedSurvey.triggers.map((trigger) => ({ name: trigger }));
     return updatedSurvey;
   });

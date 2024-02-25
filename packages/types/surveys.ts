@@ -456,7 +456,6 @@ export const ZSurveyInput = z.object({
   surveyClosedMessage: ZSurveyClosedMessage.optional(),
   verifyEmail: ZSurveyVerifyEmail.optional(),
   triggers: z.array(z.string()).optional(),
-  languages: z.array(ZSurveyLanguage),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

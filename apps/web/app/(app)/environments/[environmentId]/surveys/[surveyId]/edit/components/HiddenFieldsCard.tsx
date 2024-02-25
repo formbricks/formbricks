@@ -173,7 +173,17 @@ const validateHiddenField = (
   }
   // no key words -- userId & suid & existing question ids
   if (
-    ["userId", "source", "suid", "end", "start", "welcomeCard", "hidden", "verifiedEmail"].includes(field) ||
+    [
+      "userId",
+      "source",
+      "suid",
+      "end",
+      "start",
+      "welcomeCard",
+      "hidden",
+      "verifiedEmail",
+      "multiLanguage",
+    ].includes(field) ||
     existingQuestions.findIndex((q) => q.id === field) !== -1
   ) {
     return "Question not allowed";

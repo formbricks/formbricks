@@ -166,6 +166,7 @@ export default function SurveyEditor({
 
   return (
     <>
+      {console.log(localSurvey)}
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
@@ -230,7 +231,7 @@ export default function SurveyEditor({
               product={localProduct}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
-              languageId={selectedLanguageCode}
+              languageCode={selectedLanguageCode}
               onFileUpload={async (file) => file.name}
             />
           </aside>

@@ -20,7 +20,7 @@ interface CalQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  languageId: string;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -33,7 +33,7 @@ export default function CalQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  languageId,
+  languageCode,
   ttc,
   setTtc,
 }: CalQuestionProps) {
@@ -68,12 +68,12 @@ export default function CalQuestion({
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
-        headline={getLocalizedValue(question.headline, languageId)}
+        headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
         required={question.required}
       />
       <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageId) : ""}
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
         questionId={question.id}
       />
       <>
@@ -84,7 +84,7 @@ export default function CalQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageId)}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               onBack();
             }}
@@ -93,7 +93,7 @@ export default function CalQuestion({
         <div></div>
         {!question.required && (
           <SubmitButton
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageId)}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

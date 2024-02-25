@@ -1,6 +1,7 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
+// import { getMultiLanguagePermission } from "@formbricks/lib/utils/multiLanguage";
 import { TJSStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -31,6 +32,9 @@ export const renderWidget = async (survey: TSurvey) => {
   const product = config.get().state.product;
   const attributes = config.get().state.attributes;
 
+  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => surveyLanguage.default === true)
+    ?.language.code;
+
   const getLanguageCode = (): string => {
     const language = attributes.language;
     if (!language) return "default";
@@ -45,7 +49,7 @@ export const renderWidget = async (survey: TSurvey) => {
     }
   };
 
-  const languageId = getLanguageCode();
+  const languageCode = getLanguageCode();
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
   const responseQueue = new ResponseQueue(
@@ -76,7 +80,7 @@ export const renderWidget = async (survey: TSurvey) => {
       isBrandingEnabled: isBrandingEnabled,
       clickOutside,
       darkOverlay,
-      languageId,
+      languageCode,
       highlightBorderColor,
       placement,
       getSetIsError: (f: (value: boolean) => void) => {
@@ -152,6 +156,7 @@ export const renderWidget = async (survey: TSurvey) => {
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
+          language: languageCode === "default" ? defaultLanguageCode : languageCode,
         });
       },
       onClose: closeSurvey,

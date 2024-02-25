@@ -20,7 +20,7 @@ interface DateQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
-  languageId: string;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -33,7 +33,7 @@ export default function DateQuestion({
   isFirstQuestion,
   isLastQuestion,
   onChange,
-  languageId,
+  languageCode,
   setTtc,
   ttc,
 }: DateQuestionProps) {
@@ -125,12 +125,12 @@ export default function DateQuestion({
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
-        headline={getLocalizedValue(question.headline, languageId)}
+        headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
         required={question.required}
       />
       <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageId) : ""}
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
         questionId={question.id}
       />
 
@@ -152,7 +152,7 @@ export default function DateQuestion({
         <div>
           {!isFirstQuestion && (
             <BackButton
-              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageId)}
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);
@@ -165,7 +165,7 @@ export default function DateQuestion({
         <SubmitButton
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageId)}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
         />
       </div>
     </form>

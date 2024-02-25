@@ -3,7 +3,12 @@
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { createLanguage, deleteLanguage, updateLanguage } from "@formbricks/lib/language/service";
+import {
+  createLanguage,
+  deleteLanguage,
+  getSurveysUsingGivenLanguage,
+  updateLanguage,
+} from "@formbricks/lib/language/service";
 import { canUserAccessProduct, verifyUserRoleAccess } from "@formbricks/lib/product/auth";
 import { getProduct } from "@formbricks/lib/product/service";
 import { AuthorizationError } from "@formbricks/types/errors";
@@ -41,6 +46,16 @@ export async function deleteLanguageAction(productId: string, environmentId: str
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await deleteLanguage(productId, environmentId, languageId);
+}
+
+export async function getSurveysUsingGivenLanguageAction(productId: string, languageId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserAccessProduct(session.user?.id, productId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await getSurveysUsingGivenLanguage(languageId);
 }
 
 export async function updateLanguageAction(

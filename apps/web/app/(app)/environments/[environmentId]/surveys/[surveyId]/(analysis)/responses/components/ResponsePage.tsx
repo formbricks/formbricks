@@ -103,6 +103,7 @@ const ResponsePage = ({
 
   return (
     <ContentWrapper>
+      {console.log(responses)}
       <SummaryHeader
         environment={environment}
         survey={survey}

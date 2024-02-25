@@ -132,10 +132,12 @@ export const translateQuestion = (question: TSurveyQuestion, languages: string[]
       : undefined;
   }
   if (question.type === "openText") {
-    (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(
-      question.placeholder ?? "",
-      languages
-    );
+    if (question.placeholder) {
+      (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(
+        question.placeholder,
+        languages
+      );
+    }
   }
   if (question.type === "cta") {
     if (question.dismissButtonLabel) {
@@ -231,10 +233,6 @@ export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string
   return surveyLanguages.map((surveyLanguage) =>
     surveyLanguage.default ? "default" : surveyLanguage.language.code
   );
-};
-
-export const containsTranslations = (i18nString: TI18nString) => {
-  return Object.entries(i18nString).length > 1;
 };
 
 // Helper function to extract a regular string from an i18nString.

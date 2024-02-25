@@ -19,7 +19,7 @@ interface CTAQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  languageId: string;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -31,7 +31,7 @@ export default function CTAQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  languageId,
+  languageCode,
   ttc,
   setTtc,
 }: CTAQuestionProps) {
@@ -44,15 +44,15 @@ export default function CTAQuestion({
       {console.log(question)}
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
-        headline={getLocalizedValue(question.headline, languageId)}
+        headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
         required={question.required}
       />
-      <HtmlBody htmlString={getLocalizedValue(question.html, languageId)} questionId={question.id} />
+      <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageId)}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -73,11 +73,11 @@ export default function CTAQuestion({
                 onChange({ [question.id]: "dismissed" });
               }}
               className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
-              {getLocalizedValue(question.dismissButtonLabel, languageId) || "Skip"}
+              {getLocalizedValue(question.dismissButtonLabel, languageCode) || "Skip"}
             </button>
           )}
           <SubmitButton
-            buttonLabel={getLocalizedValue(question.buttonLabel, languageId)}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             focus={true}
             onClick={() => {

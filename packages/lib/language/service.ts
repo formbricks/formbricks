@@ -43,6 +43,34 @@ export const createLanguage = async (
   }
 };
 
+export const getSurveysUsingGivenLanguage = async (languageId: string): Promise<string[]> => {
+  try {
+    // Check if the language is used in any survey
+    const surveys = await prisma.surveyLanguage.findMany({
+      where: {
+        languageId: languageId,
+      },
+      include: {
+        survey: {
+          select: {
+            name: true, // Select only the name of the survey
+          },
+        },
+      },
+    });
+
+    // Extracting survey names
+    const surveyNames = surveys.map((s) => s.survey.name);
+    return surveyNames;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(error);
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
 export const deleteLanguage = async (
   productId: string,
   environmentId: string,

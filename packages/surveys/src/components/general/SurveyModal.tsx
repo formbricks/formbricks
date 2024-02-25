@@ -22,7 +22,7 @@ export function SurveyModal({
   onFileUpload,
   onRetry,
   isRedirectDisabled = false,
-  languageId,
+  languageCode,
   responseCount,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
@@ -52,7 +52,7 @@ export function SurveyModal({
           onDisplay={onDisplay}
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
-          languageId={languageId}
+          languageCode={languageCode}
           onClose={close}
           onFinished={() => {
             onFinished();

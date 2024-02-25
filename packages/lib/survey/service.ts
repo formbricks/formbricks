@@ -318,9 +318,10 @@ export async function updateSurvey(updatedSurvey: TSurvey): Promise<TSurvey> {
     const currentLanguageIds = currentSurvey.languages
       ? currentSurvey.languages.map((l) => l.language.id)
       : [];
-    const updatedLanguageIds = updatedSurvey.languages
-      ? updatedSurvey.languages.map((l) => l.language.id)
-      : [];
+    const updatedLanguageIds =
+      updatedSurvey.languages && updatedSurvey.languages.length > 1
+        ? updatedSurvey.languages.map((l) => l.language.id)
+        : [];
 
     // Determine languages to add and remove
     const languagesToAdd = updatedLanguageIds.filter((id) => !currentLanguageIds.includes(id));
@@ -502,7 +503,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     const actionClasses = await getActionClasses(environmentId);
     revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
   }
-
   const createdBy = surveyBody.createdBy;
   delete surveyBody.createdBy;
 
@@ -562,6 +562,8 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
+  const defaultLanguageId = existingSurvey.languages.find((l) => l.default)?.language.id;
+
   const actionClasses = await getActionClasses(environmentId);
 
   // create new survey with the data of the existing survey
@@ -575,6 +577,12 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       status: "draft",
       questions: structuredClone(existingSurvey.questions),
       thankYouCard: structuredClone(existingSurvey.thankYouCard),
+      languages: {
+        create: existingSurvey.languages?.map((surveyLanguage) => ({
+          languageId: surveyLanguage.language.id,
+          default: surveyLanguage.language.id === defaultLanguageId,
+        })),
+      },
       triggers: {
         create: existingSurvey.triggers.map((trigger) => ({
           actionClassId: getActionClassIdFromName(actionClasses, trigger),

@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import { getLanguageNameFromCode } from "@formbricks/ee/multiLanguage/lib/isoLanguages";
+import { getLanguageLabel } from "@formbricks/ee/multiLanguage/lib/isoLanguages";
 import { TSurveyLanguage } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 
@@ -92,7 +92,7 @@ export default function LinkTab({
                             setLanguage(surveyLanguage.language.code);
                             setShowLanguageSelect(false);
                           }}>
-                          {getLanguageNameFromCode(surveyLanguage.language.code)}
+                          {getLanguageLabel(surveyLanguage.language.code)}
                         </div>
                       );
                     })}

@@ -1,10 +1,19 @@
+import { useMemo } from "react";
+
 import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbricks/types/surveys";
 import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface LocalizedInputProps {
-  id: string;
+  id:
+    | "headline"
+    | "subheader"
+    | "lowerLabel"
+    | "upperLabel"
+    | "buttonLabel"
+    | "placeholder"
+    | "backButtonLabel";
   name: string;
   value: TI18nString | undefined;
   isInvalid: boolean;
@@ -22,6 +31,48 @@ interface LocalizedInputProps {
   defaultValue?: string;
   className?: string;
 }
+
+const determineQuestionId = (questionIdx: number, localSurvey: TSurvey) => {
+  //its a welcome card
+  if (questionIdx === -1) return "start";
+
+  //Its a thank you card
+  if (questionIdx === localSurvey.questions.length) return "end";
+  //Its a question card
+  else return localSurvey.questions[questionIdx].id;
+};
+
+const isValueIncomplete = (
+  id: string,
+  isInvalid: boolean,
+  surveyLanguageCodes: string[],
+  value?: TI18nString
+) => {
+  // Define a list of IDs for which a default value needs to be checked.
+  const labelIds = [
+    "headline",
+    "subheader",
+    "lowerLabel",
+    "upperLabel",
+    "buttonLabel",
+    "placeholder",
+    "backButtonLabel",
+  ];
+
+  // If value is not provided, immediately return false as it cannot be incomplete.
+  if (value === undefined) return false;
+
+  // Check if the default value is incomplete. This applies only to specific label IDs.
+  // For these IDs, the default value should not be an empty string.
+  const isDefaultIncomplete = labelIds.includes(id) ? value["default"]?.trim() !== "" : false;
+
+  // Return true if all the following conditions are met:
+  // 1. The field is marked as invalid.
+  // 2. The label is not valid for all provided language codes in the survey.
+  // 4. For specific label IDs, the default value is incomplete as defined above.
+  return isInvalid && !isLabelValidForAllLanguages(value, surveyLanguageCodes) && isDefaultIncomplete;
+};
+
 const LocalizedInput = ({
   id,
   value,
@@ -39,41 +90,24 @@ const LocalizedInput = ({
   maxLength,
   className,
 }: LocalizedInputProps) => {
-  const isThankYouCard = questionIdx === localSurvey.questions.length;
-  const isWelcomeCard = questionIdx === -1;
-  const surveyLanguageIds = extractLanguageCodes(localSurvey.languages);
-
-  const questionId = () => {
-    if (isThankYouCard) return "end";
-    else if (isWelcomeCard) return "start";
-    else return localSurvey.questions[questionIdx].id;
-  };
-
-  const isInComplete =
-    value !== undefined &&
-    (id === "subheader" ||
-    id === "lowerLabel" ||
-    id === "upperLabel" ||
-    id === "buttonLabel" ||
-    id === "placeholder" ||
-    id === "backButtonLabel"
-      ? value["default"]?.trim() !== "" &&
-        isInvalid &&
-        !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguageCode === "default"
-      : isInvalid &&
-        !isLabelValidForAllLanguages(value, surveyLanguageIds) &&
-        selectedLanguageCode === "default");
+  const questionId = useMemo(() => determineQuestionId(questionIdx, localSurvey), [questionIdx, localSurvey]);
+  const surveyLanguageCodes = useMemo(
+    () => extractLanguageCodes(localSurvey.languages),
+    [localSurvey.languages]
+  );
+  const isInComplete = useMemo(
+    () => isValueIncomplete(id, isInvalid, surveyLanguageCodes, value),
+    [value, id, isInvalid, surveyLanguageCodes]
+  );
 
   return (
     <div className="relative w-full">
       <QuestionFormInput
         id={id}
         localSurvey={localSurvey}
-        environmentId={localSurvey.environmentId}
         isInvalid={localSurvey.languages?.length > 1 && isInComplete}
         label={label}
-        questionId={questionId()}
+        questionId={questionId}
         questionIdx={questionIdx}
         updateQuestion={updateQuestion}
         updateSurvey={updateSurvey}
@@ -85,12 +119,12 @@ const LocalizedInput = ({
         onBlur={onBlur}
         className={className}
       />
-      {value && selectedLanguageCode !== "default" && value["default"] && (
+      {selectedLanguageCode !== "default" && value && value["default"] && (
         <div className="mt-1 text-xs text-gray-500">
           <strong>Translate:</strong> {recallToHeadline(value, localSurvey, false, "default")["default"]}
         </div>
       )}
-      {localSurvey.languages?.length > 1 && isInComplete && (
+      {selectedLanguageCode === "default" && localSurvey.languages?.length > 1 && isInComplete && (
         <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
       )}
     </div>

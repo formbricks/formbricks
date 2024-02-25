@@ -21,7 +21,7 @@ interface OpenTextQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
-  languageId: string;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -34,7 +34,7 @@ export default function OpenTextQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  languageId,
+  languageCode,
   autoFocus = true,
   ttc,
   setTtc,
@@ -71,12 +71,12 @@ export default function OpenTextQuestion({
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
-        headline={getLocalizedValue(question.headline, languageId)}
+        headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
         required={question.required}
       />
       <Subheader
-        subheader={question.subheader ? getLocalizedValue(question.subheader, languageId) : ""}
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
         questionId={question.id}
       />
       <div className="mt-4">
@@ -86,7 +86,7 @@ export default function OpenTextQuestion({
             tabIndex={1}
             name={question.id}
             id={question.id}
-            placeholder={getLocalizedValue(question.placeholder, languageId)}
+            placeholder={getLocalizedValue(question.placeholder, languageCode)}
             required={question.required}
             value={value ? (value as string) : ""}
             type={question.inputType}
@@ -103,7 +103,7 @@ export default function OpenTextQuestion({
             name={question.id}
             tabIndex={1}
             id={question.id}
-            placeholder={getLocalizedValue(question.placeholder, languageId)}
+            placeholder={getLocalizedValue(question.placeholder, languageCode)}
             required={question.required}
             value={value as string}
             type={question.inputType}
@@ -118,7 +118,7 @@ export default function OpenTextQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageId)}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedttc);
@@ -128,7 +128,7 @@ export default function OpenTextQuestion({
         )}
         <div></div>
         <SubmitButton
-          buttonLabel={getLocalizedValue(question.buttonLabel, languageId)}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
         />
