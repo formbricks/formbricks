@@ -140,6 +140,7 @@ export const authOptions: NextAuthOptions = {
           formData.append("client_secret", context.provider.clientSecret ?? "");
 
           const session = await getServerSession(authOptions);
+
           try {
             const response = await fetch("https://slack.com/api/oauth.v2.access", {
               method: "POST",
@@ -147,15 +148,14 @@ export const authOptions: NextAuthOptions = {
             });
 
             const data = await response.json();
-            console.log("response0--------------------------------------", data);
             return {
               tokens: {
                 access_token: data.access_token,
                 refresh_token: data.refresh_token,
                 expires_at: data.expires_in,
                 user_id: data.bot_user_id,
-                team_id: data.team.id,
-                team_name: data.team.name,
+                id: data.team.id,
+                name: data.team.name,
                 email: session?.user?.email,
               },
             };
@@ -168,7 +168,6 @@ export const authOptions: NextAuthOptions = {
         async request(context) {
           const session = await getServerSession(authOptions);
 
-          console.log("session............", session);
           return {
             sub: "bot_user",
             ...session?.user,
@@ -191,13 +190,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, session }) {
+    async jwt({ token, account }) {
       let slackAttributes = {};
       if (account && account.provider && account.provider === "slack") {
         slackAttributes = {
           accessToken: account.access_token,
-          idToken: account.id_token,
           refreshToken: account.refresh_token,
+          email: account?.email,
+          name: account?.name,
+          id: account?.id,
           expiresAt: account.expires_at,
           provider: account.provider,
         };
@@ -223,9 +224,18 @@ export const authOptions: NextAuthOptions = {
       return {
         ...session,
         slack: {
+          // @ts-expect-error
+          id: token.slack?.id,
+          // @ts-expect-error
           accessToken: token.slack?.accessToken,
+          // @ts-expect-error
           refreshToken: token.slack?.refreshToken,
+          // @ts-expect-error
           expiresAt: token.slack?.expiresAt,
+          // @ts-expect-error
+          email: token.slack?.email,
+          // @ts-expect-error
+          name: token.slack?.name,
         },
       };
     },

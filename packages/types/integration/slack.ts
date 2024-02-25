@@ -2,15 +2,6 @@ import { z } from "zod";
 
 import { ZIntegrationBase, ZIntegrationBaseSurveyData } from "./sharedTypes";
 
-export const ZSlackCredential = z.object({
-  token_type: z.literal("Bearer"),
-  expiry_date: z.number(),
-  access_token: z.string(),
-  refresh_token: z.string(),
-});
-
-export type TSlackCredential = z.infer<typeof ZSlackCredential>;
-
 export const ZIntegrationSlackConfigData = z
   .object({
     // Channel Mapped to a Particular Survey where we have to send the data from the above survey
@@ -19,29 +10,23 @@ export const ZIntegrationSlackConfigData = z
   })
   .merge(ZIntegrationBaseSurveyData);
 
-export const ZSlackConfigData = z.object({
-  createdAt: z.date(),
-
-  // Data sent from formbricks
-  questionIds: z.array(z.string()),
-  questions: z.string(),
-  surveyId: z.string(),
-  surveyName: z.string(),
-
-  // Channel Mapped to a Particular Survey where we have to send the data from the above survey
-  channelId: z.string(),
-  channelName: z.string(),
+export const ZIntegrationSlackCredential = z.object({
+  token_type: z.literal("Bearer"),
+  expiry_date: z.number(),
+  access_token: z.string(),
+  refresh_token: z.string(),
 });
+
+export type TIntegrationSlackCredential = z.infer<typeof ZIntegrationSlackCredential>;
 
 export const ZSlackUser = z.object({
   id: z.string().optional(),
   name: z.string(),
   email: z.string().email("Not a valid email address"),
-  avatar: z.string().url("Avatar must be a url"),
 });
 
 export const ZIntegrationSlackConfig = z.object({
-  key: ZSlackCredential,
+  key: ZIntegrationSlackCredential,
   data: z.array(ZIntegrationSlackConfigData),
   user: ZSlackUser,
 });
@@ -67,23 +52,3 @@ export const ZIntegrationSlackInput = z.object({
 });
 
 export type TIntegrationSlackInput = z.infer<typeof ZIntegrationSlackInput>;
-
-export const ZSlackConfig = z.object({
-  key: ZSlackCredential,
-  data: z.array(ZSlackConfigData),
-  user: ZSlackUser,
-});
-
-export const ZIntegrationSlackCredential = z.object({
-  token_type: z.literal("Bearer"),
-  expiry_date: z.number(),
-  access_token: z.string(),
-  refresh_token: z.string(),
-});
-
-export type TIntegrationSlackCredential = z.infer<typeof ZIntegrationSlackCredential>;
-
-export type TSlackConfig = z.infer<typeof ZSlackConfig>;
-export type TSlackConfigData = z.infer<typeof ZSlackConfigData>;
-export type TSlackIntegration = z.infer<typeof ZSlackIntegration>;
-export type TSlackUser = z.infer<typeof ZSlackUser>;

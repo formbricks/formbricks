@@ -3,16 +3,12 @@ import { cache } from "react";
 
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import {
-  TIntegrationSlack,
-  TSlackChannel,
-  TSlackCredential,
-  TSlackIntegration,
-} from "@formbricks/types/integration/slack";
+import { TIntegrationItem } from "@formbricks/types/integration";
+import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 
 import { getIntegrationByType } from "../integration/service";
 
-export const fetchChannels = async (key: TSlackCredential): Promise<TSlackChannel[]> => {
+export const fetchChannels = async (key: TIntegrationSlackCredential): Promise<TIntegrationItem[]> => {
   const response = await fetch("https://slack.com/api/conversations.list", {
     method: "GET",
     headers: {
@@ -37,12 +33,11 @@ export const fetchChannels = async (key: TSlackCredential): Promise<TSlackChanne
   }));
 };
 
-export const getSlackChannels = async (environmentId: string): Promise<TSlackChannel[]> => {
-  let channels: TSlackChannel[] = [];
+export const getSlackChannels = async (environmentId: string): Promise<TIntegrationItem[]> => {
+  let channels: TIntegrationItem[] = [];
   try {
     const slackIntegration = (await getIntegrationByType(environmentId, "slack")) as TIntegrationSlack;
     if (slackIntegration && slackIntegration.config?.key) {
-      console.log("fetching channels", slackIntegration.config.key);
       channels = await fetchChannels(slackIntegration.config.key);
     }
 
@@ -55,7 +50,7 @@ export const getSlackChannels = async (environmentId: string): Promise<TSlackCha
   }
 };
 
-export const getSlackIntegration = cache(async (environmentId: string): Promise<TSlackIntegration | null> => {
+export const getSlackIntegration = cache(async (environmentId: string): Promise<TIntegrationSlack | null> => {
   try {
     const result = await prisma.integration.findUnique({
       where: {
@@ -67,7 +62,7 @@ export const getSlackIntegration = cache(async (environmentId: string): Promise<
     });
     // Type Guard
     if (result && isSlackIntegration(result)) {
-      return result as TSlackIntegration; // Explicit casting
+      return result as TIntegrationSlack; // Explicit casting
     }
     return null;
   } catch (error) {
@@ -78,12 +73,12 @@ export const getSlackIntegration = cache(async (environmentId: string): Promise<
   }
 });
 
-function isSlackIntegration(integration: any): integration is TSlackIntegration {
+function isSlackIntegration(integration: any): integration is TIntegrationSlack {
   return integration.type === "slack";
 }
 
 export async function writeDataToSlack(
-  credentials: TSlackCredential,
+  credentials: TIntegrationSlackCredential,
   channelId: string,
   values: string[][],
   surveyName: string

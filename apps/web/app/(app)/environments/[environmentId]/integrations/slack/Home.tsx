@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
+import { TIntegrationSlack, TIntegrationSlackConfig } from "@formbricks/types/integration/slack";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
@@ -14,10 +14,10 @@ import { deleteIntegrationAction } from "../actions";
 
 interface HomeProps {
   environment: TEnvironment;
-  slackIntegration: TSlackIntegration;
+  slackIntegration: TIntegrationSlack;
   setOpenAddIntegrationModal: (v: boolean) => void;
   setIsConnected: (v: boolean) => void;
-  setSelectedIntegration: (v: (TSlackConfigData & { index: number }) | null) => void;
+  setSelectedIntegration: (v: (TIntegrationSlackConfig & { index: number }) | null) => void;
   refreshSheet: () => void;
 }
 
@@ -51,6 +51,7 @@ export default function Home({
     }
   };
 
+  // TODO
   const editIntegration = (index: number) => {
     setSelectedIntegration({
       ...slackIntegration.config.data[index],
@@ -69,7 +70,7 @@ export default function Home({
             onClick={() => {
               setIsDeleteIntegrationModalOpen(true);
             }}>
-            Connected with {slackIntegration.config.user.email}
+            Connected with {slackIntegration.config.user.name}
           </span>
         </div>
         <Button

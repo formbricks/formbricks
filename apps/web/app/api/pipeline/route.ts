@@ -104,7 +104,6 @@ export async function POST(request: Request) {
     const integrations = await getIntegrations(environmentId);
 
     if (integrations.length > 0) {
-      console.log("ran integrations");
       surveyData = await prisma.survey.findUnique({
         where: {
           id: surveyId,

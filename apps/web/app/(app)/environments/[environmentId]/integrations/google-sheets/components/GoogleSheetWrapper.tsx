@@ -1,5 +1,3 @@
-"use client";
-
 import { refreshSheetAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 import { useState } from "react";
 

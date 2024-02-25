@@ -1,11 +1,10 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-import { prisma } from "@formbricks/database";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
-import { TSlackConfig } from "@formbricks/types/integration/slack";
+import { TIntegrationSlackConfig, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 
 export async function GET(req: NextRequest, res: NextResponse) {
   const url = req.url;
@@ -24,26 +23,33 @@ export async function GET(req: NextRequest, res: NextResponse) {
     };
   }
 
-  const { user, slack } = session;
-  // @ts-ignore
-  const slackCredentials: TSlackCredential = {
+  // @ts-expect-error
+  const { slack } = session;
+
+  if (!slack) {
+    console.log("slack session is not defined");
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
+  const slackCredentials: TIntegrationSlackCredential = {
     token_type: "Bearer",
-    // @ts-ignore
     access_token: slack.accessToken,
-    // @ts-ignore
     refresh_token: slack.refreshToken,
-    // @ts-ignore
     expiry_date: slack.expiresAt,
   };
 
-  const slackConfiguration: TSlackConfig = {
+  const slackConfiguration: TIntegrationSlackConfig = {
     data: [],
     key: slackCredentials,
     user: {
-      id: user?.id,
-      name: user?.name as string,
-      email: user?.email as string,
-      avatar: user?.imageUrl as string,
+      id: slack.id,
+      name: slack.name as string,
+      email: slack.email as string,
     },
   };
 

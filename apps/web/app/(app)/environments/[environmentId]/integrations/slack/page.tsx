@@ -31,8 +31,6 @@ export default async function Slack({ params }) {
     throw new Error("Environment not found");
   }
 
-  console.log("isadfafd conneeeeeeected!!!!!!!!", slackIntegration);
-
   return (
     <>
       <GoBackButton url={`"/environments/${params.environmentId}/integrations`} />

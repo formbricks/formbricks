@@ -1,4 +1,3 @@
-import { upsertIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/slack/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -7,11 +6,11 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { TIntegrationItem } from "@formbricks/types/integration";
 import {
+  TIntegrationSlack,
+  TIntegrationSlackConfig,
   TIntegrationSlackInput,
-  TSlackChannel,
-  TSlackConfigData,
-  TSlackIntegration,
 } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -26,9 +25,9 @@ interface AddWebhookModalProps {
   open: boolean;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
-  channels: TSlackChannel[];
-  slackIntegration: TSlackIntegration;
-  selectedIntegration?: (TSlackConfigData & { index: number }) | null;
+  channels: TIntegrationItem[];
+  slackIntegration: TIntegrationSlack;
+  selectedIntegration?: (TIntegrationSlackConfig & { index: number }) | null;
 }
 
 export default function AddSlackConnectionModal({
@@ -55,7 +54,7 @@ export default function AddSlackConnectionModal({
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingSheet, setIsLinkingSheet] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
-  const [selectedChannel, setSelectedChannel] = useState<TSlackChannel | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<TIntegrationItem | null>(null);
   const [isDeleting, setIsDeleting] = useState<any>(null);
   const existingIntegrationData = slackIntegration?.config?.data;
   const slackIntegrationData: TIntegrationSlackInput = {

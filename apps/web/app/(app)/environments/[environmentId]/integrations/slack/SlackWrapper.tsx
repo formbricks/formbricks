@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
-import { TSlackConfigData, TSlackIntegration } from "@formbricks/types/integration/slack";
+import { TIntegrationSlack, TIntegrationSlackConfig } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { refreshChannelAction } from "./actions";
@@ -17,7 +17,7 @@ interface SlackWrapperProps {
   environment: TEnvironment;
   surveys: TSurvey[];
   channelsArray: TIntegrationItem[];
-  slackIntegration?: TSlackIntegration;
+  slackIntegration?: TIntegrationSlack;
   webAppUrl: string;
 }
 
@@ -33,7 +33,7 @@ export default function SlackWrapper({
   const [slackChannels, setSlackChannels] = useState(channelsArray);
   const [isModalOpen, setModalOpen] = useState<boolean>(false);
   const [selectedIntegration, setSelectedIntegration] = useState<
-    (TSlackConfigData & { index: number }) | null
+    (TIntegrationSlackConfig & { index: number }) | null
   >(null);
 
   const refreshSheet = async () => {
@@ -41,7 +41,6 @@ export default function SlackWrapper({
     setSlackChannels(latestSlackChannels);
   };
 
-  console.log("is conneeeeeeected!!!!!!!!", isConnected);
   return isConnected && slackIntegration ? (
     <>
       <AddSlackConnectionModal
