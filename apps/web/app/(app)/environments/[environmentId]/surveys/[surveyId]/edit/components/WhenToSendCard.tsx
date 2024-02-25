@@ -1,9 +1,10 @@
 "use client";
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
+import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
 import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -20,10 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@formbricks/ui/Select";
+import { TabBar } from "@formbricks/ui/TabBar";
 
 interface WhenToSendCardProps {
   localSurvey: TSurvey;
-  setLocalSurvey: (survey: TSurvey) => void;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
   propActionClasses: TActionClass[];
   membershipRole?: TMembershipRole;
@@ -41,6 +43,21 @@ export default function WhenToSendCard({
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
+
+  const [activeTriggerTab, setActiveTriggerTab] = useState(
+    !!localSurvey?.inlineTriggers ? "inline" : "relation"
+  );
+  const tabs = [
+    {
+      id: "relation",
+      label: "Saved Actions",
+    },
+    {
+      id: "inline",
+      label: "Custom Actions",
+    },
+  ];
+
   const { isViewer } = getAccessFlags(membershipRole);
 
   const autoClose = localSurvey.autoClose !== null;
@@ -152,6 +169,32 @@ export default function WhenToSendCard({
     }
   }, [addTriggerEvent, localSurvey.triggers.length]);
 
+  const containsEmptyTriggers = useMemo(() => {
+    const noTriggers = !localSurvey.triggers || !localSurvey.triggers.length || !localSurvey.triggers[0];
+    const noInlineTriggers =
+      !localSurvey.inlineTriggers ||
+      (!localSurvey.inlineTriggers?.codeConfig && !localSurvey.inlineTriggers?.noCodeConfig);
+
+    if (noTriggers && noInlineTriggers) {
+      return true;
+    }
+
+    return false;
+  }, [localSurvey]);
+
+  // for inline triggers, if both the codeConfig and noCodeConfig are empty, we consider it as empty
+  useEffect(() => {
+    const inlineTriggers = localSurvey?.inlineTriggers ?? {};
+    if (Object.keys(inlineTriggers).length === 0) {
+      setLocalSurvey((prevSurvey) => {
+        return {
+          ...prevSurvey,
+          inlineTriggers: null,
+        };
+      });
+    }
+  }, [localSurvey?.inlineTriggers, setLocalSurvey]);
+
   if (localSurvey.type === "link") {
     return null; // Hide card completely
   }
@@ -171,7 +214,7 @@ export default function WhenToSendCard({
           className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
-              {!localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0] ? (
+              {containsEmptyTriggers ? (
                 <div className="h-8 w-8 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
                 <CheckCircleIcon className="h-8 w-8 text-green-400" />
@@ -187,60 +230,83 @@ export default function WhenToSendCard({
 
         <Collapsible.CollapsibleContent>
           <hr className="py-1 text-slate-600" />
-          <div className="p-3">
-            {!isAddEventModalOpen &&
-              localSurvey.triggers?.map((triggerEventClass, idx) => (
-                <div className="mt-2" key={idx}>
-                  <div className="inline-flex items-center">
-                    <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
-                    <Select
-                      value={triggerEventClass}
-                      onValueChange={(actionClassName) => setTriggerEvent(idx, actionClassName)}>
-                      <SelectTrigger className="w-[240px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <button
-                          type="button"
-                          className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
-                          value="none"
-                          onClick={() => {
-                            setAddEventModalOpen(true);
-                            setActiveIndex(idx);
-                          }}>
-                          <PlusIcon className="mr-1 h-5 w-5" />
-                          Add Action
-                        </button>
-                        <SelectSeparator />
-                        {actionClasses.map((actionClass) => (
-                          <SelectItem
-                            value={actionClass.name}
-                            key={actionClass.name}
-                            title={actionClass.description ? actionClass.description : ""}>
-                            {actionClass.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="mx-2 text-sm">action is performed</p>
-                    <button type="button" onClick={() => removeTriggerEvent(idx)}>
-                      <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
-                    </button>
+
+          <div className="px-3 pb-3 pt-1">
+            <div className="flex flex-col overflow-hidden rounded-lg border-2 border-slate-100">
+              <TabBar
+                tabs={tabs}
+                activeId={activeTriggerTab}
+                setActiveId={setActiveTriggerTab}
+                tabStyle="button"
+                className="bg-slate-100"
+              />
+              <div className="p-3">
+                {activeTriggerTab === "inline" ? (
+                  <div className="flex flex-col">
+                    <InlineTriggers localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
                   </div>
-                </div>
-              ))}
-            <div className="px-6 py-4">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  addTriggerEvent();
-                }}>
-                <PlusIcon className="mr-2 h-4 w-4" />
-                Add condition
-              </Button>
+                ) : (
+                  <>
+                    {!isAddEventModalOpen &&
+                      localSurvey.triggers?.map((triggerEventClass, idx) => (
+                        <div className="mt-2" key={idx}>
+                          <div className="inline-flex items-center">
+                            <p className="mr-2 w-14 text-right text-sm">{idx === 0 ? "When" : "or"}</p>
+                            <Select
+                              value={triggerEventClass}
+                              onValueChange={(actionClassName) => setTriggerEvent(idx, actionClassName)}>
+                              <SelectTrigger className="w-[240px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <button
+                                  type="button"
+                                  className="flex w-full items-center space-x-2 rounded-md p-1 text-sm font-semibold text-slate-800 hover:bg-slate-100 hover:text-slate-500"
+                                  value="none"
+                                  onClick={() => {
+                                    setAddEventModalOpen(true);
+                                    setActiveIndex(idx);
+                                  }}>
+                                  <PlusIcon className="mr-1 h-5 w-5" />
+                                  Add Action
+                                </button>
+                                <SelectSeparator />
+                                {actionClasses.map((actionClass) => (
+                                  <SelectItem
+                                    value={actionClass.name}
+                                    key={actionClass.name}
+                                    title={actionClass.description ? actionClass.description : ""}>
+                                    {actionClass.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="mx-2 text-sm">action is performed</p>
+                            <button type="button" onClick={() => removeTriggerEvent(idx)}>
+                              <TrashIcon className="ml-3 h-4 w-4 text-slate-400" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    <div className="px-6 py-4">
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          addTriggerEvent();
+                        }}>
+                        <PlusIcon className="mr-2 h-4 w-4" />
+                        Add condition
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
-            <div className="ml-2 flex items-center space-x-1 px-4 pb-4"></div>
+            <div className="mb-4 mt-8 space-y-1 px-4">
+              <h3 className="font-semibold text-slate-800">Survey Display Settings</h3>
+              <p className="text-sm text-slate-500">Add a delay or auto-close the survey</p>
+            </div>
             <AdvancedOptionToggle
               htmlId="delay"
               isChecked={delay}

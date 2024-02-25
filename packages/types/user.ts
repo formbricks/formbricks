@@ -45,7 +45,7 @@ export const ZUserUpdateInput = z.object({
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
-  imageUrl: z.string().url().nullish(),
+  imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
 });
 
