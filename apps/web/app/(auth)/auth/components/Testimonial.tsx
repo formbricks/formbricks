@@ -9,7 +9,7 @@ export default function Testimonial() {
       <div className="3xl:w-2/3 mb-10 space-y-8 px-12 xl:px-20 ">
         <div>
           <h2 className="text-3xl font-bold text-slate-800">
-            Versatile in-app surveys. Valuable user insights.
+            Turn customer insights into irresistible experiences.
           </h2>
         </div>
         {/*  <p className="text-slate-600">

@@ -2534,6 +2534,7 @@ export const minimalSurvey: TSurvey = {
   recontactDays: null,
   welcomeCard: welcomeCardDefault,
   questions: [],
+  inlineTriggers: null,
   thankYouCard: {
     enabled: false,
   },
