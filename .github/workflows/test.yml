@@ -22,8 +22,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --config.platform=linux --config.architecture=x64
 
-      - name: create .env
-        run: cp .env.example .env
+      - name: Export .env.example variables to GitHub Environment
+        run: |
+          while IFS= read -r line; do
+            if [ -n "$line" ]; then  # Check if the line is not empty
+              echo "$line" >> $GITHUB_ENV
+            fi
+          done < .env.example
 
       - name: Generate Random ENCRYPTION_KEY
         run: |
