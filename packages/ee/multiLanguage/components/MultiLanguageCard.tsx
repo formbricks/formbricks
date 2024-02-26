@@ -17,7 +17,7 @@ import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import { getLanguageLabel } from "../lib/isoLanguages";
 
-interface HiddenFieldsCardProps {
+interface MultiLanguageCardProps {
   localSurvey: TSurvey;
   product: TProduct;
   setLocalSurvey: (survey: TSurvey) => void;
@@ -28,7 +28,7 @@ interface HiddenFieldsCardProps {
   setSelectedLanguageCode: (language: string) => void;
 }
 
-const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
+const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   activeQuestionId,
   product,
   localSurvey,
@@ -118,7 +118,7 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
     <div
       className={cn(
         open ? "scale-100 shadow-lg " : "scale-97 shadow-md",
-        "group z-10 flex flex-row rounded-lg bg-white transition-transform duration-300 ease-in-out"
+        "group z-10 flex flex-row rounded-lg bg-white text-slate-900 transition-transform duration-300 ease-in-out"
       )}>
       <div
         className={cn(
@@ -166,30 +166,37 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
               </p>
             )}
             {product.languages.length === 1 && (
-              <div className="text-sm">You need two or more languages to work with translations.</div>
+              <div className="text-sm italic text-slate-500">
+                You need two or more languages to work with translations.
+              </div>
             )}
             {product.languages.length > 1 && (
               <div className="my-4 space-y-4">
                 <div>
-                  {!isMultiLanguageAllowed &&
-                    (!isFormbricksCloud ? (
-                      <UpgradePlanNotice
-                        message="To enable multi-language surveys,"
-                        url={`/environments/${environmentId}/settings/billing`}
-                        textForUrl="please add your credit card (free)."
-                      />
-                    ) : (
-                      <UpgradePlanNotice
-                        message="To enable multi-language surveys,"
-                        url="https://formbricks.com/docs/self-hosting/enterprise"
-                        textForUrl="get a self-hosting license (free)."
-                      />
-                    ))}
+                  {isMultiLanguageAllowed && !isMultiLanguageActivated && (
+                    <div className="text-sm italic text-slate-500">
+                      Switch multi-lanugage on to get started 👉
+                    </div>
+                  )}
+                  {!isMultiLanguageAllowed && !isFormbricksCloud && !isMultiLanguageActivated && (
+                    <UpgradePlanNotice
+                      message="To enable multi-language surveys,"
+                      url={`/environments/${environmentId}/settings/billing`}
+                      textForUrl="please add your credit card (free)."
+                    />
+                  )}
+                  {!isMultiLanguageAllowed && isFormbricksCloud && !isMultiLanguageActivated && (
+                    <UpgradePlanNotice
+                      message="To enable multi-language surveys,"
+                      url="https://formbricks.com/docs/self-hosting/enterprise"
+                      textForUrl="get a self-hosting license (free)."
+                    />
+                  )}
                 </div>
                 {isMultiLanguageActivated && (
                   <div className="space-y-4">
                     <div className="space-y-4">
-                      <p className="text-sm">1. Choose the default language for this survey</p>
+                      <p className="text-sm">1. Choose the default language for this survey:</p>
                       <div className="flex items-center space-x-4">
                         <div className=" w-48 ">
                           <Select
@@ -217,9 +224,10 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
                           <ConfirmationModal
                             open={isConfirmationModalOpen}
                             setOpen={setIsConfirmationModalOpen}
-                            title={`Save ${getLanguageLabel(defaultLanguageCodeTemp)} as default language`}
-                            text={`Once set, default value cannot be change untill you re-enable translations, are you sure?`}
-                            buttonText="Save default language"
+                            title={`Set ${getLanguageLabel(defaultLanguageCodeTemp)} as default language`}
+                            text={`The default value can only be changed by deleting all existing translations. Are you sure?`}
+                            buttonText="Set default language"
+                            buttonVariant="darkCTA"
                             onConfirm={() => handleDefaultLanguageChange(defaultLanguageCodeTemp)}
                           />
                         </div>
@@ -229,7 +237,7 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
 
                     {defaultLanguage && (
                       <div className="space-y-4">
-                        <p className="text-sm">2. Activate translation for specific languages</p>
+                        <p className="text-sm">2. Activate translation for specific languages:</p>
                         <div>
                           <div className="flex flex-col space-y-4">
                             {product.languages.map((language) => {
@@ -237,19 +245,21 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
                               return (
                                 <div className="flex items-center space-x-4">
                                   <Switch
-                                    id="hidden-fields-toggle"
+                                    id={`${language}-toggle`}
                                     checked={surveyLanguageCodes.includes(language.code)}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       updateSurveyLanguages(language);
                                     }}
                                   />
-                                  <Label htmlFor="hidden-fields-toggle" className="font-bold">
+                                  <Label
+                                    htmlFor={`${language}-toggle`}
+                                    className="font-medium text-slate-800">
                                     {getLanguageLabel(language.code)}
                                   </Label>
                                   {surveyLanguageCodes.includes(language.code) && (
                                     <p
-                                      className="cursor-pointer text-xs underline"
+                                      className="cursor-pointer text-xs text-slate-600 underline"
                                       onClick={() => {
                                         setSelectedLanguageCode(language.code);
                                         setActiveQuestionId(localSurvey.questions[0]?.id);
@@ -269,24 +279,25 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
               </div>
             )}
             <Button
-              className="mt-4"
+              className="mt-2"
               variant="secondary"
+              size="sm"
               href={`/environments/${environmentId}/settings/language`}
               target="_blank">
-              Add Language <ArrowUpRight className="ml-2 h-5 w-5" />
+              Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
             </Button>
             <ConfirmationModal
-              title={"Disable translations"}
+              title={"Remove translations"}
               open={openRemoveTranslationModal}
               setOpen={setOpenRemoveTranslationModal}
-              text={"This action will remove all the translations from this survey. Are you sure?"}
+              text={"This action will remove all the translations from this survey."}
               onConfirm={() => {
                 setLocalSurvey({ ...localSurvey, languages: [] });
                 setOpenRemoveTranslationModal(false);
                 setIsMultiLanguageActivated(false);
                 setDefaultLanguage(undefined);
               }}
-              buttonText="Confirm"
+              buttonText="Remove translations"
             />
           </div>
         </Collapsible.CollapsibleContent>

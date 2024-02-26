@@ -377,7 +377,7 @@ const QuestionFormInput = ({
             )}
             <Input
               key={`${questionId}-${id}`}
-              className={`absolute top-0 text-black  caret-black ${className}`}
+              className={`absolute top-0 text-black caret-black ${localSurvey.languages?.length > 1 ? "pr-24" : ""} ${className}`}
               placeholder={placeholder ? placeholder : getPlaceHolderById(id)}
               id={id}
               name={id}

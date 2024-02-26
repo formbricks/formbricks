@@ -7,8 +7,7 @@ import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
 import MultiLanguageCard from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
-import { extractLanguageCodes, translateQuestion } from "@formbricks/lib/i18n/utils";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
@@ -270,7 +269,7 @@ export default function QuestionsView({
   }, [activeQuestionId, setActiveQuestionId]);
 
   return (
-    <div className="px-5 py-4">
+    <div className="mt-16 px-5 py-4">
       <div className="mb-5 flex flex-col gap-5">
         <EditWelcomeCard
           localSurvey={localSurvey}

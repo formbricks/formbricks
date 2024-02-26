@@ -3,11 +3,9 @@
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import { isEqual } from "lodash";
-import { useEffect, useState } from "react";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
-import LanguageSwitch from "@formbricks/ee/multiLanguage/components/LanguageSwitch";
 import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -186,13 +184,15 @@ export default function SurveyEditor({
 
             {activeView === "questions" ? (
               <>
-                <div className="mt-20">
-                  <LanguageSwitch
-                    surveyLanguages={localSurvey.languages ?? []}
-                    selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
-                  />
-                </div>
+                {/*                 <div className="mt-20">
+                  {isMultiLanguageAllowed && (
+                    <LanguageSwitch
+                      surveyLanguages={localSurvey.languages ?? []}
+                      selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
+                    />
+                  )}
+                </div> */}
                 <QuestionsView
                   localSurvey={localSurvey}
                   setLocalSurvey={setLocalSurvey}
