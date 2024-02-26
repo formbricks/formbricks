@@ -345,7 +345,7 @@ export const mockTranslatedSingleSelectQuestion = {
   subheader: { default: "Can't do both.", de: "" },
   choices: mockSingleSelectQuestion.choices.map((choice) => ({
     ...choice,
-    label: { default: choice.label.en, de: "" },
+    label: { default: choice.label.default, de: "" },
   })),
   otherOptionPlaceholder: undefined,
 };
@@ -356,7 +356,7 @@ export const mockLegacySingleSelectQuestion = {
   subheader: "Can't do both.",
   choices: mockSingleSelectQuestion.choices.map((choice) => ({
     ...choice,
-    label: choice.label.en,
+    label: choice.label.default,
   })),
 };
 
@@ -365,7 +365,7 @@ export const mockTranslatedMultiSelectQuestion = {
   headline: { default: "What's important on vacay?", de: "" },
   choices: mockMultiSelectQuestion.choices.map((choice) => ({
     ...choice,
-    label: { default: choice.label.en, de: "" },
+    label: { default: choice.label.default, de: "" },
   })),
   otherOptionPlaceholder: undefined,
 };
@@ -375,7 +375,7 @@ export const mockLegacyMultiSelectQuestion = {
   headline: "What's important on vacay?",
   choices: mockMultiSelectQuestion.choices.map((choice) => ({
     ...choice,
-    label: choice.label.en,
+    label: choice.label.default,
   })),
 };
 

@@ -45,7 +45,7 @@ export async function deleteLanguageAction(productId: string, environmentId: str
   const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user?.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
-  return await deleteLanguage(productId, environmentId, languageId);
+  return await deleteLanguage(environmentId, languageId);
 }
 
 export async function getSurveysUsingGivenLanguageAction(productId: string, languageId: string) {
@@ -75,5 +75,5 @@ export async function updateLanguageAction(
   const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user?.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
-  return await updateLanguage(productId, environmentId, languageId, languageInput);
+  return await updateLanguage(environmentId, languageId, languageInput);
 }

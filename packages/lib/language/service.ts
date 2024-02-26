@@ -3,7 +3,13 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
-import { TLanguage, TLanguageInput, ZLanguageInput } from "@formbricks/types/product";
+import {
+  TLanguage,
+  TLanguageInput,
+  TLanguageUpdate,
+  ZLanguageInput,
+  ZLanguageUpdate,
+} from "@formbricks/types/product";
 
 import { productCache } from "../product/cache";
 import { validateInputs } from "../utils/validate";
@@ -14,7 +20,7 @@ export const createLanguage = async (
   languageInput: TLanguageInput
 ): Promise<TLanguage> => {
   try {
-    validateInputs([productId, ZId], [languageInput, ZLanguageInput]);
+    validateInputs([productId, ZId], [environmentId, ZId], [languageInput, ZLanguageInput]);
     if (!languageInput.code) {
       throw new ValidationError("Language code is required");
     }
@@ -71,11 +77,7 @@ export const getSurveysUsingGivenLanguage = async (languageId: string): Promise<
   }
 };
 
-export const deleteLanguage = async (
-  productId: string,
-  environmentId: string,
-  languageId: string
-): Promise<TLanguage> => {
+export const deleteLanguage = async (environmentId: string, languageId: string): Promise<TLanguage> => {
   try {
     validateInputs([languageId, ZId]);
 
@@ -84,7 +86,7 @@ export const deleteLanguage = async (
     });
 
     productCache.revalidate({
-      id: productId,
+      id: language.productId,
       environmentId,
     });
     return language;
@@ -98,13 +100,12 @@ export const deleteLanguage = async (
 };
 
 export const updateLanguage = async (
-  productId: string,
   environmentId: string,
   languageId: string,
-  languageInput: Partial<TLanguage>
+  languageInput: TLanguageUpdate
 ): Promise<TLanguage> => {
   try {
-    validateInputs([languageId, ZId], [languageInput, ZLanguageInput]);
+    validateInputs([languageId, ZId], [languageInput, ZLanguageUpdate]);
 
     const language = await prisma.language.update({
       where: { id: languageId },
@@ -112,7 +113,7 @@ export const updateLanguage = async (
     });
 
     productCache.revalidate({
-      id: productId,
+      id: language.productId,
       environmentId,
     });
 

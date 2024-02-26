@@ -46,7 +46,7 @@ export const mockProduct: TProduct = {
   clickOutsideClose: false,
   darkOverlay: false,
   environments: [],
-  languages: [{ id: "en", alias: "English", default: true }],
+  languages: [],
 };
 
 export const mockDisplay = {
@@ -172,6 +172,10 @@ export const mockTeamOutput: TTeam = {
         status: "inactive",
         unlimited: false,
       },
+      multiLanguage: {
+        status: "inactive",
+        unlimited: false,
+      },
     },
   },
 };
@@ -191,6 +195,7 @@ export const mockSurveyOutput: SurveyMock = {
   segmentId: null,
   resultShareKey: null,
   inlineTriggers: null,
+  languages: [],
   ...baseSurveyProperties,
 };
 
@@ -216,6 +221,7 @@ export const updateSurveyInput: TSurvey = {
   resultShareKey: null,
   segment: null,
   inlineTriggers: null,
+  languages: [],
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

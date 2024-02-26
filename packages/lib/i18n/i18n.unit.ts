@@ -21,31 +21,31 @@ import {
 describe("createI18nString", () => {
   it("should create an i18n string from a regular string", () => {
     const result = createI18nString("Hello", ["default"]);
-    expect(result).toEqual({ en: "Hello" });
+    expect(result).toEqual({ default: "Hello" });
   });
 
   it("should create a new i18n string with i18n enabled from a previous i18n string", () => {
-    const result = createI18nString({ en: "Hello" }, ["default", "es"]);
-    expect(result).toEqual({ en: "Hello", es: "" });
+    const result = createI18nString({ default: "Hello" }, ["default", "es"]);
+    expect(result).toEqual({ default: "Hello", es: "" });
   });
 
   it("should add a new field key value pair when a new language is added", () => {
-    const i18nObject = { en: "Hello", es: "Hola" };
+    const i18nObject = { default: "Hello", es: "Hola" };
     const newLanguages = ["default", "es", "de"];
     const result = createI18nString(i18nObject, newLanguages);
     expect(result).toEqual({
-      en: "Hello",
+      default: "Hello",
       es: "Hola",
       de: "",
     });
   });
 
   it("should remove the translation that are not present in newLanguages", () => {
-    const i18nObject = { en: "Hello", es: "hola" };
+    const i18nObject = { default: "Hello", es: "hola" };
     const newLanguages = ["default"];
     const result = createI18nString(i18nObject, newLanguages);
     expect(result).toEqual({
-      en: "Hello",
+      default: "Hello",
     });
   });
 });
@@ -57,7 +57,7 @@ describe("translateChoice", () => {
     const translatedChoice = translateChoice(choice, languages);
     expect(translatedChoice).toEqual({
       label: {
-        en: "choice",
+        default: "choice",
         de: "",
       },
       id: "someId",
@@ -67,7 +67,7 @@ describe("translateChoice", () => {
   it("should handle cases where choice label is already an i18n object", () => {
     const choice = {
       label: {
-        en: "choice",
+        default: "choice",
         de: "",
       },
       id: "someId",
@@ -80,7 +80,7 @@ describe("translateChoice", () => {
   it("should handle cases where translations are disabled", () => {
     const choice = {
       label: {
-        en: "choice",
+        default: "choice",
         de: "",
       },
       id: "someId",
@@ -89,7 +89,7 @@ describe("translateChoice", () => {
     const translatedChoice = translateChoice(choice, languages);
     expect(translatedChoice).toEqual({
       label: {
-        en: "choice",
+        default: "choice",
       },
       id: "someId",
     });

@@ -18,6 +18,11 @@ export const ZLanguageInput = z.object({
 });
 export type TLanguageInput = z.infer<typeof ZLanguageInput>;
 
+export const ZLanguageUpdate = z.object({
+  alias: z.string().nullable(),
+});
+export type TLanguageUpdate = z.infer<typeof ZLanguageUpdate>;
+
 export const ZProduct = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),

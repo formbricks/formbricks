@@ -133,6 +133,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: { Plan: "Paid", "Init Attribute 1": "one", "Init Attribute 2": "two" },
   },
   {
@@ -149,6 +150,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "three",
@@ -169,6 +171,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: { Plan: "Paid", "Init Attribute 1": "five", "Init Attribute 2": "six" },
   },
   {
@@ -185,6 +188,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: { Plan: "Paid", "Init Attribute 1": "five", "Init Attribute 2": "four" },
   },
   {
@@ -201,6 +205,7 @@ export const mockResponsePersonAttributes: ResponseMock[] = [
     updatedAt: new Date(),
     ttc: {},
     person: null,
+    language: null,
     personAttributes: { Plan: "Paid", "Init Attribute 1": "three", "Init Attribute 2": "two" },
   },
 ];
@@ -238,6 +243,7 @@ export const mockResponses: ResponseMock[] = [
     singleUseId: mockSingleUseId,
     personId: mockPersonId,
     person: null,
+    language: null,
     tags: getMockTags(["tag1", "tag3"]),
     notes: [],
   },
@@ -261,6 +267,7 @@ export const mockResponses: ResponseMock[] = [
     singleUseId: mockSingleUseId,
     personId: mockPersonId,
     person: null,
+    language: null,
     tags: getMockTags(["tag1", "tag2"]),
     notes: [],
   },
@@ -285,6 +292,7 @@ export const mockResponses: ResponseMock[] = [
     person: null,
     tags: getMockTags(["tag2", "tag3"]),
     notes: [],
+    language: null,
   },
   {
     id: "clsk6bk1l0017k8iut9dp0uxt",
@@ -307,6 +315,7 @@ export const mockResponses: ResponseMock[] = [
     person: null,
     tags: getMockTags(["tag1", "tag4"]),
     notes: [],
+    language: null,
   },
   {
     id: "clsk5tgkm000uk8iueqoficwc",
@@ -329,6 +338,7 @@ export const mockResponses: ResponseMock[] = [
     person: null,
     tags: getMockTags(["tag4", "tag5"]),
     notes: [],
+    language: null,
   },
 ];
 
