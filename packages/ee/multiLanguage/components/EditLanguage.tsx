@@ -215,7 +215,7 @@ export default function EditLanguage({
         <div className="space-y-4">
           <div className="grid w-full grid-cols-4 gap-4">
             <Label htmlFor="languagesId">Language</Label>
-            <Label htmlFor="languagesId">Identifier</Label>
+            <Label htmlFor="languagesId">Language Code</Label>
             <Label htmlFor="Alias" className="flex items-center space-x-2">
               <span>Alias</span> <AliasTooltip />
             </Label>
