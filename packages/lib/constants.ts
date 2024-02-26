@@ -80,10 +80,14 @@ export const RESPONSES_PER_PAGE = 10;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 
 export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
-export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE || "";
+export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE;
 export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
 
 // Storage constants
+export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
+export const S3_SECRET_KEY = env.S3_SECRET_KEY;
+export const S3_REGION = env.S3_REGION;
+export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
 export const UPLOADS_DIR = "./uploads";
 export const MAX_SIZES = {
   public: 1024 * 1024 * 10, // 10MB
@@ -148,9 +152,12 @@ export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
   allowedPerInterval: 5,
 };
 
-export const DEBUG = process.env.DEBUG === "1";
+export const DEBUG = env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+
+export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;
+export const CUSTOMER_IO_API_KEY = env.CUSTOMER_IO_API_KEY;

@@ -1,10 +1,8 @@
-import {
-  TDisplay,
-  TDisplayCreateInput,
-  TDisplayLegacyCreateInput,
-  TDisplayLegacyUpdateInput,
-  TDisplayUpdateInput,
-} from "@formbricks/types/displays";
+import { Prisma } from "@prisma/client";
+
+import { prisma } from "@formbricks/database";
+
+import { selectDisplay } from "../../service";
 
 export const mockEnvironmentId = "clqkr5961000108jyfnjmbjhi";
 export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
@@ -28,49 +26,51 @@ function createMockDisplay(overrides = {}) {
   };
 }
 
-export const mockDisplay: TDisplay = createMockDisplay();
+export const mockDisplay = createMockDisplay();
 
-export const mockDisplayWithPersonId: TDisplay = createMockDisplay({ personId: mockPersonId });
+export const mockDisplayWithPersonId = createMockDisplay({ personId: mockPersonId });
 
-export const mockDisplayWithResponseId: TDisplay = createMockDisplay({
+export const mockDisplayWithResponseId = createMockDisplay({
   personId: mockPersonId,
   responseId: mockResponseId,
 });
 
-export const mockDisplayInput: TDisplayCreateInput = {
+export const mockDisplayInput = {
   environmentId: mockEnvironmentId,
   surveyId: mockSurveyId,
 };
-export const mockDisplayInputWithUserId: TDisplayCreateInput = {
+export const mockDisplayInputWithUserId = {
   ...mockDisplayInput,
   userId: mockUserId,
 };
-export const mockDisplayInputWithResponseId: TDisplayCreateInput = {
+export const mockDisplayInputWithResponseId = {
   ...mockDisplayInputWithUserId,
   responseId: mockResponseId,
 };
 
-export const mockDisplayLegacyInput: TDisplayLegacyCreateInput = {
+export const mockDisplayLegacyInput = {
   responseId: mockResponseId,
   surveyId: mockSurveyId,
 };
-export const mockDisplayLegacyInputWithPersonId: TDisplayLegacyCreateInput = {
+export const mockDisplayLegacyInputWithPersonId = {
   ...mockDisplayLegacyInput,
   personId: mockPersonId,
 };
 
-export const mockDisplayUpdate: TDisplayUpdateInput = {
+export const mockDisplayUpdate = {
   environmentId: mockEnvironmentId,
   userId: mockUserId,
   responseId: mockResponseId,
 };
 
-export const mockDisplayLegacyUpdateInput: TDisplayLegacyUpdateInput = {
+export const mockDisplayLegacyUpdateInput = {
   personId: mockPersonId,
   responseId: mockResponseId,
 };
 
-export const mockDisplayLegacyWithRespondedStatus: TDisplay = {
+export const mockDisplayLegacyWithRespondedStatus: Prisma.DisplayGetPayload<{
+  select: typeof selectDisplay;
+}> = {
   ...mockDisplayWithPersonId,
   status: "responded",
 };

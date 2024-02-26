@@ -3,6 +3,16 @@
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "baseUrl": ".",
+    "paths": {
+      "@prisma/client/*": ["@formbricks/database/client/*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "strictNullChecks": true
   }
 }

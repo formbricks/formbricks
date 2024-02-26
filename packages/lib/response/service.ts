@@ -24,7 +24,7 @@ import {
 } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, WEBAPP_URL } from "../constants";
 import { deleteDisplayByResponseId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
 import {
@@ -576,7 +576,7 @@ export const getResponseDownloadUrl = async (
 
     await putFile(fileName, fileBuffer, accessType, environmentId);
 
-    return `${process.env.WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`;
+    return `${WEBAPP_URL}/storage/${environmentId}/${accessType}/${fileName}`;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
