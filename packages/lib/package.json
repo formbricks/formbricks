@@ -11,7 +11,7 @@
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
     "test:dev": "vitest",
-    "test": "vitest run --silent"
+    "test": "vitest run"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.521.0",
