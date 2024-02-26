@@ -703,6 +703,9 @@ importers:
       '@types/mime-types':
         specifier: ^2.1.4
         version: 2.1.4
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
       eslint-config-formbricks:
         specifier: workspace:*
         version: link:../eslint-config-formbricks
