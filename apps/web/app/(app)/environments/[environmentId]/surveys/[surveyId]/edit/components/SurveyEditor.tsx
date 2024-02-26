@@ -81,7 +81,6 @@ export default function SurveyEditor({
     const translatedSurvey = translateSurvey(localSurvey, localSurvey.languages);
 
     // Check if the translated survey is different from the current localSurvey
-    // You can implement a deep comparison function or use a library like lodash
     if (!isEqual(translatedSurvey, localSurvey)) {
       setLocalSurvey(translatedSurvey);
     }

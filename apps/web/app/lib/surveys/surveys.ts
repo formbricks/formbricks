@@ -122,7 +122,7 @@ export const generateQuestionAndFilterOptions = (
 
   let metadataOptions: QuestionOption[] = [];
   //can be extended to include more properties
-  if (survey.languages.length > 0) {
+  if (survey.languages?.length > 0) {
     metadataOptions.push({ label: "Language", type: OptionsType.METADATA, id: "language" });
     const languageOptions = survey.languages.map((sl) => sl.language.code);
     questionFilterOptions.push({
