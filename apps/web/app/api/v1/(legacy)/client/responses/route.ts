@@ -2,28 +2,30 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponseLegacy } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseLegacyInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: Request): Promise<Response> {
   const responseInput = await request.json();
   if (responseInput.personId === "legacy") {
     responseInput.personId = null;
   }
   const agent = UAParser(request.headers.get("user-agent"));
-  const country = headers().get("CF-IPCountry") || headers().get("X-Vercel-IP-Country") || undefined;
+  const country =
+    headers().get("CF-IPCountry") ||
+    headers().get("X-Vercel-IP-Country") ||
+    headers().get("CloudFront-Viewer-Country") ||
+    undefined;
   const inputValidation = ZResponseLegacyInput.safeParse(responseInput);
 
   if (!inputValidation.success) {
@@ -49,8 +51,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       return responses.internalServerErrorResponse(error.message);
     }
   }
-
-  const teamDetails = await getTeamDetails(survey.environmentId);
 
   let response: TResponse;
   try {
@@ -100,14 +100,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
   }
 
-  if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "response created", teamDetails.teamId, {
-      surveyId: response.surveyId,
-      surveyType: survey.type,
-    });
-  } else {
-    console.warn("Posthog capture not possible. No team owner found");
-  }
+  await capturePosthogEnvironmentEvent(survey.environmentId, "response created", {
+    surveyId: response.surveyId,
+    surveyType: survey.type,
+  });
 
   return responses.successResponse({ id: response.id }, true);
 }

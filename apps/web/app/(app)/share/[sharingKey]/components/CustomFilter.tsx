@@ -4,6 +4,7 @@ import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import ResponseFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
 import { fetchFile } from "@/app/lib/fetchFile";
 import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
@@ -15,7 +16,7 @@ import toast from "react-hot-toast";
 
 import { getTodaysDateFormatted } from "@formbricks/lib/time";
 import useClickOutside from "@formbricks/lib/useClickOutside";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { Calendar } from "@formbricks/ui/Calendar";
@@ -45,9 +46,9 @@ enum FilterDropDownLabels {
 
 interface CustomFilterProps {
   environmentTags: TTag[];
+  attributes: TSurveyPersonAttributes;
   survey: TSurvey;
   responses: TResponse[];
-  totalResponses: TResponse[];
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -61,7 +62,7 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: CustomFilterProps) => {
+const CustomFilter = ({ environmentTags, attributes, responses, survey }: CustomFilterProps) => {
   const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -78,11 +79,11 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
   useEffect(() => {
     const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
       survey,
-      totalResponses,
-      environmentTags
+      environmentTags,
+      attributes
     );
     setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [totalResponses, survey, setSelectedOptions, environmentTags]);
+  }, [survey, setSelectedOptions, environmentTags, attributes]);
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
@@ -154,9 +155,22 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
     return keys;
   }, []);
 
+  const getAllResponsesInBatches = useCallback(async () => {
+    const BATCH_SIZE = 3000;
+    const responses: TResponse[] = [];
+    for (let page = 1; ; page++) {
+      const batchResponses = await getResponsesAction(survey.id, page, BATCH_SIZE);
+      responses.push(...batchResponses);
+      if (batchResponses.length < BATCH_SIZE) {
+        break;
+      }
+    }
+    return responses;
+  }, [survey.id]);
+
   const downloadResponses = useCallback(
     async (filter: FilterDownload, filetype: "csv" | "xlsx") => {
-      const downloadResponse = filter === FilterDownload.ALL ? totalResponses : responses;
+      const downloadResponse = filter === FilterDownload.ALL ? await getAllResponsesInBatches() : responses;
       const questionNames = survey.questions?.map((question) => question.headline);
       const hiddenFieldIds = survey.hiddenFields.fieldIds;
       const hiddenFieldResponse = {};
@@ -168,8 +182,8 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
           "Response ID": response.id,
           Timestamp: response.createdAt,
           Finished: response.finished,
+          "User ID": response.person?.userId,
           "Survey ID": response.surveyId,
-          "Formbricks User ID": response.person?.id ?? "",
         };
         const metaDataKeys = extracMetadataKeys(response.meta);
         let metaData = {};
@@ -216,7 +230,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
         "Timestamp",
         "Finished",
         "Survey ID",
-        "Formbricks User ID",
+        "User ID",
         ...metaDataFields,
         ...questionNames,
         ...(hiddenFieldIds ?? []),
@@ -268,7 +282,7 @@ const CustomFilter = ({ environmentTags, responses, survey, totalResponses }: Cu
 
       URL.revokeObjectURL(downloadUrl);
     },
-    [downloadFileName, responses, totalResponses, survey, extracMetadataKeys]
+    [downloadFileName, extracMetadataKeys, getAllResponsesInBatches, responses, survey]
   );
 
   const handleDateHoveredChange = (date: Date) => {

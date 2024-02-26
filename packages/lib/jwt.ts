@@ -15,16 +15,13 @@ export const createInviteToken = (inviteId: string, email: string, options = {})
   return jwt.sign({ inviteId, email }, env.NEXTAUTH_SECRET, options);
 };
 
-export function verifyTokenForLinkSurvey(token: string, surveyId: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    jwt.verify(token, env.NEXTAUTH_SECRET + surveyId, function (err) {
-      if (err) {
-        resolve(false);
-      } else {
-        resolve(true);
-      }
-    });
-  });
+export function verifyTokenForLinkSurvey(token: string, surveyId: string) {
+  try {
+    const payload = jwt.verify(token, process.env.NEXTAUTH_SECRET + surveyId);
+    return (payload as jwt.JwtPayload).email || null;
+  } catch (err) {
+    return null;
+  }
 }
 
 export async function verifyToken(token: string, userEmail: string = ""): Promise<JwtPayload> {

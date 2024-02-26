@@ -2,17 +2,18 @@ import { Prisma } from "@prisma/client";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TPerson } from "@formbricks/types/people";
 import { TProduct } from "@formbricks/types/product";
 import {
   TSurvey,
-  TSurveyAttributeFilter,
   TSurveyInput,
   TSurveyQuestion,
   TSurveyQuestionType,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
+import { TTeam } from "@formbricks/types/teams";
+import { TUser } from "@formbricks/types/user";
 
+import { selectPerson } from "../../person/service";
 import { selectSurvey } from "../service";
 
 const currentDate = new Date();
@@ -57,10 +58,39 @@ export const mockDisplay = {
   status: null,
 };
 
-export const mockPerson: TPerson = {
+export const mockUser: TUser = {
+  id: mockId,
+  name: "mock User",
+  email: "test@unit.com",
+  emailVerified: currentDate,
+  imageUrl: "https://www.google.com",
+  createdAt: currentDate,
+  updatedAt: currentDate,
+  onboardingCompleted: true,
+  twoFactorEnabled: false,
+  identityProvider: "google",
+  objective: "improve_user_retention",
+  notificationSettings: {
+    alert: {},
+    weeklySummary: {},
+    unsubscribedTeamIds: [],
+  },
+};
+
+export const mockPerson: Prisma.PersonGetPayload<{
+  include: typeof selectPerson;
+}> = {
   id: mockId,
   userId: mockId,
-  attributes: { test: "value" },
+  attributes: [
+    {
+      value: "value",
+      attributeClass: {
+        id: mockId,
+        name: "test",
+      },
+    },
+  ],
   ...commonMockProperties,
 };
 
@@ -80,12 +110,6 @@ export const mockAttributeClass: TAttributeClass = {
   description: "mock action class",
   archived: false,
   ...commonMockProperties,
-};
-
-export const mockAttributeFilter: TSurveyAttributeFilter = {
-  attributeClassId: mockId,
-  value: "test",
-  condition: "equals",
 };
 
 const mockQuestion: TSurveyQuestion = {
@@ -127,6 +151,30 @@ const baseSurveyProperties = {
   ...commonMockProperties,
 };
 
+export const mockTeamOutput: TTeam = {
+  id: mockId,
+  name: "mock Team",
+  createdAt: currentDate,
+  updatedAt: currentDate,
+  billing: {
+    stripeCustomerId: null,
+    features: {
+      inAppSurvey: {
+        status: "inactive",
+        unlimited: false,
+      },
+      linkSurvey: {
+        status: "inactive",
+        unlimited: false,
+      },
+      userTargeting: {
+        status: "inactive",
+        unlimited: false,
+      },
+    },
+  },
+};
+
 export const mockSurveyOutput: SurveyMock = {
   type: "web",
   status: "inProgress",
@@ -135,8 +183,13 @@ export const mockSurveyOutput: SurveyMock = {
   productOverwrites: null,
   singleUse: null,
   styling: null,
+  displayPercentage: null,
+  createdBy: null,
   pin: null,
+  segment: null,
+  segmentId: null,
   resultShareKey: null,
+  inlineTriggers: null,
   ...baseSurveyProperties,
 };
 
@@ -146,7 +199,6 @@ export const createSurveyInput: TSurveyInput = {
   displayOption: "respondMultiple",
   triggers: [mockActionClass.name],
   ...baseSurveyProperties,
-  attributeFilters: [mockAttributeFilter],
 };
 
 export const updateSurveyInput: TSurvey = {
@@ -157,39 +209,17 @@ export const updateSurveyInput: TSurvey = {
   productOverwrites: null,
   styling: null,
   singleUse: null,
+  displayPercentage: null,
+  createdBy: null,
   pin: null,
   resultShareKey: null,
+  segment: null,
+  inlineTriggers: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
-  attributeFilters: [mockAttributeFilter],
-};
-
-export const mockSurveyWithAttributesOutput: SurveyMock = {
-  ...mockSurveyOutput,
-  attributeFilters: [
-    {
-      id: mockId,
-      ...mockAttributeFilter,
-    },
-  ],
 };
 
 export const mockTransformedSurveyOutput = {
   ...mockSurveyOutput,
   triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
-};
-
-export const mockTransformedSurveyWithAttributesOutput = {
-  ...mockTransformedSurveyOutput,
-  attributeFilters: [mockAttributeFilter],
-};
-
-export const mockTransformedSurveyWithAttributesIdOutput = {
-  ...mockTransformedSurveyOutput,
-  attributeFilters: [
-    {
-      id: mockId,
-      ...mockAttributeFilter,
-    },
-  ],
 };

@@ -1,19 +1,17 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { createDisplayLegacy } from "@formbricks/lib/display/service";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
+import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
 import { TDisplay, ZDisplayLegacyCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: Request): Promise<Response> {
   const jsonInput = await request.json();
   if (jsonInput.personId === "legacy") {
     delete jsonInput.personId;
@@ -45,9 +43,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
   }
 
-  // find teamId & teamOwnerId from environmentId
-  const teamDetails = await getTeamDetails(survey.environmentId);
-
   // create display
   let display: TDisplay;
   try {
@@ -65,13 +60,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
   }
 
-  if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "display created", teamDetails.teamId, {
-      surveyId,
-    });
-  } else {
-    console.warn("Posthog capture not possible. No team owner found");
-  }
+  await capturePosthogEnvironmentEvent(survey.environmentId, "display created", {
+    surveyId,
+  });
 
   return responses.successResponse({ id: display.id }, true);
 }

@@ -10,7 +10,14 @@ import { prisma } from "@formbricks/database";
 
 import { createAccount } from "./account/service";
 import { verifyPassword } from "./auth/util";
-import { EMAIL_VERIFICATION_DISABLED } from "./constants";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  OIDC_CLIENT_ID,
+  OIDC_CLIENT_SECRET,
+  OIDC_DISPLAY_NAME,
+  OIDC_ISSUER,
+  OIDC_SIGNING_ALGORITHM,
+} from "./constants";
 import { env } from "./env.mjs";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
@@ -127,6 +134,11 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.GOOGLE_CLIENT_SECRET || "",
       allowDangerousEmailAccountLinking: true,
     }),
+    AzureAD({
+      clientId: env.AZUREAD_CLIENT_ID || "",
+      clientSecret: env.AZUREAD_CLIENT_SECRET || "",
+      tenantId: env.AZUREAD_TENANT_ID || "",
+    }),
     SlackProvider({
       clientId: env.SLACK_CLIENT_ID as string,
       clientSecret: env.SLACK_CLIENT_SECRET as string,
@@ -165,7 +177,8 @@ export const authOptions: NextAuthOptions = {
         },
       },
       userinfo: {
-        async request(context) {
+        // @ts-expect-error
+        async request() {
           const session = await getServerSession(authOptions);
 
           return {
@@ -183,11 +196,28 @@ export const authOptions: NextAuthOptions = {
       },
       idToken: false,
     }),
-    AzureAD({
-      clientId: env.AZUREAD_CLIENT_ID || "",
-      clientSecret: env.AZUREAD_CLIENT_SECRET || "",
-      tenantId: env.AZUREAD_TENANT_ID || "",
-    }),
+    {
+      id: "openid",
+      name: OIDC_DISPLAY_NAME || "OpenId",
+      type: "oauth",
+      clientId: OIDC_CLIENT_ID || "",
+      clientSecret: OIDC_CLIENT_SECRET || "",
+      wellKnown: `${OIDC_ISSUER}/.well-known/openid-configuration`,
+      authorization: { params: { scope: "openid email profile" } },
+      idToken: true,
+      client: {
+        id_token_signed_response_alg: OIDC_SIGNING_ALGORITHM || "RS256",
+      },
+      checks: ["pkce", "state"],
+      profile: (profile) => {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+        };
+      },
+    },
   ],
   callbacks: {
     async jwt({ token, account }) {
@@ -214,8 +244,7 @@ export const authOptions: NextAuthOptions = {
         slack: (token && token?.slack) ?? slackAttributes,
       };
     },
-    async session(props) {
-      const { session, token } = props;
+    async session({ session, token }) {
       // @ts-expect-error
       session.user.id = token?.id;
       // @ts-expect-error
@@ -239,8 +268,7 @@ export const authOptions: NextAuthOptions = {
         },
       };
     },
-    async signIn(props: any) {
-      const { user, account } = props;
+    async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           throw new Error("Email Verification is Pending");
@@ -248,7 +276,7 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
 
-      if (!user.email || !user.name || account.type !== "oauth") {
+      if (!user.email || account.type !== "oauth") {
         return false;
       }
 
@@ -304,13 +332,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         const userProfile = await createUser({
-          name: user.name,
+          name: user.name || user.email.split("@")[0],
           email: user.email,
           emailVerified: new Date(Date.now()),
           onboardingCompleted: false,
           identityProvider: provider,
           identityProviderAccountId: account.providerAccountId,
         });
+
         // Default team assignment if env variable is set
         if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
           // check if team exists
@@ -337,7 +366,22 @@ export const authOptions: NextAuthOptions = {
             ...account,
             userId: userProfile.id,
           });
-          await createProduct(team.id, { name: "My Product" });
+          const product = await createProduct(team.id, { name: "My Product" });
+          const updatedNotificationSettings = {
+            ...userProfile.notificationSettings,
+            alert: {
+              ...userProfile.notificationSettings?.alert,
+            },
+            weeklySummary: {
+              ...userProfile.notificationSettings?.weeklySummary,
+              [product.id]: true,
+            },
+          };
+
+          await updateUser(userProfile.id, {
+            notificationSettings: updatedNotificationSettings,
+          });
+
           return true;
         }
       }

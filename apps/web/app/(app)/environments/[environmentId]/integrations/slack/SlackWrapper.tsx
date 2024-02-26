@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
-import { TIntegrationSlack, TIntegrationSlackConfig } from "@formbricks/types/integration/slack";
+import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { refreshChannelAction } from "./actions";
@@ -33,7 +33,7 @@ export default function SlackWrapper({
   const [slackChannels, setSlackChannels] = useState(channelsArray);
   const [isModalOpen, setModalOpen] = useState<boolean>(false);
   const [selectedIntegration, setSelectedIntegration] = useState<
-    (TIntegrationSlackConfig & { index: number }) | null
+    (TIntegrationSlackConfigData & { index: number }) | null
   >(null);
 
   const refreshSheet = async () => {

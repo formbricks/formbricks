@@ -1,9 +1,6 @@
 "use client";
 
 import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
-import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
-import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
-import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
 import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
 import { Terminal } from "lucide-react";
 import { useState } from "react";
@@ -11,6 +8,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -182,12 +180,16 @@ export default function AddNoCodeActionModal({
               <div className="w-full space-y-4">
                 <div className="grid w-full grid-cols-2 gap-x-4">
                   <div className="col-span-1">
-                    <Label>What did your user do?</Label>
-                    <Input placeholder="E.g. Clicked Download" {...register("name")} />
+                    <Label htmlFor="actionNameInput">What did your user do?</Label>
+                    <Input id="actionNameInput" placeholder="E.g. Clicked Download" {...register("name")} />
                   </div>
                   <div className="col-span-1">
-                    <Label>Description</Label>
-                    <Input placeholder="User clicked Download Button " {...register("description")} />
+                    <Label htmlFor="actionDescriptionInput">Description</Label>
+                    <Input
+                      id="actionDescriptionInput"
+                      placeholder="User clicked Download Button "
+                      {...register("description")}
+                    />
                   </div>
                 </div>
                 <div>
@@ -233,12 +235,20 @@ export default function AddNoCodeActionModal({
               <div className="w-full space-y-4">
                 <div className="grid w-full grid-cols-2 gap-x-4">
                   <div className="col-span-1">
-                    <Label>Identifier</Label>
-                    <Input placeholder="E.g. clicked-download" {...register("name", { required: true })} />
+                    <Label htmlFor="codeActionNameInput">Identifier</Label>
+                    <Input
+                      id="codeActionNameInput"
+                      placeholder="E.g. clicked-download"
+                      {...register("name", { required: true })}
+                    />
                   </div>
                   <div className="col-span-1">
-                    <Label>Description</Label>
-                    <Input placeholder="User clicked Download Button " {...register("description")} />
+                    <Label htmlFor="codeActionDescriptionInput">Description</Label>
+                    <Input
+                      id="codeActionDescriptionInput"
+                      placeholder="User clicked Download Button"
+                      {...register("description")}
+                    />
                   </div>
                 </div>
                 <hr />

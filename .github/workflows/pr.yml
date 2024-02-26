@@ -29,7 +29,7 @@ jobs:
 
   e2e-test:
     name: Run E2E Tests
-    uses: ./.github/workflows/playwright.yml
+    uses: ./.github/workflows/e2e.yml
     secrets: inherit
 
   required:

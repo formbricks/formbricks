@@ -1,6 +1,7 @@
+import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, PRICING_APPSURVEYS_FREE_RESPONSES } from "@formbricks/lib/constants";
@@ -10,14 +11,14 @@ import { getSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
 export async function GET(
   _: NextRequest,
   { params }: { params: { environmentId: string } }
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     // validate using zod
     const environmentIdValidation = ZJsPublicSyncInput.safeParse({
@@ -56,6 +57,9 @@ export async function GET(
       const currentResponseCount = await getMonthlyTeamResponseCount(team.id);
       isInAppSurveyLimitReached =
         !hasInAppSurveySubscription && currentResponseCount >= PRICING_APPSURVEYS_FREE_RESPONSES;
+      if (isInAppSurveyLimitReached) {
+        await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
+      }
     }
 
     if (!environment?.widgetSetupCompleted) {
@@ -73,14 +77,23 @@ export async function GET(
 
     const state: TJsStateSync = {
       surveys: !isInAppSurveyLimitReached
-        ? surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web")
+        ? surveys.filter(
+            (survey) =>
+              survey.status === "inProgress" &&
+              survey.type === "web" &&
+              (!survey.segment || survey.segment.filters.length === 0)
+          )
         : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
       person: null,
     };
 
-    return responses.successResponse({ ...state }, true);
+    return responses.successResponse(
+      { ...state },
+      true,
+      "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
+    );
   } catch (error) {
     console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);

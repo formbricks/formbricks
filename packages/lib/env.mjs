@@ -7,6 +7,9 @@ export const env = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
+    CUSTOMER_IO_API_KEY: z.string().optional(),
+    CUSTOMER_IO_SITE_ID: z.string().optional(),
+    NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
     ENCRYPTION_KEY: z.string().length(64).or(z.string().length(32)),
@@ -23,14 +26,13 @@ export const env = createEnv({
     GITHUB_SECRET: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
-    SLACK_CLIENT_ID: z.string().optional(),
-    SLACK_CLIENT_SECRET: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     CRON_SECRET: z.string().optional(),
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
+    EMAIL_AUTH_DISABLED: z.enum(["1", "0"]).optional(),
     PRIVACY_URL: z
       .string()
       .url()
@@ -46,14 +48,13 @@ export const env = createEnv({
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
-    GITHUB_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
-    GOOGLE_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
-    AZUREAD_AUTH_ENABLED: z.enum(["1", "0"]).optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     VERCEL_URL: z.string().optional(),
     SHORT_URL_BASE: z.string().url().optional().or(z.string().length(0)),
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
+    SLACK_CLIENT_ID: z.string().optional(),
+    SLACK_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
     AIRTABLE_CLIENT_ID: z.string().optional(),
@@ -72,6 +73,12 @@ export const env = createEnv({
     DEFAULT_TEAM_ROLE: z.enum(["owner", "admin", "editor", "developer", "viewer"]).optional(),
     ONBOARDING_DISABLED: z.string().optional(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
+    RATE_LIMITING_DISABLED: z.enum(["1", "0"]).optional(),
+    OIDC_DISPLAY_NAME: z.string().optional(),
+    OIDC_CLIENT_ID: z.string().optional(),
+    OIDC_CLIENT_SECRET: z.string().optional(),
+    OIDC_ISSUER: z.string().optional(),
+    OIDC_SIGNING_ALGORITHM: z.string().optional(),
   },
 
   /*
@@ -98,6 +105,8 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    CUSTOMER_IO_API_KEY: process.env.CUSTOMER_IO_API_KEY,
+    CUSTOMER_IO_SITE_ID: process.env.CUSTOMER_IO_SITE_ID,
     WEBAPP_URL: process.env.WEBAPP_URL,
     DATABASE_URL: process.env.DATABASE_URL,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
@@ -113,20 +122,17 @@ export const env = createEnv({
     GITHUB_SECRET: process.env.GITHUB_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
-    SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     CRON_SECRET: process.env.CRON_SECRET,
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     SIGNUP_DISABLED: process.env.SIGNUP_DISABLED,
+    EMAIL_AUTH_DISABLED: process.env.EMAIL_AUTH_DISABLED,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,
     TERMS_URL: process.env.TERMS_URL,
     IMPRINT_URL: process.env.IMPRINT_URL,
-    GITHUB_AUTH_ENABLED: process.env.GITHUB_AUTH_ENABLED,
-    GOOGLE_AUTH_ENABLED: process.env.GOOGLE_AUTH_ENABLED,
     GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
     GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
@@ -146,14 +152,19 @@ export const env = createEnv({
     VERCEL_URL: process.env.VERCEL_URL,
     SHORT_URL_BASE: process.env.SHORT_URL_BASE,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    AZUREAD_AUTH_ENABLED: process.env.AZUREAD_AUTH_ENABLED,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
-    AIR_TABLE_CLIENT_ID: process.env.AIR_TABLE_CLIENT_ID,
+    AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     DEFAULT_TEAM_ID: process.env.DEFAULT_TEAM_ID,
     DEFAULT_TEAM_ROLE: process.env.DEFAULT_TEAM_ROLE,
     ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
+    RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
+    OIDC_DISPLAY_NAME: process.env.OIDC_DISPLAY_NAME,
+    OIDC_CLIENT_ID: process.env.OIDC_CLIENT_ID,
+    OIDC_CLIENT_SECRET: process.env.OIDC_CLIENT_SECRET,
+    OIDC_ISSUER: process.env.OIDC_ISSUER,
+    OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
   },
 });

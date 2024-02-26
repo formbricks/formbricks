@@ -70,11 +70,12 @@ export default function TemplateList({
     setLoading(true);
     const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
     const autoComplete = surveyType === "web" ? 50 : null;
-    const augmentedTemplate = {
+    const augmentedTemplate: TSurveyInput = {
       ...activeTemplate.preset,
       type: surveyType,
       autoComplete,
-    } as TSurveyInput;
+      createdBy: user.id,
+    };
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
     router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
   };
@@ -153,7 +154,7 @@ export default function TemplateList({
           ? [...filteredTemplates, testTemplate]
           : filteredTemplates
         ).map((template: TTemplate) => (
-          <button
+          <div
             onClick={() => {
               const newTemplate = replacePresetPlaceholders(template, product);
               onTemplateClick(newTemplate);
@@ -208,7 +209,7 @@ export default function TemplateList({
                 </Button>
               </div>
             )}
-          </button>
+          </div>
         ))}
       </div>
     </main>

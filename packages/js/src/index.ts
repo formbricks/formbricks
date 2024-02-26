@@ -1,3 +1,4 @@
+import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
 import { TJsConfigInput } from "@formbricks/types/js";
 
 import { trackAction } from "./lib/actions";
@@ -8,6 +9,15 @@ import { initialize } from "./lib/initialize";
 import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeActions";
 import { logoutPerson, resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
+
+declare global {
+  interface Window {
+    formbricksSurveys: {
+      renderSurveyInline: (props: SurveyInlineProps & { brandColor: string }) => void;
+      renderSurveyModal: (props: SurveyModalProps & { brandColor: string }) => void;
+    };
+  }
+}
 
 const logger = Logger.getInstance();
 

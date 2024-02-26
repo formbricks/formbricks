@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 
 import { ProductFeatureKeys } from "@formbricks/ee/billing/lib/constants";
 import { reportUsageToStripe } from "@formbricks/ee/billing/lib/reportUsage";
@@ -52,7 +51,7 @@ async function reportTeamUsage(team: TTeam) {
   }
 }
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(): Promise<Response> {
   const headersList = headers();
   const apiKey = headersList.get("x-api-key");
 

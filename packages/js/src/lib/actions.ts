@@ -5,6 +5,8 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
+import { sync } from "./sync";
+import { getIsDebug } from "./utils";
 import { renderWidget } from "./widget";
 
 const logger = Logger.getInstance();
@@ -12,16 +14,32 @@ const config = Config.getInstance();
 
 const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
 
-export const trackAction = async (
-  name: string,
-  properties: TJsActionInput["properties"] = {}
-): Promise<Result<void, NetworkError>> => {
-  const { userId } = config.get();
+const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
+  const randomNum = Math.floor(Math.random() * 100) + 1;
+  return randomNum <= displayPercentage;
+};
+
+export const trackAction = async (name: string): Promise<Result<void, NetworkError>> => {
+  const {
+    userId,
+    state: { surveys = [] },
+  } = config.get();
+
+  // if surveys have a inline triggers, we need to check the name of the action in the code action config
+  surveys.forEach(async (survey) => {
+    const { inlineTriggers } = survey;
+    const { codeConfig } = inlineTriggers ?? {};
+
+    if (name === codeConfig?.identifier) {
+      await renderWidget(survey);
+      return;
+    }
+  });
+
   const input: TJsActionInput = {
     environmentId: config.get().environmentId,
     userId,
     name,
-    properties: properties || {},
   };
 
   // don't send actions to the backend if the person is not identified
@@ -46,6 +64,20 @@ export const trackAction = async (
         responseMessage: res.error.message,
       });
     }
+
+    // we skip the resync on a new action since this leads to too many requests if the user has a lot of actions
+    // also this always leads to a second sync call on the `New Session` action
+    // when debug: sync after every action for testing purposes
+    if (getIsDebug()) {
+      await sync(
+        {
+          environmentId: config.get().environmentId,
+          apiHost: config.get().apiHost,
+          userId,
+        },
+        true
+      );
+    }
   }
 
   logger.debug(`Formbricks: Action "${name}" tracked`);
@@ -54,7 +86,7 @@ export const trackAction = async (
   const activeSurveys = config.get().state?.surveys;
 
   if (!!activeSurveys && activeSurveys.length > 0) {
-    triggerSurvey(name, activeSurveys);
+    await triggerSurvey(name, activeSurveys);
   } else {
     logger.debug("No active surveys to display");
   }
@@ -62,12 +94,20 @@ export const trackAction = async (
   return okVoid();
 };
 
-export const triggerSurvey = (actionName: string, activeSurveys: TSurvey[]): void => {
+export const triggerSurvey = async (actionName: string, activeSurveys: TSurvey[]): Promise<void> => {
   for (const survey of activeSurveys) {
+    // Check if the survey should be displayed based on displayPercentage
+    if (survey.displayPercentage) {
+      const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
+      if (!shouldDisplaySurvey) {
+        logger.debug("Survey display skipped based on displayPercentage.");
+        continue;
+      }
+    }
     for (const trigger of survey.triggers) {
       if (trigger === actionName) {
         logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);
-        renderWidget(survey);
+        await renderWidget(survey);
         return;
       }
     }

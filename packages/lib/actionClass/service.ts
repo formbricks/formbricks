@@ -177,6 +177,7 @@ export const createActionClass = async (
 
     return actionClassPrisma;
   } catch (error) {
+    console.error(error);
     throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
   }
 };

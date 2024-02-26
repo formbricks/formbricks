@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationSlack,
-  TIntegrationSlackConfig,
+  TIntegrationSlackConfigData,
   TIntegrationSlackInput,
 } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -27,7 +27,7 @@ interface AddWebhookModalProps {
   setOpen: (v: boolean) => void;
   channels: TIntegrationItem[];
   slackIntegration: TIntegrationSlack;
-  selectedIntegration?: (TIntegrationSlackConfig & { index: number }) | null;
+  selectedIntegration?: (TIntegrationSlackConfigData & { index: number }) | null;
 }
 
 export default function AddSlackConnectionModal({

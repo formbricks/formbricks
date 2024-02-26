@@ -189,36 +189,25 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
-    title: "Getting Started",
+    title: "In-App Surveys",
     links: [
-      { title: "Quickstart: In app", href: "/docs/getting-started/quickstart-in-app-survey" },
+      { title: "Quickstart", href: "/docs/getting-started/quickstart-in-app-survey" },
       { title: "Framework Guides", href: "/docs/getting-started/framework-guides" },
       { title: "Troubleshooting", href: "/docs/getting-started/troubleshooting" },
-    ],
-  },
-  {
-    title: "Attributes",
-    links: [
-      { title: "Why Attributes?", href: "/docs/attributes/why" },
-      { title: "Custom Attributes", href: "/docs/attributes/custom-attributes" },
-      { title: "Identify users", href: "/docs/attributes/identify-users" },
-    ],
-  },
-  {
-    title: "Actions",
-    links: [
-      { title: "Why Actions?", href: "/docs/actions/why" },
-      { title: "No-Code Actions", href: "/docs/actions/no-code" },
-      { title: "Code Actions", href: "/docs/actions/code" },
+      { title: "Identify Users", href: "/docs/in-app-surveys/user-identification" },
+      { title: "Actions", href: "/docs/in-app-surveys/actions" },
+      { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
     ],
   },
   {
     title: "Link Surveys",
     links: [
+      { title: "Quickstart", href: "/docs/link-surveys/quickstart" },
       { title: "Data Prefilling", href: "/docs/link-surveys/data-prefilling" },
       { title: "Identify Users", href: "/docs/link-surveys/user-identification" },
       { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
       { title: "Source Tracking", href: "/docs/link-surveys/source-tracking" },
+      { title: "Hidden Fields", href: "/docs/link-surveys/hidden-fields" },
     ],
   },
   {
@@ -231,6 +220,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Feature Chaser", href: "/docs/best-practices/feature-chaser" },
       { title: "Feedback Box", href: "/docs/best-practices/feedback-box" },
       { title: "Docs Feedback", href: "/docs/best-practices/docs-feedback" },
+      { title: "Improve Email Content", href: "/docs/best-practices/improve-email-content" },
     ],
   },
   {
@@ -253,7 +243,8 @@ export const navigation: Array<NavGroup> = [
       { title: "Advanced Setup", href: "/docs/self-hosting/docker" },
       { title: "Configure", href: "/docs/self-hosting/external-auth-providers" },
       { title: "Migration Guide", href: "/docs/self-hosting/migration-guide" },
-      { title: "Self-hosting License", href: "/docs/self-hosting/license" },
+      { title: "License", href: "/docs/self-hosting/license" },
+      { title: "Enterprise License", href: "/docs/self-hosting/enterprise" },
     ],
   },
   {

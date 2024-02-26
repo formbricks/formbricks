@@ -6,7 +6,6 @@ import { dirname, join } from "path";
  * It is needed in projects that use Yarn PnP or are set up within a monorepo.
  */
 function getAbsolutePath(value: string): any {
-  console.log("first");
   return dirname(require.resolve(join(value, "package.json")));
 }
 const config: StorybookConfig = {

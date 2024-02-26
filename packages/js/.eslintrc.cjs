@@ -1,3 +1,4 @@
 module.exports = {
-  extends: [ "turbo", "prettier"],
+  extends: ["turbo", "prettier"],
 };
+

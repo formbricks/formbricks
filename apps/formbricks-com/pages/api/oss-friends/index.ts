@@ -11,6 +11,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.appsmith.com",
         },
         {
+          name: "Aptabase",
+          description:
+            "Analytics for Apps, open source, simple and privacy-friendly. SDKs for Swift, React Native, Electron, Flutter and many others.",
+          href: "https://aptabase.com",
+        },
+        {
           name: "Argos",
           description: "Argos provides the developer tools to debug tests and detect visual regressions..",
           href: "https://argos-ci.com",
@@ -26,6 +32,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "Cal.com is a scheduling tool that helps you schedule meetings without the back-and-forth emails.",
           href: "https://cal.com",
+        },
+        {
+          name: "ClassroomIO.com",
+          description:
+            "ClassroomIO is a no-code tool that allows you build and scale your own teaching platform with ease.",
+          href: "https://www.classroomio.com",
         },
         {
           name: "Crowd.dev",
@@ -148,6 +160,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://www.papermark.io/",
         },
         {
+          name: "Prisma",
+          description:
+            "Simplify working with databases. Build, optimize, and grow your app easily with an intuitive data model, type-safety, automated migrations, connection pooling, caching, and real-time db subscriptions.",
+          href: "https://www.prisma.io",
+        },
+        {
           name: "Requestly",
           description:
             "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
@@ -203,6 +221,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "A modern CRM offering the flexibility of open-source, advanced features and sleek design.",
           href: "https://twenty.com",
+        },
+        {
+          name: "UnInbox",
+          description:
+            "Modern email for teams and professionals. Bringing the best of email and messaging into a single, modern, and secure platform.",
+          href: "https://uninbox.com",
         },
         {
           name: "Unkey",

@@ -53,12 +53,11 @@ export default function TemplateList({ onTemplateClick, activeTemplate }: Templa
         {templates
           .filter((template) => selectedFilter === ALL_CATEGORY_NAME || template.category === selectedFilter)
           .map((template: TTemplate) => (
-            <button
-              type="button"
+            <div
+              key={template.name}
               onClick={() => {
                 onTemplateClick(template); // Pass the 'template' object instead of 'activeTemplate'
               }}
-              key={template.name}
               className={cn(
                 activeTemplate?.name === template.name && "ring-brand ring-2",
                 "duration-120  group  relative rounded-lg bg-white p-6 shadow transition-all duration-150 hover:scale-105 dark:bg-slate-700"
@@ -71,7 +70,7 @@ export default function TemplateList({ onTemplateClick, activeTemplate }: Templa
                 {template.name}
               </h3>
               <p className="text-left text-xs text-slate-600 dark:text-slate-400">{template.description}</p>
-            </button>
+            </div>
           ))}
       </div>
     </main>

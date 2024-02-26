@@ -108,6 +108,7 @@ export default function DateQuestion({
 
   return (
     <form
+      key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
         if (question.required && !value) {

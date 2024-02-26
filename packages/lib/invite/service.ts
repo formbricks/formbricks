@@ -121,7 +121,7 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
   }
 };
 
-export const getInvite = async (inviteId: string): Promise<InviteWithCreator> => {
+export const getInvite = async (inviteId: string): Promise<InviteWithCreator | null> => {
   const invite = await unstable_cache(
     async () => {
       validateInputs([inviteId, ZString]);
@@ -140,18 +140,18 @@ export const getInvite = async (inviteId: string): Promise<InviteWithCreator> =>
         },
       });
 
-      if (!invite) {
-        throw new ResourceNotFoundError("Invite", inviteId);
-      }
       return invite;
     },
     [`getInvite-${inviteId}`],
     { tags: [inviteCache.tag.byId(inviteId)], revalidate: SERVICES_REVALIDATION_INTERVAL }
   )();
-  return {
-    ...formatDateFields(invite, ZInvite),
-    creator: invite.creator,
-  };
+
+  return invite
+    ? {
+        ...formatDateFields(invite, ZInvite),
+        creator: invite.creator,
+      }
+    : null;
 };
 
 export const resendInvite = async (inviteId: string): Promise<TInvite> => {
@@ -171,7 +171,7 @@ export const resendInvite = async (inviteId: string): Promise<TInvite> => {
     throw new ResourceNotFoundError("Invite", inviteId);
   }
 
-  await sendInviteMemberEmail(inviteId, invite.creator?.name ?? "", invite.name ?? "", invite.email);
+  await sendInviteMemberEmail(inviteId, invite.email, invite.creator?.name ?? "", invite.name ?? "");
 
   const updatedInvite = await prisma.invite.update({
     where: {

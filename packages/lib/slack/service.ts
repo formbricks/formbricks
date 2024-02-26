@@ -85,7 +85,7 @@ export async function writeDataToSlack(
   credentials: TIntegrationSlackCredential,
   channelId: string,
   values: string[][],
-  surveyName: string
+  surveyName: string | undefined
 ) {
   try {
     const [responses, questions] = values;

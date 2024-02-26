@@ -121,6 +121,12 @@ if (process.env.WEBAPP_URL) {
     protocol: "https",
     hostname: getHostname(process.env.WEBAPP_URL),
   });
+} else {
+  // The WEBAPP_URL is not set, so we allow all origins
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: "**",
+  });
 }
 
 const sentryOptions = {

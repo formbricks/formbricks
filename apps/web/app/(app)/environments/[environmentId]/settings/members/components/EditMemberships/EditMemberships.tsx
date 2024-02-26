@@ -1,5 +1,4 @@
 import MembersInfo from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/MembersInfo";
-import React from "react";
 
 import { getRoleManagementPermission } from "@formbricks/ee/lib/service";
 import { getInvitesByTeamId } from "@formbricks/lib/invite/service";
@@ -29,11 +28,10 @@ export async function EditMemberships({
   return (
     <div>
       <div className="rounded-lg border border-slate-200">
-        <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-2"></div>
+        <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
           <div className="col-span-5">Fullname</div>
           <div className="col-span-5">Email</div>
-          {canDoRoleManagement && <div className="col-span-3">Role</div>}
+          {canDoRoleManagement && <div className="col-span-5">Role</div>}
           <div className="col-span-5"></div>
         </div>
 

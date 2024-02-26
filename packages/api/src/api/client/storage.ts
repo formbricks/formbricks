@@ -77,8 +77,23 @@ export class StorageAPI {
     });
 
     if (!uploadResponse.ok) {
-      const uploadJson = await uploadResponse.json();
-      throw new Error(`${uploadJson.message}`);
+      // if local storage is used, we'll use the json response:
+      if (signingData) {
+        const uploadJson = await uploadResponse.json();
+        const error = new Error(uploadJson.message);
+        error.name = "FileTooLargeError";
+        throw error;
+      }
+
+      // if s3 is used, we'll use the text response:
+      const errorText = await uploadResponse.text();
+      if (presignedFields && errorText && errorText.includes("EntityTooLarge")) {
+        const error = new Error("File size exceeds the size limit for your plan");
+        error.name = "FileTooLargeError";
+        throw error;
+      }
+
+      throw new Error(`Upload failed with status: ${uploadResponse.status}`);
     }
 
     return fileUrl;

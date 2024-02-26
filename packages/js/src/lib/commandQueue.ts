@@ -58,7 +58,7 @@ export class CommandQueue {
       if (!result) continue;
 
       if (result.ok) {
-        if (!result.data.ok) {
+        if (result.data && !result.data.ok) {
           errorHandler.handle(result.data.error);
         }
       }

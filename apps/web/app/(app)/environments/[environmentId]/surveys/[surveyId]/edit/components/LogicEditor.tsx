@@ -57,7 +57,7 @@ export default function LogicEditor({
 
   const conditions = {
     openText: ["submitted", "skipped"],
-    multipleChoiceSingle: ["submitted", "skipped", "equals", "notEquals"],
+    multipleChoiceSingle: ["submitted", "skipped", "equals", "notEquals", "includesOne"],
     multipleChoiceMulti: ["submitted", "skipped", "includesAll", "includesOne", "equals"],
     nps: [
       "equals",

@@ -34,9 +34,11 @@ test.describe("Invite, accept and remove team member", async () => {
     await page.getByLabel("Email Address").fill(invites.addMember.email);
 
     await page.getByRole("button", { name: "Send Invitation", exact: true }).click();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
   });
 
-  test("Copy Invite Link", async ({ page }) => {
+  test("Copy invite Link", async ({ page }) => {
     await login(page, email, password);
 
     const dropdownTrigger = page.locator("#userDropdownTrigger");
@@ -71,7 +73,7 @@ test.describe("Invite, accept and remove team member", async () => {
     }
   });
 
-  test("Accept Invite", async ({ page }) => {
+  test("Accept invite", async ({ page }) => {
     const { email, name, password } = users.team[1];
     page.goto(inviteLink);
 
@@ -85,7 +87,7 @@ test.describe("Invite, accept and remove team member", async () => {
     await skipOnboarding(page);
   });
 
-  test("Remove Member", async ({ page }) => {
+  test("Remove member", async ({ page }) => {
     await login(page, email, password);
 
     const dropdownTrigger = page.locator("#userDropdownTrigger");

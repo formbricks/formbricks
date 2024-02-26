@@ -10,6 +10,8 @@ export const ZIntegrationSlackConfigData = z
   })
   .merge(ZIntegrationBaseSurveyData);
 
+export type TIntegrationSlackConfigData = z.infer<typeof ZIntegrationSlackConfigData>;
+
 export const ZIntegrationSlackCredential = z.object({
   token_type: z.literal("Bearer"),
   expiry_date: z.number(),

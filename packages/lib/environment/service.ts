@@ -187,7 +187,7 @@ export const createEnvironment = async (
       },
       attributeClasses: {
         create: [
-          { name: "userId", description: "The internal ID of the person", type: "automatic" },
+          // { name: "userId", description: "The internal ID of the person", type: "automatic" },
           { name: "email", description: "The email of the person", type: "automatic" },
         ],
       },

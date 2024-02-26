@@ -51,7 +51,7 @@ export default function FileInput({
             }
           } catch (err: any) {
             setIsUploading(false);
-            if (err.message === "File size exceeds the 10 MB limit") {
+            if (err.name === "FileTooLargeError") {
               alert(err.message);
             } else {
               alert("Upload failed! Please try again.");
@@ -73,7 +73,7 @@ export default function FileInput({
           }
         } catch (err: any) {
           setIsUploading(false);
-          if (err.message === "File size exceeds the 10 MB limit") {
+          if (err.name === "FileTooLargeError") {
             alert(err.message);
           } else {
             alert("Upload failed! Please try again.");
@@ -135,7 +135,7 @@ export default function FileInput({
                 uploadedUrls.push(response);
               } catch (err: any) {
                 setIsUploading(false);
-                if (err.message === "File size exceeds the 10 MB limit") {
+                if (err.name === "FileTooLargeError") {
                   alert(err.message);
                 } else {
                   alert("Upload failed! Please try again.");
@@ -151,7 +151,7 @@ export default function FileInput({
               uploadedUrls.push(response);
             } catch (err: any) {
               setIsUploading(false);
-              if (err.message === "File size exceeds the 10 MB limit") {
+              if (err.name === "FileTooLargeError") {
                 alert(err.message);
               } else {
                 alert("Upload failed! Please try again.");
@@ -202,8 +202,8 @@ export default function FileInput({
   }, [allowMultipleFiles, fileUrls, isUploading]);
 
   return (
-    <div className="items-left relative mt-3 flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
-      <div>
+    <div className="items-left relative mt-3 flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:cursor-pointer hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
+      <div className="max-h-[40vh] overflow-auto">
         {fileUrls &&
           fileUrls?.map((file, index) => {
             const fileName = getOriginalFileNameFromUrl(file);
@@ -241,7 +241,9 @@ export default function FileInput({
                     <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                     <polyline points="14 2 14 8 20 8" />
                   </svg>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{fileName}</p>
+                  <p className="mt-1 w-full overflow-hidden overflow-ellipsis whitespace-nowrap px-2 text-center text-sm text-slate-600 dark:text-slate-400">
+                    {fileName}
+                  </p>
                 </div>
               </div>
             );

@@ -63,7 +63,11 @@ const QuestionFormInput = ({
   const fallbackInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
-    questionId === "end" ? false : !!(question as TSurveyQuestion).imageUrl && type === "headline"
+    questionId === "end"
+      ? localSurvey.thankYouCard.imageUrl
+        ? true
+        : false
+      : !!(question as TSurveyQuestion).imageUrl
   );
   const [showQuestionSelect, setShowQuestionSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
@@ -244,17 +248,21 @@ const QuestionFormInput = ({
     <div className="mt-3 w-full">
       <Label htmlFor="headline">{type === "headline" ? "Question" : "Description"}</Label>
       <div className="mt-2 flex flex-col gap-6 overflow-hidden">
-        {showImageUploader && (
+        {showImageUploader && type === "headline" && (
           <FileInput
             id="question-image"
             allowedFileExtensions={["png", "jpeg", "jpg"]}
             environmentId={environmentId}
             onFileUpload={(url: string[] | undefined) => {
-              if (updateQuestion && url) {
+              if (isThankYouCard && updateSurvey && url) {
+                updateSurvey({ imageUrl: url[0] });
+              } else if (updateQuestion && url) {
                 updateQuestion(questionIdx, { imageUrl: url[0] });
               }
             }}
-            fileUrl={isThankYouCard ? "" : (question as TSurveyQuestion).imageUrl}
+            fileUrl={
+              isThankYouCard ? localSurvey.thankYouCard.imageUrl : (question as TSurveyQuestion).imageUrl
+            }
           />
         )}
         <div className="flex items-center space-x-2">

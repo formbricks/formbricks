@@ -47,6 +47,9 @@ x-environment: &environment
     # Uncomment the below and set it to 1 to disable Signups
     # SIGNUP_DISABLED:
 
+    # Uncomment the below and set it to 1 to disable logging in with email
+    # EMAIL_AUTH_DISABLED:
+
     # Uncomment the below and set it to 1 to disable Invites
     # INVITE_DISABLED:
 
@@ -60,12 +63,10 @@ x-environment: &environment
     # IMPRINT_URL:
 
     # Uncomment the below and set to 1 if you want to enable GitHub OAuth
-    # GITHUB_AUTH_ENABLED:
     # GITHUB_ID:
     # GITHUB_SECRET:
 
     # Uncomment the below and set to 1 if you want to enable Google OAuth
-    # GOOGLE_AUTH_ENABLED:
     # GOOGLE_CLIENT_ID:
     # GOOGLE_CLIENT_SECRET:
 

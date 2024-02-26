@@ -11,7 +11,8 @@ import { TMembership } from "@formbricks/types/memberships";
 import { TUser, TUserCreateInput, TUserUpdateInput, ZUser, ZUserUpdateInput } from "@formbricks/types/user";
 
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { updateMembership } from "../membership/service";
+import { createCustomerIoCustomer } from "../customerio";
+import { deleteMembership, updateMembership } from "../membership/service";
 import { deleteTeam } from "../team/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
@@ -29,6 +30,7 @@ const responseSelection = {
   twoFactorEnabled: true,
   identityProvider: true,
   objective: true,
+  notificationSettings: true,
 };
 
 // function to retrive basic information about a user's user
@@ -171,6 +173,9 @@ export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
     id: user.id,
   });
 
+  // send new user customer.io to customer.io
+  createCustomerIoCustomer(user);
+
   return user;
 };
 
@@ -212,6 +217,8 @@ export const deleteUser = async (id: string): Promise<TUser> => {
       } else if (currentUserIsTeamOwner) {
         await deleteTeam(teamId);
       }
+
+      await deleteMembership(id, teamId);
     }
 
     const deletedUser = await deleteUserById(id);
@@ -224,4 +231,39 @@ export const deleteUser = async (id: string): Promise<TUser> => {
 
     throw error;
   }
+};
+
+export const getUsersWithTeam = async (teamId: string): Promise<TUser[]> => {
+  validateInputs([teamId, ZId]);
+
+  const users = await prisma.user.findMany({
+    where: {
+      memberships: {
+        some: {
+          teamId,
+        },
+      },
+    },
+    select: responseSelection,
+  });
+
+  return users;
+};
+
+export const userIdRelatedToApiKey = async (apiKey: string) => {
+  const userId = await prisma.apiKey.findUnique({
+    where: { id: apiKey },
+    select: {
+      environment: {
+        select: {
+          people: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  return userId;
 };

@@ -1,12 +1,10 @@
 import MemberActions from "@/app/(app)/environments/[environmentId]/settings/members/components/EditMemberships/MemberActions";
 import { isInviteExpired } from "@/app/lib/utils";
-import React from "react";
 
 import { EditMembershipRole } from "@formbricks/ee/RoleManagement/components/EditMembershipRole";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember, TMembershipRole } from "@formbricks/types/memberships";
 import { TTeam } from "@formbricks/types/teams";
-import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Badge } from "@formbricks/ui/Badge";
 
 type MembersInfoProps = {
@@ -39,15 +37,8 @@ const MembersInfo = async ({
     <div className="grid-cols-20" id="membersInfoWrapper">
       {allMembers.map((member) => (
         <div
-          className="singleMemberInfo grid-cols-20 grid h-auto w-full content-center rounded-lg p-0.5 py-2 text-left text-sm text-slate-900"
+          className="singleMemberInfo grid-cols-20 grid h-auto w-full content-center rounded-lg px-4 py-3 text-left text-sm text-slate-900"
           key={member.email}>
-          <div className="h-58 col-span-2 pl-4">
-            {isInvitee(member) ? (
-              <ProfileAvatar userId={member.email} />
-            ) : (
-              <ProfileAvatar userId={member.userId} />
-            )}
-          </div>
           <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
             <p>{member.name}</p>
           </div>
@@ -55,7 +46,7 @@ const MembersInfo = async ({
             {member.email}
           </div>
 
-          <div className="ph-no-capture col-span-3 flex flex-col items-start justify-center break-all">
+          <div className="ph-no-capture col-span-5 flex flex-col items-start justify-center break-all">
             {canDoRoleManagement && allMembers?.length > 0 && (
               <EditMembershipRole
                 isAdminOrOwner={isUserAdminOrOwner}
