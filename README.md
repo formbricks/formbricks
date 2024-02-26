@@ -103,6 +103,8 @@ Formbricks is both a free and open source survey platform - and a privacy-first 
 - 🔒 [Auth.js](https://authjs.dev/)
 
 - 🧘‍♂️ [Zod](https://zod.dev/)
+-
+- 🐛 [Vitest](https://vitest.dev/)
 
 <a id="getting-started"></a>
 

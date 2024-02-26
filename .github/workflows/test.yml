@@ -8,8 +8,8 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Setup Node.js 20.x
         uses: actions/setup-node@v3
