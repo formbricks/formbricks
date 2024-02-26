@@ -30,8 +30,5 @@ jobs:
           SECRET=$(openssl rand -hex 32)
           echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
 
-      - name: Build formbricks-js dependencies
-        run: pnpm build --filter=js
-
       - name: Test
         run: pnpm test

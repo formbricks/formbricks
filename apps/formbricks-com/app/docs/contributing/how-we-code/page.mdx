@@ -1,4 +1,5 @@
 import Image from "next/image";
+
 import CorsHandling from "./cors-handling-in-api.webp";
 
 export const metadata = {
@@ -25,7 +26,7 @@ Thank you for choosing to contribute to Formbricks. Before you start, please fam
 - Constants should be in the packages folder
 - Types should be in the packages folder
 - How we handle Pull Requests
-- Read environment variables from `.env.mjs`
+- Read server-side environment variables from `constants.ts`
 
 ---
 
@@ -83,9 +84,9 @@ You should store constants in `packages/lib/constants`
 
 You should store type in `packages/types`
 
-## Read environment variables from `.env.mjs`
+## Read server-side environment variables from `constants.ts`
 
-Environment variables (`process.env`) shouldn’t be accessed directly but be added in the `.env.mjs` and should be accessed from here. This practice helps us ensure that the variables are typesafe.
+Server-side environment variables (`process.env`) shouldn’t be accessed directly but included into the `constants.ts` file and read from there. This way we can assure they are used only on the server side and are also type-safe.
 
 ## How we handle Pull Requests
 
