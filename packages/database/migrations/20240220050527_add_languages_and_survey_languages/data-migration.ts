@@ -48,14 +48,13 @@ async function main() {
     }
 
     for (const environment of environments) {
-      const hasLanguageAttributeClass = environment.attributeClasses.find(
-        (attributeClass) => attributeClass.name === "language"
-      );
-      if (hasLanguageAttributeClass) {
+      const languageAttributeClass = environment.attributeClasses.find((attributeClass) => {
+        return attributeClass.name === "language";
+      });
+      if (languageAttributeClass) {
         // Update existing attributeClass
-        const attributeClassId = environment.attributeClasses[0].id;
         await tx.attributeClass.update({
-          where: { id: attributeClassId },
+          where: { id: languageAttributeClass.id },
           data: {
             type: AttributeType.automatic,
             description: "The language used by the person",
