@@ -88,39 +88,45 @@ export const initialize = async (
     logger.debug("No existing configuration found.");
   }
 
-  if (
-    existingConfig &&
-    existingConfig.state &&
-    existingConfig.environmentId === c.environmentId &&
-    existingConfig.apiHost === c.apiHost &&
-    existingConfig.userId === c.userId &&
-    existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
-  ) {
-    logger.debug("Found existing configuration.");
-    if (existingConfig.expiresAt < new Date()) {
-      logger.debug("Configuration expired.");
+  // if the existing config has an errored state, we want to sleep
+  if (existingConfig?.state?.status === "error") {
+    logger.debug("Sync has failed.");
+    // return okVoid();
+  } else {
+    if (
+      existingConfig &&
+      existingConfig.state &&
+      existingConfig.environmentId === c.environmentId &&
+      existingConfig.apiHost === c.apiHost &&
+      existingConfig.userId === c.userId &&
+      existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
+    ) {
+      logger.debug("Found existing configuration.");
+      if (existingConfig.expiresAt < new Date()) {
+        logger.debug("Configuration expired.");
+
+        await sync({
+          apiHost: c.apiHost,
+          environmentId: c.environmentId,
+          userId: c.userId,
+        });
+      } else {
+        logger.debug("Configuration not expired. Extending expiration.");
+        config.update(existingConfig);
+      }
+    } else {
+      logger.debug("No valid configuration found or it has been expired. Creating new config.");
+      logger.debug("Syncing.");
 
       await sync({
         apiHost: c.apiHost,
         environmentId: c.environmentId,
         userId: c.userId,
       });
-    } else {
-      logger.debug("Configuration not expired. Extending expiration.");
-      config.update(existingConfig);
+
+      // and track the new session event
+      await trackAction("New Session");
     }
-  } else {
-    logger.debug("No valid configuration found or it has been expired. Creating new config.");
-    logger.debug("Syncing.");
-
-    await sync({
-      apiHost: c.apiHost,
-      environmentId: c.environmentId,
-      userId: c.userId,
-    });
-
-    // and track the new session event
-    await trackAction("New Session");
   }
 
   // update attributes in config

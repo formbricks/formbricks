@@ -25,7 +25,7 @@ const syncWithBackend = async (
     logger.debug("No cache option set for sync");
   }
 
-  // if user id is available
+  // if user id is not available
 
   if (!userId) {
     const url = baseUrl + urlSuffix;
@@ -76,6 +76,17 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
     const syncResult = await syncWithBackend(params, noCache);
     if (syncResult?.ok !== true) {
       logger.error(`Sync failed: ${JSON.stringify(syncResult.error)}`);
+      const existingConfig = config.get();
+      if (existingConfig.state) {
+        config.update({
+          ...existingConfig,
+          state: {
+            ...existingConfig.state,
+            status: "error",
+          },
+        });
+      }
+
       throw syncResult.error;
     }
 
@@ -91,6 +102,7 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
       attributes: syncResult.value.person?.attributes || {},
+      status: "success",
     };
 
     if (!params.userId) {
@@ -115,8 +127,6 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
       userId: params.userId,
       state,
     });
-
-    // before finding the surveys, check for public use
   } catch (error) {
     logger.error(`Error during sync: ${error}`);
     throw error;
@@ -184,7 +194,6 @@ export const addExpiryCheckListener = (): void => {
         apiHost: config.get().apiHost,
         environmentId: config.get().environmentId,
         userId: config.get().userId,
-        // personId: config.get().state?.person?.id,
       });
     }, updateInterval);
   }
