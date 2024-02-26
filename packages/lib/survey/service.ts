@@ -663,8 +663,8 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
 export const getSyncSurveys = async (
   environmentId: string,
   personId: string,
-  deviceType: "phone" | "desktop" = "desktop",
   isMultiLanguageAllowed: boolean,
+  deviceType: "phone" | "desktop" = "desktop",
   options?: {
     version?: string;
   }

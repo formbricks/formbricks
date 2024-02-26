@@ -59,7 +59,7 @@ const ResponsePage = ({
 
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey, "default");
-  }, [survey, product.languages]);
+  }, [survey]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {

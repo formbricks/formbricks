@@ -36,14 +36,7 @@ import {
 } from "./utils";
 
 interface QuestionFormInputProps {
-  id:
-    | "headline"
-    | "subheader"
-    | "lowerLabel"
-    | "upperLabel"
-    | "buttonLabel"
-    | "placeholder"
-    | "backButtonLabel";
+  id: string;
   localSurvey: TSurvey;
   questionId: string;
   questionIdx: number;

@@ -94,7 +94,6 @@ export default function SurveyEditor({
         const fetchLatestProduct = async () => {
           const latestProduct = await refetchProduct(localProduct.id);
           if (latestProduct) {
-            console.log("setting product");
             setLocalProduct(latestProduct);
           }
         };
@@ -105,6 +104,7 @@ export default function SurveyEditor({
     return () => {
       document.removeEventListener("visibilitychange", listener);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // when the survey type changes, we need to reset the active question id to the first question
@@ -158,6 +158,7 @@ export default function SurveyEditor({
     if (!extractLanguageCodes(localSurvey.languages).includes(selectedLanguageCode)) {
       setSelectedLanguageCode("default");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.languages, selectedLanguageCode]);
 
   if (!localSurvey) {

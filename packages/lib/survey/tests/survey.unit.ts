@@ -285,14 +285,14 @@ describe("Tests for getSyncedSurveys", () => {
     it("Returns synced surveys", async () => {
       prismaMock.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
       prismaMock.person.findUnique.mockResolvedValueOnce(mockPerson);
-      const surveys = await getSyncSurveys(mockId, mockPerson.id, "desktop", false);
+      const surveys = await getSyncSurveys(mockId, mockPerson.id, false);
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
     });
 
     it("Returns an empty array if no surveys are found", async () => {
       prismaMock.survey.findMany.mockResolvedValueOnce([]);
       prismaMock.person.findUnique.mockResolvedValueOnce(mockPerson);
-      const surveys = await getSyncSurveys(mockId, mockPerson.id, "desktop", false);
+      const surveys = await getSyncSurveys(mockId, mockPerson.id, false);
       expect(surveys).toEqual([]);
     });
   });
@@ -303,14 +303,14 @@ describe("Tests for getSyncedSurveys", () => {
     it("does not find a Product", async () => {
       prismaMock.product.findFirst.mockResolvedValueOnce(null);
 
-      await expect(getSyncSurveys(mockId, mockPerson.id, "desktop", false)).rejects.toThrow(Error);
+      await expect(getSyncSurveys(mockId, mockPerson.id, false)).rejects.toThrow(Error);
     });
 
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prismaMock.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
       prismaMock.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(getSyncSurveys(mockId, mockPerson.id, "desktop", false)).rejects.toThrow(Error);
+      await expect(getSyncSurveys(mockId, mockPerson.id, false)).rejects.toThrow(Error);
     });
   });
 });

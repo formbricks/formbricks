@@ -6,14 +6,7 @@ import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbrick
 import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
 interface LocalizedInputProps {
-  id:
-    | "headline"
-    | "subheader"
-    | "lowerLabel"
-    | "upperLabel"
-    | "buttonLabel"
-    | "placeholder"
-    | "backButtonLabel";
+  id: string;
   name: string;
   value: TI18nString | undefined;
   isInvalid: boolean;
@@ -50,6 +43,7 @@ const isValueIncomplete = (
 ) => {
   // Define a list of IDs for which a default value needs to be checked.
   const labelIds = [
+    "label",
     "headline",
     "subheader",
     "lowerLabel",
@@ -57,6 +51,7 @@ const isValueIncomplete = (
     "buttonLabel",
     "placeholder",
     "backButtonLabel",
+    "dismissButtonLabel",
   ];
 
   // If value is not provided, immediately return false as it cannot be incomplete.

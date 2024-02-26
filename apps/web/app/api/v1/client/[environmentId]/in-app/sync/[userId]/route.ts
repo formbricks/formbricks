@@ -131,8 +131,8 @@ export async function GET(
       getSyncSurveys(
         environmentId,
         person.id,
-        device.type === "mobile" ? "phone" : "desktop",
         isMultiLanguageAllowed,
+        device.type === "mobile" ? "phone" : "desktop",
         {
           version: apiVersion ?? undefined,
         }

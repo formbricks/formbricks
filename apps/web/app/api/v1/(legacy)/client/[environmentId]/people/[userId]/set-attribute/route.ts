@@ -1,6 +1,7 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
+import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
 import { personCache } from "@formbricks/lib/person/cache";
@@ -8,6 +9,7 @@ import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TJsStateSync, ZJsPeopleAttributeInput } from "@formbricks/types/js";
 
 interface Context {
@@ -69,8 +71,14 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       environmentId,
     });
 
+    const team = await getTeamByEnvironmentId(environmentId);
+
+    if (!team) {
+      throw new Error("Team not found");
+    }
+    const isMultiLanguageAllowed = getMultiLanguagePermission(team);
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person.id),
+      getSyncSurveys(environmentId, person.id, isMultiLanguageAllowed),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);

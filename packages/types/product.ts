@@ -55,7 +55,6 @@ export const ZProductUpdateInput = z.object({
   clickOutsideClose: z.boolean().optional(),
   darkOverlay: z.boolean().optional(),
   environments: z.array(ZEnvironment).optional(),
-  languages: z.array(ZLanguage).optional(),
 });
 
 export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;

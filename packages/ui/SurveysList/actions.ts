@@ -148,7 +148,7 @@ export async function copyToOtherEnvironmentAction(
       status: "draft",
       questions: structuredClone(existingSurvey.questions),
       thankYouCard: structuredClone(existingSurvey.thankYouCard),
-      inlineTriggers: structuredClone(existingSurvey.inlineTriggers),
+      inlineTriggers: JSON.parse(JSON.stringify(existingSurvey.inlineTriggers)),
       triggers: {
         create: targetEnvironmentTriggers.map((actionClassId) => ({
           actionClassId: actionClassId,
