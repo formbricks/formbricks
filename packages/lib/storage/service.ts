@@ -3,6 +3,7 @@ import {
   DeleteObjectsCommand,
   GetObjectCommand,
   ListObjectsCommand,
+  PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
@@ -31,7 +32,7 @@ const S3_SECRET_KEY = env.S3_SECRET_KEY!;
 
 // S3Client Singleton
 
-const s3Client = new S3Client({
+export const s3Client = new S3Client({
   credentials: {
     accessKeyId: S3_ACCESS_KEY,
     secretAccessKey: S3_SECRET_KEY!,
@@ -200,7 +201,7 @@ export const getUploadSignedUrl = async (
           uuid,
         },
         updatedFileName,
-        fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
+        fileUrl: `/storage/${environmentId}/${accessType}/${updatedFileName}`,
       };
     } catch (err) {
       throw err;
@@ -285,6 +286,33 @@ export const putFileToLocalStorage = async (
     }
 
     await writeFile(uploadPath, buffer);
+  } catch (err) {
+    throw err;
+  }
+};
+
+// a single service to put file in the storage(local or S3), based on the S3 configuration
+export const putFile = async (
+  fileName: string,
+  fileBuffer: Buffer,
+  accessType: TAccessType,
+  environmentId: string
+) => {
+  try {
+    if (!IS_S3_CONFIGURED) {
+      await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
+      return { success: true, message: "File uploaded" };
+    } else {
+      const input = {
+        Body: fileBuffer,
+        Bucket: AWS_BUCKET_NAME,
+        Key: `${environmentId}/${accessType}/${fileName}`,
+      };
+
+      const command = new PutObjectCommand(input);
+      await s3Client.send(command);
+      return { success: true, message: "File uploaded" };
+    }
   } catch (err) {
     throw err;
   }

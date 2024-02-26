@@ -31,6 +31,7 @@ import {
 import { TTag } from "@formbricks/types/tags";
 
 import { selectPerson, transformPrismaPerson } from "../../person/service";
+import { mockSurveyOutput } from "../../survey/tests/survey.mock";
 import {
   createResponse,
   createResponseLegacy,
@@ -38,6 +39,7 @@ import {
   getResponse,
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
+  getResponseDownloadUrl,
   getResponsePersonAttributes,
   getResponses,
   getResponsesByEnvironmentId,
@@ -461,6 +463,79 @@ describe("Tests for getResponses service", () => {
       prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponses(mockSurveyId)).rejects.toThrow(Error);
+    });
+  });
+});
+
+describe("Tests for getResponseDownloadUrl service", () => {
+  describe("Happy Path", () => {
+    it("Returns a download URL for the csv response file", async () => {
+      prismaMock.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prismaMock.response.count.mockResolvedValue(1);
+      prismaMock.response.findMany.mockResolvedValue([mockResponse]);
+
+      const url = await getResponseDownloadUrl(mockSurveyId, "csv");
+      const fileExtension = url.split(".").pop();
+      expect(fileExtension).toEqual("csv");
+    });
+
+    it("Returns a download URL for the xlsx response file", async () => {
+      prismaMock.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prismaMock.response.count.mockResolvedValue(1);
+      prismaMock.response.findMany.mockResolvedValue([mockResponse]);
+
+      const url = await getResponseDownloadUrl(mockSurveyId, "xlsx", { finished: true });
+      const fileExtension = url.split(".").pop();
+      expect(fileExtension).toEqual("xlsx");
+    });
+  });
+
+  describe("Sad Path", () => {
+    testInputValidation(getResponseDownloadUrl, mockSurveyId, 123);
+
+    it("Throws error if response file is of different format than expected", async () => {
+      prismaMock.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prismaMock.response.count.mockResolvedValue(1);
+      prismaMock.response.findMany.mockResolvedValue([mockResponse]);
+
+      const url = await getResponseDownloadUrl(mockSurveyId, "csv", { finished: true });
+      const fileExtension = url.split(".").pop();
+      expect(fileExtension).not.toEqual("xlsx");
+    });
+
+    it("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponseCountBySurveyId fails", async () => {
+      const mockErrorMessage = "Mock error message";
+      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+      prismaMock.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prismaMock.response.count.mockRejectedValue(errToThrow);
+
+      await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
+    });
+
+    it("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponses fails", async () => {
+      const mockErrorMessage = "Mock error message";
+      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+
+      prismaMock.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prismaMock.response.count.mockResolvedValue(1);
+      prismaMock.response.findMany.mockRejectedValue(errToThrow);
+
+      await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
+    });
+
+    it("Throws a generic Error for unexpected problems", async () => {
+      const mockErrorMessage = "Mock error message";
+
+      // error from getSurvey
+      prismaMock.survey.findUnique.mockRejectedValue(new Error(mockErrorMessage));
+
+      await expect(getResponseDownloadUrl(mockSurveyId, "xlsx")).rejects.toThrow(Error);
     });
   });
 });
