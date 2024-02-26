@@ -136,7 +136,6 @@ export default function EditWelcomeCard({
                     )
                   }
                   setText={(value: string) => {
-                    console.log(value);
                     updateSurvey({ html: value });
                   }}
                   excludedToolbarItems={["blockType"]}
