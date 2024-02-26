@@ -142,30 +142,35 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
                 <p className="text-sm font-semibold">Multiple Languages</p>
               </div>
             </div>
+
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="multi-lang-toggle">{isMultiLanguageActivated ? "On" : "Off"}</Label>
+
+              <Switch
+                id="multi-lang-toggle"
+                checked={isMultiLanguageActivated}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleActivationSwitchLogic();
+                }}
+                disabled={!isMultiLanguageAllowed || product.languages.length === 0}
+              />
+            </div>
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
-          <div className="my-4 space-y-4">
+          <div className="space-y-4">
             {product.languages.length === 0 && (
-              <div className="text-sm">You have not added a language yet</div>
+              <p className="mt-2 text-sm italic text-slate-500">
+                No languages found. Add the first one to get started:
+              </p>
             )}
             {product.languages.length === 1 && (
-              <div className="text-sm">You need to add two or more languages to work with translations</div>
+              <div className="text-sm">You need two or more languages to work with translations.</div>
             )}
             {product.languages.length > 1 && (
               <div className="my-4 space-y-4">
                 <div>
-                  <div className="my-4 flex items-center space-x-4">
-                    <Switch
-                      id="hidden-fields-toggle"
-                      checked={isMultiLanguageActivated}
-                      onClick={handleActivationSwitchLogic}
-                      disabled={!isMultiLanguageAllowed}
-                    />
-                    <Label htmlFor="hidden-fields-toggle" className="font-bold">
-                      Activate Multiple Languages
-                    </Label>
-                  </div>
                   {!isMultiLanguageAllowed &&
                     (!isFormbricksCloud ? (
                       <UpgradePlanNotice

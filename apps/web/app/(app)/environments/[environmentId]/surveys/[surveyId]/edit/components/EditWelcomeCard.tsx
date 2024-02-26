@@ -93,7 +93,7 @@ export default function EditWelcomeCard({
             </div>
 
             <div className="flex items-center space-x-2">
-              <Label htmlFor="welcome-toggle">Enabled</Label>
+              <Label htmlFor="welcome-toggle">{localSurvey?.welcomeCard?.enabled ? "On" : "Off"}</Label>
 
               <Switch
                 id="welcome-toggle"
