@@ -17,7 +17,7 @@ import {
   OIDC_ISSUER,
   OIDC_SIGNING_ALGORITHM,
 } from "./constants";
-import { env } from "./env.mjs";
+import { env } from "./env";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
 import { createProduct } from "./product/service";

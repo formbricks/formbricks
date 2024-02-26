@@ -12,5 +12,8 @@
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1"
+  },
+  "dependencies": {
+    "@t3-oss/env-nextjs": "^0.9.2"
   }
 }

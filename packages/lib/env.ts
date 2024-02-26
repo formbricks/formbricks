@@ -9,7 +9,6 @@ export const env = createEnv({
   server: {
     CUSTOMER_IO_API_KEY: z.string().optional(),
     CUSTOMER_IO_SITE_ID: z.string().optional(),
-    NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
     DATABASE_URL: z.string().url(),
     ENCRYPTION_KEY: z.string().length(64).or(z.string().length(32)),
@@ -103,6 +102,8 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
+    AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
     CUSTOMER_IO_API_KEY: process.env.CUSTOMER_IO_API_KEY,
     CUSTOMER_IO_SITE_ID: process.env.CUSTOMER_IO_SITE_ID,
     WEBAPP_URL: process.env.WEBAPP_URL,

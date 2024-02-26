@@ -1,5 +1,5 @@
 {
-  "extends": "@formbricks/tsconfig/js-library.json",
+  "extends": "@formbricks/tsconfig/nextjs.json",
   "include": ["."],
   "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {

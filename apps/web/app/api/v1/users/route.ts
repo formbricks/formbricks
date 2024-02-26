@@ -6,7 +6,7 @@ import {
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/emails/emails";
-import { env } from "@formbricks/lib/env.mjs";
+import { env } from "@formbricks/lib/env";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";

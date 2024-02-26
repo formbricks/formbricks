@@ -1,6 +1,6 @@
 import { TUser } from "@formbricks/types/user";
 
-import { env } from "./env.mjs";
+import { env } from "./env";
 
 export const createCustomerIoCustomer = async (user: TUser) => {
   if (!env.CUSTOMER_IO_SITE_ID || !env.CUSTOMER_IO_API_KEY) {

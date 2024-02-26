@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
-import { env } from "@formbricks/lib/env.mjs";
+import { env } from "@formbricks/lib/env";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";

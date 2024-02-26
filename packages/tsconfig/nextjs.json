@@ -4,6 +4,7 @@
   "extends": "./base.json",
   "compilerOptions": {
     "plugins": [{ "name": "next" }],
+    "moduleResolution": "bundler",
     "allowJs": true,
     "declaration": false,
     "declarationMap": false,

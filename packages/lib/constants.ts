@@ -1,6 +1,6 @@
 import "server-only";
 
-import { env } from "./env.mjs";
+import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
