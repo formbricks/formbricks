@@ -104,7 +104,7 @@ export default function SettingsNavbar({
             hidden: isViewer,
           },
           {
-            name: "Languages",
+            name: "Multiple Languages",
             href: `/environments/${environmentId}/settings/language`,
             icon: LanguageIcon,
             current: pathname?.includes("/language"),

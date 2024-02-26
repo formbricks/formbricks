@@ -126,7 +126,7 @@ const MultiLanguageCard: FC<HiddenFieldsCardProps> = ({
           "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
         <p>
-          <Languages className="h-6 w-6 rounded-full bg-red-600 p-1 text-white" />
+          <Languages className="h-6 w-6 rounded-full bg-indigo-500 p-1 text-white" />
         </p>
       </div>
       <Collapsible.Root
