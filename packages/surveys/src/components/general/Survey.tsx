@@ -108,19 +108,44 @@ export function Survey({
     if (currQuesTemp?.logic && currQuesTemp?.logic.length > 0 && currentQuestion) {
       for (let logic of currQuesTemp.logic) {
         if (!logic.destination) continue;
+        // Check if the current question is of type 'multipleChoiceSingle' or 'multipleChoiceMulti'
         if (
           currentQuestion.type === "multipleChoiceSingle" ||
           currentQuestion.type === "multipleChoiceMulti"
         ) {
-          const choice = currentQuestion.choices.find(
-            (choice) => getLocalizedValue(choice.label, languageCode) === responseValue
-          );
+          let choice;
+
+          // Check if the response is a string (applies to single choice questions)
+          // Sonne -> sun
+          if (typeof responseValue === "string") {
+            // Find the choice in currentQuestion.choices that matches the responseValue after localization
+            choice = currentQuestion.choices.find((choice) => {
+              return getLocalizedValue(choice.label, languageCode) === responseValue;
+            })?.label;
+
+            // If a matching choice is found, get its default localized value
+            if (choice) {
+              choice = getLocalizedValue(choice, "default");
+            }
+          }
+          // Check if the response is an array (applies to multiple choices questions)
+          // ["Sonne","Mond"]->["sun","moon"]
+          else if (Array.isArray(responseValue)) {
+            // Filter and map the choices in currentQuestion.choices that are included in responseValue after localization
+            choice = currentQuestion.choices
+              .filter((choice) => {
+                return responseValue.includes(getLocalizedValue(choice.label, languageCode));
+              })
+              .map((choice) => getLocalizedValue(choice.label, "default"));
+          }
+
+          // If a choice is determined (either single or multiple), evaluate the logic condition with that choice
           if (choice) {
-            if (evaluateCondition(logic, getLocalizedValue(choice.label, "default"))) {
+            if (evaluateCondition(logic, choice)) {
               return logic.destination;
             }
           }
-          // if choice is undefined we can determine that, "other" option is selected
+          // If choice is undefined, it implies an "other" option is selected. Evaluate the logic condition for "Other"
           else {
             if (evaluateCondition(logic, "Other")) {
               return logic.destination;

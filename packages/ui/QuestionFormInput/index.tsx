@@ -334,11 +334,11 @@ const QuestionFormInput = ({
 
   return (
     <div className="w-full">
-      {getLabelById(id) && (
+      {
         <div className="mb-2 mt-3">
-          <Label htmlFor={id}>{getLabelById(id)}</Label>
+          <Label htmlFor={id}>{label ?? getLabelById(id)}</Label>
         </div>
-      )}
+      }
       <div className="flex flex-col gap-6">
         {showImageUploader && id === "headline" && (
           <FileInput

@@ -8,7 +8,6 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { FormbricksAPI } from "@formbricks/api";
-import { getLanguageLabel } from "@formbricks/ee/multiLanguage/lib/isoLanguages";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
@@ -197,9 +196,7 @@ export default function LinkSurvey({
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
                 language:
-                  languageCode === "default" && defaultLanguageCode
-                    ? getLanguageLabel(defaultLanguageCode)
-                    : getLanguageLabel(languageCode),
+                  languageCode === "default" && defaultLanguageCode ? defaultLanguageCode : languageCode,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",
