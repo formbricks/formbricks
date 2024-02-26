@@ -3,16 +3,16 @@ import { cache } from "react";
 
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TIntegrationItem } from "@formbricks/types/integration";
+import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 
-import { getIntegrationByType } from "../integration/service";
+import { deleteIntegration, getIntegrationByType } from "../integration/service";
 
-export const fetchChannels = async (key: TIntegrationSlackCredential): Promise<TIntegrationItem[]> => {
+export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIntegrationItem[]> => {
   const response = await fetch("https://slack.com/api/conversations.list", {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${key.access_token}`,
+      Authorization: `Bearer ${slackIntegration.config.key.access_token}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
   });
@@ -24,6 +24,10 @@ export const fetchChannels = async (key: TIntegrationSlackCredential): Promise<T
   const data = await response.json();
 
   if (!data.ok) {
+    if (data.error === "token_expired") {
+      // temporary fix to reset integration if token rotation is enabled
+      await deleteIntegration(slackIntegration.id);
+    }
     throw new Error(data.error);
   }
 
@@ -38,7 +42,7 @@ export const getSlackChannels = async (environmentId: string): Promise<TIntegrat
   try {
     const slackIntegration = (await getIntegrationByType(environmentId, "slack")) as TIntegrationSlack;
     if (slackIntegration && slackIntegration.config?.key) {
-      channels = await fetchChannels(slackIntegration.config.key);
+      channels = await fetchChannels(slackIntegration);
     }
 
     return channels;
