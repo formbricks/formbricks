@@ -95,6 +95,7 @@ export default function SurveyEditor({
         const fetchLatestProduct = async () => {
           const latestProduct = await refetchProduct(localProduct.id);
           if (latestProduct) {
+            console.log("setting product");
             setLocalProduct(latestProduct);
           }
         };
@@ -105,7 +106,7 @@ export default function SurveyEditor({
     return () => {
       document.removeEventListener("visibilitychange", listener);
     };
-  }, [localProduct.id]);
+  }, []);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
@@ -197,7 +198,7 @@ export default function SurveyEditor({
                   setLocalSurvey={setLocalSurvey}
                   activeQuestionId={activeQuestionId}
                   setActiveQuestionId={setActiveQuestionId}
-                  product={product}
+                  product={localProduct}
                   invalidQuestions={invalidQuestions}
                   setInvalidQuestions={setInvalidQuestions}
                   selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}

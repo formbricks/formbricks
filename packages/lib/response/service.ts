@@ -224,7 +224,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   captureTelemetry("response created");
 
   const { environmentId, language, userId, surveyId, finished, data, meta, singleUseId } = responseInput;
-  console.log(language);
   try {
     let person: TPerson | null = null;
 
@@ -459,7 +458,6 @@ export const getResponses = async (
   batchSize?: number,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> => {
-  console.log(filterCriteria);
   const responses = await unstable_cache(
     async () => {
       validateInputs(

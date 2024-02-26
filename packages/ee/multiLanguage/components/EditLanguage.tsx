@@ -3,7 +3,7 @@
 import { AlertTriangle, ArrowUpRight, Info, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import Select from "react-select";
+import Select, { CSSObjectWithLabel } from "react-select";
 
 import { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
@@ -29,13 +29,12 @@ interface EditLanguageProps {
 }
 
 const customStyles = {
-  control: (provided) => ({
+  control: (provided: CSSObjectWithLabel) => ({
     ...provided,
     backgroundColor: "white",
     width: "100%",
     height: "100%",
     borderRadius: "5px",
-    border: "",
     borderColor: "#cbd5e1",
   }),
 };
@@ -137,12 +136,16 @@ export default function EditLanguage({
     setIsEditing(true);
   };
 
+  const removeInCompleteLanguage = () => {
+    const newLanguages = languages.slice(0, -1); // Creates a new array without the last element
+    setLanguages(newLanguages);
+    setIsEditing(false);
+  };
+
   const handleConfirmationModal = async (languageId: string) => {
     try {
       const surveysUsingGivenLanguage = await getSurveysUsingGivenLanguageAction(product.id, languageId);
-      console.log(surveysUsingGivenLanguage);
       if (surveysUsingGivenLanguage.length > 0) {
-        console.log("inside");
         setIsConfirmationModalOpen(true);
         setCanRemoveSelectedLanguage(false);
         const surveyList = surveysUsingGivenLanguage.map((surveyName) => `• ${surveyName}`).join("\n");
@@ -243,13 +246,19 @@ export default function EditLanguage({
                     onChange={(e) => handleOnChange(index, "alias", e.target.value)}
                   />
                   <div>
-                    <Button
-                      disabled={isEditing}
-                      variant="warn"
-                      onClick={() => handleConfirmationModal(language.id)}
-                      loading={isDeleting}>
-                      Remove
-                    </Button>
+                    {index === product.languages.length ? (
+                      <Button variant="warn" onClick={removeInCompleteLanguage} loading={isDeleting}>
+                        Discard
+                      </Button>
+                    ) : (
+                      <Button
+                        disabled={isEditing}
+                        variant="warn"
+                        onClick={() => handleConfirmationModal(language.id)}
+                        loading={isDeleting}>
+                        Remove
+                      </Button>
+                    )}
                   </div>
                   <ConfirmationModal
                     title={"Delete language"}

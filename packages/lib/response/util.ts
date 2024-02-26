@@ -16,7 +16,6 @@ export function calculateTtcTotal(ttc: TResponseTtc) {
 
 export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Record<string, any>[] = [];
-
   // For finished
   if (filterCriteria?.finished !== undefined) {
     whereClause.push({
@@ -104,6 +103,31 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
 
     whereClause.push({
       AND: personAttributes,
+    });
+  }
+
+  // For Metadata
+  if (filterCriteria?.metadata) {
+    const metadata: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.metadata).forEach(([key, val]) => {
+      switch (val.op) {
+        case "equals":
+          metadata.push({
+            [key.toLocaleLowerCase()]: val.value,
+          });
+          break;
+        case "notEquals":
+          metadata.push({
+            [key.toLocaleLowerCase()]: {
+              not: val.value,
+            },
+          });
+          break;
+      }
+    });
+    whereClause.push({
+      AND: metadata,
     });
   }
 

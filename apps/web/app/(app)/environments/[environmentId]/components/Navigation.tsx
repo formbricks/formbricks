@@ -171,7 +171,7 @@ export default function Navigation({
         },
         {
           icon: LanguageIcon,
-          label: "Survey Languages",
+          label: "Languages",
           href: `/environments/${environment.id}/settings/language`,
           hidden: !isEnterpriseEdition,
         },

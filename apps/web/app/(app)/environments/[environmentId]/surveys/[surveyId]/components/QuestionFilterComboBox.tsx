@@ -23,7 +23,7 @@ type QuestionFilterComboBoxProps = {
   filterComboBoxValue: string | string[] | undefined;
   onChangeFilterValue: (o: string) => void;
   onChangeFilterComboBoxValue: (o: string | string[]) => void;
-  type: OptionsType.METADATA | TSurveyQuestionType | "Attributes" | "tags" | "language" | undefined;
+  type: OptionsType.METADATA | TSurveyQuestionType | OptionsType.ATTRIBUTES | OptionsType.TAGS | undefined;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
 };
@@ -49,8 +49,7 @@ const QuestionFilterComboBox = ({
   const isMultiple =
     type === TSurveyQuestionType.MultipleChoiceMulti ||
     type === TSurveyQuestionType.MultipleChoiceSingle ||
-    type === "language" ||
-    type === "tags";
+    type === OptionsType.TAGS;
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple

@@ -3,6 +3,7 @@
 import {
   CheckIcon,
   CursorArrowRippleIcon,
+  DevicePhoneMobileIcon,
   HashtagIcon,
   LanguageIcon,
   ListBulletIcon,
@@ -24,7 +25,6 @@ export enum OptionsType {
   QUESTIONS = "Questions",
   TAGS = "Tags",
   ATTRIBUTES = "Attributes",
-  LANGUAGE = "Language",
   METADATA = "Metadata",
 }
 
@@ -67,8 +67,13 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
         }
       case OptionsType.ATTRIBUTES:
         return <HashtagIcon width={18} className="text-white" />;
-      case OptionsType.LANGUAGE:
-        return <LanguageIcon width={18} className="text-white" />;
+      case OptionsType.METADATA:
+        switch (label) {
+          case "Language":
+            return <LanguageIcon width={18} height={18} className="text-white" />;
+          case "Device Type":
+            return <DevicePhoneMobileIcon width={18} height={18} className="text-white" />;
+        }
       case OptionsType.TAGS:
         return <HashtagIcon width={18} className="text-white" />;
     }
@@ -79,7 +84,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
       return "bg-indigo-500";
     } else if (type === OptionsType.QUESTIONS) {
       return "bg-brand-dark";
-    } else if (type === OptionsType.LANGUAGE || type === OptionsType.TAGS) {
+    } else if (type === OptionsType.TAGS) {
       return "bg-indigo-500";
     } else {
       return "bg-amber-500";

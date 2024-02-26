@@ -41,7 +41,6 @@ export default function CTAQuestion({
 
   return (
     <div key={question.id}>
-      {console.log(question)}
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}

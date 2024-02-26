@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { FormbricksAPI } from "@formbricks/api";
+import { getLanguageLabel } from "@formbricks/ee/multiLanguage/lib/isoLanguages";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
@@ -51,8 +52,9 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
-  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => surveyLanguage.default === true)
-    ?.language.code;
+  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
+    return surveyLanguage.default === true;
+  })?.language.code;
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
@@ -194,7 +196,10 @@ export default function LinkSurvey({
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
-                language: languageCode === "default" ? defaultLanguageCode : languageCode,
+                language:
+                  languageCode === "default" && defaultLanguageCode
+                    ? getLanguageLabel(defaultLanguageCode)
+                    : getLanguageLabel(languageCode),
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",

@@ -30,7 +30,7 @@ const ConfirmationModal = ({
   return (
     <Modal open={open} setOpen={setOpen} title={title}>
       <div className="text-slate-900">
-        <p className="mt-2">{text}</p>
+        <p className="mt-2 whitespace-pre-wrap">{text}</p>
       </div>
 
       <div className="mt-4 space-x-2 text-right">

@@ -134,10 +134,14 @@ export const ZResponseFilterCriteria = z.object({
       notApplied: z.array(z.string()).optional(),
     })
     .optional(),
-  languages: z
-    .object({
-      includes: z.array(z.string()).optional(),
-    })
+
+  metadata: z
+    .record(
+      z.object({
+        op: z.enum(["equals", "notEquals"]),
+        value: z.union([z.string(), z.number()]),
+      })
+    )
     .optional(),
 });
 
