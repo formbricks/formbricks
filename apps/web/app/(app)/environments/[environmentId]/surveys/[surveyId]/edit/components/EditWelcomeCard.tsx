@@ -2,7 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { md } from "@formbricks/lib/markdownIt";
@@ -35,6 +35,7 @@ export default function EditWelcomeCard({
   const setOpen = (e) => {
     if (e) {
       setActiveQuestionId("start");
+      setFirstRender(true);
     } else {
       setActiveQuestionId(null);
     }
@@ -49,10 +50,6 @@ export default function EditWelcomeCard({
       },
     });
   };
-
-  useEffect(() => {
-    setFirstRender(true);
-  }, [activeQuestionId]);
 
   return (
     <div
@@ -139,6 +136,7 @@ export default function EditWelcomeCard({
                     )
                   }
                   setText={(value: string) => {
+                    console.log(value);
                     updateSurvey({ html: value });
                   }}
                   excludedToolbarItems={["blockType"]}
