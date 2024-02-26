@@ -51,7 +51,7 @@
     "@typescript-eslint/parser": "^7.0.2",
     "cross-env": "^7.0.3",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.12.4",
+    "eslint-config-turbo": "1.10.12",
     "isomorphic-fetch": "^3.0.0",
     "terser": "^5.28.1",
     "vite": "^5.1.4",

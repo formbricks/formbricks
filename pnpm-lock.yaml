@@ -462,8 +462,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(eslint@8.57.0)
       eslint-config-turbo:
-        specifier: 1.12.4
-        version: 1.12.4(eslint@8.57.0)
+        specifier: 1.10.12
+        version: 1.10.12(eslint@8.57.0)
       terser:
         specifier: ^5.28.1
         version: 5.28.1
@@ -561,8 +561,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(eslint@8.57.0)
       eslint-config-turbo:
-        specifier: 1.12.4
-        version: 1.12.4(eslint@8.57.0)
+        specifier: 1.10.12
+        version: 1.10.12(eslint@8.57.0)
       eslint-plugin-react:
         specifier: 7.33.2
         version: 7.33.2(eslint@8.57.0)
@@ -619,8 +619,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(eslint@8.57.0)
       eslint-config-turbo:
-        specifier: 1.12.4
-        version: 1.12.4(eslint@8.57.0)
+        specifier: 1.10.12
+        version: 1.10.12(eslint@8.57.0)
       isomorphic-fetch:
         specifier: ^3.0.0
         version: 3.0.0
@@ -759,8 +759,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(eslint@8.57.0)
       eslint-config-turbo:
-        specifier: 1.12.4
-        version: 1.12.4(eslint@8.57.0)
+        specifier: 1.10.12
+        version: 1.10.12(eslint@8.57.0)
       isomorphic-dompurify:
         specifier: ^2.4.0
         version: 2.4.0
@@ -12575,16 +12575,6 @@ packages:
     dependencies:
       eslint: 8.57.0
       eslint-plugin-turbo: 1.10.12(eslint@8.57.0)
-    dev: false
-
-  /eslint-config-turbo@1.12.4(eslint@8.57.0):
-    resolution: {integrity: sha512-5hqEaV6PNmAYLL4RTmq74OcCt8pgzOLnfDVPG/7PUXpQ0Mpz0gr926oCSFukywKKXjdum3VHD84S7Z9A/DqTAw==}
-    peerDependencies:
-      eslint: '>6.6.0'
-    dependencies:
-      eslint: 8.57.0
-      eslint-plugin-turbo: 1.12.4(eslint@8.57.0)
-    dev: true
 
   /eslint-import-resolver-node@0.3.9:
     resolution: {integrity: sha512-WFj2isz22JahUv+B788TlO3N6zL3nNJGU8CcZbPZvVEkBPaJdCV4vy5wyghty5ROFbCRnm132v8BScu5/1BQ8g==}
@@ -12774,16 +12764,6 @@ packages:
     dependencies:
       dotenv: 16.0.3
       eslint: 8.57.0
-    dev: false
-
-  /eslint-plugin-turbo@1.12.4(eslint@8.57.0):
-    resolution: {integrity: sha512-3AGmXvH7E4i/XTWqBrcgu+G7YKZJV/8FrEn79kTd50ilNsv+U3nS2IlcCrQB6Xm2m9avGD9cadLzKDR1/UF2+g==}
-    peerDependencies:
-      eslint: '>6.6.0'
-    dependencies:
-      dotenv: 16.0.3
-      eslint: 8.57.0
-    dev: true
 
   /eslint-scope@5.1.1:
     resolution: {integrity: sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==}
