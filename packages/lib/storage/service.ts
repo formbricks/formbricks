@@ -2,6 +2,7 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  ListBucketsCommand,
   ListObjectsCommand,
   PutObjectCommand,
   S3Client,
@@ -47,6 +48,26 @@ export const getS3Client = () => {
     });
   }
   return s3ClientInstance;
+};
+
+export const testS3Connection = async () => {
+  try {
+    const s3Client = getS3Client();
+    const cmd = new ListBucketsCommand({});
+    const result = await s3Client.send(cmd);
+
+    if (!result.Buckets) {
+      throw new Error("Access denied to any buckets");
+    }
+
+    const bucketNames = result.Buckets.map((b) => b.Name);
+
+    if (!bucketNames.includes(S3_BUCKET_NAME)) {
+      throw new Error("Access denied to bucket");
+    }
+  } catch (error) {
+    throw new Error(`S3: ${error}`);
+  }
 };
 
 const ensureDirectoryExists = async (dirPath: string) => {
