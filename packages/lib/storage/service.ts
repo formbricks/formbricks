@@ -33,19 +33,17 @@ import { env } from "../env";
 import { storageCache } from "./cache";
 
 // S3Client Singleton
-let s3ClientInstance;
+let s3ClientInstance: S3Client | null = null;
 
 export const getS3Client = () => {
   if (!s3ClientInstance) {
     s3ClientInstance = new S3Client({
       credentials: {
-        accessKeyId: S3_ACCESS_KEY,
-        secretAccessKey: S3_SECRET_KEY,
+        accessKeyId: S3_ACCESS_KEY!,
+        secretAccessKey: S3_SECRET_KEY!,
       },
       region: S3_REGION,
-      ...(S3_ENDPOINT_URL && {
-        endpoint: S3_ENDPOINT_URL,
-      }),
+      endpoint: S3_ENDPOINT_URL,
     });
   }
   return s3ClientInstance;
