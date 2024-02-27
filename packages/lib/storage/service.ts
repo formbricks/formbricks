@@ -2,7 +2,7 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
-  ListBucketsCommand,
+  HeadBucketCommand,
   ListObjectsCommand,
   PutObjectCommand,
   S3Client,
@@ -50,23 +50,21 @@ export const getS3Client = () => {
   return s3ClientInstance;
 };
 
-export const testS3Connection = async () => {
+export const testS3BucketAccess = async () => {
+  const s3Client = getS3Client();
+
   try {
-    const s3Client = getS3Client();
-    const cmd = new ListBucketsCommand({});
-    const result = await s3Client.send(cmd);
+    // Attempt to retrieve metadata about the bucket
+    const headBucketCommand = new HeadBucketCommand({
+      Bucket: S3_BUCKET_NAME,
+    });
 
-    if (!result.Buckets) {
-      throw new Error("Access denied to any buckets");
-    }
+    await s3Client.send(headBucketCommand);
 
-    const bucketNames = result.Buckets.map((b) => b.Name);
-
-    if (!bucketNames.includes(S3_BUCKET_NAME)) {
-      throw new Error("Access denied to bucket");
-    }
+    return true;
   } catch (error) {
-    throw new Error(`S3: ${error}`);
+    console.error("Failed to access S3 bucket:", error);
+    throw new Error(`S3 Bucket Access Test Failed: ${error}`);
   }
 };
 
