@@ -82,3 +82,17 @@ export async function updateAvatarAction(avatarUrl: string) {
 
   return await updateUser(session.user.id, { imageUrl: avatarUrl });
 }
+
+export async function removeAvatarAction() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+
+  if (!session.user.id) {
+    throw new Error("User not found");
+  }
+
+  return await updateUser(session.user.id, { imageUrl: null });
+}

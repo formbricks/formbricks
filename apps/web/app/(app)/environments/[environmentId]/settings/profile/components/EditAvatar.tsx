@@ -1,6 +1,9 @@
 "use client";
 
-import { updateAvatarAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
+import {
+  removeAvatarAction,
+  updateAvatarAction,
+} from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
 import { Session } from "next-auth";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -29,6 +32,19 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
       }
 
       await updateAvatarAction(url);
+      router.refresh();
+    } catch (err) {
+      toast.error("Avatar update failed. Please try again.");
+      setIsLoading(false);
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleRemove = async () => {
+    setIsLoading(true);
+    try {
+      await removeAvatarAction();
       router.refresh();
     } catch (err) {
       toast.error("Avatar update failed. Please try again.");
@@ -91,6 +107,11 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
           }}
         />
       </Button>
+      {session?.user?.imageUrl && (
+        <Button className="mt-4" variant="warn" onClick={async () => handleRemove()}>
+          Remove Image
+        </Button>
+      )}
     </div>
   );
 }
