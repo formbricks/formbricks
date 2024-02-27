@@ -28,6 +28,15 @@ interface MultiLanguageCardProps {
   setSelectedLanguageCode: (language: string) => void;
 }
 
+interface confirmationModalProps {
+  text: string;
+  open: boolean;
+  title: string;
+  buttonText: string;
+  buttonVariant: string;
+  onConfirm: () => void;
+}
+
 const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   activeQuestionId,
   product,
@@ -40,11 +49,17 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 }) => {
   const environmentId = localSurvey.environmentId;
   const open = activeQuestionId == "multiLanguage";
-  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(
     localSurvey.languages ? localSurvey.languages.length > 1 : false
   );
-  const [openRemoveTranslationModal, setOpenRemoveTranslationModal] = useState(false);
+  const [confirmationModalInfo, setconfirmationModalInfo] = useState({
+    title: "",
+    open: false,
+    text: "",
+    buttonText: "",
+    onConfirm: () => {},
+    buttonVariant: "",
+  });
   const surveyLanguageCodes =
     localSurvey.languages?.map((surveyLanguage) => surveyLanguage.language.code) ?? [];
   const [defaultLanguage, setDefaultLanguage] = useState(
@@ -52,7 +67,6 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       return language.default === true;
     })?.language
   );
-  const [defaultLanguageCodeTemp, setdefaultLanguageCodeTemp] = useState("");
 
   const setOpen = (open: boolean) => {
     if (open) {
@@ -96,7 +110,7 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       }
 
       setDefaultLanguage(language);
-      setIsConfirmationModalOpen(false);
+      setconfirmationModalInfo({ ...confirmationModalInfo, open: false });
       updateSurvey({ languages: newLanguages });
     }
   };
@@ -104,7 +118,19 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   const handleActivationSwitchLogic = () => {
     if (isMultiLanguageActivated) {
       if (localSurvey.languages?.length > 0) {
-        setOpenRemoveTranslationModal(true);
+        setconfirmationModalInfo({
+          open: true,
+          title: "Remove translations",
+          text: "This action will remove all the translations from this survey.",
+          buttonText: "Remove translations",
+          buttonVariant: "warn",
+          onConfirm: () => {
+            setLocalSurvey({ ...localSurvey, languages: [] });
+            setIsMultiLanguageActivated(false);
+            setDefaultLanguage(undefined);
+            setconfirmationModalInfo({ ...confirmationModalInfo, open: false });
+          },
+        });
       } else {
         setIsMultiLanguageActivated(false);
       }
@@ -160,14 +186,11 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <div className="space-y-4">
-            {product.languages.length === 0 && (
-              <p className="mt-2 text-sm italic text-slate-500">
-                No languages found. Add the first one to get started:
-              </p>
-            )}
-            {product.languages.length === 1 && (
+            {product.languages.length <= 1 && (
               <div className="text-sm italic text-slate-500">
-                You need two or more languages to work with translations.
+                {product.languages.length === 0
+                  ? "No languages found. Add the first one to get started:"
+                  : "You need two or more languages to work with translations."}
               </div>
             )}
             {product.languages.length > 1 && (
@@ -195,84 +218,22 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 </div>
                 {isMultiLanguageActivated && (
                   <div className="space-y-4">
-                    <div className="space-y-4">
-                      <p className="text-sm">1. Choose the default language for this survey:</p>
-                      <div className="flex items-center space-x-4">
-                        <div className=" w-48 ">
-                          <Select
-                            value={`${defaultLanguage?.code}`}
-                            defaultValue={`${defaultLanguage?.code}`}
-                            disabled={defaultLanguage ? true : false}
-                            onValueChange={(languageCode) => {
-                              setdefaultLanguageCodeTemp(languageCode);
-                              setIsConfirmationModalOpen(true);
-                            }}>
-                            <SelectTrigger className="xs:w-[180px] xs:text-base w-full px-4 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {product.languages.map((language) => (
-                                <SelectItem
-                                  key={language.id}
-                                  className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
-                                  value={language.code}>
-                                  {`${getLanguageLabel(language.code)} (${language.code})`}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <ConfirmationModal
-                            open={isConfirmationModalOpen}
-                            setOpen={setIsConfirmationModalOpen}
-                            title={`Set ${getLanguageLabel(defaultLanguageCodeTemp)} as default language`}
-                            text={`The default value can only be changed by deleting all existing translations. Are you sure?`}
-                            buttonText="Set default language"
-                            buttonVariant="darkCTA"
-                            onConfirm={() => handleDefaultLanguageChange(defaultLanguageCodeTemp)}
-                          />
-                        </div>
-                        <DefaultTag />
-                      </div>
-                    </div>
-
+                    <DefaultLanguageSelect
+                      defaultLanguage={defaultLanguage}
+                      handleDefaultLanguageChange={handleDefaultLanguageChange}
+                      product={product}
+                      setConfirmationModalInfo={setconfirmationModalInfo}
+                    />
                     {defaultLanguage && (
-                      <div className="space-y-4">
-                        <p className="text-sm">2. Activate translation for specific languages:</p>
-                        <div>
-                          <div className="flex flex-col space-y-4">
-                            {product.languages.map((language) => {
-                              if (language.id === defaultLanguage.id) return;
-                              return (
-                                <div className="flex items-center space-x-4">
-                                  <Switch
-                                    id={`${language}-toggle`}
-                                    checked={surveyLanguageCodes.includes(language.code)}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateSurveyLanguages(language);
-                                    }}
-                                  />
-                                  <Label
-                                    htmlFor={`${language}-toggle`}
-                                    className="font-medium text-slate-800">
-                                    {getLanguageLabel(language.code)}
-                                  </Label>
-                                  {surveyLanguageCodes.includes(language.code) && (
-                                    <p
-                                      className="cursor-pointer text-xs text-slate-600 underline"
-                                      onClick={() => {
-                                        setSelectedLanguageCode(language.code);
-                                        setActiveQuestionId(localSurvey.questions[0]?.id);
-                                      }}>
-                                      Edit {getLanguageLabel(language.code)} translations
-                                    </p>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
+                      <SecondaryLanguageSelect
+                        product={product}
+                        defaultLanguage={defaultLanguage}
+                        localSurvey={localSurvey}
+                        updateSurveyLanguages={updateSurveyLanguages}
+                        surveyLanguageCodes={surveyLanguageCodes}
+                        setActiveQuestionId={setActiveQuestionId}
+                        setSelectedLanguageCode={setSelectedLanguageCode}
+                      />
                     )}
                   </div>
                 )}
@@ -287,17 +248,12 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
             </Button>
             <ConfirmationModal
-              title={"Remove translations"}
-              open={openRemoveTranslationModal}
-              setOpen={setOpenRemoveTranslationModal}
-              text={"This action will remove all the translations from this survey."}
-              onConfirm={() => {
-                setLocalSurvey({ ...localSurvey, languages: [] });
-                setOpenRemoveTranslationModal(false);
-                setIsMultiLanguageActivated(false);
-                setDefaultLanguage(undefined);
-              }}
-              buttonText="Remove translations"
+              title={confirmationModalInfo.title}
+              open={confirmationModalInfo.open}
+              setOpen={() => setconfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }))}
+              text={confirmationModalInfo.text}
+              onConfirm={confirmationModalInfo.onConfirm}
+              buttonText={confirmationModalInfo.buttonText}
             />
           </div>
         </Collapsible.CollapsibleContent>
@@ -307,3 +263,127 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 };
 
 export default MultiLanguageCard;
+
+interface defaultLanguageSelectProps {
+  defaultLanguage?: TLanguage;
+  handleDefaultLanguageChange: (languageCode: string) => void;
+  product: TProduct;
+  setConfirmationModalInfo: (confirmationModal: confirmationModalProps) => void;
+}
+
+const DefaultLanguageSelect = ({
+  defaultLanguage,
+  handleDefaultLanguageChange,
+  product,
+  setConfirmationModalInfo,
+}: defaultLanguageSelectProps) => {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm">1. Choose the default language for this survey:</p>
+      <div className="flex items-center space-x-4">
+        <div className=" w-48 ">
+          <Select
+            value={`${defaultLanguage?.code}`}
+            defaultValue={`${defaultLanguage?.code}`}
+            disabled={defaultLanguage ? true : false}
+            onValueChange={(languageCode) => {
+              setConfirmationModalInfo({
+                open: true,
+                title: `Set ${getLanguageLabel(languageCode)} as default language`,
+                text: `The default value can only be changed by deleting all existing translations. Are you sure?`,
+                buttonText: "Set default language",
+                onConfirm: () => handleDefaultLanguageChange(languageCode),
+                buttonVariant: "darkCTA",
+              });
+            }}>
+            <SelectTrigger className="xs:w-[180px] xs:text-base w-full px-4 text-xs text-slate-800 dark:border-slate-400 dark:bg-slate-700 dark:text-slate-300">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {product.languages.map((language) => (
+                <SelectItem
+                  key={language.id}
+                  className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
+                  value={language.code}>
+                  {`${getLanguageLabel(language.code)} (${language.code})`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <DefaultTag />
+      </div>
+    </div>
+  );
+};
+interface LanguageToggleProps {
+  language: TLanguage;
+  isChecked: boolean;
+  onToggle: () => void;
+  onEdit: () => void;
+}
+
+const LanguageToggle = ({ language, isChecked, onToggle, onEdit }: LanguageToggleProps) => {
+  return (
+    <div className="flex flex-col space-y-4">
+      <div className="flex items-center space-x-4">
+        <Switch
+          id={`${language.code}-toggle`}
+          checked={isChecked}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+        />
+        <Label htmlFor={`${language.code}-toggle`} className="font-medium text-slate-800">
+          {getLanguageLabel(language.code)}
+        </Label>
+        {isChecked && (
+          <p className="cursor-pointer text-xs text-slate-600 underline" onClick={onEdit}>
+            Edit {getLanguageLabel(language.code)} translations
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface secondaryLanguageSelectProps {
+  product: TProduct;
+  defaultLanguage: TLanguage;
+  surveyLanguageCodes: string[];
+  setSelectedLanguageCode: (languageCode: string) => void;
+  setActiveQuestionId: (questionId: string) => void;
+  localSurvey: TSurvey;
+  updateSurveyLanguages: (language: TLanguage) => void;
+}
+
+const SecondaryLanguageSelect = ({
+  product,
+  defaultLanguage,
+  surveyLanguageCodes,
+  setSelectedLanguageCode,
+  setActiveQuestionId,
+  localSurvey,
+  updateSurveyLanguages,
+}: secondaryLanguageSelectProps) => {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm">2. Activate translation for specific languages:</p>
+      {product.languages
+        .filter((lang) => lang.id !== defaultLanguage.id)
+        .map((language) => (
+          <LanguageToggle
+            key={language.id}
+            language={language}
+            isChecked={surveyLanguageCodes.includes(language.code)}
+            onToggle={() => updateSurveyLanguages(language)}
+            onEdit={() => {
+              setSelectedLanguageCode(language.code);
+              setActiveQuestionId(localSurvey.questions[0]?.id);
+            }}
+          />
+        ))}
+    </div>
+  );
+};

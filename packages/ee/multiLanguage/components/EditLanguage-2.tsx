@@ -118,6 +118,13 @@ export default function EditLanguage({
     setIsEditing(false);
   };
 
+  const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
+    isEditing && languages.length === product.languages.length ? (
+      <Button variant="secondary" onClick={onClick} size="sm">
+        <PlusIcon /> Add Language
+      </Button>
+    ) : null;
+
   return (
     <div className="flex flex-col space-y-6">
       <div className="space-y-4">
@@ -144,7 +151,7 @@ export default function EditLanguage({
         ) : (
           <p className="text-sm italic text-slate-500">No language found. Add your first language below.</p>
         )}
-        <AddLanguageButton isEditing={isEditing} onClick={handleAddLanguage} />
+        <AddLanguageButton onClick={handleAddLanguage} />
       </div>
       <EditSaveButtons
         isEditing={isEditing}
@@ -249,13 +256,6 @@ const LanguageRow: React.FC<LanguageRowProps> = ({
     )}
   </div>
 );
-
-const AddLanguageButton: React.FC<{ isEditing: boolean; onClick: () => void }> = ({ isEditing, onClick }) =>
-  isEditing ? (
-    <Button variant="secondary" onClick={onClick} size="sm">
-      <PlusIcon /> Add Language
-    </Button>
-  ) : null;
 
 const EditSaveButtons: React.FC<{
   isEditing: boolean;
