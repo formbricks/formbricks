@@ -13,7 +13,7 @@ const styles: Record<string, CSSProperties> = {
     marginTop: "1rem",
     borderRadius: "0.375rem",
     fontSize: "0.875rem",
-    fontWeight: "lighter",
+    fontWeight: "normal",
     color: "#e5e7eb",
   },
   pre: {
@@ -21,7 +21,7 @@ const styles: Record<string, CSSProperties> = {
   },
   code: {
     textShadow: "none",
-    color: "#fbbf24",
+    color: "#333333",
   },
 };
 

@@ -1,7 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
+import createJiti from "jiti";
 
-import "@formbricks/lib/env.mjs";
+const jiti = createJiti(new URL(import.meta.url).pathname);
+
+jiti("@formbricks/lib/env");
 
 /** @type {import('next').NextConfig} */
 
@@ -116,6 +119,12 @@ if (process.env.WEBAPP_URL) {
   nextConfig.images.remotePatterns.push({
     protocol: "https",
     hostname: getHostname(process.env.WEBAPP_URL),
+  });
+} else {
+  // The WEBAPP_URL is not set, so we allow all origins
+  nextConfig.images.remotePatterns.push({
+    protocol: "https",
+    hostname: "**",
   });
 }
 

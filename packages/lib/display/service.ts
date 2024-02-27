@@ -27,7 +27,7 @@ import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 
-const selectDisplay = {
+export const selectDisplay = {
   id: true,
   createdAt: true,
   updatedAt: true,

@@ -4,25 +4,33 @@ import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";
+import { getIsDebug } from "./utils";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 let syncIntervalId: number | null = null;
 
-const syncWithBackend = async ({
-  apiHost,
-  environmentId,
-  userId,
-}: TJsSyncParams): Promise<Result<TJsStateSync, NetworkError>> => {
-  const url = `${apiHost}/api/v1/client/${environmentId}/in-app/sync/${userId}?version=${import.meta.env.VERSION}`;
-  const publicUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
+const syncWithBackend = async (
+  { apiHost, environmentId, userId }: TJsSyncParams,
+  noCache: boolean
+): Promise<Result<TJsStateSync, NetworkError>> => {
+  const baseUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
+  const urlSuffix = `?version=${import.meta.env.VERSION}`;
+
+  let fetchOptions: RequestInit = {};
+
+  if (noCache || getIsDebug()) {
+    fetchOptions.cache = "no-cache";
+    logger.debug("No cache option set for sync");
+  }
 
   // if user id is available
 
   if (!userId) {
+    const url = baseUrl + urlSuffix;
     // public survey
-    const response = await fetch(publicUrl);
+    const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
       const jsonRes = await response.json();
@@ -41,7 +49,9 @@ const syncWithBackend = async ({
 
   // userId is available, call the api with the `userId` param
 
-  const response = await fetch(url);
+  const url = `${baseUrl}/${userId}${urlSuffix}`;
+
+  const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
     const jsonRes = await response.json();
@@ -61,9 +71,9 @@ const syncWithBackend = async ({
   return ok(state as TJsStateSync);
 };
 
-export const sync = async (params: TJsSyncParams): Promise<void> => {
+export const sync = async (params: TJsSyncParams, noCache = false): Promise<void> => {
   try {
-    const syncResult = await syncWithBackend(params);
+    const syncResult = await syncWithBackend(params, noCache);
     if (syncResult?.ok !== true) {
       logger.error(`Sync failed: ${JSON.stringify(syncResult.error)}`);
       throw syncResult.error;
@@ -161,7 +171,7 @@ export const filterPublicSurveys = (state: TJsState): TJsState => {
 };
 
 export const addExpiryCheckListener = (): void => {
-  const updateInterval = 1000 * 60; // every minute
+  const updateInterval = 1000 * 30; // every 30 seconds
   // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined" && syncIntervalId === null) {
     syncIntervalId = window.setInterval(async () => {

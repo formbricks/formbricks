@@ -142,6 +142,8 @@ export const surveys = {
   },
 };
 
+export type CreateSurveyParams = typeof surveys.createAndSubmit;
+
 export const actions = {
   create: {
     noCode: {

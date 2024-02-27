@@ -1,11 +1,12 @@
 import Stripe from "stripe";
 
 import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { env } from "@formbricks/lib/env";
 import { getTeam } from "@formbricks/lib/team/service";
 
 import { StripePriceLookupKeys } from "./constants";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
 });
 

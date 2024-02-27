@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import {
   TSurvey,
   TSurveyLogic,
@@ -44,6 +45,10 @@ export default function LogicEditor({
   questionIdx,
   updateQuestion,
 }: LogicEditorProps): JSX.Element {
+  localSurvey = useMemo(() => {
+    return checkForRecallInHeadline(localSurvey);
+  }, [localSurvey]);
+
   const questionValues = useMemo(() => {
     if ("choices" in question) {
       return question.choices.map((choice) => choice.label);

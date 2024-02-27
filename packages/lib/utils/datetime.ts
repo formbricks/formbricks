@@ -42,6 +42,7 @@ export function formatDateFields<T extends z.ZodRawShape>(
 
   return formattedObject as z.infer<typeof zodSchema>;
 }
+
 export const formatDateWithOrdinal = (date: Date): string => {
   const getOrdinalSuffix = (day: number) => {
     const suffixes = ["th", "st", "nd", "rd"];

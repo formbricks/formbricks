@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
@@ -12,11 +11,11 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseLegacyInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: Request): Promise<Response> {
   const responseInput = await request.json();
   if (responseInput.personId === "legacy") {
     responseInput.personId = null;

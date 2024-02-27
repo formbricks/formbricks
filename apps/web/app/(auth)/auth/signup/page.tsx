@@ -10,6 +10,8 @@ import {
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
   INVITE_DISABLED,
+  OIDC_DISPLAY_NAME,
+  OIDC_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
   PRIVACY_URL,
   SIGNUP_ENABLED,
@@ -56,6 +58,8 @@ export default function SignUpPage({
               googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
               githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
               azureOAuthEnabled={AZURE_OAUTH_ENABLED}
+              oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
+              oidcDisplayName={OIDC_DISPLAY_NAME}
             />
           )}
         </FormWrapper>

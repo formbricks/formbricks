@@ -29,12 +29,8 @@ Harvest user-insights, build irresistible experiences.
 
 <div style="background-color:#f8fafc; border-radius:5px;">
 <p align="center">
-<i>Trusted by</i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://flixbus.com"><img src="https://github.com/formbricks/formbricks/assets/72809645/d6c91d89-7633-4845-ae1e-03bbd2ce0946" height="35px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://github.com/calcom/cal.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/1a8763cf-f47e-4960-90f6-334f6dc12a17#gh-light-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://github.com/CrowdDotDev/crowd.dev"><img src="https://github.com/formbricks/formbricks/assets/675065/59b1a4d4-25e4-4ef3-b0bf-4426446fbfd0#gh-light-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://neverinstall.com/"><img src="https://github.com/formbricks/formbricks/assets/675065/72e5e37b-8ef7-4340-b06e-f1d12a05330f#gh-light-mode-only" height="20px"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://clovyr.io/"><img src="https://github.com/formbricks/formbricks/assets/675065/9291c8df-9aac-423a-a430-a9a581240075" height="20px"></a>
+<i>Trusted by</i><br/>
+  <img width="867" alt="clients-hi-res" src="https://github.com/formbricks/formbricks/assets/72809645/924d3693-f66a-4063-bb31-6e5789a8175a">
 </p>
 <div>
 
@@ -107,6 +103,8 @@ Formbricks is both a free and open source survey platform - and a privacy-first 
 - 🔒 [Auth.js](https://authjs.dev/)
 
 - 🧘‍♂️ [Zod](https://zod.dev/)
+
+- 🐛 [Vitest](https://vitest.dev/)
 
 <a id="getting-started"></a>
 
