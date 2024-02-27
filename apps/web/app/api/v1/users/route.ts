@@ -1,12 +1,13 @@
 import { prisma } from "@formbricks/database";
 import {
+  DEFAULT_TEAM_ID,
+  DEFAULT_TEAM_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   INVITE_DISABLED,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@formbricks/lib/emails/emails";
-import { env } from "@formbricks/lib/env.mjs";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -63,16 +64,16 @@ export async function POST(request: Request) {
 
     // User signs up without invite
     // Default team assignment is enabled
-    if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
+    if (DEFAULT_TEAM_ID && DEFAULT_TEAM_ID.length > 0) {
       // check if team exists
-      let team = await getTeam(env.DEFAULT_TEAM_ID);
+      let team = await getTeam(DEFAULT_TEAM_ID);
       let isNewTeam = false;
       if (!team) {
         // create team with id from env
-        team = await createTeam({ id: env.DEFAULT_TEAM_ID, name: user.name + "'s Team" });
+        team = await createTeam({ id: DEFAULT_TEAM_ID, name: user.name + "'s Team" });
         isNewTeam = true;
       }
-      const role = isNewTeam ? "owner" : env.DEFAULT_TEAM_ROLE || "admin";
+      const role = isNewTeam ? "owner" : DEFAULT_TEAM_ROLE || "admin";
       await createMembership(team.id, user.id, { role, accepted: true });
     }
     // Without default team assignment
