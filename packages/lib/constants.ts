@@ -88,14 +88,13 @@ export const S3_SECRET_KEY = env.S3_SECRET_KEY;
 export const S3_REGION = env.S3_REGION;
 export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
 export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
-export const UPLOADS_DIR = "./uploads";
+export const UPLOADS_DIR = env.UPLOADS_DIR || "./uploads";
 export const MAX_SIZES = {
   public: 1024 * 1024 * 10, // 10MB
   free: 1024 * 1024 * 10, // 10MB
   pro: 1024 * 1024 * 1024, // 1GB
 } as const;
-export const IS_S3_CONFIGURED: boolean =
-  env.S3_ACCESS_KEY && env.S3_SECRET_KEY && env.S3_REGION && env.S3_BUCKET_NAME ? true : false;
+export const IS_S3_CONFIGURED: boolean = !!env.S3_BUCKET_NAME;
 
 // Pricing
 export const PRICING_USERTARGETING_FREE_MTU = 2500;

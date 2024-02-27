@@ -38,11 +38,12 @@ let s3ClientInstance: S3Client | null = null;
 
 export const getS3Client = () => {
   if (!s3ClientInstance) {
+    const credentials =
+      S3_ACCESS_KEY && S3_SECRET_KEY
+        ? { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY }
+        : undefined;
     s3ClientInstance = new S3Client({
-      credentials: {
-        accessKeyId: S3_ACCESS_KEY!,
-        secretAccessKey: S3_SECRET_KEY!,
-      },
+      credentials,
       region: S3_REGION,
       endpoint: S3_ENDPOINT_URL,
     });

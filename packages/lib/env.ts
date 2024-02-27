@@ -77,6 +77,7 @@ export const env = createEnv({
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
+    UPLOADS_DIR: z.string().min(1).optional(),
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
   },
@@ -169,6 +170,7 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     TERMS_URL: process.env.TERMS_URL,
+    UPLOADS_DIR: process.env.UPLOADS_DIR,
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
   },
