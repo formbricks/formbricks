@@ -45,9 +45,6 @@ export const initialize = async (
     logger.debug("formbricks is in error state, skipping initialization");
     logger.debug("Adding event listeners");
 
-    addEventListeners();
-    addCleanupEventListeners();
-
     return okVoid();
   }
 
