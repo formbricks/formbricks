@@ -11,6 +11,7 @@ type ConfirmationModalProps = {
   text: string;
   buttonText: string;
   isButtonDisabled?: boolean;
+  buttonVariant?: "warn" | "darkCTA";
 };
 
 const ConfirmationModal = ({
@@ -21,6 +22,7 @@ const ConfirmationModal = ({
   text,
   buttonText,
   isButtonDisabled = false,
+  buttonVariant = "warn",
 }: ConfirmationModalProps) => {
   const handleButtonAction = async () => {
     if (isButtonDisabled) return;
@@ -37,7 +39,7 @@ const ConfirmationModal = ({
         <Button variant="minimal" onClick={() => setOpen(false)}>
           Cancel
         </Button>
-        <Button disabled={isButtonDisabled} variant="warn" onClick={handleButtonAction}>
+        <Button disabled={isButtonDisabled} variant={buttonVariant} onClick={handleButtonAction}>
           {buttonText}
         </Button>
       </div>
