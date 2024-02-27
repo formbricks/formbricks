@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 import { UAParser } from "ua-parser-js";
 
 import { getPerson } from "@formbricks/lib/person/service";
@@ -19,11 +18,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(request: Request, context: Context): Promise<NextResponse> {
+export async function POST(request: Request, context: Context): Promise<Response> {
   const { environmentId } = context.params;
   const environmentIdValidation = ZId.safeParse(environmentId);
 

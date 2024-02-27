@@ -86,7 +86,10 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
     setSelectedOptions({ questionFilterOptions, questionOptions });
   }, [survey, setSelectedOptions, environmentTags, attributes]);
 
-  const filters = useMemo(() => getFormattedFilters(selectedFilter, dateRange), [selectedFilter, dateRange]);
+  const filters = useMemo(
+    () => getFormattedFilters(survey, selectedFilter, dateRange),
+    [survey, selectedFilter, dateRange]
+  );
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 

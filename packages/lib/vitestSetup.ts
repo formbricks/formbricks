@@ -1,25 +1,29 @@
 // mock these globally used functions
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+
 import { ValidationError } from "@formbricks/types/errors";
 
-jest.mock("next/cache", () => ({
+vi.mock("next/cache", () => ({
   __esModule: true,
   unstable_cache: (fn: () => {}) => {
     return async () => {
       return fn();
     };
   },
-  revalidateTag: jest.fn(),
+  revalidateTag: vi.fn(),
 }));
 
-jest.mock("server-only", () => jest.fn());
+vi.mock("server-only", () => {
+  return {};
+});
 
 beforeEach(() => {
-  jest.resetModules();
-  jest.resetAllMocks();
+  vi.resetModules();
+  vi.resetAllMocks();
 });
 
 afterEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 export const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {

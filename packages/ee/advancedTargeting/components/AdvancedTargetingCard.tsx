@@ -4,6 +4,7 @@ import { CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "@he
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -23,6 +24,7 @@ import {
   cloneSegmentAction,
   createSegmentAction,
   loadNewSegmentAction,
+  resetSegmentFiltersAction,
   updateSegmentAction,
 } from "../lib/actions";
 import { ACTIONS_TO_EXCLUDE } from "../lib/constants";
@@ -48,6 +50,7 @@ export function AdvancedTargetingCard({
   segments,
   initialSegment,
 }: UserTargetingAdvancedCardProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
 
@@ -143,8 +146,19 @@ export function AdvancedTargetingCard({
       if (!segment) throw new Error("Invalid segment");
       await updateSegmentAction(environmentId, segment?.id, data);
       toast.success("Segment saved successfully");
+
+      setIsSegmentEditorOpen(false);
+      setSegmentEditorViewOnly(true);
     } catch (err: any) {
       toast.error(err.message ?? "Error Saving Segment");
+    }
+  };
+
+  const handleResetAllFilters = async () => {
+    try {
+      return await resetSegmentFiltersAction(localSurvey.id);
+    } catch (err) {
+      toast.error("Error resetting filters");
     }
   };
 
@@ -192,20 +206,11 @@ export function AdvancedTargetingCard({
 
             {isSegmentEditorOpen ? (
               <div className="flex w-full flex-col gap-2">
-                <div>
-                  {!segment?.isPrivate ? (
-                    <SegmentTitle
-                      title={localSurvey.segment?.title}
-                      description={localSurvey.segment?.description}
-                    />
-                  ) : (
-                    <div className="mb-4">
-                      <p className="text-sm font-semibold text-slate-800">
-                        Send survey to audience who match...
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <SegmentTitle
+                  title={localSurvey.segment?.title}
+                  description={localSurvey.segment?.description}
+                  isPrivate={segment?.isPrivate}
+                />
                 {!!segment?.filters?.length && (
                   <div className="w-full">
                     <SegmentEditor
@@ -230,28 +235,18 @@ export function AdvancedTargetingCard({
                     Add filter
                   </Button>
 
-                  {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
+                  {isSegmentEditorOpen && !segment?.isPrivate && (
                     <Button
                       variant="secondary"
                       size="sm"
                       onClick={() => {
-                        handleSaveSegment({ filters: segment.filters });
+                        handleSaveSegment({ filters: segment?.filters ?? [] });
                       }}>
                       Save changes
                     </Button>
                   )}
-                  {/* 
-                    {isSegmentEditorOpen && !!segment?.filters?.length && (
-                      <Button
-                        variant="minimal"
-                        size="sm"
-                        className="flex items-center gap-2"
-                        onClick={() => setResetAllFiltersModalOpen(true)}>
-                        <p className="text-sm">Reset all filters</p>
-                      </Button>
-                    )} */}
 
-                  {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
+                  {isSegmentEditorOpen && !segment?.isPrivate && (
                     <Button
                       variant="minimal"
                       size="sm"
@@ -292,27 +287,6 @@ export function AdvancedTargetingCard({
                       onUpdateSegment={handleSaveAsNewSegmentUpdate}
                     />
                   )}
-
-                  <AlertDialog
-                    headerText="Are you sure?"
-                    open={resetAllFiltersModalOpen}
-                    setOpen={setResetAllFiltersModalOpen}
-                    mainText="This action resets all filters in this survey."
-                    declineBtnLabel="Cancel"
-                    onDecline={() => {
-                      setResetAllFiltersModalOpen(false);
-                    }}
-                    confirmBtnLabel="Remove all filters"
-                    onConfirm={() => {
-                      const updatedSegment = structuredClone(segment);
-                      if (updatedSegment?.filters) {
-                        updatedSegment.filters = [];
-                      }
-
-                      setSegment(updatedSegment);
-                      setResetAllFiltersModalOpen(false);
-                    }}
-                  />
                 </>
               </div>
             ) : (
@@ -320,6 +294,7 @@ export function AdvancedTargetingCard({
                 <SegmentTitle
                   title={localSurvey.segment?.title}
                   description={localSurvey.segment?.description}
+                  isPrivate={segment?.isPrivate}
                 />
 
                 {segmentEditorViewOnly && segment && (
@@ -392,6 +367,12 @@ export function AdvancedTargetingCard({
               Load Segment
             </Button>
 
+            {!segment?.isPrivate && !!segment?.filters?.length && (
+              <Button variant="secondary" size="sm" onClick={() => setResetAllFiltersModalOpen(true)}>
+                Reset all filters
+              </Button>
+            )}
+
             {isSegmentEditorOpen && !!segment?.filters?.length && (
               <Button
                 variant="secondary"
@@ -401,6 +382,29 @@ export function AdvancedTargetingCard({
                 Save as new Segment
               </Button>
             )}
+
+            <AlertDialog
+              headerText="Are you sure?"
+              open={resetAllFiltersModalOpen}
+              setOpen={setResetAllFiltersModalOpen}
+              mainText="This action resets all filters in this survey."
+              declineBtnLabel="Cancel"
+              onDecline={() => {
+                setResetAllFiltersModalOpen(false);
+              }}
+              confirmBtnLabel="Remove all filters"
+              onConfirm={async () => {
+                const segment = await handleResetAllFilters();
+                if (segment) {
+                  toast.success("Filters reset successfully");
+
+                  setSegment(segment);
+                  setResetAllFiltersModalOpen(false);
+
+                  router.refresh();
+                }
+              }}
+            />
           </div>
         </div>
       </Collapsible.CollapsibleContent>

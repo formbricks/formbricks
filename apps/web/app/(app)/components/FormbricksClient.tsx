@@ -4,7 +4,7 @@ import { formbricksEnabled } from "@/app/lib/formbricks";
 import { useEffect } from "react";
 
 import formbricks from "@formbricks/js";
-import { env } from "@formbricks/lib/env.mjs";
+import { env } from "@formbricks/lib/env";
 
 type UsageAttributesUpdaterProps = {
   numSurveys: number;

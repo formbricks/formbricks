@@ -44,7 +44,9 @@ const QuestionFilterComboBox = ({
 
   // multiple when question type is multi selection
   const isMultiple =
-    type === TSurveyQuestionType.MultipleChoiceMulti || type === TSurveyQuestionType.MultipleChoiceSingle;
+    type === TSurveyQuestionType.MultipleChoiceMulti ||
+    type === TSurveyQuestionType.MultipleChoiceSingle ||
+    type === TSurveyQuestionType.PictureSelection;
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple

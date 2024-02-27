@@ -2,7 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { md } from "@formbricks/lib/markdownIt";
@@ -29,17 +29,19 @@ export default function EditWelcomeCard({
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
-  // const [open, setOpen] = useState(false);
+
   let open = activeQuestionId == "start";
+
   const setOpen = (e) => {
     if (e) {
       setActiveQuestionId("start");
+      setFirstRender(true);
     } else {
       setActiveQuestionId(null);
     }
   };
 
-  const updateSurvey = (data) => {
+  const updateSurvey = (data: Partial<TSurvey["welcomeCard"]>) => {
     setLocalSurvey({
       ...localSurvey,
       welcomeCard: {
@@ -48,9 +50,6 @@ export default function EditWelcomeCard({
       },
     });
   };
-  useEffect(() => {
-    setFirstRender(true);
-  }, [activeQuestionId]);
 
   return (
     <div
@@ -174,9 +173,7 @@ export default function EditWelcomeCard({
                 />
               </div>
               <div className="flex-column">
-                <Label htmlFor="timeToFinish" className="">
-                  Time to Finish
-                </Label>
+                <Label htmlFor="timeToFinish">Time to Finish</Label>
                 <div className="text-sm text-slate-500 dark:text-slate-400">
                   Display an estimate of completion time for survey
                 </div>
@@ -195,9 +192,7 @@ export default function EditWelcomeCard({
                   />
                 </div>
                 <div className="flex-column">
-                  <Label htmlFor="showResponseCount" className="">
-                    Show Response Count
-                  </Label>
+                  <Label htmlFor="showResponseCount">Show Response Count</Label>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
                     Display number of responses for survey
                   </div>

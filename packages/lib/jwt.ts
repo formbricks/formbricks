@@ -2,7 +2,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 
 import { prisma } from "@formbricks/database";
 
-import { env } from "./env.mjs";
+import { env } from "./env";
 
 export function createToken(userId: string, userEmail: string, options = {}): string {
   return jwt.sign({ id: userId }, env.NEXTAUTH_SECRET + userEmail, options);

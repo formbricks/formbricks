@@ -61,7 +61,7 @@ async function extractResponses(data: TPipelineInput, questionIds: string[]): Pr
     const responseValue = data.response.data[questionId];
 
     if (responseValue !== undefined) {
-      responses.push(Array.isArray(responseValue) ? responseValue.join(",") : String(responseValue));
+      responses.push(Array.isArray(responseValue) ? responseValue.join("\n") : String(responseValue));
     } else {
       responses.push("");
     }

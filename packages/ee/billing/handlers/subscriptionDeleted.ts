@@ -1,11 +1,12 @@
 import Stripe from "stripe";
 
+import { env } from "@formbricks/lib/env";
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
 
 import { ProductFeatureKeys, StripeProductNames } from "../lib/constants";
 import { unsubscribeCoreAndAppSurveyFeatures, unsubscribeLinkSurveyProFeatures } from "../lib/downgradePlan";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",
 });
