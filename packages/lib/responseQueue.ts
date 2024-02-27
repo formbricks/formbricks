@@ -9,6 +9,7 @@ interface QueueConfig {
   environmentId: string;
   retryAttempts: number;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
+  onResponseSendingFinished?: () => void;
   setSurveyState?: (state: SurveyState) => void;
 }
 
@@ -68,6 +69,9 @@ export class ResponseQueue {
       }
       this.isRequestInProgress = false;
     } else {
+      if (responseUpdate.finished && this.config.onResponseSendingFinished) {
+        this.config.onResponseSendingFinished();
+      }
       this.isRequestInProgress = false;
       this.processQueue(); // process the next item in the queue if any
     }
