@@ -200,9 +200,10 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://spark-framework.net",
         },
         {
-          "name": "Tiledesk",
-          "description": "The innovative open-source framework for developing LLM-enabled chatbots, Tiledesk empowers developers to create advanced, conversational AI agents.",
-          "href": "https://tiledesk.com"
+          name: "Tiledesk",
+          description:
+            "The innovative open-source framework for developing LLM-enabled chatbots, Tiledesk empowers developers to create advanced, conversational AI agents.",
+          href: "https://tiledesk.com",
         },
         {
           name: "Tolgee",
