@@ -13,7 +13,11 @@ export enum StripePriceLookupKeys {
   inAppSurvey = "inAppSurvey",
   linkSurvey = "linkSurvey",
   userTargeting = "userTargeting",
-  inAppSurveyUnlimited = "survey-unlimited-03112023",
-  linkSurveyUnlimited = "linkSurvey-unlimited-03112023",
-  userTargetingUnlimited = "userTargeting-unlimited-03112023",
+  inAppSurveyUnlimitedPlan90 = "survey-unlimited-03112023",
+  linkSurveyUnlimitedPlan19 = "linkSurvey-unlimited-03112023",
+  userTargetingUnlimitedPlan90 = "userTargeting-unlimited-03112023",
+
+  inAppSurveyUnlimitedPlan33 = "survey-unlimited-33-27022024",
+  linkSurveyUnlimitedPlan33 = "linkSurvey-unlimited-33-27022024",
+  userTargetingUnlimitedPlan33 = "userTargeting-unlimited-33-27022024",
 }
