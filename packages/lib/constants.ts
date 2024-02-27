@@ -87,6 +87,7 @@ export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
 export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
 export const S3_SECRET_KEY = env.S3_SECRET_KEY;
 export const S3_REGION = env.S3_REGION;
+export const S3_ENDPOINT = env.S3_ENDPOINT;
 export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
 export const UPLOADS_DIR = "./uploads";
 export const MAX_SIZES = {
