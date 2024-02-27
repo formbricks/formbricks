@@ -2,7 +2,7 @@ import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/comp
 import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
 
 import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
-import EditLanguage from "@formbricks/ee/multiLanguage/components/EditLanguage-2";
+import EditLanguage from "@formbricks/ee/multiLanguage/components/EditLanguage";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 

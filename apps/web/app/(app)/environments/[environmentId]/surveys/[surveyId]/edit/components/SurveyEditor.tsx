@@ -3,10 +3,11 @@
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import { isEqual } from "lodash";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
+import useDocumentVisibility from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -56,54 +57,36 @@ export default function SurveyEditor({
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
-
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
 
-  useEffect(() => {
-    if (survey) {
-      if (localSurvey) return;
+  const isFirstQuestionAvailable = useMemo(() => (localSurvey?.questions?.length ?? 0) > 0, [localSurvey]);
 
-      const surveyClone = structuredClone(survey);
-      setLocalSurvey(surveyClone);
-
-      if (survey.questions.length > 0) {
-        setActiveQuestionId(survey.questions[0].id);
-      }
+  const fetchLatestProduct = useCallback(async () => {
+    const latestProduct = await refetchProduct(localProduct.id);
+    if (latestProduct) {
+      setLocalProduct(latestProduct);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [survey, localSurvey, product.languages]);
+  }, [localProduct.id]);
+
+  useDocumentVisibility(fetchLatestProduct);
+
+  useEffect(() => {
+    if (!survey) return;
+    setLocalSurvey(structuredClone(survey));
+    if (isFirstQuestionAvailable) {
+      setActiveQuestionId(survey.questions[0].id);
+    }
+  }, [survey, isFirstQuestionAvailable]);
 
   useEffect(() => {
     if (!localSurvey) return;
-
     const translatedSurvey = translateSurvey(localSurvey, localSurvey.languages);
-
     // Check if the translated survey is different from the current localSurvey
     if (!isEqual(translatedSurvey, localSurvey)) {
       setLocalSurvey(translatedSurvey);
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.id, localSurvey?.questions.length, selectedLanguageCode, localSurvey?.languages]);
-
-  useEffect(() => {
-    const listener = () => {
-      if (document.visibilityState === "visible") {
-        const fetchLatestProduct = async () => {
-          const latestProduct = await refetchProduct(localProduct.id);
-          if (latestProduct) {
-            setLocalProduct(latestProduct);
-          }
-        };
-        fetchLatestProduct();
-      }
-    };
-    document.addEventListener("visibilitychange", listener);
-    return () => {
-      document.removeEventListener("visibilitychange", listener);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
@@ -118,7 +101,6 @@ export default function SurveyEditor({
     if (!localSurvey) {
       return;
     }
-
     // do nothing if its not an in-app survey
     if (localSurvey.type !== "web") {
       return;
@@ -152,11 +134,10 @@ export default function SurveyEditor({
   }, [environment.id, isUserTargetingAllowed, localSurvey?.type, survey.id]);
 
   useEffect(() => {
-    if (!localSurvey) return;
+    if (!localSurvey?.languages) return;
     if (!extractLanguageCodes(localSurvey.languages).includes(selectedLanguageCode)) {
       setSelectedLanguageCode("default");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.languages, selectedLanguageCode]);
 
   if (!localSurvey) {

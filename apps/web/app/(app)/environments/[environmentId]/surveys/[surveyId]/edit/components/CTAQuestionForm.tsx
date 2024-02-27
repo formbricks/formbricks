@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
@@ -31,10 +31,6 @@ export default function CTAQuestionForm({
   setSelectedLanguageCode,
 }: CTAQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
-
-  useEffect(() => {
-    setFirstRender(true);
-  }, [selectedLanguageCode]);
 
   return (
     <form>

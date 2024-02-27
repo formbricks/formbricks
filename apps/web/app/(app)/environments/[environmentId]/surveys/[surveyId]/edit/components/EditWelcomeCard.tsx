@@ -2,7 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
@@ -40,6 +40,7 @@ export default function EditWelcomeCard({
   const setOpen = (e) => {
     if (e) {
       setActiveQuestionId("start");
+      setFirstRender(true);
     } else {
       setActiveQuestionId(null);
     }
@@ -54,10 +55,6 @@ export default function EditWelcomeCard({
       },
     });
   };
-
-  useEffect(() => {
-    setFirstRender(true);
-  }, [localSurvey.thankYouCard]);
 
   return (
     <div
