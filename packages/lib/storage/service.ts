@@ -20,9 +20,11 @@ import { TAccessType } from "@formbricks/types/storage";
 import {
   IS_S3_CONFIGURED,
   MAX_SIZES,
+  S3_ACCESS_KEY,
   S3_BUCKET_NAME,
   S3_ENDPOINT_URL,
   S3_REGION,
+  S3_SECRET_KEY,
   UPLOADS_DIR,
   WEBAPP_URL,
 } from "../constants";
@@ -31,17 +33,23 @@ import { env } from "../env";
 import { storageCache } from "./cache";
 
 // S3Client Singleton
+let s3ClientInstance;
 
-export const s3Client = new S3Client({
-  credentials: {
-    accessKeyId: env.S3_ACCESS_KEY!,
-    secretAccessKey: env.S3_SECRET_KEY!,
-  },
-  region: S3_REGION!,
-  ...(S3_ENDPOINT_URL && {
-    endpoint: S3_ENDPOINT_URL,
-  }),
-});
+export const getS3Client = () => {
+  if (!s3ClientInstance) {
+    s3ClientInstance = new S3Client({
+      credentials: {
+        accessKeyId: S3_ACCESS_KEY,
+        secretAccessKey: S3_SECRET_KEY,
+      },
+      region: S3_REGION,
+      ...(S3_ENDPOINT_URL && {
+        endpoint: S3_ENDPOINT_URL,
+      }),
+    });
+  }
+  return s3ClientInstance;
+};
 
 const ensureDirectoryExists = async (dirPath: string) => {
   try {
@@ -89,6 +97,7 @@ const getS3SignedUrl = async (fileKey: string): Promise<string> => {
       });
 
       try {
+        const s3Client = getS3Client();
         return await getSignedUrl(s3Client, getObjectCommand, { expiresIn });
       } catch (err) {
         throw err;
@@ -243,6 +252,7 @@ export const getS3UploadSignedUrl = async (
   const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
 
   try {
+    const s3Client = getS3Client();
     const { fields, url } = await createPresignedPost(s3Client, {
       Expires: 10 * 60, // 10 minutes
       Bucket: env.S3_BUCKET_NAME!,
@@ -313,6 +323,7 @@ export const putFile = async (
       };
 
       const command = new PutObjectCommand(input);
+      const s3Client = getS3Client();
       await s3Client.send(command);
       return { success: true, message: "File uploaded" };
     }
@@ -362,6 +373,7 @@ export const deleteS3File = async (fileKey: string) => {
   });
 
   try {
+    const s3Client = getS3Client();
     await s3Client.send(deleteObjectCommand);
   } catch (err) {
     throw err;
@@ -371,6 +383,7 @@ export const deleteS3File = async (fileKey: string) => {
 export const deleteS3FilesByEnvironmentId = async (environmentId: string) => {
   try {
     // List all objects in the bucket with the prefix of environmentId
+    const s3Client = getS3Client();
     const listObjectsOutput = await s3Client.send(
       new ListObjectsCommand({
         Bucket: S3_BUCKET_NAME,
