@@ -86,9 +86,9 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
         )}
       </div>
 
-      <div className="mb-6 text-right">
+      <div className="mt-4">
         <Button
-          className="mt-4"
+          className="mr-2"
           variant="darkCTA"
           onClick={() => {
             inputRef.current?.click();
@@ -109,7 +109,7 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
           />
         </Button>
         {session?.user?.imageUrl && (
-          <Button className="mt-4" variant="warn" onClick={async () => handleRemove()}>
+          <Button className="mr-2" variant="warn" onClick={async () => handleRemove()}>
             Remove Image
           </Button>
         )}
