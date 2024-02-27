@@ -13,8 +13,8 @@ import {
 import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
 
-import { selectPerson } from "../../person/service";
-import { selectSurvey } from "../service";
+import { selectPerson } from "../../../person/service";
+import { selectSurvey } from "../../service";
 
 const currentDate = new Date();
 const fourDaysAgo = new Date();

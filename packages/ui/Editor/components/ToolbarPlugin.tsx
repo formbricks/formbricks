@@ -401,7 +401,11 @@ export default function ToolbarPlugin(props: TextEditorProps) {
 
   const insertLink = useCallback(() => {
     if (!isLink) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, "https://");
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, {
+        url: "https://",
+        target: "_blank",
+        rel: "noopener noreferrer",
+      });
     } else {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
     }

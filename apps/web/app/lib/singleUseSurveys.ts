@@ -1,7 +1,7 @@
 import cuid2 from "@paralleldrive/cuid2";
 
+import { ENCRYPTION_KEY, FORMBRICKS_ENCRYPTION_KEY } from "@formbricks/lib/constants";
 import { decryptAES128, symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
-import { env } from "@formbricks/lib/env.mjs";
 
 // generate encrypted single use id for the survey
 export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
@@ -10,7 +10,7 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
     return cuid;
   }
 
-  const encryptedCuid = symmetricEncrypt(cuid, env.ENCRYPTION_KEY);
+  const encryptedCuid = symmetricEncrypt(cuid, ENCRYPTION_KEY);
   return encryptedCuid;
 };
 
@@ -20,13 +20,13 @@ export const validateSurveySingleUseId = (surveySingleUseId: string): string | u
     let decryptedCuid: string | null = null;
 
     if (surveySingleUseId.length === 64) {
-      if (!env.FORMBRICKS_ENCRYPTION_KEY) {
+      if (!FORMBRICKS_ENCRYPTION_KEY) {
         throw new Error("FORMBRICKS_ENCRYPTION_KEY is not defined");
       }
 
-      decryptedCuid = decryptAES128(env.FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
+      decryptedCuid = decryptAES128(FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
     } else {
-      decryptedCuid = symmetricDecrypt(surveySingleUseId, env.ENCRYPTION_KEY);
+      decryptedCuid = symmetricDecrypt(surveySingleUseId, ENCRYPTION_KEY);
     }
 
     if (cuid2.isCuid(decryptedCuid)) {
