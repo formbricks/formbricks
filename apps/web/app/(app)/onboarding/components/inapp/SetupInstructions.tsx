@@ -68,13 +68,12 @@ if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "${environmentId}",
     apiHost: "${webAppUrl}",
-    debug: true, // remove when in production 
   });
 }`}</CodeBlock>
             <Button
               className="mt-3"
               variant="secondary"
-              href="https://formbricks.com/docs/getting-started/framework-guides#react-js"
+              href="https://formbricks.com/docs/getting-started/framework-guides"
               target="_blank">
               Read docs
             </Button>
