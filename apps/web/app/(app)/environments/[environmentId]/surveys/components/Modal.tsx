@@ -52,7 +52,7 @@ export default function Modal({
 
     return {
       transform: `scale(${scaleValue})`,
-      "transform-origin": placementClass,
+      transformOrigin: placementClass,
     };
   };
 
