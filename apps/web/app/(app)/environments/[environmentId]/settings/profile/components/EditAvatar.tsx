@@ -86,32 +86,34 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
         )}
       </div>
 
-      <Button
-        className="mt-4"
-        variant="darkCTA"
-        onClick={() => {
-          inputRef.current?.click();
-        }}>
-        Upload Image
-        <input
-          type="file"
-          id="hiddenFileInput"
-          ref={inputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              await handleUpload(file, environmentId);
-            }
-          }}
-        />
-      </Button>
-      {session?.user?.imageUrl && (
-        <Button className="mt-4" variant="warn" onClick={async () => handleRemove()}>
-          Remove Image
+      <div className="mb-6 text-right">
+        <Button
+          className="mt-4"
+          variant="darkCTA"
+          onClick={() => {
+            inputRef.current?.click();
+          }}>
+          Upload Image
+          <input
+            type="file"
+            id="hiddenFileInput"
+            ref={inputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                await handleUpload(file, environmentId);
+              }
+            }}
+          />
         </Button>
-      )}
+        {session?.user?.imageUrl && (
+          <Button className="mt-4" variant="warn" onClick={async () => handleRemove()}>
+            Remove Image
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
