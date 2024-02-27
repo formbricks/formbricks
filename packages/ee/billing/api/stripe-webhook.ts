@@ -1,14 +1,16 @@
 import Stripe from "stripe";
 
+import { env } from "@formbricks/lib/env";
+
 import { handleCheckoutSessionCompleted } from "../handlers/checkoutSessionCompleted";
 import { handleSubscriptionUpdatedOrCreated } from "../handlers/subscriptionCreatedOrUpdated";
 import { handleSubscriptionDeleted } from "../handlers/subscriptionDeleted";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
 });
 
-const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret: string = env.STRIPE_WEBHOOK_SECRET!;
 
 const webhookHandler = async (requestBody: string, stripeSignature: string) => {
   let event: Stripe.Event;

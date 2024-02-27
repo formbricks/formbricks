@@ -1,8 +1,10 @@
 import Stripe from "stripe";
 
+import { env } from "@formbricks/lib/env";
+
 import { ProductFeatureKeys } from "./constants";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   // https://github.com/stripe/stripe-node#configuration
   apiVersion: "2023-10-16",
 });

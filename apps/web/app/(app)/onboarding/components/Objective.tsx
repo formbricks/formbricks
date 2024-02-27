@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
-import { env } from "@formbricks/lib/env.mjs";
+import { env } from "@formbricks/lib/env";
 import { TUser, TUserObjective } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
 

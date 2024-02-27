@@ -4,6 +4,7 @@
   "extends": "./base.json",
   "compilerOptions": {
     "plugins": [{ "name": "next" }],
+    "moduleResolution": "bundler",
     "allowJs": true,
     "declaration": false,
     "declarationMap": false,
@@ -14,7 +15,7 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "strict": false,
-    "target": "es5"
+    "target": "esnext"
   },
   "include": ["src", "next-env.d.ts"],
   "exclude": ["node_modules"]

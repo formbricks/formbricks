@@ -1,7 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
+import createJiti from "jiti";
 
-import "@formbricks/lib/env.mjs";
+const jiti = createJiti(new URL(import.meta.url).pathname);
+
+jiti("@formbricks/lib/env");
 
 /** @type {import('next').NextConfig} */
 
