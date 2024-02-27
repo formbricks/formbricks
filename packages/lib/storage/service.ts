@@ -21,8 +21,8 @@ import {
   IS_S3_CONFIGURED,
   MAX_SIZES,
   S3_BUCKET_NAME,
+  S3_ENDPOINT_URL,
   S3_REGION,
-  S3_ENDPOINT,
   UPLOADS_DIR,
   WEBAPP_URL,
 } from "../constants";
@@ -38,8 +38,8 @@ export const s3Client = new S3Client({
     secretAccessKey: env.S3_SECRET_KEY!,
   },
   region: S3_REGION!,
-  ...(S3_ENDPOINT && {
-    endpoint: S3_ENDPOINT,
+  ...(S3_ENDPOINT_URL && {
+    endpoint: S3_ENDPOINT_URL,
   }),
 });
 
