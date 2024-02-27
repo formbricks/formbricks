@@ -6,7 +6,6 @@ import { createSurvey } from "./utils/helper";
 test.describe("Survey Create & Submit Response", async () => {
   test.describe.configure({ mode: "serial" });
   let url: string | null;
-
   const { name, email, password } = users.survey[0];
 
   test("Create Survey", async ({ page }) => {
