@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { formatDate, timeSinceDate } from "@formbricks/lib/time";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -18,6 +19,7 @@ type SegmentDetailProps = {
   setIsSegmentEditorOpen: (isOpen: boolean) => void;
   onSegmentLoad: (surveyId: string, segmentId: string) => Promise<TSurvey>;
   surveyId: string;
+  currentSegment: TSegment;
 };
 
 const SegmentDetail = ({
@@ -27,11 +29,16 @@ const SegmentDetail = ({
   setSegment,
   onSegmentLoad,
   surveyId,
+  currentSegment,
 }: SegmentDetailProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLoadNewSegment = async (segmentId: string) => {
     try {
+      if (currentSegment.id === segmentId) {
+        return;
+      }
+
       setIsLoading(true);
       const updatedSurvey = await onSegmentLoad(surveyId, segmentId);
 
@@ -71,7 +78,10 @@ const SegmentDetail = ({
   return (
     <div
       key={segment.id}
-      className=" relative mt-1 grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100"
+      className={cn(
+        "relative mt-1 grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg hover:bg-slate-100",
+        currentSegment.id === segment.id && "pointer-events-none bg-slate-100 opacity-60"
+      )}
       onClick={async () => {
         setIsLoading(true);
         try {
@@ -134,7 +144,7 @@ const LoadSegmentModal = ({
     setOpen(false);
   };
 
-  const segmentsArray = segments?.filter((segment) => segment.id !== currentSegment.id && !segment.isPrivate);
+  const segmentsArray = segments?.filter((segment) => !segment.isPrivate);
 
   return (
     <Modal
@@ -168,6 +178,7 @@ const LoadSegmentModal = ({
                   setSegment={setSegment}
                   onSegmentLoad={onSegmentLoad}
                   surveyId={surveyId}
+                  currentSegment={currentSegment}
                 />
               ))}
             </div>

@@ -10,6 +10,7 @@ import {
   createSegment,
   deleteSegment,
   getSegment,
+  resetSegmentInSurvey,
   updateSegment,
 } from "@formbricks/lib/segment/service";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
@@ -129,4 +130,14 @@ export const deleteSegmentAction = async (environmentId: string, segmentId: stri
   }
 
   return await deleteSegment(segmentId);
+};
+
+export const resetSegmentFiltersAction = async (surveyId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const environmentAccess = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!environmentAccess) throw new AuthorizationError("Not authorized");
+
+  return await resetSegmentInSurvey(surveyId);
 };

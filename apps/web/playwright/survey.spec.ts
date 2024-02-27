@@ -1,142 +1,15 @@
 import { surveys, users } from "@/playwright/utils/mock";
 import { expect, test } from "@playwright/test";
 
-import { signUpAndLogin, skipOnboarding } from "./utils/helper";
+import { createSurvey } from "./utils/helper";
 
 test.describe("Survey Create & Submit Response", async () => {
   test.describe.configure({ mode: "serial" });
   let url: string | null;
   const { name, email, password } = users.survey[0];
-  let addQuestion = "Add QuestionAdd a new question to your survey";
 
   test("Create Survey", async ({ page }) => {
-    await signUpAndLogin(page, name, email, password);
-    await skipOnboarding(page);
-
-    await page.getByRole("heading", { name: "Start from Scratch" }).click();
-
-    // Welcome Card
-    await expect(page.locator("#welcome-toggle")).toBeVisible();
-    await page.getByText("Welcome Card").click();
-    await page.locator("#welcome-toggle").check();
-    await page.getByLabel("Headline").fill(surveys.createAndSubmit.welcomeCard.headline);
-    await page
-      .locator("form")
-      .getByText("Thanks for providing your")
-      .fill(surveys.createAndSubmit.welcomeCard.description);
-    await page.getByText("Welcome CardEnabled").click();
-
-    // Open Text Question
-    await page.getByRole("button", { name: "1 What would you like to know" }).click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.openTextQuestion.question);
-    await page.getByLabel("Description").fill(surveys.createAndSubmit.openTextQuestion.description);
-    await page.getByLabel("Placeholder").fill(surveys.createAndSubmit.openTextQuestion.placeholder);
-    await page.getByRole("button", { name: surveys.createAndSubmit.openTextQuestion.question }).click();
-
-    // Single Select Question
-    await page
-      .locator("div")
-      .filter({ hasText: new RegExp(`^${addQuestion}$`) })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "Single-Select" }).click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.singleSelectQuestion.question);
-    await page.getByLabel("Description").fill(surveys.createAndSubmit.singleSelectQuestion.description);
-    await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.singleSelectQuestion.options[0]);
-    await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.singleSelectQuestion.options[1]);
-    await page.getByRole("button", { name: 'Add "Other"', exact: true }).click();
-
-    // Multi Select Question
-    await page
-      .locator("div")
-      .filter({ hasText: new RegExp(`^${addQuestion}$`) })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "Multi-Select" }).click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.multiSelectQuestion.question);
-    await page.getByRole("button", { name: "Add Description", exact: true }).click();
-    await page.getByLabel("Description").fill(surveys.createAndSubmit.multiSelectQuestion.description);
-    await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.multiSelectQuestion.options[0]);
-    await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.multiSelectQuestion.options[1]);
-    await page.getByPlaceholder("Option 3").fill(surveys.createAndSubmit.multiSelectQuestion.options[2]);
-
-    // Rating Question
-    await page
-      .locator("div")
-      .filter({ hasText: new RegExp(`^${addQuestion}$`) })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "Rating" }).click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.ratingQuestion.question);
-    await page.getByLabel("Description").fill(surveys.createAndSubmit.ratingQuestion.description);
-    await page.getByPlaceholder("Not good").fill(surveys.createAndSubmit.ratingQuestion.lowLabel);
-    await page.getByPlaceholder("Very satisfied").fill(surveys.createAndSubmit.ratingQuestion.highLabel);
-
-    // NPS Question
-    await page
-      .locator("div")
-      .filter({ hasText: new RegExp(`^${addQuestion}$`) })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.npsQuestion.question);
-    await page.getByLabel("Lower label").fill(surveys.createAndSubmit.npsQuestion.lowLabel);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Upper label$/ })
-      .locator("#subheader")
-      .fill(surveys.createAndSubmit.npsQuestion.highLabel);
-
-    // CTA Question
-    await page
-      .locator("div")
-      .filter({ hasText: new RegExp(`^${addQuestion}$`) })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "Call-to-Action" }).click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.ctaQuestion.question);
-    await page.getByPlaceholder("Finish").fill(surveys.createAndSubmit.ctaQuestion.buttonLabel);
-
-    // Consent Question
-    await page
-      .locator("div")
-      .filter({ hasText: new RegExp(`^${addQuestion}$`) })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "Consent" }).click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.consentQuestion.question);
-    await page
-      .getByPlaceholder("I agree to the terms and")
-      .fill(surveys.createAndSubmit.consentQuestion.checkboxLabel);
-
-    // Picture Select Question
-    await page
-      .locator("div")
-      .filter({ hasText: new RegExp(`^${addQuestion}$`) })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "Picture Selection" }).click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.pictureSelectQuestion.question);
-    await page.getByLabel("Description").fill(surveys.createAndSubmit.pictureSelectQuestion.description);
-
-    // File Upload Question
-    await page
-      .locator("div")
-      .filter({ hasText: new RegExp(`^${addQuestion}$`) })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "File Upload" }).click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.fileUploadQuestion.question);
-
-    // Thank You Card
-    await page
-      .locator("div")
-      .filter({ hasText: /^Thank You CardShown$/ })
-      .nth(1)
-      .click();
-    await page.getByLabel("Question").fill(surveys.createAndSubmit.thankYouCard.headline);
-    await page.getByLabel("Description").fill(surveys.createAndSubmit.thankYouCard.description);
-
+    await createSurvey(page, name, email, password, surveys.createAndSubmit);
     // Save & Publish Survey
     await page.getByRole("button", { name: "Continue to Settings" }).click();
     await page.getByRole("button", { name: "Publish" }).click();
@@ -147,6 +20,52 @@ test.describe("Survey Create & Submit Response", async () => {
       .locator("div")
       .filter({ hasText: /^http:\/\/localhost:3000\/s\/[A-Za-z0-9]+$/ })
       .innerText();
+  });
+
+  test("Create Survey with Custom Actions", async ({ page }) => {
+    const { name, email, password } = users.survey[1];
+
+    await createSurvey(page, name, email, password, surveys.createAndSubmit);
+    // Save & Publish Survey
+    await page.getByRole("button", { name: "Continue to Settings" }).click();
+
+    await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
+    await page.locator("#howToSendCardTrigger").click();
+
+    await expect(page.locator("#howToSendCardOption-web")).toBeVisible();
+    await page.locator("#howToSendCardOption-web").click();
+
+    await expect(page.getByText("Survey Trigger")).toBeVisible();
+    await page.getByText("Survey Trigger").click();
+
+    await page.getByRole("button", { name: "Custom Actions" }).click();
+
+    await expect(page.locator("#codeAction")).toBeVisible();
+    await page.locator("#codeAction").click();
+
+    await expect(page.locator("#codeActionIdentifierInput")).toBeVisible();
+    await page.locator("#codeActionIdentifierInput").fill("my-custom-code-action");
+
+    await expect(page.locator("#noCodeAction")).toBeVisible();
+    await page.locator("#noCodeAction").click();
+
+    await expect(page.locator("#cssSelectorToggle")).toBeVisible();
+    await expect(page.locator("#pageURLToggle")).toBeVisible();
+    await expect(page.locator("#innerHTMLToggle")).toBeVisible();
+
+    await page.locator("#cssSelectorToggle").click();
+    await expect(page.locator("#cssSelectorInput")).toBeVisible();
+    await page.locator("#cssSelectorInput").fill(".my-custom-class");
+
+    await page.locator("#pageURLToggle").click();
+    await expect(page.locator("#pageURLInput")).toBeVisible();
+    await page.locator("#pageURLInput").fill("custom-url");
+
+    await page.locator("#innerHTMLToggle").click();
+    await expect(page.locator("#innerHTMLInput")).toBeVisible();
+    await page.locator("#innerHTMLInput").fill("Download");
+
+    await page.getByRole("button", { name: "Publish" }).click();
   });
 
   test("Submit Survey Response", async ({ page }) => {

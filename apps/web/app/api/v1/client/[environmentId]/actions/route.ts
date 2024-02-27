@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { createAction } from "@formbricks/lib/action/service";
 import { ZActionInput } from "@formbricks/types/actions";
@@ -11,11 +10,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(req: Request, context: Context): Promise<NextResponse> {
+export async function POST(req: Request, context: Context): Promise<Response> {
   try {
     const jsonInput = await req.json();
 

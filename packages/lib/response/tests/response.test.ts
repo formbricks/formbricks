@@ -1,3 +1,4 @@
+import { prisma } from "../../__mocks__/database";
 import {
   getFilteredMockResponses,
   getMockUpdateResponseInput,
@@ -19,8 +20,8 @@ import {
 } from "./__mocks__/data.mock";
 
 import { Prisma } from "@prisma/client";
+import { beforeEach, describe, expect, it } from "vitest";
 
-import { prismaMock } from "@formbricks/database/src/jestClient";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
   TResponse,
@@ -31,6 +32,7 @@ import {
 import { TTag } from "@formbricks/types/tags";
 
 import { selectPerson, transformPrismaPerson } from "../../person/service";
+import { mockSurveyOutput } from "../../survey/tests/__mock__/survey.mock";
 import {
   createResponse,
   createResponseLegacy,
@@ -38,6 +40,7 @@ import {
   getResponse,
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
+  getResponseDownloadUrl,
   getResponsePersonAttributes,
   getResponses,
   getResponsesByEnvironmentId,
@@ -85,7 +88,7 @@ const createMockResponseLegacyInput = (personId?: string): TResponseLegacyInput 
 
 beforeEach(() => {
   // @ts-expect-error
-  prismaMock.response.create.mockImplementation(async (args) => {
+  prisma.response.create.mockImplementation(async (args) => {
     if (args.data.person && args.data.person.connect) {
       return {
         ...mockResponse,
@@ -97,13 +100,13 @@ beforeEach(() => {
   });
 
   // mocking the person findFirst call as it is used in the transformPrismaPerson function
-  prismaMock.person.findFirst.mockResolvedValue(mockPerson);
-  prismaMock.responseNote.findMany.mockResolvedValue([mockResponseNote]);
+  prisma.person.findFirst.mockResolvedValue(mockPerson);
+  prisma.responseNote.findMany.mockResolvedValue([mockResponseNote]);
 
-  prismaMock.response.findUnique.mockResolvedValue(mockResponse);
+  prisma.response.findUnique.mockResolvedValue(mockResponse);
 
   // @ts-expect-error
-  prismaMock.response.update.mockImplementation(async (args) => {
+  prisma.response.update.mockImplementation(async (args) => {
     if (args.data.finished === true) {
       return {
         ...mockResponse,
@@ -119,12 +122,12 @@ beforeEach(() => {
     };
   });
 
-  prismaMock.response.findMany.mockResolvedValue([mockResponse]);
-  prismaMock.response.delete.mockResolvedValue(mockResponse);
+  prisma.response.findMany.mockResolvedValue([mockResponse]);
+  prisma.response.delete.mockResolvedValue(mockResponse);
 
-  prismaMock.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" });
+  prisma.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" });
 
-  prismaMock.response.count.mockResolvedValue(1);
+  prisma.response.count.mockResolvedValue(1);
 });
 
 // utility function to test input validation for all services
@@ -137,14 +140,14 @@ const testInputValidation = async (service: Function, ...args: any[]): Promise<v
 describe("Tests for getResponsesByPersonId", () => {
   describe("Happy Path", () => {
     it("Returns all responses associated with a given person ID", async () => {
-      prismaMock.response.findMany.mockResolvedValue([mockResponseWithMockPerson]);
+      prisma.response.findMany.mockResolvedValue([mockResponseWithMockPerson]);
 
       const responses = await getResponsesByPersonId(mockPerson.id);
       expect(responses).toEqual([expectedResponseWithPerson]);
     });
 
     it("Returns an empty array when no responses are found for the given person ID", async () => {
-      prismaMock.response.findMany.mockResolvedValue([]);
+      prisma.response.findMany.mockResolvedValue([]);
 
       const responses = await getResponsesByPersonId(mockPerson.id);
       expect(responses).toEqual([]);
@@ -161,14 +164,14 @@ describe("Tests for getResponsesByPersonId", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.response.findMany.mockRejectedValue(errToThrow);
+      prisma.response.findMany.mockRejectedValue(errToThrow);
 
       await expect(getResponsesByPersonId(mockPerson.id)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponsesByPersonId(mockPerson.id)).rejects.toThrow(Error);
     });
@@ -193,14 +196,14 @@ describe("Tests for getResponsesBySingleUseId", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.response.findUnique.mockRejectedValue(errToThrow);
+      prisma.response.findUnique.mockRejectedValue(errToThrow);
 
       await expect(getResponseBySingleUseId(mockSurveyId, mockSingleUseId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for other exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.findUnique.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.findUnique.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponseBySingleUseId(mockSurveyId, mockSingleUseId)).rejects.toThrow(Error);
     });
@@ -220,13 +223,13 @@ describe("Tests for createResponse service", () => {
     });
 
     it("Creates a new person and response when the person does not exist", async () => {
-      prismaMock.person.findFirst.mockResolvedValue(null);
-      prismaMock.person.create.mockResolvedValue(mockPerson);
+      prisma.person.findFirst.mockResolvedValue(null);
+      prisma.person.create.mockResolvedValue(mockPerson);
       const response = await createResponse(mockResponseInputWithUserId);
 
       expect(response).toEqual(expectedResponseWithPerson);
 
-      expect(prismaMock.person.create).toHaveBeenCalledWith({
+      expect(prisma.person.create).toHaveBeenCalledWith({
         data: {
           environment: { connect: { id: mockEnvironmentId } },
           userId: mockUserId,
@@ -249,14 +252,14 @@ describe("Tests for createResponse service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.response.create.mockRejectedValue(errToThrow);
+      prisma.response.create.mockRejectedValue(errToThrow);
 
       await expect(createResponse(mockResponseInputWithUserId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for other exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.create.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.create.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(createResponse(mockResponseInputWithUserId)).rejects.toThrow(Error);
     });
@@ -289,7 +292,7 @@ describe("Tests for getResponse service", () => {
     testInputValidation(getResponse, "123");
 
     it("Throws ResourceNotFoundError if no response is found", async () => {
-      prismaMock.response.findUnique.mockResolvedValue(null);
+      prisma.response.findUnique.mockResolvedValue(null);
       const response = await getResponse(mockResponse.id);
       expect(response).toBeNull();
     });
@@ -301,14 +304,14 @@ describe("Tests for getResponse service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.response.findUnique.mockRejectedValue(errToThrow);
+      prisma.response.findUnique.mockRejectedValue(errToThrow);
 
       await expect(getResponse(mockResponse.id)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for other unexpected issues", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.findUnique.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.findUnique.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponse(mockResponse.id)).rejects.toThrow(Error);
     });
@@ -318,13 +321,13 @@ describe("Tests for getResponse service", () => {
 describe("Tests for getAttributesFromResponses service", () => {
   describe("Happy Path", () => {
     it("Retrieves all attributes from responses for a given survey ID", async () => {
-      prismaMock.response.findMany.mockResolvedValue(mockResponsePersonAttributes);
+      prisma.response.findMany.mockResolvedValue(mockResponsePersonAttributes);
       const attributes = await getResponsePersonAttributes(mockSurveyId);
       expect(attributes).toEqual(mockPersonAttributesData);
     });
 
     it("Returns an empty Object when no responses with attributes are found for the given survey ID", async () => {
-      prismaMock.response.findMany.mockResolvedValue([]);
+      prisma.response.findMany.mockResolvedValue([]);
 
       const responses = await getResponsePersonAttributes(mockSurveyId);
       expect(responses).toEqual({});
@@ -341,14 +344,14 @@ describe("Tests for getAttributesFromResponses service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.response.findMany.mockRejectedValue(errToThrow);
+      prisma.response.findMany.mockRejectedValue(errToThrow);
 
       await expect(getResponsePersonAttributes(mockSurveyId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected problems", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponsePersonAttributes(mockSurveyId)).rejects.toThrow(Error);
     });
@@ -370,7 +373,7 @@ describe("Tests for getResponses service", () => {
         let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
 
         // @ts-expect-error
-        prismaMock.response.findMany.mockImplementation(async (args) => {
+        prisma.response.findMany.mockImplementation(async (args) => {
           expectedWhereClause = args?.where;
           return getFilteredMockResponses({ finished: true }, false);
         });
@@ -409,7 +412,7 @@ describe("Tests for getResponses service", () => {
         let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
 
         // @ts-expect-error
-        prismaMock.response.findMany.mockImplementation(async (args) => {
+        prisma.response.findMany.mockImplementation(async (args) => {
           expectedWhereClause = args?.where;
           return getFilteredMockResponses(criteria, false);
         });
@@ -427,7 +430,7 @@ describe("Tests for getResponses service", () => {
         let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
 
         // @ts-expect-error
-        prismaMock.response.findMany.mockImplementation(async (args) => {
+        prisma.response.findMany.mockImplementation(async (args) => {
           expectedWhereClause = args?.where;
 
           return getFilteredMockResponses({ finished: true });
@@ -451,16 +454,89 @@ describe("Tests for getResponses service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.response.findMany.mockRejectedValue(errToThrow);
+      prisma.response.findMany.mockRejectedValue(errToThrow);
 
       await expect(getResponses(mockSurveyId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for unexpected problems", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponses(mockSurveyId)).rejects.toThrow(Error);
+    });
+  });
+});
+
+describe("Tests for getResponseDownloadUrl service", () => {
+  describe("Happy Path", () => {
+    it("Returns a download URL for the csv response file", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.response.count.mockResolvedValue(1);
+      prisma.response.findMany.mockResolvedValue([mockResponse]);
+
+      const url = await getResponseDownloadUrl(mockSurveyId, "csv");
+      const fileExtension = url.split(".").pop();
+      expect(fileExtension).toEqual("csv");
+    });
+
+    it("Returns a download URL for the xlsx response file", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.response.count.mockResolvedValue(1);
+      prisma.response.findMany.mockResolvedValue([mockResponse]);
+
+      const url = await getResponseDownloadUrl(mockSurveyId, "xlsx", { finished: true });
+      const fileExtension = url.split(".").pop();
+      expect(fileExtension).toEqual("xlsx");
+    });
+  });
+
+  describe("Sad Path", () => {
+    testInputValidation(getResponseDownloadUrl, mockSurveyId, 123);
+
+    it("Throws error if response file is of different format than expected", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.response.count.mockResolvedValue(1);
+      prisma.response.findMany.mockResolvedValue([mockResponse]);
+
+      const url = await getResponseDownloadUrl(mockSurveyId, "csv", { finished: true });
+      const fileExtension = url.split(".").pop();
+      expect(fileExtension).not.toEqual("xlsx");
+    });
+
+    it("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponseCountBySurveyId fails", async () => {
+      const mockErrorMessage = "Mock error message";
+      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.response.count.mockRejectedValue(errToThrow);
+
+      await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
+    });
+
+    it("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponses fails", async () => {
+      const mockErrorMessage = "Mock error message";
+      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.response.count.mockResolvedValue(1);
+      prisma.response.findMany.mockRejectedValue(errToThrow);
+
+      await expect(getResponseDownloadUrl(mockSurveyId, "csv")).rejects.toThrow(DatabaseError);
+    });
+
+    it("Throws a generic Error for unexpected problems", async () => {
+      const mockErrorMessage = "Mock error message";
+
+      // error from getSurvey
+      prisma.survey.findUnique.mockRejectedValue(new Error(mockErrorMessage));
+
+      await expect(getResponseDownloadUrl(mockSurveyId, "xlsx")).rejects.toThrow(Error);
     });
   });
 });
@@ -483,14 +559,14 @@ describe("Tests for getResponsesByEnvironmentId", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.response.findMany.mockRejectedValue(errToThrow);
+      prisma.response.findMany.mockRejectedValue(errToThrow);
 
       await expect(getResponsesByEnvironmentId(mockEnvironmentId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for any other unhandled exceptions", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponsesByEnvironmentId(mockEnvironmentId)).rejects.toThrow(Error);
     });
@@ -521,7 +597,7 @@ describe("Tests for updateResponse Service", () => {
     testInputValidation(updateResponse, "123", {});
 
     it("Throws ResourceNotFoundError if no response is found", async () => {
-      prismaMock.response.findUnique.mockResolvedValue(null);
+      prisma.response.findUnique.mockResolvedValue(null);
       await expect(updateResponse(mockResponse.id, getMockUpdateResponseInput())).rejects.toThrow(
         ResourceNotFoundError
       );
@@ -534,7 +610,7 @@ describe("Tests for updateResponse Service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.response.update.mockRejectedValue(errToThrow);
+      prisma.response.update.mockRejectedValue(errToThrow);
 
       await expect(updateResponse(mockResponse.id, getMockUpdateResponseInput())).rejects.toThrow(
         DatabaseError
@@ -543,7 +619,7 @@ describe("Tests for updateResponse Service", () => {
 
     it("Throws a generic Error for other unexpected issues", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.update.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.update.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(updateResponse(mockResponse.id, getMockUpdateResponseInput())).rejects.toThrow(Error);
     });
@@ -568,14 +644,14 @@ describe("Tests for deleteResponse service", () => {
         clientVersion: "0.0.1",
       });
 
-      prismaMock.response.delete.mockRejectedValue(errToThrow);
+      prisma.response.delete.mockRejectedValue(errToThrow);
 
       await expect(deleteResponse(mockResponse.id)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for any unhandled exception during deletion", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.delete.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.delete.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(deleteResponse(mockResponse.id)).rejects.toThrow(Error);
     });
@@ -590,7 +666,7 @@ describe("Tests for getResponseCountBySurveyId service", () => {
     });
 
     it("Returns zero count when there are no responses for a given survey ID", async () => {
-      prismaMock.response.count.mockResolvedValue(0);
+      prisma.response.count.mockResolvedValue(0);
       const count = await getResponseCountBySurveyId(mockSurveyId);
       expect(count).toEqual(0);
     });
@@ -601,7 +677,7 @@ describe("Tests for getResponseCountBySurveyId service", () => {
 
     it("Throws a generic Error for other unexpected issues", async () => {
       const mockErrorMessage = "Mock error message";
-      prismaMock.response.count.mockRejectedValue(new Error(mockErrorMessage));
+      prisma.response.count.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponseCountBySurveyId(mockSurveyId)).rejects.toThrow(Error);
     });

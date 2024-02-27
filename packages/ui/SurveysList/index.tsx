@@ -1,7 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -28,7 +28,18 @@ export default function SurveysList({
   userId,
 }: SurveysListProps) {
   const [filteredSurveys, setFilteredSurveys] = useState<TSurvey[]>(surveys);
-  const [orientation, setOrientation] = useState("grid");
+  // Initialize orientation state with a function that checks if window is defined
+  const [orientation, setOrientation] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("surveyOrientation") || "grid" : "grid"
+  );
+
+  // Save orientation to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("surveyOrientation", orientation);
+    }
+  }, [orientation]);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between">
@@ -61,6 +72,7 @@ export default function SurveysList({
               {filteredSurveys.map((survey) => {
                 return (
                   <SurveyCard
+                    key={survey.id}
                     survey={survey}
                     environment={environment}
                     otherEnvironment={otherEnvironment}
@@ -77,6 +89,7 @@ export default function SurveysList({
               {filteredSurveys.map((survey) => {
                 return (
                   <SurveyCard
+                    key={survey.id}
                     survey={survey}
                     environment={environment}
                     otherEnvironment={otherEnvironment}
