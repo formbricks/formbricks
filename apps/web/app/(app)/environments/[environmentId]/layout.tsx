@@ -31,7 +31,15 @@ export default async function EnvironmentLayout({ children, params }) {
   return (
     <>
       <ResponseFilterProvider>
-        <PosthogIdentify session={session} environmentId={params.environmentId} team={team} />
+        <PosthogIdentify
+          session={session}
+          environmentId={params.environmentId}
+          teamId={team.id}
+          teamName={team.name}
+          inAppSurveyBillingStatus={team.billing.features.inAppSurvey.status}
+          linkSurveyBillingStatus={team.billing.features.linkSurvey.status}
+          userTargetingBillingStatus={team.billing.features.userTargeting.status}
+        />
         <FormbricksClient session={session} />
         <ToasterClient />
         <EnvironmentsNavbar
