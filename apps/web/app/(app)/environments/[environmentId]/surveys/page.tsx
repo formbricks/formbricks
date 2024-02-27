@@ -48,7 +48,7 @@ export default async function SurveysPage({ params }) {
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   return (
-    <ContentWrapper className=" flex h-full flex-col justify-between">
+    <ContentWrapper className="flex h-full flex-col justify-between">
       {surveys.length > 0 ? (
         <SurveysList
           environment={environment}
