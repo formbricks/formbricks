@@ -1,8 +1,8 @@
 import { diffInDays } from "@formbricks/lib/utils/datetime";
-import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
+import { TJsConfig, TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
 
-import { Config } from "./config";
-import { NetworkError, Result, err, ok } from "./errors";
+import { Config, LOCAL_STORAGE_KEY } from "./config";
+import { NetworkError, Result, err, ok, wrapThrows } from "./errors";
 import { Logger } from "./logger";
 import { getIsDebug } from "./utils";
 
@@ -74,17 +74,34 @@ const syncWithBackend = async (
 export const sync = async (params: TJsSyncParams, noCache = false): Promise<void> => {
   try {
     const syncResult = await syncWithBackend(params, noCache);
+
     if (syncResult?.ok !== true) {
-      logger.error(`Sync failed: ${JSON.stringify(syncResult.error)}`);
-      const existingConfig = config.get();
+      let existingConfig: TJsConfig;
+
+      // two cases:
+      // 1. This is the first sync call, the config is not yet initialized
+      // 2. The config is already initialized, but the sync call failed
+
+      try {
+        existingConfig = config.get();
+      } catch (e) {
+        // case 1 -> config is not yet initialized
+        // we initialize the config with only a "status" field set to "error"
+        // and an expiry time of 10 minutes in the future
+        const initialErrorConfig: Partial<TJsConfig> = {
+          status: "error",
+          expiresAt: new Date(new Date().getTime() + 10 * 60000),
+        };
+
+        // can't use config.update here because the config is not yet initialized
+        wrapThrows(() => localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+        throw syncResult.error;
+      }
+
+      // case 2 -> config is already initialized, but the sync call failed
       if (existingConfig.state) {
-        config.update({
-          ...existingConfig,
-          state: {
-            ...existingConfig.state,
-            status: "error",
-          },
-        });
+        // just extending the config
+        config.update(existingConfig);
       }
 
       throw syncResult.error;
@@ -102,7 +119,6 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
       attributes: syncResult.value.person?.attributes || {},
-      status: "success",
     };
 
     if (!params.userId) {

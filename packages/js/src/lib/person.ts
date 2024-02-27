@@ -11,7 +11,7 @@ import {
   ok,
   okVoid,
 } from "./errors";
-import { deinitalize, initialize } from "./initialize";
+import { deinitalize, initialize, putFormbricksInErrorState } from "./initialize";
 import { Logger } from "./logger";
 import { sync } from "./sync";
 import { closeSurvey } from "./widget";
@@ -56,14 +56,22 @@ export const updatePersonAttribute = async (
 
   if (res.data.changed) {
     logger.debug("Attribute updated. Syncing...");
-    await sync(
-      {
-        environmentId: environmentId,
-        apiHost: apiHost,
-        userId: userId,
-      },
-      true
-    );
+
+    try {
+      await sync(
+        {
+          environmentId: environmentId,
+          apiHost: apiHost,
+          userId: userId,
+        },
+        true
+      );
+    } catch (err: any) {
+      if (err.code === "network_error") {
+        // sync failed, put formbricks in error state
+        putFormbricksInErrorState();
+      }
+    }
   }
 
   return okVoid();

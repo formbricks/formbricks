@@ -34,7 +34,6 @@ export const ZJsState = z.object({
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
   displays: z.array(ZJSStateDisplay).optional(),
-  status: z.enum(["success", "error"]),
 });
 
 export type TJsState = z.infer<typeof ZJsState>;
@@ -79,6 +78,7 @@ export const ZJsConfig = z.object({
   userId: z.string().optional(),
   state: ZJsState,
   expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
 });
 
 export type TJsConfig = z.infer<typeof ZJsConfig>;
@@ -89,6 +89,7 @@ export const ZJsConfigUpdateInput = z.object({
   userId: z.string().optional(),
   state: ZJsState,
   expiresAt: z.date().optional(),
+  status: z.enum(["success", "error"]).optional(),
 });
 
 export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;

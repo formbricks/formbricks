@@ -7,10 +7,12 @@ import { TSurvey } from "@formbricks/types/surveys";
 
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
+import { putFormbricksInErrorState } from "./initialize";
 import { Logger } from "./logger";
 import { filterPublicSurveys, sync } from "./sync";
 
 const containerId = "formbricks-web-container";
+
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
@@ -183,7 +185,11 @@ export const closeSurvey = async (): Promise<void> => {
       true
     );
     surveyRunning = false;
-  } catch (e) {
+  } catch (e: any) {
+    if (e.code === "network_error") {
+      // sync has failed, we need to put formbricks in an error state
+      putFormbricksInErrorState();
+    }
     errorHandler.handle(e);
   }
 };
@@ -192,6 +198,10 @@ export const addWidgetContainer = (): void => {
   const containerElement = document.createElement("div");
   containerElement.id = containerId;
   document.body.appendChild(containerElement);
+};
+
+export const removeWidgetContainer = (): void => {
+  document.getElementById(containerId)?.remove();
 };
 
 const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {

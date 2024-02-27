@@ -19,7 +19,7 @@ import { checkPageUrl } from "./noCodeActions";
 import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
 import { getIsDebug } from "./utils";
-import { addWidgetContainer, closeSurvey } from "./widget";
+import { addWidgetContainer, closeSurvey, removeWidgetContainer } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -29,13 +29,31 @@ let isInitialized = false;
 export const initialize = async (
   c: TJsConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  if (isInitialized) {
-    logger.debug("Already initialized, skipping initialization.");
+  if (getIsDebug()) {
+    logger.configure({ logLevel: "debug" });
+  }
+
+  let existingConfig: TJsConfig | undefined;
+  try {
+    existingConfig = config.get();
+  } catch (e) {
+    logger.debug("No existing configuration found.");
+  }
+
+  // formbricks is in error state, skip initialization
+  if (existingConfig?.status === "error" && !!existingConfig?.expiresAt) {
+    logger.debug("formbricks is in error state, skipping initialization");
+    logger.debug("Adding event listeners");
+
+    addEventListeners();
+    addCleanupEventListeners();
+
     return okVoid();
   }
 
-  if (getIsDebug()) {
-    logger.configure({ logLevel: "debug" });
+  if (isInitialized) {
+    logger.debug("Already initialized, skipping initialization.");
+    return okVoid();
   }
 
   ErrorHandler.getInstance().printStatus();
@@ -81,52 +99,39 @@ export const initialize = async (
     updatedAttributes = res.value;
   }
 
-  let existingConfig: TJsConfig | undefined;
-  try {
-    existingConfig = config.get();
-  } catch (e) {
-    logger.debug("No existing configuration found.");
-  }
-
-  // if the existing config has an errored state, we want to sleep
-  if (existingConfig?.state?.status === "error") {
-    logger.debug("Sync has failed.");
-    // return okVoid();
-  } else {
-    if (
-      existingConfig &&
-      existingConfig.state &&
-      existingConfig.environmentId === c.environmentId &&
-      existingConfig.apiHost === c.apiHost &&
-      existingConfig.userId === c.userId &&
-      existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
-    ) {
-      logger.debug("Found existing configuration.");
-      if (existingConfig.expiresAt < new Date()) {
-        logger.debug("Configuration expired.");
-
-        await sync({
-          apiHost: c.apiHost,
-          environmentId: c.environmentId,
-          userId: c.userId,
-        });
-      } else {
-        logger.debug("Configuration not expired. Extending expiration.");
-        config.update(existingConfig);
-      }
-    } else {
-      logger.debug("No valid configuration found or it has been expired. Creating new config.");
-      logger.debug("Syncing.");
+  if (
+    existingConfig &&
+    existingConfig.state &&
+    existingConfig.environmentId === c.environmentId &&
+    existingConfig.apiHost === c.apiHost &&
+    existingConfig.userId === c.userId &&
+    existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
+  ) {
+    logger.debug("Found existing configuration.");
+    if (existingConfig.expiresAt < new Date()) {
+      logger.debug("Configuration expired.");
 
       await sync({
         apiHost: c.apiHost,
         environmentId: c.environmentId,
         userId: c.userId,
       });
-
-      // and track the new session event
-      await trackAction("New Session");
+    } else {
+      logger.debug("Configuration not expired. Extending expiration.");
+      config.update(existingConfig);
     }
+  } else {
+    logger.debug("No valid configuration found or it has been expired. Creating new config.");
+    logger.debug("Syncing.");
+
+    await sync({
+      apiHost: c.apiHost,
+      environmentId: c.environmentId,
+      userId: c.userId,
+    });
+
+    // and track the new session event
+    await trackAction("New Session");
   }
 
   // update attributes in config
@@ -173,4 +178,21 @@ export const deinitalize = (): void => {
   removeAllEventListeners();
   config.resetConfig();
   isInitialized = false;
+};
+
+export const putFormbricksInErrorState = (): void => {
+  logger.debug("Putting formbricks in error state");
+
+  // change formbricks status to error
+  config.update({
+    ...config.get(),
+    status: "error",
+  });
+
+  // close survey
+  removeWidgetContainer();
+  addWidgetContainer();
+
+  // remove all event listeners
+  removeAllEventListeners();
 };
