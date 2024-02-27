@@ -26,9 +26,9 @@ export default async function UnlimitedPage({ params }) {
   }
 
   const { status, newPlan, url } = await upgradePlanAction(team.id, params.environmentId, [
-    StripePriceLookupKeys.inAppSurveyUnlimitedPlan90,
-    StripePriceLookupKeys.linkSurveyUnlimitedPlan19,
-    StripePriceLookupKeys.userTargetingUnlimitedPlan90,
+    StripePriceLookupKeys.inAppSurveyUnlimitedPlan33,
+    StripePriceLookupKeys.linkSurveyUnlimitedPlan33,
+    StripePriceLookupKeys.userTargetingUnlimitedPlan33,
   ]);
   if (status != 200) {
     throw new Error("Something went wrong");
