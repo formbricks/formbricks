@@ -3,7 +3,7 @@ import { Metadata } from "next";
 
 import { prisma } from "@formbricks/database";
 import { IS_S3_CONFIGURED } from "@formbricks/lib/constants";
-import { testS3Connection } from "@formbricks/lib/storage/service";
+import { testS3BucketAccess } from "@formbricks/lib/storage/service";
 
 export const dynamic = "force-dynamic"; // no caching
 
@@ -31,8 +31,11 @@ const checkS3Connection = async () => {
     // dont try connecting if not in use
     return;
   }
-
-  await testS3Connection();
+  try {
+    await testS3BucketAccess();
+  } catch (e) {
+    throw new Error("S3 Bucket cannot be accessed");
+  }
 };
 
 export default async function HealthPage() {
