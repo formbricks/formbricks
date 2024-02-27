@@ -9,6 +9,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Build & Cache Web Binaries
         uses: ./.github/actions/cache-build-web

@@ -9,8 +9,23 @@ import { prisma } from "@formbricks/database";
 
 import { createAccount } from "./account/service";
 import { verifyPassword } from "./auth/util";
-import { EMAIL_VERIFICATION_DISABLED } from "./constants";
-import { env } from "./env.mjs";
+import {
+  AZUREAD_CLIENT_ID,
+  AZUREAD_CLIENT_SECRET,
+  AZUREAD_TENANT_ID,
+  DEFAULT_TEAM_ID,
+  DEFAULT_TEAM_ROLE,
+  EMAIL_VERIFICATION_DISABLED,
+  GITHUB_ID,
+  GITHUB_SECRET,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  OIDC_CLIENT_ID,
+  OIDC_CLIENT_SECRET,
+  OIDC_DISPLAY_NAME,
+  OIDC_ISSUER,
+  OIDC_SIGNING_ALGORITHM,
+} from "./constants";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
 import { createProduct } from "./product/service";
@@ -118,19 +133,41 @@ export const authOptions: NextAuthOptions = {
       },
     }),
     GitHubProvider({
-      clientId: env.GITHUB_ID || "",
-      clientSecret: env.GITHUB_SECRET || "",
+      clientId: GITHUB_ID || "",
+      clientSecret: GITHUB_SECRET || "",
     }),
     GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID || "",
-      clientSecret: env.GOOGLE_CLIENT_SECRET || "",
+      clientId: GOOGLE_CLIENT_ID || "",
+      clientSecret: GOOGLE_CLIENT_SECRET || "",
       allowDangerousEmailAccountLinking: true,
     }),
     AzureAD({
-      clientId: env.AZUREAD_CLIENT_ID || "",
-      clientSecret: env.AZUREAD_CLIENT_SECRET || "",
-      tenantId: env.AZUREAD_TENANT_ID || "",
+      clientId: AZUREAD_CLIENT_ID || "",
+      clientSecret: AZUREAD_CLIENT_SECRET || "",
+      tenantId: AZUREAD_TENANT_ID || "",
     }),
+    {
+      id: "openid",
+      name: OIDC_DISPLAY_NAME || "OpenId",
+      type: "oauth",
+      clientId: OIDC_CLIENT_ID || "",
+      clientSecret: OIDC_CLIENT_SECRET || "",
+      wellKnown: `${OIDC_ISSUER}/.well-known/openid-configuration`,
+      authorization: { params: { scope: "openid email profile" } },
+      idToken: true,
+      client: {
+        id_token_signed_response_alg: OIDC_SIGNING_ALGORITHM || "RS256",
+      },
+      checks: ["pkce", "state"],
+      profile: (profile) => {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+        };
+      },
+    },
   ],
   callbacks: {
     async jwt({ token }) {
@@ -161,7 +198,7 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
 
-      if (!user.email || !user.name || account.type !== "oauth") {
+      if (!user.email || account.type !== "oauth") {
         return false;
       }
 
@@ -214,7 +251,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const userProfile = await createUser({
-          name: user.name,
+          name: user.name || user.email.split("@")[0],
           email: user.email,
           emailVerified: new Date(Date.now()),
           onboardingCompleted: false,
@@ -223,16 +260,16 @@ export const authOptions: NextAuthOptions = {
         });
 
         // Default team assignment if env variable is set
-        if (env.DEFAULT_TEAM_ID && env.DEFAULT_TEAM_ID.length > 0) {
+        if (DEFAULT_TEAM_ID && DEFAULT_TEAM_ID.length > 0) {
           // check if team exists
-          let team = await getTeam(env.DEFAULT_TEAM_ID);
+          let team = await getTeam(DEFAULT_TEAM_ID);
           let isNewTeam = false;
           if (!team) {
             // create team with id from env
-            team = await createTeam({ id: env.DEFAULT_TEAM_ID, name: userProfile.name + "'s Team" });
+            team = await createTeam({ id: DEFAULT_TEAM_ID, name: userProfile.name + "'s Team" });
             isNewTeam = true;
           }
-          const role = isNewTeam ? "owner" : env.DEFAULT_TEAM_ROLE || "admin";
+          const role = isNewTeam ? "owner" : DEFAULT_TEAM_ROLE || "admin";
           await createMembership(team.id, userProfile.id, { role, accepted: true });
           await createAccount({
             ...account,

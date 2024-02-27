@@ -2,12 +2,11 @@ import { responses } from "@/app/lib/api/response";
 import { notFound } from "next/navigation";
 import path from "path";
 
-import { UPLOADS_DIR } from "@formbricks/lib/constants";
-import { env } from "@formbricks/lib/env.mjs";
+import { IS_S3_CONFIGURED, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";
 
 const getFile = async (environmentId: string, accessType: string, fileName: string) => {
-  if (!env.S3_ACCESS_KEY || !env.S3_SECRET_KEY || !env.S3_REGION || !env.S3_BUCKET_NAME) {
+  if (!IS_S3_CONFIGURED) {
     try {
       const { fileBuffer, metaData } = await getLocalFile(
         path.join(UPLOADS_DIR, environmentId, accessType, fileName)
@@ -17,6 +16,8 @@ const getFile = async (environmentId: string, accessType: string, fileName: stri
         headers: {
           "Content-Type": metaData.contentType,
           "Content-Disposition": "attachment",
+          "Cache-Control": "public, max-age=1200, s-maxage=1200, stale-while-revalidate=300",
+          Vary: "Accept-Encoding",
         },
       });
     } catch (err) {

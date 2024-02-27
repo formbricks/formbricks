@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { timeSince } from "@formbricks/lib/time";
+import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -88,7 +88,7 @@ export default function SurveyCard({
           />
         </div>
         <div>
-          <div className="text-sm font-medium text-slate-900">{survey.name}</div>
+          <div className="text-md font-medium text-slate-900">{survey.name}</div>
           <div
             className={cn(
               "mt-3 flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-xs text-slate-800",
@@ -130,7 +130,7 @@ export default function SurveyCard({
 
         <div className="col-span-4 grid w-full grid-cols-5 place-items-center">
           <div className="col-span-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-            {timeSince(survey.createdAt.toString())}
+            {convertDateString(survey.createdAt.toString())}
           </div>
           <div className="col-span-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
             {timeSince(survey.updatedAt.toString())}

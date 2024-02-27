@@ -218,7 +218,7 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
 export const createAction = async (data: TActionInput): Promise<TAction> => {
   validateInputs([data, ZActionInput]);
 
-  const { environmentId, name, properties, userId } = data;
+  const { environmentId, name, userId } = data;
 
   let actionType: TActionClassType = "code";
   if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
@@ -244,7 +244,6 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
 
   const action = await prisma.action.create({
     data: {
-      properties,
       person: {
         connect: {
           id: person.id,

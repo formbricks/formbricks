@@ -5,8 +5,11 @@ import { Metadata } from "next";
 
 import {
   AZURE_OAUTH_ENABLED,
+  EMAIL_AUTH_ENABLED,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
+  OIDC_DISPLAY_NAME,
+  OIDC_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
@@ -25,11 +28,14 @@ export default function SignInPage() {
       <div className="col-span-3 flex flex-col items-center justify-center">
         <FormWrapper>
           <SigninForm
+            emailAuthEnabled={EMAIL_AUTH_ENABLED}
             publicSignUpEnabled={SIGNUP_ENABLED}
             passwordResetEnabled={!PASSWORD_RESET_DISABLED}
             googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
             githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
             azureOAuthEnabled={AZURE_OAUTH_ENABLED}
+            oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
+            oidcDisplayName={OIDC_DISPLAY_NAME}
           />
         </FormWrapper>
       </div>

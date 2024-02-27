@@ -200,6 +200,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://spark-framework.net",
         },
         {
+          name: "Tiledesk",
+          description:
+            "The innovative open-source framework for developing LLM-enabled chatbots, Tiledesk empowers developers to create advanced, conversational AI agents.",
+          href: "https://tiledesk.com",
+        },
+        {
           name: "Tolgee",
           description: "Software localization from A to Z made really easy.",
           href: "https://tolgee.io",
@@ -221,6 +227,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "A modern CRM offering the flexibility of open-source, advanced features and sleek design.",
           href: "https://twenty.com",
+        },
+        {
+          name: "UnInbox",
+          description:
+            "Modern email for teams and professionals. Bringing the best of email and messaging into a single, modern, and secure platform.",
+          href: "https://uninbox.com",
         },
         {
           name: "Unkey",

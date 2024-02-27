@@ -16,7 +16,6 @@ export const ZActionInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string(),
   name: z.string(),
-  properties: z.record(z.string()),
 });
 
 export type TActionInput = z.infer<typeof ZActionInput>;

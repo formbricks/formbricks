@@ -1,5 +1,5 @@
 import { responses } from "@/app/lib/api/response";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -12,7 +12,7 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
@@ -22,7 +22,7 @@ export async function OPTIONS(): Promise<NextResponse> {
 // use this to let users upload files to a survey for example
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
-export async function POST(req: NextRequest, context: Context): Promise<NextResponse> {
+export async function POST(req: NextRequest, context: Context): Promise<Response> {
   const environmentId = context.params.environmentId;
 
   const { fileName, fileType, surveyId } = await req.json();

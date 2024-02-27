@@ -1,5 +1,4 @@
 import { responses } from "@/app/lib/api/response";
-import { NextResponse } from "next/server";
 
 import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
@@ -21,7 +20,7 @@ export async function authenticateRequest(request: Request): Promise<TAuthentica
   return null;
 }
 
-export function handleErrorResponse(error: any): NextResponse {
+export function handleErrorResponse(error: any): Response {
   switch (error.message) {
     case "NotAuthenticated":
       return responses.notAuthenticatedResponse();

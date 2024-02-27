@@ -80,7 +80,7 @@ async function main() {
 
       await tx.segment.create({
         data: {
-          title: "",
+          title: `${survey.id}`,
           description: "",
           isPrivate: true,
           filters,

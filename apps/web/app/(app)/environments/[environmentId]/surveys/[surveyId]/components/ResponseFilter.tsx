@@ -1,9 +1,13 @@
 "use client";
 
-import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import {
+  SelectedFilterValue,
+  useResponseFilter,
+} from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { isEqual } from "lodash";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -24,11 +28,12 @@ export type QuestionFilterOptions = {
 const ResponseFilter = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const { selectedFilter, setSelectedFilter, selectedOptions } = useResponseFilter();
+  const [filterValue, setFilterValue] = useState<SelectedFilterValue>(selectedFilter);
 
   const handleOnChangeQuestionComboBoxValue = (value: QuestionOption, index: number) => {
-    if (selectedFilter.filter[index].questionType) {
+    if (filterValue.filter[index].questionType) {
       // Create a new array and copy existing values from SelectedFilter
-      selectedFilter.filter[index] = {
+      filterValue.filter[index] = {
         questionType: value,
         filterType: {
           filterComboBoxValue: undefined,
@@ -37,25 +42,28 @@ const ResponseFilter = () => {
           )?.filterOptions[0],
         },
       };
-      setSelectedFilter({ filter: [...selectedFilter.filter], onlyComplete: selectedFilter.onlyComplete });
+      setFilterValue({ filter: [...filterValue.filter], onlyComplete: filterValue.onlyComplete });
     } else {
       // Update the existing value at the specified index
-      selectedFilter.filter[index].questionType = value;
-      selectedFilter.filter[index].filterType = {
+      filterValue.filter[index].questionType = value;
+      filterValue.filter[index].filterType = {
         filterComboBoxValue: undefined,
         filterValue: selectedOptions.questionFilterOptions.find(
           (q) => q.type === value.type || q.type === value.questionType
         )?.filterOptions[0],
       };
-      setSelectedFilter({ ...selectedFilter });
+      setFilterValue({ ...filterValue });
     }
   };
 
   // when filter is opened and added a filter without selecting any option clear out that value
   const clearItem = () => {
-    setSelectedFilter({
-      filter: [...selectedFilter.filter.filter((s) => s.questionType.hasOwnProperty("label"))],
-      onlyComplete: selectedFilter.onlyComplete,
+    setFilterValue({
+      filter: filterValue.filter.filter((s) => {
+        // keep the filter if questionType is selected and filterComboBoxValue is selected
+        return s.questionType.hasOwnProperty("label") && s.filterType.filterComboBoxValue?.length;
+      }),
+      onlyComplete: filterValue.onlyComplete,
     });
   };
 
@@ -63,15 +71,16 @@ const ResponseFilter = () => {
   useEffect(() => {
     if (!isOpen) {
       clearItem();
+      handleApplyFilters();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleAddNewFilter = () => {
-    setSelectedFilter({
-      ...selectedFilter,
+    setFilterValue({
+      ...filterValue,
       filter: [
-        ...selectedFilter.filter,
+        ...filterValue.filter,
         {
           questionType: {},
           filterType: { filterComboBoxValue: undefined, filterValue: undefined },
@@ -81,58 +90,75 @@ const ResponseFilter = () => {
   };
 
   const handleClearAllFilters = () => {
-    setSelectedFilter({ ...selectedFilter, filter: [] });
+    setFilterValue((filterValue) => ({ ...filterValue, filter: [] }));
+    setSelectedFilter((selectedFilters) => ({ ...selectedFilters, filter: [] }));
+    setIsOpen(false);
   };
 
   const handleDeleteFilter = (index: number) => {
-    selectedFilter.filter.splice(index, 1);
-    setSelectedFilter({ ...selectedFilter });
+    filterValue.filter.splice(index, 1);
+    setFilterValue({ ...filterValue });
   };
 
   const handleOnChangeFilterComboBoxValue = (o: string | string[], index: number) => {
-    selectedFilter.filter[index] = {
-      ...selectedFilter.filter[index],
+    filterValue.filter[index] = {
+      ...filterValue.filter[index],
       filterType: {
         filterComboBoxValue: o,
-        filterValue: selectedFilter.filter[index].filterType.filterValue,
+        filterValue: filterValue.filter[index].filterType.filterValue,
       },
     };
-    setSelectedFilter({ ...selectedFilter });
+    setFilterValue({ ...filterValue });
   };
   const handleOnChangeFilterValue = (o: string, index: number) => {
-    selectedFilter.filter[index] = {
-      ...selectedFilter.filter[index],
+    filterValue.filter[index] = {
+      ...filterValue.filter[index],
       filterType: { filterComboBoxValue: undefined, filterValue: o },
     };
-    setSelectedFilter({ ...selectedFilter });
+    setFilterValue({ ...filterValue });
   };
   const handleRemoveMultiSelect = (value: string[], index) => {
-    selectedFilter.filter[index] = {
-      ...selectedFilter.filter[index],
+    filterValue.filter[index] = {
+      ...filterValue.filter[index],
       filterType: {
         filterComboBoxValue: value,
-        filterValue: selectedFilter.filter[index].filterType.filterValue,
+        filterValue: filterValue.filter[index].filterType.filterValue,
       },
     };
-    setSelectedFilter({ ...selectedFilter });
+    setFilterValue({ ...filterValue });
   };
 
   const handleCheckOnlyComplete = (checked: boolean) => {
-    setSelectedFilter({ ...selectedFilter, onlyComplete: checked });
+    setFilterValue({ ...filterValue, onlyComplete: checked });
   };
 
   // remove the filter which has already been selected
   const questionComboBoxOptions = selectedOptions.questionOptions.map((q) => {
     return {
       ...q,
-      option: q.option.filter((o) => !selectedFilter.filter.some((f) => f?.questionType?.id === o?.id)),
+      option: q.option.filter((o) => !filterValue.filter.some((f) => f?.questionType?.id === o?.id)),
     };
   });
 
+  const handleApplyFilters = () => {
+    clearItem();
+    if (!isEqual(filterValue, selectedFilter)) {
+      setSelectedFilter(filterValue);
+    }
+    setIsOpen(false);
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      handleApplyFilters();
+    }
+    setIsOpen(open);
+  };
+
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger className="flex min-w-[8rem] items-center justify-between rounded border border-slate-200 bg-white p-3 text-sm text-slate-600 hover:border-slate-300 sm:min-w-[11rem] sm:px-6 sm:py-3">
-        Filter {selectedFilter.filter.length > 0 && `(${selectedFilter.filter.length})`}
+        Filter {filterValue.filter.length > 0 && `(${filterValue.filter.length})`}
         <div className="ml-3">
           {isOpen ? (
             <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
@@ -150,15 +176,15 @@ const ResponseFilter = () => {
           <div className="flex items-center space-x-2">
             <label className="text-sm font-normal text-slate-600">Only completed</label>
             <Checkbox
-              className={clsx("rounded-md", selectedFilter.onlyComplete && "bg-black text-white")}
-              checked={selectedFilter.onlyComplete}
+              className={clsx("rounded-md", filterValue.onlyComplete && "bg-black text-white")}
+              checked={filterValue.onlyComplete}
               onCheckedChange={(checked) => {
                 typeof checked === "boolean" && handleCheckOnlyComplete(checked);
               }}
             />
           </div>
         </div>
-        {selectedFilter.filter?.map((s, i) => (
+        {filterValue.filter?.map((s, i) => (
           <>
             <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
               <div
@@ -184,8 +210,8 @@ const ResponseFilter = () => {
                         q.id === s.questionType.id
                     )?.filterComboBoxOptions
                   }
-                  filterValue={selectedFilter.filter[i].filterType.filterValue}
-                  filterComboBoxValue={selectedFilter.filter[i].filterType.filterComboBoxValue}
+                  filterValue={filterValue.filter[i].filterType.filterValue}
+                  filterComboBoxValue={filterValue.filter[i].filterType.filterComboBoxValue}
                   type={
                     s?.questionType?.type === OptionsType.QUESTIONS
                       ? s?.questionType?.questionType
@@ -205,7 +231,7 @@ const ResponseFilter = () => {
                 />
               </div>
             </div>
-            {i !== selectedFilter.filter.length - 1 && (
+            {i !== filterValue.filter.length - 1 && (
               <div className="my-6 flex items-center">
                 <p className="mr-6 text-base text-slate-600">And</p>
                 <hr className="w-full text-slate-600" />
@@ -218,9 +244,14 @@ const ResponseFilter = () => {
             Add filter
             <Plus width={18} height={18} className="ml-2" />
           </Button>
-          <Button size="sm" variant="secondary" onClick={handleClearAllFilters}>
-            Clear all
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="primary" onClick={handleApplyFilters}>
+              Apply Filters
+            </Button>
+            <Button size="sm" variant="secondary" onClick={handleClearAllFilters}>
+              Clear all
+            </Button>
+          </div>
         </div>
       </PopoverContent>
     </Popover>

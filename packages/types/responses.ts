@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { ZPerson, ZPersonAttributes } from "./people";
-import { ZSurvey } from "./surveys";
+import { ZSurvey, ZSurveyLogicCondition } from "./surveys";
 import { ZTag } from "./tags";
 
 export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
@@ -15,6 +15,128 @@ export type TResponseTtc = z.infer<typeof ZResponseTtc>;
 export const ZResponsePersonAttributes = ZPersonAttributes.nullable();
 
 export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
+
+export const ZSurveyPersonAttributes = z.record(z.array(z.string()));
+
+export type TSurveyPersonAttributes = z.infer<typeof ZSurveyPersonAttributes>;
+
+const ZResponseFilterCriteriaDataLessThan = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.lessThan),
+  value: z.number(),
+});
+
+const ZResponseFilterCriteriaDataLessEqual = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.lessEqual),
+  value: z.number(),
+});
+
+const ZResponseFilterCriteriaDataGreaterEqual = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.greaterEqual),
+  value: z.number(),
+});
+
+const ZResponseFilterCriteriaDataGreaterThan = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.greaterThan),
+  value: z.number(),
+});
+
+const ZResponseFilterCriteriaDataIncludesOne = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.includesOne),
+  value: z.array(z.string()),
+});
+
+const ZResponseFilterCriteriaDataIncludesAll = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.includesAll),
+  value: z.array(z.string()),
+});
+
+const ZResponseFilterCriteriaDataEquals = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.equals),
+  value: z.union([z.string(), z.number()]),
+});
+
+const ZResponseFilterCriteriaDataNotEquals = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.notEquals),
+  value: z.union([z.string(), z.number()]),
+});
+
+const ZResponseFilterCriteriaDataAccepted = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.accepted),
+});
+
+const ZResponseFilterCriteriaDataClicked = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.clicked),
+});
+
+const ZResponseFilterCriteriaDataSubmitted = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.submitted),
+});
+
+const ZResponseFilterCriteriaDataSkipped = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.skipped),
+});
+
+const ZResponseFilterCriteriaDataUploaded = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.uploaded),
+});
+
+const ZResponseFilterCriteriaDataNotUploaded = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.notUploaded),
+});
+
+const ZResponseFilterCriteriaDataBooked = z.object({
+  op: z.literal(ZSurveyLogicCondition.Values.booked),
+});
+
+export const ZResponseFilterCriteria = z.object({
+  finished: z.boolean().optional(),
+  createdAt: z
+    .object({
+      min: z.date().optional(),
+      max: z.date().optional(),
+    })
+    .optional(),
+
+  personAttributes: z
+    .record(
+      z.object({
+        op: z.enum(["equals", "notEquals"]),
+        value: z.union([z.string(), z.number()]),
+      })
+    )
+    .optional(),
+
+  data: z
+    .record(
+      z.union([
+        ZResponseFilterCriteriaDataLessThan,
+        ZResponseFilterCriteriaDataLessEqual,
+        ZResponseFilterCriteriaDataGreaterEqual,
+        ZResponseFilterCriteriaDataGreaterThan,
+        ZResponseFilterCriteriaDataIncludesOne,
+        ZResponseFilterCriteriaDataIncludesAll,
+        ZResponseFilterCriteriaDataEquals,
+        ZResponseFilterCriteriaDataNotEquals,
+        ZResponseFilterCriteriaDataAccepted,
+        ZResponseFilterCriteriaDataClicked,
+        ZResponseFilterCriteriaDataSubmitted,
+        ZResponseFilterCriteriaDataSkipped,
+        ZResponseFilterCriteriaDataUploaded,
+        ZResponseFilterCriteriaDataNotUploaded,
+        ZResponseFilterCriteriaDataBooked,
+      ])
+    )
+    .optional(),
+
+  tags: z
+    .object({
+      applied: z.array(z.string()).optional(),
+      notApplied: z.array(z.string()).optional(),
+    })
+    .optional(),
+});
+
+export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
 export const ZResponseNoteUser = z.object({
   id: z.string().cuid2(),
