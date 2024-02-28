@@ -21,7 +21,7 @@ export const ZStyling = z.object({
   inputBorderColor: ZStylingColor.optional(),
   cardBackgroundColor: ZStylingColor.optional(),
   highlightBorderColor: ZStylingColor.optional(),
-  isDarkModeEnabled: z.boolean(),
+  isDarkModeEnabled: z.boolean().optional(),
   roundness: z.number().optional(),
   cardArrangement: ZCardArrangement.optional(),
 });

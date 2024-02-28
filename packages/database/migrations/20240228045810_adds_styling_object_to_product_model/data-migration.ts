@@ -26,12 +26,6 @@ async function main() {
           brandColor: {
             light: product.brandColor,
           },
-          isDarkModeEnabled: false,
-          roundness: 8,
-          cardArrangement: {
-            linkSurveys: "simple",
-            inAppSurveys: "simple",
-          },
           ...(product.highlightBorderColor && {
             highlightBorderColor: {
               light: product.highlightBorderColor,
