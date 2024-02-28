@@ -275,7 +275,6 @@ export function Survey({
 
   return (
     <>
-      {console.log(getSetIsResponseSendingFinished)}
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div className="no-scrollbar flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
