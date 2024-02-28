@@ -95,9 +95,9 @@ export default function RatingQuestion({
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
       <div className="mb-4 mt-6 flex items-center justify-center">
-        <div className="w-full">
+        <fieldset className="w-full">
           <legend className="sr-only">Choices</legend>
-          <fieldset className="flex w-full pb-2">
+          <div className="flex w-full pb-2">
             {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
               <span
                 key={number}
@@ -173,12 +173,12 @@ export default function RatingQuestion({
                 )}
               </span>
             ))}
-          </fieldset>
+          </div>
           <div className="text-subheading flex justify-between px-1.5 text-xs leading-6">
             <p className="w-1/2 text-left">{question.lowerLabel}</p>
             <p className="w-1/2 text-right">{question.upperLabel}</p>
           </div>
-        </div>
+        </fieldset>
       </div>
 
       <div className="mt-4 flex w-full justify-between">
