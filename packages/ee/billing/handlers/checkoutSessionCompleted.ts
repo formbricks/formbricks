@@ -36,7 +36,10 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
     switch (product.name) {
       case StripeProductNames.inAppSurvey:
         updatedFeatures.inAppSurvey.status = "active";
-        if (item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimited) {
+        const isInAppSurveyUnlimited =
+          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimitedPlan90 ||
+          item.price.lookup_key === StripePriceLookupKeys.inAppSurveyUnlimitedPlan33;
+        if (isInAppSurveyUnlimited) {
           updatedFeatures.inAppSurvey.unlimited = true;
         } else {
           const countForTeam = await getMonthlyTeamResponseCount(team.id);
@@ -50,14 +53,20 @@ export const handleCheckoutSessionCompleted = async (event: Stripe.Event) => {
 
       case StripeProductNames.linkSurvey:
         updatedFeatures.linkSurvey.status = "active";
-        if (item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimited) {
+        const isLinkSurveyUnlimited =
+          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimitedPlan19 ||
+          item.price.lookup_key === StripePriceLookupKeys.linkSurveyUnlimitedPlan33;
+        if (isLinkSurveyUnlimited) {
           updatedFeatures.linkSurvey.unlimited = true;
         }
         break;
 
       case StripeProductNames.userTargeting:
         updatedFeatures.userTargeting.status = "active";
-        if (item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimited) {
+        const isUserTargetingUnlimited =
+          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimitedPlan90 ||
+          item.price.lookup_key === StripePriceLookupKeys.userTargetingUnlimitedPlan33;
+        if (isUserTargetingUnlimited) {
           updatedFeatures.userTargeting.unlimited = true;
         } else {
           const countForTeam = await getMonthlyActiveTeamPeopleCount(team.id);
