@@ -49,13 +49,11 @@ export function Onboarding({
   }, [currentStep, iframeLoaded, selectedPathway]);
 
   useEffect(() => {
-    // Only execute this logic if the iframe is intended to be visible
     if (iframeVisible) {
-      setFade(true); // Start with fading in the iframe
+      setFade(true);
 
       const handleSurveyCompletion = () => {
-        // Logic to run when the survey is completed
-        setFade(false); // Start fade-out effect
+        setFade(false);
 
         setTimeout(() => {
           setIframeVisible(false); // Hide the iframe after fade-out effect is complete
@@ -63,7 +61,6 @@ export function Onboarding({
         }, 1000); // Adjust timeout duration based on your fade-out CSS transition
       };
 
-      // Setup the event listener for the custom event to listen to survey completion
       window.addEventListener("SurveyCompleted", handleSurveyCompletion);
 
       // Cleanup function to remove the event listener
