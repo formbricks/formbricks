@@ -241,7 +241,7 @@ export const SigninForm = ({
             <span className="leading-5 text-slate-500">New to Formbricks?</span>
             <br />
             <Link
-              href={callbackUrl ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup"}
+              href={inviteToken ? `/auth/signup?inviteToken=${inviteToken}` : "/auth/signup"}
               className="font-semibold text-slate-600 underline hover:text-slate-700">
               Create an account
             </Link>
