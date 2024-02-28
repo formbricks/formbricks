@@ -440,3 +440,4 @@ export const QuestionFormInput = ({
     </div>
   );
 };
+QuestionFormInput.displayName = "QuestionFormInput";

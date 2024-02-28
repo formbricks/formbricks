@@ -25,6 +25,7 @@ const conditionOptions = {
   cta: ["is"],
   tags: ["is"],
   languages: ["Equals", "Not equals"],
+  pictureSelection: ["Includes all", "Includes either"],
   userAttributes: ["Equals", "Not equals"],
   consent: ["is"],
 };
@@ -72,6 +73,13 @@ export const generateQuestionAndFilterOptions = (
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
+          id: q.id,
+        });
+      } else if (q.type === TSurveyQuestionType.PictureSelection) {
+        questionFilterOptions.push({
+          type: q.type,
+          filterOptions: conditionOptions[q.type],
+          filterComboBoxOptions: q?.choices ? q?.choices?.map((_, idx) => `Picture ${idx + 1}`) : [""],
           id: q.id,
         });
       } else {
@@ -139,6 +147,7 @@ export const generateQuestionAndFilterOptions = (
 
 // get the formatted filter expression to fetch filtered responses
 export const getFormattedFilters = (
+  survey: TSurvey,
   selectedFilter: SelectedFilterValue,
   dateRange: DateRange
 ): TResponseFilterCriteria => {
@@ -263,6 +272,34 @@ export const getFormattedFilters = (
           } else if (filterType.filterComboBoxValue === "Dismissed") {
             filters.data[questionType.id ?? ""] = {
               op: "skipped",
+            };
+          }
+        }
+        case TSurveyQuestionType.PictureSelection: {
+          const questionId = questionType.id ?? "";
+          const question = survey.questions.find((q) => q.id === questionId);
+
+          if (
+            question?.type !== TSurveyQuestionType.PictureSelection ||
+            !Array.isArray(filterType.filterComboBoxValue)
+          ) {
+            return;
+          }
+
+          const selectedOptions = filterType.filterComboBoxValue.map((option) => {
+            const index = parseInt(option.split(" ")[1]);
+            return question?.choices[index - 1].id;
+          });
+
+          if (filterType.filterValue === "Includes all") {
+            filters.data[questionId] = {
+              op: "includesAll",
+              value: selectedOptions,
+            };
+          } else if (filterType.filterValue === "Includes either") {
+            filters.data[questionId] = {
+              op: "includesOne",
+              value: selectedOptions,
             };
           }
         }

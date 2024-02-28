@@ -15,6 +15,7 @@ export function SurveyModal({
   darkOverlay,
   highlightBorderColor,
   onDisplay,
+  getSetIsResponseSendingFinished,
   onActiveQuestionChange,
   onResponse,
   onClose,
@@ -50,6 +51,7 @@ export function SurveyModal({
           isBrandingEnabled={isBrandingEnabled}
           activeQuestionId={activeQuestionId}
           onDisplay={onDisplay}
+          getSetIsResponseSendingFinished={getSetIsResponseSendingFinished}
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
           languageCode={languageCode}

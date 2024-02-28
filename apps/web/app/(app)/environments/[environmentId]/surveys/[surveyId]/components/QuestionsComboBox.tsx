@@ -7,6 +7,7 @@ import {
   HashtagIcon,
   LanguageIcon,
   ListBulletIcon,
+  PhotoIcon,
   QuestionMarkCircleIcon,
   QueueListIcon,
   StarIcon,
@@ -64,6 +65,8 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.Consent:
             return <CheckIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionType.PictureSelection:
+            return <PhotoIcon width={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
         return <HashtagIcon width={18} className="text-white" />;

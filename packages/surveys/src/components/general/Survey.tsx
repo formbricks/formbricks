@@ -31,6 +31,7 @@ export function Survey({
   prefillResponseData,
   languageCode,
   getSetIsError,
+  getSetIsResponseSendingFinished,
   onFileUpload,
   responseCount,
 }: SurveyBaseProps) {
@@ -38,6 +39,9 @@ export function Survey({
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
   const [showError, setShowError] = useState(false);
+  // flag state to store whether response processing has been completed or not
+  const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(false);
+
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
@@ -87,7 +91,15 @@ export function Survey({
         setShowError(value);
       });
     }
-  });
+  }, [getSetIsError]);
+
+  useEffect(() => {
+    if (getSetIsResponseSendingFinished) {
+      getSetIsResponseSendingFinished((value: boolean) => {
+        setIsResponseSendingFinished(value);
+      });
+    }
+  }, [getSetIsResponseSendingFinished]);
 
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
@@ -261,6 +273,7 @@ export function Survey({
         <ThankYouCard
           headline={survey.thankYouCard.headline}
           subheader={survey.thankYouCard.subheader}
+          isResponseSendingFinished={isResponseSendingFinished}
           buttonLabel={survey.thankYouCard.buttonLabel}
           buttonLink={survey.thankYouCard.buttonLink}
           imageUrl={survey.thankYouCard.imageUrl}
