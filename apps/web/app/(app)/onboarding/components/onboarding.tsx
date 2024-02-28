@@ -74,8 +74,8 @@ export function Onboarding({
   useEffect(() => {
     if (typeof window !== "undefined") {
       // Access localStorage only when window is available
-      const pathwayValueFromLocalStorage = localStorage.getItem("pathway");
-      const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("currentStep") ?? "1");
+      const pathwayValueFromLocalStorage = localStorage.getItem("onboardingPathway");
+      const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("onboardingCurrentStep") ?? "1");
 
       setSelectedPathway(pathwayValueFromLocalStorage);
       setCurrentStep(currentStepValueFromLocalStorage);
@@ -87,7 +87,7 @@ export function Onboarding({
       const stepProgressMap = { 1: 16, 2: 50, 3: 65, 4: 75, 5: 90 };
       const newProgress = stepProgressMap[currentStep] || 16;
       setProgress(newProgress);
-      localStorage.setItem("currentStep", currentStep.toString());
+      localStorage.setItem("onboardingCurrentStep", currentStep.toString());
     }
   }, [currentStep]);
 

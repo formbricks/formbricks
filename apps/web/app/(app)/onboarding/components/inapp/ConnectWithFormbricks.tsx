@@ -16,15 +16,15 @@ import SetupInstructionsOnboarding from "./SetupInstructions";
 
 const goToProduct = async (router) => {
   if (typeof localStorage !== undefined) {
-    localStorage.removeItem("pathway");
-    localStorage.removeItem("currentStep");
+    localStorage.removeItem("onboardingPathway");
+    localStorage.removeItem("onboardingCurrentStep");
   }
   await finishOnboardingAction();
   router.push("/");
 };
 
 const goToTeamInvitePage = async () => {
-  localStorage.setItem("currentStep", "5");
+  localStorage.setItem("onboardingCurrentStep", "5");
 };
 
 // Custom hook for visibility change logic
@@ -142,7 +142,7 @@ export function ConnectWithFormbricks({
       environment={environment}
       goToTeamInvitePage={() => {
         setCurrentStep(5);
-        localStorage.setItem("currentStep", "5");
+        localStorage.setItem("onboardingCurrentStep", "5");
         goToTeamInvitePage();
       }}
     />

@@ -67,8 +67,8 @@ export function InviteTeamMate({ team, environmentId, setCurrentStep }: InviteTe
     setIsLoading(true);
     try {
       if (typeof localStorage !== undefined) {
-        localStorage.removeItem("pathway");
-        localStorage.removeItem("currentStep");
+        localStorage.removeItem("onboardingPathway");
+        localStorage.removeItem("onboardingCurrentStep");
       }
       await finishOnboardingAction();
       router.push(`/environments/${environmentId}/surveys`);
@@ -80,7 +80,7 @@ export function InviteTeamMate({ team, environmentId, setCurrentStep }: InviteTe
 
   const goBackToConnectPage = () => {
     setCurrentStep(4);
-    localStorage.setItem("currentStep", "4");
+    localStorage.setItem("onboardingCurrentStep", "4");
   };
 
   return (

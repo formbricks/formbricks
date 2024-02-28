@@ -50,7 +50,7 @@ export const Objective: React.FC<ObjectiveProps> = ({ formbricksResponseId, user
 
   const next = () => {
     setCurrentStep(4);
-    localStorage.setItem("currentStep", "4");
+    localStorage.setItem("onboardingCurrentStep", "4");
   };
 
   const handleNextClick = async () => {

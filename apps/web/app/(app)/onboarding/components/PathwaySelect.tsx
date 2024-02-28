@@ -20,23 +20,18 @@ export default function PathwaySelect({
 }: PathwaySelectProps) {
   const handleSelect = async (pathway: PathwayOptionType) => {
     if (pathway === "link") {
-      localStorage.setItem("pathway", "link");
+      localStorage.setItem("onboardingPathway", "link");
       if (isFormbricksCloud) {
         setCurrentStep(2);
-        localStorage.setItem("currentStep", "2");
+        localStorage.setItem("onboardingCurrentStep", "2");
       } else {
         setCurrentStep(5);
-        localStorage.setItem("currentStep", "5");
+        localStorage.setItem("onboardingCurrentStep", "5");
       }
     } else {
-      localStorage.setItem("pathway", "in-app");
-      if (isFormbricksCloud) {
-        setCurrentStep(2);
-        localStorage.setItem("currentStep", "2");
-      } else {
-        setCurrentStep(4);
-        localStorage.setItem("currentStep", "4");
-      }
+      localStorage.setItem("onboardingPathway", "in-app");
+      setCurrentStep(2);
+      localStorage.setItem("onboardingCurrentStep", "2");
     }
     setSelectedPathway(pathway);
   };

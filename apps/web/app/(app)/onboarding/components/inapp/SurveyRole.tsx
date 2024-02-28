@@ -48,7 +48,7 @@ export const Role: React.FC<RoleProps> = ({ setFormbricksResponseId, session, se
 
   const next = () => {
     setCurrentStep(3);
-    localStorage.setItem("currentStep", "3");
+    localStorage.setItem("onboardingCurrentStep", "3");
   };
 
   const handleNextClick = async () => {
