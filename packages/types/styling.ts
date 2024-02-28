@@ -15,15 +15,15 @@ export const ZCardArrangement = z.object({
 });
 
 export const ZStyling = z.object({
-  brandColor: ZStylingColor,
-  questionColor: ZStylingColor,
-  inputColor: ZStylingColor,
-  inputBorderColor: ZStylingColor,
-  cardBackgroundColor: ZStylingColor,
+  brandColor: ZStylingColor.optional(),
+  questionColor: ZStylingColor.optional(),
+  inputColor: ZStylingColor.optional(),
+  inputBorderColor: ZStylingColor.optional(),
+  cardBackgroundColor: ZStylingColor.optional(),
   highlightBorderColor: ZStylingColor.optional(),
-  enableDarkMode: z.boolean(),
-  roundness: z.number(),
-  cardArrangement: ZCardArrangement,
+  isDarkModeEnabled: z.boolean(),
+  roundness: z.number().optional(),
+  cardArrangement: ZCardArrangement.optional(),
 });
 
 export type TStyling = z.infer<typeof ZStyling>;

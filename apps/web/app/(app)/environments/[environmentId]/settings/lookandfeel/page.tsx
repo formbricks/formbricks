@@ -18,6 +18,7 @@ import { EditBrandColor } from "./components/EditBrandColor";
 import { EditFormbricksBranding } from "./components/EditBranding";
 import { EditHighlightBorder } from "./components/EditHighlightBorder";
 import { EditPlacement } from "./components/EditPlacement";
+import UnifiedStyling from "./components/UnifiedStyling";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [session, team, product] = await Promise.all([
@@ -50,6 +51,11 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   return (
     <div>
       <SettingsTitle title="Look & Feel" />
+      <SettingsCard
+        title="Unified Styling"
+        description="Set styling for ALL surveys in this project. You can still overwrite these styles in the survey editor.">
+        <UnifiedStyling />
+      </SettingsCard>
       <SettingsCard title="Brand Color" description="Match the surveys with your user interface.">
         <EditBrandColor
           product={product}

@@ -26,19 +26,7 @@ async function main() {
           brandColor: {
             light: product.brandColor,
           },
-          questionColor: {
-            light: product.brandColor,
-          },
-          inputColor: {
-            light: product.brandColor,
-          },
-          inputBorderColor: {
-            light: product.brandColor,
-          },
-          cardBackgroundColor: {
-            light: product.brandColor,
-          },
-          enableDarkMode: false,
+          isDarkModeEnabled: false,
           roundness: 8,
           cardArrangement: {
             linkSurveys: "simple",
