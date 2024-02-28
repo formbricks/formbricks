@@ -2665,4 +2665,5 @@ export const getFirstSurvey = (webAppUrl: string) => ({
   triggers: ["New Session"],
   status: "inProgress" as TSurveyStatus,
   displayOption: "respondMultiple" as TSurveyDisplayOption,
+  recontactDays: 0,
 });
