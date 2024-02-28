@@ -66,6 +66,7 @@ export default function AddProductModal({ environmentId, open, setOpen }: AddPro
               <div>
                 <Label>Name</Label>
                 <Input
+                  autoFocus
                   placeholder="e.g. My New Product"
                   {...register("name", { required: true })}
                   value={productName}
