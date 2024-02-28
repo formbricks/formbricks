@@ -47,7 +47,6 @@ async function main() {
           ...(product.highlightBorderColor && {
             highlightBorderColor: {
               light: product.highlightBorderColor,
-              dark: product.highlightBorderColor,
             },
           }),
         };
