@@ -66,6 +66,10 @@ export function InviteTeamMate({ team, environmentId, setCurrentStep }: InviteTe
   const goToProduct = async () => {
     setIsLoading(true);
     try {
+      if (typeof localStorage !== undefined) {
+        localStorage.removeItem("pathway");
+        localStorage.removeItem("currentStep");
+      }
       await finishOnboardingAction();
       router.push(`/environments/${environmentId}/surveys`);
     } catch (error) {

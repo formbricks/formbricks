@@ -2,7 +2,7 @@
 
 import TemplateList from "@/app/(app)/environments/[environmentId]/surveys/templates/TemplateList";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -27,11 +27,6 @@ export default function SurveyStarter({
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    localStorage.removeItem("pathway");
-    localStorage.removeItem("currentStep");
-  }, []);
 
   const newSurveyFromTemplate = async (template: TTemplate) => {
     setIsCreateSurveyLoading(true);

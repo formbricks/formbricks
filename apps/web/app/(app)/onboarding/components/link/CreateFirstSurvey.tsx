@@ -40,6 +40,10 @@ export function CreateFirstSurvey({ environmentId }: CreateFirstSurveyProps) {
 
   const newSurveyFromTemplate = async (template: TTemplate) => {
     setLoadingTemplate(template.name);
+    if (typeof localStorage !== undefined) {
+      localStorage.removeItem("pathway");
+      localStorage.removeItem("currentStep");
+    }
     await finishOnboardingAction();
     try {
       const survey = await createSurveyFromTemplate(template, environmentId);

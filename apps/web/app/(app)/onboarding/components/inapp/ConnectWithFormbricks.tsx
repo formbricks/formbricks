@@ -15,6 +15,10 @@ import { fetchEnvironment, finishOnboardingAction } from "../../actions";
 import SetupInstructionsOnboarding from "./SetupInstructions";
 
 const goToProduct = async (router) => {
+  if (typeof localStorage !== undefined) {
+    localStorage.removeItem("pathway");
+    localStorage.removeItem("currentStep");
+  }
   await finishOnboardingAction();
   router.push("/");
 };

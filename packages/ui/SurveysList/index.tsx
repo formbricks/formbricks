@@ -33,11 +33,6 @@ export default function SurveysList({
     typeof localStorage !== "undefined" ? localStorage.getItem("surveyOrientation") || "grid" : "grid"
   );
 
-  useEffect(() => {
-    localStorage.removeItem("pathway");
-    localStorage.removeItem("currentStep");
-  }, []);
-
   // Save orientation to localStorage
   useEffect(() => {
     localStorage.setItem("surveyOrientation", orientation);
