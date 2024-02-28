@@ -189,7 +189,7 @@ export default function PreviewSurvey({
               : "expanded_with_fixed_positioning"
             : "shrink"
         }
-        className="relative flex h-[95] max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+        className="relative flex max-h-[95%] w-5/6 items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
         {previewMode === "mobile" && (
           <>
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
@@ -216,8 +216,8 @@ export default function PreviewSurvey({
                   />
                 </Modal>
               ) : (
-                <div className="w-full px-4">
-                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                <div className="flex h-full w-full items-center px-4">
+                  <div className="no-scrollbar z-10 max-h-[95%] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
                       brandColor={brandColor}
@@ -241,7 +241,7 @@ export default function PreviewSurvey({
                 <div className="h-3 w-3 rounded-full bg-amber-500"></div>
                 <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
               </div>
-              <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+              <div className="ml-4 flex h-full w-full justify-between font-mono text-sm text-slate-400">
                 <p>{previewType === "modal" ? "Your web app" : "Preview"}</p>
 
                 <div className="flex items-center">
@@ -287,7 +287,7 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
-                <div className="z-0 w-full max-w-md rounded-lg p-4">
+                <div className="z-0 flex h-full w-full max-w-md rounded-lg p-4">
                   <SurveyInline
                     survey={survey}
                     brandColor={brandColor}

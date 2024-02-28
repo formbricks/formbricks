@@ -51,7 +51,10 @@ export function AutoCloseWrapper({ survey, onClose, children }: AutoCloseProps) 
   return (
     <>
       {!countdownStop && survey.autoClose && <Progress progress={countdownProgress} />}
-      <div onClick={handleStopCountdown} onMouseOver={handleStopCountdown} className="h-full w-full">
+      <div
+        onClick={handleStopCountdown}
+        onMouseOver={handleStopCountdown}
+        className="flex h-full w-full items-center overflow-scroll">
         {children}
       </div>
     </>
