@@ -330,7 +330,9 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
 
   const { triggers, environmentId, segment, ...surveyData } = updatedSurvey;
 
-  data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
+  if (triggers) {
+    data.triggers = processTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
+  }
 
   if (segment) {
     // parse the segment filters:
@@ -438,7 +440,6 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
     const actionClasses = await getActionClasses(environmentId);
     revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
   }
-  const actionClasses = await getActionClasses(environmentId);
 
   const createdBy = surveyBody.createdBy;
   delete surveyBody.createdBy;
@@ -446,7 +447,9 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   const data: Omit<Prisma.SurveyCreateInput, "environment"> = {
     ...surveyBody,
     // TODO: Create with attributeFilters
-    triggers: surveyBody.triggers ? processTriggerUpdates(surveyBody.triggers, [], actionClasses) : undefined,
+    triggers: surveyBody.triggers
+      ? processTriggerUpdates(surveyBody.triggers, [], await getActionClasses(environmentId))
+      : undefined,
     attributeFilters: undefined,
   };
 
