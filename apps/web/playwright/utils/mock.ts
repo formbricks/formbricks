@@ -9,12 +9,12 @@ export const users = {
   onboarding: [
     {
       name: "Onboarding User 1",
-      email: "onboarding13@formbricks.com",
+      email: "onboarding1@formbricks.com",
       password: "iHalLonErFGK$X901R0",
     },
     {
       name: "Onboarding User 2",
-      email: "onboarding12@formbricks.com",
+      email: "onboarding2@formbricks.com",
       password: "231Xh7D&dM8u75EjIYV",
     },
   ],

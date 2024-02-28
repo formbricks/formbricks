@@ -19,9 +19,8 @@ test.describe("Onboarding Flow Test", async () => {
     await page.frameLocator("iframe").getByRole("button", { name: "Next" }).click();
     await page.frameLocator("iframe").locator("label").filter({ hasText: "GitHub" }).click();
     await page.frameLocator("iframe").getByRole("button", { name: "Finish" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    await page.getByRole("button", { name: "Start from scratch", exact: true }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit/);
+    await page.getByRole("button", { name: "Collect Feedback Collect" }).click();
+    await page.getByRole("button", { name: "Back", exact: true }).click();
     await page.getByRole("button", { name: "Save" }).click();
   });
 
@@ -38,7 +37,7 @@ test.describe("Onboarding Flow Test", async () => {
     await page.getByRole("button", { name: "I am not sure how to do this" }).click();
     await page.locator("input").click();
     await page.locator("input").fill("test@gmail.com");
-    await page.getByRole("button", { name: "Invite co-worker" }).click();
+    await page.getByRole("button", { name: "Invite" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(productName)).toBeVisible();
   });
