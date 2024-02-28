@@ -41,14 +41,10 @@ export const finishOnboarding = async (page: Page): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
   await page.getByRole("button", { name: "In-app Surveys Run a survey" }).click();
-  await page.locator("label").filter({ hasText: "Engineer" }).click();
-  await page.getByRole("button", { name: "Next" }).click();
-  await page.locator("label").filter({ hasText: "Improve user retention" }).click();
-  await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "I am not sure how to do this" }).click();
   await page.locator("input").click();
   await page.locator("input").fill("test@gmail.com");
-  await page.getByRole("button", { name: "Invite co-worker" }).click();
+  await page.getByRole("button", { name: "Invite" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
   await expect(page.getByText("My Product")).toBeVisible();
 };
