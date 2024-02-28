@@ -146,7 +146,7 @@ export function Onboarding({
         {renderOnboardingStep()}
         {iframeVisible && isFormbricksCloud && (
           <iframe
-            src={`https://app.formbricks.com/s/clslmswhch2aepodw008fy1h2?userId=${session.user.id}`}
+            src={`https://app.formbricks.com/s/clr737oiseav88up09skt2hxo?userId=${session.user.id}`}
             onLoad={() => setIframeLoaded(true)}
             style={{
               inset: "0",
