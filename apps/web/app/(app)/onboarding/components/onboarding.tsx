@@ -62,11 +62,11 @@ export function Onboarding({
         }, 1000); // Adjust timeout duration based on your fade-out CSS transition
       };
 
-      window.addEventListener("SurveyCompleted", handleSurveyCompletion);
+      window.addEventListener("formbricksSurveyCompleted", handleSurveyCompletion);
 
       // Cleanup function to remove the event listener
       return () => {
-        window.removeEventListener("SurveyCompleted", handleSurveyCompletion);
+        window.removeEventListener("formbricksSurveyCompleted", handleSurveyCompletion);
       };
     }
   }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
