@@ -76,6 +76,7 @@ export default function OpenTextQuestion({
             tabIndex={1}
             name={question.id}
             id={question.id}
+            step={"any"}
             placeholder={question.placeholder}
             required={question.required}
             value={value ? (value as string) : ""}
