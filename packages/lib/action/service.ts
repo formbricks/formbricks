@@ -3,7 +3,6 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { differenceInDays } from "date-fns";
 import { unstable_cache } from "next/cache";
-import { activePersonCache } from "person/cache";
 
 import { prisma } from "@formbricks/database";
 import { TActionClassType } from "@formbricks/types/actionClasses";
@@ -15,6 +14,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { actionClassCache } from "../actionClass/cache";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { activePersonCache } from "../person/cache";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "../person/service";
 import { surveyCache } from "../survey/cache";
 import { formatDateFields } from "../utils/datetime";
