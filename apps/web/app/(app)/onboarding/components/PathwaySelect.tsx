@@ -7,7 +7,7 @@ import { OptionCard } from "@formbricks/ui/OptionCard";
 
 interface PathwaySelectProps {
   setSelectedPathway: (pathway: "link" | "in-app" | null) => void;
-  SET_CURRENT_STEP: (currentStep: number) => void;
+  setCurrentStep: (currentStep: number) => void;
   isFormbricksCloud: boolean;
 }
 
@@ -15,22 +15,27 @@ type PathwayOptionType = "link" | "in-app";
 
 export default function PathwaySelect({
   setSelectedPathway,
-  SET_CURRENT_STEP,
+  setCurrentStep,
   isFormbricksCloud,
 }: PathwaySelectProps) {
   const handleSelect = async (pathway: PathwayOptionType) => {
     if (pathway === "link") {
-      SET_CURRENT_STEP(2);
-      localStorage.setItem("CURRENT_STEP", "2");
       localStorage.setItem("pathway", "link");
+      if (isFormbricksCloud) {
+        setCurrentStep(2);
+        localStorage.setItem("currentStep", "2");
+      } else {
+        setCurrentStep(5);
+        localStorage.setItem("currentStep", "5");
+      }
     } else {
       localStorage.setItem("pathway", "in-app");
       if (isFormbricksCloud) {
-        SET_CURRENT_STEP(2);
-        localStorage.setItem("CURRENT_STEP", "2");
+        setCurrentStep(2);
+        localStorage.setItem("currentStep", "2");
       } else {
-        SET_CURRENT_STEP(4);
-        localStorage.setItem("CURRENT_STEP", "4");
+        setCurrentStep(4);
+        localStorage.setItem("currentStep", "4");
       }
     }
     setSelectedPathway(pathway);

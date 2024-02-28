@@ -1,6 +1,6 @@
 import "server-only";
 
-import { env } from "./env.mjs";
+import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
@@ -29,10 +29,12 @@ export const IMPRINT_URL = env.IMPRINT_URL;
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
 
-export const GOOGLE_OAUTH_ENABLED = env.GOOGLE_CLIENT_ID && env.GITHUB_SECRET ? true : false;
+export const GOOGLE_OAUTH_ENABLED = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? true : false;
 export const GITHUB_OAUTH_ENABLED = env.GITHUB_ID && env.GITHUB_SECRET ? true : false;
 export const AZURE_OAUTH_ENABLED =
   env.AZUREAD_CLIENT_ID && env.AZUREAD_CLIENT_SECRET && env.AZUREAD_TENANT_ID ? true : false;
+export const OIDC_OAUTH_ENABLED =
+  env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_ISSUER ? true : false;
 
 export const GITHUB_ID = env.GITHUB_ID;
 export const GITHUB_SECRET = env.GITHUB_SECRET;
@@ -42,6 +44,12 @@ export const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 export const AZUREAD_CLIENT_ID = env.AZUREAD_CLIENT_ID;
 export const AZUREAD_CLIENT_SECRET = env.AZUREAD_CLIENT_SECRET;
 export const AZUREAD_TENANT_ID = env.AZUREAD_TENANT_ID;
+
+export const OIDC_CLIENT_ID = env.OIDC_CLIENT_ID;
+export const OIDC_CLIENT_SECRET = env.OIDC_CLIENT_SECRET;
+export const OIDC_ISSUER = env.OIDC_ISSUER;
+export const OIDC_DISPLAY_NAME = env.OIDC_DISPLAY_NAME;
+export const OIDC_SIGNING_ALGORITHM = env.OIDC_SIGNING_ALGORITHM;
 
 export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
@@ -66,16 +74,20 @@ export const SMTP_PASSWORD = env.SMTP_PASSWORD;
 export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
-export const NEXTAUTH_URL = env.NEXTAUTH_URL;
 export const ITEMS_PER_PAGE = 50;
 export const RESPONSES_PER_PAGE = 10;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 
 export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
-export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE || "";
+export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE;
 export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
 
 // Storage constants
+export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
+export const S3_SECRET_KEY = env.S3_SECRET_KEY;
+export const S3_REGION = env.S3_REGION;
+export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
+export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
 export const UPLOADS_DIR = "./uploads";
 export const MAX_SIZES = {
   public: 1024 * 1024 * 10, // 10MB
@@ -140,9 +152,12 @@ export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
   allowedPerInterval: 5,
 };
 
-export const DEBUG = process.env.DEBUG === "1";
+export const DEBUG = env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+
+export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;
+export const CUSTOMER_IO_API_KEY = env.CUSTOMER_IO_API_KEY;

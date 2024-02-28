@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -2624,6 +2625,7 @@ export const minimalSurvey: TSurvey = {
   recontactDays: null,
   welcomeCard: welcomeCardDefault,
   questions: [],
+  inlineTriggers: null,
   thankYouCard: {
     enabled: false,
   },
@@ -2655,7 +2657,7 @@ export const firstSurvey = {
         html: "You're all set up. Create your own survey to gather exactly the feedback you need :)",
         buttonLabel: "Create survey",
         buttonExternal: true,
-        buttonUrl: "https://app.formbricks.com",
+        buttonUrl: WEBAPP_URL,
         imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/meme.png",
       }) as TSurveyCTAQuestion
   ),

@@ -15,7 +15,7 @@ import { finishOnboardingAction, inviteTeamMateAction } from "../../actions";
 interface InviteTeamMateProps {
   team: TTeam;
   environmentId: string;
-  SET_CURRENT_STEP: (currentStep: number) => void;
+  setCurrentStep: (currentStep: number) => void;
 }
 
 const DEFAULT_INVITE_MESSAGE =
@@ -23,7 +23,7 @@ const DEFAULT_INVITE_MESSAGE =
 const INITIAL_FORM_STATE = { email: "", inviteMessage: DEFAULT_INVITE_MESSAGE };
 
 function isValidEmail(email) {
-  const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+  const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
   return regex.test(email);
 }
 
@@ -39,7 +39,7 @@ function InviteMessageInput({ value, onChange }) {
   );
 }
 
-export function InviteTeamMate({ team, environmentId, SET_CURRENT_STEP }: InviteTeamMateProps) {
+export function InviteTeamMate({ team, environmentId, setCurrentStep }: InviteTeamMateProps) {
   const [formState, setFormState] = useState(INITIAL_FORM_STATE);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -75,8 +75,8 @@ export function InviteTeamMate({ team, environmentId, SET_CURRENT_STEP }: Invite
   };
 
   const goBackToConnectPage = () => {
-    SET_CURRENT_STEP(4);
-    localStorage.setItem("CURRENT_STEP", "4");
+    setCurrentStep(4);
+    localStorage.setItem("currentStep", "4");
   };
 
   return (

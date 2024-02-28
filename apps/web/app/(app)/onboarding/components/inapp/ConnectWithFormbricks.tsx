@@ -20,7 +20,7 @@ const goToProduct = async (router) => {
 };
 
 const goToTeamInvitePage = async () => {
-  localStorage.setItem("CURRENT_STEP", "5");
+  localStorage.setItem("currentStep", "5");
 };
 
 // Custom hook for visibility change logic
@@ -102,13 +102,13 @@ interface ConnectProps {
   environment: TEnvironment;
   webAppUrl: string;
   isFormbricksCloud: boolean;
-  SET_CURRENT_STEP: (currentStep: number) => void;
+  setCurrentStep: (currentStep: number) => void;
 }
 
 export function ConnectWithFormbricks({
   environment,
   webAppUrl,
-  SET_CURRENT_STEP,
+  setCurrentStep,
   isFormbricksCloud,
 }: ConnectProps) {
   const router = useRouter();
@@ -137,8 +137,8 @@ export function ConnectWithFormbricks({
       webAppUrl={webAppUrl}
       environment={environment}
       goToTeamInvitePage={() => {
-        SET_CURRENT_STEP(5);
-        localStorage.setItem("CURRENT_STEP", "5");
+        setCurrentStep(5);
+        localStorage.setItem("currentStep", "5");
         goToTeamInvitePage();
       }}
     />

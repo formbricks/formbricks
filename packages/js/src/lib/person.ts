@@ -38,9 +38,10 @@ export const updatePersonAttribute = async (
   };
 
   const api = new FormbricksAPI({
-    apiHost: config.get().apiHost,
-    environmentId: config.get().environmentId,
+    apiHost,
+    environmentId,
   });
+
   const res = await api.client.people.update(userId, input);
 
   if (!res.ok) {
@@ -53,13 +54,17 @@ export const updatePersonAttribute = async (
     });
   }
 
-  logger.debug("Attribute updated. Syncing...");
-
-  await sync({
-    environmentId: environmentId,
-    apiHost: apiHost,
-    userId: userId,
-  });
+  if (res.data.changed) {
+    logger.debug("Attribute updated. Syncing...");
+    await sync(
+      {
+        environmentId: environmentId,
+        apiHost: apiHost,
+        userId: userId,
+      },
+      true
+    );
+  }
 
   return okVoid();
 };

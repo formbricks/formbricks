@@ -28,12 +28,20 @@ export default function SurveysList({
   userId,
 }: SurveysListProps) {
   const [filteredSurveys, setFilteredSurveys] = useState<TSurvey[]>(surveys);
-  const [orientation, setOrientation] = useState("grid");
+  // Initialize orientation state with a function that checks if window is defined
+  const [orientation, setOrientation] = useState(() =>
+    typeof localStorage !== "undefined" ? localStorage.getItem("surveyOrientation") || "grid" : "grid"
+  );
 
   useEffect(() => {
     localStorage.removeItem("pathway");
-    localStorage.removeItem("CURRENT_STEP");
+    localStorage.removeItem("currentStep");
   }, []);
+
+  // Save orientation to localStorage
+  useEffect(() => {
+    localStorage.setItem("surveyOrientation", orientation);
+  }, [orientation]);
 
   return (
     <div className="space-y-4">

@@ -209,7 +209,7 @@ export default function PreviewSurvey({
                     survey={survey}
                     brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
-                    isBrandingEnabled={product.linkSurveyBranding}
+                    isBrandingEnabled={product.inAppSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
@@ -241,8 +241,9 @@ export default function PreviewSurvey({
                 <div className="h-3 w-3 rounded-full bg-amber-500"></div>
                 <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
               </div>
-              <p className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                {previewType === "modal" ? "Your web app" : "Preview"}
+              <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+                <p>{previewType === "modal" ? "Your web app" : "Preview"}</p>
+
                 <div className="flex items-center">
                   {isFullScreenPreview ? (
                     <ArrowsPointingInIcon
@@ -265,7 +266,7 @@ export default function PreviewSurvey({
                   )}
                   <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
                 </div>
-              </p>
+              </div>
             </div>
 
             {previewType === "modal" ? (
@@ -278,7 +279,7 @@ export default function PreviewSurvey({
                   survey={survey}
                   brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
-                  isBrandingEnabled={product.linkSurveyBranding}
+                  isBrandingEnabled={product.inAppSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}

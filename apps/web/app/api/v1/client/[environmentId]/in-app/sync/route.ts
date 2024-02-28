@@ -2,7 +2,7 @@ import { firstSurvey } from "@/app/(app)/environments/[environmentId]/surveys/te
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD, PRICING_APPSURVEYS_FREE_RESPONSES } from "@formbricks/lib/constants";
@@ -12,14 +12,14 @@ import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
 export async function GET(
   _: NextRequest,
   { params }: { params: { environmentId: string } }
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     // validate using zod
     const environmentIdValidation = ZJsPublicSyncInput.safeParse({

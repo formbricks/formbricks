@@ -2,8 +2,8 @@
 
 import { ConnectWithFormbricks } from "@/app/(app)/onboarding/components/inapp/ConnectWithFormbricks";
 import { InviteTeamMate } from "@/app/(app)/onboarding/components/inapp/InviteTeamMate";
-import Objective from "@/app/(app)/onboarding/components/inapp/SurveyObjective";
-import Role from "@/app/(app)/onboarding/components/inapp/SurveyRole";
+import { Objective } from "@/app/(app)/onboarding/components/inapp/SurveyObjective";
+import { Role } from "@/app/(app)/onboarding/components/inapp/SurveyRole";
 import { CreateFirstSurvey } from "@/app/(app)/onboarding/components/link/CreateFirstSurvey";
 import { Session } from "next-auth";
 import { useEffect, useState } from "react";
@@ -35,18 +35,18 @@ export function Onboarding({
   const [selectedPathway, setSelectedPathway] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(16);
   const [formbricksResponseId, setFormbricksResponseId] = useState<string | undefined>();
-  const [CURRENT_STEP, SET_CURRENT_STEP] = useState<number | null>(null);
+  const [currentStep, setCurrentStep] = useState<number | null>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeVisible, setIframeVisible] = useState(false);
   const [fade, setFade] = useState(false);
 
   useEffect(() => {
-    if (CURRENT_STEP === 2 && selectedPathway === "link") {
+    if (currentStep === 2 && selectedPathway === "link") {
       setIframeVisible(true);
     } else {
       setIframeVisible(false);
     }
-  }, [CURRENT_STEP, iframeLoaded, selectedPathway]);
+  }, [currentStep, iframeLoaded, selectedPathway]);
 
   useEffect(() => {
     // Only execute this logic if the iframe is intended to be visible
@@ -59,7 +59,7 @@ export function Onboarding({
 
         setTimeout(() => {
           setIframeVisible(false); // Hide the iframe after fade-out effect is complete
-          SET_CURRENT_STEP(5); // Assuming you want to move to the next step after survey completion
+          setCurrentStep(5); // Assuming you want to move to the next step after survey completion
         }, 1000); // Adjust timeout duration based on your fade-out CSS transition
       };
 
@@ -71,36 +71,36 @@ export function Onboarding({
         window.removeEventListener("SurveyCompleted", handleSurveyCompletion);
       };
     }
-  }, [iframeVisible, CURRENT_STEP]); // Depend on iframeVisible and CURRENT_STEP to re-evaluate when needed
+  }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       // Access localStorage only when window is available
       const pathwayValueFromLocalStorage = localStorage.getItem("pathway");
-      const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("CURRENT_STEP") ?? "1");
+      const currentStepValueFromLocalStorage = parseInt(localStorage.getItem("currentStep") ?? "1");
 
       setSelectedPathway(pathwayValueFromLocalStorage);
-      SET_CURRENT_STEP(currentStepValueFromLocalStorage);
+      setCurrentStep(currentStepValueFromLocalStorage);
     }
   }, []);
 
   useEffect(() => {
-    if (CURRENT_STEP) {
+    if (currentStep) {
       const stepProgressMap = { 1: 16, 2: 50, 3: 65, 4: 75, 5: 90 };
-      const newProgress = stepProgressMap[CURRENT_STEP] || 16;
+      const newProgress = stepProgressMap[currentStep] || 16;
       setProgress(newProgress);
-      localStorage.setItem("CURRENT_STEP", CURRENT_STEP.toString());
+      localStorage.setItem("currentStep", currentStep.toString());
     }
-  }, [CURRENT_STEP]);
+  }, [currentStep]);
 
   // Function to render current onboarding step
   const renderOnboardingStep = () => {
-    switch (CURRENT_STEP) {
+    switch (currentStep) {
       case 1:
         return (
           <PathwaySelect
             setSelectedPathway={setSelectedPathway}
-            SET_CURRENT_STEP={SET_CURRENT_STEP}
+            setCurrentStep={setCurrentStep}
             isFormbricksCloud={isFormbricksCloud}
           />
         );
@@ -110,7 +110,7 @@ export function Onboarding({
             <Role
               setFormbricksResponseId={setFormbricksResponseId}
               session={session}
-              SET_CURRENT_STEP={SET_CURRENT_STEP}
+              setCurrentStep={setCurrentStep}
             />
           )
         );
@@ -119,7 +119,7 @@ export function Onboarding({
           <Objective
             formbricksResponseId={formbricksResponseId}
             user={user}
-            SET_CURRENT_STEP={SET_CURRENT_STEP}
+            setCurrentStep={setCurrentStep}
           />
         );
       case 4:
@@ -127,7 +127,7 @@ export function Onboarding({
           <ConnectWithFormbricks
             environment={environment}
             webAppUrl={webAppUrl}
-            SET_CURRENT_STEP={SET_CURRENT_STEP}
+            setCurrentStep={setCurrentStep}
             isFormbricksCloud={isFormbricksCloud}
           />
         );
@@ -135,7 +135,7 @@ export function Onboarding({
         return selectedPathway === "link" ? (
           <CreateFirstSurvey environmentId={environment.id} />
         ) : (
-          <InviteTeamMate environmentId={environment.id} team={team} SET_CURRENT_STEP={SET_CURRENT_STEP} />
+          <InviteTeamMate environmentId={environment.id} team={team} setCurrentStep={setCurrentStep} />
         );
       default:
         return null;
@@ -147,9 +147,9 @@ export function Onboarding({
       <OnboardingHeader progress={progress} />
       <div className="mt-20 flex w-full justify-center bg-slate-50">
         {renderOnboardingStep()}
-        {iframeVisible && (
+        {iframeVisible && isFormbricksCloud && (
           <iframe
-            src="http://localhost:3000/s/clsui9a7x0000fbh5orp0g7c5"
+            src={`https://app.formbricks.com/s/clslmswhch2aepodw008fy1h2?userId=${session.user.id}`}
             onLoad={() => setIframeLoaded(true)}
             style={{
               inset: "0",

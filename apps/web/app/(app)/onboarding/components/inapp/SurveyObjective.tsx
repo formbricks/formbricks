@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
-import { env } from "@formbricks/lib/env.mjs";
+import { env } from "@formbricks/lib/env";
 import { TUser, TUserObjective } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -16,7 +16,7 @@ import { Input } from "@formbricks/ui/Input";
 type ObjectiveProps = {
   formbricksResponseId?: string;
   user: TUser;
-  SET_CURRENT_STEP: (currentStep: number) => void;
+  setCurrentStep: (currentStep: number) => void;
 };
 
 type ObjectiveChoice = {
@@ -24,7 +24,7 @@ type ObjectiveChoice = {
   id: TUserObjective;
 };
 
-const Objective: React.FC<ObjectiveProps> = ({ formbricksResponseId, user, SET_CURRENT_STEP }) => {
+export const Objective: React.FC<ObjectiveProps> = ({ formbricksResponseId, user, setCurrentStep }) => {
   const objectives: Array<ObjectiveChoice> = [
     { label: "Increase conversion", id: "increase_conversion" },
     { label: "Improve user retention", id: "improve_user_retention" },
@@ -49,8 +49,8 @@ const Objective: React.FC<ObjectiveProps> = ({ formbricksResponseId, user, SET_C
   }, [fieldsetRef, setSelectedChoice]);
 
   const next = () => {
-    SET_CURRENT_STEP(4);
-    localStorage.setItem("CURRENT_STEP", "4");
+    setCurrentStep(4);
+    localStorage.setItem("currentStep", "4");
   };
 
   const handleNextClick = async () => {
@@ -162,5 +162,3 @@ const Objective: React.FC<ObjectiveProps> = ({ formbricksResponseId, user, SET_C
     </div>
   );
 };
-
-export default Objective;

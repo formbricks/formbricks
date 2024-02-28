@@ -11,7 +11,7 @@ export default function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
   useEffect(() => {
     if (htmlString) {
       import("isomorphic-dompurify").then((DOMPurify) => {
-        setSafeHtml(DOMPurify.sanitize(htmlString));
+        setSafeHtml(DOMPurify.sanitize(htmlString, { ADD_ATTR: ["target"] }));
       });
     }
   }, [htmlString]);

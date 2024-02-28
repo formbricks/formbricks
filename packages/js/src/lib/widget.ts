@@ -16,6 +16,7 @@ const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
 let surveyRunning = false;
 let setIsError = (_: boolean) => {};
+let setIsResponseSendingFinished = (_: boolean) => {};
 
 export const renderWidget = async (survey: TSurvey) => {
   if (surveyRunning) {
@@ -40,6 +41,9 @@ export const renderWidget = async (survey: TSurvey) => {
       onResponseSendingFailed: () => {
         setIsError(true);
       },
+      onResponseSendingFinished: () => {
+        setIsResponseSendingFinished(true);
+      },
     },
     surveyState
   );
@@ -51,7 +55,6 @@ export const renderWidget = async (survey: TSurvey) => {
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;
-
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
   setTimeout(() => {
@@ -65,6 +68,9 @@ export const renderWidget = async (survey: TSurvey) => {
       placement,
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
+      },
+      getSetIsResponseSendingFinished: (f: (value: boolean) => void) => {
+        setIsResponseSendingFinished = f;
       },
       onDisplay: async () => {
         const { userId } = config.get();
@@ -174,11 +180,14 @@ export const closeSurvey = async (): Promise<void> => {
 
   // for identified users we sync to get the latest surveys
   try {
-    await sync({
-      apiHost: config.get().apiHost,
-      environmentId: config.get().environmentId,
-      userId: config.get().userId,
-    });
+    await sync(
+      {
+        apiHost: config.get().apiHost,
+        environmentId: config.get().environmentId,
+        userId: config.get().userId,
+      },
+      true
+    );
     surveyRunning = false;
   } catch (e) {
     errorHandler.handle(e);

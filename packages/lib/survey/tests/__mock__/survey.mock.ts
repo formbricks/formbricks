@@ -13,8 +13,8 @@ import {
 import { TTeam } from "@formbricks/types/teams";
 import { TUser } from "@formbricks/types/user";
 
-import { selectPerson } from "../../person/service";
-import { selectSurvey } from "../service";
+import { selectPerson } from "../../../person/service";
+import { selectSurvey } from "../../service";
 
 const currentDate = new Date();
 const fourDaysAgo = new Date();
@@ -189,6 +189,7 @@ export const mockSurveyOutput: SurveyMock = {
   segment: null,
   segmentId: null,
   resultShareKey: null,
+  inlineTriggers: null,
   ...baseSurveyProperties,
 };
 
@@ -213,6 +214,7 @@ export const updateSurveyInput: TSurvey = {
   pin: null,
   resultShareKey: null,
   segment: null,
+  inlineTriggers: null,
   ...commonMockProperties,
   ...baseSurveyProperties,
 };

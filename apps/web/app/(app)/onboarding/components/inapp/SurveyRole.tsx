@@ -9,14 +9,14 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
-import { env } from "@formbricks/lib/env.mjs";
+import { env } from "@formbricks/lib/env";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
 type RoleProps = {
   setFormbricksResponseId: (id: string) => void;
   session: Session;
-  SET_CURRENT_STEP: (currentStep: number) => void;
+  setCurrentStep: (currentStep: number) => void;
 };
 
 type RoleChoice = {
@@ -24,7 +24,7 @@ type RoleChoice = {
   id: "project_manager" | "engineer" | "founder" | "marketing_specialist" | "other";
 };
 
-const Role: React.FC<RoleProps> = ({ setFormbricksResponseId, session, SET_CURRENT_STEP }) => {
+export const Role: React.FC<RoleProps> = ({ setFormbricksResponseId, session, setCurrentStep }) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const fieldsetRef = useRef<HTMLFieldSetElement>(null);
@@ -47,8 +47,8 @@ const Role: React.FC<RoleProps> = ({ setFormbricksResponseId, session, SET_CURRE
   ];
 
   const next = () => {
-    SET_CURRENT_STEP(3);
-    localStorage.setItem("CURRENT_STEP", "3");
+    setCurrentStep(3);
+    localStorage.setItem("currentStep", "3");
   };
 
   const handleNextClick = async () => {
@@ -158,5 +158,3 @@ const Role: React.FC<RoleProps> = ({ setFormbricksResponseId, session, SET_CURRE
     </div>
   );
 };
-
-export default Role;

@@ -1,10 +1,11 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
-import { NextResponse } from "next/server";
 
 import { deletePerson, getPerson } from "@formbricks/lib/person/service";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TPerson } from "@formbricks/types/people";
+
+// Please use the methods provided by the client API to update a person
 
 async function fetchAndAuthorizePerson(
   authentication: TAuthenticationApiKey,
@@ -20,10 +21,7 @@ async function fetchAndAuthorizePerson(
   return person;
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { personId: string } }
-): Promise<NextResponse> {
+export async function GET(request: Request, { params }: { params: { personId: string } }): Promise<Response> {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -36,31 +34,6 @@ export async function GET(
     return handleErrorResponse(error);
   }
 }
-
-// Please use the methods provided by the client API to update a person
-
-/* export async function PUT(
-  request: Request,
-  { params }: { params: { personId: string } }
-): Promise<NextResponse> {
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    await fetchAndAuthorizePerson(authentication, params.personId);
-
-    const personUpdate = await request.json();
-    const inputValidation = ZPersonUpdateInput.safeParse(personUpdate);
-    if (!inputValidation.success) {
-      return responses.badRequestResponse(
-        "Fields are missing or incorrectly formatted",
-        transformErrorToDetails(inputValidation.error)
-      );
-    }
-    return responses.successResponse(await updatePerson(params.personId, inputValidation.data));
-  } catch (error) {
-    return handleErrorResponse(error);
-  }
-} */
 
 export async function DELETE(request: Request, { params }: { params: { personId: string } }) {
   try {

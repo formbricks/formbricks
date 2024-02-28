@@ -30,7 +30,7 @@ export default function SurveyStarter({
 
   useEffect(() => {
     localStorage.removeItem("pathway");
-    localStorage.removeItem("CURRENT_STEP");
+    localStorage.removeItem("currentStep");
   }, []);
 
   const newSurveyFromTemplate = async (template: TTemplate) => {
