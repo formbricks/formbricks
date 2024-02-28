@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
-import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";

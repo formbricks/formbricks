@@ -14,7 +14,7 @@ type ConfirmationModalProps = {
   buttonVariant?: "warn" | "darkCTA";
 };
 
-const ConfirmationModal = ({
+export const ConfirmationModal = ({
   title,
   onConfirm,
   open,
@@ -46,5 +46,3 @@ const ConfirmationModal = ({
     </Modal>
   );
 };
-
-export default ConfirmationModal;

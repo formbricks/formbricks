@@ -32,7 +32,6 @@ export default function AppPage({}) {
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
         attributes,
-        language: "gujju",
       });
       window.formbricks = formbricks;
     }

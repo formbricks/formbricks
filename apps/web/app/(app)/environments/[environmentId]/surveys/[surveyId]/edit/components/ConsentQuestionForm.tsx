@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
-import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
 

@@ -3,7 +3,7 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 
-import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";

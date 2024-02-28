@@ -5,7 +5,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import {
   createI18nString,
   extractLanguageCodes,

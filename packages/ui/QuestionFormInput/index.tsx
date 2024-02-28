@@ -54,7 +54,7 @@ interface QuestionFormInputProps {
   className?: string;
 }
 
-const QuestionFormInput = ({
+export const QuestionFormInput = ({
   id,
   localSurvey,
   questionId,
@@ -440,4 +440,3 @@ const QuestionFormInput = ({
     </div>
   );
 };
-export default QuestionFormInput;

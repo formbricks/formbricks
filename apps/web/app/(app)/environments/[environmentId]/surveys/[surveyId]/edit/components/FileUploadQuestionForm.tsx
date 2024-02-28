@@ -4,7 +4,7 @@ import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import LocalizedInput from "@formbricks/ee/multiLanguage/components/LocalizedInput";
+import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";

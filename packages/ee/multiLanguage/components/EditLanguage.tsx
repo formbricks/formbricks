@@ -7,7 +7,7 @@ import Select, { CSSObjectWithLabel } from "react-select";
 
 import { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
-import ConfirmationModal from "@formbricks/ui/ConfirmationModal";
+import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";

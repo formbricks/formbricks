@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { extractLanguageCodes, isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbricks/types/surveys";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 interface LocalizedInputProps {
   id: string;
@@ -68,7 +68,7 @@ const isValueIncomplete = (
   return isInvalid && !isLabelValidForAllLanguages(value, surveyLanguageCodes) && isDefaultIncomplete;
 };
 
-const LocalizedInput = ({
+export const LocalizedInput = ({
   id,
   value,
   isInvalid,
@@ -125,5 +125,3 @@ const LocalizedInput = ({
     </div>
   );
 };
-
-export default LocalizedInput;
