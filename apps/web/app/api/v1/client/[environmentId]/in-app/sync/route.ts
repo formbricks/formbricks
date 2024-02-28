@@ -1,4 +1,4 @@
-import { firstSurvey } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
+import { getFirstSurvey } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -68,8 +68,7 @@ export async function GET(
     }
 
     if (!environment?.widgetSetupCompleted) {
-      //set button URL
-      firstSurvey.questions[0].buttonUrl = WEBAPP_URL;
+      const firstSurvey = getFirstSurvey(WEBAPP_URL);
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }
