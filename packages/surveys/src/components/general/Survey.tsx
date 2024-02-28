@@ -37,8 +37,10 @@ export function Survey({
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
   const [showError, setShowError] = useState(false);
-  // flag state to store whether response processing has been completed or not
-  const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(false);
+  // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
+  const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
+    getSetIsResponseSendingFinished ? false : true
+  );
 
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
@@ -273,6 +275,7 @@ export function Survey({
 
   return (
     <>
+      {console.log(getSetIsResponseSendingFinished)}
       <AutoCloseWrapper survey={survey} onClose={onClose}>
         <div className="no-scrollbar flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
