@@ -1,5 +1,6 @@
 "use client";
 
+import jsPackageJson from "@/../../packages/js/package.json";
 import { ConnectWithFormbricks } from "@/app/(app)/onboarding/components/inapp/ConnectWithFormbricks";
 import { InviteTeamMate } from "@/app/(app)/onboarding/components/inapp/InviteTeamMate";
 import { Objective } from "@/app/(app)/onboarding/components/inapp/SurveyObjective";
@@ -124,8 +125,8 @@ export function Onboarding({
           <ConnectWithFormbricks
             environment={environment}
             webAppUrl={webAppUrl}
+            jsPackageVersion={jsPackageJson.version}
             setCurrentStep={setCurrentStep}
-            isFormbricksCloud={isFormbricksCloud}
           />
         );
       case 5:

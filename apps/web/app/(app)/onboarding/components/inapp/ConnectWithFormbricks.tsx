@@ -71,7 +71,7 @@ const ConnectedState = ({ goToProduct }) => {
   );
 };
 
-const NotConnectedState = ({ environment, webAppUrl, isFormbricksCloud, goToTeamInvitePage }) => {
+const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToTeamInvitePage }) => {
   return (
     <div className="group mb-8 w-full max-w-xl space-y-8">
       <OnboardingTitle
@@ -87,7 +87,7 @@ const NotConnectedState = ({ environment, webAppUrl, isFormbricksCloud, goToTeam
       <SetupInstructionsOnboarding
         environmentId={environment.id}
         webAppUrl={webAppUrl}
-        isFormbricksCloud={isFormbricksCloud}
+        jsPackageVersion={jsPackageVersion}
       />
       <div className="flex justify-center">
         <Button
@@ -105,15 +105,15 @@ const NotConnectedState = ({ environment, webAppUrl, isFormbricksCloud, goToTeam
 interface ConnectProps {
   environment: TEnvironment;
   webAppUrl: string;
-  isFormbricksCloud: boolean;
+  jsPackageVersion: string;
   setCurrentStep: (currentStep: number) => void;
 }
 
 export function ConnectWithFormbricks({
   environment,
   webAppUrl,
+  jsPackageVersion,
   setCurrentStep,
-  isFormbricksCloud,
 }: ConnectProps) {
   const router = useRouter();
   const [localEnvironment, setLocalEnvironment] = useState(environment);
@@ -137,7 +137,7 @@ export function ConnectWithFormbricks({
     />
   ) : (
     <NotConnectedState
-      isFormbricksCloud={isFormbricksCloud}
+      jsPackageVersion={jsPackageVersion}
       webAppUrl={webAppUrl}
       environment={environment}
       goToTeamInvitePage={() => {

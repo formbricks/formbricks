@@ -1,6 +1,5 @@
 "use client";
 
-import jsPackageJson from "@/../../packages/js/package.json";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -15,18 +14,21 @@ const tabs = [
   { id: "npm", label: "NPM", icon: <IoLogoNpm /> },
 ];
 
+interface SetupInstructionsOnboardingProps {
+  environmentId: string;
+  webAppUrl: string;
+  jsPackageVersion: string;
+}
+
 export default function SetupInstructionsOnboarding({
   environmentId,
   webAppUrl,
-}: {
-  environmentId: string;
-  webAppUrl: string;
-  isFormbricksCloud: boolean;
-}) {
+  jsPackageVersion,
+}: SetupInstructionsOnboardingProps) {
   const [activeTab, setActiveId] = useState(tabs[0].id);
   const htmlSnippet = `<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^${jsPackageJson.version}/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="https://unpkg.com/@formbricks/js@^${jsPackageVersion}/dist/index.umd.js";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: "${environmentId}", apiHost: "${window.location.protocol}//${window.location.host}"})},500)}();
 </script>
 <!-- END Formbricks Surveys -->`;
 

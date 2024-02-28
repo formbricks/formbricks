@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -2656,7 +2657,7 @@ export const firstSurvey = {
         html: "You're all set up. Create your own survey to gather exactly the feedback you need :)",
         buttonLabel: "Create survey",
         buttonExternal: true,
-        imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/meme.png",
+        imageUrl: `${WEBAPP_URL}/onboarding/meme.png`,
       }) as TSurveyCTAQuestion
   ),
   name: "Example survey",
