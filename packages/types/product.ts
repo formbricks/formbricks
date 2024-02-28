@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { ZColor, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
+import { ZStyling } from "./styling";
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
@@ -11,6 +12,7 @@ export const ZProduct = z.object({
   teamId: z.string(),
   brandColor: ZColor,
   highlightBorderColor: ZColor.nullable(),
+  styling: ZStyling.optional(),
   recontactDays: z.number().int(),
   inAppSurveyBranding: z.boolean(),
   linkSurveyBranding: z.boolean(),
