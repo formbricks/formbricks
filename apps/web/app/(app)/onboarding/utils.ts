@@ -1,4 +1,3 @@
-// util.js
 export const handleTabNavigation = (fieldsetRef, setSelectedChoice) => (event) => {
   if (event.key !== "Tab") {
     return;
