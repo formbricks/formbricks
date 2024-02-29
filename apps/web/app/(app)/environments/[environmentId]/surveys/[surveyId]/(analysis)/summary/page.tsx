@@ -18,7 +18,7 @@ export default async function Page({ params }) {
     throw new Error("Unauthorized");
   }
 
-  const [{ responses, survey, displayCount }, environment] = await Promise.all([
+  const [{ responses, survey }, environment] = await Promise.all([
     getAnalysisData(params.surveyId, params.environmentId),
     getEnvironment(params.environmentId),
   ]);
@@ -59,7 +59,6 @@ export default async function Page({ params }) {
         user={user}
         environmentTags={tags}
         attributes={attributes}
-        displayCount={displayCount}
         responsesPerPage={TEXT_RESPONSES_PER_PAGE}
         membershipRole={currentUserMembership?.role}
       />

@@ -249,3 +249,28 @@ export const ZResponseUpdate = z.object({
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
+
+export const ZSurveySummary = z.object({
+  meta: z.object({
+    displayCount: z.number(),
+    totalResponses: z.number(),
+    startsPercentage: z.number(),
+    completedResponses: z.number(),
+    completedPercentage: z.number(),
+    dropoffs: z.number(),
+    dropoffRate: z.number(),
+    ttcAverage: z.number(),
+  }),
+  dropoff: z.array(
+    z.object({
+      questionId: z.string().cuid2(),
+      headline: z.string(),
+      ttc: z.number(),
+      views: z.number(),
+      dropoffCount: z.number(),
+      dropoffPercentage: z.number(),
+    })
+  ),
+});
+
+export type TSurveySummary = z.infer<typeof ZSurveySummary>;

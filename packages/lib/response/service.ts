@@ -15,6 +15,7 @@ import {
   TResponseLegacyInput,
   TResponseUpdateInput,
   TSurveyPersonAttributes,
+  TSurveySummary,
   ZResponse,
   ZResponseFilterCriteria,
   ZResponseInput,
@@ -33,6 +34,8 @@ import {
   extractSurveyDetails,
   getResponsesFileName,
   getResponsesJson,
+  getSurveySummaryDropoff,
+  getSurveySummaryMeta,
 } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
@@ -513,6 +516,78 @@ export const getResponses = async (
     ...formatDateFields(response, ZResponse),
     notes: response.notes.map((note) => formatDateFields(note, ZResponseNote)),
   }));
+};
+
+export const getSurveySummary = (
+  surveyId: string,
+  filterCriteria?: TResponseFilterCriteria
+): Promise<TSurveySummary> => {
+  const summary = unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
+
+      const survey = await getSurvey(surveyId);
+
+      if (!survey) {
+        throw new ResourceNotFoundError("Survey", surveyId);
+      }
+
+      const batchSize = 3000;
+      const responseCount = await getResponseCountBySurveyId(surveyId);
+      const pages = Math.ceil(responseCount / batchSize);
+
+      const responsesArray = await Promise.all(
+        Array.from({ length: pages }, (_, i) => {
+          return getResponses(surveyId, i + 1, batchSize, filterCriteria);
+        })
+      );
+      const responses = responsesArray.flat();
+
+      const displayCount = await prisma.display.count({
+        where: {
+          surveyId,
+        },
+      });
+
+      // const completedResponses = await prisma.response.count({
+      //   where: {
+      //     surveyId,
+      //     ...buildWhereClause(filterCriteria),
+      //     finished: true,
+      //   },
+      // });
+
+      // const ttcResponses = await prisma.response.findMany({
+      //   where: {
+      //     surveyId,
+      //     ...buildWhereClause(filterCriteria),
+      //     finished: true,
+      //     ttc: {
+      //       path: ["_total"],
+      //       gt: 0,
+      //     },
+      //   },
+      //   select: {
+      //     ttc: true,
+      //   },
+      // });
+
+      const meta = getSurveySummaryMeta(responses, displayCount);
+      const dropoff = getSurveySummaryDropoff(survey, responses, displayCount);
+
+      return {
+        meta,
+        dropoff,
+      };
+    },
+    [`getSurveyMeta-${surveyId}-${JSON.stringify(filterCriteria)}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return summary;
 };
 
 export const getResponseDownloadUrl = async (

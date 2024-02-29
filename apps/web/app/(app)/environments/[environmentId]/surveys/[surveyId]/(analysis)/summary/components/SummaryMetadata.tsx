@@ -1,18 +1,17 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
-import { useMemo, useState } from "react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TSurveySummary } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SummaryMetadataProps {
   responses: TResponse[];
-  showDropOffs: boolean;
-  setShowDropOffs: React.Dispatch<React.SetStateAction<boolean>>;
   survey: TSurvey;
-  displayCount: number;
+  setShowDropOffs: React.Dispatch<React.SetStateAction<boolean>>;
+  showDropOffs: boolean;
+  surveySummary: TSurveySummary["meta"];
 }
 
 const StatCard = ({ label, percentage, value, tooltipText }) => (
@@ -36,8 +35,8 @@ const StatCard = ({ label, percentage, value, tooltipText }) => (
   </TooltipProvider>
 );
 
-function formatTime(ttc, totalResponses) {
-  const seconds = ttc / (1000 * totalResponses);
+function formatTime(ttc) {
+  const seconds = ttc / 1000;
   let formattedValue;
 
   if (seconds >= 60) {
@@ -54,27 +53,20 @@ function formatTime(ttc, totalResponses) {
 export default function SummaryMetadata({
   responses,
   survey,
-  displayCount,
   setShowDropOffs,
   showDropOffs,
+  surveySummary,
 }: SummaryMetadataProps) {
-  const completedResponsesCount = useMemo(() => responses.filter((r) => r.finished).length, [responses]);
-  const [validTtcResponsesCount, setValidResponsesCount] = useState(0);
-
-  const ttc = useMemo(() => {
-    let validTtcResponsesCountAcc = 0; //stores the count of responses that contains a _total value
-    const ttc = responses.reduce((acc, response) => {
-      if (response.ttc?._total) {
-        validTtcResponsesCountAcc++;
-        return acc + response.ttc._total;
-      }
-      return acc;
-    }, 0);
-    setValidResponsesCount(validTtcResponsesCountAcc);
-    return ttc;
-  }, [responses]);
-
-  const totalResponses = responses.length;
+  const {
+    completedPercentage,
+    completedResponses,
+    displayCount,
+    dropoffRate,
+    dropoffs,
+    startsPercentage,
+    totalResponses,
+    ttcAverage,
+  } = surveySummary;
 
   return (
     <div className="mb-4">
@@ -88,28 +80,26 @@ export default function SummaryMetadata({
           />
           <StatCard
             label="Starts"
-            percentage={`${Math.round((totalResponses / displayCount) * 100)}%`}
+            percentage={`${Math.round(startsPercentage)}%`}
             value={totalResponses === 0 ? <span>-</span> : totalResponses}
             tooltipText="Number of times the survey has been started."
           />
           <StatCard
             label="Responses"
-            percentage={`${Math.round((completedResponsesCount / displayCount) * 100)}%`}
-            value={responses.length === 0 ? <span>-</span> : completedResponsesCount}
+            percentage={`${Math.round(completedPercentage)}%`}
+            value={responses.length === 0 ? <span>-</span> : completedResponses}
             tooltipText="Number of times the survey has been completed."
           />
           <StatCard
             label="Drop Offs"
-            percentage={`${Math.round(((totalResponses - completedResponsesCount) / totalResponses) * 100)}%`}
-            value={responses.length === 0 ? <span>-</span> : totalResponses - completedResponsesCount}
+            percentage={`${Math.round(dropoffRate)}%`}
+            value={responses.length === 0 ? <span>-</span> : dropoffs}
             tooltipText="Number of times the survey has been started but not completed."
           />
           <StatCard
             label="Time to Complete"
             percentage={null}
-            value={
-              validTtcResponsesCount === 0 ? <span>-</span> : `${formatTime(ttc, validTtcResponsesCount)}`
-            }
+            value={ttcAverage === 0 ? <span>-</span> : `${formatTime(ttcAverage)}`}
             tooltipText="Average time to complete the survey."
           />
         </div>
