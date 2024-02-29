@@ -1,31 +1,44 @@
+import { Onboarding } from "@/app/(app)/onboarding/components/onboarding";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getFirstEnvironmentByUserId } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getUser } from "@formbricks/lib/user/service";
-
-import Onboarding from "./components/Onboarding";
 
 export default async function OnboardingPage() {
   const session = await getServerSession(authOptions);
+
+  // Redirect to login if not authenticated
   if (!session) {
-    redirect("/auth/login");
+    return redirect("/auth/login");
   }
-  const userId = session?.user.id;
+
+  // Redirect to home if onboarding is completed
+  if (session.user.onboardingCompleted) {
+    return redirect("/");
+  }
+
+  const userId = session.user.id;
   const environment = await getFirstEnvironmentByUserId(userId);
-
-  if (!environment) {
-    throw new Error("No environment found for user");
-  }
-
   const user = await getUser(userId);
-  const product = await getProductByEnvironmentId(environment?.id!);
+  const team = environment ? await getTeamByEnvironmentId(environment.id) : null;
 
-  if (!environment || !user || !product) {
-    throw new Error("Failed to get environment, user, or product");
+  // Ensure all necessary data is available
+  if (!environment || !user || !team) {
+    throw new Error("Failed to get necessary user, environment, or team information");
   }
 
-  return <Onboarding session={session} environmentId={environment.id} user={user} product={product} />;
+  return (
+    <Onboarding
+      isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+      session={session}
+      environment={environment}
+      user={user}
+      team={team}
+      webAppUrl={WEBAPP_URL}
+    />
+  );
 }

@@ -203,7 +203,7 @@ export default function FileInput({
 
   return (
     <div className="items-left relative mt-3 flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:cursor-pointer hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
-      <div className="max-h-[40vh] overflow-auto">
+      <div className="max-h-[30vh] overflow-auto">
         {fileUrls &&
           fileUrls?.map((file, index) => {
             const fileName = getOriginalFileNameFromUrl(file);
