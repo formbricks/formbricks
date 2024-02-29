@@ -11,10 +11,11 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 
-import { IS_S3_CONFIGURED, ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { createEnvironment } from "../environment/service";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
+import { isS3Configured } from "../storage/utils";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { productCache } from "./cache";
@@ -196,7 +197,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
   if (product) {
     // delete all files from storage related to this product
 
-    if (IS_S3_CONFIGURED) {
+    if (isS3Configured()) {
       const s3FilesPromises = product.environments.map(async (environment) => {
         return deleteS3FilesByEnvironmentId(environment.id);
       });

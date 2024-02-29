@@ -2,11 +2,12 @@ import { responses } from "@/app/lib/api/response";
 import { notFound } from "next/navigation";
 import path from "path";
 
-import { IS_S3_CONFIGURED, UPLOADS_DIR } from "@formbricks/lib/constants";
+import { UPLOADS_DIR } from "@formbricks/lib/constants";
 import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";
+import { isS3Configured } from "@formbricks/lib/storage/utils";
 
 const getFile = async (environmentId: string, accessType: string, fileName: string) => {
-  if (!IS_S3_CONFIGURED) {
+  if (!isS3Configured()) {
     try {
       const { fileBuffer, metaData } = await getLocalFile(
         path.join(UPLOADS_DIR, environmentId, accessType, fileName)

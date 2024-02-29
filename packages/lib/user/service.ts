@@ -168,8 +168,6 @@ export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
     select: responseSelection,
   });
 
-  console.log("user", user);
-
   userCache.revalidate({
     email: user.email,
     id: user.id,
