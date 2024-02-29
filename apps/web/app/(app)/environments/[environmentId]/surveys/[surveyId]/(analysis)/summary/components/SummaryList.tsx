@@ -1,4 +1,5 @@
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import AddressSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/AddressSummary";
 import CalSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
@@ -167,6 +168,16 @@ export default function SummaryList({ environment, survey, responses, responsesP
                   key={questionSummary.question.id}
                   questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyCalQuestion>}
                   environmentId={environment.id}
+                />
+              );
+            }
+            if (questionSummary.question.type === TSurveyQuestionType.address) {
+              return (
+                <AddressSummary
+                  key={questionSummary.question.id}
+                  questionSummary={questionSummary as TSurveyQuestionSummary<TSurveyOpenTextQuestion>}
+                  environmentId={environment.id}
+                  responsesPerPage={responsesPerPage}
                 />
               );
             }

@@ -319,6 +319,24 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <EmailFooter />
         </EmailTemplateWrapper>
       );
+    case TSurveyQuestionType.address:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+            {firstQuestion.headline}
+          </Text>
+          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
+            {firstQuestion.subheader}
+          </Text>
+          <Section className="mt-4 block h-10 w-full rounded-lg border border-solid border-slate-200 bg-slate-50" />
+          <Section className="mt-4 block h-10 w-full rounded-lg border border-solid border-slate-200 bg-slate-50" />
+          <Section className="mt-4 block h-10 w-full rounded-lg border border-solid border-slate-200 bg-slate-50" />
+          <Section className="mt-4 block h-10 w-full rounded-lg border border-solid border-slate-200 bg-slate-50" />
+          <Section className="mt-4 block h-10 w-full rounded-lg border border-solid border-slate-200 bg-slate-50" />
+          <Section className="mt-4 block h-10 w-full rounded-lg border border-solid border-slate-200 bg-slate-50" />
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
   }
 };
 

@@ -89,6 +89,7 @@ export default function LogicEditor({
     pictureSelection: ["submitted", "skipped"],
     fileUpload: ["uploaded", "notUploaded"],
     cal: ["skipped", "booked"],
+    address: ["submitted", "skipped"],
   };
 
   const logicConditions: LogicConditions = {

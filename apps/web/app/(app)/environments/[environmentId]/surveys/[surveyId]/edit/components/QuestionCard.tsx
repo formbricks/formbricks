@@ -12,6 +12,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   CursorArrowRippleIcon,
+  HomeIcon,
   ListBulletIcon,
   PhoneIcon,
   PhotoIcon,
@@ -31,6 +32,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 
+import AddressQuestionForm from "./AddressQuestionForm";
 import CTAQuestionForm from "./CTAQuestionForm";
 import CalQuestionForm from "./CalQuestionForm";
 import ConsentQuestionForm from "./ConsentQuestionForm";
@@ -184,6 +186,8 @@ export default function QuestionCard({
                       <CalendarDaysIcon />
                     ) : question.type === TSurveyQuestionType.Cal ? (
                       <PhoneIcon />
+                    ) : question.type === TSurveyQuestionType.address ? (
+                      <HomeIcon />
                     ) : null}
                   </div>
                   <div>
@@ -304,6 +308,15 @@ export default function QuestionCard({
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInvalid={isInvalid}
+                />
+              ) : question.type === TSurveyQuestionType.address ? (
+                <AddressQuestionForm
                   localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}

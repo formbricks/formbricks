@@ -4,6 +4,7 @@ import {
   ChatBubbleBottomCenterTextIcon,
   CheckIcon,
   CursorArrowRippleIcon,
+  HomeIcon,
   ListBulletIcon,
   PhoneIcon,
   PhotoIcon,
@@ -167,6 +168,15 @@ export const questionTypes: TSurveyQuestionType[] = [
       headline: "Schedule a call with me",
       buttonLabel: "Skip",
       calUserName: "rick/get-rick-rolled",
+    },
+  },
+  {
+    id: QuestionId.address,
+    label: "Address",
+    description: "Allow respondents to provide their address",
+    icon: HomeIcon,
+    preset: {
+      headline: "Please Provide Your Address",
     },
   },
 ];
