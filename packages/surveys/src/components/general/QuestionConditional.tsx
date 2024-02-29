@@ -3,6 +3,7 @@ import CalQuestion from "@/components/questions/CalQuestion";
 import ConsentQuestion from "@/components/questions/ConsentQuestion";
 import DateQuestion from "@/components/questions/DateQuestion";
 import FileUploadQuestion from "@/components/questions/FileUploadQuestion";
+import MatrixQuestion from "@/components/questions/MatrixQuestion";
 import MultipleChoiceMultiQuestion from "@/components/questions/MultipleChoiceMultiQuestion";
 import MultipleChoiceSingleQuestion from "@/components/questions/MultipleChoiceSingleQuestion";
 import NPSQuestion from "@/components/questions/NPSQuestion";
@@ -168,6 +169,18 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.Cal ? (
     <CalQuestion
+      question={question}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      ttc={ttc}
+      setTtc={setTtc}
+    />
+  ) : question.type === TSurveyQuestionType.Matrix ? (
+    <MatrixQuestion
       question={question}
       value={value}
       onChange={onChange}

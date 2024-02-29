@@ -2,6 +2,7 @@
 
 import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
 import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
+import MatrixQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MatrixQuestionForm";
 import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
 import {
@@ -20,6 +21,7 @@ import {
   StarIcon,
 } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { Grid3X3 } from "lucide-react";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
@@ -184,6 +186,8 @@ export default function QuestionCard({
                       <CalendarDaysIcon />
                     ) : question.type === TSurveyQuestionType.Cal ? (
                       <PhoneIcon />
+                    ) : question.type === TSurveyQuestionType.Matrix ? (
+                      <Grid3X3 />
                     ) : null}
                   </div>
                   <div>
@@ -304,6 +308,15 @@ export default function QuestionCard({
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  isInvalid={isInvalid}
+                />
+              ) : question.type === TSurveyQuestionType.Matrix ? (
+                <MatrixQuestionForm
                   localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}

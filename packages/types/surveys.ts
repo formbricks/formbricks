@@ -26,6 +26,7 @@ export enum TSurveyQuestionType {
   PictureSelection = "pictureSelection",
   Cal = "cal",
   Date = "date",
+  Matrix = "matrix",
 }
 
 export const ZSurveyWelcomeCard = z.object({
@@ -220,6 +221,11 @@ const ZSurveyCalLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+const ZSurveyMatrixLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["booked", "skipped"]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyLogic = z.union([
   ZSurveyOpenTextLogic,
   ZSurveyConsentLogic,
@@ -371,6 +377,15 @@ export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
 
+export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.Matrix),
+  rows: z.array(z.string()),
+  columns: z.array(z.string()),
+  logic: z.array(ZSurveyMatrixLogic).optional(),
+});
+
+export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
+
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
@@ -383,6 +398,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyDateQuestion,
   ZSurveyFileUploadQuestion,
   ZSurveyCalQuestion,
+  ZSurveyMatrixQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;

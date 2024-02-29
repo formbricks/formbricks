@@ -12,6 +12,7 @@ import {
   StarIcon,
 } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+import { Grid3X3 } from "lucide-react";
 
 import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 
@@ -166,6 +167,18 @@ export const questionTypes: TSurveyQuestionType[] = [
       headline: "Schedule a call with me",
       buttonLabel: "Skip",
       calUserName: "rick/get-rick-rolled",
+    },
+  },
+  {
+    id: QuestionId.Matrix,
+    label: "Matrix question",
+    description: "This is a matrix question",
+    icon: Grid3X3,
+    preset: {
+      headline: "Matrix question",
+      subheader: "This is a matrix question",
+      rows: [""],
+      columns: [""],
     },
   },
 ];
