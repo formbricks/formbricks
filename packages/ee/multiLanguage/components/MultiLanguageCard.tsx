@@ -33,7 +33,7 @@ interface confirmationModalProps {
   open: boolean;
   title: string;
   buttonText: string;
-  buttonVariant: string;
+  buttonVariant?: "darkCTA" | "warn";
   onConfirm: () => void;
 }
 
@@ -52,14 +52,14 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(
     localSurvey.languages ? localSurvey.languages.length > 1 : false
   );
-  const [confirmationModalInfo, setconfirmationModalInfo] = useState({
+  const [confirmationModalInfo, setConfirmationModalInfo] = useState<confirmationModalProps>({
     title: "",
     open: false,
     text: "",
     buttonText: "",
     onConfirm: () => {},
-    buttonVariant: "",
   });
+
   const surveyLanguageCodes =
     localSurvey.languages?.map((surveyLanguage) => surveyLanguage.language.code) ?? [];
   const [defaultLanguage, setDefaultLanguage] = useState(
@@ -110,7 +110,7 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       }
 
       setDefaultLanguage(language);
-      setconfirmationModalInfo({ ...confirmationModalInfo, open: false });
+      setConfirmationModalInfo({ ...confirmationModalInfo, open: false });
       updateSurvey({ languages: newLanguages });
     }
   };
@@ -118,7 +118,7 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   const handleActivationSwitchLogic = () => {
     if (isMultiLanguageActivated) {
       if (localSurvey.languages?.length > 0) {
-        setconfirmationModalInfo({
+        setConfirmationModalInfo({
           open: true,
           title: "Remove translations",
           text: "This action will remove all the translations from this survey.",
@@ -128,7 +128,7 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             setLocalSurvey({ ...localSurvey, languages: [] });
             setIsMultiLanguageActivated(false);
             setDefaultLanguage(undefined);
-            setconfirmationModalInfo({ ...confirmationModalInfo, open: false });
+            setConfirmationModalInfo({ ...confirmationModalInfo, open: false });
           },
         });
       } else {
@@ -187,7 +187,7 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <div className="space-y-4">
             {product.languages.length <= 1 && (
-              <div className="text-sm italic text-slate-500">
+              <div className="mb-4 text-sm italic text-slate-500">
                 {product.languages.length === 0
                   ? "No languages found. Add the first one to get started:"
                   : "You need two or more languages to work with translations."}
@@ -222,7 +222,7 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                       defaultLanguage={defaultLanguage}
                       handleDefaultLanguageChange={handleDefaultLanguageChange}
                       product={product}
-                      setConfirmationModalInfo={setconfirmationModalInfo}
+                      setConfirmationModalInfo={setConfirmationModalInfo}
                     />
                     {defaultLanguage && (
                       <SecondaryLanguageSelect
@@ -250,10 +250,11 @@ const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
             <ConfirmationModal
               title={confirmationModalInfo.title}
               open={confirmationModalInfo.open}
-              setOpen={() => setconfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }))}
+              setOpen={() => setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }))}
               text={confirmationModalInfo.text}
               onConfirm={confirmationModalInfo.onConfirm}
               buttonText={confirmationModalInfo.buttonText}
+              buttonVariant={confirmationModalInfo.buttonVariant}
             />
           </div>
         </Collapsible.CollapsibleContent>
@@ -291,7 +292,7 @@ const DefaultLanguageSelect = ({
                 open: true,
                 title: `Set ${getLanguageLabel(languageCode)} as default language`,
                 text: `The default value can only be changed by deleting all existing translations. Are you sure?`,
-                buttonText: "Set default language",
+                buttonText: `Set ${getLanguageLabel(languageCode)} as default language`,
                 onConfirm: () => handleDefaultLanguageChange(languageCode),
                 buttonVariant: "darkCTA",
               });
