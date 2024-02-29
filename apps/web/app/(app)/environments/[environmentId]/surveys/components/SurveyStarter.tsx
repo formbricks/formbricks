@@ -27,6 +27,7 @@ export default function SurveyStarter({
 }) {
   const [isCreateSurveyLoading, setIsCreateSurveyLoading] = useState(false);
   const router = useRouter();
+
   const newSurveyFromTemplate = async (template: TTemplate) => {
     setIsCreateSurveyLoading(true);
     const surveyType = environment?.widgetSetupCompleted ? "web" : "link";

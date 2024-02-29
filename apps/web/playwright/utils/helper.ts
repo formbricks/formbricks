@@ -37,14 +37,15 @@ export const login = async (page: Page, email: string, password: string): Promis
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const skipOnboarding = async (page: Page): Promise<void> => {
+export const finishOnboarding = async (page: Page): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
-  await page.getByRole("button", { name: "I'll do it later" }).click();
-  await page.waitForTimeout(500);
-  await page.getByRole("button", { name: "I'll do it later" }).click();
+  await page.getByRole("button", { name: "In-app Surveys Run a survey" }).click();
+  await page.getByRole("button", { name: "I am not sure how to do this" }).click();
+  await page.locator("input").click();
+  await page.locator("input").fill("test@gmail.com");
+  await page.getByRole("button", { name: "Invite" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
   await expect(page.getByText("My Product")).toBeVisible();
 };
 
@@ -87,7 +88,7 @@ export const createSurvey = async (
   const addQuestion = "Add QuestionAdd a new question to your survey";
 
   await signUpAndLogin(page, name, email, password);
-  await skipOnboarding(page);
+  await finishOnboarding(page);
 
   await page.getByRole("heading", { name: "Start from Scratch" }).click();
 

@@ -13,7 +13,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, barColor, he
     <div className={cn(height === 2 ? "h-2" : height === 5 ? "h-5" : "", "w-full rounded-full bg-slate-200")}>
       <div
         className={cn("h-full rounded-full", barColor)}
-        style={{ width: `${Math.floor(progress * 100)}%` }}></div>
+        style={{ width: `${Math.floor(progress * 100)}%`, transition: "width 0.5s ease-out" }}></div>
     </div>
   );
 };
