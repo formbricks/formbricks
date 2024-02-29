@@ -20,7 +20,7 @@ const isLabelValidForAllLanguages = (
   if (typeof label === "string") {
     return label.trim() !== "";
   } else {
-    return languages.every((language) => label[language] && label[language].trim() !== "");
+    return languages.every((language) => label && label[language] && label[language].trim() !== "");
   }
 };
 
