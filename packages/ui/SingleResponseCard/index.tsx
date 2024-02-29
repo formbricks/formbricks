@@ -295,7 +295,7 @@ export default function SingleResponseCard({
                   </Link>
                 </div>
               )}
-              {response.language && (
+              {response.language && response.language !== "default" && (
                 <div className="flex space-x-2 rounded-full bg-slate-700 px-2 py-1 text-xs text-white">
                   <div>{getLanguageLabel(response.language)}</div>
                   <LanguageIcon className="h-4 w-4" />
