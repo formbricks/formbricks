@@ -18,7 +18,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Argos",
-          description: "Argos provides the developer tools to debug tests and detect visual regressions..",
+          description: "Argos provides the developer tools to debug tests and detect visual regressions.",
           href: "https://argos-ci.com",
         },
         {
