@@ -2,8 +2,8 @@ import { CheckBadgeIcon } from "@heroicons/react/24/outline";
 import { Metadata } from "next";
 
 import { prisma } from "@formbricks/database";
+import { isS3Configured } from "@formbricks/lib/constants";
 import { testS3BucketAccess } from "@formbricks/lib/storage/service";
-import { isS3Configured } from "@formbricks/lib/storage/utils";
 
 export const dynamic = "force-dynamic"; // no caching
 

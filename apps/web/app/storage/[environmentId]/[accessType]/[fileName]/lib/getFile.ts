@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import path from "path";
 
 import { UPLOADS_DIR } from "@formbricks/lib/constants";
+import { isS3Configured } from "@formbricks/lib/constants";
 import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";
-import { isS3Configured } from "@formbricks/lib/storage/utils";
 
 const getFile = async (environmentId: string, accessType: string, fileName: string) => {
   if (!isS3Configured()) {

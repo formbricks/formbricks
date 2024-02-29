@@ -11,11 +11,10 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 
-import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, isS3Configured } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { createEnvironment } from "../environment/service";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
-import { isS3Configured } from "../storage/utils";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { productCache } from "./cache";

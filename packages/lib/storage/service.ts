@@ -27,11 +27,11 @@ import {
   S3_SECRET_KEY,
   UPLOADS_DIR,
   WEBAPP_URL,
+  isS3Configured,
 } from "../constants";
 import { generateLocalSignedUrl } from "../crypto";
 import { env } from "../env";
 import { storageCache } from "./cache";
-import { isS3Configured } from "./utils";
 
 // S3Client Singleton
 let s3ClientInstance: S3Client | null = null;
