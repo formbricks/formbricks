@@ -11,7 +11,7 @@ export const getIsEnterpriseEdition = (): boolean => {
 export const getMultiLanguagePermission = async (teamId: string): Promise<boolean> => {
   const team = await getTeam(teamId);
   if (!team) return false;
-  if (IS_FORMBRICKS_CLOUD) return team.billing.features.multiLanguage.status !== "inactive";
+  if (IS_FORMBRICKS_CLOUD) return team.billing.features.inAppSurvey.status !== "inactive";
   else if (!IS_FORMBRICKS_CLOUD) return getIsEnterpriseEdition();
   else return false;
 };
