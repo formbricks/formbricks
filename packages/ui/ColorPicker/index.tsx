@@ -4,11 +4,20 @@
 import { useCallback, useRef, useState } from "react";
 import { HexColorInput, HexColorPicker } from "react-colorful";
 
+import { cn } from "@formbricks/lib/cn";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 
-export const ColorPicker = ({ color, onChange }: { color: string; onChange: (v: string) => void }) => {
+export const ColorPicker = ({
+  color,
+  onChange,
+  containerClass,
+}: {
+  color: string;
+  onChange: (v: string) => void;
+  containerClass?: string;
+}) => {
   return (
-    <div className="my-2">
+    <div className={cn("my-2", containerClass)}>
       <div className="flex w-full items-center justify-between space-x-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-400">
         <div className="flex w-full items-center">
           #
