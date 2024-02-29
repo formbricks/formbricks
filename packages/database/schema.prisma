@@ -351,8 +351,9 @@ model Action {
   /// [ActionProperties]
   properties    Json        @default("{}")
 
+  @@index([personId, actionClassId, createdAt])
+  @@index([actionClassId, createdAt])
   @@index([personId])
-  @@index([actionClassId])
 }
 
 enum EnvironmentType {

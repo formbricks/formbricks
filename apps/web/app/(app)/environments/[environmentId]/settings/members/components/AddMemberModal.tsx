@@ -79,7 +79,7 @@ export default function AddMemberModal({
               <div>
                 <AddMemberRole control={control} canDoRoleManagement={canDoRoleManagement} />
                 {!canDoRoleManagement &&
-                  (!isFormbricksCloud ? (
+                  (isFormbricksCloud ? (
                     <UpgradePlanNotice
                       message="To manage access roles,"
                       url={`/environments/${environmentId}/settings/billing`}
