@@ -9,8 +9,8 @@ LogBox.ignoreAllLogs();
 export default function App() {
   const [text, setText] = useState("Formbricks React Native SDK Demo");
   const config = {
-    environmentId: "clsy35z2l0009mt7owuzkhenk",
-    apiHost: "http://192.168.4.30:3000",
+    environmentId: "clt23nwjc0009y0iwkzv0rdcy",
+    apiHost: "http://192.168.4.39:3000",
     debug: true,
     userId: "111",
     attributes: {
@@ -25,7 +25,7 @@ export default function App() {
       <Button
         title="Trigger Code Action"
         onPress={() => {
-          track("rn-code-action");
+          track("Code Action");
         }}
       />
       <StatusBar style="auto" />

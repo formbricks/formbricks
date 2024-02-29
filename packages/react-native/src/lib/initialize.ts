@@ -97,11 +97,14 @@ export const initialize = async (
     logger.debug("No valid configuration found or it has been expired. Creating new config.");
     logger.debug("Syncing.");
 
-    await sync({
-      apiHost: c.apiHost,
-      environmentId: c.environmentId,
-      userId: c.userId,
-    });
+    await sync(
+      {
+        apiHost: c.apiHost,
+        environmentId: c.environmentId,
+        userId: c.userId,
+      },
+      true
+    );
 
     // and track the new session event
     // await trackAction("New Session");
