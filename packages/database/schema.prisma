@@ -420,9 +420,7 @@ model Product {
   highlightBorderColor String?
   /// @zod.custom(imports.ZStyling)
   /// [Styling]
-  styling              Json?
-  unifiedStyling       Boolean?        @default(true)
-  allowStyleOverwrite  Boolean?        @default(true)
+  styling              Json?           @default("{\"unifiedStyling\":true,\"allowStyleOverwrite\":true,\"brandColor\":{\"light\":\"#64748b\"}}")
   recontactDays        Int             @default(7)
   linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
   inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys

@@ -13,8 +13,6 @@ export const ZProduct = z.object({
   brandColor: ZColor,
   highlightBorderColor: ZColor.nullable(),
   styling: ZStyling.nullable(),
-  unifiedStyling: z.boolean().nullable(),
-  allowStyleOverwrite: z.boolean().nullable(),
   recontactDays: z.number().int(),
   inAppSurveyBranding: z.boolean(),
   linkSurveyBranding: z.boolean(),

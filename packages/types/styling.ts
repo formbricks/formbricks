@@ -15,6 +15,8 @@ export const ZCardArrangement = z.object({
 });
 
 export const ZStyling = z.object({
+  unifiedStyling: z.boolean(),
+  allowStyleOverwrite: z.boolean(),
   brandColor: ZStylingColor.optional(),
   questionColor: ZStylingColor.optional(),
   inputColor: ZStylingColor.optional(),
