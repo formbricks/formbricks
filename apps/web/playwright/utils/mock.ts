@@ -88,7 +88,7 @@ export const teams = {
     {
       role: "Founder",
       useCase: "Increase conversion",
-      productName: "Formbricks E2E Test Suite",
+      productName: "My Product",
     },
   ],
 };

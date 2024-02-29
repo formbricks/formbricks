@@ -1,3 +1,4 @@
+import { getFirstSurvey } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -5,10 +6,15 @@ import { NextRequest } from "next/server";
 
 import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { IS_FORMBRICKS_CLOUD, PRICING_APPSURVEYS_FREE_RESPONSES } from "@formbricks/lib/constants";
+import {
+  IS_FORMBRICKS_CLOUD,
+  PRICING_APPSURVEYS_FREE_RESPONSES,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import {
+  createSurvey,
   getSurveys,
   transformToLegacySurvey,
   transformToSurveyWithDefaultLanguageOnly,
@@ -75,6 +81,8 @@ export async function GET(
     }
 
     if (!environment?.widgetSetupCompleted) {
+      const firstSurvey = getFirstSurvey(WEBAPP_URL);
+      await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }
 
