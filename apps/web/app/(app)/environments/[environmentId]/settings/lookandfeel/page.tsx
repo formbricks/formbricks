@@ -56,19 +56,19 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         description="Set styling for ALL surveys in this project. You can still overwrite these styles in the survey editor.">
         <UnifiedStyling />
       </SettingsCard>
-      <SettingsCard title="Brand Color" description="Match the surveys with your user interface.">
+      {/* <SettingsCard title="Brand Color" description="Match the surveys with your user interface.">
         <EditBrandColor
           product={product}
           isBrandColorDisabled={isBrandColorEditDisabled}
           environmentId={params.environmentId}
         />
-      </SettingsCard>
+      </SettingsCard> */}
       <SettingsCard
         title="In-app Survey Placement"
         description="Change where surveys will be shown in your web app.">
         <EditPlacement product={product} environmentId={params.environmentId} />
       </SettingsCard>
-      <SettingsCard
+      {/* <SettingsCard
         noPadding
         title="Highlight Border"
         description="Make sure your users notice the survey you display">
@@ -77,7 +77,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           defaultBrandColor={DEFAULT_BRAND_COLOR}
           environmentId={params.environmentId}
         />
-      </SettingsCard>
+      </SettingsCard> */}
       <SettingsCard
         title="Formbricks Branding"
         description="We love your support but understand if you toggle it off.">

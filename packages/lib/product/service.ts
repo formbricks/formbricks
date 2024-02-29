@@ -35,8 +35,6 @@ const selectProduct = {
   darkOverlay: true,
   environments: true,
   styling: true,
-  unifiedStyling: true,
-  allowStyleOverwrite: true,
 };
 
 export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> => {
