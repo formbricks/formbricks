@@ -52,7 +52,14 @@ async function main() {
         return attributeClass.name === "language";
       });
       if (languageAttributeClass) {
-        // Update existing attributeClass
+        // Update existing attributeClass if needed
+        if (
+          languageAttributeClass.type === AttributeType.automatic &&
+          languageAttributeClass.description === "The language used by the person"
+        ) {
+          continue;
+        }
+
         await tx.attributeClass.update({
           where: { id: languageAttributeClass.id },
           data: {
