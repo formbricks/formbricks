@@ -588,6 +588,24 @@ export const getFilterResponses = (
         return true;
       });
     }
+    if (filter.questionType?.type === "Metadata") {
+      toBeFilterResponses = toBeFilterResponses.filter((response) => {
+        if (filter?.questionType?.label === "Language") {
+          const responseLanguage = response.language;
+          if (responseLanguage) {
+            if (filter?.filterType?.filterValue === "Equals") {
+              return responseLanguage === filter?.filterType?.filterComboBoxValue;
+            }
+            if (filter?.filterType?.filterValue === "Not equals") {
+              return responseLanguage !== filter?.filterType?.filterComboBoxValue;
+            }
+          } else {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
   });
 
   // filtering for the responses which is completed
