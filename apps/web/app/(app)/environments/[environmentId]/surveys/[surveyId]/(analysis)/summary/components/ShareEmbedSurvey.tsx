@@ -94,7 +94,7 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
               <div className="flex max-w-full flex-col items-center justify-center space-x-2 lg:flex-row">
                 <div
                   ref={linkTextRef}
-                  className="mt-2 max-w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
+                  className="mt-2 max-w-[80%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
                   style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
                   onClick={() => handleTextSelection()}>
                   {surveyUrl}
