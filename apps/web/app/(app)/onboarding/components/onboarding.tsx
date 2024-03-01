@@ -1,12 +1,14 @@
 "use client";
 
 import jsPackageJson from "@/../../packages/js/package.json";
+import { finishOnboardingAction } from "@/app/(app)/onboarding/actions";
 import { ConnectWithFormbricks } from "@/app/(app)/onboarding/components/inapp/ConnectWithFormbricks";
 import { InviteTeamMate } from "@/app/(app)/onboarding/components/inapp/InviteTeamMate";
 import { Objective } from "@/app/(app)/onboarding/components/inapp/SurveyObjective";
 import { Role } from "@/app/(app)/onboarding/components/inapp/SurveyRole";
 import { CreateFirstSurvey } from "@/app/(app)/onboarding/components/link/CreateFirstSurvey";
 import { Session } from "next-auth";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -33,6 +35,7 @@ export function Onboarding({
   team,
   webAppUrl,
 }: OnboardingProps) {
+  const router = useRouter();
   const [selectedPathway, setSelectedPathway] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(16);
   const [formbricksResponseId, setFormbricksResponseId] = useState<string | undefined>();
@@ -142,6 +145,17 @@ export function Onboarding({
 
   return (
     <div className="flex h-full w-full flex-col items-center bg-slate-50">
+      <div className="hidden">
+        <button
+          id="FB__INTERNAL__SKIP_ONBOARDING"
+          onClick={async () => {
+            await finishOnboardingAction();
+            router.push(`/environments/${environment.id}/surveys`);
+          }}>
+          Skip onboarding
+        </button>
+      </div>
+
       <OnboardingHeader progress={progress} />
       <div className="mt-20 flex w-full justify-center bg-slate-50">
         {renderOnboardingStep()}
