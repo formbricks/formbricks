@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
+import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TSurveyLanguage } from "@formbricks/types/surveys";
 
 import { getLanguageLabel } from "../lib/isoLanguages";
@@ -16,21 +17,24 @@ export function LanguageIndicator({
   setSelectedLanguageCode,
 }: LanguageIndicatorProps) {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-
   const toggleDropdown = () => setShowLanguageDropdown((prev) => !prev);
+  const languageDropdownRef = useRef(null);
 
   const changeLanguage = (language: TSurveyLanguage) => {
     setSelectedLanguageCode(language.language.code);
     setShowLanguageDropdown(false);
   };
+
   const langaugeToBeDisplayed = surveyLanguages.find((language) => {
     return selectedLanguageCode === "default"
       ? language.default === true
       : language.language.code === selectedLanguageCode;
   });
 
+  useClickOutside(languageDropdownRef, () => setShowLanguageDropdown(false));
+
   return (
-    <div className="absolute right-2 top-2 z-50">
+    <div className="absolute right-2 top-2">
       <button
         type="button"
         className="flex items-center justify-center rounded-md bg-slate-900 p-1 px-2 text-xs text-white hover:bg-slate-700"
@@ -41,14 +45,16 @@ export function LanguageIndicator({
         <ChevronDown className="ml-1 h-4 w-4" />
       </button>
       {showLanguageDropdown && (
-        <div className="absolute right-0 mt-1 space-y-2 rounded-md bg-slate-900 p-2 text-xs text-white hover:bg-slate-700">
+        <div
+          className="absolute right-0 z-30 mt-1 space-y-2 rounded-md bg-slate-900 p-1 text-xs text-white "
+          ref={languageDropdownRef}>
           {surveyLanguages.map(
             (language) =>
               language.language.code !== langaugeToBeDisplayed?.language.code && (
                 <button
                   key={language.language.id}
                   type="button"
-                  className="m-0 block w-full text-left"
+                  className="block w-full rounded-sm p-1 text-left hover:bg-slate-700"
                   onClick={() => changeLanguage(language)}>
                   {getLanguageLabel(language.language.code)}
                 </button>

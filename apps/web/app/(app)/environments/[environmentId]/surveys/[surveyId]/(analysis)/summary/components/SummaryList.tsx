@@ -119,7 +119,6 @@ export default function SummaryList({ environment, survey, responses, responsesP
         />
       ) : (
         <>
-          {console.log(getSummaryData())}
           {getSummaryData().map((questionSummary) => {
             if (questionSummary.question.type === TSurveyQuestionType.OpenText) {
               return (

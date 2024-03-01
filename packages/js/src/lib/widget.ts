@@ -33,7 +33,6 @@ export const renderWidget = async (survey: TSurvey) => {
   const product = config.get().state.product;
   const attributes = config.get().state.attributes;
   const lang = config.get().language;
-  console.log(config.get().language);
 
   const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
     return surveyLanguage.default === true;

@@ -113,19 +113,17 @@ export default function OpenQuestionForm({
               });
               setShowSubheader(true);
             }}>
-            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
         )}
       </div>
-
       <div className="mt-2">
         <LocalizedInput
           id="placeholder"
           name="placeholder"
           value={
-            question.placeholder && question.placeholder[selectedLanguageCode]
+            question.placeholder
               ? question.placeholder
               : createI18nString(defaultPlaceholder, surveyLanguageCodes)
           }
