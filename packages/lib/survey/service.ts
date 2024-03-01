@@ -31,7 +31,7 @@ import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters } from "./util";
+import { anySurveyHasFilters, determineLanguageCode } from "./util";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -349,21 +349,23 @@ export const transformToLegacySurvey = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
   return formatDateFields(transformedSurvey, ZLegacySurvey);
 };
 
-export const transformToSurveyWithDefaultLanguageOnly = async (survey: TSurvey): Promise<TSurvey> => {
+export const transformSurveyToSpecificLanguage = async (
+  survey: TSurvey,
+  targetLanguageCode?: string
+): Promise<TSurvey> => {
+  // if target language code is not available, it will be transformed to default language
   const transformedSurvey = await unstable_cache(
     async () => {
       if (!survey.languages || survey.languages.length === 0) {
         //survey do not have any translations
         return survey;
       }
-      return translateSurvey(survey, []);
+      return translateSurvey(survey, [], targetLanguageCode);
     },
-    [`transformToSurveyWithDefaultLanguageOnly-${survey}`],
+    [`transformSurveyToSpecificLanguage-${survey}-${targetLanguageCode}`],
     {
       tags: [surveyCache.tag.byId(survey.id)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -735,28 +737,32 @@ export const getSyncSurveys = async (
         }
       });
 
-      if (options?.version) {
-        if (!isMultiLanguageAllowed) {
-          // Scenario 1: Version available, multi-language not allowed
-          surveys = await Promise.all(surveys.map(transformToSurveyWithDefaultLanguageOnly));
+      if (isMultiLanguageAllowed) {
+        if (options?.version) {
+          // Version available and Multi-Langauge allowed, so tranform to required language
+          surveys = await Promise.all(
+            surveys.map(async (survey) => {
+              const languageCode = determineLanguageCode(person, survey);
+              return transformSurveyToSpecificLanguage(survey, languageCode);
+            })
+          );
+        } else {
+          // Version not available and Multi-Langauge allowed, so tranform to legacy survey with required language
+          surveys = await Promise.all(
+            surveys.map(async (survey) => {
+              const languageCode = determineLanguageCode(person, survey);
+              return transformToLegacySurvey(survey, languageCode);
+            })
+          );
         }
-        // Scenario 2: Version available, multi-language allowed (no transformation needed)
       } else {
-        if (!isMultiLanguageAllowed) {
-          // Scenario 3: No version, multi-language not allowed
+        if (!options?.version) {
+          // No version available and multi-language not allowed so transform to legacy survey with default language only
           surveys = await Promise.all(surveys.map((survey) => transformToLegacySurvey(survey, "default")));
         } else {
-          // Scenario 4: No version, multi-language allowed
+          // Version available and multi-language not allowed so transform to survey with default language only
           surveys = await Promise.all(
-            surveys.map((survey) => {
-              const languageCodeOrAlias = (person.attributes?.language ?? "default") as string;
-              const selectedLanguage = survey.languages.find(
-                (surveyLanguage) =>
-                  surveyLanguage.language.code === languageCodeOrAlias ||
-                  surveyLanguage.language.alias === languageCodeOrAlias
-              );
-              return transformToLegacySurvey(survey, selectedLanguage?.language.code ?? "default");
-            })
+            surveys.map((survey) => transformSurveyToSpecificLanguage(survey, "default"))
           );
         }
       }

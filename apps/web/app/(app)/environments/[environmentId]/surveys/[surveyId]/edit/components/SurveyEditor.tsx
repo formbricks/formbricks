@@ -71,7 +71,7 @@ export default function SurveyEditor({
   useDocumentVisibility(fetchLatestProduct);
 
   useEffect(() => {
-    if (!survey) return;
+    if (!survey || localSurvey) return;
     setLocalSurvey(structuredClone(survey));
     if (isFirstQuestionAvailable) {
       setActiveQuestionId(survey.questions[0].id);

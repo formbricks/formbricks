@@ -39,6 +39,14 @@ export const renderWidget = async (survey: TSurvey) => {
   })?.language.code;
 
   const getLanguageCode = (): string => {
+    const availableLanguageCodes = Object.keys(survey.questions[0].headline);
+    if (availableLanguageCodes.length === 1) {
+      // survey is only availabe in one language, this can occur in following scenarios:
+      // 1) Multi language turned off
+      // 2) Multi langauge now allowed (permission issues)
+      // 3) User identification enabled
+      return availableLanguageCodes[0];
+    }
     const language = attributes.language ?? lang;
     if (!language) return "default";
     else {

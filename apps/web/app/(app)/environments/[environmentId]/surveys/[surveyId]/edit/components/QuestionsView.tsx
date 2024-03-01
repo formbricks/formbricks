@@ -230,7 +230,10 @@ export default function QuestionsView({
           isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
           (card.subheader && card.subheader[defaultLanguageCode] === ""
             ? true
-            : isLabelValidForAllLanguages(card.subheader, surveyLanguages))
+            : isLabelValidForAllLanguages(card.subheader, surveyLanguages)) &&
+          (card.buttonLabel && card.buttonLabel[defaultLanguageCode] === ""
+            ? true
+            : isLabelValidForAllLanguages(card.buttonLabel, surveyLanguages))
         );
       }
       return true;

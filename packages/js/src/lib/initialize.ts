@@ -72,7 +72,7 @@ export const initialize = async (
   // if userId and attributes are available, set them in backend
   let updatedAttributes: TPersonAttributes | null = null;
   if (c.userId && c.attributes) {
-    const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+    const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes, c.language);
 
     if (res.ok !== true) {
       return err(res.error);

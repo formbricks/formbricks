@@ -1,6 +1,7 @@
 import "server-only";
 
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
+import { TPerson } from "@formbricks/types/people";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
@@ -45,4 +46,20 @@ export const anySurveyHasFilters = (surveys: TSurvey[] | TLegacySurvey[]): boole
     }
     return false;
   });
+};
+
+export const determineLanguageCode = (person: TPerson, survey: TSurvey) => {
+  // Default to 'default' if person.attributes.language is not set or not a string
+  const languageCodeOrAlias =
+    typeof person.attributes?.language === "string" ? person.attributes.language : "default";
+
+  // Find the matching language in the survey
+  const selectedLanguage = survey.languages.find(
+    (surveyLanguage) =>
+      surveyLanguage.language.code === languageCodeOrAlias ||
+      surveyLanguage.language.alias === languageCodeOrAlias
+  );
+
+  // Determine and return the language code to use
+  return !selectedLanguage || selectedLanguage.default === true ? "default" : selectedLanguage.language.code;
 };
