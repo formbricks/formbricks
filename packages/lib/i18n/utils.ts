@@ -100,6 +100,9 @@ export const translateThankYouCard = (
   if (thankYouCard.subheader) {
     clonedThankYouCard.subheader = createI18nString(thankYouCard.subheader, languages);
   }
+  if (thankYouCard.buttonLabel) {
+    clonedThankYouCard.subheader = createI18nString(thankYouCard.buttonLabel, languages);
+  }
 
   return clonedThankYouCard;
 };
@@ -378,6 +381,9 @@ const reverseTranslateThankYouCard = (
   }
   if (thankYouCard.subheader) {
     clonedThankYouCard.subheader = extractStringFromI18n(thankYouCard.subheader, languageCode);
+  }
+  if (thankYouCard.buttonLabel) {
+    clonedThankYouCard.subheader = extractStringFromI18n(thankYouCard.buttonLabel, languageCode);
   }
 
   return clonedThankYouCard;

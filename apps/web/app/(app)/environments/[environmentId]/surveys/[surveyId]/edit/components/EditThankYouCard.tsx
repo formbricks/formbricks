@@ -137,7 +137,7 @@ export default function EditThankYouCard({
                       updateSurvey({ buttonLabel: undefined, buttonLink: undefined });
                     } else {
                       updateSurvey({
-                        buttonLabel: "Create your own Survey",
+                        buttonLabel: { default: "Create your own Survey" },
                         buttonLink: "https://formbricks.com/signup",
                       });
                     }
@@ -154,16 +154,21 @@ export default function EditThankYouCard({
                 </Label>
               </div>
               {showThankYouCardCTA && (
-                <div className="border-1 mt-4 space-y-4 rounded-md border bg-slate-100 p-4">
+                <div className="border-1 mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
                   <div className="space-y-2">
-                    <Label>Button Label</Label>
-                    <Input
+                    <LocalizedInput
                       id="buttonLabel"
                       name="buttonLabel"
-                      className="bg-white"
+                      label="Button Label"
                       placeholder="Create your own Survey"
+                      className="bg-white"
                       value={localSurvey.thankYouCard.buttonLabel}
-                      onChange={(e) => updateSurvey({ buttonLabel: e.target.value })}
+                      localSurvey={localSurvey}
+                      questionIdx={localSurvey.questions.length}
+                      isInvalid={isInvalid}
+                      updateSurvey={updateSurvey}
+                      selectedLanguageCode={selectedLanguageCode}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
                     />
                   </div>
                   <div className="space-y-2">

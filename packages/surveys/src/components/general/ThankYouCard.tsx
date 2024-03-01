@@ -14,7 +14,7 @@ interface ThankYouCardProps {
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
   languageCode: string;
-  buttonLabel?: string;
+  buttonLabel?: TI18nString;
   buttonLink?: string;
   imageUrl?: string;
   replaceRecallInfo: (text: string) => string;
@@ -85,7 +85,7 @@ export default function ThankYouCard({
         {buttonLabel && isResponseSendingFinished && (
           <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
             <Button
-              buttonLabel={buttonLabel}
+              buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
               isLastQuestion={false}
               onClick={() => {
                 if (!buttonLink) return;

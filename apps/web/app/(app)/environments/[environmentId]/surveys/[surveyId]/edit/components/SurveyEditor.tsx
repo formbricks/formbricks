@@ -164,30 +164,19 @@ export default function SurveyEditor({
             <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
 
             {activeView === "questions" ? (
-              <>
-                {/*                 <div className="mt-20">
-                  {isMultiLanguageAllowed && (
-                    <LanguageSwitch
-                      surveyLanguages={localSurvey.languages ?? []}
-                      selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
-                    />
-                  )}
-                </div> */}
-                <QuestionsView
-                  localSurvey={localSurvey}
-                  setLocalSurvey={setLocalSurvey}
-                  activeQuestionId={activeQuestionId}
-                  setActiveQuestionId={setActiveQuestionId}
-                  product={localProduct}
-                  invalidQuestions={invalidQuestions}
-                  setInvalidQuestions={setInvalidQuestions}
-                  selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  isMultiLanguageAllowed={isMultiLanguageAllowed}
-                  isFormbricksCloud={isFormbricksCloud}
-                />
-              </>
+              <QuestionsView
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                activeQuestionId={activeQuestionId}
+                setActiveQuestionId={setActiveQuestionId}
+                product={localProduct}
+                invalidQuestions={invalidQuestions}
+                setInvalidQuestions={setInvalidQuestions}
+                selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                isMultiLanguageAllowed={isMultiLanguageAllowed}
+                isFormbricksCloud={isFormbricksCloud}
+              />
             ) : (
               <SettingsView
                 environment={environment}

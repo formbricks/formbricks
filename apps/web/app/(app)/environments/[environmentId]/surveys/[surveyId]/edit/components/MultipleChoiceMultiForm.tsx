@@ -235,7 +235,7 @@ export default function MultipleChoiceMultiForm({
 
       <div className="mt-3">
         <Label htmlFor="choices">Options</Label>
-        <div className="mt-2 space-y-1" id="choices">
+        <div className="mt-2 -space-y-2" id="choices">
           {question.choices &&
             question.choices.map((choice, choiceIdx) => (
               <div key={choiceIdx} className="inline-flex w-full items-center">

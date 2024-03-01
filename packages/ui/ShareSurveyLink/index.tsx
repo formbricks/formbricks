@@ -94,7 +94,7 @@ export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: 
 
   const getUrl = useCallback(async () => {
     let url = `${webAppUrl}/s/${survey.id}`;
-    const queryParams = [];
+    const queryParams: string[] = [];
 
     if (survey.singleUse?.enabled) {
       const singleUseId = await generateSingleUseIdAction(survey.id, survey.singleUse.isEncrypted);

@@ -14,7 +14,7 @@ export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
-  buttonLabel: z.optional(z.string()),
+  buttonLabel: ZI18nString.optional(),
   buttonLink: z.optional(z.string()),
   imageUrl: z.string().optional(),
 });

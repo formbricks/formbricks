@@ -127,7 +127,7 @@ const revalidateSurveyByActionClassId = (actionClasses: TActionClass[], actionCl
 };
 
 const processTriggerUpdates = (
-  triggers: string[],
+  updatedTriggers: string[],
   currentSurveyTriggers: string[],
   actionClasses: TActionClass[]
 ) => {
@@ -135,7 +135,7 @@ const processTriggerUpdates = (
   const removedTriggers: string[] = [];
 
   // find added triggers
-  for (const trigger of triggers) {
+  for (const trigger of updatedTriggers) {
     if (!trigger || currentSurveyTriggers.includes(trigger)) {
       continue;
     }
@@ -144,8 +144,8 @@ const processTriggerUpdates = (
 
   // find removed triggers
   for (const trigger of currentSurveyTriggers) {
-    if (!triggers.includes(trigger)) {
-      removedTriggers.push(getActionClassIdFromName(actionClasses, trigger));
+    if (!updatedTriggers.includes(trigger)) {
+      removedTriggers.push(trigger);
     }
   }
 
@@ -160,7 +160,9 @@ const processTriggerUpdates = (
 
   if (removedTriggers.length > 0) {
     triggersUpdate.deleteMany = {
-      actionClassId: { in: removedTriggers },
+      actionClassId: {
+        in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
+      },
     };
   }
   revalidateSurveyByActionClassId(actionClasses, [...newTriggers, ...removedTriggers]);
@@ -551,7 +553,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   };
 
   if (surveyBody.type === "web" && data.thankYouCard) {
-    data.thankYouCard.buttonLabel = "";
+    data.thankYouCard.buttonLabel = { default: "" };
     data.thankYouCard.buttonLink = "";
   }
 

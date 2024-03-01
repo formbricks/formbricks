@@ -242,7 +242,7 @@ export const mockThankYouCard: TSurveyThankYouCard = {
     default: "We appreciate your feedback.",
   },
   buttonLink: "https://formbricks.com/signup",
-  buttonLabel: "Create your own Survey",
+  buttonLabel: { default: "Create your own Survey" },
 } as unknown as TSurveyThankYouCard;
 
 export const mockSurvey: TSurvey = {
@@ -277,7 +277,7 @@ export const mockSurvey: TSurvey = {
       default: "We appreciate your feedback.",
     },
     buttonLink: "https://formbricks.com/signup",
-    buttonLabel: "Create your own Survey",
+    buttonLabel: { default: "Create your own Survey" },
   },
   hiddenFields: {
     enabled: true,
