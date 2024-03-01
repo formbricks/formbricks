@@ -15,21 +15,42 @@ const syncWithBackend = async (
   { apiHost, environmentId, userId }: TJsSyncParams,
   noCache: boolean
 ): Promise<Result<TJsStateSync, NetworkError>> => {
-  const baseUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
-  const urlSuffix = `?version=${import.meta.env.VERSION}`;
+  try {
+    const baseUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
+    const urlSuffix = `?version=${import.meta.env.VERSION}`;
 
-  let fetchOptions: RequestInit = {};
+    let fetchOptions: RequestInit = {};
 
-  if (noCache || getIsDebug()) {
-    fetchOptions.cache = "no-cache";
-    logger.debug("No cache option set for sync");
-  }
+    if (noCache || getIsDebug()) {
+      fetchOptions.cache = "no-cache";
+      logger.debug("No cache option set for sync");
+    }
 
-  // if user id is not available
+    // if user id is not available
+    if (!userId) {
+      const url = baseUrl + urlSuffix;
+      // public survey
+      const response = await fetch(url, fetchOptions);
 
-  if (!userId) {
-    const url = baseUrl + urlSuffix;
-    // public survey
+      if (!response.ok) {
+        const jsonRes = await response.json();
+
+        return err({
+          code: "network_error",
+          status: response.status,
+          message: "Error syncing with backend",
+          url,
+          responseMessage: jsonRes.message,
+        });
+      }
+
+      return ok((await response.json()).data as TJsState);
+    }
+
+    // userId is available, call the api with the `userId` param
+
+    const url = `${baseUrl}/${userId}${urlSuffix}`;
+
     const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
@@ -44,31 +65,13 @@ const syncWithBackend = async (
       });
     }
 
-    return ok((await response.json()).data as TJsState);
+    const data = await response.json();
+    const { data: state } = data;
+
+    return ok(state as TJsStateSync);
+  } catch (e) {
+    return err(e as NetworkError);
   }
-
-  // userId is available, call the api with the `userId` param
-
-  const url = `${baseUrl}/${userId}${urlSuffix}`;
-
-  const response = await fetch(url, fetchOptions);
-
-  if (!response.ok) {
-    const jsonRes = await response.json();
-
-    return err({
-      code: "network_error",
-      status: response.status,
-      message: "Error syncing with backend",
-      url,
-      responseMessage: jsonRes.message,
-    });
-  }
-
-  const data = await response.json();
-  const { data: state } = data;
-
-  return ok(state as TJsStateSync);
 };
 
 export const sync = async (params: TJsSyncParams, noCache = false): Promise<void> => {
@@ -88,6 +91,7 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
         // case 1 -> config is not yet initialized
         // we initialize the config with only a "status" field set to "error"
         // and an expiry time of 10 minutes in the future
+        logger.debug("Sync call on init failed. Entering error state.");
         const initialErrorConfig: Partial<TJsConfig> = {
           status: "error",
           expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
@@ -99,10 +103,9 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
       }
 
       // case 2 -> config is already initialized, but the sync call failed
-      if (existingConfig.state) {
-        // just extending the config
-        config.update(existingConfig);
-      }
+      // just extending the config
+      logger.debug("Sync call failed. Extending existing config.");
+      config.update(existingConfig);
 
       throw syncResult.error;
     }

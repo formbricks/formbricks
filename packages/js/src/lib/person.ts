@@ -11,9 +11,8 @@ import {
   ok,
   okVoid,
 } from "./errors";
-import { deinitalize, initialize, putFormbricksInErrorState } from "./initialize";
+import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
-import { sync } from "./sync";
 import { closeSurvey } from "./widget";
 
 const config = Config.getInstance();

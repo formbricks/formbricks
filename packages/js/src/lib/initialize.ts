@@ -126,7 +126,10 @@ export const initialize = async (
       config.update(existingConfig);
     }
   } else {
-    logger.debug("No valid configuration found or it has been expired. Creating new config.");
+    logger.debug(
+      "No valid configuration found or it has been expired. Resetting config and creating new one."
+    );
+    config.resetConfig();
     logger.debug("Syncing.");
 
     await sync({
@@ -191,6 +194,7 @@ export const putFormbricksInErrorState = (): void => {
   config.update({
     ...config.get(),
     status: "error",
+    expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
   });
   deinitalize();
 };
