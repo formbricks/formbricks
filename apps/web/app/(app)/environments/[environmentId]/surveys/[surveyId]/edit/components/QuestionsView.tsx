@@ -141,7 +141,7 @@ export default function QuestionsView({
     });
     updatedSurvey.questions.splice(questionIdx, 1);
     updatedSurvey = handleQuestionLogicChange(updatedSurvey, questionId, "end");
-
+    console.log(updatedSurvey);
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
     if (questionId === activeQuestionIdTemp) {

@@ -1,7 +1,6 @@
 "use server";
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
-import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { customAlphabet } from "nanoid";
 import { getServerSession } from "next-auth";
 
@@ -16,17 +15,6 @@ type TSendEmailActionArgs = {
   subject: string;
   html: string;
 };
-
-export async function generateSingleUseIdAction(surveyId: string, isEncrypted: boolean): Promise<string> {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
-
-  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
-
-  return generateSurveySingleUseId(isEncrypted);
-}
 
 export const sendEmailAction = async ({ html, subject, to }: TSendEmailActionArgs) => {
   const session = await getServerSession(authOptions);

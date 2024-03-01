@@ -1,25 +1,16 @@
 "use client";
 
-import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import {
-  ArrowLeftIcon,
-  CodeBracketIcon,
-  EnvelopeIcon,
-  LanguageIcon,
-  LinkIcon,
-} from "@heroicons/react/24/outline";
-import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
-import { BellRing, BlocksIcon, Code2Icon, RefreshCcw } from "lucide-react";
+import { ArrowLeftIcon, CodeBracketIcon, EnvelopeIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { BellRing, BlocksIcon, Code2Icon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
+import { useState } from "react";
 
-import { getLanguageLabel } from "@formbricks/ee/multiLanguage/lib/isoLanguages";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 import { Button } from "@formbricks/ui/Button";
 import { Dialog, DialogContent } from "@formbricks/ui/Dialog";
+import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
 
 import EmailTab from "./shareEmbedTabs/EmailTab";
 import LinkTab from "./shareEmbedTabs/LinkTab";
@@ -45,44 +36,7 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
 
   const [activeId, setActiveId] = useState(tabs[0].id);
   const [showInitialPage, setShowInitialPage] = useState(true);
-  const linkTextRef = useRef(null);
   const [surveyUrl, setSurveyUrl] = useState("");
-  const surveyLanguages = survey.languages ?? [];
-  const [language, setLanguage] = useState<string>("default");
-  const [showLanguageSelect, setShowLanguageSelect] = useState(false);
-
-  const getUrl = useCallback(async () => {
-    let url = webAppUrl + "/s/" + survey.id;
-    if (survey.singleUse?.enabled) {
-      const singleUseId = await generateSingleUseIdAction(survey.id, survey.singleUse.isEncrypted);
-      url += "?suId=" + singleUseId;
-    }
-    if (language !== "default") {
-      if (survey.singleUse?.enabled) {
-        url += "&lang=" + language;
-      } else {
-        url += "?lang=" + language;
-      }
-    }
-    setSurveyUrl(url);
-  }, [survey, webAppUrl, language]);
-
-  useEffect(() => {
-    getUrl();
-  }, [survey, webAppUrl, getUrl, language]);
-
-  const handleTextSelection = () => {
-    if (linkTextRef.current) {
-      const range = document.createRange();
-      range.selectNodeContents(linkTextRef.current);
-
-      const selection = window.getSelection();
-      if (selection) {
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-    }
-  };
 
   const handleOpenChange = (open: boolean) => {
     setActiveId(tabs[0].id);
@@ -94,11 +48,6 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
     setShowInitialPage(!showInitialPage);
   };
 
-  const generateNewSingleUseLink = () => {
-    getUrl();
-    toast.success("New single use link generated");
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className=" w-full max-w-xl bg-white p-0 md:max-w-3xl lg:h-[700px] lg:max-w-5xl">
@@ -106,69 +55,12 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
           <div className="h-full max-w-full overflow-hidden">
             <div className="flex h-[200px] w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
               <p className="pt-2 text-xl font-semibold text-slate-800">Your survey is public 🎉</p>
-              <div
-                className={`flex max-w-full flex-col items-center justify-center space-x-2  ${survey.singleUse?.enabled ? "flex-col" : "lg:flex-row"}`}>
-                <div
-                  ref={linkTextRef}
-                  className="mt-2 max-w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
-                  style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-                  onClick={() => handleTextSelection()}>
-                  {surveyUrl}
-                </div>
-                <div className="mt-2 flex items-center justify-center space-x-2">
-                  {surveyLanguages.length > 1 && (
-                    <div className="relative">
-                      {showLanguageSelect && (
-                        <div className="absolute left-0 right-0 top-12 rounded-lg border bg-slate-900 p-1 text-sm text-white">
-                          {surveyLanguages.map((surveyLanguage) => {
-                            return (
-                              <div
-                                className="rounded-md px-1 py-2 hover:cursor-pointer hover:bg-slate-700"
-                                onClick={() => {
-                                  setLanguage(surveyLanguage.language.code);
-                                  setShowLanguageSelect(false);
-                                }}>
-                                {getLanguageLabel(surveyLanguage.language.code)}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      <Button
-                        variant="secondary"
-                        className=""
-                        title="Select Language"
-                        aria-label="Select Language"
-                        onClick={() => setShowLanguageSelect(!showLanguageSelect)}>
-                        <LanguageIcon className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  )}
-                  <Button
-                    variant="darkCTA"
-                    className="inline"
-                    title="Copy survey link to clipboard"
-                    aria-label="Copy survey link to clipboard"
-                    onClick={() => {
-                      navigator.clipboard.writeText(surveyUrl);
-                      toast.success("URL copied to clipboard!");
-                    }}
-                    EndIcon={DocumentDuplicateIcon}>
-                    Copy Link
-                  </Button>
-
-                  {survey.singleUse?.enabled && (
-                    <Button
-                      variant="darkCTA"
-                      className="inline"
-                      title="Regenerate single use survey link"
-                      aria-label="Regenerate single use survey link"
-                      onClick={() => generateNewSingleUseLink()}>
-                      <RefreshCcw className="h-5 w-5" />
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <ShareSurveyLink
+                survey={survey}
+                webAppUrl={webAppUrl}
+                surveyUrl={surveyUrl}
+                setSurveyUrl={setSurveyUrl}
+              />
             </div>
             <div className="flex h-[300px] flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 lg:h-3/5">
               <p className="-mt-8 text-sm text-slate-500">What&apos;s next?</p>
@@ -235,12 +127,10 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
                     <WebpageTab surveyUrl={surveyUrl} />
                   ) : activeId === "link" ? (
                     <LinkTab
-                      surveyUrl={surveyUrl}
+                      survey={survey}
                       webAppUrl={webAppUrl}
-                      generateNewSingleUseLink={generateNewSingleUseLink}
-                      isSingleUseLinkSurvey={isSingleUseLinkSurvey}
-                      surveyLanguages={surveyLanguages}
-                      setLanguage={setLanguage}
+                      surveyUrl={surveyUrl}
+                      setSurveyUrl={setSurveyUrl}
                     />
                   ) : null}
                 </div>
