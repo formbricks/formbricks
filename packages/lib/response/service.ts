@@ -32,6 +32,7 @@ import {
   buildWhereClause,
   calculateTtcTotal,
   extractSurveyDetails,
+  getQuestionWiseSummary,
   getResponsesFileName,
   getResponsesJson,
   getSurveySummaryDropoff,
@@ -549,36 +550,11 @@ export const getSurveySummary = (
         },
       });
 
-      // const completedResponses = await prisma.response.count({
-      //   where: {
-      //     surveyId,
-      //     ...buildWhereClause(filterCriteria),
-      //     finished: true,
-      //   },
-      // });
-
-      // const ttcResponses = await prisma.response.findMany({
-      //   where: {
-      //     surveyId,
-      //     ...buildWhereClause(filterCriteria),
-      //     finished: true,
-      //     ttc: {
-      //       path: ["_total"],
-      //       gt: 0,
-      //     },
-      //   },
-      //   select: {
-      //     ttc: true,
-      //   },
-      // });
-
       const meta = getSurveySummaryMeta(responses, displayCount);
       const dropoff = getSurveySummaryDropoff(survey, responses, displayCount);
+      const questionWiseSummary = getQuestionWiseSummary(survey, responses);
 
-      return {
-        meta,
-        dropoff,
-      };
+      return { meta, dropoff, summary: questionWiseSummary };
     },
     [`getSurveyMeta-${surveyId}-${JSON.stringify(filterCriteria)}`],
     {

@@ -2,13 +2,14 @@ import "server-only";
 
 import { Prisma } from "@prisma/client";
 
+import { TPerson } from "@formbricks/types/people";
 import {
   TResponse,
   TResponseFilterCriteria,
   TResponseTtc,
   TSurveySummary,
 } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
@@ -553,4 +554,390 @@ export const getSurveySummaryDropoff = (
   });
 
   return dropoff;
+};
+
+export const getQuestionWiseSummary = (
+  survey: TSurvey,
+  responses: TResponse[]
+): TSurveySummary["summary"] => {
+  const VALUES_LIMIT = 10;
+  let summary: TSurveySummary["summary"] = [];
+  let values: any = [];
+
+  survey.questions.forEach((question) => {
+    switch (question.type) {
+      case TSurveyQuestionType.OpenText: {
+        values = [];
+        responses.forEach((response) => {
+          const answer = response.data[question.id];
+          if (answer) {
+            values.push({
+              updatedAt: response.updatedAt,
+              value: answer,
+              person: response.person,
+            });
+          }
+        });
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: values.length,
+          samples: values.slice(0, VALUES_LIMIT),
+        });
+        break;
+      }
+      case TSurveyQuestionType.MultipleChoiceSingle:
+      case TSurveyQuestionType.MultipleChoiceMulti: {
+        values = [];
+        // check last choice is others or not
+        const isOthersEnabled = question.choices[question.choices.length - 1].id === "other";
+        const questionChoices = question.choices.map((choice) => choice.label);
+        if (isOthersEnabled) {
+          questionChoices.pop();
+        }
+
+        let totalResponseCount = 0;
+        const choiceCountMap = questionChoices.reduce((acc: Record<string, number>, choice) => {
+          acc[choice] = 0;
+          return acc;
+        }, {});
+        const otherValues: { value: string; person: TPerson | null }[] = [];
+
+        responses.forEach((response) => {
+          const answer = response.data[question.id];
+
+          if (Array.isArray(answer)) {
+            answer.forEach((value) => {
+              totalResponseCount++;
+              if (questionChoices.includes(value)) {
+                choiceCountMap[value]++;
+              } else {
+                otherValues.push({
+                  value,
+                  person: response.person,
+                });
+              }
+            });
+          } else if (typeof answer === "string") {
+            totalResponseCount++;
+            if (questionChoices.includes(answer)) {
+              choiceCountMap[answer]++;
+            } else {
+              otherValues.push({
+                value: answer,
+                person: response.person,
+              });
+            }
+          }
+        });
+
+        Object.entries(choiceCountMap).map(([label, count]) => {
+          values.push({
+            value: label,
+            count,
+            percentage: totalResponseCount > 0 ? (count / totalResponseCount) * 100 : 0,
+          });
+        });
+
+        if (isOthersEnabled) {
+          values.push({
+            value: "Other",
+            count: otherValues.length,
+            percentage: (otherValues.length / totalResponseCount) * 100,
+            others: otherValues.slice(0, VALUES_LIMIT),
+          });
+        }
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: totalResponseCount,
+          choices: values,
+        });
+
+        break;
+      }
+      case TSurveyQuestionType.PictureSelection: {
+        values = [];
+        const choiceCountMap: Record<string, number> = {};
+
+        question.choices.forEach((choice) => {
+          choiceCountMap[choice.id] = 0;
+        });
+        let totalResponseCount = 0;
+
+        responses.forEach((response) => {
+          const answer = response.data[question.id];
+          if (Array.isArray(answer)) {
+            answer.forEach((value) => {
+              totalResponseCount++;
+              choiceCountMap[value]++;
+            });
+          }
+        });
+
+        question.choices.forEach((choice) => {
+          values.push({
+            id: choice.id,
+            imageUrl: choice.imageUrl,
+            count: choiceCountMap[choice.id],
+            percentage: totalResponseCount > 0 ? (choiceCountMap[choice.id] / totalResponseCount) * 100 : 0,
+          });
+        });
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: totalResponseCount,
+          choices: values,
+        });
+
+        break;
+      }
+      case TSurveyQuestionType.Rating: {
+        values = [];
+        const choiceCountMap: Record<number, number> = {};
+        const range = question.range;
+
+        for (let i = 1; i <= range; i++) {
+          choiceCountMap[i] = 0;
+        }
+
+        let totalResponseCount = 0;
+        let totalRating = 0;
+
+        responses.forEach((response) => {
+          const answer = response.data[question.id];
+          if (typeof answer === "number") {
+            totalResponseCount++;
+            choiceCountMap[answer]++;
+            totalRating += answer;
+          }
+        });
+
+        Object.entries(choiceCountMap).map(([label, count]) => {
+          values.push({
+            value: parseInt(label),
+            count,
+            percentage: totalResponseCount > 0 ? (count / totalResponseCount) * 100 : 0,
+          });
+        });
+
+        summary.push({
+          type: question.type,
+          question,
+          average: totalRating / totalResponseCount || 0,
+          responseCount: totalResponseCount,
+          choices: values,
+        });
+
+        break;
+      }
+      case TSurveyQuestionType.NPS: {
+        const data = {
+          promoters: 0,
+          passives: 0,
+          detractors: 0,
+          total: 0,
+          score: 0,
+        };
+
+        responses.forEach((response) => {
+          const value = response.data[question.id];
+          if (typeof value === "number") {
+            data.total++;
+            if (value >= 9) {
+              data.promoters++;
+            } else if (value >= 7) {
+              data.passives++;
+            } else {
+              data.detractors++;
+            }
+          }
+        });
+
+        data.score = data.total > 0 ? ((data.promoters - data.detractors) / data.total) * 100 : 0;
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: data.total,
+          total: data.total,
+          score: data.score,
+          promoters: {
+            count: data.promoters,
+            percentage: data.total > 0 ? (data.promoters / data.total) * 100 : 0,
+          },
+          passives: {
+            count: data.passives,
+            percentage: data.total > 0 ? (data.passives / data.total) * 100 : 0,
+          },
+          detractors: {
+            count: data.detractors,
+            percentage: data.total > 0 ? (data.detractors / data.total) * 100 : 0,
+          },
+        });
+        break;
+      }
+      case TSurveyQuestionType.CTA: {
+        const data = {
+          clicked: 0,
+          dismissed: 0,
+        };
+
+        responses.forEach((response) => {
+          const value = response.data[question.id];
+          if (value === "clicked") {
+            data.clicked++;
+          } else if (value === "dismissed") {
+            data.dismissed++;
+          }
+        });
+
+        const totalResponses = data.clicked + data.dismissed;
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: totalResponses,
+          ctr: {
+            count: data.clicked,
+            percentage: totalResponses > 0 ? (data.clicked / totalResponses) * 100 : 0,
+          },
+        });
+        break;
+      }
+      case TSurveyQuestionType.Consent: {
+        const data = {
+          accepted: 0,
+          dismissed: 0,
+        };
+
+        responses.forEach((response) => {
+          const value = response.data[question.id];
+          if (value === "accepted") {
+            data.accepted++;
+          } else if (response.ttc && response.ttc[question.id] > 0) {
+            data.dismissed++;
+          }
+        });
+
+        const totalResponses = data.accepted + data.dismissed;
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: totalResponses,
+          accepted: {
+            count: data.accepted,
+            percentage: totalResponses > 0 ? (data.accepted / totalResponses) * 100 : 0,
+          },
+          dismissed: {
+            count: data.dismissed,
+            percentage: totalResponses > 0 ? (data.dismissed / totalResponses) * 100 : 0,
+          },
+        });
+
+        break;
+      }
+      case TSurveyQuestionType.Date: {
+        values = [];
+        responses.forEach((response) => {
+          const answer = response.data[question.id];
+          if (answer) {
+            values.push({
+              updatedAt: response.updatedAt,
+              value: answer,
+              person: response.person,
+            });
+          }
+        });
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: values.length,
+          samples: values.slice(0, VALUES_LIMIT),
+        });
+        break;
+      }
+      case TSurveyQuestionType.FileUpload: {
+        values = [];
+        responses.forEach((response) => {
+          const answer = response.data[question.id];
+          if (Array.isArray(answer)) {
+            values.push({
+              updatedAt: response.updatedAt,
+              value: answer,
+              person: response.person,
+            });
+          }
+        });
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: values.length,
+          files: values.slice(0, VALUES_LIMIT),
+        });
+        break;
+      }
+      case TSurveyQuestionType.Cal: {
+        const data = {
+          booked: 0,
+          skipped: 0,
+        };
+
+        responses.forEach((response) => {
+          const value = response.data[question.id];
+          if (value === "booked") {
+            data.booked++;
+          } else if (response.ttc && response.ttc[question.id] > 0) {
+            data.skipped++;
+          }
+        });
+        const totalResponses = data.booked + data.skipped;
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: totalResponses,
+          booked: {
+            count: data.booked,
+            percentage: totalResponses > 0 ? (data.booked / totalResponses) * 100 : 0,
+          },
+          skipped: {
+            count: data.skipped,
+            percentage: totalResponses > 0 ? (data.skipped / totalResponses) * 100 : 0,
+          },
+        });
+
+        break;
+      }
+    }
+  });
+
+  survey.hiddenFields?.fieldIds?.forEach((question) => {
+    const values: any = [];
+    responses.forEach((response) => {
+      const answer = response.data[question];
+      if (answer) {
+        values.push({
+          updatedAt: response.updatedAt,
+          value: answer,
+          person: response.person,
+        });
+      }
+    });
+
+    summary.push({
+      type: "hiddenField",
+      question,
+      responseCount: values.length,
+      samples: values.slice(0, VALUES_LIMIT),
+    });
+  });
+
+  return summary;
 };

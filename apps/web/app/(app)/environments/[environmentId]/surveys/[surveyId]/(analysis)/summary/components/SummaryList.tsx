@@ -4,7 +4,7 @@ import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[su
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { TResponse } from "@formbricks/types/responses";
+import { TResponse, TSurveySummary } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import type {
   TSurveyCalQuestion,
@@ -36,13 +36,20 @@ import PictureChoiceSummary from "./PictureChoiceSummary";
 import RatingSummary from "./RatingSummary";
 
 interface SummaryListProps {
+  summary: TSurveySummary["summary"];
   environment: TEnvironment;
   survey: TSurvey;
   responses: TResponse[];
   responsesPerPage: number;
 }
 
-export default function SummaryList({ environment, survey, responses, responsesPerPage }: SummaryListProps) {
+export default function SummaryList({
+  summary,
+  environment,
+  survey,
+  responses,
+  responsesPerPage,
+}: SummaryListProps) {
   const getSummaryData = (): TSurveyQuestionSummary<TSurveyQuestion>[] =>
     survey.questions.map((question) => {
       const questionResponses = responses

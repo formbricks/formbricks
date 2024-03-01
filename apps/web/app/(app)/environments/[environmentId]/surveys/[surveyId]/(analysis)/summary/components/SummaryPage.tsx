@@ -64,6 +64,7 @@ const SummaryPage = ({
       ttcAverage: 0,
     },
     dropoff: [],
+    summary: [],
   });
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
 
@@ -115,12 +116,13 @@ const SummaryPage = ({
       <SummaryMetadata
         responses={filterResponses}
         survey={survey}
-        surveySummary={surveySummary?.meta}
+        surveySummary={surveySummary.meta}
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />
       {showDropOffs && <SummaryDropOffs dropoff={surveySummary?.dropoff} />}
       <SummaryList
+        summary={surveySummary.summary}
         responses={filterResponses}
         survey={survey}
         environment={environment}
