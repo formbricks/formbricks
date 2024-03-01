@@ -29,6 +29,7 @@ export function Survey({
   isRedirectDisabled = false,
   prefillResponseData,
   getSetIsError,
+  getSetIsResponseSendingFinished,
   onFileUpload,
   responseCount,
 }: SurveyBaseProps) {
@@ -36,6 +37,11 @@ export function Survey({
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
   const [showError, setShowError] = useState(false);
+  // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
+  const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
+    getSetIsResponseSendingFinished ? false : true
+  );
+
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>({});
@@ -85,7 +91,15 @@ export function Survey({
         setShowError(value);
       });
     }
-  });
+  }, [getSetIsError]);
+
+  useEffect(() => {
+    if (getSetIsResponseSendingFinished) {
+      getSetIsResponseSendingFinished((value: boolean) => {
+        setIsResponseSendingFinished(value);
+      });
+    }
+  }, [getSetIsResponseSendingFinished]);
 
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
@@ -138,6 +152,9 @@ export function Survey({
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
+      // Dispatching a custom event when the survey is completed
+      const event = new CustomEvent("formbricksSurveyCompleted", { detail: { surveyId: survey.id } });
+      window.top?.dispatchEvent(event);
       onFinished();
     }
     setQuestionId(nextQuestionId);
@@ -216,6 +233,7 @@ export function Survey({
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
       return (
         <ThankYouCard
+          isResponseSendingFinished={isResponseSendingFinished}
           headline={
             typeof survey.thankYouCard.headline === "string"
               ? replaceRecallInfo(survey.thankYouCard.headline)

@@ -13,6 +13,7 @@ interface ThankYouCardProps {
   buttonLabel?: string;
   buttonLink?: string;
   imageUrl?: string;
+  isResponseSendingFinished: boolean;
 }
 
 export default function ThankYouCard({
@@ -23,9 +24,10 @@ export default function ThankYouCard({
   buttonLabel,
   buttonLink,
   imageUrl,
+  isResponseSendingFinished,
 }: ThankYouCardProps) {
   useEffect(() => {
-    if (!buttonLink) return;
+    if (!buttonLink || !isResponseSendingFinished) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Enter") {
         window.top?.location.replace(buttonLink);
@@ -35,7 +37,7 @@ export default function ThankYouCard({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [buttonLink]);
+  }, [buttonLink, isResponseSendingFinished]);
 
   return (
     <div className="text-center">
@@ -66,14 +68,14 @@ export default function ThankYouCard({
         <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
         <Subheader subheader={subheader} questionId="thankYouCard" />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
-        {buttonLabel && (
+        {buttonLabel && isResponseSendingFinished && (
           <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
             <Button
               buttonLabel={buttonLabel}
               isLastQuestion={false}
               onClick={() => {
                 if (!buttonLink) return;
-                window.location.href = buttonLink;
+                window.location.replace(buttonLink);
               }}
             />
             <p class="text-xs">Press Enter ↵</p>

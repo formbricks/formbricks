@@ -216,8 +216,8 @@ export default function PreviewSurvey({
                   />
                 </Modal>
               ) : (
-                <div className="px-4">
-                  <div className="no-scrollbar z-10 max-h-[500px] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                <div className="w-full px-3">
+                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
                       brandColor={brandColor}
@@ -241,8 +241,9 @@ export default function PreviewSurvey({
                 <div className="h-3 w-3 rounded-full bg-amber-500"></div>
                 <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
               </div>
-              <p className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                {previewType === "modal" ? "Your web app" : "Preview"}
+              <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+                <p>{previewType === "modal" ? "Your web app" : "Preview"}</p>
+
                 <div className="flex items-center">
                   {isFullScreenPreview ? (
                     <ArrowsPointingInIcon
@@ -265,7 +266,7 @@ export default function PreviewSurvey({
                   )}
                   <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
                 </div>
-              </p>
+              </div>
             </div>
 
             {previewType === "modal" ? (

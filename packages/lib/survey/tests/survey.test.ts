@@ -3,7 +3,7 @@ import { prisma } from "../../__mocks__/database";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { testInputValidation } from "../../vitestSetup";
 import {
@@ -204,6 +204,7 @@ describe("Tests for createSurvey", () => {
     it("Creates a survey successfully", async () => {
       prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
       prisma.team.findFirst.mockResolvedValueOnce(mockTeamOutput);
+      prisma.actionClass.findMany.mockResolvedValue([mockActionClass]);
       prisma.user.findMany.mockResolvedValueOnce([
         {
           ...mockUser,

@@ -7,8 +7,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 
 interface MultipleChoiceMultiProps {
@@ -127,7 +126,7 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="bg-survey-bg relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}

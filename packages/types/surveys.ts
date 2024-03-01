@@ -391,7 +391,7 @@ export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 
-const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
+export const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
 
 export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
 
@@ -477,7 +477,7 @@ export const ZSurveyInput = z
     welcomeCard: ZSurveyWelcomeCard.optional(),
     questions: ZSurveyQuestions.optional(),
     thankYouCard: ZSurveyThankYouCard.optional(),
-    hiddenFields: ZSurveyHiddenFields,
+    hiddenFields: ZSurveyHiddenFields.optional(),
     delay: z.number().optional(),
     autoComplete: z.number().optional(),
     closeOnDate: z.date().optional(),

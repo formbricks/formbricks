@@ -194,10 +194,14 @@ export const inviteUser = async ({
   currentUser,
   invitee,
   teamId,
+  isOnboardingInvite,
+  inviteMessage,
 }: {
   teamId: string;
   invitee: TInvitee;
   currentUser: TCurrentUser;
+  isOnboardingInvite?: boolean;
+  inviteMessage?: string;
 }): Promise<TInvite> => {
   validateInputs([teamId, ZString], [invitee, ZInvitee], [currentUser, ZCurrentUser]);
 
@@ -239,6 +243,6 @@ export const inviteUser = async ({
     teamId: invite.teamId,
   });
 
-  await sendInviteMemberEmail(invite.id, email, currentUserName, name);
+  await sendInviteMemberEmail(invite.id, email, currentUserName, name, isOnboardingInvite, inviteMessage);
   return invite;
 };
