@@ -100,7 +100,10 @@ const getActionClassIdFromName = (actionClasses: TActionClass[], actionClassName
   return actionClasses.find((actionClass) => actionClass.name === actionClassName)!.id;
 };
 
-const revalidateSurveyByActionClassId = (actionClasses: TActionClass[], actionClassNames: string[]): void => {
+const revalidateSurveyByActionClassName = (
+  actionClasses: TActionClass[],
+  actionClassNames: string[]
+): void => {
   for (const actionClassName of actionClassNames) {
     const actionClassId: string = getActionClassIdFromName(actionClasses, actionClassName);
     surveyCache.revalidate({
@@ -128,7 +131,7 @@ const processTriggerUpdates = (
   // find removed triggers
   for (const trigger of currentSurveyTriggers) {
     if (!triggers.includes(trigger)) {
-      removedTriggers.push(getActionClassIdFromName(actionClasses, trigger));
+      removedTriggers.push(trigger);
     }
   }
 
@@ -143,10 +146,12 @@ const processTriggerUpdates = (
 
   if (removedTriggers.length > 0) {
     triggersUpdate.deleteMany = {
-      actionClassId: { in: removedTriggers },
+      actionClassId: {
+        in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
+      },
     };
   }
-  revalidateSurveyByActionClassId(actionClasses, [...newTriggers, ...removedTriggers]);
+  revalidateSurveyByActionClassName(actionClasses, [...newTriggers, ...removedTriggers]);
   return triggersUpdate;
 };
 
@@ -438,7 +443,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 
   if (surveyBody.triggers) {
     const actionClasses = await getActionClasses(environmentId);
-    revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
+    revalidateSurveyByActionClassName(actionClasses, surveyBody.triggers);
   }
 
   const createdBy = surveyBody.createdBy;
@@ -561,7 +566,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
   }
 
   // Revalidate surveys by actionClassId
-  revalidateSurveyByActionClassId(actionClasses, existingSurvey.triggers);
+  revalidateSurveyByActionClassName(actionClasses, existingSurvey.triggers);
 
   return newSurvey;
 };
