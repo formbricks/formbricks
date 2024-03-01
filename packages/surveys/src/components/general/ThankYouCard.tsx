@@ -75,7 +75,7 @@ export default function ThankYouCard({
               isLastQuestion={false}
               onClick={() => {
                 if (!buttonLink) return;
-                window.location.href = buttonLink;
+                window.location.replace(buttonLink);
               }}
             />
             <p class="text-xs">Press Enter ↵</p>

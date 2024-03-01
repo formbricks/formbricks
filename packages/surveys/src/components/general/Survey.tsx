@@ -150,6 +150,9 @@ export function Survey({
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
+      // Dispatching a custom event when the survey is completed
+      const event = new CustomEvent("formbricksSurveyCompleted", { detail: { surveyId: survey.id } });
+      window.top?.dispatchEvent(event);
       onFinished();
     }
     setQuestionId(nextQuestionId);
