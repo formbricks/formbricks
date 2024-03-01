@@ -162,9 +162,13 @@ export default function LinkSurvey({
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
           }}
-          getSetIsResponseSendingFinished={(f: (value: boolean) => void) => {
-            setIsResponseSendingFinished = f;
-          }}
+          getSetIsResponseSendingFinished={
+            !isPreview
+              ? (f: (value: boolean) => void) => {
+                  setIsResponseSendingFinished = f;
+                }
+              : undefined
+          }
           onRetry={() => {
             setIsError(false);
             responseQueue.processQueue();
