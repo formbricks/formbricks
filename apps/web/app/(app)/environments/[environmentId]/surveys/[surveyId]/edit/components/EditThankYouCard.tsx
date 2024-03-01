@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -32,7 +33,9 @@ export default function EditThankYouCard({
   // const [open, setOpen] = useState(false);
   let open = activeQuestionId == "end";
   const [showThankYouCardCTA, setshowThankYouCardCTA] = useState<boolean>(
-    localSurvey.thankYouCard.buttonLabel || localSurvey.thankYouCard.buttonLink ? true : false
+    getLocalizedValue(localSurvey.thankYouCard.buttonLabel, "default") || localSurvey.thankYouCard.buttonLink
+      ? true
+      : false
   );
   const setOpen = (e) => {
     if (e) {

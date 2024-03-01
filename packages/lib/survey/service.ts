@@ -558,8 +558,8 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
   };
 
   if (surveyBody.type === "web" && data.thankYouCard) {
-    data.thankYouCard.buttonLabel = { default: "" };
-    data.thankYouCard.buttonLink = "";
+    data.thankYouCard.buttonLabel = undefined;
+    data.thankYouCard.buttonLink = undefined;
   }
 
   if (createdBy) {
