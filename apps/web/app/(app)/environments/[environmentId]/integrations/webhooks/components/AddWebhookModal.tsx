@@ -53,7 +53,8 @@ export default function AddWebhookModal({ environmentId, surveys, open, setOpen 
       return true;
     } catch (err) {
       setHittingEndpoint(false);
-      toast.error("Oh no! We are unable to ping the webhook!");
+      toast.error("Unable to ping the webhook! Please check browser console for logs");
+      console.error("Webhook Test Failed due to: ", err.message);
       setEndpointAccessible(false);
       return false;
     }

@@ -32,3 +32,22 @@ export const personCache = {
     }
   },
 };
+
+interface ActivePersonRevalidateProps {
+  id?: string;
+  environmentId?: string;
+  userId?: string;
+}
+
+export const activePersonCache = {
+  tag: {
+    byId(personId: string): string {
+      return `people-${personId}-active`;
+    },
+  },
+  revalidate({ id }: ActivePersonRevalidateProps): void {
+    if (id) {
+      revalidateTag(this.tag.byEnvironmentId(id));
+    }
+  },
+};

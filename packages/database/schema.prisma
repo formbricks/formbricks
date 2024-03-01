@@ -63,7 +63,7 @@ model Attribute {
   personId         String
   value            String
 
-  @@unique([attributeClassId, personId])
+  @@unique([personId, attributeClassId])
 }
 
 enum AttributeType {
@@ -86,7 +86,8 @@ model AttributeClass {
   attributeFilters SurveyAttributeFilter[]
 
   @@unique([name, environmentId])
-  @@index([environmentId])
+  @@index([environmentId, createdAt])
+  @@index([environmentId, archived])
 }
 
 model Person {
@@ -350,8 +351,9 @@ model Action {
   /// [ActionProperties]
   properties    Json        @default("{}")
 
+  @@index([personId, actionClassId, createdAt])
+  @@index([actionClassId, createdAt])
   @@index([personId])
-  @@index([actionClassId])
 }
 
 enum EnvironmentType {
