@@ -1,8 +1,8 @@
 import { diffInDays } from "@formbricks/lib/utils/datetime";
-import { TJsConfig, TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
+import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
 
-import { Config, LOCAL_STORAGE_KEY } from "./config";
-import { NetworkError, Result, err, ok, wrapThrows } from "./errors";
+import { Config } from "./config";
+import { NetworkError, Result, err, ok } from "./errors";
 import { Logger } from "./logger";
 import { getIsDebug } from "./utils";
 
@@ -79,34 +79,6 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
     const syncResult = await syncWithBackend(params, noCache);
 
     if (syncResult?.ok !== true) {
-      let existingConfig: TJsConfig;
-
-      // two cases:
-      // 1. This is the first sync call, the config is not yet initialized
-      // 2. The config is already initialized, but the sync call failed
-
-      try {
-        existingConfig = config.get();
-      } catch (e) {
-        // case 1 -> config is not yet initialized
-        // we initialize the config with only a "status" field set to "error"
-        // and an expiry time of 10 minutes in the future
-        logger.debug("Sync call on init failed. Entering error state.");
-        const initialErrorConfig: Partial<TJsConfig> = {
-          status: "error",
-          expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
-        };
-
-        // can't use config.update here because the config is not yet initialized
-        wrapThrows(() => localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
-        throw syncResult.error;
-      }
-
-      // case 2 -> config is already initialized, but the sync call failed
-      // just extending the config
-      logger.debug("Sync call failed. Extending existing config.");
-      config.update(existingConfig);
-
       throw syncResult.error;
     }
 
@@ -210,13 +182,11 @@ export const addExpiryCheckListener = (): void => {
           return;
         }
         logger.debug("Config has expired. Starting sync.");
-        await sync({
-          apiHost: config.get().apiHost,
-          environmentId: config.get().environmentId,
-          userId: config.get().userId,
-        });
       } catch (e) {
         logger.error(`Error during expiry check: ${e}`);
+        logger.debug("Extending config and try again later.");
+        const existingConfig = config.get();
+        config.update(existingConfig);
       }
     }, updateInterval);
   }

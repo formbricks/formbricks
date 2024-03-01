@@ -2,7 +2,7 @@ import type { TJsConfig, TJsConfigInput } from "@formbricks/types/js";
 import { TPersonAttributes } from "@formbricks/types/people";
 
 import { trackAction } from "./actions";
-import { Config } from "./config";
+import { Config, LOCAL_STORAGE_KEY } from "./config";
 import {
   ErrorHandler,
   MissingFieldError,
@@ -12,6 +12,7 @@ import {
   Result,
   err,
   okVoid,
+  wrapThrows,
 } from "./errors";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
 import { Logger } from "./logger";
@@ -116,11 +117,15 @@ export const initialize = async (
     if (existingConfig.expiresAt < new Date()) {
       logger.debug("Configuration expired.");
 
-      await sync({
-        apiHost: c.apiHost,
-        environmentId: c.environmentId,
-        userId: c.userId,
-      });
+      try {
+        await sync({
+          apiHost: c.apiHost,
+          environmentId: c.environmentId,
+          userId: c.userId,
+        });
+      } catch (e) {
+        putFormbricksInErrorState();
+      }
     } else {
       logger.debug("Configuration not expired. Extending expiration.");
       config.update(existingConfig);
@@ -132,12 +137,15 @@ export const initialize = async (
     config.resetConfig();
     logger.debug("Syncing.");
 
-    await sync({
-      apiHost: c.apiHost,
-      environmentId: c.environmentId,
-      userId: c.userId,
-    });
-
+    try {
+      await sync({
+        apiHost: c.apiHost,
+        environmentId: c.environmentId,
+        userId: c.userId,
+      });
+    } catch (e) {
+      handleErrorOnFirstInit();
+    }
     // and track the new session event
     await trackAction("New Session");
   }
@@ -166,6 +174,17 @@ export const initialize = async (
 
   checkPageUrl();
   return okVoid();
+};
+
+const handleErrorOnFirstInit = () => {
+  // put formbricks in error state (by creating a new config) and throw error
+  const initialErrorConfig: Partial<TJsConfig> = {
+    status: "error",
+    expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+  };
+  // can't use config.update here because the config is not yet initialized
+  wrapThrows(() => localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  throw new Error("Could not initialize formbricks");
 };
 
 export const checkInitialized = (): Result<void, NotInitializedError> => {
