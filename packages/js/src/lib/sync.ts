@@ -90,7 +90,7 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
         // and an expiry time of 10 minutes in the future
         const initialErrorConfig: Partial<TJsConfig> = {
           status: "error",
-          expiresAt: new Date(new Date().getTime() + 10 * 60000),
+          expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
         };
 
         // can't use config.update here because the config is not yet initialized
@@ -201,16 +201,20 @@ export const addExpiryCheckListener = (): void => {
   // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined" && syncIntervalId === null) {
     syncIntervalId = window.setInterval(async () => {
-      // check if the config has not expired yet
-      if (config.get().expiresAt && new Date(config.get().expiresAt) >= new Date()) {
-        return;
+      try {
+        // check if the config has not expired yet
+        if (config.get().expiresAt && new Date(config.get().expiresAt) >= new Date()) {
+          return;
+        }
+        logger.debug("Config has expired. Starting sync.");
+        await sync({
+          apiHost: config.get().apiHost,
+          environmentId: config.get().environmentId,
+          userId: config.get().userId,
+        });
+      } catch (e) {
+        logger.error(`Error during expiry check: ${e}`);
       }
-      logger.debug("Config has expired. Starting sync.");
-      await sync({
-        apiHost: config.get().apiHost,
-        environmentId: config.get().environmentId,
-        userId: config.get().userId,
-      });
     }, updateInterval);
   }
 };

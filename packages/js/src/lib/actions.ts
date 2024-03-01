@@ -1,5 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { TJsActionInput, TJsConfig } from "@formbricks/types/js";
+import { TJsActionInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { Config } from "./config";
@@ -20,16 +20,10 @@ const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
 };
 
 export const trackAction = async (name: string): Promise<Result<void, NetworkError>> => {
-  let existingConfig: TJsConfig | undefined;
-
-  try {
-    existingConfig = config.get();
-  } catch (e) {
-    logger.debug("No existing configuration found.");
-  }
-
-  const { userId, state } = existingConfig ?? {};
-  const { surveys = [] } = state ?? {};
+  const {
+    userId,
+    state: { surveys = [] },
+  } = config.get();
 
   // if surveys have a inline triggers, we need to check the name of the action in the code action config
   surveys.forEach(async (survey) => {

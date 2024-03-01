@@ -30,6 +30,7 @@ export class Config {
       this.config = {
         ...this.config,
         ...newConfig,
+        status: newConfig.status || "success",
         expiresAt,
       };
 

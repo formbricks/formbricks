@@ -19,12 +19,16 @@ import { checkPageUrl } from "./noCodeActions";
 import { updatePersonAttributes } from "./person";
 import { sync } from "./sync";
 import { getIsDebug } from "./utils";
-import { addWidgetContainer, closeSurvey, removeWidgetContainer } from "./widget";
+import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
+
+export const setIsInitialized = (value: boolean) => {
+  isInitialized = value;
+};
 
 export const initialize = async (
   c: TJsConfigInput
@@ -33,24 +37,28 @@ export const initialize = async (
     logger.configure({ logLevel: "debug" });
   }
 
+  if (isInitialized) {
+    logger.debug("Already initialized, skipping initialization.");
+    return okVoid();
+  }
+
   let existingConfig: TJsConfig | undefined;
   try {
     existingConfig = config.get();
+    logger.debug("Found existing configuration.");
   } catch (e) {
     logger.debug("No existing configuration found.");
   }
 
   // formbricks is in error state, skip initialization
-  if (existingConfig?.status === "error" && !!existingConfig?.expiresAt) {
-    logger.debug("formbricks is in error state, skipping initialization");
-    logger.debug("Adding event listeners");
-
-    return okVoid();
-  }
-
-  if (isInitialized) {
-    logger.debug("Already initialized, skipping initialization.");
-    return okVoid();
+  if (existingConfig?.status === "error") {
+    logger.debug("Formbricks was set to an error state.");
+    if (existingConfig?.expiresAt && new Date(existingConfig.expiresAt) > new Date()) {
+      logger.debug("Error state is not expired, skipping initialization");
+      return okVoid();
+    } else {
+      logger.debug("Error state is expired. Continue with initialization.");
+    }
   }
 
   ErrorHandler.getInstance().printStatus();
@@ -104,7 +112,7 @@ export const initialize = async (
     existingConfig.userId === c.userId &&
     existingConfig.expiresAt // only accept config when they follow new config version with expiresAt
   ) {
-    logger.debug("Found existing configuration.");
+    logger.debug("Configuration fits init parameters.");
     if (existingConfig.expiresAt < new Date()) {
       logger.debug("Configuration expired.");
 
@@ -148,7 +156,7 @@ export const initialize = async (
   addEventListeners();
   addCleanupEventListeners();
 
-  isInitialized = true;
+  setIsInitialized(true);
   logger.debug("Initialized");
 
   // check page url if initialized after page load
@@ -171,25 +179,18 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
 
 export const deinitalize = (): void => {
   logger.debug("Deinitializing");
-  closeSurvey();
+  removeWidgetContainer();
+  setIsSurveyRunning(false);
   removeAllEventListeners();
-  config.resetConfig();
-  isInitialized = false;
+  setIsInitialized(false);
 };
 
 export const putFormbricksInErrorState = (): void => {
   logger.debug("Putting formbricks in error state");
-
   // change formbricks status to error
   config.update({
     ...config.get(),
     status: "error",
   });
-
-  // close survey
-  removeWidgetContainer();
-  addWidgetContainer();
-
-  // remove all event listeners
-  removeAllEventListeners();
+  deinitalize();
 };

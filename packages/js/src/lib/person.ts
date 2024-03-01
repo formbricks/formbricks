@@ -55,23 +55,7 @@ export const updatePersonAttribute = async (
   }
 
   if (res.data.changed) {
-    logger.debug("Attribute updated. Syncing...");
-
-    try {
-      await sync(
-        {
-          environmentId: environmentId,
-          apiHost: apiHost,
-          userId: userId,
-        },
-        true
-      );
-    } catch (err: any) {
-      if (err.code === "network_error") {
-        // sync failed, put formbricks in error state
-        putFormbricksInErrorState();
-      }
-    }
+    logger.debug("Attribute updated in Formbricks");
   }
 
   return okVoid();
@@ -186,6 +170,7 @@ export const setPersonAttribute = async (
 
 export const logoutPerson = async (): Promise<void> => {
   deinitalize();
+  config.resetConfig();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {

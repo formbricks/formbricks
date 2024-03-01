@@ -16,16 +16,20 @@ const containerId = "formbricks-web-container";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
-let surveyRunning = false;
+let isSurveyRunning = false;
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
 
+export const setIsSurveyRunning = (value: boolean) => {
+  isSurveyRunning = value;
+};
+
 export const renderWidget = async (survey: TSurvey) => {
-  if (surveyRunning) {
+  if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
   }
-  surveyRunning = true;
+  setIsSurveyRunning(false);
 
   if (survey.delay) {
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
@@ -165,7 +169,7 @@ export const renderWidget = async (survey: TSurvey) => {
 
 export const closeSurvey = async (): Promise<void> => {
   // remove container element from DOM
-  document.getElementById(containerId)?.remove();
+  removeWidgetContainer();
   addWidgetContainer();
 
   // if unidentified user, refilter the surveys
@@ -176,7 +180,7 @@ export const closeSurvey = async (): Promise<void> => {
       ...config.get(),
       state: updatedState,
     });
-    surveyRunning = false;
+    setIsSurveyRunning(false);
     return;
   }
 
@@ -190,13 +194,10 @@ export const closeSurvey = async (): Promise<void> => {
       },
       true
     );
-    surveyRunning = false;
+    setIsSurveyRunning(false);
   } catch (e: any) {
-    if (e.code === "network_error") {
-      // sync has failed, we need to put formbricks in an error state
-      putFormbricksInErrorState();
-    }
     errorHandler.handle(e);
+    putFormbricksInErrorState();
   }
 };
 
