@@ -2,6 +2,7 @@
 
 import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
 import { EnvelopeIcon } from "@heroicons/react/24/solid";
+import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
@@ -130,11 +131,8 @@ export default function VerifyEmail({
               We sent an email to <span className="font-semibold italic">{email}</span>. Please click the link
               in the email to take your survey.
             </p>
-            <Button
-              variant="secondary"
-              className="mt-6 cursor-pointer text-sm text-slate-400"
-              onClick={handleGoBackClick}>
-              Go Back
+            <Button variant="secondary" className="mt-6" onClick={handleGoBackClick} StartIcon={ArrowLeft}>
+              Back
             </Button>
           </div>
         )}
