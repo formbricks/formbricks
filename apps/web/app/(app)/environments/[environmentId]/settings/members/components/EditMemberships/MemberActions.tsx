@@ -111,7 +111,7 @@ export default function MemberActions({ team, member, invite, showDeleteButton }
                 onClick={() => {
                   handleShareInvite();
                 }}
-                id="shareInviteButton">
+                className="shareInviteButton">
                 <ShareIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
               </button>
             </TooltipTrigger>
