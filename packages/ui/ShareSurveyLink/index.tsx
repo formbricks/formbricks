@@ -41,7 +41,7 @@ const LanguageDropdown = ({ survey, setLanguage }: LanguageDropdownProps) => {
             {survey.languages.map((surveyLanguage) => (
               <div
                 key={surveyLanguage.language.code}
-                className="rounded-md px-1 py-2 hover:cursor-pointer hover:bg-slate-700"
+                className="rounded-md p-2 hover:cursor-pointer hover:bg-slate-700"
                 onClick={() => {
                   setLanguage(surveyLanguage.language.code);
                   setShowLanguageSelect(false);

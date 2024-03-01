@@ -111,7 +111,11 @@ export const translateThankYouCard = (
     clonedThankYouCard.subheader = createI18nString(thankYouCard.subheader, languages, targetLanguageCode);
   }
   if (thankYouCard.buttonLabel) {
-    clonedThankYouCard.subheader = createI18nString(thankYouCard.buttonLabel, languages, targetLanguageCode);
+    clonedThankYouCard.buttonLabel = createI18nString(
+      thankYouCard.buttonLabel,
+      languages,
+      targetLanguageCode
+    );
   }
 
   return clonedThankYouCard;
@@ -425,7 +429,7 @@ const reverseTranslateThankYouCard = (
     clonedThankYouCard.subheader = extractStringFromI18n(thankYouCard.subheader, languageCode);
   }
   if (thankYouCard.buttonLabel) {
-    clonedThankYouCard.subheader = extractStringFromI18n(thankYouCard.buttonLabel, languageCode);
+    clonedThankYouCard.buttonLabel = extractStringFromI18n(thankYouCard.buttonLabel, languageCode);
   }
 
   return clonedThankYouCard;
