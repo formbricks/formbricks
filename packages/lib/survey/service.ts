@@ -117,7 +117,10 @@ const getActionClassIdFromName = (actionClasses: TActionClass[], actionClassName
   return actionClasses.find((actionClass) => actionClass.name === actionClassName)!.id;
 };
 
-const revalidateSurveyByActionClassId = (actionClasses: TActionClass[], actionClassNames: string[]): void => {
+const revalidateSurveyByActionClassName = (
+  actionClasses: TActionClass[],
+  actionClassNames: string[]
+): void => {
   for (const actionClassName of actionClassNames) {
     const actionClassId: string = getActionClassIdFromName(actionClasses, actionClassName);
     surveyCache.revalidate({
@@ -127,7 +130,7 @@ const revalidateSurveyByActionClassId = (actionClasses: TActionClass[], actionCl
 };
 
 const processTriggerUpdates = (
-  updatedTriggers: string[],
+  triggers: string[],
   currentSurveyTriggers: string[],
   actionClasses: TActionClass[]
 ) => {
@@ -135,7 +138,7 @@ const processTriggerUpdates = (
   const removedTriggers: string[] = [];
 
   // find added triggers
-  for (const trigger of updatedTriggers) {
+  for (const trigger of triggers) {
     if (!trigger || currentSurveyTriggers.includes(trigger)) {
       continue;
     }
@@ -144,7 +147,7 @@ const processTriggerUpdates = (
 
   // find removed triggers
   for (const trigger of currentSurveyTriggers) {
-    if (!updatedTriggers.includes(trigger)) {
+    if (!triggers.includes(trigger)) {
       removedTriggers.push(trigger);
     }
   }
@@ -165,7 +168,7 @@ const processTriggerUpdates = (
       },
     };
   }
-  revalidateSurveyByActionClassId(actionClasses, [...newTriggers, ...removedTriggers]);
+  revalidateSurveyByActionClassName(actionClasses, [...newTriggers, ...removedTriggers]);
   return triggersUpdate;
 };
 
@@ -540,7 +543,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 
   if (surveyBody.triggers) {
     const actionClasses = await getActionClasses(environmentId);
-    revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
+    revalidateSurveyByActionClassName(actionClasses, surveyBody.triggers);
   }
   const createdBy = surveyBody.createdBy;
   delete surveyBody.createdBy;
@@ -666,7 +669,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
   }
 
   // Revalidate surveys by actionClassId
-  revalidateSurveyByActionClassId(actionClasses, existingSurvey.triggers);
+  revalidateSurveyByActionClassName(actionClasses, existingSurvey.triggers);
 
   return newSurvey;
 };

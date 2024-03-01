@@ -81,7 +81,7 @@ export const SurveyLinkDisplay = ({ surveyUrl }: SurveyLinkDisplayProps) => {
 
   return (
     <div
-      className="mt-2 max-w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
+      className="mt-2 max-w-[80%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
       style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
       onClick={handleTextSelection}>
       {surveyUrl}
