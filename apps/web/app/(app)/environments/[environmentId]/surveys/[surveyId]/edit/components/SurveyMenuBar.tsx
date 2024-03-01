@@ -129,7 +129,10 @@ export default function SurveyMenuBar({
         !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", survey.languages) ||
         (survey.thankYouCard.subheader &&
           survey.thankYouCard.subheader[defaultLanguageCode] !== "" &&
-          !isLabelValidForAllLanguages(survey.thankYouCard.subheader, survey.languages))
+          !isLabelValidForAllLanguages(survey.thankYouCard.subheader, survey.languages)) ||
+        (survey.thankYouCard.buttonLabel &&
+          survey.thankYouCard.buttonLabel[defaultLanguageCode] !== "" &&
+          !isLabelValidForAllLanguages(survey.thankYouCard.buttonLabel, survey.languages))
       ) {
         faultyQuestions.push("end");
       }

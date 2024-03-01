@@ -167,7 +167,6 @@ export const questionTypes: TSurveyQuestionType[] = [
     icon: PhoneIcon,
     preset: {
       headline: { default: "Schedule a call with me" },
-      buttonLabel: { default: "Skip" },
       calUserName: "rick/get-rick-rolled",
     },
   },

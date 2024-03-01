@@ -16,8 +16,8 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import {
   createSurvey,
   getSurveys,
+  transformSurveyToSpecificLanguage,
   transformToLegacySurvey,
-  transformToSurveyWithDefaultLanguageOnly,
 } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
@@ -108,7 +108,7 @@ export async function GET(
         // Scenario 1: Version available, multi-language not allowed
         // Convert to TSurvey with default language only.
         transformedSurveys = await Promise.all(
-          inProgressWebSurveys.map(transformToSurveyWithDefaultLanguageOnly)
+          inProgressWebSurveys.map((survey) => transformSurveyToSpecificLanguage(survey, "default"))
         );
       } else {
         // Scenario 2: No version, multi-language not allowed

@@ -145,7 +145,9 @@ export const translateQuestion = (
 
   if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
     (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
-      question.choices.map((choice) => translateChoice(structuredClone(choice), languages));
+      question.choices.map((choice) =>
+        translateChoice(structuredClone(choice), languages, targetLanguageCode)
+      );
     (
       clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion
     ).otherOptionPlaceholder = question.otherOptionPlaceholder
@@ -232,8 +234,8 @@ export const translateSurvey = (
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languages, targetLanguageCode);
   });
-  const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languages);
-  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languages);
+  const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languages, targetLanguageCode);
+  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languages, targetLanguageCode);
   const translatedSurvey = structuredClone(survey);
   return {
     ...translatedSurvey,
