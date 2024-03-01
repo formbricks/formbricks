@@ -379,6 +379,7 @@ export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
 
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.address),
   addressRequired: z.boolean().default(false),
   addressLine2Required: z.boolean().default(false),
   cityRequired: z.boolean().default(false),
