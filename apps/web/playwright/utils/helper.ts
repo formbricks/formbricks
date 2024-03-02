@@ -12,11 +12,19 @@ export const signUpAndLogin = async (
   await page.goto("/auth/login");
   await page.getByRole("link", { name: "Create an account" }).click();
   await page.getByRole("button", { name: "Continue with Email" }).click();
+
+  await expect(page.getByPlaceholder("Full Name")).toBeVisible();
   await page.getByPlaceholder("Full Name").fill(name);
   await page.getByPlaceholder("Full Name").press("Tab");
+
+  await expect(page.getByPlaceholder("work@email.com")).toBeVisible();
+
   await page.getByPlaceholder("work@email.com").click();
   await page.getByPlaceholder("work@email.com").fill(email);
   await page.getByPlaceholder("work@email.com").press("Tab");
+
+  await expect(page.getByPlaceholder("*******")).toBeVisible();
+
   await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
   await page.getByRole("button", { name: "Continue with Email" }).click();
@@ -30,21 +38,39 @@ export const signUpAndLogin = async (
 
 export const login = async (page: Page, email: string, password: string): Promise<void> => {
   await page.goto("/auth/login");
+
+  await expect(page.getByRole("button", { name: "Login with Email" })).toBeVisible();
+
   await page.getByRole("button", { name: "Login with Email" }).click();
+
+  await expect(page.getByPlaceholder("work@email.com")).toBeVisible();
+
   await page.getByPlaceholder("work@email.com").fill(email);
+
+  await expect(page.getByPlaceholder("*******")).toBeVisible();
+
   await page.getByPlaceholder("*******").click();
   await page.getByPlaceholder("*******").fill(password);
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const skipOnboarding = async (page: Page): Promise<void> => {
+export const finishOnboarding = async (page: Page): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
-  await page.getByRole("button", { name: "I'll do it later" }).click();
-  await page.waitForTimeout(500);
-  await page.getByRole("button", { name: "I'll do it later" }).click();
+
+  const hiddenSkipButton = page.locator("#FB__INTERNAL__SKIP_ONBOARDING");
+  hiddenSkipButton.evaluate((el: HTMLElement) => el.click());
+
+  // await page.getByRole("button", { name: "In-app Surveys Run a survey" }).click();
+
+  // await page.getByRole("button", { name: "Skip" }).click();
+  // await page.getByRole("button", { name: "Skip" }).click();
+
+  // await page.getByRole("button", { name: "I am not sure how to do this" }).click();
+  // await page.locator("input").click();
+  // await page.locator("input").fill("test@gmail.com");
+  // await page.getByRole("button", { name: "Invite" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  await expect(page).toHaveURL(/\/environments\/[^/]+\/surveys/);
   await expect(page.getByText("My Product")).toBeVisible();
 };
 
@@ -87,7 +113,7 @@ export const createSurvey = async (
   const addQuestion = "Add QuestionAdd a new question to your survey";
 
   await signUpAndLogin(page, name, email, password);
-  await skipOnboarding(page);
+  await finishOnboarding(page);
 
   await page.getByRole("heading", { name: "Start from Scratch" }).click();
 

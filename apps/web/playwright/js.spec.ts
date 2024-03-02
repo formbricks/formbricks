@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { login, replaceEnvironmentIdInHtml, signUpAndLogin, skipOnboarding } from "./utils/helper";
+import { finishOnboarding, login, replaceEnvironmentIdInHtml, signUpAndLogin } from "./utils/helper";
 import { users } from "./utils/mock";
 
 test.describe("JS Package Test", async () => {
@@ -10,7 +10,7 @@ test.describe("JS Package Test", async () => {
 
   test("Admin creates an In-App Survey", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await skipOnboarding(page);
+    await finishOnboarding(page);
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
@@ -64,7 +64,8 @@ test.describe("JS Package Test", async () => {
     // Formbricks Modal is visible
     await expect(page.getByRole("link", { name: "Powered by Formbricks" })).toBeVisible();
 
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1500);
   });
 
   test("Admin checks Display", async ({ page }) => {
@@ -74,9 +75,11 @@ test.describe("JS Package Test", async () => {
     (await page.waitForSelector("text=Responses")).isVisible();
 
     // Survey should have 1 Display
+    await page.waitForTimeout(1000);
     await expect(page.getByText("Displays1")).toBeVisible();
 
     // Survey should have 0 Responses
+    await page.waitForTimeout(1000);
     await expect(page.getByRole("button", { name: "Responses0% -" })).toBeVisible();
   });
 
@@ -115,7 +118,7 @@ test.describe("JS Package Test", async () => {
     // Formbricks Modal is not visible
     await expect(page.getByText("Powered by Formbricks")).not.toBeVisible({ timeout: 10000 });
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1500);
   });
 
   test("Admin validates Response", async ({ page }) => {
@@ -125,8 +128,11 @@ test.describe("JS Package Test", async () => {
     (await page.waitForSelector("text=Responses")).isVisible();
 
     // Survey should have 2 Displays
+    await page.waitForTimeout(1000);
     await expect(page.getByText("Displays2")).toBeVisible();
+
     // Survey should have 1 Response
+    await page.waitForTimeout(1000);
     await expect(page.getByRole("button", { name: "Responses50%" })).toBeVisible();
     await expect(page.getByText("1 responses", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("Clickthrough Rate (CTR)100%")).toBeVisible();

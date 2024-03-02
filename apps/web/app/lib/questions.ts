@@ -36,6 +36,7 @@ export const questionTypes: TSurveyQuestionType[] = [
       subheader: "Who? Who? Who?",
       placeholder: "Type your answer here...",
       longAnswer: true,
+      inputType: "text",
     },
   },
   {

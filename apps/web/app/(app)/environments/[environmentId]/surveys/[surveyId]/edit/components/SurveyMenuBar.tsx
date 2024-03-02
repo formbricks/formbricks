@@ -314,12 +314,6 @@ export default function SurveyMenuBar({
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
         router.back();
-      } else {
-        if (localSurvey.status !== "draft") {
-          router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary`);
-        } else {
-          router.push(`/environments/${environment.id}/surveys`);
-        }
       }
     } catch (e) {
       console.error(e);

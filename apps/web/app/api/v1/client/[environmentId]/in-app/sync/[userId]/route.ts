@@ -3,7 +3,6 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
 
-import { getLatestActionByPersonId } from "@formbricks/lib/action/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   IS_FORMBRICKS_CLOUD,
@@ -11,7 +10,7 @@ import {
   PRICING_USERTARGETING_FREE_MTU,
 } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
-import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
+import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import {
@@ -95,10 +94,12 @@ export async function GET(
 
     let person = await getPersonByUserId(environmentId, userId);
     if (!isMauLimitReached) {
+      // MAU limit not reached: create person if not exists
       if (!person) {
         person = await createPerson(environmentId, userId);
       }
     } else {
+      // MAU limit reached: check if person has been active this month; only continue if person has been active
       await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "userTargeting");
       const errorMessage = `Monthly Active Users limit in the current plan is reached in ${environmentId}`;
       if (!person) {
@@ -110,8 +111,8 @@ export async function GET(
         );
       } else {
         // check if person has been active this month
-        const latestAction = await getLatestActionByPersonId(person.id);
-        if (!latestAction || new Date(latestAction.createdAt).getMonth() !== new Date().getMonth()) {
+        const isPersonMonthlyActive = await getIsPersonMonthlyActive(person.id);
+        if (!isPersonMonthlyActive) {
           return responses.tooManyRequestsResponse(
             errorMessage,
             true,
