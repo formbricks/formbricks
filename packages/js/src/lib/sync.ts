@@ -182,6 +182,11 @@ export const addExpiryCheckListener = (): void => {
           return;
         }
         logger.debug("Config has expired. Starting sync.");
+        await sync({
+          apiHost: config.get().apiHost,
+          environmentId: config.get().environmentId,
+          userId: config.get().userId,
+        });
       } catch (e) {
         logger.error(`Error during expiry check: ${e}`);
         logger.debug("Extending config and try again later.");
