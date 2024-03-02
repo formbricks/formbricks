@@ -216,7 +216,7 @@ export default function PreviewSurvey({
                   />
                 </Modal>
               ) : (
-                <div className="w-full px-4">
+                <div className="w-full px-3">
                   <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
