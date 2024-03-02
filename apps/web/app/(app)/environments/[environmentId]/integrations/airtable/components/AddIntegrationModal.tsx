@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { Control, Controller, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
@@ -333,7 +334,7 @@ export default function AddIntegrationModal(props: AddIntegrationModalProps) {
                 <Label htmlFor="Surveys">Questions</Label>
                 <div className="mt-1 rounded-lg border border-slate-200">
                   <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                    {selectedSurvey?.questions.map((question) => (
+                    {checkForRecallInHeadline(selectedSurvey)?.questions.map((question) => (
                       <Controller
                         key={question.id}
                         control={control}

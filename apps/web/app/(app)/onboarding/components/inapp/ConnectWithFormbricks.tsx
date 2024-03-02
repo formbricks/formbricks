@@ -129,7 +129,7 @@ export function ConnectWithFormbricks({
       setLocalEnvironment(refetchedEnvironment);
     };
     fetchLatestEnvironmentOnFirstLoad();
-  }, []);
+  }, [environment.id]);
 
   return localEnvironment.widgetSetupCompleted ? (
     <ConnectedState
