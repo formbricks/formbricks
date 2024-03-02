@@ -7,12 +7,11 @@ import Link from "next/link";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
-import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
+import { TSurveySummaryFileUpload } from "@formbricks/types/responses";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 
 interface FileUploadSummaryProps {
-  questionSummary: TSurveyQuestionSummary<TSurveyFileUploadQuestion>;
+  questionSummary: TSurveySummaryFileUpload;
   environmentId: string;
 }
 
@@ -31,7 +30,7 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4" />
-            {questionSummary.responses.length} Responses
+            {questionSummary.responseCount} Responses
           </div>
           {!questionSummary.question.required && (
             <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
@@ -44,7 +43,7 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
           <div className="px-4 md:px-6">Time</div>
         </div>
-        {questionSummary.responses.map((response) => {
+        {questionSummary.files.map((response) => {
           const displayIdentifier = response.person ? getPersonIdentifier(response.person) : null;
 
           return (
@@ -74,12 +73,6 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
               </div>
 
               <div className="col-span-2 grid">
-                {response.value === "skipped" && (
-                  <div className="flex w-full flex-col items-center justify-center p-2">
-                    <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">skipped</p>
-                  </div>
-                )}
-
                 {Array.isArray(response.value) &&
                   (response.value.length > 0 ? (
                     response.value.map((fileUrl, index) => {
@@ -114,7 +107,9 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
                   ))}
               </div>
 
-              <div className="px-4 text-slate-500 md:px-6">{timeSince(response.updatedAt.toISOString())}</div>
+              <div className="px-4 text-slate-500 md:px-6">
+                {timeSince(new Date(response.updatedAt).toISOString())}
+              </div>
             </div>
           );
         })}

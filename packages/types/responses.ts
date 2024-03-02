@@ -270,6 +270,7 @@ export const ZSurveySummaryOpenText = z.object({
   responseCount: z.number(),
   samples: z.array(
     z.object({
+      id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
       person: ZPerson,
@@ -330,6 +331,10 @@ export const ZSurveySummaryRating = z.object({
       percentage: z.number(),
     })
   ),
+  dismissed: z.object({
+    count: z.number(),
+    percentage: z.number(),
+  }),
 });
 
 export type TSurveySummaryRating = z.infer<typeof ZSurveySummaryRating>;
@@ -349,6 +354,10 @@ export const ZSurveySummaryNps = z.object({
     percentage: z.number(),
   }),
   detractors: z.object({
+    count: z.number(),
+    percentage: z.number(),
+  }),
+  dismissed: z.object({
     count: z.number(),
     percentage: z.number(),
   }),
@@ -390,6 +399,7 @@ export const ZSurveySummaryDate = z.object({
   responseCount: z.number(),
   samples: z.array(
     z.object({
+      id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
       person: ZPerson,
@@ -405,6 +415,7 @@ export const ZSurveySummaryFileUpload = z.object({
   responseCount: z.number(),
   files: z.array(
     z.object({
+      id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
       person: ZPerson,

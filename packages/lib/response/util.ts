@@ -572,6 +572,7 @@ export const getQuestionWiseSummary = (
           const answer = response.data[question.id];
           if (answer) {
             values.push({
+              id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
               person: response.person,
@@ -591,7 +592,9 @@ export const getQuestionWiseSummary = (
       case TSurveyQuestionType.MultipleChoiceMulti: {
         values = [];
         // check last choice is others or not
-        const isOthersEnabled = question.choices[question.choices.length - 1].id === "other";
+        const lastChoice = question.choices[question.choices.length - 1];
+        const isOthersEnabled = lastChoice.id === "other";
+
         const questionChoices = question.choices.map((choice) => choice.label);
         if (isOthersEnabled) {
           questionChoices.pop();
@@ -642,7 +645,7 @@ export const getQuestionWiseSummary = (
 
         if (isOthersEnabled) {
           values.push({
-            value: "Other",
+            value: lastChoice.label || "Other",
             count: otherValues.length,
             percentage: (otherValues.length / totalResponseCount) * 100,
             others: otherValues.slice(0, VALUES_LIMIT),
@@ -706,6 +709,7 @@ export const getQuestionWiseSummary = (
 
         let totalResponseCount = 0;
         let totalRating = 0;
+        let dismissed = 0;
 
         responses.forEach((response) => {
           const answer = response.data[question.id];
@@ -713,12 +717,15 @@ export const getQuestionWiseSummary = (
             totalResponseCount++;
             choiceCountMap[answer]++;
             totalRating += answer;
+          } else if (response.ttc && response.ttc[question.id] > 0) {
+            totalResponseCount++;
+            dismissed++;
           }
         });
 
         Object.entries(choiceCountMap).map(([label, count]) => {
           values.push({
-            value: parseInt(label),
+            rating: parseInt(label),
             count,
             percentage: totalResponseCount > 0 ? (count / totalResponseCount) * 100 : 0,
           });
@@ -727,9 +734,13 @@ export const getQuestionWiseSummary = (
         summary.push({
           type: question.type,
           question,
-          average: totalRating / totalResponseCount || 0,
+          average: totalRating / (totalResponseCount - dismissed) || 0,
           responseCount: totalResponseCount,
           choices: values,
+          dismissed: {
+            count: dismissed,
+            percentage: totalResponseCount > 0 ? (dismissed / totalResponseCount) * 100 : 0,
+          },
         });
 
         break;
@@ -739,6 +750,7 @@ export const getQuestionWiseSummary = (
           promoters: 0,
           passives: 0,
           detractors: 0,
+          dismissed: 0,
           total: 0,
           score: 0,
         };
@@ -754,6 +766,9 @@ export const getQuestionWiseSummary = (
             } else {
               data.detractors++;
             }
+          } else if (response.ttc && response.ttc[question.id] > 0) {
+            data.total++;
+            data.dismissed++;
           }
         });
 
@@ -776,6 +791,10 @@ export const getQuestionWiseSummary = (
           detractors: {
             count: data.detractors,
             percentage: data.total > 0 ? (data.detractors / data.total) * 100 : 0,
+          },
+          dismissed: {
+            count: data.dismissed,
+            percentage: data.total > 0 ? (data.dismissed / data.total) * 100 : 0,
           },
         });
         break;
@@ -847,6 +866,7 @@ export const getQuestionWiseSummary = (
           const answer = response.data[question.id];
           if (answer) {
             values.push({
+              id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
               person: response.person,
@@ -868,6 +888,7 @@ export const getQuestionWiseSummary = (
           const answer = response.data[question.id];
           if (Array.isArray(answer)) {
             values.push({
+              id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
               person: response.person,

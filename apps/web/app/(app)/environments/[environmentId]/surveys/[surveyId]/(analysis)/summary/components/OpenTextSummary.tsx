@@ -2,27 +2,19 @@ import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId
 import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useState } from "react";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
-import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
+import { TSurveySummaryOpenText } from "@formbricks/types/responses";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 
 interface OpenTextSummaryProps {
-  questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;
+  questionSummary: TSurveySummaryOpenText;
   environmentId: string;
-  responsesPerPage: number;
 }
 
-export default function OpenTextSummary({
-  questionSummary,
-  environmentId,
-  responsesPerPage,
-}: OpenTextSummaryProps) {
+export default function OpenTextSummary({ questionSummary, environmentId }: OpenTextSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
-  const [displayCount, setDisplayCount] = useState(responsesPerPage);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -35,7 +27,7 @@ export default function OpenTextSummary({
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4" />
-            {questionSummary.responses.length} Responses
+            {questionSummary.responseCount} Responses
           </div>
           {!questionSummary.question.required && (
             <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
@@ -48,7 +40,7 @@ export default function OpenTextSummary({
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
           <div className="px-4 md:px-6">Time</div>
         </div>
-        {questionSummary.responses.slice(0, displayCount).map((response) => {
+        {questionSummary.samples.map((response) => {
           const displayIdentifier = getPersonIdentifier(response.person!);
           return (
             <div
@@ -78,21 +70,12 @@ export default function OpenTextSummary({
               <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
                 {response.value}
               </div>
-              <div className="px-4 text-slate-500 md:px-6">{timeSince(response.updatedAt.toISOString())}</div>
+              <div className="px-4 text-slate-500 md:px-6">
+                {timeSince(new Date(response.updatedAt).toISOString())}
+              </div>
             </div>
           );
         })}
-
-        {displayCount < questionSummary.responses.length && (
-          <div className="flex justify-center py-1">
-            <button
-              type="button"
-              onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
-              className="my-2 flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700">
-              Show more
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

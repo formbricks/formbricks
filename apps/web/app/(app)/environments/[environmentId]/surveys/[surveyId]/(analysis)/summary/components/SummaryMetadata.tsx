@@ -1,13 +1,12 @@
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
-import { TResponse, TSurveySummary } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SummaryMetadataProps {
-  responses: TResponse[];
   survey: TSurvey;
   setShowDropOffs: React.Dispatch<React.SetStateAction<boolean>>;
   showDropOffs: boolean;
@@ -51,7 +50,6 @@ function formatTime(ttc) {
 }
 
 export default function SummaryMetadata({
-  responses,
   survey,
   setShowDropOffs,
   showDropOffs,
@@ -87,13 +85,13 @@ export default function SummaryMetadata({
           <StatCard
             label="Responses"
             percentage={`${Math.round(completedPercentage)}%`}
-            value={responses.length === 0 ? <span>-</span> : completedResponses}
+            value={completedResponses === 0 ? <span>-</span> : completedResponses}
             tooltipText="Number of times the survey has been completed."
           />
           <StatCard
             label="Drop Offs"
             percentage={`${Math.round(dropoffRate)}%`}
-            value={responses.length === 0 ? <span>-</span> : dropoffs}
+            value={dropoffs === 0 ? <span>-</span> : dropoffs}
             tooltipText="Number of times the survey has been started but not completed."
           />
           <StatCard

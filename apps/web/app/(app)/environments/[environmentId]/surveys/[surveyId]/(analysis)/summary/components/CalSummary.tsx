@@ -1,19 +1,16 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 
-import { getPersonIdentifier } from "@formbricks/lib/person/util";
-import { timeSince } from "@formbricks/lib/time";
-import { TSurveyCalQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { PersonAvatar } from "@formbricks/ui/Avatars";
+import { TSurveySummaryCal } from "@formbricks/types/responses";
+import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 interface CalSummaryProps {
-  questionSummary: TSurveyQuestionSummary<TSurveyCalQuestion>;
+  questionSummary: TSurveySummaryCal;
   environmentId: string;
 }
 
-export default function CalSummary({ questionSummary, environmentId }: CalSummaryProps) {
+export default function CalSummary({ questionSummary }: CalSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   return (
@@ -28,50 +25,46 @@ export default function CalSummary({ questionSummary, environmentId }: CalSummar
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4" />
-            {questionSummary.responses.length} Responses
+            {questionSummary.responseCount} Responses
           </div>
+          {!questionSummary.question.required && (
+            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
+          )}
         </div>
       </div>
-      <div className="rounded-b-lg bg-white ">
-        <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
-          <div className="pl-4 md:pl-6">User</div>
-          <div className="col-span-2 pl-4 md:pl-6">Response</div>
-          <div className="px-4 md:px-6">Time</div>
-        </div>
-        {questionSummary.responses.map((response) => {
-          const displayIdentifier = response.person ? getPersonIdentifier(response.person) : null;
-          return (
-            <div
-              key={response.id}
-              className="grid  grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
-              <div className="pl-4 md:pl-6">
-                {response.person ? (
-                  <Link
-                    className="ph-no-capture group flex items-center"
-                    href={`/environments/${environmentId}/people/${response.person.id}`}>
-                    <div className="hidden md:flex">
-                      <PersonAvatar personId={response.person.id} />
-                    </div>
-                    <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                      {displayIdentifier}
-                    </p>
-                  </Link>
-                ) : (
-                  <div className="group flex items-center">
-                    <div className="hidden md:flex">
-                      <PersonAvatar personId="anonymous" />
-                    </div>
-                    <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
-                  </div>
-                )}
+      <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
+        <div>
+          <div className="text flex justify-between px-2 pb-2">
+            <div className="mr-8 flex space-x-1">
+              <p className="font-semibold text-slate-700">Booked</p>
+              <div>
+                <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                  {Math.round(questionSummary.booked.percentage)}%
+                </p>
               </div>
-              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold capitalize">
-                {response.value}
-              </div>
-              <div className="px-4 text-slate-500 md:px-6">{timeSince(response.updatedAt.toISOString())}</div>
             </div>
-          );
-        })}
+            <p className="flex w-32 items-end justify-end text-slate-600">
+              {questionSummary.booked.count} {questionSummary.booked.count === 1 ? "response" : "responses"}
+            </p>
+          </div>
+          <ProgressBar barColor="bg-brand" progress={questionSummary.booked.percentage / 100} />
+        </div>
+        <div>
+          <div className="text flex justify-between px-2 pb-2">
+            <div className="mr-8 flex space-x-1">
+              <p className="font-semibold text-slate-700">Dismissed</p>
+              <div>
+                <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
+                  {Math.round(questionSummary.skipped.percentage)}%
+                </p>
+              </div>
+            </div>
+            <p className="flex w-32 items-end justify-end text-slate-600">
+              {questionSummary.skipped.count} {questionSummary.skipped.count === 1 ? "response" : "responses"}
+            </p>
+          </div>
+          <ProgressBar barColor="bg-brand" progress={questionSummary.skipped.percentage / 100} />
+        </div>
       </div>
     </div>
   );

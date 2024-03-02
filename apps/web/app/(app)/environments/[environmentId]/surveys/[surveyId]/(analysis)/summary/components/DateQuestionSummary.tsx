@@ -2,27 +2,20 @@ import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId
 import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useState } from "react";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
-import type { TSurveyDateQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveySummaryDate } from "@formbricks/types/responses";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 
 interface DateQuestionSummary {
-  questionSummary: TSurveyQuestionSummary<TSurveyDateQuestion>;
+  questionSummary: TSurveySummaryDate;
   environmentId: string;
-  responsesPerPage: number;
 }
 
-export default function DateQuestionSummary({
-  questionSummary,
-  environmentId,
-  responsesPerPage,
-}: DateQuestionSummary) {
+export default function DateQuestionSummary({ questionSummary, environmentId }: DateQuestionSummary) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
-  const [displayCount, setDisplayCount] = useState(responsesPerPage);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -36,7 +29,7 @@ export default function DateQuestionSummary({
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4" />
-            {questionSummary.responses.length} Responses
+            {questionSummary.responseCount} Responses
           </div>
           {!questionSummary.question.required && (
             <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
@@ -49,8 +42,8 @@ export default function DateQuestionSummary({
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
           <div className="px-4 md:px-6">Time</div>
         </div>
-        {questionSummary.responses.slice(0, displayCount).map((response) => {
-          const displayIdentifier = getPersonIdentifier(response.person!);
+        {questionSummary.samples.map((response) => {
+          const displayIdentifier = getPersonIdentifier(response.person);
           return (
             <div
               key={response.id}
@@ -79,21 +72,12 @@ export default function DateQuestionSummary({
               <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
                 {formatDateWithOrdinal(new Date(response.value as string))}
               </div>
-              <div className="px-4 text-slate-500 md:px-6">{timeSince(response.updatedAt.toISOString())}</div>
+              <div className="px-4 text-slate-500 md:px-6">
+                {timeSince(new Date(response.updatedAt).toISOString())}
+              </div>
             </div>
           );
         })}
-
-        {displayCount < questionSummary.responses.length && (
-          <div className="my-1 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
-              className="my-2 flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700">
-              Show more
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
