@@ -49,7 +49,7 @@ export default function CalEmbed({ question, onSuccessfulBooking }: CalEmbedProp
   }, [cal, question.calUserName]);
 
   return (
-    <div className="relative mt-4 max-h-[30vh] overflow-auto">
+    <div className="relative mt-4 max-h-[33vh] overflow-auto">
       <div id="fb-cal-embed" className={cn("rounded-lg border border-slate-200")} />
     </div>
   );

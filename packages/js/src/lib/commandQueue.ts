@@ -46,7 +46,10 @@ export class CommandQueue {
       if (currentItem.checkInitialized) {
         const initResult = checkInitialized();
 
-        if (initResult && initResult.ok !== true) errorHandler.handle(initResult.error);
+        if (initResult && initResult.ok !== true) {
+          errorHandler.handle(initResult.error);
+          continue;
+        }
       }
 
       const executeCommand = async () => {

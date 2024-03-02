@@ -15,21 +15,42 @@ const syncWithBackend = async (
   { apiHost, environmentId, userId }: TJsSyncParams,
   noCache: boolean
 ): Promise<Result<TJsStateSync, NetworkError>> => {
-  const baseUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
-  const urlSuffix = `?version=${import.meta.env.VERSION}`;
+  try {
+    const baseUrl = `${apiHost}/api/v1/client/${environmentId}/in-app/sync`;
+    const urlSuffix = `?version=${import.meta.env.VERSION}`;
 
-  let fetchOptions: RequestInit = {};
+    let fetchOptions: RequestInit = {};
 
-  if (noCache || getIsDebug()) {
-    fetchOptions.cache = "no-cache";
-    logger.debug("No cache option set for sync");
-  }
+    if (noCache || getIsDebug()) {
+      fetchOptions.cache = "no-cache";
+      logger.debug("No cache option set for sync");
+    }
 
-  // if user id is available
+    // if user id is not available
+    if (!userId) {
+      const url = baseUrl + urlSuffix;
+      // public survey
+      const response = await fetch(url, fetchOptions);
 
-  if (!userId) {
-    const url = baseUrl + urlSuffix;
-    // public survey
+      if (!response.ok) {
+        const jsonRes = await response.json();
+
+        return err({
+          code: "network_error",
+          status: response.status,
+          message: "Error syncing with backend",
+          url,
+          responseMessage: jsonRes.message,
+        });
+      }
+
+      return ok((await response.json()).data as TJsState);
+    }
+
+    // userId is available, call the api with the `userId` param
+
+    const url = `${baseUrl}/${userId}${urlSuffix}`;
+
     const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
@@ -44,38 +65,20 @@ const syncWithBackend = async (
       });
     }
 
-    return ok((await response.json()).data as TJsState);
+    const data = await response.json();
+    const { data: state } = data;
+
+    return ok(state as TJsStateSync);
+  } catch (e) {
+    return err(e as NetworkError);
   }
-
-  // userId is available, call the api with the `userId` param
-
-  const url = `${baseUrl}/${userId}${urlSuffix}`;
-
-  const response = await fetch(url, fetchOptions);
-
-  if (!response.ok) {
-    const jsonRes = await response.json();
-
-    return err({
-      code: "network_error",
-      status: response.status,
-      message: "Error syncing with backend",
-      url,
-      responseMessage: jsonRes.message,
-    });
-  }
-
-  const data = await response.json();
-  const { data: state } = data;
-
-  return ok(state as TJsStateSync);
 };
 
 export const sync = async (params: TJsSyncParams, noCache = false): Promise<void> => {
   try {
     const syncResult = await syncWithBackend(params, noCache);
+
     if (syncResult?.ok !== true) {
-      logger.error(`Sync failed: ${JSON.stringify(syncResult.error)}`);
       throw syncResult.error;
     }
 
@@ -115,8 +118,6 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
       userId: params.userId,
       state,
     });
-
-    // before finding the surveys, check for public use
   } catch (error) {
     logger.error(`Error during sync: ${error}`);
     throw error;
@@ -175,17 +176,23 @@ export const addExpiryCheckListener = (): void => {
   // add event listener to check sync with backend on regular interval
   if (typeof window !== "undefined" && syncIntervalId === null) {
     syncIntervalId = window.setInterval(async () => {
-      // check if the config has not expired yet
-      if (config.get().expiresAt && new Date(config.get().expiresAt) >= new Date()) {
-        return;
+      try {
+        // check if the config has not expired yet
+        if (config.get().expiresAt && new Date(config.get().expiresAt) >= new Date()) {
+          return;
+        }
+        logger.debug("Config has expired. Starting sync.");
+        await sync({
+          apiHost: config.get().apiHost,
+          environmentId: config.get().environmentId,
+          userId: config.get().userId,
+        });
+      } catch (e) {
+        logger.error(`Error during expiry check: ${e}`);
+        logger.debug("Extending config and try again later.");
+        const existingConfig = config.get();
+        config.update(existingConfig);
       }
-      logger.debug("Config has expired. Starting sync.");
-      await sync({
-        apiHost: config.get().apiHost,
-        environmentId: config.get().environmentId,
-        userId: config.get().userId,
-        // personId: config.get().state?.person?.id,
-      });
     }, updateInterval);
   }
 };

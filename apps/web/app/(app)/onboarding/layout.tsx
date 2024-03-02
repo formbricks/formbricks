@@ -1,3 +1,4 @@
+import PosthogIdentify from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
@@ -12,6 +13,7 @@ export default async function EnvironmentLayout({ children }) {
 
   return (
     <div className="h-full w-full bg-slate-50">
+      <PosthogIdentify session={session} />
       <ToasterClient />
       {children}
     </div>

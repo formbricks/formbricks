@@ -7,23 +7,29 @@ import { TSurvey } from "@formbricks/types/surveys";
 
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
+import { putFormbricksInErrorState } from "./initialize";
 import { Logger } from "./logger";
 import { filterPublicSurveys, sync } from "./sync";
 
 const containerId = "formbricks-web-container";
+
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
-let surveyRunning = false;
+let isSurveyRunning = false;
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
 
+export const setIsSurveyRunning = (value: boolean) => {
+  isSurveyRunning = value;
+};
+
 export const renderWidget = async (survey: TSurvey) => {
-  if (surveyRunning) {
+  if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
   }
-  surveyRunning = true;
+  setIsSurveyRunning(false);
 
   if (survey.delay) {
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
@@ -163,7 +169,7 @@ export const renderWidget = async (survey: TSurvey) => {
 
 export const closeSurvey = async (): Promise<void> => {
   // remove container element from DOM
-  document.getElementById(containerId)?.remove();
+  removeWidgetContainer();
   addWidgetContainer();
 
   // if unidentified user, refilter the surveys
@@ -174,7 +180,7 @@ export const closeSurvey = async (): Promise<void> => {
       ...config.get(),
       state: updatedState,
     });
-    surveyRunning = false;
+    setIsSurveyRunning(false);
     return;
   }
 
@@ -188,9 +194,10 @@ export const closeSurvey = async (): Promise<void> => {
       },
       true
     );
-    surveyRunning = false;
-  } catch (e) {
+    setIsSurveyRunning(false);
+  } catch (e: any) {
     errorHandler.handle(e);
+    putFormbricksInErrorState();
   }
 };
 
@@ -198,6 +205,10 @@ export const addWidgetContainer = (): void => {
   const containerElement = document.createElement("div");
   containerElement.id = containerId;
   document.body.appendChild(containerElement);
+};
+
+export const removeWidgetContainer = (): void => {
+  document.getElementById(containerId)?.remove();
 };
 
 const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {
