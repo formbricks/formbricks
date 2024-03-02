@@ -59,8 +59,10 @@ export function CreateFirstSurvey({ environmentId }: CreateFirstSurveyProps) {
       <div className="grid w-11/12 max-w-6xl grid-cols-3 grid-rows-1 gap-6">
         {filteredTemplates.map((template) => {
           const TemplateImage = templateImages[template.name];
+          const cssId = `onboarding-link-template-${template.name.toLowerCase().replace(/ /g, "-")}`;
           return (
             <OptionCard
+              cssId={cssId} // Use the generated cssId here
               size="md"
               key={template.name}
               title={template.name}
@@ -72,7 +74,9 @@ export function CreateFirstSurvey({ environmentId }: CreateFirstSurveyProps) {
           );
         })}
       </div>
+
       <Button
+        id="onboarding-start-from-scratch"
         size="lg"
         variant="secondary"
         loading={loadingTemplate === "Start from scratch"}
