@@ -45,14 +45,13 @@ export default function LinkSurvey({
   responseCount,
   verifiedEmail,
 }: LinkSurveyProps) {
-  console.log(survey);
-
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
   const startAt = searchParams?.get("startAt");
+  // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
     startAt ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
