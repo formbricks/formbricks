@@ -19,6 +19,6 @@
   "dependencies": {
     "@formbricks/lib": "workspace:*",
     "@t3-oss/env-nextjs": "^0.9.2",
-    "stripe": "^14.18.0"
+    "stripe": "^14.19.0"
   }
 }

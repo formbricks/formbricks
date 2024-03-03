@@ -14,9 +14,9 @@
     "test": "dotenv -e ../../.env -- vitest run"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.521.0",
-    "@aws-sdk/s3-presigned-post": "3.521.0",
-    "@aws-sdk/s3-request-presigner": "3.521.0",
+    "@aws-sdk/client-s3": "3.525.0",
+    "@aws-sdk/s3-presigned-post": "3.525.0",
+    "@aws-sdk/s3-request-presigner": "3.525.0",
     "@formbricks/api": "*",
     "@formbricks/database": "*",
     "@formbricks/types": "*",
@@ -29,14 +29,14 @@
     "mime-types": "^2.1.35",
     "nanoid": "^5.0.6",
     "next-auth": "^4.24.6",
-    "nodemailer": "^6.9.10",
+    "nodemailer": "^6.9.11",
     "posthog-node": "^3.6.3",
     "server-only": "^0.0.1",
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "*",
-    "@types/jsonwebtoken": "^9.0.5",
+    "@types/jsonwebtoken": "^9.0.6",
     "@types/mime-types": "^2.1.4",
     "dotenv": "^16.4.5",
     "eslint-config-formbricks": "workspace:*",

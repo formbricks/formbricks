@@ -1,7 +1,7 @@
 import { actions, users } from "@/playwright/utils/mock";
 import { Page, expect, test } from "@playwright/test";
 
-import { login, signUpAndLogin, skipOnboarding } from "./utils/helper";
+import { finishOnboarding, login, signUpAndLogin } from "./utils/helper";
 
 const createNoCodeActionByCSSSelector = async (
   page: Page,
@@ -13,7 +13,7 @@ const createNoCodeActionByCSSSelector = async (
   selector: string
 ) => {
   await signUpAndLogin(page, username, email, password);
-  await skipOnboarding(page);
+  await finishOnboarding(page);
 
   await page.getByRole("link", { name: "Actions & Attributes" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/actions/);
@@ -55,7 +55,7 @@ const createNoCodeActionByPageURL = async (
   testURL: string
 ) => {
   await signUpAndLogin(page, username, email, password);
-  await skipOnboarding(page);
+  await finishOnboarding(page);
 
   await page.getByRole("link", { name: "Actions & Attributes" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/actions/);
@@ -104,7 +104,7 @@ const createNoCodeActionByInnerText = async (
   innerText: string
 ) => {
   await signUpAndLogin(page, username, email, password);
-  await skipOnboarding(page);
+  await finishOnboarding(page);
 
   await page.getByRole("link", { name: "Actions & Attributes" }).click();
   await page.waitForURL(/\/environments\/[^/]+\/actions/);
@@ -276,7 +276,7 @@ test.describe("Create and Edit Code Action", async () => {
 
   test("Create Code Action", async ({ page }) => {
     await signUpAndLogin(page, username, email, password);
-    await skipOnboarding(page);
+    await finishOnboarding(page);
 
     await page.getByRole("link", { name: "Actions & Attributes" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/actions/);
