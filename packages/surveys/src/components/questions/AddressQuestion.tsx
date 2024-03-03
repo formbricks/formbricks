@@ -95,7 +95,7 @@ export default function AddressQuestion({
           step={"any"}
           placeholder={"City / Town"}
           required={question.cityRequired}
-          value={value && value[3] ? (value[3] as string) : ""}
+          value={value && value[2] ? (value[2] as string) : ""}
           onInput={(e) => handleInputChange(e.currentTarget.value, 2)}
           autoFocus={autoFocus}
           className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
@@ -109,7 +109,7 @@ export default function AddressQuestion({
           step={"any"}
           placeholder={"State / Region"}
           required={question.stateRequired}
-          value={value && value[4] ? (value[4] as string) : ""}
+          value={value && value[3] ? (value[3] as string) : ""}
           onInput={(e) => handleInputChange(e.currentTarget.value, 3)}
           autoFocus={autoFocus}
           className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
@@ -123,7 +123,7 @@ export default function AddressQuestion({
           step={"any"}
           placeholder={"ZIP / Post Code"}
           required={question.zipRequired}
-          value={value && value[5] ? (value[5] as string) : ""}
+          value={value && value[4] ? (value[4] as string) : ""}
           onInput={(e) => handleInputChange(e.currentTarget.value, 4)}
           autoFocus={autoFocus}
           className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
@@ -137,7 +137,7 @@ export default function AddressQuestion({
           step={"any"}
           placeholder={"Country"}
           required={question.countryRequired}
-          value={value && value[6] ? (value[6] as string) : ""}
+          value={value && value[5] ? (value[5] as string) : ""}
           onInput={(e) => handleInputChange(e.currentTarget.value, 5)}
           autoFocus={autoFocus}
           className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
