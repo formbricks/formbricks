@@ -46,6 +46,8 @@
 
     This will setup the cloud VM with all the necessary tools & dependencies to run your application.
 
+> Make sure to run `kamal env push` before a `kamal deploy` to push the latest environment variables to the cloud VM.
+
 ## Debugging
 
 - If you run into an error such as:

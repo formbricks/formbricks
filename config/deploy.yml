@@ -6,7 +6,7 @@ image: laalshaitaan/formbricks
 
 # Deploy to these servers.
 servers:
-  - 54.216.65.42
+  - 18.196.187.144
 
 # Credentials for your image host.
 registry:
