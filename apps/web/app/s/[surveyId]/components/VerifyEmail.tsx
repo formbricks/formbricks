@@ -2,9 +2,11 @@
 
 import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
 import { EnvelopeIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -19,6 +21,10 @@ export default function VerifyEmail({
   isErrorComponent?: boolean;
   singleUseId?: string;
 }) {
+  survey = useMemo(() => {
+    return checkForRecallInHeadline(survey);
+  }, [survey]);
+
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState<boolean>(false);
@@ -106,7 +112,6 @@ export default function VerifyEmail({
         )}
         {!emailSent && showPreviewQuestions && (
           <div>
-            {" "}
             <p className="text-4xl font-bold">Question Preview</p>
             <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-8 text-slate-700">
               {survey.questions.map((question, index) => (
@@ -126,11 +131,8 @@ export default function VerifyEmail({
               We sent an email to <span className="font-semibold italic">{email}</span>. Please click the link
               in the email to take your survey.
             </p>
-            <Button
-              variant="secondary"
-              className="mt-6 cursor-pointer text-sm text-slate-400"
-              onClick={handleGoBackClick}>
-              Go Back
+            <Button variant="secondary" className="mt-6" onClick={handleGoBackClick} StartIcon={ArrowLeft}>
+              Back
             </Button>
           </div>
         )}

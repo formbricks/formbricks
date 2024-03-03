@@ -73,6 +73,7 @@ if (typeof window !== "undefined") {
   });
 }`}</CodeBlock>
             <Button
+              id="onboarding-inapp-connect-read-npm-docs"
               className="mt-3"
               variant="secondary"
               href="https://formbricks.com/docs/getting-started/framework-guides"
@@ -90,6 +91,7 @@ if (typeof window !== "undefined") {
             </CodeBlock>
             <div className="mt-4 space-x-2">
               <Button
+                id="onboarding-inapp-connect-copy-code"
                 variant="darkCTA"
                 onClick={() => {
                   navigator.clipboard.writeText(htmlSnippet);
@@ -98,6 +100,7 @@ if (typeof window !== "undefined") {
                 Copy code
               </Button>
               <Button
+                id="onboarding-inapp-connect-step-by-step-manual"
                 variant="secondary"
                 href="https://formbricks.com/docs/getting-started/framework-guides#html"
                 target="_blank">

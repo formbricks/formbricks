@@ -155,7 +155,7 @@ export const Objective: React.FC<ObjectiveProps> = ({ formbricksResponseId, user
           loading={isProfileUpdating}
           disabled={!selectedChoice}
           onClick={handleNextClick}
-          id="objective-next">
+          id="onboarding-inapp-objective-next">
           Next
         </Button>
       </div>

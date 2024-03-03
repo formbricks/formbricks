@@ -58,6 +58,7 @@ const ConnectedState = ({ goToProduct }) => {
       </div>
       <div className="mt-4 text-right">
         <Button
+          id="onboarding-inapp-connect-connection-successful"
           variant="minimal"
           loading={isLoading}
           onClick={() => {
@@ -91,6 +92,7 @@ const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToTeamI
       />
       <div className="flex justify-center">
         <Button
+          id="onboarding-inapp-connect-not-sure-how-to-do-this"
           className="opacity-0 transition-all delay-[3000ms] duration-500 ease-in-out group-hover:opacity-100"
           variant="minimal"
           onClick={goToTeamInvitePage}>
@@ -127,7 +129,7 @@ export function ConnectWithFormbricks({
       setLocalEnvironment(refetchedEnvironment);
     };
     fetchLatestEnvironmentOnFirstLoad();
-  }, []);
+  }, [environment.id]);
 
   return localEnvironment.widgetSetupCompleted ? (
     <ConnectedState

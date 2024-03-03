@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
@@ -105,12 +106,13 @@ export default function AddIntegrationModal({
   }, [selectedDatabase?.id]);
 
   const questionItems = useMemo(() => {
-    const questions =
-      selectedSurvey?.questions.map((q) => ({
-        id: q.id,
-        name: q.headline,
-        type: q.type,
-      })) || [];
+    const questions = selectedSurvey
+      ? checkForRecallInHeadline(selectedSurvey)?.questions.map((q) => ({
+          id: q.id,
+          name: q.headline,
+          type: q.type,
+        }))
+      : [];
 
     const hiddenFields = selectedSurvey?.hiddenFields.enabled
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
