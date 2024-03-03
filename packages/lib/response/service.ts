@@ -806,15 +806,19 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
   }
 };
 
-export const getResponseCountBySurveyId = async (surveyId: string): Promise<number> =>
+export const getResponseCountBySurveyId = async (
+  surveyId: string,
+  filterCriteria?: TResponseFilterCriteria
+): Promise<number> =>
   unstable_cache(
     async () => {
-      validateInputs([surveyId, ZId]);
+      validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
       try {
         const responseCount = await prisma.response.count({
           where: {
             surveyId: surveyId,
+            ...buildWhereClause(filterCriteria),
           },
         });
         return responseCount;
