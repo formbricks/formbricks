@@ -10,9 +10,9 @@ async function main() {
     // styling object needs to be created for each product
     const products = await tx.product.findMany({});
 
-    if (!products) {
-      // something went wrong, could not find any products
-      return;
+    if (!products || products.length === 0) {
+      throw new Error('No products found');
+    }
     }
 
     if (products.length) {
