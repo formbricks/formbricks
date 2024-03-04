@@ -93,6 +93,10 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v2
       
+      - name: Create builder
+        run: docker buildx create --use --name formbricks-gh-actions-builder
+        if: steps.buildx.outputs.should_create_builder == 'true'
+
       - name: Push env variables to Kamal
         run: kamal env push
       

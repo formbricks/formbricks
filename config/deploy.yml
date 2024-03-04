@@ -97,6 +97,9 @@ builder:
     - NEXTAUTH_SECRET
     - ENCRYPTION_KEY
   multiarch: false
+  cache:
+    type: registry
+    options: mode=max,image-manifest=true,oci-mediatypes=true
 #   secrets:
 #     - GITHUB_TOKEN
 #   remote:
