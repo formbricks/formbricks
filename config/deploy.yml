@@ -2,7 +2,7 @@
 service: formbricks-kamal
 
 # Name of the container image.
-image: laalshaitaan/KAMAL_CONTAINER_IMAGE
+image: laalshaitaan/formbricks
 
 # Deploy to these servers.
 servers:
