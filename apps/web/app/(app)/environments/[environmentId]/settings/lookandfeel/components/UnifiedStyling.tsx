@@ -1,15 +1,19 @@
 "use client";
 
+import PreviewSurvey from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurvey";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Slider } from "@formbricks/ui/Slider";
 import CardArrangement from "@formbricks/ui/Styling/CardArrangement";
+import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabel";
 import DarkModeColors from "@formbricks/ui/Styling/DarkModeColors";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -26,6 +30,97 @@ const colorDefaults = {
   inputBorderColor: "#c0c0c0",
   cardBackgroundColor: "#c0c0c0",
   highlighBorderColor: "#64748b",
+};
+
+const previewSurvey = {
+  id: "cltcppyqk00006uothzb3ybh0",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  name: "Product Market Fit (Superhuman)",
+  type: "link",
+  environmentId: "cltcf8i2n00099wlx7cu12zi6",
+  createdBy: "cltcf8i1c00009wlx3sk1ryss",
+  status: "draft",
+  welcomeCard: {
+    html: "Thanks for providing your feedback - let's go!",
+    enabled: false,
+    headline: "Welcome!",
+    timeToFinish: true,
+    showResponseCount: false,
+  },
+  questions: [
+    {
+      id: "uvnrhtngswxlibktglanh45f",
+      type: "openText",
+      headline: "This is a preview survey",
+      required: true,
+      inputType: "text",
+      subheader: "Click through it to check the look and feel of the surveying experience.",
+      longAnswer: true,
+      placeholder: "Type your answer here...",
+    },
+    {
+      id: "swfnndfht0ubsu9uh17tjcej",
+      type: "rating",
+      range: 5,
+      scale: "star",
+      headline: "How would you rate My Product",
+      required: true,
+      subheader: "Don't worry, be honest.",
+      lowerLabel: "Not good",
+      upperLabel: "Very good",
+    },
+    {
+      id: "je70a714xjdxc70jhxgv5web",
+      type: "multipleChoiceSingle",
+      choices: [
+        {
+          id: "vx9q4mlr6ffaw35m99bselwm",
+          label: "Eat the cake 🍰",
+        },
+        {
+          id: "ynj051qawxd4dszxkbvahoe5",
+          label: "Have the cake 🎂",
+        },
+      ],
+      headline: "What do you do?",
+      required: true,
+      subheader: "Can't do both.",
+      shuffleOption: "none",
+    },
+  ],
+  thankYouCard: {
+    enabled: true,
+    headline: "Thank you!",
+    subheader: "We appreciate your feedback.",
+    buttonLink: "https://formbricks.com/signup",
+    buttonLabel: "Create your own Survey",
+  },
+  hiddenFields: {
+    enabled: true,
+    fieldIds: [],
+  },
+  displayOption: "displayOnce",
+  recontactDays: null,
+  autoClose: null,
+  closeOnDate: null,
+  delay: 0,
+  displayPercentage: null,
+  autoComplete: null,
+  verifyEmail: null,
+  redirectUrl: null,
+  productOverwrites: null,
+  styling: null,
+  surveyClosedMessage: null,
+  singleUse: {
+    enabled: false,
+    isEncrypted: true,
+  },
+  pin: null,
+  resultShareKey: null,
+  triggers: [],
+  inlineTriggers: null,
+  segment: null,
 };
 
 const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
@@ -84,6 +179,12 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const [inAppSurveysCardArrangement, setInAppSurveysCardArrangement] = useState(
     product.styling?.cardArrangement?.inAppSurveys ?? "casual"
   );
+
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveQuestionId(previewSurvey.questions[0].id);
+  }, []);
 
   useEffect(() => {
     if (!unifiedStyling) {
@@ -171,54 +272,41 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
-              <h3 className="text-base font-semibold text-slate-900">Brand color</h3>
-              <p className="text-sm text-slate-800">Change the text color of the survey questions.</p>
-            </div>
+          <ColorSelectorWithLabel
+            label="Brand color"
+            color={brandColor}
+            setColor={setBrandColor}
+            description="Change the text color of the survey questions."
+            disabled
+          />
 
-            <ColorPicker color={brandColor} onChange={setBrandColor} containerClass="my-0" />
-          </div>
+          <ColorSelectorWithLabel
+            label="Question color"
+            color={questionColor}
+            setColor={setQuestionColor}
+            description="Change the text color of the survey questions."
+          />
 
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
-              <h3 className="text-base font-semibold text-slate-900">Question color</h3>
-              <p className="text-sm text-slate-800">Change the text color of the survey questions.</p>
-            </div>
+          <ColorSelectorWithLabel
+            label="Input color"
+            color={inputColor}
+            setColor={setInputColor}
+            description="Change the text color of the survey questions."
+          />
 
-            <ColorPicker color={questionColor} onChange={setQuestionColor} containerClass="my-0" />
-          </div>
+          <ColorSelectorWithLabel
+            label="Input border color"
+            color={inputBorderColor}
+            setColor={setInputBorderColor}
+            description="Change the text color of the survey questions."
+          />
 
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
-              <h3 className="text-base font-semibold text-slate-900">Input color</h3>
-              <p className="text-sm text-slate-800">Change the text color of the survey questions.</p>
-            </div>
-
-            <ColorPicker color={inputColor} onChange={setInputColor} containerClass="my-0" />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
-              <h3 className="text-base font-semibold text-slate-900">Input border color</h3>
-              <p className="text-sm text-slate-800">Change the text color of the survey questions.</p>
-            </div>
-
-            <ColorPicker color={inputBorderColor} onChange={setInputBorderColor} containerClass="my-0" />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
-              <h3 className="text-base font-semibold text-slate-900">Card background color</h3>
-              <p className="text-sm text-slate-800">Change the text color of the survey questions.</p>
-            </div>
-
-            <ColorPicker
-              color={cardBackgroundColor}
-              onChange={setCardBackgroundColor}
-              containerClass="my-0"
-            />
-          </div>
+          <ColorSelectorWithLabel
+            label="Card background color"
+            color={cardBackgroundColor}
+            setColor={setCardBackgroundColor}
+            description="Change the text color of the survey questions."
+          />
 
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-6">
@@ -303,7 +391,17 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
       {/* Survey Preview */}
 
       <div className="w-1/2 bg-slate-100">
-        <h1>Survey Preview</h1>
+        <div className="max-h-96">
+          <PreviewSurvey
+            activeQuestionId={activeQuestionId}
+            setActiveQuestionId={setActiveQuestionId}
+            survey={previewSurvey as TSurvey}
+            environment={{ widgetSetupCompleted: true } as TEnvironment}
+            product={product}
+            previewType={previewSurvey.type === "web" ? "modal" : "fullwidth"}
+            onFileUpload={async (file) => file.name}
+          />
+        </div>
       </div>
     </div>
   );

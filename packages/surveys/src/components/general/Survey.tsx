@@ -32,6 +32,7 @@ export function Survey({
   getSetIsResponseSendingFinished,
   onFileUpload,
   responseCount,
+  styling,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)

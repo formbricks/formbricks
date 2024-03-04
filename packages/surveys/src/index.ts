@@ -8,15 +8,15 @@ import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbrick
 declare global {
   interface Window {
     formbricksSurveys: {
-      renderSurveyInline: (props: SurveyInlineProps & { brandColor: string }) => void;
-      renderSurveyModal: (props: SurveyModalProps & { brandColor: string }) => void;
+      renderSurveyInline: (props: SurveyInlineProps) => void;
+      renderSurveyModal: (props: SurveyModalProps) => void;
     };
   }
 }
 
-export const renderSurveyInline = (props: SurveyInlineProps & { brandColor: string }) => {
+export const renderSurveyInline = (props: SurveyInlineProps) => {
   addStylesToDom();
-  addCustomThemeToDom({ brandColor: props.brandColor });
+  addCustomThemeToDom({ brandColor: props.styling?.brandColor?.light ?? "" });
 
   const element = document.getElementById(props.containerId);
   if (!element) {
@@ -25,9 +25,9 @@ export const renderSurveyInline = (props: SurveyInlineProps & { brandColor: stri
   render(h(SurveyInline, props), element);
 };
 
-export const renderSurveyModal = (props: SurveyModalProps & { brandColor: string }) => {
+export const renderSurveyModal = (props: SurveyModalProps) => {
   addStylesToDom();
-  addCustomThemeToDom({ brandColor: props.brandColor });
+  addCustomThemeToDom({ brandColor: props.styling?.brandColor?.light ?? "" });
 
   // add container element to DOM
   const element = document.createElement("div");

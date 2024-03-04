@@ -1,5 +1,5 @@
-import { ColorPicker } from "../ColorPicker";
 import { Switch } from "../Switch";
+import ColorSelectorWithLabel from "./ColorSelectorWithLabel";
 
 const colorDefaults = {
   brandColor: "#64748b",
@@ -9,24 +9,6 @@ const colorDefaults = {
   cardBackgroundColor: "#c0c0c0",
   highlightBorderColor: "#64748b",
 };
-
-const ColorSelectorWithLabel = ({
-  label,
-  color,
-  setColor,
-}: {
-  label: string;
-  color: string;
-  setColor: React.Dispatch<React.SetStateAction<string>>;
-}) => {
-  return (
-    <div className="flex flex-col">
-      <h3 className="text-base font-semibold text-slate-900">{label}</h3>
-      <ColorPicker color={color} onChange={setColor} />
-    </div>
-  );
-};
-
 type DarModeColorProps = {
   isDarkMode: boolean;
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
@@ -82,31 +64,37 @@ const DarkModeColors = ({
             label="Brand color"
             color={brandColor ?? colorDefaults.brandColor}
             setColor={setBrandColor}
+            className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Question color"
             color={questionColor ?? colorDefaults.questionColor}
             setColor={setQuestionColor}
+            className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Input color"
             color={inputColor ?? colorDefaults.inputColor}
             setColor={setInputColor}
+            className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Input border color"
             color={inputBorderColor ?? colorDefaults.inputBorderColor}
             setColor={setInputBorderColor}
+            className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Card background color"
             color={cardBackgroundColor ?? colorDefaults.cardBackgroundColor}
             setColor={setCardBackgroundColor}
+            className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Highlight border color"
             color={highlightBorderColor ?? colorDefaults.highlightBorderColor}
             setColor={setHighlighBorderColor}
+            className="gap-2"
           />
         </div>
       )}

@@ -1,5 +1,6 @@
 import { TResponseData, TResponseUpdate } from "./responses";
 import { TUploadFileConfig } from "./storage";
+import { TStyling } from "./styling";
 import { TSurvey } from "./surveys";
 
 export interface SurveyBaseProps {
@@ -19,6 +20,7 @@ export interface SurveyBaseProps {
   prefillResponseData?: TResponseData;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
+  styling: TStyling;
 }
 
 export interface SurveyInlineProps extends SurveyBaseProps {

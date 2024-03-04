@@ -24,6 +24,7 @@ export function SurveyModal({
   onRetry,
   isRedirectDisabled = false,
   responseCount,
+  styling,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -67,6 +68,7 @@ export function SurveyModal({
           onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
           responseCount={responseCount}
+          styling={styling}
         />
       </Modal>
     </div>

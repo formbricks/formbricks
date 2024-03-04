@@ -11,11 +11,12 @@ import {
   DevicePhoneMobileIcon,
 } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TStyling } from "@formbricks/types/styling";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -120,9 +121,23 @@ export default function PreviewSurvey({
     placement: surveyPlacement,
   } = productOverwrites || {};
 
-  const brandColor = surveyBrandColor || product.brandColor;
+  // const brandColor = surveyBrandColor || product.brandColor;
   const placement = surveyPlacement || product.placement;
   const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
+
+  const styling: TStyling = useMemo(() => {
+    if (product.styling) {
+      return product.styling;
+    }
+
+    return {
+      unifiedStyling: true,
+      allowStyleOverwrite: true,
+      brandColor: {
+        light: product.brandColor || "#64748b",
+      },
+    };
+  }, [product.brandColor, product.styling]);
 
   useEffect(() => {
     // close modal if there are no questions left
@@ -207,12 +222,13 @@ export default function PreviewSurvey({
                   previewMode="mobile">
                   <SurveyInline
                     survey={survey}
-                    brandColor={brandColor}
+                    // brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.inAppSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
+                    styling={styling}
                   />
                 </Modal>
               ) : (
@@ -220,12 +236,13 @@ export default function PreviewSurvey({
                   <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
-                      brandColor={brandColor}
+                      // brandColor={brandColor}
                       activeQuestionId={activeQuestionId || undefined}
                       isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       onFileUpload={onFileUpload}
                       responseCount={42}
+                      styling={styling}
                     />
                   </div>
                 </div>
@@ -277,12 +294,13 @@ export default function PreviewSurvey({
                 previewMode="desktop">
                 <SurveyInline
                   survey={survey}
-                  brandColor={brandColor}
+                  // brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
                   isBrandingEnabled={product.inAppSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
+                  styling={styling}
                 />
               </Modal>
             ) : (
@@ -290,13 +308,14 @@ export default function PreviewSurvey({
                 <div className="z-0 w-full max-w-md rounded-lg p-4">
                   <SurveyInline
                     survey={survey}
-                    brandColor={brandColor}
+                    // brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
                     responseCount={42}
+                    styling={styling}
                   />
                 </div>
               </MediaBackground>

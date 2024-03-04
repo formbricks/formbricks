@@ -13,8 +13,11 @@ import { logoutPerson, resetPerson, setPersonAttribute, setPersonUserId } from "
 declare global {
   interface Window {
     formbricksSurveys: {
-      renderSurveyInline: (props: SurveyInlineProps & { brandColor: string }) => void;
-      renderSurveyModal: (props: SurveyModalProps & { brandColor: string }) => void;
+      // renderSurveyInline: (props: SurveyInlineProps & { brandColor: string }) => void;
+      // renderSurveyModal: (props: SurveyModalProps & { brandColor: string }) => void;
+
+      renderSurveyInline: (props: SurveyInlineProps) => void;
+      renderSurveyModal: (props: SurveyModalProps) => void;
     };
   }
 }

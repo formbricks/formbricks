@@ -1,6 +1,5 @@
 "use client";
 
-/* import { persistForm, useForm } from "@/app/lib/forms"; */
 import { useCallback, useRef, useState } from "react";
 import { HexColorInput, HexColorPicker } from "react-colorful";
 
@@ -11,10 +10,12 @@ export const ColorPicker = ({
   color,
   onChange,
   containerClass,
+  disabled,
 }: {
   color: string;
   onChange: (v: string) => void;
   containerClass?: string;
+  disabled?: boolean;
 }) => {
   return (
     <div className={cn("my-2", containerClass)}>
@@ -27,6 +28,7 @@ export const ColorPicker = ({
             onChange={onChange}
             id="color"
             aria-label="Primary color"
+            disabled={disabled}
           />
         </div>
         <PopoverPicker color={color} onChange={onChange} />
