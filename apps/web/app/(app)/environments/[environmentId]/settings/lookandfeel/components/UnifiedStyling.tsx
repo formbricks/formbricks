@@ -191,49 +191,49 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }
   }, [unifiedStyling]);
 
-  const onSave = async () => {
-    await updateProductAction(product.id, {
-      styling: {
-        unifiedStyling,
-        allowStyleOverwrite,
-        brandColor: {
-          light: brandColor,
-          dark: brandColorDark,
+  const onSave = useCallback(async () => {
+      await updateProductAction(product.id, {
+        styling: {
+          unifiedStyling,
+          allowStyleOverwrite,
+          brandColor: {
+            light: brandColor,
+            dark: brandColorDark,
+          },
+          questionColor: {
+            light: questionColor,
+            dark: questionColorDark,
+          },
+          inputColor: {
+            light: inputColor,
+            dark: inputColorDark,
+          },
+          inputBorderColor: {
+            light: inputBorderColor,
+            dark: inputBorderColorDark,
+          },
+          cardBackgroundColor: {
+            light: cardBackgroundColor,
+            dark: cardBackgroundColorDark,
+          },
+          highlightBorderColor: allowHighlightBorder
+            ? {
+                light: highlightBorderColor,
+                dark: highlightBorderColorDark,
+              }
+            : undefined,
+          isDarkModeEnabled: isDarkMode,
+          roundness,
+          cardArrangement: {
+            linkSurveys: linkSurveysCardArrangement,
+            inAppSurveys: inAppSurveysCardArrangement,
+          },
         },
-        questionColor: {
-          light: questionColor,
-          dark: questionColorDark,
-        },
-        inputColor: {
-          light: inputColor,
-          dark: inputColorDark,
-        },
-        inputBorderColor: {
-          light: inputBorderColor,
-          dark: inputBorderColorDark,
-        },
-        cardBackgroundColor: {
-          light: cardBackgroundColor,
-          dark: cardBackgroundColorDark,
-        },
-        highlightBorderColor: allowHighlightBorder
-          ? {
-              light: highlightBorderColor,
-              dark: highlightBorderColorDark,
-            }
-          : undefined,
-        isDarkModeEnabled: isDarkMode,
-        roundness,
-        cardArrangement: {
-          linkSurveys: linkSurveysCardArrangement,
-          inAppSurveys: inAppSurveysCardArrangement,
-        },
-      },
-    });
-
-    toast.success("Styling updated successfully.");
-    router.refresh();
-  };
+      });
+  
+      toast.success("Styling updated successfully.");
+      router.refresh();
+    }, [unifiedStyling, allowStyleOverwrite, brandColor, brandColorDark, questionColor, questionColorDark, inputColor, inputColorDark, inputBorderColor, inputBorderColorDark, cardBackgroundColor, cardBackgroundColorDark, allowHighlightBorder, highlightBorderColor, highlightBorderColorDark, isDarkMode, roundness, linkSurveysCardArrangement, inAppSurveysCardArrangement]);
 
   return (
     <div className="flex">
