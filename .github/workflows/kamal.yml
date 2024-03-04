@@ -94,6 +94,66 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v2
+      
+      - name: Create .env file
+        run: |
+          echo "WEBAPP_URL=$WEBAPP_URL" >> .env
+          echo "DATABASE_URL=$DATABASE_URL" >> .env
+          echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env
+          echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> .env
+          echo "SHORT_URL_BASE=$SHORT_URL_BASE" >> .env
+          echo "MAIL_FROM=$MAIL_FROM" >> .env
+          echo "SMTP_HOST=$SMTP_HOST" >> .env
+          echo "SMTP_PORT=$SMTP_PORT" >> .env
+          echo "SMTP_SECURE_ENABLED=$SMTP_SECURE_ENABLED" >> .env
+          echo "SMTP_USER=$SMTP_USER" >> .env
+          echo "SMTP_PASSWORD=$SMTP_PASSWORD" >> .env
+          echo "EMAIL_VERIFICATION_DISABLED=$EMAIL_VERIFICATION_DISABLED" >> .env
+          echo "PASSWORD_RESET_DISABLED=$PASSWORD_RESET_DISABLED" >> .env
+          echo "SIGNUP_DISABLED=$SIGNUP_DISABLED" >> .env
+          echo "EMAIL_AUTH_DISABLED=$EMAIL_AUTH_DISABLED" >> .env
+          echo "INVITE_DISABLED=$INVITE_DISABLED" >> .env
+          echo "PRIVACY_URL=$PRIVACY_URL" >> .env
+          echo "TERMS_URL=$TERMS_URL" >> .env
+          echo "IMPRINT_URL=$IMPRINT_URL" >> .env
+          echo "GITHUB_ID=$GITHUB_ID" >> .env
+          echo "GITHUB_SECRET=$GITHUB_SECRET" >> .env
+          echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env
+          echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env
+          echo "AZUREAD_CLIENT_ID=$AZUREAD_CLIENT_ID" >> .env
+          echo "AZUREAD_CLIENT_SECRET=$AZUREAD_CLIENT_SECRET" >> .env
+          echo "AZUREAD_TENANT_ID=$AZUREAD_TENANT_ID" >> .env
+          echo "OIDC_CLIENT_ID=$OIDC_CLIENT_ID" >> .env
+          echo "OIDC_CLIENT_SECRET=$OIDC_CLIENT_SECRET" >> .env
+          echo "OIDC_ISSUER=$OIDC_ISSUER" >> .env
+          echo "OIDC_DISPLAY_NAME=$OIDC_DISPLAY_NAME" >> .env
+          echo "OIDC_SIGNING_ALGORITHM=$OIDC_SIGNING_ALGORITHM" >> .env
+          echo "CRON_SECRET=$CRON_SECRET" >> .env
+          echo "ASSET_PREFIX_URL=$ASSET_PREFIX_URL" >> .env
+          echo "NOTION_OAUTH_CLIENT_ID=$NOTION_OAUTH_CLIENT_ID" >> .env
+          echo "NOTION_OAUTH_CLIENT_SECRET=$NOTION_OAUTH_CLIENT_SECRET" >> .env
+          echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env
+          echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env
+          echo "GOOGLE_SHEETS_CLIENT_ID=$GOOGLE_SHEETS_CLIENT_ID" >> .env
+          echo "GOOGLE_SHEETS_CLIENT_SECRET=$GOOGLE_SHEETS_CLIENT_SECRET" >> .env
+          echo "GOOGLE_SHEETS_REDIRECT_URL=$GOOGLE_SHEETS_REDIRECT_URL" >> .env
+          echo "AIRTABLE_CLIENT_ID=$AIRTABLE_CLIENT_ID" >> .env
+          echo "ENTERPRISE_LICENSE_KEY=$ENTERPRISE_LICENSE_KEY" >> .env
+          echo "DEFAULT_TEAM_ID=$DEFAULT_TEAM_ID" >> .env
+          echo "DEFAULT_TEAM_ROLE=$DEFAULT_TEAM_ROLE" >> .env
+          echo "ONBOARDING_DISABLED=$ONBOARDING_DISABLED" >> .env
+          echo "CUSTOMER_IO_API_KEY=$CUSTOMER_IO_API_KEY" >> .env
+          echo "CUSTOMER_IO_SITE_ID=$CUSTOMER_IO_SITE_ID" >> .env
+          echo "RATE_LIMITING_DISABLED=$RATE_LIMITING_DISABLED" >> .env
+          echo "NEXT_PUBLIC_POSTHOG_API_KEY=$NEXT_PUBLIC_POSTHOG_API_KEY" >> .env
+          echo "NEXT_PUBLIC_POSTHOG_API_HOST=$NEXT_PUBLIC_POSTHOG_API_HOST" >> .env
+          echo "NEXT_PUBLIC_FORMBRICKS_API_HOST=$NEXT_PUBLIC_FORMBRICKS_API_HOST" >> .env
+          echo "NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID=$NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID" >> .env
+          echo "NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID=$NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID" >> .env
+          echo "NODE_ENV=production" >> .env
+          echo "KAMAL_REGISTRY_USERNAME=$KAMAL_REGISTRY_USERNAME" >> .env
+          echo "KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD" >> .env
+          echo "KAMAL_CONTAINER_IMAGE=$KAMAL_CONTAINER_IMAGE" >> .env
     
       - name: Run deploy command
         run: kamal setup
