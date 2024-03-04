@@ -107,7 +107,7 @@ export default function AddIntegrationModal({
 
   const questionItems = useMemo(() => {
     const questions = selectedSurvey
-      ? checkForRecallInHeadline(selectedSurvey)?.questions.map((q) => ({
+      ? checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((q) => ({
           id: q.id,
           name: q.headline,
           type: q.type,

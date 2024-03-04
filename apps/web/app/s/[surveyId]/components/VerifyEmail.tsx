@@ -22,7 +22,7 @@ export default function VerifyEmail({
   singleUseId?: string;
 }) {
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, "default");
   }, [survey]);
 
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
