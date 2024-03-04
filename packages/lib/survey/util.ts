@@ -60,6 +60,8 @@ export const determineLanguageCode = (person: TPerson, survey: TSurvey) => {
       surveyLanguage.language.alias === languageCodeOrAlias
   );
 
+  if (!selectedLanguage) return;
+
   // Determine and return the language code to use
-  return !selectedLanguage || selectedLanguage.default === true ? "default" : selectedLanguage.language.code;
+  return selectedLanguage.default ? "default" : selectedLanguage.language.code;
 };

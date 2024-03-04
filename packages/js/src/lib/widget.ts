@@ -44,7 +44,7 @@ export const renderWidget = async (survey: TSurvey) => {
     return surveyLanguage.default === true;
   })?.language.code;
 
-  const getLanguageCode = (): string => {
+  const getLanguageCode = (): string | undefined => {
     const availableLanguageCodes = Object.keys(survey.questions[0].headline);
     if (availableLanguageCodes.length === 1) {
       // survey is only availabe in one language, this can occur in following scenarios:
@@ -62,11 +62,16 @@ export const renderWidget = async (survey: TSurvey) => {
       if (selectedLanguage?.default) {
         return "default";
       }
-      return selectedLanguage ? selectedLanguage.language.code : "default";
+      return selectedLanguage ? selectedLanguage.language.code : undefined;
     }
   };
 
   const languageCode = getLanguageCode();
+  //if survey is not available in selected language, survey wont be shown
+  if (!languageCode) {
+    logger.debug("Survey not available in specified language.");
+    return;
+  }
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
   const responseQueue = new ResponseQueue(

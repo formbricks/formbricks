@@ -787,18 +787,22 @@ export const getSyncSurveys = async (
         if (options?.version) {
           // Version available and Multi-Langauge allowed, so tranform to required language
           surveys = await Promise.all(
-            surveys.map(async (survey) => {
-              const languageCode = determineLanguageCode(person, survey);
-              return transformSurveyToSpecificLanguage(survey, languageCode);
-            })
+            surveys
+              .filter((survey) => determineLanguageCode(person, survey)) // Keep only surveys with a valid language code
+              .map(async (survey) => {
+                const languageCode = determineLanguageCode(person, survey);
+                return transformSurveyToSpecificLanguage(survey, languageCode);
+              })
           );
         } else {
           // Version not available and Multi-Langauge allowed, so tranform to legacy survey with required language
           surveys = await Promise.all(
-            surveys.map(async (survey) => {
-              const languageCode = determineLanguageCode(person, survey);
-              return transformToLegacySurvey(survey, languageCode);
-            })
+            surveys
+              .filter((survey) => determineLanguageCode(person, survey)) // Keep only surveys with a valid language code
+              .map(async (survey) => {
+                const languageCode = determineLanguageCode(person, survey);
+                return transformToLegacySurvey(survey, languageCode);
+              })
           );
         }
       } else {

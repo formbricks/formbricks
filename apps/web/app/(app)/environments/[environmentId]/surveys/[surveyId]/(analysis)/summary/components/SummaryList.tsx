@@ -63,7 +63,10 @@ export default function SummaryList({ environment, survey, responses, responsesP
       // Initialize an array to hold the choice values
       let choiceValues = [] as string[];
 
-      (response.data[id] as string[]).forEach((data) => {
+      (typeof response.data[id] === "string"
+        ? ([response.data[id]] as string[])
+        : (response.data[id] as string[])
+      ).forEach((data) => {
         choiceValues.push(
           getLocalizedValue(
             question.choices.find((choice) => choice.label[languageCode] === data)?.label,
