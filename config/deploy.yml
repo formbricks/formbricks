@@ -87,8 +87,6 @@ env:
 # Use a different ssh user than root
 ssh:
   user: ubuntu
-  log_level: debug
-
 
 # Configure builder setup.
 builder:
