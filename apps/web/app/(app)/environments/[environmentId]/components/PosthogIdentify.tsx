@@ -19,25 +19,29 @@ export default function PosthogIdentify({
   userTargetingBillingStatus,
 }: {
   session: Session;
-  environmentId: string;
-  teamId: string;
-  teamName: string;
-  inAppSurveyBillingStatus: TSubscriptionStatus;
-  linkSurveyBillingStatus: TSubscriptionStatus;
-  userTargetingBillingStatus: TSubscriptionStatus;
+  environmentId?: string;
+  teamId?: string;
+  teamName?: string;
+  inAppSurveyBillingStatus?: TSubscriptionStatus;
+  linkSurveyBillingStatus?: TSubscriptionStatus;
+  userTargetingBillingStatus?: TSubscriptionStatus;
 }) {
   const posthog = usePostHog();
 
   useEffect(() => {
     if (posthogEnabled && session.user && posthog) {
       posthog.identify(session.user.id, { name: session.user.name, email: session.user.email });
-      posthog.group("environment", environmentId, { name: environmentId });
-      posthog.group("team", teamId, {
-        name: teamName,
-        inAppSurveyBillingStatus,
-        linkSurveyBillingStatus,
-        userTargetingBillingStatus,
-      });
+      if (environmentId) {
+        posthog.group("environment", environmentId, { name: environmentId });
+      }
+      if (teamId) {
+        posthog.group("team", teamId, {
+          name: teamName,
+          inAppSurveyBillingStatus,
+          linkSurveyBillingStatus,
+          userTargetingBillingStatus,
+        });
+      }
     }
   }, [
     posthog,

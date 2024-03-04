@@ -44,6 +44,7 @@ export default function PathwaySelect({
       />
       <div className="flex space-x-8">
         <OptionCard
+          cssId="onboarding-link-survey-card"
           size="lg"
           title="Link Surveys"
           description="Create a new survey and share a link."
@@ -53,6 +54,7 @@ export default function PathwaySelect({
           <Image src={LinkMockup} alt="" height={350} />
         </OptionCard>
         <OptionCard
+          cssId="onboarding-inapp-survey-card"
           size="lg"
           title="In-app Surveys"
           description="Run a survey on a website or in-app."

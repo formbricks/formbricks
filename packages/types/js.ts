@@ -81,6 +81,7 @@ export const ZJsConfig = z.object({
   state: ZJsState,
   language: z.string().optional(),
   expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
 });
 
 export type TJsConfig = z.infer<typeof ZJsConfig>;
@@ -90,6 +91,8 @@ export const ZJsConfigUpdateInput = z.object({
   apiHost: z.string(),
   userId: z.string().optional(),
   state: ZJsState,
+  expiresAt: z.date().optional(),
+  status: z.enum(["success", "error"]).optional(),
   language: z.string().optional(),
 });
 
