@@ -15,37 +15,37 @@ async function main() {
       return;
     }
 
-    if (products.length) {
-      for (const product of products) {
-        if (product.styling !== null) {
-          // styling object already exists for this product
-          continue;
-        }
-
-        const styling: TStyling = {
-          unifiedStyling: true,
-          allowStyleOverwrite: true,
-          brandColor: {
-            light: product.brandColor,
-          },
-          ...(product.highlightBorderColor && {
-            highlightBorderColor: {
-              light: product.highlightBorderColor,
-              dark: product.highlightBorderColor,
-            },
-          }),
-        };
-
-        await tx.product.update({
-          where: {
-            id: product.id,
-          },
-          data: {
-            styling,
-          },
-        });
+    const updates = products.map(product => {
+      if (product.styling !== null) {
+        // styling object already exists for this product
+        return;
       }
-    }
+    
+      const styling: TStyling = {
+        unifiedStyling: true,
+        allowStyleOverwrite: true,
+        brandColor: {
+          light: product.brandColor,
+        },
+        ...(product.highlightBorderColor && {
+          highlightBorderColor: {
+            light: product.highlightBorderColor,
+            dark: product.highlightBorderColor,
+          },
+        }),
+      };
+    
+      return tx.product.update({
+        where: {
+          id: product.id,
+        },
+        data: {
+          styling,
+        },
+      });
+    });
+    
+    await tx.$transaction(updates);
   });
 }
 
