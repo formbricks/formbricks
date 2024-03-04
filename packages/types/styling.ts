@@ -8,6 +8,7 @@ export const ZStylingColor = z.object({
 });
 
 export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple"]);
+export type TCardArrangementOptions = z.infer<typeof ZCardArrangementOptions>;
 
 export const ZCardArrangement = z.object({
   linkSurveys: ZCardArrangementOptions,
