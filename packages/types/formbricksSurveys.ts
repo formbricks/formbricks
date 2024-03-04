@@ -30,6 +30,6 @@ export interface SurveyInlineProps extends SurveyBaseProps {
 export interface SurveyModalProps extends SurveyBaseProps {
   clickOutside: boolean;
   darkOverlay: boolean;
-  highlightBorderColor: string | null;
+  // highlightBorderColor: string | null;
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
 }

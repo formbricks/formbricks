@@ -6,6 +6,7 @@ export const ZStylingColor = z.object({
   light: ZColor,
   dark: ZColor.optional(),
 });
+export type TStylingColor = z.infer<typeof ZStylingColor>;
 
 export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple"]);
 export type TCardArrangementOptions = z.infer<typeof ZCardArrangementOptions>;

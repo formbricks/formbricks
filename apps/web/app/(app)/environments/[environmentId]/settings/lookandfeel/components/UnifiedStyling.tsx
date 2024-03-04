@@ -1,12 +1,11 @@
 "use client";
 
-import PreviewSurvey from "@/app/(app)/environments/[environmentId]/surveys/components/PreviewSurvey";
+import UnifiedStylingPreviewSurvey from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -390,16 +389,13 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
       {/* Survey Preview */}
 
-      <div className="w-1/2 bg-slate-100">
-        <div className="max-h-96">
-          <PreviewSurvey
+      <div className="w-1/2 bg-slate-100 pt-4">
+        <div className="h-full max-h-[800px]">
+          <UnifiedStylingPreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             survey={previewSurvey as TSurvey}
-            environment={{ widgetSetupCompleted: true } as TEnvironment}
             product={product}
-            previewType={previewSurvey.type === "web" ? "modal" : "fullwidth"}
-            onFileUpload={async (file) => file.name}
           />
         </div>
       </div>

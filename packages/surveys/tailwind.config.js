@@ -31,6 +31,9 @@ module.exports = {
         "close-button": "var(--fb-close-btn-color)",
         "close-button-focus": "var(--fb-close-btn-hover-color)",
       },
+      borderRadius: {
+        custom: "var(--fb-border-radius)",
+      },
       zIndex: {
         999999: "999999",
       },

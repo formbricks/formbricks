@@ -10,12 +10,14 @@ export default function Modal({
   placement,
   previewMode,
   highlightBorderColor,
+  borderRadius,
 }: {
   children: ReactNode;
   isOpen: boolean;
   placement: TPlacement;
   previewMode: string;
   highlightBorderColor: string | null | undefined;
+  borderRadius?: number;
 }) {
   const [show, setShow] = useState(false);
   const modalRef = useRef<HTMLDivElement | null>(null);
@@ -102,7 +104,14 @@ export default function Modal({
     <div aria-live="assertive" className="relative h-full w-full overflow-hidden bg-slate-300">
       <div
         ref={modalRef}
-        style={{ ...highlightBorderColorStyle, ...scalingClasses }}
+        style={{
+          ...highlightBorderColorStyle,
+          ...scalingClasses,
+
+          ...(borderRadius && {
+            borderRadius: `${borderRadius}px`,
+          }),
+        }}
         className={cn(
           "no-scrollbar pointer-events-auto absolute h-fit max-h-[90%] w-full max-w-sm overflow-y-auto rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-500 ease-in-out ",
           previewMode === "desktop" ? getPlacementStyle(placement) : "max-w-full",

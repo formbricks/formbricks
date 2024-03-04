@@ -85,7 +85,7 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
+            className="bg-survey-bg rounded-custom relative max-h-[33vh] space-y-2 overflow-y-auto py-0.5 pr-2"
             role="radiogroup">
             {questionChoices.map((choice, idx) => (
               <label
