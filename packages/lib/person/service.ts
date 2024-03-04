@@ -258,7 +258,7 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
       // Now perform the upsert for the attribute with the found or created attributeClassId
       await prisma.attribute.upsert({
         where: {
-          attributeClassId_personId: {
+          personId_attributeClassId: {
             attributeClassId: attributeClass!.id,
             personId,
           },
@@ -391,7 +391,7 @@ export const updatePersonAttribute = async (
 
   const attributes = await prisma.attribute.upsert({
     where: {
-      attributeClassId_personId: {
+      personId_attributeClassId: {
         attributeClassId,
         personId,
       },
