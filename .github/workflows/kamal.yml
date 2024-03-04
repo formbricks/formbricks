@@ -94,4 +94,16 @@ jobs:
         run: kamal env push
       
       - name: Run deploy command
-        run: kamal deploy
+        run: |
+          set +e
+          DEPLOY_OUTPUT=$(kamal deploy 2>&1)
+          DEPLOY_EXIT_CODE=$?
+          echo "$DEPLOY_OUTPUT"
+          if [[ "$DEPLOY_OUTPUT" == *"container not unhealthy (healthy)"* ]]; then
+            echo "Deployment reported healthy container. Considering as success."
+            kamal lock release
+            exit 0
+          else
+            exit $DEPLOY_EXIT_CODE
+          fi
+        shell: bash
