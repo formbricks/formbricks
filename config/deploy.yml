@@ -11,7 +11,7 @@ servers:
       - 18.196.187.144
     labels:
       traefik.http.routers.blog.entrypoints: websecure
-      traefik.http.routers.blog.rule: Host(`kamal.formbricks.com`)
+      traefik.http.routers.blog.rule: Host(`kamal2.formbricks.com`)
       traefik.http.routers.blog.tls.certresolver: letsencrypt
 
 # Credentials for your image host.
