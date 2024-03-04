@@ -58,19 +58,19 @@ export default function Modal({
     };
   };
 
-  const scalingClasses = calculateScaling();
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
+  const scalingClasses = useMemo(() => calculateScaling(), [windowWidth, previewMode]);
+  
   const highlightBorderColorStyle = useMemo(() => {
     if (!highlightBorderColor)
       return {
         overflow: "auto",
       };
+  
+    return {
+      border: `2px solid ${highlightBorderColor}`,
+      overflow: "auto",
+    };
+  }, [highlightBorderColor]);
 
     return {
       border: `2px solid ${highlightBorderColor}`,
