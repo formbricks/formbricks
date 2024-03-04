@@ -122,23 +122,23 @@ const previewSurvey = {
   segment: null,
 };
 
+const StylingSettings = ({...props}) => {
+  // ... styling settings code ...
+};
+
+const SurveyPreview = ({...props}) => {
+  // ... survey preview code ...
+};
+
 const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
-  const router = useRouter();
-  const [unifiedStyling, setUnifiedStyling] = useState(product.styling?.unifiedStyling ?? false);
-  const [allowStyleOverwrite, setAllowStyleOverwrite] = useState(
-    product.styling?.allowStyleOverwrite ?? false
+  // ...
+  return (
+    <div className="flex">
+      <StylingSettings {...props} />
+      <SurveyPreview {...props} />
+    </div>
   );
-  const [brandColor, setBrandColor] = useState(
-    product.styling?.brandColor?.light ?? colorDefaults.brandColor
-  );
-  const [questionColor, setQuestionColor] = useState(
-    product.styling?.questionColor?.light ?? colorDefaults.questionColor
-  );
-  const [inputColor, setInputColor] = useState(
-    product.styling?.inputColor?.light ?? colorDefaults.inputColor
-  );
-  const [inputBorderColor, setInputBorderColor] = useState(
-    product.styling?.inputBorderColor?.light ?? colorDefaults.inputBorderColor
+};
   );
   const [cardBackgroundColor, setCardBackgroundColor] = useState(
     product.styling?.cardBackgroundColor?.light ?? colorDefaults.cardBackgroundColor
