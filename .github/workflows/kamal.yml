@@ -7,9 +7,7 @@ on:
 
 jobs:
   Deploy:
-    if: ${{ github.event_name == 'push'}}
     runs-on: ubuntu-latest
-
     env:
       DOCKER_BUILDKIT: 1
       WEBAPP_URL: ${{ secrets.WEBAPP_URL }}
@@ -93,4 +91,4 @@ jobs:
         uses: docker/setup-buildx-action@v2
       
       - name: Run deploy command
-        run: kamal setup
+        run: kamal deploy

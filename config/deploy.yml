@@ -98,6 +98,7 @@ builder:
     - DATABASE_URL
     - NEXTAUTH_SECRET
     - ENCRYPTION_KEY
+  multiarch: false
 #   secrets:
 #     - GITHUB_TOKEN
 #   remote:
