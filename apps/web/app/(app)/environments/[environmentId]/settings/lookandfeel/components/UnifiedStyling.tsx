@@ -22,7 +22,7 @@ type UnifiedStylingProps = {
   product: TProduct;
 };
 
-const colorDefaults = {
+const COLOR_DEFAULTS = {
   brandColor: "#64748b",
   questionColor: "#2b2524",
   inputColor: "#efefef",
