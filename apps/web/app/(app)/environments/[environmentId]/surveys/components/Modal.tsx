@@ -41,20 +41,20 @@ export default function Modal({
     }
 
     let placementClass = "";
-
-    if (placement === "bottomLeft") {
-      placementClass = "bottom left";
-    } else if (placement === "bottomRight") {
-      placementClass = "bottom right";
-    } else if (placement === "topLeft") {
-      placementClass = "top left";
-    } else if (placement === "topRight") {
-      placementClass = "top right";
-    }
-
-    return {
-      transform: `scale(${scaleValue})`,
-      transformOrigin: placementClass,
+        switch (placement) {
+          case "bottomLeft":
+            placementClass = "bottom left";
+            break;
+          case "bottomRight":
+            placementClass = "bottom right";
+            break;
+          case "topLeft":
+            placementClass = "top left";
+            break;
+          case "topRight":
+            placementClass = "top right";
+            break;
+        }
     };
   };
 
