@@ -40,18 +40,18 @@ export default function OpenTextQuestion({
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
-  const handleInputChange = (inputValue: string) => {
+  const handleInputChange = useCallback((inputValue: string) => {
     onChange({ [question.id]: inputValue });
-  };
-
-  const handleInputResize = (event: { target: any }) => {
+  }, [onChange, question.id]);
+  
+  const handleInputResize = useCallback((event: { target: any }) => {
     let maxHeight = 160; // 8 lines
     const textarea = event.target;
     textarea.style.height = "auto";
     const newHeight = Math.min(textarea.scrollHeight, maxHeight);
     textarea.style.height = `${newHeight}px`;
     textarea.style.overflow = newHeight >= maxHeight ? "auto" : "hidden";
-  };
+  }, []);
 
   const openTextRef = useCallback(
     (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
