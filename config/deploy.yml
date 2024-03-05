@@ -122,9 +122,9 @@ traefik:
     entryPoints.web.http.redirections.entryPoint.scheme: https
     entryPoints.web.http.redirections.entrypoint.permanent: true
     entrypoints.websecure.http.tls: true
-    entrypoints.websecure.http.tls.domains[0].main: "example.com"
-    entrypoints.websecure.http.tls.domains[0].sans: "*.example.com"
-    certificatesResolvers.letsencrypt.acme.email: "user@example.com"
+    entrypoints.websecure.http.tls.domains[0].main: "kamal2.formbricks.com"
+    entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
+    certificatesResolvers.letsencrypt.acme.email: "shubham@formbricks.com"
     certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
     certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
 
