@@ -74,3 +74,11 @@ mkdir -p /letsencrypt && touch /letsencrypt/acme.json && chmod 600 /letsencrypt/
     Then simply run `kamal lock release` & try again.
 
 For further details, refer to the [Kamal Documentation](https://kamal-deploy.org/docs/configuration) or reach out to us on our [Discord](https://formbricks.com/discord)
+
+## Rollback
+
+Run:
+
+```sh
+kamal rollback [git_commit_hash_to_rollback_to] -c kamal/deploy.yml
+```

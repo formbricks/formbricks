@@ -99,18 +99,16 @@ jobs:
         run: docker buildx create --use --name formbricks-gh-actions-builder
         if: steps.buildx.outputs.should_create_builder == 'true'
 
-      - name: Set Kamal alias
-        run: |
-          echo 'kamal() { command kamal "$@" -c kamal/deploy.yml; }' >> $GITHUB_ENV
-          echo 'export -f kamal' >> $GITHUB_ENV
-
       - name: Push env variables to Kamal
-        run: kamal env push -c kamal/deploy.yml
+        run: |
+          kamal() { command kamal "$@" -c kamal/deploy.yml; }
+          kamal env push
 
       - name: Run deploy command
         run: |
+          kamal() { command kamal "$@" -c kamal/deploy.yml; }
           set +e
-          DEPLOY_OUTPUT=$(kamal deploy -c kamal/deploy.yml 2>&1)
+          DEPLOY_OUTPUT=$(kamal deploy 2>&1)
           DEPLOY_EXIT_CODE=$?
           echo "$DEPLOY_OUTPUT"
           if [[ "$DEPLOY_OUTPUT" == *"container not unhealthy (healthy)"* ]]; then
