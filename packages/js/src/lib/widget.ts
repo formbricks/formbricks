@@ -10,6 +10,7 @@ import { ErrorHandler } from "./errors";
 import { putFormbricksInErrorState } from "./initialize";
 import { Logger } from "./logger";
 import { filterPublicSurveys, sync } from "./sync";
+import { getDefaultLanguageCode, getLanguageCode } from "./utils";
 
 const containerId = "formbricks-web-container";
 
@@ -37,27 +38,8 @@ export const renderWidget = async (survey: TSurvey) => {
   const product = config.get().state.product;
   const attributes = config.get().state.attributes;
 
-  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
-    return surveyLanguage.default === true;
-  })?.language.code;
-
-  const getLanguageCode = (): string | undefined => {
-    const language = attributes.language;
-    const availableLanguageCodes = Object.keys(survey.questions[0].headline);
-    if (!language) return "default";
-    else {
-      const selectedLanguage = survey.languages.find((surveyLanguage) => {
-        return surveyLanguage.language.code === language || surveyLanguage.language.alias === language;
-      });
-      if (selectedLanguage?.default) {
-        return "default";
-      }
-      if (!selectedLanguage || !availableLanguageCodes.includes(selectedLanguage.language.code)) return;
-      return selectedLanguage.language.code;
-    }
-  };
-
-  const languageCode = getLanguageCode();
+  const defaultLanguageCode = getDefaultLanguageCode(survey);
+  const languageCode = getLanguageCode(survey, attributes);
 
   //if survey is not available in selected language, survey wont be shown
   if (!languageCode) {
