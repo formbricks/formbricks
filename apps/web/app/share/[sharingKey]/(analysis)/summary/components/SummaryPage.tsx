@@ -1,13 +1,15 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import SurveyResultsTabs from "@/app/(app)/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
-import ResponseTimeline from "@/app/(app)/share/[sharingKey]/(analysis)/responses/components/ResponseTimeline";
-import CustomFilter from "@/app/(app)/share/[sharingKey]/components/CustomFilter";
-import SummaryHeader from "@/app/(app)/share/[sharingKey]/components/SummaryHeader";
+import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
+import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
+import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
 import { getFilterResponses } from "@/app/lib/surveys/surveys";
+import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
+import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
+import SummaryHeader from "@/app/share/[sharingKey]/components/SummaryHeader";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
@@ -16,20 +18,20 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
-interface ResponsePageProps {
+interface SummaryPageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
   responses: TResponse[];
-  webAppUrl: string;
   product: TProduct;
   sharingKey: string;
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
+  displayCount: number;
   responsesPerPage: number;
 }
 
-const ResponsePage = ({
+const SummaryPage = ({
   environment,
   survey,
   surveyId,
@@ -38,10 +40,11 @@ const ResponsePage = ({
   sharingKey,
   environmentTags,
   attributes,
-  responsesPerPage,
-}: ResponsePageProps) => {
+  displayCount,
+  responsesPerPage: openTextResponsesPerPage,
+}: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
-
+  const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -54,6 +57,7 @@ const ResponsePage = ({
   const filterResponses: TResponse[] = useMemo(() => {
     return getFilterResponses(responses, selectedFilter, survey, dateRange);
   }, [selectedFilter, responses, survey, dateRange]);
+
   return (
     <ContentWrapper>
       <SummaryHeader survey={survey} product={product} />
@@ -64,21 +68,27 @@ const ResponsePage = ({
         survey={survey}
       />
       <SurveyResultsTabs
-        activeId="responses"
+        activeId="summary"
         environmentId={environment.id}
         surveyId={surveyId}
         sharingKey={sharingKey}
       />
-      <ResponseTimeline
-        environment={environment}
-        surveyId={surveyId}
+      <SummaryMetadata
         responses={filterResponses}
         survey={survey}
-        environmentTags={environmentTags}
-        responsesPerPage={responsesPerPage}
+        displayCount={displayCount}
+        showDropOffs={showDropOffs}
+        setShowDropOffs={setShowDropOffs}
+      />
+      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
+      <SummaryList
+        responses={filterResponses}
+        survey={survey}
+        environment={environment}
+        responsesPerPage={openTextResponsesPerPage}
       />
     </ContentWrapper>
   );
 };
 
-export default ResponsePage;
+export default SummaryPage;
