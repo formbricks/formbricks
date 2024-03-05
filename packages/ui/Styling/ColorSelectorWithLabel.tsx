@@ -17,7 +17,7 @@ const ColorSelectorWithLabel = ({
   label,
   setColor,
   className = "",
-  disabled,
+  disabled = false,
 }: ColorSelectorWithLabelProps) => {
   return (
     <div className={cn("flex flex-col gap-4", className)}>

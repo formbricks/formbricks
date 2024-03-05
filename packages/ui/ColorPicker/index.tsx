@@ -10,7 +10,7 @@ export const ColorPicker = ({
   color,
   onChange,
   containerClass,
-  disabled,
+  disabled = false,
 }: {
   color: string;
   onChange: (v: string) => void;
@@ -31,13 +31,21 @@ export const ColorPicker = ({
             disabled={disabled}
           />
         </div>
-        <PopoverPicker color={color} onChange={onChange} />
+        <PopoverPicker color={color} onChange={onChange} disabled={disabled} />
       </div>
     </div>
   );
 };
 
-export const PopoverPicker = ({ color, onChange }: { color: string; onChange: (v: string) => void }) => {
+export const PopoverPicker = ({
+  color,
+  onChange,
+  disabled = false,
+}: {
+  color: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) => {
   const popover = useRef(null);
   const [isOpen, toggle] = useState(false);
 
@@ -49,8 +57,12 @@ export const PopoverPicker = ({ color, onChange }: { color: string; onChange: (v
       <div
         id="color-picker"
         className="h-6 w-10 cursor-pointer rounded"
-        style={{ backgroundColor: color }}
-        onClick={() => toggle(!isOpen)}
+        style={{ backgroundColor: color, opacity: disabled ? 0.5 : 1 }}
+        onClick={() => {
+          if (!disabled) {
+            toggle(!isOpen);
+          }
+        }}
       />
 
       {isOpen && (

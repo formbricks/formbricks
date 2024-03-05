@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import { colorDefaults } from "@formbricks/lib/styling/constants";
 
 import { Switch } from "../Switch";
@@ -18,6 +20,7 @@ type DarModeColorProps = {
   setCardBackgroundColor: React.Dispatch<React.SetStateAction<string>>;
   highlightBorderColor?: string;
   setHighlighBorderColor: React.Dispatch<React.SetStateAction<string>>;
+  disabled?: boolean;
 };
 
 const DarkModeColors = ({
@@ -35,7 +38,14 @@ const DarkModeColors = ({
   setInputBorderColor,
   setInputColor,
   setQuestionColor,
+  disabled = false,
 }: DarModeColorProps) => {
+  useEffect(() => {
+    if (disabled) {
+      setIsDarkMode(false);
+    }
+  }, [disabled, setIsDarkMode]);
+
   return (
     <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
       <div className="flex items-center gap-4">
@@ -44,6 +54,7 @@ const DarkModeColors = ({
           onCheckedChange={(value) => {
             setIsDarkMode(value);
           }}
+          disabled={disabled}
         />
 
         <div className="flex flex-col">

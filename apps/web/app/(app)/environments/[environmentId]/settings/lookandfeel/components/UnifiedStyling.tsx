@@ -164,10 +164,10 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const [roundness, setRoundness] = useState(product.styling?.roundness ?? 8);
 
   const [linkSurveysCardArrangement, setLinkSurveysCardArrangement] = useState(
-    product.styling?.cardArrangement?.linkSurveys ?? "casual"
+    product.styling?.cardArrangement?.linkSurveys ?? "simple"
   );
   const [inAppSurveysCardArrangement, setInAppSurveysCardArrangement] = useState(
-    product.styling?.cardArrangement?.inAppSurveys ?? "casual"
+    product.styling?.cardArrangement?.inAppSurveys ?? "simple"
   );
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -248,6 +248,54 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     unifiedStyling,
   ]);
 
+  const onReset = useCallback(async () => {
+    await updateProductAction(product.id, {
+      styling: {
+        unifiedStyling: true,
+        allowStyleOverwrite: true,
+        brandColor: {
+          light: colorDefaults.brandColor,
+        },
+        questionColor: {
+          light: colorDefaults.questionColor,
+        },
+        inputColor: {
+          light: colorDefaults.inputColor,
+        },
+        inputBorderColor: {
+          light: colorDefaults.inputBorderColor,
+        },
+        cardBackgroundColor: {
+          light: colorDefaults.cardBackgroundColor,
+        },
+        highlightBorderColor: undefined,
+        isDarkModeEnabled: false,
+        roundness: 8,
+        cardArrangement: {
+          linkSurveys: "simple",
+          inAppSurveys: "simple",
+        },
+      },
+    });
+
+    setUnifiedStyling(true);
+    setAllowStyleOverwrite(true);
+    setBrandColor(colorDefaults.brandColor);
+    setQuestionColor(colorDefaults.questionColor);
+    setInputColor(colorDefaults.inputColor);
+    setInputBorderColor(colorDefaults.inputBorderColor);
+    setCardBackgroundColor(colorDefaults.cardBackgroundColor);
+    setAllowHighlightBorder(false);
+    setHighlightBorderColor(colorDefaults.highlightBorderColor);
+    setIsDarkMode(false);
+    setRoundness(8);
+    setLinkSurveysCardArrangement("simple");
+    setInAppSurveysCardArrangement("simple");
+
+    toast.success("Styling updated successfully.");
+    router.refresh();
+  }, [product.id, router]);
+
   return (
     <div className="flex">
       {/* Styling settings */}
@@ -289,7 +337,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={brandColor}
             setColor={setBrandColor}
             description="Change the brand color of the survey"
-            disabled
+            disabled={!unifiedStyling}
           />
 
           <ColorSelectorWithLabel
@@ -297,6 +345,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={questionColor}
             setColor={setQuestionColor}
             description="Change the text color of the survey questions."
+            disabled={!unifiedStyling}
           />
 
           <ColorSelectorWithLabel
@@ -304,6 +353,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={inputColor}
             setColor={setInputColor}
             description="Change the background color of the input fields"
+            disabled={!unifiedStyling}
           />
 
           <ColorSelectorWithLabel
@@ -311,6 +361,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={inputBorderColor}
             setColor={setInputBorderColor}
             description="Change the border color of the input fields"
+            disabled={!unifiedStyling}
           />
 
           <ColorSelectorWithLabel
@@ -318,6 +369,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={cardBackgroundColor}
             setColor={setCardBackgroundColor}
             description="Change the background color of the card"
+            disabled={!unifiedStyling}
           />
 
           <div className="flex flex-col gap-4">
@@ -359,6 +411,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             setInputBorderColor={setInputBorderColorDark}
             setInputColor={setInputColorDark}
             setQuestionColor={setQuestionColorDark}
+            disabled={!unifiedStyling}
           />
 
           <div className="flex flex-col gap-4">
@@ -379,17 +432,19 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             activeCardArrangement={linkSurveysCardArrangement}
             surveyType="link"
             setActiveCardArrangement={setLinkSurveysCardArrangement}
+            disabled={!unifiedStyling}
           />
 
           <CardArrangement
             activeCardArrangement={inAppSurveysCardArrangement}
             surveyType="web"
             setActiveCardArrangement={setInAppSurveysCardArrangement}
+            disabled={!unifiedStyling}
           />
         </div>
 
         <div className="mt-8 flex items-center justify-end gap-2">
-          <Button variant="minimal" className="flex items-center gap-2">
+          <Button variant="minimal" className="flex items-center gap-2" onClick={onReset}>
             Reset
             <RotateCcwIcon className="h-4 w-4" />
           </Button>

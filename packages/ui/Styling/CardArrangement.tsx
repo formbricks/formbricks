@@ -9,16 +9,23 @@ type CardArrangementProps = {
   surveyType: "link" | "web";
   activeCardArrangement: TCardArrangementOptions;
   setActiveCardArrangement: (arrangement: TCardArrangementOptions) => void;
+  disabled?: boolean;
 };
 
 const CardArrangement = ({
   activeCardArrangement,
   surveyType,
   setActiveCardArrangement,
+  disabled = false,
 }: CardArrangementProps) => {
   const surveyTypeDerived = useMemo(() => {
     return surveyType == "link" ? "Link" : "In App";
   }, [surveyType]);
+
+  const handleCardArrangementChange = (arrangement: TCardArrangementOptions) => {
+    if (disabled) return;
+    setActiveCardArrangement(arrangement);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -39,14 +46,16 @@ const CardArrangement = ({
             "flex flex-1 justify-center bg-white text-center",
             activeCardArrangement === "casual" && "bg-slate-200"
           )}
-          onClick={() => setActiveCardArrangement("casual")}>
+          disabled={disabled}
+          onClick={() => handleCardArrangementChange("casual")}>
           Casual
         </Button>
 
         <Button
           variant="minimal"
           size="sm"
-          onClick={() => setActiveCardArrangement("straight")}
+          onClick={() => handleCardArrangementChange("straight")}
+          disabled={disabled}
           className={cn(
             "flex flex-1 justify-center bg-white text-center",
             activeCardArrangement === "straight" && "bg-slate-200"
@@ -57,7 +66,8 @@ const CardArrangement = ({
         <Button
           variant="minimal"
           size="sm"
-          onClick={() => setActiveCardArrangement("simple")}
+          onClick={() => handleCardArrangementChange("simple")}
+          disabled={disabled}
           className={cn(
             "flex flex-1 justify-center bg-white text-center",
             activeCardArrangement === "simple" && "bg-slate-200"
