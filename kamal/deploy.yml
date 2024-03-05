@@ -162,13 +162,13 @@ traefik:
 #     accesslog: true
 #     accesslog.format: json
 
-# logging:
-#   driver: awslogs
-#   options:
-#     awslogs-region: eu-central-1
-#     awslogs-group: /formbricks-kamal
-#     awslogs-create-group: true
-#     tag: "{{.Name}}-{{.ID}}"
+logging:
+  driver: awslogs
+  options:
+    awslogs-region: eu-central-1
+    awslogs-group: formbricks-kamal-shubhi
+    awslogs-create-group: true
+    tag: "{{.Name}}-{{.ID}}"
 
 healthcheck:
   path: /health
