@@ -29,7 +29,6 @@ export const renderWidget = async (survey: TSurvey) => {
     logger.debug("A survey is already running. Skipping.");
     return;
   }
-  setIsSurveyRunning(false);
 
   if (survey.delay) {
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
@@ -37,22 +36,14 @@ export const renderWidget = async (survey: TSurvey) => {
 
   const product = config.get().state.product;
   const attributes = config.get().state.attributes;
-  const lang = config.get().language;
 
   const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
     return surveyLanguage.default === true;
   })?.language.code;
 
   const getLanguageCode = (): string | undefined => {
+    const language = attributes.language;
     const availableLanguageCodes = Object.keys(survey.questions[0].headline);
-    if (availableLanguageCodes.length === 1) {
-      // survey is only availabe in one language, this can occur in following scenarios:
-      // 1) Multi language turned off
-      // 2) Multi langauge now allowed (permission issues)
-      // 3) User identification enabled
-      return availableLanguageCodes[0];
-    }
-    const language = attributes.language ?? lang;
     if (!language) return "default";
     else {
       const selectedLanguage = survey.languages.find((surveyLanguage) => {
@@ -61,16 +52,20 @@ export const renderWidget = async (survey: TSurvey) => {
       if (selectedLanguage?.default) {
         return "default";
       }
-      return selectedLanguage ? selectedLanguage.language.code : undefined;
+      if (!selectedLanguage || !availableLanguageCodes.includes(selectedLanguage.language.code)) return;
+      return selectedLanguage.language.code;
     }
   };
 
   const languageCode = getLanguageCode();
+
   //if survey is not available in selected language, survey wont be shown
   if (!languageCode) {
     logger.debug("Survey not available in specified language.");
     return;
   }
+  setIsSurveyRunning(true);
+
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
   const responseQueue = new ResponseQueue(

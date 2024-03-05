@@ -37,6 +37,7 @@ export async function GET(
     };
   }
 ): Promise<Response> {
+  console.log("called");
   try {
     const { device } = userAgent(request);
     const apiVersion = request.nextUrl.searchParams.get("version");
@@ -145,15 +146,21 @@ export async function GET(
     if (!product) {
       throw new Error("Product not found");
     }
+    const languageAttribute = person.attributes.language;
+    const isLanguageAvailable = Boolean(languageAttribute);
 
-    // return state
+    const personData = apiVersion
+      ? {
+          ...(isLanguageAvailable && { attributes: { language: languageAttribute } }),
+        }
+      : {
+          id: person.id,
+          userId: person.userId,
+          ...(isLanguageAvailable && { attributes: { language: languageAttribute } }),
+        };
+
     const state: TJsStateSync = {
-      person: apiVersion
-        ? undefined
-        : {
-            id: person.id,
-            userId: person.userId,
-          },
+      person: personData,
       surveys: !isInAppSurveyLimitReached ? surveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,

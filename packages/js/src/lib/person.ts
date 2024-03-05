@@ -79,15 +79,10 @@ export const updatePersonAttributes = async (
   apiHost: string,
   environmentId: string,
   userId: string,
-  attributes: TPersonAttributes,
-  language?: string
+  attributes: TPersonAttributes
 ): Promise<Result<TPersonAttributes, NetworkError | MissingPersonError>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
-  // Include the language in updatedAttributes if it's provided
-  if (language) {
-    updatedAttributes.language = language;
-  }
 
   try {
     const existingAttributes = config.get()?.state?.attributes;
@@ -193,7 +188,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
     environmentId: config.get().environmentId,
     apiHost: config.get().apiHost,
     userId: config.get().userId,
-    language: config.get().language,
+    attributes: config.get().state.attributes,
   };
   await logoutPerson();
   try {

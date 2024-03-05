@@ -50,6 +50,7 @@ export const anySurveyHasFilters = (surveys: TSurvey[] | TLegacySurvey[]): boole
 
 export const determineLanguageCode = (person: TPerson, survey: TSurvey) => {
   // Default to 'default' if person.attributes.language is not set or not a string
+  if (!person.attributes?.language) return "default";
   const languageCodeOrAlias =
     typeof person.attributes?.language === "string" ? person.attributes.language : "default";
 
@@ -59,7 +60,6 @@ export const determineLanguageCode = (person: TPerson, survey: TSurvey) => {
       surveyLanguage.language.code === languageCodeOrAlias ||
       surveyLanguage.language.alias === languageCodeOrAlias
   );
-
   if (!selectedLanguage) return;
 
   // Determine and return the language code to use

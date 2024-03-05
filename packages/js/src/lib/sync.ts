@@ -116,7 +116,6 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
       apiHost: params.apiHost,
       environmentId: params.environmentId,
       userId: params.userId,
-      language: params.language,
       state,
     });
   } catch (error) {
