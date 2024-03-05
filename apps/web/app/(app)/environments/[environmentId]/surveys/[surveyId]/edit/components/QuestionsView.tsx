@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
 import toast from "react-hot-toast";
 
-import MultiLanguageCard from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
+import { MultiLanguageCard } from "@formbricks/ee/multiLanguage/components/MultiLanguageCard";
 import { extractLanguageCodes, getLocalizedValue, translateQuestion } from "@formbricks/lib/i18n/utils";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
