@@ -38,7 +38,7 @@
 
 > Run the below for SSL config the first time
 ```sh
-mkdir -p /letsencrypt && touch /letsencrypt/acme.json && chmod 600 /letsencrypt/acme.json
+sudo mkdir -p /letsencrypt && sudo touch /letsencrypt/acme.json && sudo chmod 600 /letsencrypt/acme.json
 ```
 
 8. Make sure you have docker buildx locally on your machine where you run the kamal CLI from!
@@ -81,4 +81,10 @@ Run:
 
 ```sh
 kamal rollback [git_commit_hash_to_rollback_to] -c kamal/deploy.yml
+```
+
+## View Formbricks Server logs
+
+```sh
+kamal app logs -c kamal/deploy.yml
 ```
