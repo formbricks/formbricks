@@ -11,7 +11,7 @@ servers:
       - 18.196.187.144
     labels:
       traefik.http.routers.formbricks-kamal.entrypoints: websecure
-      traefik.http.routers.formbricks-kamal.rule: Host(`kamal2.formbricks.com`)
+      traefik.http.routers.formbricks-kamal.rule: Host(`kamal.formbricks.com`)
       traefik.http.routers.formbricks-kamal.tls.certresolver: letsencrypt
 
 # Credentials for your image host.
@@ -121,7 +121,7 @@ traefik:
     entryPoints.web.http.redirections.entryPoint.scheme: https
     entryPoints.web.http.redirections.entrypoint.permanent: true
     entrypoints.websecure.http.tls: true
-    entrypoints.websecure.http.tls.domains[0].main: "kamal2.formbricks.com"
+    entrypoints.websecure.http.tls.domains[0].main: "kamal.formbricks.com"
     entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
     certificatesResolvers.letsencrypt.acme.email: "shubham@formbricks.com"
     certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
