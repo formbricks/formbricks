@@ -99,6 +99,13 @@ jobs:
         run: docker buildx create --use --name formbricks-gh-actions-builder
         if: steps.buildx.outputs.should_create_builder == 'true'
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
       - name: Push env variables to Kamal
         run: |
           kamal() { command kamal "$@" -c kamal/deploy.yml; }
