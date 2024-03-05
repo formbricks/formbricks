@@ -413,7 +413,7 @@ export const getSurveySummaryMeta = (
   const ttcAverage = ttcResponseCount > 0 ? ttcSum / ttcResponseCount : 0;
 
   return {
-    displayCount,
+    displayCount: displayCount || 0,
     totalResponses: responseCount,
     startsPercentage,
     completedResponses,
@@ -547,8 +547,8 @@ export const getSurveySummaryDropoff = (
       questionId: question.id,
       headline: question.headline,
       ttc: totalTtc[question.id],
-      views: viewsArr[index],
-      dropoffCount: dropoffArr[index],
+      views: viewsArr[index] || 0,
+      dropoffCount: dropoffArr[index] || 0,
       dropoffPercentage: dropoffPercentageArr[index],
     };
   });
