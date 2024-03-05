@@ -113,7 +113,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="bg-survey-bg relative flex-1 cursor-pointer text-center text-sm leading-[2.8rem]">
+                className="bg-survey-bg relative h-[41px] flex-1 cursor-pointer text-center text-sm leading-[2.8rem]">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
@@ -141,7 +141,7 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      "flex max-h-16 justify-center focus:outline-none",
+                      "flex h-full max-h-16 justify-center focus:outline-none",
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
                         : "text-slate-300",
@@ -160,7 +160,7 @@ export default function RatingQuestion({
                 ) : (
                   <label
                     className={cn(
-                      "flex max-h-16 justify-center",
+                      "flex h-full max-h-16 justify-center",
                       value === number || hoveredNumber === number
                         ? "stroke-rating-selected text-rating-selected"
                         : "stroke-heading text-heading"

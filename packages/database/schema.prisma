@@ -314,6 +314,7 @@ model Survey {
   languages         SurveyLanguage[]
 
   @@index([environmentId])
+  @@index([segmentId])
 }
 
 enum ActionType {
