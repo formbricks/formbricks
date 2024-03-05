@@ -12,23 +12,23 @@ export default function HeaderLight() {
   const router = useRouter();
   return (
     <Popover className="relative" as="header">
-      <div className="max-w-8xl mx-auto flex items-center justify-between py-6 sm:px-2  md:justify-start lg:px-8 xl:px-12">
+      <div className="max-w-8xl mx-auto flex items-center justify-between py-6 sm:px-6  md:justify-start lg:px-10 xl:px-12">
         <div className="flex w-0 flex-1 justify-start">
           <Link href="/">
             <span className="sr-only">Formbricks</span>
-            <FooterLogo className="ml-7 h-8 w-auto sm:h-10" />
+            <FooterLogo className="h-8 w-auto sm:h-10" />
           </Link>
         </div>
 
         <div className="hidden flex-1 items-center justify-end md:flex">
-          <Button
+          {/*  <Button
             variant="secondary"
             onClick={() => {
               router.push("https://cal.com/johannes/formbricks-demo");
               plausible("Demo_CTA_TalkToUs");
             }}>
             Talk to us
-          </Button>
+          </Button> */}
           <Button
             variant="highlight"
             className="ml-2"
@@ -36,7 +36,7 @@ export default function HeaderLight() {
               router.push("https://app.formbricks.com/auth/signup");
               plausible("Demo_CTA_TryForFree");
             }}>
-            Start for free
+            Get started - it&apos;s free!
           </Button>
         </div>
       </div>

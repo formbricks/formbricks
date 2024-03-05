@@ -14,7 +14,7 @@ export default function Layout({ title, description, children }: LayoutProps) {
       <MetaInformation title={title} description={description} />
       <HeaderLight />
       {
-        <main className="max-w-8xl relative mx-auto flex w-full flex-col justify-center px-2 lg:px-8 xl:px-12">
+        <main className="max-w-8xl relative mx-auto flex w-full flex-col justify-center px-6 lg:px-24 xl:px-36">
           {children}
         </main>
       }
