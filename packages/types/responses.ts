@@ -273,7 +273,7 @@ export const ZSurveySummaryOpenText = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      person: ZPerson,
+      person: ZPerson.nullable(),
     })
   ),
 });
@@ -402,7 +402,7 @@ export const ZSurveySummaryDate = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      person: ZPerson,
+      person: ZPerson.nullable(),
     })
   ),
 });
@@ -418,7 +418,7 @@ export const ZSurveySummaryFileUpload = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      person: ZPerson,
+      person: ZPerson.nullable(),
     })
   ),
 });
@@ -449,7 +449,7 @@ export const ZSurveySummaryHiddenField = z.object({
     z.object({
       updatedAt: z.date(),
       value: z.string(),
-      person: ZPerson,
+      person: ZPerson.nullable(),
     })
   ),
 });

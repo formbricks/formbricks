@@ -8,6 +8,13 @@ import {
   TResponseFilterCriteria,
   TResponseTtc,
   TSurveySummary,
+  TSurveySummaryDate,
+  TSurveySummaryFileUpload,
+  TSurveySummaryHiddenField,
+  TSurveySummaryMultipleChoice,
+  TSurveySummaryOpenText,
+  TSurveySummaryPictureSelection,
+  TSurveySummaryRating,
 } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
@@ -562,15 +569,14 @@ export const getQuestionWiseSummary = (
 ): TSurveySummary["summary"] => {
   const VALUES_LIMIT = 10;
   let summary: TSurveySummary["summary"] = [];
-  let values: any = [];
 
   survey.questions.forEach((question) => {
     switch (question.type) {
       case TSurveyQuestionType.OpenText: {
-        values = [];
+        let values: TSurveySummaryOpenText["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
-          if (answer) {
+          if (answer && typeof answer === "string") {
             values.push({
               id: response.id,
               updatedAt: response.updatedAt,
@@ -586,11 +592,13 @@ export const getQuestionWiseSummary = (
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
         });
+
+        values = [];
         break;
       }
       case TSurveyQuestionType.MultipleChoiceSingle:
       case TSurveyQuestionType.MultipleChoiceMulti: {
-        values = [];
+        let values: TSurveySummaryMultipleChoice["choices"] = [];
         // check last choice is others or not
         const lastChoice = question.choices[question.choices.length - 1];
         const isOthersEnabled = lastChoice.id === "other";
@@ -659,10 +667,11 @@ export const getQuestionWiseSummary = (
           choices: values,
         });
 
+        values = [];
         break;
       }
       case TSurveyQuestionType.PictureSelection: {
-        values = [];
+        let values: TSurveySummaryPictureSelection["choices"] = [];
         const choiceCountMap: Record<string, number> = {};
 
         question.choices.forEach((choice) => {
@@ -696,10 +705,11 @@ export const getQuestionWiseSummary = (
           choices: values,
         });
 
+        values = [];
         break;
       }
       case TSurveyQuestionType.Rating: {
-        values = [];
+        let values: TSurveySummaryRating["choices"] = [];
         const choiceCountMap: Record<number, number> = {};
         const range = question.range;
 
@@ -743,6 +753,7 @@ export const getQuestionWiseSummary = (
           },
         });
 
+        values = [];
         break;
       }
       case TSurveyQuestionType.NPS: {
@@ -861,10 +872,10 @@ export const getQuestionWiseSummary = (
         break;
       }
       case TSurveyQuestionType.Date: {
-        values = [];
+        let values: TSurveySummaryDate["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
-          if (answer) {
+          if (answer && typeof answer === "string") {
             values.push({
               id: response.id,
               updatedAt: response.updatedAt,
@@ -880,10 +891,12 @@ export const getQuestionWiseSummary = (
           responseCount: values.length,
           samples: values.slice(0, VALUES_LIMIT),
         });
+
+        values = [];
         break;
       }
       case TSurveyQuestionType.FileUpload: {
-        values = [];
+        let values: TSurveySummaryFileUpload["files"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (Array.isArray(answer)) {
@@ -902,6 +915,8 @@ export const getQuestionWiseSummary = (
           responseCount: values.length,
           files: values.slice(0, VALUES_LIMIT),
         });
+
+        values = [];
         break;
       }
       case TSurveyQuestionType.Cal: {
@@ -940,10 +955,10 @@ export const getQuestionWiseSummary = (
   });
 
   survey.hiddenFields?.fieldIds?.forEach((question) => {
-    const values: any = [];
+    let values: TSurveySummaryHiddenField["samples"] = [];
     responses.forEach((response) => {
       const answer = response.data[question];
-      if (answer) {
+      if (answer && typeof answer === "string") {
         values.push({
           updatedAt: response.updatedAt,
           value: answer,
@@ -958,6 +973,8 @@ export const getQuestionWiseSummary = (
       responseCount: values.length,
       samples: values.slice(0, VALUES_LIMIT),
     });
+
+    values = [];
   });
 
   return summary;
