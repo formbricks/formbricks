@@ -114,7 +114,6 @@ traefik:
       - "443:443"
     volume:
       - "/letsencrypt/acme.json:/letsencrypt/acme.json" # To save the configuration file.
-traefik:
   args:
     entryPoints.web.address: ":80"
     entryPoints.websecure.address: ":443"
