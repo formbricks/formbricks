@@ -131,8 +131,7 @@ traefik:
   env:
     secret:
       - CLOUDFLARE_API_KEY
-    clear:
-      CLOUDFLARE_EMAIL: 'mail@matthiasnannt.com'
+      - CLOUDFLARE_EMAIL
 
 # traefik:
 #   options:
