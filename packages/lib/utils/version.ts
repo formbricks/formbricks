@@ -1,5 +1,5 @@
 export const isVersionGreaterThan = (version, specificVersion) => {
-  return true; // uncomment when testing in demo app
+  // return true; // uncomment when testing in demo app
   const parts1 = version.split(".").map(Number);
   const parts2 = specificVersion.split(".").map(Number);
 
