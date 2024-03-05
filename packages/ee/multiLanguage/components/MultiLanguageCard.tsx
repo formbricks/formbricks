@@ -185,76 +185,78 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <div className="space-y-4">
-            {product.languages.length <= 1 && (
-              <div className="mb-4 text-sm italic text-slate-500">
-                {product.languages.length === 0
-                  ? "No languages found. Add the first one to get started:"
-                  : "You need two or more languages to work with translations."}
-              </div>
-            )}
-            {product.languages.length > 1 && (
-              <div className="my-4 space-y-4">
-                <div>
-                  {isMultiLanguageAllowed && !isMultiLanguageActivated && (
-                    <div className="text-sm italic text-slate-500">
-                      Switch multi-lanugage on to get started 👉
+            {!isMultiLanguageAllowed && !isFormbricksCloud && !isMultiLanguageActivated ? (
+              <UpgradePlanNotice
+                message="To enable multi-language surveys,"
+                url="https://formbricks.com/docs/self-hosting/enterprise"
+                textForUrl="get a enterprise license."
+              />
+            ) : !isMultiLanguageAllowed && isFormbricksCloud && !isMultiLanguageActivated ? (
+              <UpgradePlanNotice
+                message="To enable multi-language surveys,"
+                url={`/environments/${environmentId}/settings/billing`}
+                textForUrl="please add your credit card."
+              />
+            ) : (
+              <>
+                {product.languages.length <= 1 && (
+                  <div className="mb-4 text-sm italic text-slate-500">
+                    {product.languages.length === 0
+                      ? "No languages found. Add the first one to get started:"
+                      : "You need two or more languages to work with translations."}
+                  </div>
+                )}
+                {product.languages.length > 1 && (
+                  <div className="my-4 space-y-4">
+                    <div>
+                      {isMultiLanguageAllowed && !isMultiLanguageActivated && (
+                        <div className="text-sm italic text-slate-500">
+                          Switch multi-lanugage on to get started 👉
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {!isMultiLanguageAllowed && !isFormbricksCloud && !isMultiLanguageActivated && (
-                    <UpgradePlanNotice
-                      message="To enable multi-language surveys,"
-                      url={`/environments/${environmentId}/settings/billing`}
-                      textForUrl="please add your credit card (free)."
-                    />
-                  )}
-                  {!isMultiLanguageAllowed && isFormbricksCloud && !isMultiLanguageActivated && (
-                    <UpgradePlanNotice
-                      message="To enable multi-language surveys,"
-                      url="https://formbricks.com/docs/self-hosting/enterprise"
-                      textForUrl="get a self-hosting license (free)."
-                    />
-                  )}
-                </div>
-                {isMultiLanguageActivated && (
-                  <div className="space-y-4">
-                    <DefaultLanguageSelect
-                      defaultLanguage={defaultLanguage}
-                      handleDefaultLanguageChange={handleDefaultLanguageChange}
-                      product={product}
-                      setConfirmationModalInfo={setConfirmationModalInfo}
-                    />
-                    {defaultLanguage && (
-                      <SecondaryLanguageSelect
-                        product={product}
-                        defaultLanguage={defaultLanguage}
-                        localSurvey={localSurvey}
-                        updateSurveyLanguages={updateSurveyLanguages}
-                        surveyLanguageCodes={surveyLanguageCodes}
-                        setActiveQuestionId={setActiveQuestionId}
-                        setSelectedLanguageCode={setSelectedLanguageCode}
-                      />
+                    {isMultiLanguageActivated && (
+                      <div className="space-y-4">
+                        <DefaultLanguageSelect
+                          defaultLanguage={defaultLanguage}
+                          handleDefaultLanguageChange={handleDefaultLanguageChange}
+                          product={product}
+                          setConfirmationModalInfo={setConfirmationModalInfo}
+                        />
+                        {defaultLanguage && (
+                          <SecondaryLanguageSelect
+                            product={product}
+                            defaultLanguage={defaultLanguage}
+                            localSurvey={localSurvey}
+                            updateSurveyLanguages={updateSurveyLanguages}
+                            surveyLanguageCodes={surveyLanguageCodes}
+                            setActiveQuestionId={setActiveQuestionId}
+                            setSelectedLanguageCode={setSelectedLanguageCode}
+                          />
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
-              </div>
+                <Button
+                  className="mt-2"
+                  variant="secondary"
+                  size="sm"
+                  href={`/environments/${environmentId}/settings/language`}
+                  target="_blank">
+                  Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
+                </Button>
+                <ConfirmationModal
+                  title={confirmationModalInfo.title}
+                  open={confirmationModalInfo.open}
+                  setOpen={() => setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }))}
+                  text={confirmationModalInfo.text}
+                  onConfirm={confirmationModalInfo.onConfirm}
+                  buttonText={confirmationModalInfo.buttonText}
+                  buttonVariant={confirmationModalInfo.buttonVariant}
+                />
+              </>
             )}
-            <Button
-              className="mt-2"
-              variant="secondary"
-              size="sm"
-              href={`/environments/${environmentId}/settings/language`}
-              target="_blank">
-              Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
-            </Button>
-            <ConfirmationModal
-              title={confirmationModalInfo.title}
-              open={confirmationModalInfo.open}
-              setOpen={() => setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }))}
-              text={confirmationModalInfo.text}
-              onConfirm={confirmationModalInfo.onConfirm}
-              buttonText={confirmationModalInfo.buttonText}
-              buttonVariant={confirmationModalInfo.buttonVariant}
-            />
           </div>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
