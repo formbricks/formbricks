@@ -5,6 +5,7 @@ import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 
+import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
 import {
   extractId,
   extractRecallInfo,
@@ -14,7 +15,6 @@ import {
   headlineToRecall,
   recallToHeadline,
   replaceRecallInfoWithUnderline,
-  useSyncScroll,
 } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 

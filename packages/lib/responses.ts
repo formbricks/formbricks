@@ -1,8 +1,8 @@
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 export const getQuestionResponseMapping = (
-  survey: { questions: TSurveyQuestion[] },
+  survey: TSurvey,
   response: TResponse
 ): { question: string; answer: string | string[]; type: TSurveyQuestionType }[] => {
   const questionResponseMapping: {

@@ -9,8 +9,8 @@ import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 import { handleIntegrations } from "./lib/handleIntegrations";
@@ -99,22 +99,14 @@ export async function POST(request: Request) {
       },
     });
 
-    let surveyData;
-
     const integrations = await getIntegrations(environmentId);
+    const surveyData = await getSurvey(surveyId);
+    const survey = surveyData ? checkForRecallInHeadline(surveyData) : undefined;
 
     if (integrations.length > 0) {
-      surveyData = await prisma.survey.findUnique({
-        where: {
-          id: surveyId,
-        },
-        select: {
-          id: true,
-          name: true,
-          questions: true,
-        },
-      });
-      handleIntegrations(integrations, inputValidation.data, surveyData);
+      if (survey) {
+        handleIntegrations(integrations, inputValidation.data, survey);
+      }
     }
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
@@ -129,32 +121,12 @@ export async function POST(request: Request) {
     const responseCount = await getResponseCountBySurveyId(surveyId);
 
     if (usersWithNotifications.length > 0) {
-      // get survey
-      if (!surveyData) {
-        surveyData = await prisma.survey.findUnique({
-          where: {
-            id: surveyId,
-          },
-          select: {
-            id: true,
-            name: true,
-            questions: true,
-          },
-        });
-      }
-
-      if (!surveyData) {
+      if (!survey) {
         console.error(`Pipeline: Survey with id ${surveyId} not found`);
         return new Response("Survey not found", {
           status: 404,
         });
       }
-      // create survey object
-      const survey = {
-        id: surveyData.id,
-        name: surveyData.name,
-        questions: JSON.parse(JSON.stringify(surveyData.questions)) as TSurveyQuestion[],
-      };
       // send email to all users
       await Promise.all(
         usersWithNotifications.map(async (user) => {
