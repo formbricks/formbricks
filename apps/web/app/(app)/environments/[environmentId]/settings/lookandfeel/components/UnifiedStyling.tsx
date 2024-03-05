@@ -12,9 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Slider } from "@formbricks/ui/Slider";
-import CardArrangement from "@formbricks/ui/Styling/CardArrangement";
 import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabel";
-import DarkModeColors from "@formbricks/ui/Styling/DarkModeColors";
 import { Switch } from "@formbricks/ui/Switch";
 
 import { updateProductAction } from "../actions";
@@ -143,32 +141,32 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     product.styling?.highlightBorderColor?.light ?? colorDefaults.highlightBorderColor
   );
 
-  const [isDarkMode, setIsDarkMode] = useState(product.styling?.isDarkModeEnabled ?? false);
+  // const [isDarkMode, setIsDarkMode] = useState(product.styling?.isDarkModeEnabled ?? false);
 
-  const [brandColorDark, setBrandColorDark] = useState(product.styling?.brandColor?.dark);
+  // const [brandColorDark, setBrandColorDark] = useState(product.styling?.brandColor?.dark);
 
-  const [questionColorDark, setQuestionColorDark] = useState(product.styling?.questionColor?.dark);
+  // const [questionColorDark, setQuestionColorDark] = useState(product.styling?.questionColor?.dark);
 
-  const [inputColorDark, setInputColorDark] = useState(product.styling?.inputColor?.dark);
+  // const [inputColorDark, setInputColorDark] = useState(product.styling?.inputColor?.dark);
 
-  const [inputBorderColorDark, setInputBorderColorDark] = useState(product.styling?.inputBorderColor?.dark);
+  // const [inputBorderColorDark, setInputBorderColorDark] = useState(product.styling?.inputBorderColor?.dark);
 
-  const [cardBackgroundColorDark, setCardBackgroundColorDark] = useState(
-    product.styling?.cardBackgroundColor?.dark
-  );
+  // const [cardBackgroundColorDark, setCardBackgroundColorDark] = useState(
+  //   product.styling?.cardBackgroundColor?.dark
+  // );
 
-  const [highlightBorderColorDark, setHighlightBorderColorDark] = useState(
-    product.styling?.highlightBorderColor?.dark
-  );
+  // const [highlightBorderColorDark, setHighlightBorderColorDark] = useState(
+  //   product.styling?.highlightBorderColor?.dark
+  // );
 
   const [roundness, setRoundness] = useState(product.styling?.roundness ?? 8);
 
-  const [linkSurveysCardArrangement, setLinkSurveysCardArrangement] = useState(
-    product.styling?.cardArrangement?.linkSurveys ?? "simple"
-  );
-  const [inAppSurveysCardArrangement, setInAppSurveysCardArrangement] = useState(
-    product.styling?.cardArrangement?.inAppSurveys ?? "simple"
-  );
+  // const [linkSurveysCardArrangement, setLinkSurveysCardArrangement] = useState(
+  //   product.styling?.cardArrangement?.linkSurveys ?? "simple"
+  // );
+  // const [inAppSurveysCardArrangement, setInAppSurveysCardArrangement] = useState(
+  //   product.styling?.cardArrangement?.inAppSurveys ?? "simple"
+  // );
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
@@ -189,36 +187,26 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
         allowStyleOverwrite,
         brandColor: {
           light: brandColor,
-          dark: brandColorDark,
         },
         questionColor: {
           light: questionColor,
-          dark: questionColorDark,
         },
         inputColor: {
           light: inputColor,
-          dark: inputColorDark,
         },
         inputBorderColor: {
           light: inputBorderColor,
-          dark: inputBorderColorDark,
         },
         cardBackgroundColor: {
           light: cardBackgroundColor,
-          dark: cardBackgroundColorDark,
         },
         highlightBorderColor: allowHighlightBorder
           ? {
               light: highlightBorderColor,
-              dark: highlightBorderColorDark,
             }
           : undefined,
-        isDarkModeEnabled: isDarkMode,
+        isDarkModeEnabled: false,
         roundness,
-        cardArrangement: {
-          linkSurveys: linkSurveysCardArrangement,
-          inAppSurveys: inAppSurveysCardArrangement,
-        },
       },
     });
 
@@ -228,21 +216,12 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     allowHighlightBorder,
     allowStyleOverwrite,
     brandColor,
-    brandColorDark,
     cardBackgroundColor,
-    cardBackgroundColorDark,
     highlightBorderColor,
-    highlightBorderColorDark,
-    inAppSurveysCardArrangement,
     inputBorderColor,
-    inputBorderColorDark,
     inputColor,
-    inputColorDark,
-    isDarkMode,
-    linkSurveysCardArrangement,
     product.id,
     questionColor,
-    questionColorDark,
     roundness,
     router,
     unifiedStyling,
@@ -287,10 +266,10 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     setCardBackgroundColor(colorDefaults.cardBackgroundColor);
     setAllowHighlightBorder(false);
     setHighlightBorderColor(colorDefaults.highlightBorderColor);
-    setIsDarkMode(false);
+    // setIsDarkMode(false);
     setRoundness(8);
-    setLinkSurveysCardArrangement("simple");
-    setInAppSurveysCardArrangement("simple");
+    // setLinkSurveysCardArrangement("simple");
+    // setInAppSurveysCardArrangement("simple");
 
     toast.success("Styling updated successfully.");
     router.refresh();
@@ -396,7 +375,23 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             )}
           </div>
 
-          <DarkModeColors
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <h3 className="text-base font-semibold text-slate-900">Roundness</h3>
+              <p className="text-sm text-slate-800">Change the border radius of the card and the inputs.</p>
+            </div>
+
+            <Slider
+              value={[roundness]}
+              max={16}
+              onValueChange={(value) => setRoundness(value[0])}
+              disabled={!unifiedStyling}
+            />
+          </div>
+
+          {/* These will be tackled later */}
+
+          {/* <DarkModeColors
             isDarkMode={isDarkMode}
             setIsDarkMode={setIsDarkMode}
             brandColor={brandColorDark}
@@ -412,23 +407,9 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             setInputColor={setInputColorDark}
             setQuestionColor={setQuestionColorDark}
             disabled={!unifiedStyling}
-          />
+          /> */}
 
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
-              <h3 className="text-base font-semibold text-slate-900">Roundness</h3>
-              <p className="text-sm text-slate-800">Change the border radius of the card and the inputs.</p>
-            </div>
-
-            <Slider
-              value={[roundness]}
-              max={16}
-              onValueChange={(value) => setRoundness(value[0])}
-              disabled={!unifiedStyling}
-            />
-          </div>
-
-          <CardArrangement
+          {/* <CardArrangement
             activeCardArrangement={linkSurveysCardArrangement}
             surveyType="link"
             setActiveCardArrangement={setLinkSurveysCardArrangement}
@@ -440,7 +421,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             surveyType="web"
             setActiveCardArrangement={setInAppSurveysCardArrangement}
             disabled={!unifiedStyling}
-          />
+          /> */}
         </div>
 
         <div className="mt-8 flex items-center justify-end gap-2">
@@ -457,8 +438,8 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
       {/* Survey Preview */}
 
-      <div className="w-1/2 bg-slate-100 pt-4">
-        <div className="h-full max-h-[800px]">
+      <div className="relative w-1/2 bg-slate-100 pt-4">
+        <div className="sticky top-0 h-full max-h-[600px]">
           <UnifiedStylingPreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}

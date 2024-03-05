@@ -2,6 +2,7 @@ import { isLight } from "@/lib/utils";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 
+import { hexToRGBA } from "@formbricks/lib/utils";
 import { TStyling } from "@formbricks/types/styling";
 
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
@@ -63,6 +64,9 @@ export const addCustomThemeToDom = ({ styling }: { styling: TStyling }) => {
   appendCssVariable("border-color", styling.inputBorderColor?.light);
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("border-radius", styling.roundness ? `${styling.roundness}px` : undefined);
+  appendCssVariable("input-background-color", styling.inputColor?.light);
+  appendCssVariable("accent-background-color", hexToRGBA(styling.brandColor?.light ?? "", 0.1));
+  appendCssVariable("accent-selected-background-color", hexToRGBA(styling.brandColor?.light ?? "", 0.2));
 
   // Close the :root block
   cssVariables += "}";

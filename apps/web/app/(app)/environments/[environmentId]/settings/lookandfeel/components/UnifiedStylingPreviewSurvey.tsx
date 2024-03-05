@@ -233,13 +233,13 @@ export default function UnifiedStylingPreviewSurvey({
       {/* for toggling between mobile and desktop mode  */}
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <div
-          className={`${previewType === "link" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1`}
+          className={`${previewType === "link" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("link")}>
           Link survey
         </div>
 
         <div
-          className={`${previewType === "web" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1`}
+          className={`${previewType === "web" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("web")}>
           App survey
         </div>

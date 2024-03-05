@@ -72,6 +72,7 @@ p.fb-editor-paragraph {
   --fb-survey-background-color: white;
   --fb-accent-background-color: var(--slate-200);
   --fb-accent-background-color-selected: var(--slate-100);
+  --fb-input-background-color: white;
   --fb-placeholder-color: var(--slate-400);
   --fb-shadow-color: var(--slate-300);
   --fb-rating-fill: var(--yellow-300);

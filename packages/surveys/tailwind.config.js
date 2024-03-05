@@ -21,6 +21,7 @@ module.exports = {
         "survey-bg": "var(--fb-survey-background-color)",
         "accent-bg": "var(--fb-accent-background-color)",
         "accent-selected-bg": "var(--fb-accent-background-color-selected)",
+        "input-bg": "var(--fb-input-background-color)",
         placeholder: "var(--fb-placeholder-color)",
         shadow: "var(--fb-shadow-color)",
         "rating-fill": "var(--fb-rating-fill)",

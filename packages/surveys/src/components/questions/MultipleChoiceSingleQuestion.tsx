@@ -102,10 +102,8 @@ export default function MultipleChoiceSingleQuestion({
                   }
                 }}
                 className={cn(
-                  value === choice.label
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
-                    : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                  value === choice.label ? "border-brand z-10" : "border-border",
+                  "text-heading bg-input-bg focus-within:border-brand focus-within:bg-accent-bg hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
