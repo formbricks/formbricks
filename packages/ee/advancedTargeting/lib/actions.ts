@@ -55,8 +55,6 @@ export const createSegmentAction = async ({
     isPrivate,
     filters,
   });
-  surveyCache.revalidate({ id: surveyId });
-  segmentCache.revalidate({ id: segment.id, environmentId });
 
   return segment;
 };
