@@ -42,7 +42,7 @@ export default async function SurveysPage({ params }) {
   if (!environment) {
     throw new Error("Environment not found");
   }
-  const surveys = await getSurveys(params.environmentId);
+  const surveys = await getSurveys(params.environmentId, 1); // workaround for now; only get the first page; better approach is in development
 
   const environments = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
