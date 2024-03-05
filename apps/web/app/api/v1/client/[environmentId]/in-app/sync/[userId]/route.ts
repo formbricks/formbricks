@@ -37,7 +37,6 @@ export async function GET(
     };
   }
 ): Promise<Response> {
-  console.log("called");
   try {
     const { device } = userAgent(request);
     const apiVersion = request.nextUrl.searchParams.get("version");
