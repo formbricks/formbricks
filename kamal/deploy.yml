@@ -133,29 +133,6 @@ traefik:
       - CLOUDFLARE_API_KEY
       - CLOUDFLARE_EMAIL
 
-# traefik:
-#   options:
-#     publish:
-#       - "443:443"
-#     volume:
-#       - "/letsencrypt/acme.json:/letsencrypt/acme.json" # To save the configuration file.
-#   args:
-#     entryPoints.web.address: ":80"
-#     entryPoints.websecure.address: ":443"
-#     entryPoints.web.http.redirections.entryPoint.to: websecure # We want to force https
-#     certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
-#     entrypoints.websecure.http.tls: true
-#     entrypoints.websecure.http.tls.certResolver: letsencrypt
-#     entrypoints.websecure.http.tls.domains[0].main: app.formbricks.com
-#     entrypoints.websecure.http.tls.domains[0].sans: *.home.example.com
-
-#     entryPoints.web.http.redirections.entryPoint.scheme: https
-#     entryPoints.web.http.redirections.entrypoint.permanent: true
-#     certificatesResolvers.letsencrypt.acme.email: "shubham@formbricks.com"
-#     certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json" # Must match the path in `volume`
-#     # certificatesResolvers.letsencrypt.acme.httpchallenge: true
-#     # certificatesResolvers.letsencrypt.acme.httpchallenge.entrypoint: web # Must match the role in `servers`
-
 # Use accessory services (secrets come from .env).
 # accessories:
 #   db:
@@ -190,7 +167,6 @@ healthcheck:
   port: 3000
   max_attempts: 7
   interval: 20s
-
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old
 # version inside the asset_path.
