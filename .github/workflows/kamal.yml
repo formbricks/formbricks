@@ -71,7 +71,7 @@ jobs:
       KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
       KAMAL_CONTAINER_IMAGE: ${{ secrets.KAMAL_CONTAINER_IMAGE }}
       CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
-      CF_DNS_API_TOKEN: ${{ secrets.CF_DNS_API_TOKEN }}
+      CLOUDFLARE_DNS_API_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
 
     steps:
       - name: Checkout code

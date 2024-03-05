@@ -84,7 +84,7 @@ env:
     - NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID
     - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
     - CLOUDFLARE_EMAIL
-    - CF_DNS_API_TOKEN
+    - CLOUDFLARE_DNS_API_TOKEN
 
 # Use a different ssh user than root
 ssh:
@@ -130,7 +130,7 @@ traefik:
     level: DEBUG
   env:
     secret:
-      - CF_DNS_API_TOKEN
+      - CLOUDFLARE_DNS_API_TOKEN
       - CLOUDFLARE_EMAIL
 
 # Use accessory services (secrets come from .env).
@@ -162,13 +162,13 @@ traefik:
 #     accesslog: true
 #     accesslog.format: json
 
-logging:
-  driver: awslogs
-  options:
-    awslogs-region: eu-central-1
-    awslogs-group: /formbricks-kamal
-    awslogs-create-group: true
-    tag: "{{.Name}}-{{.ID}}"
+# logging:
+#   driver: awslogs
+#   options:
+#     awslogs-region: eu-central-1
+#     awslogs-group: /formbricks-kamal
+#     awslogs-create-group: true
+#     tag: "{{.Name}}-{{.ID}}"
 
 healthcheck:
   path: /health
