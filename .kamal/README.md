@@ -36,6 +36,11 @@
 
     > Note: The above needs to be ran on the Cloud VM. There is an open Issue on Kamal for the same [here](https://github.com/basecamp/kamal/issues/405)
 
+> Run the below for SSL config the first time
+```sh
+mkdir -p /letsencrypt && touch /letsencrypt/acme.json && chmod 600 /letsencrypt/acme.json
+```
+
 8. Make sure you have docker buildx locally on your machine where you run the kamal CLI from!
 
 9. Voila! You are all set to deploy your application to the cloud with Kamal! 🚀

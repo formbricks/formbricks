@@ -12,7 +12,7 @@ servers:
     labels:
       traefik.http.routers.formbricks-kamal.entrypoints: websecure
       traefik.http.routers.formbricks-kamal.rule: Host(`kamal2.formbricks.com`)
-      traefik.http.routers.formbricks-kamal.tls.certresolver: shubham
+      traefik.http.routers.formbricks-kamal.tls.certresolver: letsencrypt
 
 # Credentials for your image host.
 registry:
@@ -84,7 +84,7 @@ env:
     - NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID
     - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
     - CLOUDFLARE_EMAIL
-    - CLOUDFLARE_DNS_API_TOKEN
+    - CLOUDFLARE_API_KEY
 
 # Use a different ssh user than root
 ssh:
@@ -121,17 +121,20 @@ traefik:
     entryPoints.web.http.redirections.entryPoint.to: websecure
     entryPoints.web.http.redirections.entryPoint.scheme: https
     entryPoints.web.http.redirections.entrypoint.permanent: true
-
-    certificatesresolvers.shubham.acme.dnschallenge.provider: cloudflare
-    certificatesResolvers.shubham.acme.email: "shubham@formbricks.com"
-    certificatesResolvers.shubham.acme.storage: "/letsencrypt/acme.json"
+    entrypoints.websecure.http.tls: true
+    entrypoints.websecure.http.tls.domains[0].main: "example.com"
+    entrypoints.websecure.http.tls.domains[0].sans: "*.example.com"
+    certificatesResolvers.letsencrypt.acme.email: "user@example.com"
+    certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
+    certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
 
   log:
     level: DEBUG
   env:
     secret:
-      - CLOUDFLARE_EMAIL
-      - CLOUDFLARE_DNS_API_TOKEN
+      - CLOUDFLARE_API_KEY
+    clear:
+      CLOUDFLARE_EMAIL: 'mail@matthiasnannt.com'
 
 # traefik:
 #   options:
