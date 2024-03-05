@@ -224,7 +224,7 @@ export default function AddNoCodeActionModal({
                   Cancel
                 </Button>
                 <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
-                  Track Action
+                  Create Action
                 </Button>
               </div>
             </div>
@@ -275,7 +275,7 @@ export default function AddNoCodeActionModal({
                   Cancel
                 </Button>
                 <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
-                  Track Action
+                  Create Action
                 </Button>
               </div>
             </div>
