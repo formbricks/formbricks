@@ -3,7 +3,7 @@ import SummaryPage from "@/app/(app)/share/[sharingKey]/(analysis)/summary/compo
 import { getResultShareUrlSurveyAction } from "@/app/(app)/share/[sharingKey]/action";
 import { notFound } from "next/navigation";
 
-import { REVALIDATION_INTERVAL, TEXT_RESPONSES_PER_PAGE } from "@formbricks/lib/constants";
+import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponsePersonAttributes } from "@formbricks/lib/response/service";
@@ -24,8 +24,7 @@ export default async function Page({ params }) {
   if (!survey) {
     throw new Error("Survey not found");
   }
-
-  const [{ responses, displayCount }, environment] = await Promise.all([
+  const [{ responseCount }, environment] = await Promise.all([
     getAnalysisData(survey.id, survey.environmentId),
     getEnvironment(survey.environmentId),
   ]);
@@ -46,15 +45,13 @@ export default async function Page({ params }) {
     <>
       <SummaryPage
         environment={environment}
-        responses={responses}
         survey={survey}
-        sharingKey={params.sharingKey}
         surveyId={survey.id}
+        sharingKey={params.sharingKey}
         product={product}
         environmentTags={tags}
         attributes={attributes}
-        displayCount={displayCount}
-        responsesPerPage={TEXT_RESPONSES_PER_PAGE}
+        responseCount={responseCount}
       />
     </>
   );

@@ -5,15 +5,17 @@ import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[s
 import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
 import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
 import SurveyResultsTabs from "@/app/(app)/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
+import { getSurveySummaryUnauthorizedAction } from "@/app/(app)/share/[sharingKey]/action";
 import CustomFilter from "@/app/(app)/share/[sharingKey]/components/CustomFilter";
 import SummaryHeader from "@/app/(app)/share/[sharingKey]/components/SummaryHeader";
-import { getFilterResponses } from "@/app/lib/surveys/surveys";
+import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TSurveyPersonAttributes } from "@formbricks/types/responses";
+import { TSurveyPersonAttributes, TSurveySummary } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
@@ -22,29 +24,57 @@ interface SummaryPageProps {
   environment: TEnvironment;
   survey: TSurvey;
   surveyId: string;
-  responses: TResponse[];
   product: TProduct;
   sharingKey: string;
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
-  displayCount: number;
-  responsesPerPage: number;
+  responseCount: number;
 }
 
 const SummaryPage = ({
   environment,
   survey,
   surveyId,
-  responses,
   product,
   sharingKey,
   environmentTags,
   attributes,
-  displayCount,
-  responsesPerPage: openTextResponsesPerPage,
+  responseCount,
 }: SummaryPageProps) => {
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
+  const [surveySummary, setSurveySummary] = useState<TSurveySummary>({
+    meta: {
+      completedPercentage: 0,
+      completedResponses: 0,
+      displayCount: 0,
+      dropoffRate: 0,
+      dropoffs: 0,
+      startsPercentage: 0,
+      totalResponses: 0,
+      ttcAverage: 0,
+    },
+    dropoff: [],
+    summary: [],
+  });
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
+
+  const filters = useMemo(
+    () => getFormattedFilters(survey, selectedFilter, dateRange),
+    [survey, selectedFilter, dateRange]
+  );
+
+  useEffect(() => {
+    const fetchSurveySummary = async () => {
+      const response = await getSurveySummaryUnauthorizedAction(surveyId, filters);
+      setSurveySummary(response);
+    };
+    fetchSurveySummary();
+  }, [filters, surveyId]);
+
+  survey = useMemo(() => {
+    return checkForRecallInHeadline(survey);
+  }, [survey]);
+
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -53,20 +83,10 @@ const SummaryPage = ({
     }
   }, [searchParams, resetState]);
 
-  // get the filtered array when the selected filter value changes
-  const filterResponses: TResponse[] = useMemo(() => {
-    return getFilterResponses(responses, selectedFilter, survey, dateRange);
-  }, [selectedFilter, responses, survey, dateRange]);
-
   return (
     <ContentWrapper>
       <SummaryHeader survey={survey} product={product} />
-      <CustomFilter
-        environmentTags={environmentTags}
-        attributes={attributes}
-        responses={filterResponses}
-        survey={survey}
-      />
+      <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
       <SurveyResultsTabs
         activeId="summary"
         environmentId={environment.id}
@@ -74,18 +94,18 @@ const SummaryPage = ({
         sharingKey={sharingKey}
       />
       <SummaryMetadata
-        responses={filterResponses}
         survey={survey}
-        displayCount={displayCount}
+        surveySummary={surveySummary.meta}
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />
-      {showDropOffs && <SummaryDropOffs survey={survey} responses={responses} displayCount={displayCount} />}
+      {showDropOffs && <SummaryDropOffs dropoff={surveySummary.dropoff} />}
+
       <SummaryList
-        responses={filterResponses}
+        summary={surveySummary.summary}
+        responseCount={responseCount}
         survey={survey}
         environment={environment}
-        responsesPerPage={openTextResponsesPerPage}
       />
     </ContentWrapper>
   );

@@ -1,5 +1,7 @@
 export const getOriginalFileNameFromUrl = (fileURL: string) => {
   try {
+    if (!fileURL) return "";
+
     const fileNameFromURL = fileURL.startsWith("/storage/")
       ? fileURL.split("/").pop()
       : new URL(fileURL).pathname.split("/").pop();

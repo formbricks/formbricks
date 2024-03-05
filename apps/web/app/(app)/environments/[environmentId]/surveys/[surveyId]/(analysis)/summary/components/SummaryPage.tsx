@@ -74,7 +74,6 @@ const SummaryPage = ({
   useEffect(() => {
     const fetchSurveySummary = async () => {
       const response = await getSurveySummaryAction(surveyId, filters);
-      console.log({ response });
       setSurveySummary(response);
     };
     fetchSurveySummary();
@@ -84,6 +83,7 @@ const SummaryPage = ({
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey);
   }, [survey]);
+
   useEffect(() => {
     if (!searchParams?.get("referer")) {
       resetState();

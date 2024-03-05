@@ -21,7 +21,6 @@ export default function MultipleChoiceSummary({
 }: MultipleChoiceSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
-  console.log("questionSummary", questionSummary);
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     if (a.others) return 1; // Always put a after b if a has 'others'
