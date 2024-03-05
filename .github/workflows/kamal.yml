@@ -72,6 +72,10 @@ jobs:
       KAMAL_CONTAINER_IMAGE: ${{ secrets.KAMAL_CONTAINER_IMAGE }}
       CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
       CLOUDFLARE_DNS_API_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: 'eu-central-1'
+
 
     steps:
       - name: Checkout code
@@ -98,6 +102,9 @@ jobs:
       - name: Create builder
         run: docker buildx create --use --name formbricks-gh-actions-builder
         if: steps.buildx.outputs.should_create_builder == 'true'
+
+      - id: install-aws-cli
+        uses: unfor19/install-aws-cli-action@v1
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
