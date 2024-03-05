@@ -106,7 +106,9 @@ export const isS3Configured = () => {
   }
 
   // for other s3 compatible services, we need to provide the access key and secret key
-  return S3_ACCESS_KEY && S3_SECRET_KEY && S3_REGION && S3_BUCKET_NAME ? true : false;
+  return S3_ACCESS_KEY && S3_SECRET_KEY && (S3_ENDPOINT_URL ? S3_REGION : true) && S3_BUCKET_NAME
+    ? true
+    : false;
 };
 
 // Pricing
