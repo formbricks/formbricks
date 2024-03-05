@@ -3,15 +3,12 @@
 import { InfoIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import Select, { CSSObjectWithLabel } from "react-select";
 
 import { TLanguage, TProduct } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { ConfirmationModal } from "@formbricks/ui/ConfirmationModal";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
-import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import {
   createLanguageAction,
@@ -20,24 +17,12 @@ import {
   updateLanguageAction,
 } from "../lib/actions";
 import { iso639Languages } from "../lib/isoLanguages";
+import { LanguageRow } from "./LanguageRow";
 
 interface EditLanguageProps {
   product: TProduct;
   environmentId: string;
-  isFormbricksCloud: boolean;
-  isEnterpriseEdition: boolean;
 }
-
-const customSelectStyles = {
-  control: (provided: CSSObjectWithLabel) => ({
-    ...provided,
-    backgroundColor: "white",
-    width: "100%",
-    height: "100%",
-    borderRadius: "5px",
-    borderColor: "#cbd5e1",
-  }),
-};
 
 const checkIfDuplicateExists = (arr: string[]) => {
   return new Set(arr).size !== arr.length;
@@ -83,12 +68,7 @@ const validateLanguages = (languages: TLanguage[]) => {
   return true;
 };
 
-export default function EditLanguage({
-  product,
-  environmentId,
-  isFormbricksCloud,
-  isEnterpriseEdition,
-}: EditLanguageProps) {
+export default function EditLanguage({ product, environmentId }: EditLanguageProps) {
   const [languages, setLanguages] = useState<TLanguage[]>(product.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
@@ -108,7 +88,6 @@ export default function EditLanguage({
   }));
 
   const handleAddLanguage = () => {
-    if (!isEnterpriseEdition) return;
     const newLanguage = { id: "new", createdAt: new Date(), updatedAt: new Date(), code: "", alias: "" };
     setLanguages((prev) => [...prev, newLanguage]);
     setIsEditing(true);
@@ -178,7 +157,6 @@ export default function EditLanguage({
                 key={language.id}
                 language={language}
                 languageOptions={languageOptions}
-                isEnterpriseEdition={isEnterpriseEdition}
                 isEditing={isEditing}
                 index={index}
                 onLanguageChange={(newLanguage: TLanguage) => {
@@ -210,21 +188,6 @@ export default function EditLanguage({
         onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
         isButtonDisabled={confirmationModal.isButtonDisabled}
       />
-
-      {!isEnterpriseEdition &&
-        (!isFormbricksCloud ? (
-          <UpgradePlanNotice
-            message="To enable multi-language surveys,"
-            url={`/environments/${environmentId}/settings/billing`}
-            textForUrl="please add your credit card (free)."
-          />
-        ) : (
-          <UpgradePlanNotice
-            message="To manage access roles for your team,"
-            url="https://formbricks.com/docs/self-hosting/license"
-            textForUrl="get a enterprise license."
-          />
-        ))}
     </div>
   );
 }
@@ -253,50 +216,6 @@ const LanguageLabels = () => (
     <Label htmlFor="Alias" className="flex items-center space-x-2">
       <span>Alias</span> <AliasTooltip />
     </Label>
-  </div>
-);
-
-type LanguageRowProps = {
-  language: TLanguage;
-  languageOptions: { value: string; label: string }[];
-  isEnterpriseEdition: boolean;
-  isEditing: boolean;
-  index: number;
-  onLanguageChange: (newLanguage: TLanguage) => void;
-  onDelete: () => void;
-};
-
-const LanguageRow: React.FC<LanguageRowProps> = ({
-  language,
-  languageOptions,
-  isEnterpriseEdition,
-  isEditing,
-  onLanguageChange,
-  onDelete,
-}) => (
-  <div className="my-3 grid grid-cols-4 gap-4">
-    <Select
-      value={languageOptions.find((option) => option.value === language.code)}
-      onChange={(selectedOption) => onLanguageChange({ ...language, code: selectedOption?.value || "" })}
-      options={languageOptions}
-      isDisabled={!isEnterpriseEdition || language.id !== "new"}
-      isSearchable={true}
-      placeholder="Search..."
-      styles={customSelectStyles}
-    />
-    <Input disabled value={language.code} />
-    <Input
-      disabled={!isEnterpriseEdition || !isEditing}
-      value={language.alias || ""}
-      placeholder="e.g. en_us"
-      onChange={(e) => onLanguageChange({ ...language, alias: e.target.value })}
-    />
-
-    {language.id !== "new" && isEditing && (
-      <Button variant="warn" onClick={onDelete} className="w-fit" size="sm">
-        Remove
-      </Button>
-    )}
   </div>
 );
 

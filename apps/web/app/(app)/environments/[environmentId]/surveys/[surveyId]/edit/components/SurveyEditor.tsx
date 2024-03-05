@@ -1,7 +1,7 @@
 "use client";
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
+import { LoadingSkeleton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LoadingSkeleton";
 import { isEqual } from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -76,7 +76,7 @@ export default function SurveyEditor({
     if (isFirstQuestionAvailable) {
       setActiveQuestionId(survey.questions[0].id);
     }
-  }, [survey, isFirstQuestionAvailable]);
+  }, [survey, isFirstQuestionAvailable, localSurvey]);
 
   useEffect(() => {
     if (!localSurvey) return;
@@ -141,7 +141,7 @@ export default function SurveyEditor({
   }, [localSurvey?.languages, selectedLanguageCode]);
 
   if (!localSurvey) {
-    return <Loading />;
+    return <LoadingSkeleton />;
   }
 
   return (

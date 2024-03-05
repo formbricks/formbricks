@@ -187,9 +187,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
           <div className="space-y-4">
             {!isMultiLanguageAllowed && !isFormbricksCloud && !isMultiLanguageActivated ? (
               <UpgradePlanNotice
-                message="To enable multi-language surveys,"
-                url="https://formbricks.com/docs/self-hosting/enterprise"
-                textForUrl="get a enterprise license."
+                message="To enable multi-language surveys, you need an active"
+                url={`/environments/${environmentId}/settings/enterprise`}
+                textForUrl="enterprise license."
               />
             ) : !isMultiLanguageAllowed && isFormbricksCloud && !isMultiLanguageActivated ? (
               <UpgradePlanNotice
