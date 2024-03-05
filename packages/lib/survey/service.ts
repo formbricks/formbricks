@@ -23,7 +23,7 @@ import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { segmentCache } from "../segment/cache";
-import { evaluateSegment, getSegment, updateSegment } from "../segment/service";
+import { createSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
@@ -549,21 +549,64 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : Prisma.JsonNull,
-      segment: existingSurvey.segment ? { connect: { id: existingSurvey.segment.id } } : undefined,
+      // we'll update the segment later
+      segment: undefined,
     },
   });
+
+  // if the existing survey has an inline segment, we copy the filters and create a new inline segment and connect it to the new survey
+  if (existingSurvey.segment) {
+    if (existingSurvey.segment.isPrivate) {
+      const newInlineSegment = await createSegment({
+        environmentId,
+        title: `${newSurvey.id}`,
+        isPrivate: true,
+        surveyId: newSurvey.id,
+        filters: existingSurvey.segment.filters,
+      });
+
+      await prisma.survey.update({
+        where: {
+          id: newSurvey.id,
+        },
+        data: {
+          segment: {
+            connect: {
+              id: newInlineSegment.id,
+            },
+          },
+        },
+      });
+
+      segmentCache.revalidate({
+        id: newInlineSegment.id,
+        environmentId: newSurvey.environmentId,
+      });
+    } else {
+      await prisma.survey.update({
+        where: {
+          id: newSurvey.id,
+        },
+        data: {
+          segment: {
+            connect: {
+              id: existingSurvey.segment.id,
+            },
+          },
+        },
+      });
+
+      segmentCache.revalidate({
+        id: existingSurvey.segment.id,
+        environmentId: newSurvey.environmentId,
+      });
+    }
+  }
 
   surveyCache.revalidate({
     id: newSurvey.id,
     environmentId: newSurvey.environmentId,
   });
-
-  if (newSurvey.segmentId) {
-    segmentCache.revalidate({
-      id: newSurvey.segmentId,
-      environmentId: newSurvey.environmentId,
-    });
-  }
 
   // Revalidate surveys by actionClassId
   revalidateSurveyByActionClassName(actionClasses, existingSurvey.triggers);
