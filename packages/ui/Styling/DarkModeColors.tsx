@@ -1,14 +1,8 @@
+import { colorDefaults } from "@formbricks/lib/styling/constants";
+
 import { Switch } from "../Switch";
 import ColorSelectorWithLabel from "./ColorSelectorWithLabel";
 
-const colorDefaults = {
-  brandColor: "#64748b",
-  questionColor: "#2b2524",
-  inputColor: "#efefef",
-  inputBorderColor: "#c0c0c0",
-  cardBackgroundColor: "#c0c0c0",
-  highlightBorderColor: "#64748b",
-};
 type DarModeColorProps = {
   isDarkMode: boolean;
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;

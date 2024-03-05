@@ -85,7 +85,7 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="bg-survey-bg rounded-custom relative max-h-[33vh] space-y-2 overflow-y-auto py-0.5 pr-2"
+            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto py-0.5 pr-2"
             role="radiogroup">
             {questionChoices.map((choice, idx) => (
               <label
@@ -105,7 +105,7 @@ export default function MultipleChoiceSingleQuestion({
                   value === choice.label
                     ? "border-border-highlight bg-accent-selected-bg z-10"
                     : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
+                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -136,7 +136,7 @@ export default function MultipleChoiceSingleQuestion({
                   value === otherOption.label
                     ? "border-border-highlight bg-accent-selected-bg z-10"
                     : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
+                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
@@ -183,7 +183,7 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     placeholder={question.otherOptionPlaceholder ?? "Please specify"}
-                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus mt-3 flex h-10 w-full rounded-md border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />

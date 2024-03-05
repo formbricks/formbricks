@@ -15,20 +15,58 @@ export const addStylesToDom = () => {
   }
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TStyling }) => {
-  if (document.getElementById("formbricks__css") === null) return;
+// export const addCustomThemeToDom = ({ styling }: { styling: TStyling }) => {
+//   if (document.getElementById("formbricks__css") === null) return;
 
-  const styleElement = document.createElement("style");
-  styleElement.id = "formbricks__css__custom";
-  styleElement.innerHTML = `
-    :root {
-      --fb-brand-color: ${styling.brandColor?.light};
-      ${isLight(styling.brandColor?.light ?? "") ? "--fb-brand-text-color: black;" : "--fb-brand-text-color: white;"}
-      --fb-heading-color: ${styling.questionColor?.light};
-      --fb-border-color: ${styling.inputBorderColor?.light};
-      --fb-survey-background-color: ${styling.cardBackgroundColor?.light};
-      --fb-border-radius: ${styling.roundness}px;
+//   const styleElement = document.createElement("style");
+//   styleElement.id = "formbricks__css__custom";
+//   styleElement.innerHTML = `
+//     :root {
+//       --fb-brand-color: ${styling.brandColor?.light};
+//       ${isLight(styling.brandColor?.light ?? "") ? "--fb-brand-text-color: black;" : "--fb-brand-text-color: white;"}
+//       --fb-heading-color: ${styling.questionColor?.light};
+//       --fb-border-color: ${styling.inputBorderColor?.light};
+//       --fb-survey-background-color: ${styling.cardBackgroundColor?.light};
+//       --fb-border-radius: ${styling.roundness}px;
+//     }
+//   `;
+//   document.head.appendChild(styleElement);
+// };
+
+export const addCustomThemeToDom = ({ styling }: { styling: TStyling }) => {
+  // Check if the style element already exists
+  let styleElement = document.getElementById("formbricks__css__custom");
+
+  // If the style element doesn't exist, create it and append to the head
+  if (!styleElement) {
+    styleElement = document.createElement("style");
+    styleElement.id = "formbricks__css__custom";
+    document.head.appendChild(styleElement);
+  }
+
+  // Start the innerHTML string with :root
+  let cssVariables = ":root {\n";
+
+  // Helper function to append the variable if it's not undefined
+  const appendCssVariable = (variableName: string, value: string | undefined) => {
+    if (value !== undefined) {
+      cssVariables += `--fb-${variableName}: ${value};\n`;
     }
-  `;
-  document.head.appendChild(styleElement);
+  };
+
+  // Use the helper function to append CSS variables
+  appendCssVariable("brand-color", styling.brandColor?.light);
+  if (styling.brandColor?.light !== undefined) {
+    cssVariables += `--fb-brand-text-color: ${isLight(styling.brandColor?.light) ? "black" : "white"};\n`;
+  }
+  appendCssVariable("heading-color", styling.questionColor?.light);
+  appendCssVariable("border-color", styling.inputBorderColor?.light);
+  appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
+  appendCssVariable("border-radius", styling.roundness ? `${styling.roundness}px` : undefined);
+
+  // Close the :root block
+  cssVariables += "}";
+
+  // Set the innerHTML of the style element
+  styleElement.innerHTML = cssVariables;
 };

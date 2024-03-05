@@ -3,9 +3,10 @@
 import UnifiedStylingPreviewSurvey from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { colorDefaults } from "@formbricks/lib/styling/constants";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -20,15 +21,6 @@ import { updateProductAction } from "../actions";
 
 type UnifiedStylingProps = {
   product: TProduct;
-};
-
-const colorDefaults = {
-  brandColor: "#64748b",
-  questionColor: "#2b2524",
-  inputColor: "#efefef",
-  inputBorderColor: "#c0c0c0",
-  cardBackgroundColor: "#c0c0c0",
-  highlighBorderColor: "#64748b",
 };
 
 const previewSurvey = {
@@ -144,12 +136,11 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     product.styling?.cardBackgroundColor?.light ?? colorDefaults.cardBackgroundColor
   );
 
-  // highlight border
   const [allowHighlightBorder, setAllowHighlightBorder] = useState(
     !!product.styling?.highlightBorderColor?.light ?? false
   );
   const [highlightBorderColor, setHighlightBorderColor] = useState(
-    product.styling?.highlightBorderColor?.light ?? colorDefaults.highlighBorderColor
+    product.styling?.highlightBorderColor?.light ?? colorDefaults.highlightBorderColor
   );
 
   const [isDarkMode, setIsDarkMode] = useState(product.styling?.isDarkModeEnabled ?? false);
@@ -191,7 +182,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }
   }, [unifiedStyling]);
 
-  const onSave = async () => {
+  const onSave = useCallback(async () => {
     await updateProductAction(product.id, {
       styling: {
         unifiedStyling,
@@ -233,7 +224,29 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
     toast.success("Styling updated successfully.");
     router.refresh();
-  };
+  }, [
+    allowHighlightBorder,
+    allowStyleOverwrite,
+    brandColor,
+    brandColorDark,
+    cardBackgroundColor,
+    cardBackgroundColorDark,
+    highlightBorderColor,
+    highlightBorderColorDark,
+    inAppSurveysCardArrangement,
+    inputBorderColor,
+    inputBorderColorDark,
+    inputColor,
+    inputColorDark,
+    isDarkMode,
+    linkSurveysCardArrangement,
+    product.id,
+    questionColor,
+    questionColorDark,
+    roundness,
+    router,
+    unifiedStyling,
+  ]);
 
   return (
     <div className="flex">
@@ -275,7 +288,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             label="Brand color"
             color={brandColor}
             setColor={setBrandColor}
-            description="Change the text color of the survey questions."
+            description="Change the brand color of the survey"
             disabled
           />
 
@@ -290,21 +303,21 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             label="Input color"
             color={inputColor}
             setColor={setInputColor}
-            description="Change the text color of the survey questions."
+            description="Change the background color of the input fields"
           />
 
           <ColorSelectorWithLabel
             label="Input border color"
             color={inputBorderColor}
             setColor={setInputBorderColor}
-            description="Change the text color of the survey questions."
+            description="Change the border color of the input fields"
           />
 
           <ColorSelectorWithLabel
             label="Card background color"
             color={cardBackgroundColor}
             setColor={setCardBackgroundColor}
-            description="Change the text color of the survey questions."
+            description="Change the background color of the card"
           />
 
           <div className="flex flex-col gap-4">
