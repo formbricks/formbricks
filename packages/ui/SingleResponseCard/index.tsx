@@ -395,7 +395,7 @@ export default function SingleResponseCard({
                         {response.data[question.id]}
                       </p>
                     ) : (
-                      <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                      <p className="ph-no-capture my-1 whitespace-pre-line font-semibold text-slate-700">
                         {response.data[question.id]}
                       </p>
                     )

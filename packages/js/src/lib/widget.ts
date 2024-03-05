@@ -30,6 +30,7 @@ export const renderWidget = async (survey: TSurvey) => {
     logger.debug("A survey is already running. Skipping.");
     return;
   }
+  setIsSurveyRunning(true);
 
   if (survey.delay) {
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
@@ -44,9 +45,9 @@ export const renderWidget = async (survey: TSurvey) => {
   //if survey is not available in selected language, survey wont be shown
   if (!languageCode) {
     logger.debug("Survey not available in specified language.");
+    setIsSurveyRunning(true);
     return;
   }
-  setIsSurveyRunning(true);
 
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 

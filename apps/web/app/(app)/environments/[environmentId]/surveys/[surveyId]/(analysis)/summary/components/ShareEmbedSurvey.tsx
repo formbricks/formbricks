@@ -3,6 +3,7 @@
 import { ArrowLeftIcon, CodeBracketIcon, EnvelopeIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { BellRing, BlocksIcon, Code2Icon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -24,6 +25,7 @@ interface ShareEmbedSurveyProps {
   user: TUser;
 }
 export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, user }: ShareEmbedSurveyProps) {
+  const router = useRouter();
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
@@ -42,6 +44,9 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
     setActiveId(tabs[0].id);
     setOpen(open);
     setShowInitialPage(open); // Reset to initial page when modal opens
+
+    // fetch latest responses
+    router.refresh();
   };
 
   const handleInitialPageButton = () => {
