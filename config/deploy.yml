@@ -128,6 +128,12 @@ traefik:
     entryPoints.web.http.redirections.entrypoint.permanent: true
     certificatesResolvers.letsencrypt.acme.email: "shubham@formbricks.com"
     certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json" # Must match the path in `volume`
+  log:
+    level: DEBUG
+  env:
+    secret:
+      - CLOUDFLARE_EMAIL
+      - CLOUDFLARE_DNS_API_TOKEN
 
 # traefik:
 #   options:
