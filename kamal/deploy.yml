@@ -85,6 +85,8 @@ env:
     - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
     - CLOUDFLARE_EMAIL
     - CLOUDFLARE_DNS_API_TOKEN
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
 
 # Use a different ssh user than root
 ssh:
