@@ -100,7 +100,7 @@ jobs:
         if: steps.buildx.outputs.should_create_builder == 'true'
 
       - name: Push env variables to Kamal
-        run: kamal env push
+        run: kamal env push -c kamal/deploy.yml
       
       - name: Run deploy command
         run: |

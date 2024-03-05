@@ -46,7 +46,7 @@ mkdir -p /letsencrypt && touch /letsencrypt/acme.json && chmod 600 /letsencrypt/
 9. Voila! You are all set to deploy your application to the cloud with Kamal! 🚀
 
     ```sh
-    kamal setup
+    kamal setup -c kamal/deploy.yml
     ```
 
     This will setup the cloud VM with all the necessary tools & dependencies to run your application.
