@@ -1,7 +1,6 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
 import { personCache } from "@formbricks/lib/person/cache";
@@ -76,9 +75,9 @@ export async function POST(req: Request, context: Context): Promise<Response> {
     if (!team) {
       throw new Error("Team not found");
     }
-    const isMultiLanguageAllowed = getMultiLanguagePermission(team);
+
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person.id, isMultiLanguageAllowed),
+      getSyncSurveys(environmentId, person.id),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);

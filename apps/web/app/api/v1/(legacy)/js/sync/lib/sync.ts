@@ -1,4 +1,3 @@
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   IS_FORMBRICKS_CLOUD,
@@ -94,11 +93,10 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
 
   let surveys;
 
-  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
   if (isAppSurveyLimitReached) {
     surveys = [];
   } else if (isPerson) {
-    surveys = await getSyncSurveys(environmentId, (person as TPerson).id, isMultiLanguageAllowed);
+    surveys = await getSyncSurveys(environmentId, (person as TPerson).id);
   } else {
     surveys = await getSurveys(environmentId);
     surveys = surveys.filter((survey) => survey.type === "web" && survey.status === "inProgress");
