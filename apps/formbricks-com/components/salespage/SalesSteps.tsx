@@ -10,17 +10,17 @@ export default function SalesSteps({ steps }: SalesStepsProps) {
           return (
             <li
               key={step.id}
-              className="relative col-span-1 flex flex-col rounded-xl border border-slate-200 bg-slate-100 text-center dark:bg-slate-700">
+              className="relative col-span-1 flex flex-col rounded-xl border border-slate-200 bg-slate-100 text-center ">
               <div className="absolute -mt-12 w-full">
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-200 text-5xl font-bold text-slate-700 shadow dark:bg-slate-800">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-200 text-5xl font-bold text-slate-700 shadow ">
                   {step.id}
                 </div>
               </div>
               <div className="flex flex-1 flex-col p-10">
-                <h3 className="my-4 text-lg font-medium text-slate-800 dark:text-slate-200">{step.name}</h3>
+                <h3 className="my-4 text-lg font-medium text-slate-800 ">{step.name}</h3>
                 <dl className="mt-1 flex flex-grow flex-col justify-between">
                   <dt className="sr-only">Description</dt>
-                  <dd className="text-sm text-slate-600 dark:text-slate-400">{step.description}</dd>
+                  <dd className="text-slate-600 ">{step.description}</dd>
                 </dl>
               </div>
             </li>

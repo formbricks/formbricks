@@ -17,14 +17,18 @@ export default function SalesPageFeature({
   imgLeft,
 }: SalesPageFeatureProps) {
   return (
-    <div className="grid grid-cols-2 content-center gap-12">
-      <div className={`space-y-6 ${imgLeft && `order-last`}`}>
-        <h2 className="text-balance text-3xl font-bold text-slate-800">{headline}</h2>
+    <div className="group grid grid-cols-2 content-center gap-12">
+      <div className={`flex flex-col justify-center space-y-6 ${imgLeft && `order-last`}`}>
+        <h2 className="text-balance text-3xl font-bold  text-slate-800">{headline}</h2>
         <p className="text-pretty text-lg text-slate-700">{subheadline}</p>
         <SalesCTA />
       </div>
       <div className="relative">
-        <Image src={imgSrc} alt={imgAlt} fill={true} objectFit="cover" className="rounded-md" />
+        <Image
+          src={imgSrc}
+          alt={imgAlt}
+          className="rounded-3xl border border-slate-200 bg-white transition delay-75 duration-500 group-hover:border-slate-300"
+        />
       </div>
     </div>
   );

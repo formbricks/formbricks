@@ -9,11 +9,12 @@ export default function SalesCTA() {
   return (
     <Button
       variant="darkCTA"
+      className="w-fit"
       onClick={() => {
         router.push("https://app.formbricks.com/auth/signup");
         plausible("SalesPage_CTA_GetStartedNow");
       }}>
-      Get started now!
+      Get started now
     </Button>
   );
 }

@@ -12,7 +12,7 @@ export default function SalesBreaker({ headline, subheadline }: Props) {
         <div className="xs:block xs:absolute xs:right-10 hidden md:top-1/2 md:-translate-y-1/2">
           <SalesCTA />
         </div>
-        <h2 className="text-slate-800bmt-4 text-2xl font-bold tracking-tight lg:text-3xl">{headline}</h2>
+        <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-800 lg:text-3xl">{headline}</h2>
         <h4 className="text-md mt-4 max-w-3xl text-slate-500 lg:text-lg dark:text-slate-300">
           {subheadline}
         </h4>

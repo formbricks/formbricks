@@ -6,6 +6,8 @@ import SalesPageFeature from "@/components/salespage/SalesPageFeature";
 import SalesPageHero from "@/components/salespage/SalesPageHero";
 import SalesSteps from "@/components/salespage/SalesSteps";
 import SalesTestimonial from "@/components/salespage/SalesTestimonial";
+import Jonathan from "@/images/clients/headshots/jonathan.png";
+import Peer from "@/images/clients/headshots/peer.jpeg";
 import PlaceholderImg from "@/images/placeholder.png";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import {
@@ -27,6 +29,14 @@ import {
   IoVideocam,
 } from "react-icons/io5";
 
+import Img2 from "./2-finally-good-open-source-forms-for-free.png";
+import Img4 from "./4-all-question-types-an-open-source-form-builder-needs.png";
+import Img5 from "./5-all-question-types-an-open-source-form-builder-needs.png";
+import Img6 from "./6-slack-zapier-hubspot-integration-for-open-source-form-builder-online.png";
+import Img8 from "./8-pre-populate-typeform-open-source-alternative.png";
+import Img9 from "./9-conditional-logic-jumps-for-free-open-source-online-form-builder.png";
+import Img10 from "./10-multi-language-surveys-free-and-open-source.png";
+
 const linkSurveySteps = [
   {
     id: "1",
@@ -35,12 +45,12 @@ const linkSurveySteps = [
   },
   {
     id: "2",
-    name: "Create form",
+    name: "Create your form",
     description: "Create your free online form in minutes. Style it to match your brand.",
   },
   {
     id: "3",
-    name: "Analyze or forward",
+    name: "AI Analysis",
     description: "Analyze responses right in Formbricks or pipe them to where you need them.",
   },
 ];
@@ -49,7 +59,7 @@ const linkSurveyFeaturesPt1 = [
   {
     headline: "Free forever, unlimited",
     subheadline:
-      "Unlimited forms, unlimited responses. In the Cloud, we only charge for branding removal. Self-host with 1 click and get the complete product for free.",
+      "Unlimited forms, unlimited responses. In the Cloud, we only charge for branding removal. Self-host with 1 click and remove the branding for free.",
     imgSrc: PlaceholderImg,
     imgAlt: "tba",
     imgLeft: false,
@@ -58,7 +68,7 @@ const linkSurveyFeaturesPt1 = [
     headline: "The 'Do everything' forms",
     subheadline:
       "Formbricks packs all question types you can think of. But if you’re missing something, we’ll ship it!",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img4,
     imgAlt: "tba",
     imgLeft: true,
   },
@@ -66,15 +76,15 @@ const linkSurveyFeaturesPt1 = [
     headline: "100% on brand design",
     subheadline:
       "Create surveys in exactly the look & feel of your brand. Change colors, border radius and more to get exactly the look you want.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img5,
     imgAlt: "tba",
     imgLeft: false,
   },
   {
-    headline: "Slack, zapier, hubspot",
+    headline: "Slack, Zapier, Hubspot",
     subheadline:
       "Use native integrations into all of your tools. Keep your respondents data safe and your Privacy Policy short.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img6,
     imgAlt: "tba",
     imgLeft: true,
   },
@@ -93,7 +103,7 @@ const linkSurveyFeaturesPt2 = [
     headline: "Pre-populate fields",
     subheadline:
       "Prefill fields with data you have already. Enrich your analysis by gathering all data points in one place.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img8,
     imgAlt: "tba",
     imgLeft: true,
   },
@@ -101,14 +111,14 @@ const linkSurveyFeaturesPt2 = [
     headline: "Conditional logic",
     subheadline:
       "Jump questions based on previous answers for higher completion rate. Conditional logic let’s you personalize the survey experience.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img9,
     imgAlt: "tba",
     imgLeft: false,
   },
   {
     headline: "Multi-language surveys",
     subheadline: "Run the same survey in several languages. Analyse all results together or per language.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img10,
     imgAlt: "tba",
     imgLeft: true,
   },
@@ -302,7 +312,7 @@ const FAQ = [
       "Yes, its built for the community by the community. Our open source license assures that it will stay around until the internet dies.",
   },
   {
-    question: "Can I self-host formbricks?",
+    question: "Can I self-host Formbricks?",
     answer: "Yes. Formbricks can be self-hosted with one click via our Docker image.",
   },
   {
@@ -337,7 +347,7 @@ export default function LinkSurveyPage() {
         <SalesPageFeature
           headline="Finally, a good open source online form builder"
           subheadline="Everyone needs online forms and yet, there was no good open source builder for them. That’s why we are building it together with our community."
-          imgSrc={PlaceholderImg}
+          imgSrc={Img2}
           imgAlt="tba"
           imgLeft
         />
@@ -346,6 +356,7 @@ export default function LinkSurveyPage() {
         {linkSurveyFeaturesPt1.map((feature) => {
           return (
             <SalesPageFeature
+              key={feature.headline}
               headline={feature.headline}
               subheadline={feature.subheadline}
               imgSrc={feature.imgSrc}
@@ -357,12 +368,14 @@ export default function LinkSurveyPage() {
         <SalesTestimonial
           quote="Finally a great open source survey tool! Formbricks proves once again that open source software can be both powerful and user-friendly."
           author="Jonathan Reimer, CEO @ crowd.dev"
-          imgSrc={PlaceholderImg}
+          imgSrc={Jonathan}
           imgAlt="Jonathan Reimer, CEO @ crowd.dev"
+          textSize="large"
         />
         {linkSurveyFeaturesPt2.map((feature) => {
           return (
             <SalesPageFeature
+              key={feature.headline}
               headline={feature.headline}
               subheadline={feature.subheadline}
               imgSrc={feature.imgSrc}
@@ -372,24 +385,39 @@ export default function LinkSurveyPage() {
           );
         })}
         <div className="space-y-12">
-          <h2 className="text-balance text-center text-5xl font-bold text-slate-800">All Features</h2>
+          <h2 className="text-balance text-center text-3xl font-bold text-slate-800">More Features</h2>
           <div className="grid grid-cols-3 gap-4">
             {allFeaturesList.map((feature) => {
-              return <FeatureCard title={feature.title} text={feature.text} Icon={feature.icon} />;
+              return (
+                <FeatureCard
+                  key={feature.title}
+                  title={feature.title}
+                  text={feature.text}
+                  Icon={feature.icon}
+                />
+              );
             })}
           </div>
         </div>
         <SalesTestimonial
           quote="I've been looking for a solid open source Typeform alternative for a while. Super happy to see Formbricks building it!"
           author="Peer Richelsen, CEO @ cal.com"
-          imgSrc={PlaceholderImg}
+          imgSrc={Peer}
           imgAlt="Peer Richelsen, Co-Founder and CEO of Cal.com"
+          textSize="large"
         />
         <div className="space-y-12">
-          <h2 className="text-balance text-center text-5xl font-bold text-slate-800">All Question Types</h2>
+          <h2 className="text-balance text-center text-3xl font-bold text-slate-800">All Question Types</h2>
           <div className="grid grid-cols-3 gap-4">
             {allQuestionTypes.map((feature) => {
-              return <FeatureCard title={feature.title} text={feature.text} Icon={feature.icon} />;
+              return (
+                <FeatureCard
+                  key={feature.title}
+                  title={feature.title}
+                  text={feature.text}
+                  Icon={feature.icon}
+                />
+              );
             })}
           </div>
         </div>
@@ -398,7 +426,7 @@ export default function LinkSurveyPage() {
           subheadline="Convinced that Formbricks is a good open source Typeform alternative? Try it now!"
         />
         <div className="space-y-12">
-          <h2 className="text-balance text-center text-5xl font-bold text-slate-800">FAQ</h2>
+          <h2 className="text-balance text-center text-3xl font-bold text-slate-800">FAQ</h2>
           <div className="gap-4">
             {FAQ.map((question) => (
               <div key={question.question} className="">

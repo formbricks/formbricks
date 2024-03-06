@@ -13,7 +13,7 @@ export default function SalesPageHero({ imgSrc, imgAlt, headline, subheadline }:
     <div className="grid min-h-[60vh] grid-cols-2 content-center gap-12">
       <div className="space-y-6">
         <h1 className="text-5xl font-bold text-slate-800">{headline}</h1>
-        <p className="text-pretty text-lg text-slate-700">{subheadline}</p>
+        <p className="text-balance text-lg text-slate-700">{subheadline}</p>
         <SalesCTA />
       </div>
       <div className="relative">
