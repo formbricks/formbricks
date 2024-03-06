@@ -1,3 +1,8 @@
+export interface TIso639Language {
+  alpha2: string;
+  english: string;
+}
+
 export const iso639Languages = [
   {
     alpha2: "aa",
