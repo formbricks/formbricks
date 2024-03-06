@@ -263,19 +263,26 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const getSurveys = async (environmentId: string, page?: number): Promise<TSurvey[]> => {
+export const getSurveys = async (
+  environmentId: string,
+  page?: number,
+  batchSize?: number
+): Promise<TSurvey[]> => {
   const surveys = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+      validateInputs([environmentId, ZId], [page, ZOptionalNumber], [batchSize, ZOptionalNumber]);
       let surveysPrisma;
+
+      batchSize = batchSize ? Math.min(batchSize, ITEMS_PER_PAGE) : ITEMS_PER_PAGE;
+
       try {
         surveysPrisma = await prisma.survey.findMany({
           where: {
             environmentId,
           },
           select: selectSurvey,
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          take: page ? batchSize : undefined,
+          skip: page ? batchSize * (page - 1) : undefined,
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -308,7 +315,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
       }
       return surveys;
     },
-    [`getSurveys-${environmentId}-${page}`],
+    [`getSurveys-${environmentId}-${page}-${batchSize}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -318,6 +325,36 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+};
+
+export const getSurveyCountByEnvironmentId = async (environmentId: string): Promise<number> => {
+  validateInputs([environmentId, ZId]);
+
+  const count = await unstable_cache(
+    async () => {
+      try {
+        return await prisma.survey.count({
+          where: {
+            environmentId,
+          },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error);
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getSurveyCountByEnvironmentId-${environmentId}`],
+    {
+      tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return count;
 };
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {

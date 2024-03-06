@@ -1,33 +1,40 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys";
 
 import { Button } from "../v2/Button";
+import { getSurveysAction } from "./actions";
 import SurveyCard from "./components/SurveyCard";
 import SurveyFilters from "./components/SurveyFilters";
 
 interface SurveysListProps {
   environment: TEnvironment;
-  surveys: TSurvey[];
   otherEnvironment: TEnvironment;
   isViewer: boolean;
   WEBAPP_URL: string;
   userId: string;
+  surveysPerPage: number;
 }
 
 export default function SurveysList({
   environment,
-  surveys,
   otherEnvironment,
   isViewer,
   WEBAPP_URL,
   userId,
+  surveysPerPage,
 }: SurveysListProps) {
+  const [surveys, setSurveys] = useState<TSurvey[]>([]);
+  const [page, setPage] = useState(1);
+  const [isFetching, setIsFetching] = useState(true);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+
   const [filteredSurveys, setFilteredSurveys] = useState<TSurvey[]>(surveys);
+
   // Initialize orientation state with a function that checks if window is defined
   const [orientation, setOrientation] = useState(() =>
     typeof localStorage !== "undefined" ? localStorage.getItem("surveyOrientation") || "grid" : "grid"
@@ -37,6 +44,29 @@ export default function SurveysList({
   useEffect(() => {
     localStorage.setItem("surveyOrientation", orientation);
   }, [orientation]);
+
+  useEffect(() => {
+    async function fetchInitialSurveys() {
+      setIsFetching(true);
+      const res = await getSurveysAction(environment.id, 1, surveysPerPage);
+      if (res.length < surveysPerPage) setHasMore(false);
+      setSurveys(res);
+      setIsFetching(false);
+    }
+    fetchInitialSurveys();
+  }, [environment.id, surveysPerPage]);
+
+  const fetchNextPage = useCallback(async () => {
+    const newPage = page + 1;
+    setIsFetching(true);
+    const newSurveys = await getSurveysAction(environment.id, newPage, surveysPerPage);
+    if (newSurveys.length === 0 || newSurveys.length < surveysPerPage) {
+      setHasMore(false);
+    }
+    setSurveys([...surveys, ...newSurveys]);
+    setPage(newPage);
+    setIsFetching(false);
+  }, [environment.id, page, surveys, surveysPerPage]);
 
   return (
     <div className="space-y-4">
@@ -99,12 +129,20 @@ export default function SurveysList({
               })}
             </div>
           )}
+
+          {hasMore && (
+            <div className="flex justify-center py-2">
+              <Button onClick={fetchNextPage} variant="darkCTA" size="sm" loading={isFetching}>
+                Load more
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex h-full flex-col items-center justify-center">
           <span className="mb-4 h-24 w-24 rounded-full bg-slate-100 p-6 text-5xl">🕵️</span>
 
-          <div className="text-slate-600">No surveys found</div>
+          <div className="text-slate-600">{isFetching ? "Fetching Surveys" : "No surveys found"}</div>
         </div>
       )}
     </div>
