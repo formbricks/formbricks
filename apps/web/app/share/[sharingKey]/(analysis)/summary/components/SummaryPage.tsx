@@ -48,7 +48,7 @@ const SummaryPage = ({
       completedResponses: 0,
       displayCount: 0,
       dropOffPercentage: 0,
-      dropOffs: 0,
+      dropOffCount: 0,
       startsPercentage: 0,
       totalResponses: 0,
       ttcAverage: 0,
