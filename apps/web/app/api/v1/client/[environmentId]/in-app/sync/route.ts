@@ -58,7 +58,6 @@ export async function GET(
     if (!team) {
       throw new Error("Team does not exist");
     }
-    const isMultiLanguageAllowed = await getMultiLanguagePermission(team);
 
     if (!environment) {
       throw new Error("Environment does not exist");
@@ -96,58 +95,37 @@ export async function GET(
     if (!product) {
       throw new Error("Product not found");
     }
+
+    // Common filter condition for selecting surveys that are in progress, are of type 'web' and have no active segment filtering.
+    let filteredSurveys = surveys.filter(
+      (survey) =>
+        survey.status === "inProgress" &&
+        survey.type === "web" &&
+        (!survey.segment || survey.segment.filters.length === 0)
+    );
+
     // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
     let transformedSurveys: TLegacySurvey[] | TSurvey[];
 
-    // Common filter condition for selecting surveys that are in progress and of type 'web'.
-    const inProgressWebSurveys = surveys.filter(
-      (survey) => survey.status === "inProgress" && survey.type === "web"
-    );
-
-    if (!isMultiLanguageAllowed) {
-      if (version && isVersionGreaterThanOrEqualTo(version, "1.7.0")) {
-        // Scenario 1: Version available, multi-language not allowed
-        // Convert to TSurvey with default language only.
-        transformedSurveys = await Promise.all(
-          inProgressWebSurveys.map((survey) => transformSurveyToSpecificLanguage(survey, "default"))
-        );
-      } else {
-        // Scenario 2: No version, multi-language not allowed
-        // Convert to legacy surveys with default language.
-        transformedSurveys = await Promise.all(
-          inProgressWebSurveys.map((survey) => transformToLegacySurvey(survey, "default"))
-        );
-      }
+    // Backwards compatibility for versions less than 1.7.0 (no multi-language support).
+    if (version && isVersionGreaterThanOrEqualTo(version, "1.7.0")) {
+      // Scenario 1: Multi language supported
+      // Use the surveys as they are.
+      transformedSurveys = filteredSurveys;
     } else {
-      if (version && isVersionGreaterThanOrEqualTo(version, "1.7.0")) {
-        // Scenario 4: Version available, multi-language allowed
-        // Use the surveys as they are.
-        transformedSurveys = inProgressWebSurveys;
-      } else {
-        // Scenario 3: No version, multi-language allowed
-        // Convert to legacy surveys with specified language or default if not specified.
-        transformedSurveys = await Promise.all(
-          inProgressWebSurveys.map((survey) => {
-            const languageCode = "default";
-            return transformToLegacySurvey(survey, languageCode);
-          })
-        );
-      }
+      // Scenario 2: Multi language not supported
+      // Convert to legacy surveys with default language.
+      transformedSurveys = await Promise.all(
+        filteredSurveys.map((survey) => {
+          const languageCode = "default";
+          return transformToLegacySurvey(survey, languageCode);
+        })
+      );
     }
-
-    // Define a filter condition for surveys without segments or with empty segment filters.
-    const filterCondition = (survey) =>
-      survey.status === "inProgress" &&
-      survey.type === "web" &&
-      (!survey.segment || survey.segment.filters.length === 0);
 
     // Create the 'state' object with surveys, noCodeActionClasses, product, and person.
     const state: TJsStateSync = {
-      surveys: isInAppSurveyLimitReached
-        ? []
-        : version
-          ? (transformedSurveys as TSurvey[]).filter(filterCondition)
-          : (transformedSurveys as TLegacySurvey[]).filter(filterCondition),
+      surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
       person: null,
