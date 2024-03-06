@@ -14,7 +14,7 @@ interface LanguageSelectProps {
   disabled: boolean;
 }
 
-const LanguageSelect = ({ language, onLanguageChange, disabled }: LanguageSelectProps) => {
+export const LanguageSelect = ({ language, onLanguageChange, disabled }: LanguageSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState(
@@ -69,5 +69,3 @@ const LanguageSelect = ({ language, onLanguageChange, disabled }: LanguageSelect
     </div>
   );
 };
-
-export default LanguageSelect;

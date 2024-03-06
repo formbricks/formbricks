@@ -1,13 +1,13 @@
-import { Copy, Languages, RefreshCcw } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Copy, RefreshCcw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import { getLanguageLabel } from "../../ee/multiLanguage/lib/isoLanguages";
 import { Button } from "../Button";
 import { generateSingleUseIdAction } from "./actions";
+import { LanguageDropdown } from "./components/LanguageDropdown";
+import { SurveyLinkDisplay } from "./components/SurveyLinkDisplay";
 
 interface ShareSurveyLinkProps {
   survey: TSurvey;
@@ -15,79 +15,6 @@ interface ShareSurveyLinkProps {
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
 }
-
-interface LanguageDropdownProps {
-  survey: TSurvey;
-  setLanguage: (language: string) => void;
-}
-
-interface SurveyLinkDisplayProps {
-  surveyUrl: string;
-}
-
-const LanguageDropdown = ({ survey, setLanguage }: LanguageDropdownProps) => {
-  const [showLanguageSelect, setShowLanguageSelect] = useState(false);
-  const languageDropdownRef = useRef(null);
-
-  useClickOutside(languageDropdownRef, () => setShowLanguageSelect(false));
-
-  return (
-    survey.languages.length > 1 && (
-      <div className="relative">
-        {showLanguageSelect && (
-          <div
-            className="absolute top-12 z-30 w-fit rounded-lg border bg-slate-900 p-1 text-sm text-white"
-            ref={languageDropdownRef}>
-            {survey.languages.map((surveyLanguage) => (
-              <div
-                key={surveyLanguage.language.code}
-                className="rounded-md p-2 hover:cursor-pointer hover:bg-slate-700"
-                onClick={() => {
-                  setLanguage(surveyLanguage.language.code);
-                  setShowLanguageSelect(false);
-                }}>
-                {getLanguageLabel(surveyLanguage.language.code)}
-              </div>
-            ))}
-          </div>
-        )}
-        <Button
-          variant="secondary"
-          title="Select Language"
-          aria-label="Select Language"
-          onClick={() => setShowLanguageSelect(!showLanguageSelect)}>
-          <Languages className="h-5 w-5" />
-        </Button>
-      </div>
-    )
-  );
-};
-
-export const SurveyLinkDisplay = ({ surveyUrl }: SurveyLinkDisplayProps) => {
-  const linkTextRef = useRef(null);
-
-  const handleTextSelection = () => {
-    if (linkTextRef.current) {
-      const range = document.createRange();
-      range.selectNodeContents(linkTextRef.current);
-
-      const selection = window.getSelection();
-      if (selection) {
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-    }
-  };
-
-  return (
-    <div
-      className="mt-2 max-w-[80%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
-      style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-      onClick={handleTextSelection}>
-      {surveyUrl}
-    </div>
-  );
-};
 
 export const ShareSurveyLink = ({ survey, webAppUrl, surveyUrl, setSurveyUrl }: ShareSurveyLinkProps) => {
   const [language, setLanguage] = useState("default");

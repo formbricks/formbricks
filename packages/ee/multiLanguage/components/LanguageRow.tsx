@@ -2,7 +2,7 @@ import { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 
-import LanguageSelect from "./LanguageSelect";
+import { LanguageSelect } from "./LanguageSelect";
 
 interface LanguageRowProps {
   language: TLanguage;
