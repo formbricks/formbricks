@@ -397,6 +397,10 @@ export const getResponsesJson = (
   return jsonData;
 };
 
+const convertFloatTo2Decimal = (num: number) => {
+  return Math.round(num * 100) / 100;
+};
+
 export const getSurveySummaryMeta = (
   responses: TResponse[],
   displayCount: number
@@ -422,12 +426,12 @@ export const getSurveySummaryMeta = (
   return {
     displayCount: displayCount || 0,
     totalResponses: responseCount,
-    startsPercentage,
+    startsPercentage: convertFloatTo2Decimal(startsPercentage),
     completedResponses,
-    completedPercentage,
+    completedPercentage: convertFloatTo2Decimal(completedPercentage),
     dropOffs,
-    dropOffPercentage,
-    ttcAverage,
+    dropOffPercentage: convertFloatTo2Decimal(dropOffPercentage),
+    ttcAverage: convertFloatTo2Decimal(ttcAverage),
   };
 };
 
@@ -553,10 +557,10 @@ export const getSurveySummaryDropOff = (
     return {
       questionId: question.id,
       headline: question.headline,
-      ttc: totalTtc[question.id],
+      ttc: convertFloatTo2Decimal(totalTtc[question.id]) || 0,
       views: viewsArr[index] || 0,
       dropOffCount: dropOffArr[index] || 0,
-      dropOffPercentage: dropOffPercentageArr[index],
+      dropOffPercentage: convertFloatTo2Decimal(dropOffPercentageArr[index]) || 0,
     };
   });
 
@@ -647,7 +651,8 @@ export const getQuestionWiseSummary = (
           values.push({
             value: label,
             count,
-            percentage: totalResponseCount > 0 ? (count / totalResponseCount) * 100 : 0,
+            percentage:
+              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
           });
         });
 
@@ -655,7 +660,7 @@ export const getQuestionWiseSummary = (
           values.push({
             value: lastChoice.label || "Other",
             count: otherValues.length,
-            percentage: (otherValues.length / totalResponseCount) * 100,
+            percentage: convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100),
             others: otherValues.slice(0, VALUES_LIMIT),
           });
         }
@@ -694,7 +699,10 @@ export const getQuestionWiseSummary = (
             id: choice.id,
             imageUrl: choice.imageUrl,
             count: choiceCountMap[choice.id],
-            percentage: totalResponseCount > 0 ? (choiceCountMap[choice.id] / totalResponseCount) * 100 : 0,
+            percentage:
+              totalResponseCount > 0
+                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalResponseCount) * 100)
+                : 0,
           });
         });
 
@@ -737,19 +745,21 @@ export const getQuestionWiseSummary = (
           values.push({
             rating: parseInt(label),
             count,
-            percentage: totalResponseCount > 0 ? (count / totalResponseCount) * 100 : 0,
+            percentage:
+              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
           });
         });
 
         summary.push({
           type: question.type,
           question,
-          average: totalRating / (totalResponseCount - dismissed) || 0,
+          average: convertFloatTo2Decimal(totalRating / (totalResponseCount - dismissed)) || 0,
           responseCount: totalResponseCount,
           choices: values,
           dismissed: {
             count: dismissed,
-            percentage: totalResponseCount > 0 ? (dismissed / totalResponseCount) * 100 : 0,
+            percentage:
+              totalResponseCount > 0 ? convertFloatTo2Decimal((dismissed / totalResponseCount) * 100) : 0,
           },
         });
 
@@ -783,7 +793,10 @@ export const getQuestionWiseSummary = (
           }
         });
 
-        data.score = data.total > 0 ? ((data.promoters - data.detractors) / data.total) * 100 : 0;
+        data.score =
+          data.total > 0
+            ? convertFloatTo2Decimal(((data.promoters - data.detractors) / data.total) * 100)
+            : 0;
 
         summary.push({
           type: question.type,
@@ -793,19 +806,19 @@ export const getQuestionWiseSummary = (
           score: data.score,
           promoters: {
             count: data.promoters,
-            percentage: data.total > 0 ? (data.promoters / data.total) * 100 : 0,
+            percentage: data.total > 0 ? convertFloatTo2Decimal((data.promoters / data.total) * 100) : 0,
           },
           passives: {
             count: data.passives,
-            percentage: data.total > 0 ? (data.passives / data.total) * 100 : 0,
+            percentage: data.total > 0 ? convertFloatTo2Decimal((data.passives / data.total) * 100) : 0,
           },
           detractors: {
             count: data.detractors,
-            percentage: data.total > 0 ? (data.detractors / data.total) * 100 : 0,
+            percentage: data.total > 0 ? convertFloatTo2Decimal((data.detractors / data.total) * 100) : 0,
           },
           dismissed: {
             count: data.dismissed,
-            percentage: data.total > 0 ? (data.dismissed / data.total) * 100 : 0,
+            percentage: data.total > 0 ? convertFloatTo2Decimal((data.dismissed / data.total) * 100) : 0,
           },
         });
         break;
@@ -833,7 +846,8 @@ export const getQuestionWiseSummary = (
           responseCount: totalResponses,
           ctr: {
             count: data.clicked,
-            percentage: totalResponses > 0 ? (data.clicked / totalResponses) * 100 : 0,
+            percentage:
+              totalResponses > 0 ? convertFloatTo2Decimal((data.clicked / totalResponses) * 100) : 0,
           },
         });
         break;
@@ -861,11 +875,13 @@ export const getQuestionWiseSummary = (
           responseCount: totalResponses,
           accepted: {
             count: data.accepted,
-            percentage: totalResponses > 0 ? (data.accepted / totalResponses) * 100 : 0,
+            percentage:
+              totalResponses > 0 ? convertFloatTo2Decimal((data.accepted / totalResponses) * 100) : 0,
           },
           dismissed: {
             count: data.dismissed,
-            percentage: totalResponses > 0 ? (data.dismissed / totalResponses) * 100 : 0,
+            percentage:
+              totalResponses > 0 ? convertFloatTo2Decimal((data.dismissed / totalResponses) * 100) : 0,
           },
         });
 
@@ -941,11 +957,12 @@ export const getQuestionWiseSummary = (
           responseCount: totalResponses,
           booked: {
             count: data.booked,
-            percentage: totalResponses > 0 ? (data.booked / totalResponses) * 100 : 0,
+            percentage: totalResponses > 0 ? convertFloatTo2Decimal((data.booked / totalResponses) * 100) : 0,
           },
           skipped: {
             count: data.skipped,
-            percentage: totalResponses > 0 ? (data.skipped / totalResponses) * 100 : 0,
+            percentage:
+              totalResponses > 0 ? convertFloatTo2Decimal((data.skipped / totalResponses) * 100) : 0,
           },
         });
 
