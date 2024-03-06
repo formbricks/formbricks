@@ -169,7 +169,15 @@ export default function SurveyEditor({
               />
             )}
 
-            {activeView === "styling" && product.styling?.allowStyleOverwrite && <StylingView />}
+            {activeView === "styling" && product.styling?.allowStyleOverwrite && (
+              <StylingView
+                colours={colours}
+                environment={environment}
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                product={localProduct}
+              />
+            )}
 
             {activeView === "settings" && (
               <SettingsView

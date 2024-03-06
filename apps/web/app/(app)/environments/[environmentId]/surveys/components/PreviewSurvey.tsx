@@ -16,8 +16,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TStyling } from "@formbricks/types/styling";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TProductStyling } from "@formbricks/types/styling";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
@@ -125,7 +125,11 @@ export default function PreviewSurvey({
   const placement = surveyPlacement || product.placement;
   const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
 
-  const styling: TStyling = useMemo(() => {
+  const styling: TSurveyStyling | TProductStyling = useMemo(() => {
+    if (survey.styling) {
+      return survey.styling;
+    }
+
     if (product.styling) {
       return product.styling;
     }
@@ -137,7 +141,7 @@ export default function PreviewSurvey({
         light: product.brandColor || "#64748b",
       },
     };
-  }, [product.brandColor, product.styling]);
+  }, [product.brandColor, product.styling, survey.styling]);
 
   useEffect(() => {
     // close modal if there are no questions left

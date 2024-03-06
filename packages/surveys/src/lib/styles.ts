@@ -3,7 +3,7 @@ import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 
 import { hexToRGBA } from "@formbricks/lib/utils";
-import { TStyling } from "@formbricks/types/styling";
+import { TProductStyling } from "@formbricks/types/styling";
 
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
 
@@ -34,7 +34,7 @@ export const addStylesToDom = () => {
 //   document.head.appendChild(styleElement);
 // };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TStyling }) => {
+export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom");
 

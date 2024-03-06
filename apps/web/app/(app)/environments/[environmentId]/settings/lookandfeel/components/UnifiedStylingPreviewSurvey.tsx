@@ -8,7 +8,7 @@ import { Variants, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
-import { TStyling } from "@formbricks/types/styling";
+import { TProductStyling } from "@formbricks/types/styling";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -106,7 +106,7 @@ export default function UnifiedStylingPreviewSurvey({
 
   const highlightBorderColor = product.styling?.highlightBorderColor?.light;
 
-  const styling: TStyling = useMemo(() => {
+  const styling: TProductStyling = useMemo(() => {
     if (product.styling) {
       return product.styling;
     }

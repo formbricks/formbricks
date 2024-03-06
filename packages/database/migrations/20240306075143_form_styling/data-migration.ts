@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { TStyling } from "@formbricks/types/styling";
+import { TProductStyling } from "@formbricks/types/styling";
 
 const prisma = new PrismaClient();
 
@@ -22,7 +22,7 @@ async function main() {
           continue;
         }
 
-        const styling: TStyling = {
+        const styling: TProductStyling = {
           unifiedStyling: true,
           allowStyleOverwrite: true,
           brandColor: {

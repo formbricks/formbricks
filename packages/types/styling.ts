@@ -16,9 +16,7 @@ export const ZCardArrangement = z.object({
   inAppSurveys: ZCardArrangementOptions,
 });
 
-export const ZStyling = z.object({
-  unifiedStyling: z.boolean(),
-  allowStyleOverwrite: z.boolean(),
+export const ZBaseStyling = z.object({
   brandColor: ZStylingColor.optional(),
   questionColor: ZStylingColor.optional(),
   inputColor: ZStylingColor.optional(),
@@ -30,4 +28,9 @@ export const ZStyling = z.object({
   cardArrangement: ZCardArrangement.optional(),
 });
 
-export type TStyling = z.infer<typeof ZStyling>;
+export const ZProductStyling = ZBaseStyling.extend({
+  unifiedStyling: z.boolean(),
+  allowStyleOverwrite: z.boolean(),
+});
+
+export type TProductStyling = z.infer<typeof ZProductStyling>;

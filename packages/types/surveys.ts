@@ -4,6 +4,7 @@ import { ZNoCodeConfig } from "./actionClasses";
 import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 import { ZSegment } from "./segment";
+import { ZBaseStyling } from "./styling";
 
 export const ZSurveyThankYouCard = z.object({
   enabled: z.boolean(),
@@ -65,9 +66,10 @@ export const ZSurveyStylingBackground = z.object({
 
 export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
 
-export const ZSurveyStyling = z.object({
+export const ZSurveyStyling = ZBaseStyling.extend({
   background: ZSurveyStylingBackground.nullish(),
   hideProgressBar: z.boolean().nullish(),
+  overwriteUnifiedStyling: z.boolean().nullish(),
 });
 
 export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;

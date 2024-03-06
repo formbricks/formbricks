@@ -2,7 +2,7 @@ import { TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TIntegrationConfig } from "@formbricks/types/integration";
 import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/responses";
 import { TBaseFilters } from "@formbricks/types/segment";
-import { TStyling } from "@formbricks/types/styling";
+import { TProductStyling } from "@formbricks/types/styling";
 import {
   TSurveyClosedMessage,
   TSurveyHiddenFields,
@@ -39,6 +39,6 @@ declare global {
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
     export type SurveyInlineTriggers = TSurveyInlineTriggers;
-    export type Styling = TStyling;
+    export type Styling = TProductStyling;
   }
 }

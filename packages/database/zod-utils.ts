@@ -1,6 +1,6 @@
 import z from "zod";
 
-export { ZStyling } from "@formbricks/types/styling";
+export { ZProductStyling } from "@formbricks/types/styling";
 
 export const ZActionProperties = z.record(z.string());
 export { ZActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
