@@ -85,6 +85,10 @@ env:
     - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
     - CLOUDFLARE_EMAIL
     - CLOUDFLARE_DNS_API_TOKEN
+    - S3_ACCESS_KEY
+    - S3_SECRET_KEY
+    - S3_REGION
+    - S3_BUCKET_NAME
 
 # Use a different ssh user than root
 ssh:

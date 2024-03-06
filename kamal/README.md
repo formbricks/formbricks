@@ -26,7 +26,7 @@
 
     This should now run successfully & exit with 0.
 
-6. Generate an Access Token for your Image Registry (DockerHub, GHCR, etc.) & add it to your environment variables (.env file). Also update the Registry details in the `deploy.yml`.
+6. Generate a Classic Personal Access Token for `container:write` & `container:read` for your Image Registry (DockerHub, GHCR, etc.) & add it to your environment variables (.env file). Also update the Registry details in the `deploy.yml`.
 
 7. If your SSH user is a non-root user, run the below command to add the user to the docker group:
 
