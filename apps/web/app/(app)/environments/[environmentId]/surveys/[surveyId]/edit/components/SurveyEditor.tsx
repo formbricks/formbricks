@@ -69,14 +69,24 @@ export default function SurveyEditor({
   }, [localProduct.id]);
 
   useDocumentVisibility(fetchLatestProduct);
+  useEffect(() => {
+    if (survey) {
+      const surveyClone = structuredClone(survey);
+      setLocalSurvey(surveyClone);
+
+      if (survey.questions.length > 0) {
+        setActiveQuestionId(survey.questions[0].id);
+      }
+    }
+  }, [survey]);
 
   useEffect(() => {
-    if (!survey || localSurvey) return;
+    if (!survey) return;
     setLocalSurvey(structuredClone(survey));
     if (isFirstQuestionAvailable) {
       setActiveQuestionId(survey.questions[0].id);
     }
-  }, [survey, isFirstQuestionAvailable, localSurvey]);
+  }, [survey, isFirstQuestionAvailable]);
 
   useEffect(() => {
     if (!localSurvey) return;
