@@ -96,6 +96,7 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
     });
 
     segmentCache.revalidate({ id: segment.id, environmentId });
+    surveyCache.revalidate({ id: surveyId });
 
     return transformPrismaSegment(segment);
   } catch (error) {
