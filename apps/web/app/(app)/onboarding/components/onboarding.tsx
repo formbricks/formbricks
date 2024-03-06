@@ -150,7 +150,7 @@ export function Onboarding({
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center bg-slate-50">
+    <div className="group flex h-full w-full flex-col items-center bg-slate-50">
       <div className="hidden">
         <button
           id="FB__INTERNAL__SKIP_ONBOARDING"

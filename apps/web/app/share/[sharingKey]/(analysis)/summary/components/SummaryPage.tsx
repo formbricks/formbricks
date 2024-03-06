@@ -4,11 +4,11 @@ import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/comp
 import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
 import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
-import SurveyResultsTabs from "@/app/(app)/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
-import { getSurveySummaryUnauthorizedAction } from "@/app/(app)/share/[sharingKey]/action";
-import CustomFilter from "@/app/(app)/share/[sharingKey]/components/CustomFilter";
-import SummaryHeader from "@/app/(app)/share/[sharingKey]/components/SummaryHeader";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
+import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
+import { getSurveySummaryUnauthorizedAction } from "@/app/share/[sharingKey]/action";
+import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
+import SummaryHeader from "@/app/share/[sharingKey]/components/SummaryHeader";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 

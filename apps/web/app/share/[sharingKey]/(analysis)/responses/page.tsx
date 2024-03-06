@@ -1,5 +1,5 @@
-import ResponsePage from "@/app/(app)/share/[sharingKey]/(analysis)/responses/components/ResponsePage";
-import { getResultShareUrlSurveyAction } from "@/app/(app)/share/[sharingKey]/action";
+import ResponsePage from "@/app/share/[sharingKey]/(analysis)/responses/components/ResponsePage";
+import { getResultShareUrlSurveyAction } from "@/app/share/[sharingKey]/action";
 import { notFound } from "next/navigation";
 
 import { RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
