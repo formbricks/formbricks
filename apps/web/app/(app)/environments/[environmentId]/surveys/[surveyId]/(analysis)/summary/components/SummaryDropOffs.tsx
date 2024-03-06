@@ -4,10 +4,10 @@ import { TSurveySummary } from "@formbricks/types/responses";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 interface SummaryDropOffsProps {
-  dropoff: TSurveySummary["dropoff"];
+  dropOff: TSurveySummary["dropOff"];
 }
 
-export default function SummaryDropOffs({ dropoff }: SummaryDropOffsProps) {
+export default function SummaryDropOffs({ dropOff }: SummaryDropOffsProps) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="rounded-b-lg bg-white ">
@@ -28,18 +28,18 @@ export default function SummaryDropOffs({ dropoff }: SummaryDropOffsProps) {
           <div className="px-4 text-center md:px-6">Views</div>
           <div className="pr-6 text-center md:pl-6">Drop Offs</div>
         </div>
-        {dropoff.map((quesDropoff) => (
+        {dropOff.map((quesDropOff) => (
           <div
-            key={quesDropoff.questionId}
+            key={quesDropOff.questionId}
             className="grid grid-cols-6 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
-            <div className="col-span-3 pl-4 md:pl-6">{quesDropoff.headline}</div>
+            <div className="col-span-3 pl-4 md:pl-6">{quesDropOff.headline}</div>
             <div className="whitespace-pre-wrap text-center font-semibold">
-              {quesDropoff.ttc > 0 ? (quesDropoff.ttc / 1000).toFixed(2) + "s" : "N/A"}
+              {quesDropOff.ttc > 0 ? (quesDropOff.ttc / 1000).toFixed(2) + "s" : "N/A"}
             </div>
-            <div className="whitespace-pre-wrap text-center font-semibold">{quesDropoff.views}</div>
+            <div className="whitespace-pre-wrap text-center font-semibold">{quesDropOff.views}</div>
             <div className=" pl-6 text-center md:px-6">
-              <span className="font-semibold">{quesDropoff.dropoffCount}</span>
-              <span>({Math.round(quesDropoff.dropoffPercentage)}%)</span>
+              <span className="font-semibold">{quesDropOff.dropOffCount}</span>
+              <span>({Math.round(quesDropOff.dropOffPercentage)}%)</span>
             </div>
           </div>
         ))}

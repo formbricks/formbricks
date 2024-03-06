@@ -35,7 +35,7 @@ import {
   getQuestionWiseSummary,
   getResponsesFileName,
   getResponsesJson,
-  getSurveySummaryDropoff,
+  getSurveySummaryDropOff,
   getSurveySummaryMeta,
 } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
@@ -551,12 +551,12 @@ export const getSurveySummary = (
       });
 
       const meta = getSurveySummaryMeta(responses, displayCount);
-      const dropoff = getSurveySummaryDropoff(survey, responses, displayCount);
+      const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
       const questionWiseSummary = getQuestionWiseSummary(survey, responses);
 
-      return { meta, dropoff, summary: questionWiseSummary };
+      return { meta, dropOff, summary: questionWiseSummary };
     },
-    [`getSurveyMeta-${surveyId}-${JSON.stringify(filterCriteria)}`],
+    [`getSurveySummary-${surveyId}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

@@ -55,13 +55,13 @@ const SummaryPage = ({
       completedPercentage: 0,
       completedResponses: 0,
       displayCount: 0,
-      dropoffRate: 0,
-      dropoffs: 0,
+      dropOffPercentage: 0,
+      dropOffs: 0,
       startsPercentage: 0,
       totalResponses: 0,
       ttcAverage: 0,
     },
-    dropoff: [],
+    dropOff: [],
     summary: [],
   });
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
@@ -90,6 +90,8 @@ const SummaryPage = ({
     }
   }, [searchParams, resetState]);
 
+  console.log({ surveySummary });
+
   return (
     <ContentWrapper>
       <SummaryHeader
@@ -112,7 +114,7 @@ const SummaryPage = ({
         showDropOffs={showDropOffs}
         setShowDropOffs={setShowDropOffs}
       />
-      {showDropOffs && <SummaryDropOffs dropoff={surveySummary.dropoff} />}
+      {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <SummaryList
         summary={surveySummary.summary}
         responseCount={responseCount}

@@ -415,8 +415,8 @@ export const getSurveySummaryMeta = (
 
   const startsPercentage = displayCount > 0 ? (responseCount / displayCount) * 100 : 0;
   const completedPercentage = displayCount > 0 ? (completedResponses / displayCount) * 100 : 0;
-  const dropoffs = responseCount - completedResponses;
-  const dropoffRate = responseCount > 0 ? (dropoffs / responseCount) * 100 : 0;
+  const dropOffs = responseCount - completedResponses;
+  const dropOffPercentage = responseCount > 0 ? (dropOffs / responseCount) * 100 : 0;
   const ttcAverage = ttcResponseCount > 0 ? ttcSum / ttcResponseCount : 0;
 
   return {
@@ -425,17 +425,17 @@ export const getSurveySummaryMeta = (
     startsPercentage,
     completedResponses,
     completedPercentage,
-    dropoffs,
-    dropoffRate,
+    dropOffs,
+    dropOffPercentage,
     ttcAverage,
   };
 };
 
-export const getSurveySummaryDropoff = (
+export const getSurveySummaryDropOff = (
   survey: TSurvey,
   responses: TResponse[],
   displayCount: number
-): TSurveySummary["dropoff"] => {
+): TSurveySummary["dropOff"] => {
   const initialTtc = survey.questions.reduce((acc: Record<string, number>, question) => {
     acc[question.id] = 0;
     return acc;
@@ -444,9 +444,9 @@ export const getSurveySummaryDropoff = (
   let totalTtc = { ...initialTtc };
   let responseCounts = { ...initialTtc };
 
-  let dropoffArr = new Array(survey.questions.length).fill(0) as number[];
+  let dropOffArr = new Array(survey.questions.length).fill(0) as number[];
   let viewsArr = new Array(survey.questions.length).fill(0) as number[];
-  let dropoffPercentageArr = new Array(survey.questions.length).fill(0) as number[];
+  let dropOffPercentageArr = new Array(survey.questions.length).fill(0) as number[];
 
   responses.forEach((response) => {
     // Calculate total time-to-completion
@@ -468,7 +468,7 @@ export const getSurveySummaryDropoff = (
           viewsArr[currQuesIdx]++;
 
           if (currQuesIdx === survey.questions.length - 1 && !response.finished) {
-            dropoffArr[currQuesIdx]++;
+            dropOffArr[currQuesIdx]++;
             break;
           }
 
@@ -495,7 +495,7 @@ export const getSurveySummaryDropoff = (
         (response.data[currQues.id] === undefined && !response.finished) ||
         (currQues.required && !response.data[currQues.id])
       ) {
-        dropoffArr[currQuesIdx]++;
+        dropOffArr[currQuesIdx]++;
         viewsArr[currQuesIdx]++;
         break;
       }
@@ -516,7 +516,7 @@ export const getSurveySummaryDropoff = (
       }
 
       if (!response.data[survey.questions[nextQuesIdx]?.id] && !response.finished) {
-        dropoffArr[nextQuesIdx]++;
+        dropOffArr[nextQuesIdx]++;
         viewsArr[nextQuesIdx]++;
         break;
       }
@@ -532,35 +532,35 @@ export const getSurveySummaryDropoff = (
   });
 
   if (!survey.welcomeCard.enabled) {
-    dropoffArr[0] = displayCount - viewsArr[0];
-    if (viewsArr[0] > displayCount) dropoffPercentageArr[0] = 0;
+    dropOffArr[0] = displayCount - viewsArr[0];
+    if (viewsArr[0] > displayCount) dropOffPercentageArr[0] = 0;
 
-    dropoffPercentageArr[0] =
+    dropOffPercentageArr[0] =
       viewsArr[0] - displayCount >= 0 ? 0 : ((displayCount - viewsArr[0]) / displayCount) * 100 || 0;
 
     viewsArr[0] = displayCount;
   } else {
-    dropoffPercentageArr[0] = (dropoffArr[0] / viewsArr[0]) * 100;
+    dropOffPercentageArr[0] = (dropOffArr[0] / viewsArr[0]) * 100;
   }
 
   for (let i = 1; i < survey.questions.length; i++) {
     if (viewsArr[i] !== 0) {
-      dropoffPercentageArr[i] = (dropoffArr[i] / viewsArr[i]) * 100;
+      dropOffPercentageArr[i] = (dropOffArr[i] / viewsArr[i]) * 100;
     }
   }
 
-  const dropoff = survey.questions.map((question, index) => {
+  const dropOff = survey.questions.map((question, index) => {
     return {
       questionId: question.id,
       headline: question.headline,
       ttc: totalTtc[question.id],
       views: viewsArr[index] || 0,
-      dropoffCount: dropoffArr[index] || 0,
-      dropoffPercentage: dropoffPercentageArr[index],
+      dropOffCount: dropOffArr[index] || 0,
+      dropOffPercentage: dropOffPercentageArr[index],
     };
   });
 
-  return dropoff;
+  return dropOff;
 };
 
 export const getQuestionWiseSummary = (

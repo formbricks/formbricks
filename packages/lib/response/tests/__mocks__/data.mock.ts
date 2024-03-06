@@ -462,10 +462,10 @@ export const getMockUpdateResponseInput = (finished: boolean = false): TResponse
 });
 
 export const mockSurveySummaryOutput: TSurveySummary = {
-  dropoff: [
+  dropOff: [
     {
-      dropoffCount: 0,
-      dropoffPercentage: 0,
+      dropOffCount: 0,
+      dropOffPercentage: 0,
       headline: "Question Text",
       questionId: "ars2tjk8hsi8oqk1uac00mo8",
       ttc: 0,
@@ -476,8 +476,8 @@ export const mockSurveySummaryOutput: TSurveySummary = {
     completedPercentage: 0,
     completedResponses: 1,
     displayCount: 0,
-    dropoffRate: 0,
-    dropoffs: 0,
+    dropOffPercentage: 0,
+    dropOffs: 0,
     startsPercentage: 0,
     totalResponses: 1,
     ttcAverage: 0,

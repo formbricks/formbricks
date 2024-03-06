@@ -463,18 +463,18 @@ export const ZSurveySummary = z.object({
     startsPercentage: z.number(),
     completedResponses: z.number(),
     completedPercentage: z.number(),
-    dropoffs: z.number(),
-    dropoffRate: z.number(),
+    dropOffs: z.number(),
+    dropOffPercentage: z.number(),
     ttcAverage: z.number(),
   }),
-  dropoff: z.array(
+  dropOff: z.array(
     z.object({
       questionId: z.string().cuid2(),
       headline: z.string(),
       ttc: z.number(),
       views: z.number(),
-      dropoffCount: z.number(),
-      dropoffPercentage: z.number(),
+      dropOffCount: z.number(),
+      dropOffPercentage: z.number(),
     })
   ),
   summary: z.array(
