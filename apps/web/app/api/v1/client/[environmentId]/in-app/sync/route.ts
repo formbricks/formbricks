@@ -105,7 +105,7 @@ export async function GET(
     );
 
     if (!isMultiLanguageAllowed) {
-      if (version && isVersionGreaterThanOrEqualTo(version, "1.6.2")) {
+      if (version && isVersionGreaterThanOrEqualTo(version, "1.7.0")) {
         // Scenario 1: Version available, multi-language not allowed
         // Convert to TSurvey with default language only.
         transformedSurveys = await Promise.all(
@@ -119,7 +119,7 @@ export async function GET(
         );
       }
     } else {
-      if (version && isVersionGreaterThanOrEqualTo(version, "1.6.2")) {
+      if (version && isVersionGreaterThanOrEqualTo(version, "1.7.0")) {
         // Scenario 4: Version available, multi-language allowed
         // Use the surveys as they are.
         transformedSurveys = inProgressWebSurveys;
