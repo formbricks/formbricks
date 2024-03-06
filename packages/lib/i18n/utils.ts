@@ -53,7 +53,7 @@ export const createI18nString = (
 };
 
 // Helper function to check if a property is an i18n object
-const isI18nObject = (obj) => {
+const isI18nObject = (obj: any) => {
   return obj !== null && typeof obj === "object" && "default" in obj;
 };
 
@@ -279,7 +279,7 @@ const extractStringFromI18n = (i18nString: TI18nString, languageCode: string): s
 };
 
 // Recursive function to process each property of an object
-const reverseTranslateObject = (obj, languageCode) => {
+const reverseTranslateObject = (obj: any, languageCode: string) => {
   for (let key in obj) {
     if (isI18nObject(obj[key])) {
       obj[key] = extractStringFromI18n(obj[key], languageCode);
@@ -290,25 +290,25 @@ const reverseTranslateObject = (obj, languageCode) => {
 };
 
 // Modified reverse translate functions using the generic approach
-const reverseTranslateQuestion = (question, languageCode) => {
+const reverseTranslateQuestion = (question: TSurveyQuestion, languageCode: string) => {
   const clonedQuestion = structuredClone(question);
   reverseTranslateObject(clonedQuestion, languageCode);
   return clonedQuestion;
 };
 
-const reverseTranslateWelcomeCard = (welcomeCard, languageCode) => {
+const reverseTranslateWelcomeCard = (welcomeCard: TSurveyWelcomeCard, languageCode: string) => {
   const clonedWelcomeCard = structuredClone(welcomeCard);
   reverseTranslateObject(clonedWelcomeCard, languageCode);
   return clonedWelcomeCard;
 };
 
-const reverseTranslateThankYouCard = (thankYouCard, languageCode) => {
+const reverseTranslateThankYouCard = (thankYouCard: TSurveyThankYouCard, languageCode: string) => {
   const clonedThankYouCard = structuredClone(thankYouCard);
   reverseTranslateObject(clonedThankYouCard, languageCode);
   return clonedThankYouCard;
 };
 
-export const reverseTranslateSurvey = (survey, languageCode = "default") => {
+export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "default") => {
   const reversedSurvey = structuredClone(survey);
   reversedSurvey.questions = reversedSurvey.questions.map((question) =>
     reverseTranslateQuestion(question, languageCode)
