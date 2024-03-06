@@ -126,8 +126,6 @@ traefik:
     certificatesResolvers.letsencrypt.acme.email: "shubham@formbricks.com"
     certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
     certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
-  log:
-    level: DEBUG
   env:
     secret:
       - CLOUDFLARE_DNS_API_TOKEN
