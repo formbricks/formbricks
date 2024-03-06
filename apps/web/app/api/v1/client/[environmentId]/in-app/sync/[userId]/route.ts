@@ -3,7 +3,6 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest, userAgent } from "next/server";
 
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   IS_FORMBRICKS_CLOUD,
@@ -13,14 +12,17 @@ import {
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSyncSurveys } from "@formbricks/lib/survey/service";
+import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import {
   getMonthlyActiveTeamPeopleCount,
   getMonthlyTeamResponseCount,
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
+import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
+import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys";
 
 export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
@@ -39,7 +41,7 @@ export async function GET(
 ): Promise<Response> {
   try {
     const { device } = userAgent(request);
-    const apiVersion = request.nextUrl.searchParams.get("version");
+    const version = request.nextUrl.searchParams.get("version");
 
     // validate using zod
 
@@ -74,7 +76,6 @@ export async function GET(
     if (!team) {
       throw new Error("Team does not exist");
     }
-    const isMultiLanguageAllowed = getMultiLanguagePermission(team);
 
     // check if MAU limit is reached
     let isMauLimitReached = false;
@@ -124,20 +125,15 @@ export async function GET(
         }
       }
     }
+
     if (isInAppSurveyLimitReached) {
       await sendFreeLimitReachedEventToPosthogBiWeekly(environmentId, "inAppSurvey");
     }
 
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(
-        environmentId,
-        person.id,
-        isMultiLanguageAllowed,
-        device.type === "mobile" ? "phone" : "desktop",
-        {
-          version: apiVersion ?? undefined,
-        }
-      ),
+      getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop", {
+        version: version ?? undefined,
+      }),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
@@ -148,7 +144,7 @@ export async function GET(
     const languageAttribute = person.attributes.language;
     const isLanguageAvailable = Boolean(languageAttribute);
 
-    const personData = apiVersion
+    const personData = version
       ? {
           ...(isLanguageAvailable && { attributes: { language: languageAttribute } }),
         }
@@ -158,9 +154,28 @@ export async function GET(
           ...(isLanguageAvailable && { attributes: { language: languageAttribute } }),
         };
 
+    // Define 'transformedSurveys' which can be an array of either TLegacySurvey or TSurvey.
+    let transformedSurveys: TLegacySurvey[] | TSurvey[];
+
+    // Backwards compatibility for versions less than 1.7.0 (no multi-language support).
+    if (version && isVersionGreaterThanOrEqualTo(version, "1.7.0")) {
+      // Scenario 1: Multi language supported
+      // Use the surveys as they are.
+      transformedSurveys = surveys;
+    } else {
+      // Scenario 2: Multi language not supported
+      // Convert to legacy surveys with default language.
+      transformedSurveys = await Promise.all(
+        surveys.map((survey) => {
+          const languageCode = "default";
+          return transformToLegacySurvey(survey, languageCode);
+        })
+      );
+    }
+
     const state: TJsStateSync = {
       person: personData,
-      surveys: !isInAppSurveyLimitReached ? surveys : [],
+      surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
       product,
     };

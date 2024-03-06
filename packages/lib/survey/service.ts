@@ -30,9 +30,8 @@ import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
-import { isVersionGreaterThanOrEqualTo } from "../utils/version";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, determineLanguageCode } from "./util";
+import { anySurveyHasFilters } from "./util";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -722,7 +721,6 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
 export const getSyncSurveys = async (
   environmentId: string,
   personId: string,
-  isMultiLanguageAllowed: boolean,
   deviceType: "phone" | "desktop" = "desktop",
   options?: {
     version?: string;
@@ -784,53 +782,6 @@ export const getSyncSurveys = async (
           return true;
         }
       });
-
-      if (isMultiLanguageAllowed) {
-        if (options?.version && isVersionGreaterThanOrEqualTo(options?.version, "1.6.2")) {
-          // Version available and Multi-Langauge allowed, so tranform to required language
-          surveys = await Promise.all(
-            surveys
-              .filter((survey) => determineLanguageCode(person, survey)) // Keep only surveys with a valid language code
-              .map(async (survey) => {
-                return survey;
-              })
-          );
-        } else {
-          // Version not available and Multi-Langauge allowed, so tranform to legacy survey with required language
-          surveys = await Promise.all(
-            surveys
-              .filter((survey) => determineLanguageCode(person, survey)) // Keep only surveys with a valid language code
-              .map(async (survey) => {
-                const languageCode = determineLanguageCode(person, survey);
-                return transformToLegacySurvey(survey, languageCode);
-              })
-          );
-        }
-      } else {
-        if (options?.version && isVersionGreaterThanOrEqualTo(options?.version, "1.6.2")) {
-          // Version available and multi-language not allowed so transform to survey with default language only
-          surveys = await Promise.all(
-            surveys
-              .filter((survey) => determineLanguageCode(person, survey)) // Keep only surveys with a valid language code
-              .map(async (survey) => {
-                return transformSurveyToSpecificLanguage(survey, "default");
-              })
-          );
-        } else {
-          // No version available and multi-language not allowed so transform to legacy survey with default language only
-          surveys = await Promise.all(
-            surveys
-              .filter((survey) => {
-                const languageCode = determineLanguageCode(person, survey);
-                return languageCode && languageCode === "default";
-              })
-              .map(async (survey) => {
-                const languageCode = determineLanguageCode(person, survey);
-                return transformToLegacySurvey(survey, languageCode);
-              })
-          );
-        }
-      }
 
       // if no surveys have segment filters, return the surveys
       if (!anySurveyHasFilters(surveys)) {
@@ -923,11 +874,7 @@ export const getSyncSurveys = async (
     }
   )();
 
-  if (options?.version) {
-    return surveys.map((survey) => formatDateFields(survey as TSurvey, ZSurvey));
-  } else {
-    return surveys.map((survey) => formatDateFields(survey as TLegacySurvey, ZLegacySurvey));
-  }
+  return surveys.map((survey) => formatDateFields(survey as TSurvey, ZSurvey));
 };
 
 export const getSurveyByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
