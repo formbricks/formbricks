@@ -200,6 +200,7 @@ export default function UnifiedStylingPreviewSurvey({
               placement={placement}
               highlightBorderColor={highlightBorderColor}
               previewMode="desktop"
+              background={styling.cardBackgroundColor?.light}
               borderRadius={styling.roundness ?? 12}>
               <SurveyInline
                 survey={survey}

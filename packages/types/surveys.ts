@@ -541,3 +541,5 @@ export interface TSurveyQuestionSummary<T> {
     person: TPerson | null;
   }[];
 }
+
+export type TSurveyEditorTabs = "questions" | "settings" | "styling";

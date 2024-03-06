@@ -13,6 +13,7 @@ import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
+  TSurveyEditorTabs,
   TSurveyQuestionType,
   ZSurveyInlineTriggers,
   surveyHasBothTriggers,
@@ -30,8 +31,8 @@ interface SurveyMenuBarProps {
   survey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   environment: TEnvironment;
-  activeId: "questions" | "settings";
-  setActiveId: (id: "questions" | "settings") => void;
+  activeId: TSurveyEditorTabs;
+  setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidQuestions: (invalidQuestions: String[]) => void;
   product: TProduct;
   responseCount: number;

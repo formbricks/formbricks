@@ -1,6 +1,7 @@
 "use client";
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import StylingView from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
 import { useEffect, useState } from "react";
 
@@ -11,7 +12,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyEditorTabs } from "@formbricks/types/surveys";
 
 import PreviewSurvey from "../../../components/PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
@@ -46,7 +47,7 @@ export default function SurveyEditor({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
 }: SurveyEditorProps): JSX.Element {
-  const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
+  const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
@@ -150,8 +151,13 @@ export default function SurveyEditor({
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
-            <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
-            {activeView === "questions" ? (
+            <QuestionsAudienceTabs
+              activeId={activeView}
+              setActiveId={setActiveView}
+              isStylingTabVisible={product.styling?.allowStyleOverwrite}
+            />
+
+            {activeView === "questions" && (
               <QuestionsView
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
@@ -161,7 +167,11 @@ export default function SurveyEditor({
                 invalidQuestions={invalidQuestions}
                 setInvalidQuestions={setInvalidQuestions}
               />
-            ) : (
+            )}
+
+            {activeView === "styling" && product.styling?.allowStyleOverwrite && <StylingView />}
+
+            {activeView === "settings" && (
               <SettingsView
                 environment={environment}
                 localSurvey={localSurvey}
