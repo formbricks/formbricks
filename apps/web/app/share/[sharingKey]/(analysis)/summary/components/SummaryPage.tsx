@@ -72,7 +72,7 @@ const SummaryPage = ({
   }, [filters, surveyId]);
 
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, "default");
   }, [survey]);
 
   const searchParams = useSearchParams();
