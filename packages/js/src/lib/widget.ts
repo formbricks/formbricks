@@ -29,7 +29,7 @@ export const renderWidget = async (survey: TSurvey) => {
     logger.debug("A survey is already running. Skipping.");
     return;
   }
-  setIsSurveyRunning(false);
+  setIsSurveyRunning(true);
 
   if (survey.delay) {
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
