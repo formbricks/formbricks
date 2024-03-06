@@ -57,7 +57,7 @@ export const Hero: React.FC = ({}) => {
             />
             <Image src={CalLogoLight} alt="Cal Logo" className="block rounded-lg  dark:hidden" width={170} />
             <Image src={CalLogoDark} alt="Cal Logo" className="hidden rounded-lg  dark:block" width={170} />
-            <Image src={ThemeisleLogo} alt="Neverinstall Logo" className="pb-1" width={200} />
+            <Image src={ThemeisleLogo} alt="ThemeIsle Logo" className="pb-1" width={200} />
 
             <Image
               src={CrowdLogoLight}
@@ -71,7 +71,7 @@ export const Hero: React.FC = ({}) => {
               className="hidden rounded-lg pb-1  dark:block"
               width={200}
             />
-            <Image src={OptimoleLogo} alt="Neverinstall Logo" className="pb-1" width={200} />
+            <Image src={OptimoleLogo} alt="Optimole Logo" className="pb-1" width={200} />
             <Image src={NILogoDark} alt="Neverinstall Logo" className="block pb-1  dark:hidden" width={200} />
             <Image
               src={NILogoLight}

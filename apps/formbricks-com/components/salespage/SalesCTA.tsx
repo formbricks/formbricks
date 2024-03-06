@@ -8,7 +8,7 @@ export default function SalesCTA() {
   const router = useRouter();
   return (
     <Button
-      variant="highlight"
+      variant="darkCTA"
       onClick={() => {
         router.push("https://app.formbricks.com/auth/signup");
         plausible("SalesPage_CTA_GetStartedNow");

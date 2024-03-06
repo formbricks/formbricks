@@ -1,18 +1,25 @@
 import SalesCTA from "@/components/salespage/SalesCTA";
 import Image, { StaticImageData } from "next/image";
 
-interface SalesPageHeroProps {
+interface SalesPageFeatureProps {
   imgSrc: StaticImageData;
   imgAlt: string;
   headline: string;
   subheadline: string;
+  imgLeft?: boolean;
 }
 
-export default function SalesPageHero({ imgSrc, imgAlt, headline, subheadline }: SalesPageHeroProps) {
+export default function SalesPageFeature({
+  imgSrc,
+  imgAlt,
+  headline,
+  subheadline,
+  imgLeft,
+}: SalesPageFeatureProps) {
   return (
-    <div className="grid min-h-[60vh] grid-cols-2 content-center gap-12">
-      <div className="space-y-6">
-        <h1 className="text-5xl font-bold text-slate-800">{headline}</h1>
+    <div className="grid grid-cols-2 content-center gap-12">
+      <div className={`space-y-6 ${imgLeft && `order-last`}`}>
+        <h2 className="text-balance text-3xl font-bold text-slate-800">{headline}</h2>
         <p className="text-pretty text-lg text-slate-700">{subheadline}</p>
         <SalesCTA />
       </div>
