@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -44,28 +46,62 @@ export default function ResponseFeed({
       {fetchedResponses.length === 0 ? (
         <EmptySpaceFiller type="response" environment={environment} />
       ) : (
-        fetchedResponses.map((response) => {
-          const survey = surveys.find((survey) => {
-            return survey.id === response.surveyId;
-          });
-          return (
-            <div key={response.id}>
-              {survey && (
-                <SingleResponseCard
-                  response={response}
-                  survey={survey}
-                  user={user}
-                  pageType="people"
-                  environmentTags={environmentTags}
-                  environment={environment}
-                  deleteResponse={deleteResponse}
-                  updateResponse={updateResponse}
-                />
-              )}
-            </div>
-          );
-        })
+        fetchedResponses.map((response) => (
+          <ResponseSurveyCard
+            key={response.id}
+            response={response}
+            surveys={surveys}
+            user={user}
+            environmentTags={environmentTags}
+            environment={environment}
+            deleteResponse={deleteResponse}
+            updateResponse={updateResponse}
+          />
+        ))
       )}
     </>
   );
 }
+
+const ResponseSurveyCard = ({
+  response,
+  surveys,
+  user,
+  environmentTags,
+  environment,
+  deleteResponse,
+  updateResponse,
+}: {
+  response: TResponse;
+  surveys: TSurvey[];
+  user: TUser;
+  environmentTags: TTag[];
+  environment: TEnvironment;
+  deleteResponse: (responseId: string) => void;
+  updateResponse: (responseId: string, response: TResponse) => void;
+}) => {
+  const survey = surveys.find((survey) => {
+    return survey.id === response.surveyId;
+  });
+
+  const { membershipRole } = useMembershipRole(survey?.environmentId || "");
+  const { isViewer } = getAccessFlags(membershipRole);
+
+  return (
+    <div key={response.id}>
+      {survey && (
+        <SingleResponseCard
+          response={response}
+          survey={survey}
+          user={user}
+          pageType="people"
+          environmentTags={environmentTags}
+          environment={environment}
+          deleteResponse={deleteResponse}
+          updateResponse={updateResponse}
+          isViewer={isViewer}
+        />
+      )}
+    </div>
+  );
+};

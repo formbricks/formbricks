@@ -15,6 +15,7 @@ import {
   TResponseLegacyInput,
   TResponseUpdateInput,
   TSurveyPersonAttributes,
+  TSurveySummary,
   ZResponse,
   ZResponseFilterCriteria,
   ZResponseInput,
@@ -31,8 +32,11 @@ import {
   buildWhereClause,
   calculateTtcTotal,
   extractSurveyDetails,
+  getQuestionWiseSummary,
   getResponsesFileName,
   getResponsesJson,
+  getSurveySummaryDropOff,
+  getSurveySummaryMeta,
 } from "../response/util";
 import { responseNoteCache } from "../responseNote/cache";
 import { getResponseNotes } from "../responseNote/service";
@@ -515,6 +519,53 @@ export const getResponses = async (
   }));
 };
 
+export const getSurveySummary = (
+  surveyId: string,
+  filterCriteria?: TResponseFilterCriteria
+): Promise<TSurveySummary> => {
+  const summary = unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
+
+      const survey = await getSurvey(surveyId);
+
+      if (!survey) {
+        throw new ResourceNotFoundError("Survey", surveyId);
+      }
+
+      const batchSize = 3000;
+      const responseCount = await getResponseCountBySurveyId(surveyId);
+      const pages = Math.ceil(responseCount / batchSize);
+
+      const responsesArray = await Promise.all(
+        Array.from({ length: pages }, (_, i) => {
+          return getResponses(surveyId, i + 1, batchSize, filterCriteria);
+        })
+      );
+      const responses = responsesArray.flat();
+
+      const displayCount = await prisma.display.count({
+        where: {
+          surveyId,
+        },
+      });
+
+      const meta = getSurveySummaryMeta(responses, displayCount);
+      const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
+      const questionWiseSummary = getQuestionWiseSummary(survey, responses);
+
+      return { meta, dropOff, summary: questionWiseSummary };
+    },
+    [`getSurveySummary-${surveyId}-${JSON.stringify(filterCriteria)}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return summary;
+};
+
 export const getResponseDownloadUrl = async (
   surveyId: string,
   format: "csv" | "xlsx",
@@ -755,15 +806,19 @@ export const deleteResponse = async (responseId: string): Promise<TResponse> => 
   }
 };
 
-export const getResponseCountBySurveyId = async (surveyId: string): Promise<number> =>
+export const getResponseCountBySurveyId = async (
+  surveyId: string,
+  filterCriteria?: TResponseFilterCriteria
+): Promise<number> =>
   unstable_cache(
     async () => {
-      validateInputs([surveyId, ZId]);
+      validateInputs([surveyId, ZId], [filterCriteria, ZResponseFilterCriteria.optional()]);
 
       try {
         const responseCount = await prisma.response.count({
           where: {
             surveyId: surveyId,
+            ...buildWhereClause(filterCriteria),
           },
         });
         return responseCount;

@@ -2,74 +2,19 @@ import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId
 import { questionTypes } from "@/app/lib/questions";
 import { InboxStackIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import { useMemo } from "react";
 
-import type { TSurveyPictureSelectionQuestion, TSurveyQuestionSummary } from "@formbricks/types/surveys";
+import { TSurveySummaryPictureSelection } from "@formbricks/types/responses";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
 interface PictureChoiceSummaryProps {
-  questionSummary: TSurveyQuestionSummary<TSurveyPictureSelectionQuestion>;
-}
-
-interface ChoiceResult {
-  id: string;
-  imageUrl: string;
-  count: number;
-  percentage?: number;
+  questionSummary: TSurveySummaryPictureSelection;
 }
 
 export default function PictureChoiceSummary({ questionSummary }: PictureChoiceSummaryProps) {
   const isMulti = questionSummary.question.allowMulti;
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
-  const results: ChoiceResult[] = useMemo(() => {
-    if (!("choices" in questionSummary.question)) return [];
-
-    // build a dictionary of choices
-    const resultsDict: { [key: string]: ChoiceResult } = {};
-    for (const choice of questionSummary.question.choices) {
-      resultsDict[choice.id] = {
-        id: choice.id,
-        imageUrl: choice.imageUrl,
-        count: 0,
-        percentage: 0,
-      };
-    }
-
-    // count the responses
-    for (const response of questionSummary.responses) {
-      if (Array.isArray(response.value)) {
-        for (const choice of response.value) {
-          if (choice in resultsDict) {
-            resultsDict[choice].count += 1;
-          }
-        }
-      }
-    }
-
-    // add the percentage
-    const total = questionSummary.responses.length;
-    for (const key of Object.keys(resultsDict)) {
-      if (resultsDict[key].count) {
-        resultsDict[key].percentage = resultsDict[key].count / total;
-      }
-    }
-
-    // sort by count and transform to array
-    const results = Object.values(resultsDict).sort((a, b) => {
-      return b.count - a.count;
-    });
-
-    return results;
-  }, [questionSummary]);
-
-  const totalResponses = useMemo(() => {
-    let total = 0;
-    for (const result of results) {
-      total += result.count;
-    }
-    return total;
-  }, [results]);
+  const results = questionSummary.choices.sort((a, b) => b.count - a.count);
 
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -83,7 +28,7 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxStackIcon className="mr-2 h-4 w-4 " />
-            {totalResponses} responses
+            {questionSummary.responseCount} responses
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             {isMulti ? "Multi" : "Single"} Select
@@ -109,7 +54,7 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
                 </div>
                 <div className="self-end">
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {Math.round((result.percentage || 0) * 100)}%
+                    {Math.round(result.percentage)}%
                   </p>
                 </div>
               </div>
@@ -117,7 +62,7 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
                 {result.count} {result.count === 1 ? "response" : "responses"}
               </p>
             </div>
-            <ProgressBar barColor="bg-brand" progress={result.percentage || 0} />
+            <ProgressBar barColor="bg-brand" progress={result.percentage / 100 || 0} />
           </div>
         ))}
       </div>
