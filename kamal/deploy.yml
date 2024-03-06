@@ -85,8 +85,6 @@ env:
     - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
     - CLOUDFLARE_EMAIL
     - CLOUDFLARE_DNS_API_TOKEN
-    - AWS_ACCESS_KEY_ID
-    - AWS_SECRET_ACCESS_KEY
 
 # Use a different ssh user than root
 ssh:
@@ -163,14 +161,6 @@ traefik:
 #   args:
 #     accesslog: true
 #     accesslog.format: json
-
-logging:
-  driver: awslogs
-  options:
-    awslogs-region: eu-central-1
-    awslogs-group: formbricks-kamal-shubhi
-    awslogs-create-group: true
-    tag: "{{.Name}}-{{.ID}}"
 
 healthcheck:
   path: /health
