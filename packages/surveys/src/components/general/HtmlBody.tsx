@@ -17,6 +17,7 @@ export default function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
   }, [htmlString]);
 
   if (!htmlString) return null;
+  if (safeHtml === `<p class="fb-editor-paragraph"><br></p>`) return null;
 
   return (
     <label
