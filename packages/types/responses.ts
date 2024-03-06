@@ -463,7 +463,7 @@ export const ZSurveySummary = z.object({
     startsPercentage: z.number(),
     completedResponses: z.number(),
     completedPercentage: z.number(),
-    dropOffs: z.number(),
+    dropOffCount: z.number(),
     dropOffPercentage: z.number(),
     ttcAverage: z.number(),
   }),

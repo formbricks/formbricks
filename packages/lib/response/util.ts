@@ -419,8 +419,8 @@ export const getSurveySummaryMeta = (
 
   const startsPercentage = displayCount > 0 ? (responseCount / displayCount) * 100 : 0;
   const completedPercentage = displayCount > 0 ? (completedResponses / displayCount) * 100 : 0;
-  const dropOffs = responseCount - completedResponses;
-  const dropOffPercentage = responseCount > 0 ? (dropOffs / responseCount) * 100 : 0;
+  const dropOffCount = responseCount - completedResponses;
+  const dropOffPercentage = responseCount > 0 ? (dropOffCount / responseCount) * 100 : 0;
   const ttcAverage = ttcResponseCount > 0 ? ttcSum / ttcResponseCount : 0;
 
   return {
@@ -429,7 +429,7 @@ export const getSurveySummaryMeta = (
     startsPercentage: convertFloatTo2Decimal(startsPercentage),
     completedResponses,
     completedPercentage: convertFloatTo2Decimal(completedPercentage),
-    dropOffs,
+    dropOffCount,
     dropOffPercentage: convertFloatTo2Decimal(dropOffPercentage),
     ttcAverage: convertFloatTo2Decimal(ttcAverage),
   };

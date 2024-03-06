@@ -60,7 +60,7 @@ export default function SummaryMetadata({
     completedResponses,
     displayCount,
     dropOffPercentage,
-    dropOffs,
+    dropOffCount,
     startsPercentage,
     totalResponses,
     ttcAverage,
@@ -91,7 +91,7 @@ export default function SummaryMetadata({
           <StatCard
             label="Drop Offs"
             percentage={`${Math.round(dropOffPercentage)}%`}
-            value={dropOffs === 0 ? <span>-</span> : dropOffs}
+            value={dropOffCount === 0 ? <span>-</span> : dropOffCount}
             tooltipText="Number of times the survey has been started but not completed."
           />
           <StatCard
