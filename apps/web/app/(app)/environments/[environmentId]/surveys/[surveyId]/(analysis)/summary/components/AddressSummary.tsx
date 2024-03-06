@@ -79,37 +79,37 @@ export default function AddressSummary({
                 <div className="ph-no-capture col-span-2 pl-6 font-semibold">
                   {response.value[0] && (
                     <>
-                      Address: {response.value[0]}
+                      {response.value[0]}
                       <br />
                     </>
                   )}
                   {response.value[1] && (
                     <>
-                      Address Line 2: {response.value[1]}
+                      {response.value[1]}
                       <br />
                     </>
                   )}{" "}
                   {response.value[2] && (
                     <>
-                      City/Town: {response.value[2]}
+                      {response.value[2]}
                       <br />
                     </>
                   )}
                   {response.value[3] && (
                     <>
-                      State/Region: {response.value[3]}
+                      {response.value[3]}
                       <br />
                     </>
                   )}
                   {response.value[4] && (
                     <>
-                      ZIP/Post Code: {response.value[4]}
+                      {response.value[4]}
                       <br />
                     </>
                   )}
                   {response.value[5] && (
                     <>
-                      Country : {response.value[5]}
+                      {response.value[5]}
                       <br />
                     </>
                   )}
