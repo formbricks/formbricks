@@ -384,6 +384,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     surveyCache.revalidate({
       id: modifiedSurvey.id,
       environmentId: modifiedSurvey.environmentId,
+      segmentId: modifiedSurvey.segment?.id,
     });
 
     return modifiedSurvey;

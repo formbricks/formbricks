@@ -1,6 +1,6 @@
 import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
-import SummaryPage from "@/app/(app)/share/[sharingKey]/(analysis)/summary/components/SummaryPage";
-import { getResultShareUrlSurveyAction } from "@/app/(app)/share/[sharingKey]/action";
+import SummaryPage from "@/app/share/[sharingKey]/(analysis)/summary/components/SummaryPage";
+import { getResultShareUrlSurveyAction } from "@/app/share/[sharingKey]/action";
 import { notFound } from "next/navigation";
 
 import { REVALIDATION_INTERVAL, TEXT_RESPONSES_PER_PAGE } from "@formbricks/lib/constants";

@@ -151,7 +151,7 @@ export const Role: React.FC<RoleProps> = ({ setFormbricksResponseId, session, se
           loading={isUpdating}
           disabled={!selectedChoice}
           onClick={handleNextClick}
-          id="role-next">
+          id="onboarding-inapp-role-next">
           Next
         </Button>
       </div>

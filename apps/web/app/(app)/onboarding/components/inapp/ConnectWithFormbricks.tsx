@@ -6,6 +6,7 @@ import Lost from "@/images/onboarding-lost.gif";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -47,6 +48,8 @@ const useVisibilityChange = (environment, setLocalEnvironment) => {
 
 const ConnectedState = ({ goToProduct }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const posthog = usePostHog();
+  posthog.capture("onboarding-sdk-connected");
   return (
     <div className="flex w-full max-w-xl flex-col gap-8">
       <OnboardingTitle title="We are connected!" subtitle="From now on it's a piece of cake 🍰" />
@@ -58,6 +61,7 @@ const ConnectedState = ({ goToProduct }) => {
       </div>
       <div className="mt-4 text-right">
         <Button
+          id="onboarding-inapp-connect-connection-successful"
           variant="minimal"
           loading={isLoading}
           onClick={() => {
@@ -73,7 +77,7 @@ const ConnectedState = ({ goToProduct }) => {
 
 const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToTeamInvitePage }) => {
   return (
-    <div className="group mb-8 w-full max-w-xl space-y-8">
+    <div className="mb-8 w-full max-w-xl space-y-8">
       <OnboardingTitle
         title="Connect your app or website"
         subtitle="It takes just a few minutes to set it up."
@@ -91,7 +95,8 @@ const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToTeamI
       />
       <div className="flex justify-center">
         <Button
-          className="opacity-0 transition-all delay-[3000ms] duration-500 ease-in-out group-hover:opacity-100"
+          id="onboarding-inapp-connect-not-sure-how-to-do-this"
+          className="mt-8 font-normal text-slate-400"
           variant="minimal"
           onClick={goToTeamInvitePage}>
           I am not sure how to do this
@@ -127,7 +132,7 @@ export function ConnectWithFormbricks({
       setLocalEnvironment(refetchedEnvironment);
     };
     fetchLatestEnvironmentOnFirstLoad();
-  }, []);
+  }, [environment.id]);
 
   return localEnvironment.widgetSetupCompleted ? (
     <ConnectedState
