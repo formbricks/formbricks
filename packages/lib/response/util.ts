@@ -16,8 +16,15 @@ import {
   TSurveySummaryPictureSelection,
   TSurveySummaryRating,
 } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import {
+  TSurvey,
+  TSurveyLanguage,
+  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyQuestionType,
+} from "@formbricks/types/surveys";
 
+import { getLocalizedValue } from "../i18n/utils";
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
 
@@ -580,7 +587,7 @@ export const getSurveySummaryDropOff = (
   const dropOff = survey.questions.map((question, index) => {
     return {
       questionId: question.id,
-      headline: question.headline,
+      headline: getLocalizedValue(question.headline, "default"),
       ttc: convertFloatTo2Decimal(totalTtc[question.id]) || 0,
       views: viewsArr[index] || 0,
       dropOffCount: dropOffArr[index] || 0,
@@ -589,6 +596,43 @@ export const getSurveySummaryDropOff = (
   });
 
   return dropOff;
+};
+
+const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {
+  if (!surveyLanguages?.length || !languageCode) return "default";
+  const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
+  return language?.default ? "default" : language?.language.code || "default";
+};
+
+const checkForI18n = (response: TResponse, id: string, survey: TSurvey, languageCode: string) => {
+  const question = survey.questions.find((question) => question.id === id);
+
+  if (question?.type === "multipleChoiceMulti") {
+    // Initialize an array to hold the choice values
+    let choiceValues = [] as string[];
+
+    (typeof response.data[id] === "string"
+      ? ([response.data[id]] as string[])
+      : (response.data[id] as string[])
+    ).forEach((data) => {
+      choiceValues.push(
+        getLocalizedValue(
+          question.choices.find((choice) => choice.label[languageCode] === data)?.label,
+          "default"
+        ) || data
+      );
+    });
+
+    // Return the array of localized choice values of multiSelect multi questions
+    return choiceValues;
+  }
+
+  // Return the localized value of the choice fo multiSelect single question
+  const choice = (
+    question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion
+  )?.choices.find((choice) => choice.label[languageCode] === response.data[id]);
+
+  return getLocalizedValue(choice?.label, "default") || response.data[id];
 };
 
 export const getQuestionWiseSummary = (
@@ -631,7 +675,7 @@ export const getQuestionWiseSummary = (
         const lastChoice = question.choices[question.choices.length - 1];
         const isOthersEnabled = lastChoice.id === "other";
 
-        const questionChoices = question.choices.map((choice) => choice.label);
+        const questionChoices = question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
         if (isOthersEnabled) {
           questionChoices.pop();
         }
@@ -642,9 +686,13 @@ export const getQuestionWiseSummary = (
           return acc;
         }, {});
         const otherValues: { value: string; person: TPerson | null }[] = [];
-
         responses.forEach((response) => {
-          const answer = response.data[question.id];
+          const responseLanguageCode = getLanguageCode(survey.languages, response.language);
+
+          const answer =
+            responseLanguageCode === "default"
+              ? response.data[question.id]
+              : checkForI18n(response, question.id, survey, responseLanguageCode);
 
           if (Array.isArray(answer)) {
             answer.forEach((value) => {
@@ -682,7 +730,7 @@ export const getQuestionWiseSummary = (
 
         if (isOthersEnabled) {
           values.push({
-            value: lastChoice.label || "Other",
+            value: getLocalizedValue(lastChoice.label, "default") || "Other",
             count: otherValues.length,
             percentage: convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100),
             others: otherValues.slice(0, VALUES_LIMIT),
