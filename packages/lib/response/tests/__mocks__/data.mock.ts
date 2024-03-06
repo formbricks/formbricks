@@ -477,7 +477,7 @@ export const mockSurveySummaryOutput: TSurveySummary = {
     completedResponses: 1,
     displayCount: 0,
     dropOffPercentage: 0,
-    dropOffs: 0,
+    dropOffCount: 0,
     startsPercentage: 0,
     totalResponses: 1,
     ttcAverage: 0,
