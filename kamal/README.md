@@ -53,7 +53,7 @@ sudo mkdir -p /letsencrypt && sudo touch /letsencrypt/acme.json && sudo chmod 60
 
 > Make sure to run `kamal env push` before a `kamal deploy` to push the latest environment variables to the cloud VM.
 
-## Debugging
+### Debugging for Kamal
 
 - If you run into an error such as:
 
@@ -71,20 +71,68 @@ sudo mkdir -p /letsencrypt && sudo touch /letsencrypt/acme.json && sudo chmod 60
     Lock failed: failed to acquire lock: lockfile already exists
     ```
 
-    Then simply run `kamal lock release` & try again.
+    Then simply run `kamal lock release -c kamal/deploy.yml` & try again.
+
+- If you run into:
+    ```sh
+    No config found
+    ```
+
+    Then simply add the following at the end of the command: `-c kamal/deploy.yml`
 
 For further details, refer to the [Kamal Documentation](https://kamal-deploy.org/docs/configuration) or reach out to us on our [Discord](https://formbricks.com/discord)
 
-## Rollback
-
-Run:
+# Rollback to a Previous Version
 
 ```sh
 kamal rollback [git_commit_hash_to_rollback_to] -c kamal/deploy.yml
 ```
 
-## View Formbricks Server logs
+## View Formbricks Server logs with Kamal
 
 ```sh
 kamal app logs -c kamal/deploy.yml
 ```
+
+# Configure Memory Metrics on AWS using CW Agent
+
+1. Install the CloudWatch Agent on the EC2 instance
+
+```sh
+wget https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+```
+
+2. Attach the IAM role of `CloudWatchFullAccessv2` to the EC2 instance
+
+3. Edit the CloudWatch Agent config file
+
+```sh
+sudo nano /opt/aws/amazon-cloudwatch-agent/bin/config.json
+```
+
+4. Add the below config to the `config.json` file
+
+```json
+{
+  "metrics": {
+    "metrics_collected": {
+      "mem": {
+        "measurement": ["mem_used_percent"],
+        "metrics_collection_interval": 60
+      }
+    },
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}"
+    }
+  }
+}
+```
+
+5. Fetch the config & start the CloudWatch Agent
+
+```sh
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+```
+
+6. Now go to Cloudwatch > Metrics > All Metrics > Custom Namespaces > CWAgent > InstanceId > {InstanceId} > Tick the Checkbox next to it > Graph above will be updated
