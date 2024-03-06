@@ -21,17 +21,17 @@ export const users = {
   survey: [
     {
       name: "Survey User 1",
-      email: "survey10@formbricks.com",
-      password: "Y1I*EpURUSb32j5XijP",
-    },
-    {
-      name: "Multi Language Survey User 1",
-      email: "MLSurvey16@formbricks.com",
+      email: "survey1@formbricks.com",
       password: "Y1I*EpURUSb32j5XijP",
     },
     {
       name: "Survey User 2",
       email: "survey2@formbricks.com",
+      password: "Y1I*EpURUSb32j5XijP",
+    },
+    {
+      name: "Survey User 3",
+      email: "survey3@formbricks.com",
       password: "Y1I*EpURUSb32j5XijP",
     },
   ],
@@ -200,6 +200,7 @@ export const surveys = {
     thankYouCard: {
       headline: "Dies ist meine Dankeskarte Überschrift!", // German translation
       description: "Dies ist meine Beschreibung zur Dankeskarte!", // German translation
+      buttonLabel: "Erstellen Sie Ihre eigene Umfrage",
     },
   },
 };

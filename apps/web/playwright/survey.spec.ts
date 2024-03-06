@@ -2,7 +2,7 @@ import { surveys, users } from "@/playwright/utils/mock";
 import { expect, test } from "@playwright/test";
 
 import { signUpAndLogin } from "./utils/helper";
-import { skipOnboarding } from "./utils/helper";
+import { finishOnboarding } from "./utils/helper";
 import { createSurvey } from "./utils/helper";
 
 test.describe("Survey Create & Submit Response", async () => {
@@ -183,24 +183,39 @@ test.describe("Survey Create & Submit Response", async () => {
 
 test.describe("Multi Language Survey Create", async () => {
   test.describe.configure({ mode: "serial" });
-  const { name, email, password } = users.survey[1];
+  const { name, email, password } = users.survey[2];
   test("Create Survey", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await skipOnboarding(page);
+    await finishOnboarding(page);
 
     //add a new language
     await page.getByRole("link", { name: "Settings" }).click();
-    await page.getByRole("link", { name: "Multipe Languages" }).click();
+    await page.getByRole("link", { name: "Survey Languages" }).click();
+    await page.getByRole("button", { name: "Edit Languages" }).click();
     await page.getByRole("button", { name: "Add Language" }).click();
-    await page.getByPlaceholder("e.g., English").nth(1).click();
-    await page.getByPlaceholder("e.g., English").nth(1).fill("German");
-    await page.getByPlaceholder("e.g., English").nth(1).press("Tab");
-    await page.getByPlaceholder("e.g., en").nth(3).fill("de");
-    await page.getByRole("button", { name: "Save" }).click();
+    await page.getByRole("button", { name: "Select" }).click();
+    await page.getByPlaceholder("Search items").click();
+    await page.getByPlaceholder("Search items").fill("Eng");
+    await page.getByText("English").click();
+    await page.getByRole("button", { name: "Save Changes" }).click();
+    await page.getByRole("button", { name: "Edit Languages" }).click();
+    await page.getByRole("button", { name: "Add Language" }).click();
+    await page.getByRole("button", { name: "Select" }).click();
+    await page.getByRole("textbox", { name: "Search items" }).click();
+    await page.getByRole("textbox", { name: "Search items" }).fill("German");
+    await page.getByText("German").nth(1).click();
+    await page.getByRole("button", { name: "Save Changes" }).click();
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     await page.getByRole("link", { name: "Surveys" }).click();
     await page.getByRole("button", { name: "Start from scratch Create a" }).click();
+    await page.locator("#multi-lang-toggle").click();
+    await page.getByText("Multiple LanguagesOn").click();
+    await page.getByRole("combobox").click();
+    await page.getByLabel("English (en)").click();
+    await page.getByRole("button", { name: "Set English as default" }).click();
+    await page.getByLabel("German").click();
     await page.locator("#welcome-toggle").click();
-    await page.getByText("Welcome CardShownEnabled").click();
+    await page.getByText("Welcome CardShownOn").click();
 
     // Add questions in default language
     await page.getByText("Add Question").click();
@@ -234,18 +249,6 @@ test.describe("Multi Language Survey Create", async () => {
       .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
       .nth(1)
       .click();
-    await page.getByRole("button", { name: "Call-to-Action" }).click();
-    await page
-      .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
-      .nth(1)
-      .click();
-    await page.getByRole("button", { name: "Consent" }).click();
-    await page
-      .locator("div")
-      .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
-      .nth(1)
-      .click();
     await page.getByRole("button", { name: "Date" }).click();
     await page
       .locator("div")
@@ -255,10 +258,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("button", { name: "File Upload" }).click();
 
     // Enable translation in german
-    await page.getByText("Add Translation").click();
-    await page.getByRole("button", { name: "Translation Settings" }).click();
-    await page.getByLabel("German").click();
-    await page.getByText("Welcome CardShownEnabled").click();
+    await page.getByText("Welcome CardShownOn").click();
     await page.getByRole("button", { name: "English" }).first().click();
     await page.getByRole("button", { name: "German" }).click();
 
@@ -345,22 +345,6 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Upper Label").click();
     await page.getByLabel("Upper Label").fill(surveys.germanCreate.npsQuestion.highLabel);
 
-    // Fill CTA question in german
-    await page.getByRole("button", { name: "Call-to-Action Required" }).click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page.getByPlaceholder("Your question here. Recall").fill(surveys.germanCreate.ctaQuestion.question);
-
-    // Fill Consent question in german
-    await page.getByRole("button", { name: "Consent Required" }).click();
-    await page.getByPlaceholder("Your question here. Recall").click();
-    await page
-      .getByPlaceholder("Your question here. Recall")
-      .fill(surveys.germanCreate.ctaQuestion.buttonLabel);
-    await page.getByPlaceholder("I agree to the terms and").click();
-    await page
-      .getByPlaceholder("I agree to the terms and")
-      .fill(surveys.germanCreate.ctaQuestion.buttonLabel);
-
     // Fill Date question in german
     await page.getByRole("button", { name: "Date Required" }).click();
     await page.getByPlaceholder("Your question here. Recall").click();
@@ -389,6 +373,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your description here. Recall")
       .fill(surveys.germanCreate.thankYouCard.description);
+    await page.getByPlaceholder("Create your own Survey").click();
+    await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.thankYouCard.buttonLabel);
     await page.getByRole("button", { name: "Continue to Settings" }).click();
     await page.getByRole("button", { name: "Publish" }).click();
 

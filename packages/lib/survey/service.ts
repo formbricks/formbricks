@@ -30,7 +30,7 @@ import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
-import { isVersionGreaterThan } from "../utils/version";
+import { isVersionGreaterThanOrEqualTo } from "../utils/version";
 import { surveyCache } from "./cache";
 import { anySurveyHasFilters, determineLanguageCode } from "./util";
 
@@ -786,7 +786,7 @@ export const getSyncSurveys = async (
       });
 
       if (isMultiLanguageAllowed) {
-        if (options?.version && isVersionGreaterThan(options?.version, "1.6.2")) {
+        if (options?.version && isVersionGreaterThanOrEqualTo(options?.version, "1.6.2")) {
           // Version available and Multi-Langauge allowed, so tranform to required language
           surveys = await Promise.all(
             surveys
@@ -807,7 +807,7 @@ export const getSyncSurveys = async (
           );
         }
       } else {
-        if (options?.version && isVersionGreaterThan(options?.version, "1.6.2")) {
+        if (options?.version && isVersionGreaterThanOrEqualTo(options?.version, "1.6.2")) {
           // Version available and multi-language not allowed so transform to survey with default language only
           surveys = await Promise.all(
             surveys

@@ -20,7 +20,7 @@ import {
   transformToLegacySurvey,
 } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
-import { isVersionGreaterThan } from "@formbricks/lib/utils/version";
+import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -105,7 +105,7 @@ export async function GET(
     );
 
     if (!isMultiLanguageAllowed) {
-      if (version && isVersionGreaterThan(version, "1.6.2")) {
+      if (version && isVersionGreaterThanOrEqualTo(version, "1.6.2")) {
         // Scenario 1: Version available, multi-language not allowed
         // Convert to TSurvey with default language only.
         transformedSurveys = await Promise.all(
@@ -119,7 +119,7 @@ export async function GET(
         );
       }
     } else {
-      if (version && isVersionGreaterThan(version, "1.6.2")) {
+      if (version && isVersionGreaterThanOrEqualTo(version, "1.6.2")) {
         // Scenario 4: Version available, multi-language allowed
         // Use the surveys as they are.
         transformedSurveys = inProgressWebSurveys;
