@@ -22,11 +22,16 @@ import {
   mockAttributeClass,
   mockDisplay,
   mockId,
-  mockPerson,
+  mockPrismaPerson,
+  mockPrismaPersonWithoutAttributes,
   mockProduct,
   mockSurveyOutput,
+  mockSurveyOutputWithDefaultTranslation,
   mockTeamOutput,
+  mockTransformedLegacySurveyOutput,
   mockTransformedSurveyOutput,
+  mockTranslatedLegacySurveyOutput,
+  mockTranslatedSurveyOutput,
   mockUser,
   updateSurveyInput,
 } from "./__mock__/survey.mock";
@@ -279,17 +284,44 @@ describe("Tests for getSyncedSurveys", () => {
       prisma.attributeClass.findMany.mockResolvedValueOnce([mockAttributeClass]);
     });
 
-    it("Returns synced surveys", async () => {
+    it("Returns synced surveys with version available", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
-      prisma.person.findUnique.mockResolvedValueOnce(mockPerson);
-      const surveys = await getSyncSurveys(mockId, mockPerson.id, false);
-      expect(surveys).toEqual([mockTransformedSurveyOutput]);
+      prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
+      const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, false, "desktop", {
+        version: "1.7.0",
+      });
+      expect(surveys).toEqual([mockSurveyOutputWithDefaultTranslation]);
+    });
+
+    it("Returns synced surveys with version available and Multi Language enabled", async () => {
+      prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
+      prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
+      const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, true, "desktop", {
+        version: "1.7.0",
+      });
+      expect(surveys).toEqual([mockTranslatedSurveyOutput]);
+    });
+
+    it("Returns synced surveys with version not available", async () => {
+      prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
+      prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPersonWithoutAttributes);
+      const surveys = await getSyncSurveys(mockId, mockPrismaPersonWithoutAttributes.id, false);
+      expect(surveys).toEqual([mockTransformedLegacySurveyOutput]);
+    });
+
+    it("Returns synced surveys with version not available and multiLanguage enabled", async () => {
+      prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
+      prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
+      const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, true);
+      expect(surveys).toEqual([mockTranslatedLegacySurveyOutput]);
     });
 
     it("Returns an empty array if no surveys are found", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([]);
-      prisma.person.findUnique.mockResolvedValueOnce(mockPerson);
-      const surveys = await getSyncSurveys(mockId, mockPerson.id, false);
+      prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
+      const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, false, "desktop", {
+        version: "1.7.0",
+      });
       expect(surveys).toEqual([]);
     });
   });
@@ -300,14 +332,18 @@ describe("Tests for getSyncedSurveys", () => {
     it("does not find a Product", async () => {
       prisma.product.findFirst.mockResolvedValueOnce(null);
 
-      await expect(getSyncSurveys(mockId, mockPerson.id, false)).rejects.toThrow(Error);
+      await expect(
+        getSyncSurveys(mockId, mockPrismaPerson.id, false, "desktop", { version: "1.7.0" })
+      ).rejects.toThrow(Error);
     });
 
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
       prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(getSyncSurveys(mockId, mockPerson.id, false)).rejects.toThrow(Error);
+      await expect(
+        getSyncSurveys(mockId, mockPrismaPerson.id, false, "desktop", { version: "1.7.0" })
+      ).rejects.toThrow(Error);
     });
   });
 });

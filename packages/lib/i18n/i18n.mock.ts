@@ -487,7 +487,7 @@ export const mockTranslatedThankYouCard = {
   ...mockThankYouCard,
   headline: { default: "Thank you!", de: "" },
   subheader: { default: "We appreciate your feedback.", de: "" },
-  buttonLabel: "Create your own Survey",
+  buttonLabel: { default: "Create your own Survey", de: "" },
 };
 
 export const mockLegacyThankYouCard = {

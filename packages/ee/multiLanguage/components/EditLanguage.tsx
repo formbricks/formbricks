@@ -82,11 +82,6 @@ export default function EditLanguage({ product, environmentId }: EditLanguagePro
     setLanguages(product.languages);
   }, [product.languages]);
 
-  const languageOptions = iso639Languages.map(({ alpha2, english }) => ({
-    value: alpha2,
-    label: english,
-  }));
-
   const handleAddLanguage = () => {
     const newLanguage = { id: "new", createdAt: new Date(), updatedAt: new Date(), code: "", alias: "" };
     setLanguages((prev) => [...prev, newLanguage]);
@@ -156,7 +151,6 @@ export default function EditLanguage({ product, environmentId }: EditLanguagePro
               <LanguageRow
                 key={language.id}
                 language={language}
-                languageOptions={languageOptions}
                 isEditing={isEditing}
                 index={index}
                 onLanguageChange={(newLanguage: TLanguage) => {
