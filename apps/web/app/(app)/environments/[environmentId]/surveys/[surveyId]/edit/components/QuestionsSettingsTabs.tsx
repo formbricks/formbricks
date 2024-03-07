@@ -1,5 +1,4 @@
-import { Cog8ToothIcon, QueueListIcon } from "@heroicons/react/24/solid";
-import { BrushIcon } from "lucide-react";
+import { Cog8ToothIcon, PaintBrushIcon, QueueListIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -20,7 +19,7 @@ const tabs: Tab[] = [
   {
     id: "styling",
     label: "Styling",
-    icon: <BrushIcon className="h-5 w-5" />,
+    icon: <PaintBrushIcon />,
   },
   {
     id: "settings",
