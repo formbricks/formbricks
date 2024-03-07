@@ -13,7 +13,6 @@ export function SurveyModal({
   placement,
   clickOutside,
   darkOverlay,
-  highlightBorderColor,
   onDisplay,
   getSetIsResponseSendingFinished,
   onActiveQuestionChange,
@@ -36,6 +35,8 @@ export function SurveyModal({
       }
     }, 1000); // wait for animation to finish}
   };
+
+  const highlightBorderColor = styling?.highlightBorderColor?.light || null;
 
   return (
     <div id="fbjs" className="formbricks-form">

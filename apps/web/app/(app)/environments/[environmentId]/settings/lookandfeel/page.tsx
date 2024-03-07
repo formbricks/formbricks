@@ -5,7 +5,6 @@ import {
   getRemoveLinkBrandingPermission,
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -14,9 +13,7 @@ import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
-import { EditBrandColor } from "./components/EditBrandColor";
 import { EditFormbricksBranding } from "./components/EditBranding";
-import { EditHighlightBorder } from "./components/EditHighlightBorder";
 import { EditPlacement } from "./components/EditPlacement";
 import UnifiedStyling from "./components/UnifiedStyling";
 
@@ -41,8 +38,8 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   const canRemoveLinkBranding = getRemoveLinkBrandingPermission(team);
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isBrandColorEditDisabled = isDeveloper ? true : isViewer;
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  // const isBrandColorEditDisabled = isDeveloper ? true : isViewer;
 
   if (isViewer) {
     return <ErrorComponent />;

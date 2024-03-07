@@ -154,7 +154,7 @@ export default function SurveyEditor({
             <QuestionsAudienceTabs
               activeId={activeView}
               setActiveId={setActiveView}
-              isStylingTabVisible={product.styling?.allowStyleOverwrite}
+              isStylingTabVisible={!!product.styling?.allowStyleOverwrite}
             />
 
             {activeView === "questions" && (

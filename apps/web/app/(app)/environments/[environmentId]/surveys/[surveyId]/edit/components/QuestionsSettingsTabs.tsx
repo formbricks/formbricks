@@ -1,6 +1,6 @@
 import { Cog8ToothIcon, QueueListIcon } from "@heroicons/react/24/solid";
 import { BrushIcon } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys";

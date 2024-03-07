@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
+import { COLOR_DEFUALTS } from "@formbricks/lib/styling/constants";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
@@ -60,8 +61,6 @@ export default function LinkSurvey({
   const prefillResponseData: TResponseData | undefined = prefillAnswer
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
     : undefined;
-
-  const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
 
   const responseQueue = useMemo(
     () =>
@@ -138,6 +137,38 @@ export default function LinkSurvey({
     return <VerifyEmail singleUseId={suId ?? ""} survey={survey} />;
   }
 
+  const getStyling = () => {
+    // unified styling is disabled from the product
+    if (!product.styling?.unifiedStyling && !!survey.styling) {
+      return survey.styling;
+    }
+
+    // allow style overwrite is disabled from the product
+    if (product.styling?.unifiedStyling && !product.styling?.allowStyleOverwrite) {
+      return product.styling;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling?.unifiedStyling && product.styling?.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteUnifiedStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    // no styling is set (default styling)
+    return {
+      unifiedStyling: true,
+      allowStyleOverwrite: true,
+      brandColor: {
+        light: product.brandColor || COLOR_DEFUALTS.brandColor,
+      },
+    };
+  };
+
   return (
     <>
       <ContentWrapper className="my-12 h-full w-full p-0 md:max-w-md">
@@ -157,7 +188,8 @@ export default function LinkSurvey({
         )}
         <SurveyInline
           survey={survey}
-          brandColor={brandColor}
+          // brandColor={brandColor}
+          styling={getStyling()}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
