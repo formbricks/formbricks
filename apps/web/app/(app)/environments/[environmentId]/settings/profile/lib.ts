@@ -78,6 +78,8 @@ export const handleFileUpload = async (
   });
 
   if (!uploadResponse.ok) {
+    console.log("uploadResponse in settings profile lib", uploadResponse);
+
     return {
       error: "Upload failed. Please try again.",
       url: "",

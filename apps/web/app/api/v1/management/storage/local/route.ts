@@ -95,6 +95,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       message: "File uploaded successfully",
     });
   } catch (err) {
+    console.log("Error in POST /api/v1/client/mgmt/storage/local", err);
     if (err.name === "FileTooLargeError") {
       return responses.badRequestResponse(err.message);
     }
