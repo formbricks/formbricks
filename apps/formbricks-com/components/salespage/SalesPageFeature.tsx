@@ -19,7 +19,7 @@ export default function SalesPageFeature({
   return (
     <div className="group grid content-center gap-12 lg:grid-cols-2">
       <div
-        className={`order-last flex flex-col justify-center space-y-6 lg:order-first ${imgLeft && `order-last`}`}>
+        className={`order-last flex flex-col justify-center space-y-6 lg:order-none ${imgLeft && `!order-last`}`}>
         <h2 className="text-balance text-3xl font-bold  text-slate-800">{headline}</h2>
         <p className="text-pretty text-lg text-slate-700">{subheadline}</p>
         <SalesCTA />

@@ -391,7 +391,7 @@ export default function LinkSurveyPage() {
       />
       <div className="space-y-12">
         <h2 className="text-balance text-center text-3xl font-bold text-slate-800">More features</h2>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {allFeaturesList.map((feature) => {
             return (
               <FeatureCard
@@ -413,7 +413,7 @@ export default function LinkSurveyPage() {
       />
       <div className="space-y-12">
         <h2 className="text-balance text-center text-3xl font-bold text-slate-800">All question types</h2>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {allQuestionTypes.map((feature) => {
             return (
               <FeatureCard

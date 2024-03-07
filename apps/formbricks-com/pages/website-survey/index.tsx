@@ -166,100 +166,98 @@ export default function LinkSurveyPage() {
       title="Website Surveys, Free and Open Source"
       description="Run targeted website surveys with full control over your data.">
       <SalesPageHero
-        headline="Website surveys, privacy-first"
+        headline="Website Surveys, Privacy-First 🔒"
         subheadline="Understand what people need on your website. Keep full control over your data, always."
         imgSrc={PlaceholderImg}
         imgAlt="Run targeted website surveys to optimize conversions and learn from your visitors."
       />
-      <div className="space-y-40">
-        <div className="grid gap-4 md:grid-cols-2">
-          <SalesTestimonial
-            quote="We run NPS surveys for several products with Formbricks. It's open source, the team is super responsive and we can use one license on unlimited domains - definitely recommended!"
-            author="Marius Cristea, CTO @ ThemeIsle"
-            imgSrc={Marius}
-            imgAlt="Marius Cristea, CTO @ ThemeIsle"
-            textSize="base"
-          />
-          <SalesTestimonial
-            quote="We're using a self-hosted instance of Formbricks with tens of thousands of users. The insights we gather with Formbricks are invaluable for our product decisions. Great product, built for scale!"
-            author="Ram Pasala, CEO @ NeverInstall"
-            imgSrc={Ram}
-            imgAlt="Ram Pasala, CEO @ NeverInstall"
-            textSize="base"
-          />
-        </div>
-        <SalesPageFeature
-          headline="Keep all data private and secure"
-          subheadline="Formbricks is open source and can be self-hosted easily. Fly through compliance reviews by keeping all data on premise - or use our EU cloud 🇪🇺"
-          imgSrc={PlaceholderImg}
-          imgAlt="tba"
-          imgLeft
-        />
-
-        <SalesSteps steps={websiteSurveySteps} />
-        {websiteSurveyFeatures.map((feature) => {
-          return (
-            <SalesPageFeature
-              key={feature.headline}
-              headline={feature.headline}
-              subheadline={feature.subheadline}
-              imgSrc={feature.imgSrc}
-              imgAlt={feature.imgAlt}
-              imgLeft={feature.imgLeft}
-            />
-          );
-        })}
-        <LogoBar />
-        {linkSurveyFeaturesPt2.map((feature) => {
-          return (
-            <SalesPageFeature
-              key={feature.headline}
-              headline={feature.headline}
-              subheadline={feature.subheadline}
-              imgSrc={feature.imgSrc}
-              imgAlt={feature.imgAlt}
-              imgLeft={feature.imgLeft}
-            />
-          );
-        })}
+      <div className="grid gap-4 md:grid-cols-2">
         <SalesTestimonial
-          quote="We measure the clarity of our docs and learn from churn all on one platform. Great product, very responsive team!"
-          author="Peer Richelsen, CEO @ cal.com"
-          imgSrc={Peer}
-          imgAlt="Peer Richelsen, Co-Founder and CEO of Cal.com"
-          textSize="large"
+          quote="We run NPS surveys for several products with Formbricks. It's open source, the team is super responsive and we can use one license on unlimited domains - definitely recommended!"
+          author="Marius Cristea, CTO @ ThemeIsle"
+          imgSrc={Marius}
+          imgAlt="Marius Cristea, CTO @ ThemeIsle"
+          textSize="base"
         />
-        <div className="space-y-12">
-          <h2 className="text-balance text-center text-3xl font-bold text-slate-800">More Features</h2>
-          <div className="grid grid-cols-3 gap-4">
-            {allFeaturesList.map((feature) => {
-              return (
-                <FeatureCard
-                  key={feature.title}
-                  title={feature.title}
-                  text={feature.text}
-                  Icon={feature.icon}
-                />
-              );
-            })}
-          </div>
+        <SalesTestimonial
+          quote="We're using a self-hosted instance of Formbricks with tens of thousands of users. The insights we gather with Formbricks are invaluable for our product decisions. Great product, built for scale!"
+          author="Ram Pasala, CEO @ NeverInstall"
+          imgSrc={Ram}
+          imgAlt="Ram Pasala, CEO @ NeverInstall"
+          textSize="base"
+        />
+      </div>
+      <SalesPageFeature
+        headline="Keep all data private and secure"
+        subheadline="Formbricks is open source and can be self-hosted easily. Fly through compliance reviews by keeping all data on premise - or use our EU cloud 🇪🇺"
+        imgSrc={PlaceholderImg}
+        imgAlt="tba"
+        imgLeft
+      />
+
+      <SalesSteps steps={websiteSurveySteps} />
+      {websiteSurveyFeatures.map((feature) => {
+        return (
+          <SalesPageFeature
+            key={feature.headline}
+            headline={feature.headline}
+            subheadline={feature.subheadline}
+            imgSrc={feature.imgSrc}
+            imgAlt={feature.imgAlt}
+            imgLeft={feature.imgLeft}
+          />
+        );
+      })}
+      <LogoBar />
+      {linkSurveyFeaturesPt2.map((feature) => {
+        return (
+          <SalesPageFeature
+            key={feature.headline}
+            headline={feature.headline}
+            subheadline={feature.subheadline}
+            imgSrc={feature.imgSrc}
+            imgAlt={feature.imgAlt}
+            imgLeft={feature.imgLeft}
+          />
+        );
+      })}
+      <SalesTestimonial
+        quote="We measure the clarity of our docs and learn from churn all on one platform. Great product, very responsive team!"
+        author="Peer Richelsen, CEO @ cal.com"
+        imgSrc={Peer}
+        imgAlt="Peer Richelsen, Co-Founder and CEO of Cal.com"
+        textSize="large"
+      />
+      <div className="space-y-12">
+        <h2 className="text-balance text-center text-3xl font-bold text-slate-800">More Features</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {allFeaturesList.map((feature) => {
+            return (
+              <FeatureCard
+                key={feature.title}
+                title={feature.title}
+                text={feature.text}
+                Icon={feature.icon}
+              />
+            );
+          })}
         </div>
-        <SalesBreaker
-          headline="All clear? Get started!"
-          subheadline="Run targeted website surveys, all privacy-first. Make the most out of your website traffic while keeping your data private and secure."
-        />
-        <div className="space-y-12">
-          <h2 className="text-balance text-center text-3xl font-bold text-slate-800">FAQ</h2>
-          <div className="gap-4">
-            {FAQ.map((question) => (
-              <div key={question.question} className="">
-                <div>
-                  <h3 className="mt-6 text-lg font-bold text-slate-700">{question.question} </h3>
-                  <p className="text-slate-600">{question.answer}</p>
-                </div>
+      </div>
+      <SalesBreaker
+        headline="All clear? Get started!"
+        subheadline="Run targeted website surveys, all privacy-first. Make the most out of your website traffic while keeping your data private and secure."
+      />
+      <div className="space-y-12">
+        <h2 className="text-balance text-center text-3xl font-bold text-slate-800">FAQ</h2>
+        <div className="gap-4">
+          {FAQ.map((question) => (
+            <div key={question.question} className="">
+              <div>
+                <h3 className="mt-6 text-lg font-bold text-slate-700">{question.question} </h3>
+                <p className="text-slate-600">{question.answer}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </LayoutLight>

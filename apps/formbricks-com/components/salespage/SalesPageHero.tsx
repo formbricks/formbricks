@@ -4,7 +4,7 @@ import Image, { StaticImageData } from "next/image";
 interface SalesPageHeroProps {
   imgSrc: StaticImageData;
   imgAlt: string;
-  headline: string;
+  headline: React.ReactNode;
   subheadline: string;
 }
 
