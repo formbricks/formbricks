@@ -128,20 +128,21 @@ export const deleteActionClass = async (
   validateInputs([environmentId, ZId], [actionClassId, ZId]);
 
   try {
-    const result = await prisma.actionClass.delete({
+    const actionClass = await prisma.actionClass.delete({
       where: {
         id: actionClassId,
       },
       select,
     });
-    if (result === null) throw new ResourceNotFoundError("Action", actionClassId);
+    if (actionClass === null) throw new ResourceNotFoundError("Action", actionClassId);
 
     actionClassCache.revalidate({
       environmentId,
       id: actionClassId,
+      name: actionClass.name,
     });
 
-    return result;
+    return actionClass;
   } catch (error) {
     throw new DatabaseError(
       `Database error when deleting an action with id ${actionClassId} for environment ${environmentId}`

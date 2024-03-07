@@ -1,6 +1,5 @@
-import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
-import ResponsePage from "@/app/(app)/share/[sharingKey]/(analysis)/responses/components/ResponsePage";
-import { getResultShareUrlSurveyAction } from "@/app/(app)/share/[sharingKey]/action";
+import ResponsePage from "@/app/share/[sharingKey]/(analysis)/responses/components/ResponsePage";
+import { getResultShareUrlSurveyAction } from "@/app/share/[sharingKey]/action";
 import { notFound } from "next/navigation";
 
 import { RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -25,10 +24,7 @@ export default async function Page({ params }) {
     throw new Error("Survey not found");
   }
 
-  const [{ responses }, environment] = await Promise.all([
-    getAnalysisData(survey.id, survey.environmentId),
-    getEnvironment(survey.environmentId),
-  ]);
+  const environment = await getEnvironment(survey.environmentId);
 
   if (!environment) {
     throw new Error("Environment not found");
@@ -45,9 +41,8 @@ export default async function Page({ params }) {
     <>
       <ResponsePage
         environment={environment}
-        responses={responses}
         survey={survey}
-        surveyId={params.surveyId}
+        surveyId={surveyId}
         webAppUrl={WEBAPP_URL}
         product={product}
         sharingKey={params.sharingKey}

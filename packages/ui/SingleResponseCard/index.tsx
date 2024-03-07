@@ -9,8 +9,6 @@ import { ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
-import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
@@ -23,7 +21,6 @@ import { TUser } from "@formbricks/types/user";
 import { PersonAvatar } from "../Avatars";
 import { DeleteDialog } from "../DeleteDialog";
 import { FileUploadResponse } from "../FileUploadResponse";
-import { LoadingWrapper } from "../LoadingWrapper";
 import { PictureSelectionResponse } from "../PictureSelectionResponse";
 import { RatingResponse } from "../RatingResponse";
 import { SurveyStatusIndicator } from "../SurveyStatusIndicator";
@@ -43,6 +40,7 @@ export interface SingleResponseCardProps {
   environment: TEnvironment;
   updateResponse?: (responseId: string, responses: TResponse) => void;
   deleteResponse?: (responseId: string) => void;
+  isViewer: boolean;
 }
 
 interface TooltipRendererProps {
@@ -83,6 +81,7 @@ export default function SingleResponseCard({
   environment,
   updateResponse,
   deleteResponse,
+  isViewer,
 }: SingleResponseCardProps) {
   const environmentId = survey.environmentId;
   const router = useRouter();
@@ -95,8 +94,7 @@ export default function SingleResponseCard({
     : isSubmissionTimeMoreThan5Minutes(response.updatedAt);
   let skippedQuestions: string[][] = [];
   let temp: string[] = [];
-  const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
-  const { isViewer } = getAccessFlags(membershipRole);
+
   const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
 
   function isValidValue(value: any) {
@@ -384,7 +382,7 @@ export default function SingleResponseCard({
                         {response.data[question.id]}
                       </p>
                     ) : (
-                      <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                      <p className="ph-no-capture my-1 whitespace-pre-line font-semibold text-slate-700">
                         {response.data[question.id]}
                       </p>
                     )
@@ -424,18 +422,14 @@ export default function SingleResponseCard({
           )}
         </div>
 
-        {user && (
-          <LoadingWrapper isLoading={isLoading} error={error}>
-            {!isViewer && (
-              <ResponseTagsWrapper
-                environmentId={environmentId}
-                responseId={response.id}
-                tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
-                environmentTags={environmentTags}
-                updateFetchedResponses={updateFetchedResponses}
-              />
-            )}
-          </LoadingWrapper>
+        {user && !isViewer && (
+          <ResponseTagsWrapper
+            environmentId={environmentId}
+            responseId={response.id}
+            tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
+            environmentTags={environmentTags}
+            updateFetchedResponses={updateFetchedResponses}
+          />
         )}
 
         <DeleteDialog

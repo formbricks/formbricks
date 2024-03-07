@@ -7,7 +7,9 @@ import {
   TResponseFilterCriteria,
   TResponseUpdateInput,
   TSurveyPersonAttributes,
+  TSurveySummary,
 } from "@formbricks/types/responses";
+import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
 import { transformPrismaPerson } from "../../../person/service";
@@ -458,3 +460,40 @@ export const getMockUpdateResponseInput = (finished: boolean = false): TResponse
   data: mockResponseData,
   finished,
 });
+
+export const mockSurveySummaryOutput: TSurveySummary = {
+  dropOff: [
+    {
+      dropOffCount: 0,
+      dropOffPercentage: 0,
+      headline: "Question Text",
+      questionId: "ars2tjk8hsi8oqk1uac00mo8",
+      ttc: 0,
+      views: 0,
+    },
+  ],
+  meta: {
+    completedPercentage: 0,
+    completedResponses: 1,
+    displayCount: 0,
+    dropOffPercentage: 0,
+    dropOffCount: 0,
+    startsPercentage: 0,
+    totalResponses: 1,
+    ttcAverage: 0,
+  },
+  summary: [
+    {
+      question: {
+        headline: "Question Text",
+        id: "ars2tjk8hsi8oqk1uac00mo8",
+        inputType: "text",
+        required: false,
+        type: TSurveyQuestionType.OpenText,
+      },
+      responseCount: 0,
+      samples: [],
+      type: "openText",
+    },
+  ],
+};

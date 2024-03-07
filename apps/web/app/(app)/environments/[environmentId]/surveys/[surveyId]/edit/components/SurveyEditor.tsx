@@ -54,8 +54,6 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
-      if (localSurvey) return;
-
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
 
@@ -63,7 +61,7 @@ export default function SurveyEditor({
         setActiveQuestionId(survey.questions[0].id);
       }
     }
-  }, [localSurvey, survey]);
+  }, [survey]);
 
   useEffect(() => {
     const listener = () => {
