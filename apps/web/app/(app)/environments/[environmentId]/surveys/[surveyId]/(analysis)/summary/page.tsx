@@ -3,7 +3,7 @@ import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surve
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { TEXT_RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -18,7 +18,7 @@ export default async function Page({ params }) {
     throw new Error("Unauthorized");
   }
 
-  const [{ responses, survey, displayCount }, environment] = await Promise.all([
+  const [{ survey, responseCount }, environment] = await Promise.all([
     getAnalysisData(params.surveyId, params.environmentId),
     getEnvironment(params.environmentId),
   ]);
@@ -51,7 +51,6 @@ export default async function Page({ params }) {
     <>
       <SummaryPage
         environment={environment}
-        responses={responses}
         survey={survey}
         surveyId={params.surveyId}
         webAppUrl={WEBAPP_URL}
@@ -59,9 +58,8 @@ export default async function Page({ params }) {
         user={user}
         environmentTags={tags}
         attributes={attributes}
-        displayCount={displayCount}
-        responsesPerPage={TEXT_RESPONSES_PER_PAGE}
         membershipRole={currentUserMembership?.role}
+        responseCount={responseCount}
       />
     </>
   );
