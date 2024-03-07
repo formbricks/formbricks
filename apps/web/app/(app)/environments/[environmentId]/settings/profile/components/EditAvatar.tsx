@@ -31,8 +31,6 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
       await updateAvatarAction(url);
       router.refresh();
     } catch (err) {
-      console.log("error in handleUpload client side", err);
-
       toast.error("Avatar update failed. Please try again.");
       setIsLoading(false);
     }

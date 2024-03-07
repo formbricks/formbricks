@@ -134,8 +134,6 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
 
     return updatedUser;
   } catch (error) {
-    console.log("error in updateUser", error);
-
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
       throw new ResourceNotFoundError("User", personId);
     } else {

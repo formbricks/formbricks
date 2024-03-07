@@ -89,8 +89,6 @@ const uploadFile = async (
       url: fileUrl,
     };
   } catch (error) {
-    console.log("error in fileUpload", error);
-
     throw error;
   }
 };

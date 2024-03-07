@@ -77,8 +77,6 @@ export class StorageAPI {
     });
 
     if (!uploadResponse.ok) {
-      console.log("uploadResponse in api client storage", uploadResponse);
-
       // if local storage is used, we'll use the json response:
       if (signingData) {
         const uploadJson = await uploadResponse.json();
