@@ -18,7 +18,7 @@ servers:
 registry:
   # Specify the registry server, if you're not using Docker Hub
   server: ghcr.io
-  username: formbricks
+  username: mattinannt
 
   # Always use an access token rather than real password when possible.
   password:
