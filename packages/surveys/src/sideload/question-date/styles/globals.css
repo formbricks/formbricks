@@ -6,6 +6,7 @@
   height: 160px;
   display: flex;
   background: rgb(248 250 252);
+  background: var(--fb-survey-background-color);
   flex-direction: row-reverse;
   gap: 8px;
   justify-content: center;
@@ -54,6 +55,7 @@
 .calendar-root {
   position: absolute !important;
   top: 0 !important;
+  background: var(--fb-survey-background-color) !important;
 }
 
 .calendar-root [class$="navigation"] {

@@ -78,7 +78,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         monthPlaceholder="MM"
         yearPlaceholder="YYYY"
         format={format ?? "M-d-y"}
-        className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""}
+        className={`dp-input-root rounded-custom ${!datePickerOpen ? "wrapper-hide" : ""}
           ${hideInvalid ? "hide-invalid" : ""}
         `}
         calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md"
