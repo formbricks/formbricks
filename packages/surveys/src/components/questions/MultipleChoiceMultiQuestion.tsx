@@ -141,10 +141,8 @@ export default function MultipleChoiceMultiQuestion({
                   }
                 }}
                 className={cn(
-                  value === choice.label
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
-                    : "border-border",
-                  "text-heading focus-within:border-border-highlight hover:bg-accent-bg focus:bg-accent-bg rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                  value === choice.label ? "border-border bg-input-selected-bg z-10" : "border-border",
+                  "text-heading bg-input-bg focus-within:border-brand hover:bg-input-bg-selected focus:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -177,10 +175,8 @@ export default function MultipleChoiceMultiQuestion({
               <label
                 tabIndex={questionChoices.length + 1}
                 className={cn(
-                  value === otherOption.label
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
-                    : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                  value === otherOption.label ? "border-border bg-input-selected-bg z-10" : "border-border",
+                  "text-heading focus-within:border-border focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {

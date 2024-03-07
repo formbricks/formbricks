@@ -210,20 +210,18 @@ export default function StylingCard({
                     </div>
                   </div>
                 </div>
-
-                <div className="my-3 flex flex-col gap-4 p-3">
-                  <div className="flex flex-col">
-                    <h3 className="text-base font-semibold text-slate-900">Roundness</h3>
-                    <p className="text-sm text-slate-800">
-                      Change the border radius of the card and the inputs.
-                    </p>
-                  </div>
-
-                  <Slider value={[roundness]} max={16} onValueChange={(value) => setRoundness(value[0])} />
-                </div>
               </>
             </>
           )}
+
+          <div className="my-3 flex flex-col gap-4 p-3">
+            <div className="flex flex-col">
+              <h3 className="text-base font-semibold text-slate-900">Roundness</h3>
+              <p className="text-sm text-slate-800">Change the border radius of the card and the inputs.</p>
+            </div>
+
+            <Slider value={[roundness]} max={16} onValueChange={(value) => setRoundness(value[0])} />
+          </div>
 
           {/* Positioning */}
           {type !== "link" && (

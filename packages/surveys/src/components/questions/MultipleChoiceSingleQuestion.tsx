@@ -103,7 +103,7 @@ export default function MultipleChoiceSingleQuestion({
                 }}
                 className={cn(
                   value === choice.label ? "border-brand z-10" : "border-border",
-                  "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg/80 hover:bg-brand rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                  "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -131,10 +131,8 @@ export default function MultipleChoiceSingleQuestion({
               <label
                 tabIndex={questionChoices.length + 1}
                 className={cn(
-                  value === otherOption.label
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
-                    : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                  value === otherOption.label ? "border-border bg-input-bg-selected z-10" : "border-border",
+                  "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
@@ -181,7 +179,7 @@ export default function MultipleChoiceSingleQuestion({
                       }
                     }}
                     placeholder={question.otherOptionPlaceholder ?? "Please specify"}
-                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />

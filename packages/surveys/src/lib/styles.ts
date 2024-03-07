@@ -2,7 +2,7 @@ import { isLight } from "@/lib/utils";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 
-import { hexToRGBA } from "@formbricks/lib/utils";
+import { hexToRGBA, lightenDarkenColor } from "@formbricks/lib/utils";
 import { TProductStyling } from "@formbricks/types/product";
 
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
@@ -39,7 +39,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
 
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
-  if (styling.brandColor?.light !== undefined) {
+  if (!!styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
     cssVariables += `--fb-brand-text-color: ${isLight(styling.brandColor?.light) ? "black" : "white"};\n`;
   } else {
@@ -51,6 +51,9 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("border-radius", styling.roundness ? `${styling.roundness}px` : undefined);
   appendCssVariable("input-background-color", styling.inputColor?.light);
+  if (!!styling.inputColor?.light) {
+    appendCssVariable("input-background-color-selected", lightenDarkenColor(styling.inputColor?.light, -20));
+  }
   appendCssVariable("accent-background-color", hexToRGBA(styling.brandColor?.light ?? "", 0.1));
   appendCssVariable("accent-selected-background-color", hexToRGBA(styling.brandColor?.light ?? "", 0.2));
 
