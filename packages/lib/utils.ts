@@ -2,8 +2,10 @@ export const delay = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-export const hexToRGBA = (hex: string, opacity: number) => {
-  if (!hex || hex === "") return "";
+export const hexToRGBA = (hex: string | undefined, opacity: number): string | undefined => {
+  // return undefined if hex is undefined, this is important for adding the default values to the CSS variables
+  // TODO: find a better way to handle this
+  if (!hex || hex === "") return undefined;
 
   // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
   let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;

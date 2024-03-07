@@ -1,12 +1,12 @@
 "use client";
 
-import UnifiedStylingPreviewSurvey from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
+import UnifiedStylingPREVIEW_SURVEY from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { colorDefaults } from "@formbricks/lib/styling/constants";
+import { COLOR_DEFUALTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -19,97 +19,6 @@ import { updateProductAction } from "../actions";
 
 type UnifiedStylingProps = {
   product: TProduct;
-};
-
-const previewSurvey = {
-  id: "cltcppyqk00006uothzb3ybh0",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  name: "Product Market Fit (Superhuman)",
-  type: "link",
-  environmentId: "cltcf8i2n00099wlx7cu12zi6",
-  createdBy: "cltcf8i1c00009wlx3sk1ryss",
-  status: "draft",
-  welcomeCard: {
-    html: "Thanks for providing your feedback - let's go!",
-    enabled: false,
-    headline: "Welcome!",
-    timeToFinish: true,
-    showResponseCount: false,
-  },
-  questions: [
-    {
-      id: "uvnrhtngswxlibktglanh45f",
-      type: "openText",
-      headline: "This is a preview survey",
-      required: true,
-      inputType: "text",
-      subheader: "Click through it to check the look and feel of the surveying experience.",
-      longAnswer: true,
-      placeholder: "Type your answer here...",
-    },
-    {
-      id: "swfnndfht0ubsu9uh17tjcej",
-      type: "rating",
-      range: 5,
-      scale: "star",
-      headline: "How would you rate My Product",
-      required: true,
-      subheader: "Don't worry, be honest.",
-      lowerLabel: "Not good",
-      upperLabel: "Very good",
-    },
-    {
-      id: "je70a714xjdxc70jhxgv5web",
-      type: "multipleChoiceSingle",
-      choices: [
-        {
-          id: "vx9q4mlr6ffaw35m99bselwm",
-          label: "Eat the cake 🍰",
-        },
-        {
-          id: "ynj051qawxd4dszxkbvahoe5",
-          label: "Have the cake 🎂",
-        },
-      ],
-      headline: "What do you do?",
-      required: true,
-      subheader: "Can't do both.",
-      shuffleOption: "none",
-    },
-  ],
-  thankYouCard: {
-    enabled: true,
-    headline: "Thank you!",
-    subheader: "We appreciate your feedback.",
-    buttonLink: "https://formbricks.com/signup",
-    buttonLabel: "Create your own Survey",
-  },
-  hiddenFields: {
-    enabled: true,
-    fieldIds: [],
-  },
-  displayOption: "displayOnce",
-  recontactDays: null,
-  autoClose: null,
-  closeOnDate: null,
-  delay: 0,
-  displayPercentage: null,
-  autoComplete: null,
-  verifyEmail: null,
-  redirectUrl: null,
-  productOverwrites: null,
-  styling: null,
-  surveyClosedMessage: null,
-  singleUse: {
-    enabled: false,
-    isEncrypted: true,
-  },
-  pin: null,
-  resultShareKey: null,
-  triggers: [],
-  inlineTriggers: null,
-  segment: null,
 };
 
 const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
@@ -139,7 +48,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const brandColor = localProduct.styling?.brandColor?.light ?? colorDefaults.brandColor;
+  const brandColor = localProduct.styling?.brandColor?.light ?? COLOR_DEFUALTS.brandColor;
   const setBrandColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -153,7 +62,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const questionColor = localProduct.styling?.questionColor?.light ?? colorDefaults.questionColor;
+  const questionColor = localProduct.styling?.questionColor?.light ?? COLOR_DEFUALTS.questionColor;
   const setQuestionColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -167,7 +76,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const inputColor = localProduct.styling?.inputColor?.light ?? colorDefaults.inputColor;
+  const inputColor = localProduct.styling?.inputColor?.light ?? COLOR_DEFUALTS.inputColor;
   const setInputColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -181,7 +90,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const inputBorderColor = localProduct.styling?.inputBorderColor?.light ?? colorDefaults.inputBorderColor;
+  const inputBorderColor = localProduct.styling?.inputBorderColor?.light ?? COLOR_DEFUALTS.inputBorderColor;
   const setInputBorderColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -196,7 +105,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   };
 
   const cardBackgroundColor =
-    localProduct.styling?.cardBackgroundColor?.light ?? colorDefaults.cardBackgroundColor;
+    localProduct.styling?.cardBackgroundColor?.light ?? COLOR_DEFUALTS.cardBackgroundColor;
 
   const setCardBackgroundColor = (color: string) => {
     setLocalProduct((prev) => ({
@@ -212,7 +121,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   };
 
   const highlightBorderColor =
-    localProduct.styling?.highlightBorderColor?.light || colorDefaults.highlightBorderColor;
+    localProduct.styling?.highlightBorderColor?.light || COLOR_DEFUALTS.highlightBorderColor;
   const setHighlightBorderColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -240,7 +149,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
   useEffect(() => {
-    setActiveQuestionId(previewSurvey.questions[0].id);
+    setActiveQuestionId(PREVIEW_SURVEY.questions[0].id);
   }, []);
 
   const onSave = useCallback(async () => {
@@ -296,19 +205,19 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
         unifiedStyling: true,
         allowStyleOverwrite: true,
         brandColor: {
-          light: colorDefaults.brandColor,
+          light: COLOR_DEFUALTS.brandColor,
         },
         questionColor: {
-          light: colorDefaults.questionColor,
+          light: COLOR_DEFUALTS.questionColor,
         },
         inputColor: {
-          light: colorDefaults.inputColor,
+          light: COLOR_DEFUALTS.inputColor,
         },
         inputBorderColor: {
-          light: colorDefaults.inputBorderColor,
+          light: COLOR_DEFUALTS.inputBorderColor,
         },
         cardBackgroundColor: {
-          light: colorDefaults.cardBackgroundColor,
+          light: COLOR_DEFUALTS.cardBackgroundColor,
         },
         highlightBorderColor: undefined,
         isDarkModeEnabled: false,
@@ -322,13 +231,13 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
     setUnifiedStyling(true);
     setAllowStyleOverwrite(true);
-    setBrandColor(colorDefaults.brandColor);
-    setQuestionColor(colorDefaults.questionColor);
-    setInputColor(colorDefaults.inputColor);
-    setInputBorderColor(colorDefaults.inputBorderColor);
-    setCardBackgroundColor(colorDefaults.cardBackgroundColor);
+    setBrandColor(COLOR_DEFUALTS.brandColor);
+    setQuestionColor(COLOR_DEFUALTS.questionColor);
+    setInputColor(COLOR_DEFUALTS.inputColor);
+    setInputBorderColor(COLOR_DEFUALTS.inputBorderColor);
+    setCardBackgroundColor(COLOR_DEFUALTS.cardBackgroundColor);
     setIsHighlightBorderAllowed(false);
-    setHighlightBorderColor(colorDefaults.highlightBorderColor);
+    setHighlightBorderColor(COLOR_DEFUALTS.highlightBorderColor);
     setRoundness(8);
 
     toast.success("Styling updated successfully.");
@@ -466,10 +375,10 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
       <div className="relative w-1/2 bg-slate-100 pt-4">
         <div className="sticky top-0 h-full max-h-[600px]">
-          <UnifiedStylingPreviewSurvey
+          <UnifiedStylingPREVIEW_SURVEY
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
-            survey={previewSurvey as TSurvey}
+            survey={PREVIEW_SURVEY as TSurvey}
             product={localProduct}
           />
         </div>

@@ -5,7 +5,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import React, { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { colorDefaults } from "@formbricks/lib/styling/constants";
+import { COLOR_DEFUALTS } from "@formbricks/lib/styling/constants";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabel";
@@ -21,7 +21,7 @@ const CardStylingSettings = ({ localSurvey, setLocalSurvey, disabled }: CardStyl
   const [open, setOpen] = useState(false);
   const [isHighlightBorderAllowed, setIsHighlightBorderAllowed] = useState(false);
 
-  const cardBgColor = localSurvey.styling?.cardBackgroundColor?.light || colorDefaults.cardBackgroundColor;
+  const cardBgColor = localSurvey.styling?.cardBackgroundColor?.light || COLOR_DEFUALTS.cardBackgroundColor;
   const setCardBgColor = (color: string) => {
     setLocalSurvey((prev) => ({
       ...prev,
@@ -36,7 +36,7 @@ const CardStylingSettings = ({ localSurvey, setLocalSurvey, disabled }: CardStyl
   };
 
   const highlightBorderColor =
-    localSurvey.styling?.highlightBorderColor?.light || colorDefaults.highlightBorderColor;
+    localSurvey.styling?.highlightBorderColor?.light || COLOR_DEFUALTS.highlightBorderColor;
   const setHighlightBorderColor = (color: string) => {
     setLocalSurvey((prev) => ({
       ...prev,

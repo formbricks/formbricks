@@ -16,24 +16,6 @@ export const addStylesToDom = () => {
   }
 };
 
-// export const addCustomThemeToDom = ({ styling }: { styling: TStyling }) => {
-//   if (document.getElementById("formbricks__css") === null) return;
-
-//   const styleElement = document.createElement("style");
-//   styleElement.id = "formbricks__css__custom";
-//   styleElement.innerHTML = `
-//     :root {
-//       --fb-brand-color: ${styling.brandColor?.light};
-//       ${isLight(styling.brandColor?.light ?? "") ? "--fb-brand-text-color: black;" : "--fb-brand-text-color: white;"}
-//       --fb-heading-color: ${styling.questionColor?.light};
-//       --fb-border-color: ${styling.inputBorderColor?.light};
-//       --fb-survey-background-color: ${styling.cardBackgroundColor?.light};
-//       --fb-border-radius: ${styling.roundness}px;
-//     }
-//   `;
-//   document.head.appendChild(styleElement);
-// };
-
 export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom");
@@ -58,7 +40,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
   if (styling.brandColor?.light !== undefined) {
+    // If the brand color is defined, set the text color based on the lightness of the brand color
     cssVariables += `--fb-brand-text-color: ${isLight(styling.brandColor?.light) ? "black" : "white"};\n`;
+  } else {
+    // If the brand color is undefined, default to white
+    cssVariables += `--fb-brand-text-color: white;\n`;
   }
   appendCssVariable("heading-color", styling.questionColor?.light);
   appendCssVariable("border-color", styling.inputBorderColor?.light);
