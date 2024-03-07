@@ -142,6 +142,9 @@ importers:
       lottie-web:
         specifier: ^5.12.2
         version: 5.12.2
+      lucide:
+        specifier: ^0.350.0
+        version: 0.350.0
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
@@ -15127,6 +15130,10 @@ packages:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0
     dependencies:
       react: 18.2.0
+    dev: false
+
+  /lucide@0.350.0:
+    resolution: {integrity: sha512-etEqxSd0Ls/Jc+4EJsPBnLpvryxa5FkbEE1rISimsL8SfalN0CJABjTt2/pzRDj2PsHodHRIK9MUqufSklEwrQ==}
     dev: false
 
   /lz-string@1.5.0:

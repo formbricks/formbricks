@@ -8,27 +8,27 @@ import SalesSteps from "@/components/salespage/SalesSteps";
 import SalesTestimonial from "@/components/salespage/SalesTestimonial";
 import Jonathan from "@/images/clients/headshots/jonathan.png";
 import Peer from "@/images/clients/headshots/peer.jpeg";
-import PlaceholderImg from "@/images/placeholder.png";
-import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import {
-  IoAlertCircle,
-  IoApps,
-  IoCalendar,
-  IoCash,
-  IoCheckbox,
-  IoCheckmarkCircle,
-  IoCloudUpload,
-  IoConstruct,
-  IoHome,
-  IoImage,
-  IoPencil,
-  IoRadioButtonOn,
-  IoScale,
-  IoStar,
-  IoText,
-  IoVideocam,
-} from "react-icons/io5";
+  BadgeCheck,
+  CalendarRange,
+  Check,
+  CreditCard,
+  Gauge,
+  Grid,
+  Hammer,
+  Headset,
+  Home,
+  Image,
+  List,
+  ListTodoIcon,
+  MessageSquareText,
+  MousePointerClick,
+  PencilIcon,
+  Star,
+  Upload,
+} from "lucide-react";
 
+import Img1 from "./1-open-source-typeform-alternative-free.png";
 import Img2 from "./2-finally-good-open-source-forms-for-free.png";
 import Img3 from "./3-free-online-form-builder-unlimited-forms-and-responses.png";
 import Img4 from "./4-all-question-types-an-open-source-form-builder-needs.png";
@@ -130,102 +130,102 @@ const allFeaturesList = [
   {
     title: "Close on response limit",
     text: "Auto-close a survey after hitting e.g. 50 responses.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Close on date",
     text: "Auto-close a survey on a specific date.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Redirect on completion",
     text: "Redirect visitors after they completed your survey.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Custom ‘Survey closed’ message",
     text: "Adjust how you tell respondents that your survey is closed.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Single-use survey links",
     text: "Generate links which can be used only once.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Verify email before response",
     text: "Ask for a valid email before allowing people to respond.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "PIN protected forms",
     text: "Require a PIN before letting people respond.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Hidden fields",
     text: "Add hidden fields you can prepulate via URL.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Multi-language surveys",
     text: "Translate your surveys, analyze responses together.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Email notifications",
     text: "Receive emails when people respond to your surveys",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Partial submissions",
     text: "Get all the insights down to the very first answer.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Recall information",
     text: "Pipe answers from previous quesitons for better questions.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Add images to questions",
     text: "Add an image or video to any question.",
-    icon: IoCheckmarkCircle,
+    icon: Check,
   },
   {
     title: "Add videos to questions",
     text: "Add an image or video to any question.",
-    icon: IoConstruct,
+    icon: Hammer,
   },
   {
     title: "Branded surveys",
     text: "Add your logo at the header of you survey.",
-    icon: IoConstruct,
+    icon: Hammer,
   },
   {
     title: "Custom domains",
     text: "Add your domain for higher brand recognition and trust.",
-    icon: IoConstruct,
+    icon: Hammer,
   },
   {
     title: "Calculations & quizzing",
     text: "Redirect visitors after they completed your survey.",
-    icon: IoConstruct,
+    icon: Hammer,
   },
   {
     title: "Auto-email respondents",
     text: "Auto-close a survey after hitting e.g. 50 responses.",
-    icon: IoConstruct,
+    icon: Hammer,
   },
   {
     title: "Dropdowns & Rankings",
     text: "Auto-close a survey after hitting e.g. 50 responses.",
-    icon: IoConstruct,
+    icon: Hammer,
   },
   {
     title: "Question groups",
     text: "Auto-close a survey on a specific date.",
-    icon: IoConstruct,
+    icon: Hammer,
   },
 ];
 
@@ -233,77 +233,77 @@ const allQuestionTypes = [
   {
     title: "Address field",
     text: "Gather addresses",
-    icon: IoHome,
+    icon: Home,
   },
   {
     title: "File upload",
     text: "Handle file uploads",
-    icon: IoCloudUpload,
+    icon: Upload,
   },
   {
     title: "Net Promoter Score",
     text: "NPS",
-    icon: IoScale,
+    icon: Gauge,
   },
   {
     title: "Picture selection",
     text: "Find out what resonates",
-    icon: IoImage,
+    icon: Image,
   },
   {
     title: "Date picker",
     text: "Ask for specific dates",
-    icon: IoCalendar,
+    icon: CalendarRange,
   },
   {
     title: "Schedule a meeting",
     text: "Powered by Cal.com",
-    icon: IoVideocam,
+    icon: Headset,
   },
   {
     title: "Open text",
     text: "Free text field",
-    icon: IoText,
+    icon: MessageSquareText,
   },
   {
     title: "Single select",
     text: "Radio select field",
-    icon: IoRadioButtonOn,
+    icon: List,
   },
   {
     title: "Multi select",
     text: "List of checkboxes",
-    icon: IoCheckbox,
+    icon: ListTodoIcon,
   },
   {
     title: "Rating",
     text: "Stars, smiles or numbers",
-    icon: IoStar,
+    icon: Star,
   },
   {
     title: "Call to action",
     text: "Prompt users with a CTA",
-    icon: IoAlertCircle,
+    icon: MousePointerClick,
   },
   {
     title: "Consent",
     text: "Ask for consent.",
-    icon: CalendarDaysIcon,
+    icon: BadgeCheck,
   },
   {
     title: "Signature (soon)",
     text: "Powered by Documenso",
-    icon: IoPencil,
+    icon: PencilIcon,
   },
   {
     title: "Collect payments (soon)",
     text: "Powered by Stripe",
-    icon: IoCash,
+    icon: CreditCard,
   },
   {
     title: "Matrix question (soon)",
     text: "Run scientific surveys",
-    icon: IoApps,
+    icon: Grid,
   },
 ];
 
@@ -341,107 +341,105 @@ export default function LinkSurveyPage() {
       <SalesPageHero
         headline="The Open Source Typeform Alternative"
         subheadline="Create beautiful online forms for free – all open-source. Unlimited surveys, unlimited responses. Easily self-hostable."
-        imgSrc={PlaceholderImg}
+        imgSrc={Img1}
         imgAlt="Free and open source Typeform alternative. Build forms online for free while keeping all data secure. Self-hosting for online form builder available for free."
       />
-      <div className="space-y-40">
-        <LogoBar />
-        <SalesPageFeature
-          headline="Finally, a good open source online form builder"
-          subheadline="Everyone needs online forms and yet, there was no good open source builder for them. That’s why we are building it together with our community."
-          imgSrc={Img2}
-          imgAlt="tba"
-          imgLeft
-        />
+      <LogoBar />
+      <SalesPageFeature
+        headline="Finally, a good open source online form builder"
+        subheadline="Everyone needs online forms and yet, there was no good open source builder for them. That’s why we are building it together with our community."
+        imgSrc={Img2}
+        imgAlt="tba"
+        imgLeft
+      />
 
-        <SalesSteps steps={linkSurveySteps} />
-        {linkSurveyFeaturesPt1.map((feature) => {
-          return (
-            <SalesPageFeature
-              key={feature.headline}
-              headline={feature.headline}
-              subheadline={feature.subheadline}
-              imgSrc={feature.imgSrc}
-              imgAlt={feature.imgAlt}
-              imgLeft={feature.imgLeft}
-            />
-          );
-        })}
-        <SalesTestimonial
-          quote="Finally a great open source survey tool! Formbricks proves once again that open source software can be both powerful and user-friendly."
-          author="Jonathan Reimer, CEO @ crowd.dev"
-          imgSrc={Jonathan}
-          imgAlt="Jonathan Reimer, CEO @ crowd.dev"
-          textSize="large"
-        />
-        {linkSurveyFeaturesPt2.map((feature) => {
-          return (
-            <SalesPageFeature
-              key={feature.headline}
-              headline={feature.headline}
-              subheadline={feature.subheadline}
-              imgSrc={feature.imgSrc}
-              imgAlt={feature.imgAlt}
-              imgLeft={feature.imgLeft}
-            />
-          );
-        })}
-        <div className="space-y-12">
-          <h2 className="text-balance text-center text-3xl font-bold text-slate-800">More Features</h2>
-          <div className="grid grid-cols-3 gap-4">
-            {allFeaturesList.map((feature) => {
-              return (
-                <FeatureCard
-                  key={feature.title}
-                  title={feature.title}
-                  text={feature.text}
-                  Icon={feature.icon}
-                />
-              );
-            })}
-          </div>
+      <SalesSteps steps={linkSurveySteps} />
+      {linkSurveyFeaturesPt1.map((feature) => {
+        return (
+          <SalesPageFeature
+            key={feature.headline}
+            headline={feature.headline}
+            subheadline={feature.subheadline}
+            imgSrc={feature.imgSrc}
+            imgAlt={feature.imgAlt}
+            imgLeft={feature.imgLeft}
+          />
+        );
+      })}
+      <SalesTestimonial
+        quote="Finally a great open source survey tool! Formbricks proves once again that open source software can be both powerful and user-friendly."
+        author="Jonathan Reimer, CEO @ crowd.dev"
+        imgSrc={Jonathan}
+        imgAlt="Jonathan Reimer, CEO @ crowd.dev"
+        textSize="large"
+      />
+      {linkSurveyFeaturesPt2.map((feature) => {
+        return (
+          <SalesPageFeature
+            key={feature.headline}
+            headline={feature.headline}
+            subheadline={feature.subheadline}
+            imgSrc={feature.imgSrc}
+            imgAlt={feature.imgAlt}
+            imgLeft={feature.imgLeft}
+          />
+        );
+      })}
+      <SalesBreaker
+        headline="Try THE open source form builder 💪"
+        subheadline="Convinced that Formbricks is a good open source Typeform alternative? Try it now!"
+      />
+      <div className="space-y-12">
+        <h2 className="text-balance text-center text-3xl font-bold text-slate-800">More features</h2>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {allFeaturesList.map((feature) => {
+            return (
+              <FeatureCard
+                key={feature.title}
+                title={feature.title}
+                text={feature.text}
+                Icon={feature.icon}
+              />
+            );
+          })}
         </div>
-        <SalesTestimonial
-          quote="I've been looking for a solid open source Typeform alternative for a while. Super happy to see Formbricks building it!"
-          author="Peer Richelsen, CEO @ cal.com"
-          imgSrc={Peer}
-          imgAlt="Peer Richelsen, Co-Founder and CEO of Cal.com"
-          textSize="large"
-        />
-        <div className="space-y-12">
-          <h2 className="text-balance text-center text-3xl font-bold text-slate-800">All Question Types</h2>
-          <div className="grid grid-cols-3 gap-4">
-            {allQuestionTypes.map((feature) => {
-              return (
-                <FeatureCard
-                  key={feature.title}
-                  title={feature.title}
-                  text={feature.text}
-                  Icon={feature.icon}
-                />
-              );
-            })}
-          </div>
-        </div>
-        <SalesBreaker
-          headline="Try THE open source form builder"
-          subheadline="Convinced that Formbricks is a good open source Typeform alternative? Try it now!"
-        />
-        <div className="space-y-12">
-          <h2 className="text-balance text-center text-3xl font-bold text-slate-800">FAQ</h2>
-          <div className="gap-4">
-            {FAQ.map((question) => (
-              <div key={question.question} className="">
-                <div>
-                  <h3 className="mt-6 text-lg font-bold text-slate-700">{question.question} </h3>
-                  <p className="text-slate-600">{question.answer}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <SalesBreaker headline="What are you waiting for?" subheadline="Dive right in, it's free!" />
       </div>
+      <SalesTestimonial
+        quote="I've been looking for a solid open source Typeform alternative for a while. Super happy to see Formbricks building it!"
+        author="Peer Richelsen, CEO @ cal.com"
+        imgSrc={Peer}
+        imgAlt="Peer Richelsen, Co-Founder and CEO of Cal.com"
+        textSize="large"
+      />
+      <div className="space-y-12">
+        <h2 className="text-balance text-center text-3xl font-bold text-slate-800">All question types</h2>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {allQuestionTypes.map((feature) => {
+            return (
+              <FeatureCard
+                key={feature.title}
+                title={feature.title}
+                text={feature.text}
+                Icon={feature.icon}
+              />
+            );
+          })}
+        </div>
+      </div>
+      <div className="space-y-12">
+        <h2 className="text-balance text-center text-3xl font-bold text-slate-800">FAQ</h2>
+        <div className="gap-4">
+          {FAQ.map((question) => (
+            <div key={question.question} className="">
+              <div>
+                <h3 className="mt-6 text-lg font-bold text-slate-700">{question.question} </h3>
+                <p className="text-slate-600">{question.answer}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <SalesBreaker headline="What are you waiting for? 🤓" subheadline="Dive right in, it's free!" />
     </LayoutLight>
   );
 }

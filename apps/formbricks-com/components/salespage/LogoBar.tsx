@@ -13,7 +13,7 @@ export default function LogoBar() {
         10,000+ teams at the world’s best companies trust Formbricks
       </p>
       <div className="mt-5 items-center px-4 sm:flex sm:justify-center md:mt-6 md:space-x-8 md:px-0">
-        <div className="grid grid-cols-6 items-center gap-8 pt-2 md:gap-10">
+        <div className="grid grid-cols-2 items-center gap-8 pt-2 md:grid-cols-2 md:gap-10 lg:grid-cols-6">
           <Image
             src={FlixbusLogo}
             alt="Flixbus Flix Flixtrain Logo"
