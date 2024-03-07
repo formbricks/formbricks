@@ -2,7 +2,7 @@
 service: formbricks-kamal
 
 # Name of the container image.
-image: shubhampalriwala/formbricks
+image: formbricks/formbricks
 
 # Deploy to these servers.
 servers:
@@ -18,7 +18,7 @@ servers:
 registry:
   # Specify the registry server, if you're not using Docker Hub
   server: ghcr.io
-  username: ShubhamPalriwala
+  username: formbricks
 
   # Always use an access token rather than real password when possible.
   password:
