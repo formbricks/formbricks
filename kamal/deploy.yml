@@ -2,7 +2,7 @@
 service: formbricks-kamal
 
 # Name of the container image.
-image: formbricks/formbricks
+image: formbricks/formbricks-cloud
 
 # Deploy to these servers.
 servers:
