@@ -72,7 +72,7 @@ const DarkModeColors = ({
             className="gap-2"
           />
           <ColorSelectorWithLabel
-            label="Question color"
+            label="Text color"
             color={questionColor ?? colorDefaults.questionColor}
             setColor={setQuestionColor}
             className="gap-2"

@@ -13,7 +13,7 @@ import {
 import { Variants, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { COLOR_DEFUALTS } from "@formbricks/lib/styling/constants";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
@@ -149,7 +149,7 @@ export default function PreviewSurvey({
       unifiedStyling: true,
       allowStyleOverwrite: true,
       brandColor: {
-        light: product.brandColor || COLOR_DEFUALTS.brandColor,
+        light: product.brandColor || COLOR_DEFAULTS.brandColor,
       },
     };
   }, [product.brandColor, product.styling, survey.styling]);

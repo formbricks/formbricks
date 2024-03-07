@@ -3,10 +3,10 @@
 import UnifiedStylingPREVIEW_SURVEY from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { COLOR_DEFUALTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
+import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -48,7 +48,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const brandColor = localProduct.styling?.brandColor?.light ?? COLOR_DEFUALTS.brandColor;
+  const brandColor = localProduct.styling?.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
   const setBrandColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -62,7 +62,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const questionColor = localProduct.styling?.questionColor?.light ?? COLOR_DEFUALTS.questionColor;
+  const questionColor = localProduct.styling?.questionColor?.light ?? COLOR_DEFAULTS.questionColor;
   const setQuestionColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -76,7 +76,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const inputColor = localProduct.styling?.inputColor?.light ?? COLOR_DEFUALTS.inputColor;
+  const inputColor = localProduct.styling?.inputColor?.light ?? COLOR_DEFAULTS.inputColor;
   const setInputColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -90,7 +90,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const inputBorderColor = localProduct.styling?.inputBorderColor?.light ?? COLOR_DEFUALTS.inputBorderColor;
+  const inputBorderColor = localProduct.styling?.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor;
   const setInputBorderColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -105,7 +105,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   };
 
   const cardBackgroundColor =
-    localProduct.styling?.cardBackgroundColor?.light ?? COLOR_DEFUALTS.cardBackgroundColor;
+    localProduct.styling?.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor;
 
   const setCardBackgroundColor = (color: string) => {
     setLocalProduct((prev) => ({
@@ -121,7 +121,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   };
 
   const highlightBorderColor =
-    localProduct.styling?.highlightBorderColor?.light || COLOR_DEFUALTS.highlightBorderColor;
+    localProduct.styling?.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
   const setHighlightBorderColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -205,19 +205,19 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
         unifiedStyling: true,
         allowStyleOverwrite: true,
         brandColor: {
-          light: COLOR_DEFUALTS.brandColor,
+          light: COLOR_DEFAULTS.brandColor,
         },
         questionColor: {
-          light: COLOR_DEFUALTS.questionColor,
+          light: COLOR_DEFAULTS.questionColor,
         },
         inputColor: {
-          light: COLOR_DEFUALTS.inputColor,
+          light: COLOR_DEFAULTS.inputColor,
         },
         inputBorderColor: {
-          light: COLOR_DEFUALTS.inputBorderColor,
+          light: COLOR_DEFAULTS.inputBorderColor,
         },
         cardBackgroundColor: {
-          light: COLOR_DEFUALTS.cardBackgroundColor,
+          light: COLOR_DEFAULTS.cardBackgroundColor,
         },
         highlightBorderColor: undefined,
         isDarkModeEnabled: false,
@@ -231,13 +231,13 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
     setUnifiedStyling(true);
     setAllowStyleOverwrite(true);
-    setBrandColor(COLOR_DEFUALTS.brandColor);
-    setQuestionColor(COLOR_DEFUALTS.questionColor);
-    setInputColor(COLOR_DEFUALTS.inputColor);
-    setInputBorderColor(COLOR_DEFUALTS.inputBorderColor);
-    setCardBackgroundColor(COLOR_DEFUALTS.cardBackgroundColor);
+    setBrandColor(COLOR_DEFAULTS.brandColor);
+    setQuestionColor(COLOR_DEFAULTS.questionColor);
+    setInputColor(COLOR_DEFAULTS.inputColor);
+    setInputBorderColor(COLOR_DEFAULTS.inputBorderColor);
+    setCardBackgroundColor(COLOR_DEFAULTS.cardBackgroundColor);
     setIsHighlightBorderAllowed(false);
-    setHighlightBorderColor(COLOR_DEFUALTS.highlightBorderColor);
+    setHighlightBorderColor(COLOR_DEFAULTS.highlightBorderColor);
     setRoundness(8);
 
     toast.success("Styling updated successfully.");
@@ -289,10 +289,10 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
           />
 
           <ColorSelectorWithLabel
-            label="Question color"
+            label="Text color"
             color={questionColor}
             setColor={setQuestionColor}
-            description="Change the text color of the survey questions."
+            description="Change the text color of the questions, descriptions and answer options."
             disabled={!unifiedStyling}
           />
 

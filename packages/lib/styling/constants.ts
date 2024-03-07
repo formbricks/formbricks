@@ -1,11 +1,11 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
 
-export const COLOR_DEFUALTS = {
+export const COLOR_DEFAULTS = {
   brandColor: "#64748b",
   questionColor: "#2b2524",
-  inputColor: "#fff",
+  inputColor: "#ffffff",
   inputBorderColor: "#cbd5e1",
-  cardBackgroundColor: "#fff",
+  cardBackgroundColor: "#ffffff",
   highlightBorderColor: "#64748b",
 };
 

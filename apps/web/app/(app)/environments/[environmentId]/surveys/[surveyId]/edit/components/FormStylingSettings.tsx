@@ -5,7 +5,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import React, { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { COLOR_DEFUALTS } from "@formbricks/lib/styling/constants";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TSurvey } from "@formbricks/types/surveys";
 import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabel";
 
@@ -18,7 +18,7 @@ type FormStylingSettingsProps = {
 const FormStylingSettings = ({ localSurvey, setLocalSurvey, disabled = false }: FormStylingSettingsProps) => {
   const [open, setOpen] = useState(false);
 
-  const brandColor = localSurvey.styling?.brandColor?.light || COLOR_DEFUALTS.brandColor;
+  const brandColor = localSurvey.styling?.brandColor?.light || COLOR_DEFAULTS.brandColor;
   const setBrandColor = (color: string) => {
     setLocalSurvey((prev) => ({
       ...prev,
@@ -31,7 +31,7 @@ const FormStylingSettings = ({ localSurvey, setLocalSurvey, disabled = false }: 
     }));
   };
 
-  const questionColor = localSurvey.styling?.questionColor?.light || COLOR_DEFUALTS.questionColor;
+  const questionColor = localSurvey.styling?.questionColor?.light || COLOR_DEFAULTS.questionColor;
   const setQuestionColor = (color: string) => {
     setLocalSurvey((prev) => ({
       ...prev,
@@ -44,7 +44,7 @@ const FormStylingSettings = ({ localSurvey, setLocalSurvey, disabled = false }: 
     }));
   };
 
-  const inputColor = localSurvey.styling?.inputColor?.light || COLOR_DEFUALTS.inputColor;
+  const inputColor = localSurvey.styling?.inputColor?.light || COLOR_DEFAULTS.inputColor;
   const setInputColor = (color: string) => {
     setLocalSurvey((prev) => ({
       ...prev,
@@ -57,7 +57,7 @@ const FormStylingSettings = ({ localSurvey, setLocalSurvey, disabled = false }: 
     }));
   };
 
-  const inputBorderColor = localSurvey.styling?.inputBorderColor?.light || COLOR_DEFUALTS.inputBorderColor;
+  const inputBorderColor = localSurvey.styling?.inputBorderColor?.light || COLOR_DEFAULTS.inputBorderColor;
   const setInputBorderColor = (color: string) => {
     setLocalSurvey((prev) => ({
       ...prev,
@@ -116,10 +116,10 @@ const FormStylingSettings = ({ localSurvey, setLocalSurvey, disabled = false }: 
           />
 
           <ColorSelectorWithLabel
-            label="Question color"
+            label="Text color"
             color={questionColor}
             setColor={setQuestionColor}
-            description="Change the text color of the survey questions."
+            description="Change the text color of the questions, descriptions and answer options."
           />
 
           <ColorSelectorWithLabel

@@ -59,7 +59,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         return (
           <div
             className={`${baseClasses} ${loadedClass}`}
-            style={{ backgroundColor: survey.styling?.background?.bg || "#ffff", filter: `${filterStyle}` }}
+            style={{ backgroundColor: survey.styling?.background?.bg || "#ffffff", filter: `${filterStyle}` }}
           />
         );
       case "animation":

@@ -209,7 +209,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         />
       </MediaBackground>
       <LegalFooter
-        bgColor={survey.styling?.background?.bg || "#ffff"}
+        bgColor={survey.styling?.background?.bg || "#ffffff"}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}

@@ -1,6 +1,6 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
-import { COLOR_DEFUALTS } from "@formbricks/lib/styling/constants";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import SurveyState from "@formbricks/lib/surveyState";
 import { TJSStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
@@ -91,7 +91,7 @@ export const renderWidget = async (survey: TSurvey) => {
       unifiedStyling: true,
       allowStyleOverwrite: true,
       brandColor: {
-        light: product.brandColor || COLOR_DEFUALTS.brandColor,
+        light: product.brandColor || COLOR_DEFAULTS.brandColor,
       },
     };
   };

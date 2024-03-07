@@ -160,8 +160,10 @@ export default function StylingCard({
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Styling</p>
-            <p className="mt-1 truncate text-sm text-slate-500">Overwrite global styling settings</p>
+            <p className="font-semibold text-slate-800">Background Styling</p>
+            <p className="mt-1 truncate text-sm text-slate-500">
+              Change the background to a color, image or animation.
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>

@@ -15,7 +15,7 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs } from "@formbricks/types/surveys";
 
 import PreviewSurvey from "../../../components/PreviewSurvey";
-import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
+import QuestionsAudienceTabs from "./QuestionsStylingSettingsTabs";
 import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";

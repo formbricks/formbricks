@@ -56,7 +56,7 @@ export const PopoverPicker = ({
     <div className="picker relative">
       <div
         id="color-picker"
-        className="h-6 w-10 cursor-pointer rounded"
+        className="h-6 w-10 cursor-pointer rounded border border-slate-200"
         style={{ backgroundColor: color, opacity: disabled ? 0.5 : 1 }}
         onClick={() => {
           if (!disabled) {
