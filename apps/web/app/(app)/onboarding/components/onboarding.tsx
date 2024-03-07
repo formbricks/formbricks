@@ -78,6 +78,7 @@ export function Onboarding({
         window.removeEventListener("message", handleMessageEvent, false);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
 
   useEffect(() => {
