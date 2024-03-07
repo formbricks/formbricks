@@ -1,11 +1,15 @@
 import CardStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import FormStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
 import StylingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingCard";
+import { RotateCcwIcon } from "lucide-react";
+import Link from "next/link";
 import React, { useMemo } from "react";
+import toast from "react-hot-toast";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";
 
 type StylingViewProps = {
@@ -27,6 +31,22 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
 
   const setOverwriteUnifiedStyling = (value: boolean) => {
     setLocalSurvey((prev) => ({ ...prev, styling: { ...prev.styling, overwriteUnifiedStyling: value } }));
+  };
+
+  const onResetUnifiedStyling = () => {
+    const { styling: productStyling } = product;
+    const { unifiedStyling, allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
+    // const { background, hideProgressBar } = localSurvey.styling ?? {};
+
+    setLocalSurvey((prev) => ({
+      ...prev,
+      styling: {
+        ...baseStyling,
+        overwriteUnifiedStyling,
+      },
+    }));
+
+    toast.success("Styling set to unified styles");
   };
 
   return (
@@ -62,6 +82,25 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
         environmentId={environment.id}
         disabled={!overwriteUnifiedStyling}
       />
+
+      {overwriteUnifiedStyling && (
+        <div className="mt-4 flex items-center justify-between">
+          <Button variant="minimal" className="flex items-center gap-2" onClick={onResetUnifiedStyling}>
+            Reset to unified styles
+            <RotateCcwIcon className="h-4 w-4" />
+          </Button>
+
+          <p className="text-sm text-slate-500">
+            To set unified styling, go to the{" "}
+            <Link
+              href={`/environments/${environment.id}/settings/lookandfeel`}
+              className="font-semibold underline">
+              Look & Feel
+            </Link>{" "}
+            settings
+          </p>
+        </div>
+      )}
     </div>
   );
 };

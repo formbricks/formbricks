@@ -9,6 +9,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyBackgroundBgType } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
+import { Slider } from "@formbricks/ui/Slider";
 import { Switch } from "@formbricks/ui/Switch";
 
 import Placement from "./Placement";
@@ -125,6 +126,17 @@ export default function StylingCard({
     });
   };
 
+  const roundness = localSurvey.styling?.roundness ?? 8;
+  const setRoundness = (value: number) => {
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...localSurvey.styling,
+        roundness: value,
+      },
+    });
+  };
+
   return (
     <Collapsible.Root
       open={open}
@@ -197,6 +209,17 @@ export default function StylingCard({
                       />
                     </div>
                   </div>
+                </div>
+
+                <div className="my-3 flex flex-col gap-4 p-3">
+                  <div className="flex flex-col">
+                    <h3 className="text-base font-semibold text-slate-900">Roundness</h3>
+                    <p className="text-sm text-slate-800">
+                      Change the border radius of the card and the inputs.
+                    </p>
+                  </div>
+
+                  <Slider value={[roundness]} max={16} onValueChange={(value) => setRoundness(value[0])} />
                 </div>
               </>
             </>

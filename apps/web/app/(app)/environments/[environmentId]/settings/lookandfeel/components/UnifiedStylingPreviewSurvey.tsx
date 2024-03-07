@@ -55,7 +55,6 @@ export default function UnifiedStylingPreviewSurvey({
   survey,
   product,
 }: UnifiedStylingPreviewSurveyProps) {
-  const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
@@ -128,12 +127,6 @@ export default function UnifiedStylingPreviewSurvey({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
-
-  useEffect(() => {
-    if (previewType === "web") {
-      setIsModalOpen(true);
-    }
-  }, [previewType]);
 
   function resetQuestionProgress() {
     setActiveQuestionId(survey?.questions[0]?.id);
