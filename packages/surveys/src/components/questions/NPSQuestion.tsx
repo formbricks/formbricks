@@ -70,7 +70,7 @@ export default function NPSQuestion({
                 }}
                 className={cn(
                   value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
-                  "bg-survey-bg text-heading relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 first:rounded-l-md last:rounded-r-md focus:outline-none",
+                  "bg-survey-bg text-heading first:rounded-l-custom last:rounded-r-custom relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 focus:outline-none",
                   hoveredNumber === number ? "bg-accent-bg" : ""
                 )}>
                 <input

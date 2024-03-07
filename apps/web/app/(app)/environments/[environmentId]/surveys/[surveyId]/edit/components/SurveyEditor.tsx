@@ -189,7 +189,6 @@ export default function SurveyEditor({
                 segments={segments}
                 responseCount={responseCount}
                 membershipRole={membershipRole}
-                colours={colours}
                 isUserTargetingAllowed={isUserTargetingAllowed}
                 isFormbricksCloud={isFormbricksCloud}
               />

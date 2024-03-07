@@ -4,6 +4,7 @@ import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import React, { useState } from "react";
 
+import { cn } from "@formbricks/lib/cn";
 import { colorDefaults } from "@formbricks/lib/styling/constants";
 import { TSurvey } from "@formbricks/types/surveys";
 import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabel";
@@ -11,9 +12,10 @@ import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabe
 type FormStylingSettingsProps = {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  disabled?: boolean;
 };
 
-const FormStylingSettings = ({ localSurvey, setLocalSurvey }: FormStylingSettingsProps) => {
+const FormStylingSettings = ({ localSurvey, setLocalSurvey, disabled = false }: FormStylingSettingsProps) => {
   const [open, setOpen] = useState(false);
 
   const brandColor = localSurvey.styling?.brandColor?.light || colorDefaults.brandColor;
@@ -72,12 +74,17 @@ const FormStylingSettings = ({ localSurvey, setLocalSurvey }: FormStylingSetting
     <Collapsible.Root
       open={open}
       onOpenChange={(openState) => {
+        if (disabled) return;
         setOpen(openState);
       }}
       className="w-full rounded-lg border border-slate-300 bg-white">
       <Collapsible.CollapsibleTrigger
         asChild
-        className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
+        disabled={disabled}
+        className={cn(
+          "h-full w-full cursor-pointer rounded-lg hover:bg-slate-50",
+          disabled && "cursor-not-allowed opacity-60 hover:bg-white"
+        )}>
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckCircleIcon className="h-8 w-8 text-green-400" />

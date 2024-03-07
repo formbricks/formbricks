@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { TProductStyling } from "@formbricks/types/styling";
+import { TProductStyling } from "@formbricks/types/product";
 
 const prisma = new PrismaClient();
 
@@ -31,7 +31,6 @@ async function main() {
           ...(product.highlightBorderColor && {
             highlightBorderColor: {
               light: product.highlightBorderColor,
-              dark: product.highlightBorderColor,
             },
           }),
         };

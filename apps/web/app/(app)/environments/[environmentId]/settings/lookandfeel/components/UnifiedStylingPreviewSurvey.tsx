@@ -8,7 +8,7 @@ import { Variants, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
-import { TProductStyling } from "@formbricks/types/styling";
+import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";

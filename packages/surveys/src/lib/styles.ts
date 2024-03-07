@@ -3,7 +3,7 @@ import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 
 import { hexToRGBA } from "@formbricks/lib/utils";
-import { TProductStyling } from "@formbricks/types/styling";
+import { TProductStyling } from "@formbricks/types/product";
 
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
 

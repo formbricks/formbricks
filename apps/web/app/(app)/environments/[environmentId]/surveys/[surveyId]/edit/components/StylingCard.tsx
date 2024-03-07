@@ -8,7 +8,6 @@ import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyBackgroundBgType } from "@formbricks/types/surveys";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -20,6 +19,7 @@ interface StylingCardProps {
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colours: string[];
   environmentId: string;
+  disabled?: boolean;
 }
 
 export default function StylingCard({
@@ -27,12 +27,12 @@ export default function StylingCard({
   setLocalSurvey,
   colours,
   environmentId,
+  disabled,
 }: StylingCardProps) {
-  const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
+  const [open, setOpen] = useState(false);
   const progressBarHidden = localSurvey.styling?.hideProgressBar ?? false;
   const { type, productOverwrites, styling } = localSurvey;
-  const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
-    productOverwrites ?? {};
+  const { clickOutsideClose, darkOverlay, placement } = productOverwrites ?? {};
   const { bgType } = styling?.background ?? {};
 
   const [inputValue, setInputValue] = useState(100);
@@ -50,36 +50,6 @@ export default function StylingCard({
         placement: !!placement ? null : "bottomRight",
         clickOutsideClose: false,
         darkOverlay: false,
-      },
-    });
-  };
-
-  const toggleBrandColor = () => {
-    setLocalSurvey({
-      ...localSurvey,
-      productOverwrites: {
-        ...localSurvey.productOverwrites,
-        brandColor: !!brandColor ? null : "#64748b",
-      },
-    });
-  };
-
-  const toggleHighlightBorderColor = () => {
-    setLocalSurvey({
-      ...localSurvey,
-      productOverwrites: {
-        ...localSurvey.productOverwrites,
-        highlightBorderColor: !!highlightBorderColor ? null : "#64748b",
-      },
-    });
-  };
-
-  const handleColorChange = (color: string) => {
-    setLocalSurvey({
-      ...localSurvey,
-      productOverwrites: {
-        ...localSurvey.productOverwrites,
-        brandColor: color,
       },
     });
   };
@@ -109,16 +79,6 @@ export default function StylingCard({
           ...localSurvey.styling?.background,
           brightness: percent,
         },
-      },
-    });
-  };
-
-  const handleBorderColorChange = (color: string) => {
-    setLocalSurvey({
-      ...localSurvey,
-      productOverwrites: {
-        ...localSurvey.productOverwrites,
-        highlightBorderColor: color,
       },
     });
   };
@@ -168,12 +128,21 @@ export default function StylingCard({
   return (
     <Collapsible.Root
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(openState) => {
+        if (disabled) return;
+        setOpen(openState);
+      }}
       className={cn(
         open ? "" : "hover:bg-slate-50",
         "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
       )}>
-      <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
+      <Collapsible.CollapsibleTrigger
+        asChild
+        disabled={disabled}
+        className={cn(
+          "h-full w-full cursor-pointer rounded-lg hover:bg-slate-50",
+          disabled && "cursor-not-allowed opacity-60 hover:bg-white"
+        )}>
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
@@ -232,26 +201,7 @@ export default function StylingCard({
               </>
             </>
           )}
-          {/* Brand Color */}
-          <div className="p-3">
-            <div className="ml-2 flex items-center space-x-1">
-              <Switch id="autoComplete" checked={!!brandColor} onCheckedChange={toggleBrandColor} />
-              <Label htmlFor="autoComplete" className="cursor-pointer">
-                <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Overwrite Brand Color</h3>
-                  <p className="text-xs font-normal text-slate-500">Change the main color for this survey.</p>
-                </div>
-              </Label>
-            </div>
-            {brandColor && (
-              <div className="ml-2 mt-4 rounded-lg border bg-slate-50 p-4">
-                <div className="w-full max-w-xs">
-                  <Label htmlFor="brandcolor">Color (HEX)</Label>
-                  <ColorPicker color={brandColor} onChange={handleColorChange} />
-                </div>
-              </div>
-            )}
-          </div>
+
           {/* Positioning */}
           {type !== "link" && (
             <div className="p-3 ">
@@ -282,44 +232,7 @@ export default function StylingCard({
               )}
             </div>
           )}
-          {/* Highlight border */}
-          {type !== "link" && (
-            <div className="p-3 ">
-              <div className="ml-2 flex items-center space-x-1">
-                <Switch
-                  id="autoComplete"
-                  checked={!!highlightBorderColor}
-                  onCheckedChange={toggleHighlightBorderColor}
-                />
-                <Label htmlFor="autoComplete" className="cursor-pointer">
-                  <div className="ml-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Overwrite Highlight Border</h3>
-                    <p className="text-xs font-normal text-slate-500">
-                      Change the highlight border for this survey.
-                    </p>
-                  </div>
-                </Label>
-              </div>
-              {!!highlightBorderColor && (
-                <div className="ml-2 mt-4 rounded-lg border bg-slate-50 p-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="highlightBorder"
-                      checked={!!highlightBorderColor}
-                      onCheckedChange={toggleHighlightBorderColor}
-                    />
-                    <h2 className="text-sm font-medium text-slate-800">Show highlight border</h2>
-                  </div>
-                  {!!highlightBorderColor && (
-                    <div className="mt-6 w-full max-w-xs">
-                      <Label htmlFor="brandcolor">Color (HEX)</Label>
-                      <ColorPicker color={highlightBorderColor || ""} onChange={handleBorderColorChange} />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+
           <div className="p-3">
             <div className="ml-2 flex items-center space-x-1">
               <Switch

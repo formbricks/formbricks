@@ -114,71 +114,134 @@ const previewSurvey = {
 
 const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const router = useRouter();
-  const [unifiedStyling, setUnifiedStyling] = useState(product.styling?.unifiedStyling ?? false);
-  const [allowStyleOverwrite, setAllowStyleOverwrite] = useState(
-    product.styling?.allowStyleOverwrite ?? false
-  );
-  const [brandColor, setBrandColor] = useState(
-    product.styling?.brandColor?.light ?? colorDefaults.brandColor
-  );
-  const [questionColor, setQuestionColor] = useState(
-    product.styling?.questionColor?.light ?? colorDefaults.questionColor
-  );
-  const [inputColor, setInputColor] = useState(
-    product.styling?.inputColor?.light ?? colorDefaults.inputColor
-  );
-  const [inputBorderColor, setInputBorderColor] = useState(
-    product.styling?.inputBorderColor?.light ?? colorDefaults.inputBorderColor
-  );
-  const [cardBackgroundColor, setCardBackgroundColor] = useState(
-    product.styling?.cardBackgroundColor?.light ?? colorDefaults.cardBackgroundColor
-  );
+  const [localProduct, setLocalProduct] = useState(product);
+  const [isHighlightBorderAllowed, setIsHighlightBorderAllowed] = useState(false);
 
-  const [allowHighlightBorder, setAllowHighlightBorder] = useState(
-    !!product.styling?.highlightBorderColor?.light ?? false
-  );
-  const [highlightBorderColor, setHighlightBorderColor] = useState(
-    product.styling?.highlightBorderColor?.light ?? colorDefaults.highlightBorderColor
-  );
+  const unifiedStyling = localProduct.styling?.unifiedStyling ?? false;
+  const setUnifiedStyling = (value: boolean) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        unifiedStyling: value,
+      },
+    }));
+  };
 
-  // const [isDarkMode, setIsDarkMode] = useState(product.styling?.isDarkModeEnabled ?? false);
+  const allowStyleOverwrite = localProduct.styling?.allowStyleOverwrite ?? false;
+  const setAllowStyleOverwrite = (value: boolean) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        allowStyleOverwrite: value,
+      },
+    }));
+  };
 
-  // const [brandColorDark, setBrandColorDark] = useState(product.styling?.brandColor?.dark);
+  const brandColor = localProduct.styling?.brandColor?.light ?? colorDefaults.brandColor;
+  const setBrandColor = (color: string) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        brandColor: {
+          ...(prev.styling?.brandColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
 
-  // const [questionColorDark, setQuestionColorDark] = useState(product.styling?.questionColor?.dark);
+  const questionColor = localProduct.styling?.questionColor?.light ?? colorDefaults.questionColor;
+  const setQuestionColor = (color: string) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        questionColor: {
+          ...(prev.styling?.questionColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
 
-  // const [inputColorDark, setInputColorDark] = useState(product.styling?.inputColor?.dark);
+  const inputColor = localProduct.styling?.inputColor?.light ?? colorDefaults.inputColor;
+  const setInputColor = (color: string) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        inputColor: {
+          ...(prev.styling?.inputColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
 
-  // const [inputBorderColorDark, setInputBorderColorDark] = useState(product.styling?.inputBorderColor?.dark);
+  const inputBorderColor = localProduct.styling?.inputBorderColor?.light ?? colorDefaults.inputBorderColor;
+  const setInputBorderColor = (color: string) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        inputBorderColor: {
+          ...(prev.styling?.inputBorderColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
 
-  // const [cardBackgroundColorDark, setCardBackgroundColorDark] = useState(
-  //   product.styling?.cardBackgroundColor?.dark
-  // );
+  const cardBackgroundColor =
+    localProduct.styling?.cardBackgroundColor?.light ?? colorDefaults.cardBackgroundColor;
 
-  // const [highlightBorderColorDark, setHighlightBorderColorDark] = useState(
-  //   product.styling?.highlightBorderColor?.dark
-  // );
+  const setCardBackgroundColor = (color: string) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        cardBackgroundColor: {
+          ...(prev.styling?.cardBackgroundColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
 
-  const [roundness, setRoundness] = useState(product.styling?.roundness ?? 8);
+  const highlightBorderColor =
+    localProduct.styling?.highlightBorderColor?.light || colorDefaults.highlightBorderColor;
+  const setHighlightBorderColor = (color: string) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        highlightBorderColor: {
+          ...(prev.styling?.highlightBorderColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
 
-  // const [linkSurveysCardArrangement, setLinkSurveysCardArrangement] = useState(
-  //   product.styling?.cardArrangement?.linkSurveys ?? "simple"
-  // );
-  // const [inAppSurveysCardArrangement, setInAppSurveysCardArrangement] = useState(
-  //   product.styling?.cardArrangement?.inAppSurveys ?? "simple"
-  // );
+  const roundness = localProduct.styling?.roundness ?? 8;
+  const setRoundness = (value: number) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        roundness: value,
+      },
+    }));
+  };
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
   useEffect(() => {
     setActiveQuestionId(previewSurvey.questions[0].id);
   }, []);
-
-  useEffect(() => {
-    if (!unifiedStyling) {
-      setAllowStyleOverwrite(false);
-    }
-  }, [unifiedStyling]);
 
   const onSave = useCallback(async () => {
     await updateProductAction(product.id, {
@@ -200,7 +263,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
         cardBackgroundColor: {
           light: cardBackgroundColor,
         },
-        highlightBorderColor: allowHighlightBorder
+        highlightBorderColor: isHighlightBorderAllowed
           ? {
               light: highlightBorderColor,
             }
@@ -213,13 +276,13 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     toast.success("Styling updated successfully.");
     router.refresh();
   }, [
-    allowHighlightBorder,
     allowStyleOverwrite,
     brandColor,
     cardBackgroundColor,
     highlightBorderColor,
     inputBorderColor,
     inputColor,
+    isHighlightBorderAllowed,
     product.id,
     questionColor,
     roundness,
@@ -264,12 +327,9 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     setInputColor(colorDefaults.inputColor);
     setInputBorderColor(colorDefaults.inputBorderColor);
     setCardBackgroundColor(colorDefaults.cardBackgroundColor);
-    setAllowHighlightBorder(false);
+    setIsHighlightBorderAllowed(false);
     setHighlightBorderColor(colorDefaults.highlightBorderColor);
-    // setIsDarkMode(false);
     setRoundness(8);
-    // setLinkSurveysCardArrangement("simple");
-    // setInAppSurveysCardArrangement("simple");
 
     toast.success("Styling updated successfully.");
     router.refresh();
@@ -354,9 +414,9 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-6">
               <Switch
-                checked={allowHighlightBorder}
+                checked={isHighlightBorderAllowed}
                 onCheckedChange={(value) => {
-                  setAllowHighlightBorder(value);
+                  setIsHighlightBorderAllowed(value);
                 }}
                 disabled={!unifiedStyling}
               />
@@ -366,7 +426,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
               </div>
             </div>
 
-            {allowHighlightBorder && (
+            {isHighlightBorderAllowed && (
               <ColorPicker
                 color={highlightBorderColor}
                 onChange={setHighlightBorderColor}
@@ -388,40 +448,6 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
               disabled={!unifiedStyling}
             />
           </div>
-
-          {/* These will be tackled later */}
-
-          {/* <DarkModeColors
-            isDarkMode={isDarkMode}
-            setIsDarkMode={setIsDarkMode}
-            brandColor={brandColorDark}
-            cardBackgroundColor={cardBackgroundColorDark}
-            highlightBorderColor={highlightBorderColorDark}
-            inputBorderColor={inputBorderColorDark}
-            inputColor={inputColorDark}
-            questionColor={questionColorDark}
-            setBrandColor={setBrandColorDark}
-            setCardBackgroundColor={setCardBackgroundColorDark}
-            setHighlighBorderColor={setHighlightBorderColorDark}
-            setInputBorderColor={setInputBorderColorDark}
-            setInputColor={setInputColorDark}
-            setQuestionColor={setQuestionColorDark}
-            disabled={!unifiedStyling}
-          /> */}
-
-          {/* <CardArrangement
-            activeCardArrangement={linkSurveysCardArrangement}
-            surveyType="link"
-            setActiveCardArrangement={setLinkSurveysCardArrangement}
-            disabled={!unifiedStyling}
-          />
-
-          <CardArrangement
-            activeCardArrangement={inAppSurveysCardArrangement}
-            surveyType="web"
-            setActiveCardArrangement={setInAppSurveysCardArrangement}
-            disabled={!unifiedStyling}
-          /> */}
         </div>
 
         <div className="mt-8 flex items-center justify-end gap-2">
@@ -444,7 +470,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             survey={previewSurvey as TSurvey}
-            product={product}
+            product={localProduct}
           />
         </div>
       </div>

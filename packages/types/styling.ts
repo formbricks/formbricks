@@ -4,7 +4,7 @@ import { ZColor } from "./common";
 
 export const ZStylingColor = z.object({
   light: ZColor,
-  dark: ZColor.optional(),
+  dark: ZColor.nullish(),
 });
 export type TStylingColor = z.infer<typeof ZStylingColor>;
 
@@ -17,20 +17,13 @@ export const ZCardArrangement = z.object({
 });
 
 export const ZBaseStyling = z.object({
-  brandColor: ZStylingColor.optional(),
-  questionColor: ZStylingColor.optional(),
-  inputColor: ZStylingColor.optional(),
-  inputBorderColor: ZStylingColor.optional(),
-  cardBackgroundColor: ZStylingColor.optional(),
-  highlightBorderColor: ZStylingColor.optional(),
-  isDarkModeEnabled: z.boolean().optional(),
-  roundness: z.number().optional(),
-  cardArrangement: ZCardArrangement.optional(),
+  brandColor: ZStylingColor.nullish(),
+  questionColor: ZStylingColor.nullish(),
+  inputColor: ZStylingColor.nullish(),
+  inputBorderColor: ZStylingColor.nullish(),
+  cardBackgroundColor: ZStylingColor.nullish(),
+  highlightBorderColor: ZStylingColor.nullish(),
+  isDarkModeEnabled: z.boolean().nullish(),
+  roundness: z.number().nullish(),
+  cardArrangement: ZCardArrangement.nullish(),
 });
-
-export const ZProductStyling = ZBaseStyling.extend({
-  unifiedStyling: z.boolean(),
-  allowStyleOverwrite: z.boolean(),
-});
-
-export type TProductStyling = z.infer<typeof ZProductStyling>;

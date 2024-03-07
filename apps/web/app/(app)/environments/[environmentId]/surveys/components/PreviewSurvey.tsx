@@ -13,10 +13,11 @@ import {
 import { Variants, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { colorDefaults } from "@formbricks/lib/styling/constants";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
+import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TProductStyling } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -61,6 +62,7 @@ const previewParentContainerVariant: Variants = {
     zIndex: -1,
   },
 };
+
 export default function PreviewSurvey({
   setActiveQuestionId,
   activeQuestionId,
@@ -115,33 +117,52 @@ export default function PreviewSurvey({
     },
   };
 
-  const {
-    brandColor: surveyBrandColor,
-    highlightBorderColor: surveyHighlightBorderColor,
-    placement: surveyPlacement,
-  } = productOverwrites || {};
+  const { placement: surveyPlacement } = productOverwrites || {};
 
-  // const brandColor = surveyBrandColor || product.brandColor;
   const placement = surveyPlacement || product.placement;
-  const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
+  // const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
 
   const styling: TSurveyStyling | TProductStyling = useMemo(() => {
-    if (survey.styling) {
+    // unified styling is disabled from the product
+    if (!product.styling?.unifiedStyling && !!survey.styling) {
       return survey.styling;
     }
 
-    if (product.styling) {
+    // allow style overwrite is disabled from the product
+    if (product.styling?.unifiedStyling && !product.styling?.allowStyleOverwrite) {
       return product.styling;
     }
 
+    // allow style overwrite is enabled from the product
+    if (product.styling?.unifiedStyling && product.styling?.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteUnifiedStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    // no styling is set (default styling)
     return {
       unifiedStyling: true,
       allowStyleOverwrite: true,
       brandColor: {
-        light: product.brandColor || "#64748b",
+        light: product.brandColor || colorDefaults.brandColor,
       },
     };
   }, [product.brandColor, product.styling, survey.styling]);
+
+  const highlightBorderColor = useMemo(() => {
+    if (survey.styling?.highlightBorderColor?.light) {
+      return survey.styling.highlightBorderColor.light;
+    }
+
+    if (product.styling?.highlightBorderColor?.light) {
+      return product.styling.highlightBorderColor.light;
+    }
+  }, [product.styling, survey.styling]);
 
   useEffect(() => {
     // close modal if there are no questions left
@@ -223,10 +244,11 @@ export default function PreviewSurvey({
                   isOpen={isModalOpen}
                   placement={placement}
                   highlightBorderColor={highlightBorderColor}
-                  previewMode="mobile">
+                  previewMode="mobile"
+                  borderRadius={styling.roundness ?? 12}
+                  background={styling.cardBackgroundColor?.light}>
                   <SurveyInline
                     survey={survey}
-                    // brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.inAppSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
@@ -240,7 +262,6 @@ export default function PreviewSurvey({
                   <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
-                      // brandColor={brandColor}
                       activeQuestionId={activeQuestionId || undefined}
                       isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
@@ -295,10 +316,11 @@ export default function PreviewSurvey({
                 isOpen={isModalOpen}
                 placement={placement}
                 highlightBorderColor={highlightBorderColor}
-                previewMode="desktop">
+                previewMode="desktop"
+                borderRadius={styling.roundness ?? 12}
+                background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
                   survey={survey}
-                  // brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
                   isBrandingEnabled={product.inAppSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
@@ -312,7 +334,6 @@ export default function PreviewSurvey({
                 <div className="z-0 w-full max-w-md rounded-lg p-4">
                   <SurveyInline
                     survey={survey}
-                    // brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}

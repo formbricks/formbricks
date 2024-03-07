@@ -9,7 +9,6 @@ import { TSurvey } from "@formbricks/types/surveys";
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
-import StylingCard from "./StylingCard";
 import TargetingCard from "./TargetingCard";
 import WhenToSendCard from "./WhenToSendCard";
 
@@ -22,7 +21,6 @@ interface SettingsViewProps {
   segments: TSegment[];
   responseCount: number;
   membershipRole?: TMembershipRole;
-  colours: string[];
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
 }
@@ -36,7 +34,6 @@ export default function SettingsView({
   segments,
   responseCount,
   membershipRole,
-  colours,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
 }: SettingsViewProps) {
@@ -87,13 +84,6 @@ export default function SettingsView({
       <RecontactOptionsCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environmentId={environment.id}
-      />
-
-      <StylingCard
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-        colours={colours}
         environmentId={environment.id}
       />
     </div>

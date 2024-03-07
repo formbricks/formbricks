@@ -2,7 +2,14 @@ import { z } from "zod";
 
 import { ZColor, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
-import { ZProductStyling } from "./styling";
+import { ZBaseStyling } from "./styling";
+
+export const ZProductStyling = ZBaseStyling.extend({
+  unifiedStyling: z.boolean().nullish(),
+  allowStyleOverwrite: z.boolean().nullish(),
+});
+
+export type TProductStyling = z.infer<typeof ZProductStyling>;
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
