@@ -11,6 +11,7 @@ import {
   deleteSurvey,
   duplicateSurvey,
   getSurvey,
+  getSurveyCountByEnvironmentId,
   getSurveys,
   getSurveysByActionClassId,
   getSyncSurveys,
@@ -30,6 +31,10 @@ import {
   mockUser,
   updateSurveyInput,
 } from "./__mock__/survey.mock";
+
+beforeEach(() => {
+  prisma.survey.count.mockResolvedValue(1);
+});
 
 describe("Tests for getSurvey", () => {
   describe("Happy Path", () => {
@@ -95,7 +100,7 @@ describe("Tests for getSurveysByActionClassId", () => {
 
 describe("Tests for getSurveys", () => {
   describe("Happy Path", () => {
-    it("Returns an array of surveys for a given environmentId and page", async () => {
+    it("Returns an array of surveys for a given environmentId, limit(optional) and offset(optional)", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
       const surveys = await getSurveys(mockId);
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
@@ -308,6 +313,32 @@ describe("Tests for getSyncedSurveys", () => {
       prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
       prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
       await expect(getSyncSurveys(mockId, mockPerson.id)).rejects.toThrow(Error);
+    });
+  });
+});
+
+describe("Tests for getSurveyCountByEnvironmentId service", () => {
+  describe("Happy Path", () => {
+    it("Counts the total number of surveys for a given environment ID", async () => {
+      const count = await getSurveyCountByEnvironmentId(mockId);
+      expect(count).toEqual(1);
+    });
+
+    it("Returns zero count when there are no surveys for a given environment ID", async () => {
+      prisma.survey.count.mockResolvedValue(0);
+      const count = await getSurveyCountByEnvironmentId(mockId);
+      expect(count).toEqual(0);
+    });
+  });
+
+  describe("Sad Path", () => {
+    testInputValidation(getSurveyCountByEnvironmentId, "123");
+
+    it("Throws a generic Error for other unexpected issues", async () => {
+      const mockErrorMessage = "Mock error message";
+      prisma.survey.count.mockRejectedValue(new Error(mockErrorMessage));
+
+      await expect(getSurveyCountByEnvironmentId(mockId)).rejects.toThrow(Error);
     });
   });
 });

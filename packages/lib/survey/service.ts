@@ -331,16 +331,17 @@ export const getSurveys = async (
 };
 
 export const getSurveyCountByEnvironmentId = async (environmentId: string): Promise<number> => {
-  validateInputs([environmentId, ZId]);
-
   const count = await unstable_cache(
     async () => {
+      validateInputs([environmentId, ZId]);
       try {
-        return await prisma.survey.count({
+        const surveyCount = await prisma.survey.count({
           where: {
-            environmentId,
+            environmentId: environmentId,
           },
         });
+
+        return surveyCount;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           console.error(error);
