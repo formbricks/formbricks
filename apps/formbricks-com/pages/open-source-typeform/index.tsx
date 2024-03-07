@@ -30,9 +30,11 @@ import {
 } from "react-icons/io5";
 
 import Img2 from "./2-finally-good-open-source-forms-for-free.png";
+import Img3 from "./3-free-online-form-builder-unlimited-forms-and-responses.png";
 import Img4 from "./4-all-question-types-an-open-source-form-builder-needs.png";
 import Img5 from "./5-all-question-types-an-open-source-form-builder-needs.png";
 import Img6 from "./6-slack-zapier-hubspot-integration-for-open-source-form-builder-online.png";
+import Img7 from "./7-embed-open-source-form-any-where-you-need-it.png";
 import Img8 from "./8-pre-populate-typeform-open-source-alternative.png";
 import Img9 from "./9-conditional-logic-jumps-for-free-open-source-online-form-builder.png";
 import Img10 from "./10-multi-language-surveys-free-and-open-source.png";
@@ -59,8 +61,8 @@ const linkSurveyFeaturesPt1 = [
   {
     headline: "Free forever, unlimited",
     subheadline:
-      "Unlimited forms, unlimited responses. In the Cloud, we only charge for branding removal. Self-host with 1 click and remove the branding for free.",
-    imgSrc: PlaceholderImg,
+      "Unlimited forms, responses, team members and workspaces. In the Cloud we only charge for branding removal. Self-host with 1 click and remove the branding for free.",
+    imgSrc: Img3,
     imgAlt: "tba",
     imgLeft: false,
   },
@@ -92,7 +94,7 @@ const linkSurveyFeaturesPt1 = [
     headline: "Embed anywhere",
     subheadline:
       "On your website, in an email. Get your forms in front of the right people effortlessly. Our community is working on a WordPress plugin as we speak.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img7,
     imgAlt: "tba",
     imgLeft: false,
   },
