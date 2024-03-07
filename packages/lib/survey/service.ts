@@ -265,15 +265,13 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
 
 export const getSurveys = async (
   environmentId: string,
-  page?: number,
-  batchSize?: number
+  limit?: number,
+  offset?: number
 ): Promise<TSurvey[]> => {
   const surveys = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber], [batchSize, ZOptionalNumber]);
+      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
       let surveysPrisma;
-
-      batchSize = batchSize ? Math.min(batchSize, ITEMS_PER_PAGE) : ITEMS_PER_PAGE;
 
       try {
         surveysPrisma = await prisma.survey.findMany({
@@ -281,8 +279,13 @@ export const getSurveys = async (
             environmentId,
           },
           select: selectSurvey,
-          take: page ? batchSize : undefined,
-          skip: page ? batchSize * (page - 1) : undefined,
+          orderBy: [
+            {
+              updatedAt: "desc",
+            },
+          ],
+          take: limit ? limit : undefined,
+          skip: offset ? offset : undefined,
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -315,7 +318,7 @@ export const getSurveys = async (
       }
       return surveys;
     },
-    [`getSurveys-${environmentId}-${page}-${batchSize}`],
+    [`getSurveys-${environmentId}-${limit}-${offset}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

@@ -213,12 +213,12 @@ export async function generateSingleUseIdAction(surveyId: string, isEncrypted: b
   return generateSurveySingleUseId(isEncrypted);
 }
 
-export async function getSurveysAction(environmentId: string, page: number, batchSize: number) {
+export async function getSurveysAction(environmentId: string, limit?: number, offset?: number) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
   const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
-  return await getSurveys(environmentId, page, batchSize);
+  return await getSurveys(environmentId, limit, offset);
 }

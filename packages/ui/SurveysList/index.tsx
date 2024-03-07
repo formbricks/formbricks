@@ -26,10 +26,9 @@ export default function SurveysList({
   isViewer,
   WEBAPP_URL,
   userId,
-  surveysPerPage,
+  surveysPerPage: surveysLimit,
 }: SurveysListProps) {
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
-  const [page, setPage] = useState(1);
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
@@ -48,25 +47,23 @@ export default function SurveysList({
   useEffect(() => {
     async function fetchInitialSurveys() {
       setIsFetching(true);
-      const res = await getSurveysAction(environment.id, 1, surveysPerPage);
-      if (res.length < surveysPerPage) setHasMore(false);
+      const res = await getSurveysAction(environment.id, surveysLimit);
+      if (res.length < surveysLimit) setHasMore(false);
       setSurveys(res);
       setIsFetching(false);
     }
     fetchInitialSurveys();
-  }, [environment.id, surveysPerPage]);
+  }, [environment.id, surveysLimit]);
 
   const fetchNextPage = useCallback(async () => {
-    const newPage = page + 1;
     setIsFetching(true);
-    const newSurveys = await getSurveysAction(environment.id, newPage, surveysPerPage);
-    if (newSurveys.length === 0 || newSurveys.length < surveysPerPage) {
+    const newSurveys = await getSurveysAction(environment.id, surveysLimit, surveys.length);
+    if (newSurveys.length === 0 || newSurveys.length < surveysLimit) {
       setHasMore(false);
     }
     setSurveys([...surveys, ...newSurveys]);
-    setPage(newPage);
     setIsFetching(false);
-  }, [environment.id, page, surveys, surveysPerPage]);
+  }, [environment.id, surveys, surveysLimit]);
 
   return (
     <div className="space-y-4">
