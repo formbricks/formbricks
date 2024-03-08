@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
+import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 
@@ -42,16 +43,25 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
   };
 
   const handleRemove = async () => {
-    setIsLoading(true);
-    try {
-      await removeAvatarAction();
-      router.refresh();
-    } catch (err) {
-      toast.error("Avatar update failed. Please try again.");
-      setIsLoading(false);
+    const imageUrl = session?.user?.imageUrl;
+    if (!imageUrl) {
+      return;
     }
 
-    setIsLoading(false);
+    setIsLoading(true);
+    const fileName = getFileNameWithIdFromUrl(imageUrl);
+    if (!fileName) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await removeAvatarAction(environmentId, fileName);
+    } catch (err) {
+      toast.error("Avatar update failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -109,7 +119,7 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
           />
         </Button>
         {session?.user?.imageUrl && (
-          <Button className="mr-2" variant="warn" onClick={async () => handleRemove()}>
+          <Button className="mr-2" variant="warn" onClick={handleRemove}>
             Remove Image
           </Button>
         )}

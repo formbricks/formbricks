@@ -19,3 +19,15 @@ export const getOriginalFileNameFromUrl = (fileURL: string) => {
     console.error("Error parsing file URL:", error);
   }
 };
+
+export const getFileNameWithIdFromUrl = (fileURL: string) => {
+  try {
+    const fileNameFromURL = fileURL.startsWith("/storage/")
+      ? fileURL.split("/").pop()
+      : new URL(fileURL).pathname.split("/").pop();
+
+    return fileNameFromURL;
+  } catch (error) {
+    console.error("Error parsing file URL:", error);
+  }
+};

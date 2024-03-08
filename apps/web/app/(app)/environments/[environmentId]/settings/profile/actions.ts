@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { deleteFile } from "@formbricks/lib/storage/service";
 import { deleteUser, updateUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TUserUpdateInput } from "@formbricks/types/user";
@@ -83,7 +85,7 @@ export async function updateAvatarAction(avatarUrl: string) {
   return await updateUser(session.user.id, { imageUrl: avatarUrl });
 }
 
-export async function removeAvatarAction() {
+export async function removeAvatarAction(environmentId: string, fileName: string) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -94,5 +96,16 @@ export async function removeAvatarAction() {
     throw new Error("User not found");
   }
 
-  return await updateUser(session.user.id, { imageUrl: null });
+  const isUserAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!isUserAuthorized) {
+    throw new Error("Not Authorized");
+  }
+  //Also delete the image from the storage
+  const deletionResult = await deleteFile(environmentId, "public", fileName);
+
+  if (deletionResult.success) {
+    return await updateUser(session.user.id, { imageUrl: null });
+  } else {
+    throw new Error("Deletion failed");
+  }
 }
