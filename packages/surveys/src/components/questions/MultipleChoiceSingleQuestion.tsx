@@ -7,8 +7,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 
 interface MultipleChoiceSingleProps {
@@ -86,7 +85,7 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="bg-survey-bg relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
+            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
             role="radiogroup">
             {questionChoices.map((choice, idx) => (
               <label

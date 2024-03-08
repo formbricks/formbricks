@@ -21,13 +21,13 @@ export const users = {
   survey: [
     {
       name: "Survey User 1",
-      email: "survey1@formbricks.com",
+      email: "survey3@formbricks.com",
       password: "Y1I*EpURUSb32j5XijP",
     },
     {
       name: "Survey User 2",
       email: "survey2@formbricks.com",
-      password: "Y1I*EpURUSb32j5XijP",
+      password: "G73*Gjif22F4JKM1pA",
     },
   ],
   js: [
@@ -83,7 +83,7 @@ export const teams = {
     {
       role: "Founder",
       useCase: "Increase conversion",
-      productName: "Formbricks E2E Test Suite",
+      productName: "My Product",
     },
   ],
 };

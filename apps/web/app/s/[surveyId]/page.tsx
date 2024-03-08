@@ -8,12 +8,10 @@ import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL } from "@formbricks/lib/constants";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponseBySingleUseId } from "@formbricks/lib/response/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";

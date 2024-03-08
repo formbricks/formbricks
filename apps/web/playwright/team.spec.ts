@@ -1,6 +1,6 @@
 import { expect, test } from "playwright/test";
 
-import { login, signUpAndLogin, signupUsingInviteToken, skipOnboarding } from "./utils/helper";
+import { finishOnboarding, login, signUpAndLogin, signupUsingInviteToken } from "./utils/helper";
 import { invites, users } from "./utils/mock";
 
 test.describe("Invite, accept and remove team member", async () => {
@@ -10,7 +10,7 @@ test.describe("Invite, accept and remove team member", async () => {
 
   test("Invite team member", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await skipOnboarding(page);
+    await finishOnboarding(page);
 
     const dropdownTrigger = page.locator("#userDropdownTrigger");
     await expect(dropdownTrigger).toBeVisible();
@@ -58,7 +58,7 @@ test.describe("Invite, accept and remove team member", async () => {
     const pendingSpan = lastMemberInfo.locator("span").filter({ hasText: "Pending" });
     await expect(pendingSpan).toBeVisible();
 
-    const shareInviteButton = page.locator("#shareInviteButton");
+    const shareInviteButton = page.locator(".shareInviteButton").last();
     await expect(shareInviteButton).toBeVisible();
 
     await shareInviteButton.click();
@@ -84,7 +84,7 @@ test.describe("Invite, accept and remove team member", async () => {
     await page.getByRole("link", { name: "Create account" }).click();
 
     await signupUsingInviteToken(page, name, email, password);
-    await skipOnboarding(page);
+    await finishOnboarding(page);
   });
 
   test("Remove member", async ({ page }) => {

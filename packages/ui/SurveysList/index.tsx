@@ -30,14 +30,12 @@ export default function SurveysList({
   const [filteredSurveys, setFilteredSurveys] = useState<TSurvey[]>(surveys);
   // Initialize orientation state with a function that checks if window is defined
   const [orientation, setOrientation] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("surveyOrientation") || "grid" : "grid"
+    typeof localStorage !== "undefined" ? localStorage.getItem("surveyOrientation") || "grid" : "grid"
   );
 
   // Save orientation to localStorage
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("surveyOrientation", orientation);
-    }
+    localStorage.setItem("surveyOrientation", orientation);
   }, [orientation]);
 
   return (

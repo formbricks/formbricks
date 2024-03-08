@@ -61,7 +61,7 @@ function DeleteAccountModal({ setOpen, open, session, IS_FORMBRICKS_CLOUD }: Del
         await signOut({ redirect: true });
         window.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
       } else {
-        await signOut();
+        await signOut({ callbackUrl: "/auth/login" });
       }
     } catch (error) {
       toast.error("Something went wrong");
