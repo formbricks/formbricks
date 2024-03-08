@@ -329,7 +329,7 @@ export const extracMetadataKeys = (obj: TResponse["meta"]) => {
 };
 
 export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
-  const metaDataFields = extracMetadataKeys(responses[0]?.meta);
+  const metaDataFields = responses.length > 0 ? extracMetadataKeys(responses[0].meta) : [];
   const questions = survey.questions.map((question, idx) => `${idx + 1}. ${question.headline}`);
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
   const userAttributes = Array.from(
