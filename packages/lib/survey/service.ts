@@ -352,7 +352,7 @@ export const transformToLegacySurvey = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return formatDateFields(transformedSurvey, ZLegacySurvey);
+  return formatDateFields(transformedSurvey as TLegacySurvey, ZLegacySurvey);
 };
 
 export const transformSurveyToSpecificLanguage = async (

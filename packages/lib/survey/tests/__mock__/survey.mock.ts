@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 
-import { TLegacySurveyQuestion, TLegacySurveyWelcomeCard } from "@formbricks/types/LegacySurvey";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TProduct } from "@formbricks/types/product";
@@ -119,15 +118,6 @@ export const mockPrismaPerson: Prisma.PersonGetPayload<{
       },
     },
   ],
-  ...commonMockProperties,
-};
-
-export const mockPrismaPersonWithoutAttributes: Prisma.PersonGetPayload<{
-  include: typeof selectPerson;
-}> = {
-  id: mockId,
-  userId: mockId,
-  attributes: [],
   ...commonMockProperties,
 };
 
@@ -265,63 +255,4 @@ export const updateSurveyInput: TSurvey = {
 export const mockTransformedSurveyOutput = {
   ...mockSurveyOutput,
   triggers: mockSurveyOutput.triggers.map((trigger) => trigger.actionClass.name),
-};
-
-const mockQuestionWithDefaultTranslation = {
-  ...mockQuestion,
-  headline: { default: "Question Text" },
-};
-
-const mockWelcomeCardWithDefaultTranslation = {
-  ...mockWelcomeCard,
-  headline: { default: "My welcome card" },
-};
-
-export const mockSurveyOutputWithDefaultTranslation = {
-  ...mockTransformedSurveyOutput,
-  questions: [mockQuestionWithDefaultTranslation],
-  welcomeCard: mockWelcomeCardWithDefaultTranslation,
-};
-
-const mockLegacyWelcomeCard: TLegacySurveyWelcomeCard = {
-  enabled: false,
-  headline: "My welcome card",
-  timeToFinish: false,
-  showResponseCount: false,
-};
-
-const mockLegacyQuestion: TLegacySurveyQuestion = {
-  id: mockId,
-  type: TSurveyQuestionType.OpenText,
-  headline: "Question Text",
-  required: false,
-  inputType: "text",
-};
-
-export const mockTransformedLegacySurveyOutput = {
-  ...mockTransformedSurveyOutput,
-  questions: [mockLegacyQuestion],
-  welcomeCard: mockLegacyWelcomeCard,
-};
-
-export const mockTranslatedSurveyOutput = {
-  ...mockTransformedSurveyOutput,
-  questions: [mockQuestion],
-  welcomeCard: mockWelcomeCard,
-};
-
-export const mockTranslatedLegacyQuestion: TLegacySurveyQuestion = {
-  ...mockLegacyQuestion,
-  headline: "Fragetext",
-};
-
-export const mockTranslatedLegacyWelcomeCard: TLegacySurveyWelcomeCard = {
-  ...mockLegacyWelcomeCard,
-  headline: "Meine Willkommenskarte",
-};
-
-export const mockTranslatedLegacySurveyOutput = {
-  ...mockTransformedSurveyOutput,
-  questions: [mockTranslatedLegacyQuestion],
-  welcomeCard: mockTranslatedLegacyWelcomeCard,
 };
