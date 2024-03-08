@@ -1,13 +1,17 @@
 "use client";
 
+import Placement from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Placement";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import React, { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
+import { TPlacement } from "@formbricks/types/common";
 import { TSurvey } from "@formbricks/types/surveys";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
+import { Label } from "@formbricks/ui/Label";
+import { Slider } from "@formbricks/ui/Slider";
 import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabel";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -27,6 +31,9 @@ const CardStylingSettings = ({
   setOpen,
 }: CardStylingSettingsProps) => {
   const [isHighlightBorderAllowed, setIsHighlightBorderAllowed] = useState(false);
+  const { styling, productOverwrites, type } = localSurvey;
+  const { hideProgressBar } = styling ?? {};
+  const { placement, clickOutsideClose, darkOverlay } = productOverwrites ?? {};
 
   const cardBgColor = localSurvey.styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
   const setCardBgColor = (color: string) => {
@@ -55,6 +62,71 @@ const CardStylingSettings = ({
         },
       },
     }));
+  };
+
+  const roundness = localSurvey.styling?.roundness ?? 8;
+  const setRoundness = (value: number) => {
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...localSurvey.styling,
+        roundness: value,
+      },
+    });
+  };
+
+  const togglePlacement = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        placement: !!placement ? null : "bottomRight",
+        clickOutsideClose: false,
+        darkOverlay: false,
+      },
+    });
+  };
+
+  const handlePlacementChange = (placement: TPlacement) => {
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        placement,
+      },
+    });
+  };
+
+  const handleOverlay = (overlayType: string) => {
+    const darkOverlay = overlayType === "dark";
+
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        darkOverlay,
+      },
+    });
+  };
+
+  const handleClickOutsideClose = (clickOutsideClose: boolean) => {
+    setLocalSurvey({
+      ...localSurvey,
+      productOverwrites: {
+        ...localSurvey.productOverwrites,
+        clickOutsideClose,
+      },
+    });
+  };
+
+  const toggleProgressBarVisibility = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...localSurvey.styling,
+        hideProgressBar: !hideProgressBar,
+      },
+    });
   };
 
   return (
@@ -119,6 +191,65 @@ const CardStylingSettings = ({
               )}
             </div>
           )}
+
+          <div className="my-3 flex flex-col gap-4 p-3">
+            <div className="flex flex-col">
+              <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
+              <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
+            </div>
+            <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
+              <Slider value={[roundness]} max={22} onValueChange={(value) => setRoundness(value[0])} />
+            </div>
+          </div>
+
+          {/* Positioning */}
+          {localSurvey.type !== "link" && (
+            <div className="p-3 ">
+              <div className="ml-2 flex items-center space-x-1">
+                <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />
+                <Label htmlFor="surveyDeadline" className="cursor-pointer">
+                  <div className="ml-2">
+                    <h3 className="text-sm font-semibold text-slate-700">Overwrite Placement</h3>
+                    <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
+                  </div>
+                </Label>
+              </div>
+              {placement && (
+                <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
+                  <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                    <div className="w-full items-center">
+                      <Placement
+                        currentPlacement={placement}
+                        setCurrentPlacement={handlePlacementChange}
+                        setOverlay={handleOverlay}
+                        overlay={darkOverlay ? "dark" : "light"}
+                        setClickOutsideClose={handleClickOutsideClose}
+                        clickOutsideClose={!!clickOutsideClose}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="p-3">
+            <div className="ml-2 flex items-center space-x-1">
+              <Switch
+                id="hideProgressBar"
+                checked={!!hideProgressBar}
+                onCheckedChange={toggleProgressBarVisibility}
+              />
+              <Label htmlFor="hideProgressBar" className="cursor-pointer">
+                <div className="ml-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
+                  <p className="text-xs font-normal text-slate-500">
+                    Disable the visibility of survey progress
+                  </p>
+                </div>
+              </Label>
+            </div>
+          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

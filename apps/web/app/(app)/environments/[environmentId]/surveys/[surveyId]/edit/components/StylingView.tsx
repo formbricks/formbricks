@@ -1,6 +1,6 @@
+import BackgroundStylingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
 import CardStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import FormStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
-import StylingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingCard";
 import { RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
@@ -96,15 +96,17 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
         disabled={!overwriteUnifiedStyling}
       />
 
-      <StylingCard
-        open={stylingOpen}
-        setOpen={setStylingOpen}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-        colours={colours}
-        environmentId={environment.id}
-        disabled={!overwriteUnifiedStyling}
-      />
+      {localSurvey.type === "link" && (
+        <BackgroundStylingCard
+          open={stylingOpen}
+          setOpen={setStylingOpen}
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          colours={colours}
+          environmentId={environment.id}
+          disabled={!overwriteUnifiedStyling}
+        />
+      )}
 
       {product.styling?.unifiedStyling && (
         <div className="mt-4 flex items-center justify-between">

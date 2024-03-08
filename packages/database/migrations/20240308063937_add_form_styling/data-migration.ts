@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 
-import { TProductStyling } from "@formbricks/types/product";
+const DEFAULT_BRAND_COLOR = "#64748b";
+const DEFAULT_STYLING = {
+  unifiedStyling: true,
+  allowStyleOverwrite: false,
+};
 
 const prisma = new PrismaClient();
 async function main() {
@@ -14,30 +18,41 @@ async function main() {
     }
     if (products.length) {
       for (const product of products) {
-        if (product.styling !== null) {
-          // styling object already exists for this product
+        // no migration needed
+        // 1. product's brandColor is equal to the default one
+        // 2. product's styling object is equal the default one
+        // 3. product has no highlightBorderColor
+
+        if (
+          product.brandColor === DEFAULT_BRAND_COLOR &&
+          JSON.stringify(product.styling) === JSON.stringify(DEFAULT_STYLING) &&
+          !product.highlightBorderColor
+        ) {
           continue;
         }
-        const styling: TProductStyling = {
-          unifiedStyling: false,
-          allowStyleOverwrite: true,
-          brandColor: {
-            light: product.brandColor,
-          },
-          ...(product.highlightBorderColor && {
-            highlightBorderColor: {
-              light: product.highlightBorderColor,
+
+        if (product.brandColor) {
+          await tx.product.update({
+            where: {
+              id: product.id,
             },
-          }),
-        };
-        await tx.product.update({
-          where: {
-            id: product.id,
-          },
-          data: {
-            styling,
-          },
-        });
+            data: {
+              brandColor: null,
+              styling: {
+                unifiedStyling: false,
+                allowStyleOverwrite: true,
+                brandColor: {
+                  light: product.brandColor,
+                },
+                ...(product.highlightBorderColor && {
+                  highlightBorderColor: {
+                    light: product.highlightBorderColor,
+                  },
+                }),
+              },
+            },
+          });
+        }
       }
     }
   });
