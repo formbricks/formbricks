@@ -198,7 +198,7 @@ export const ZResponse = z.object({
   ttc: ZResponseTtc.optional(),
   notes: z.array(ZResponseNote),
   tags: z.array(ZTag),
-  meta: ZResponseMeta.nullable(),
+  meta: ZResponseMeta,
   singleUseId: z.string().nullable(),
 });
 
