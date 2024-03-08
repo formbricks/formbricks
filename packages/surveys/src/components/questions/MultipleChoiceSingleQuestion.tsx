@@ -61,16 +61,12 @@ export default function MultipleChoiceSingleQuestion({
   }, [question.id, question.choices, value]);
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
-  const choicesContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
-    if (otherSelected && choicesContainerRef.current && otherSpecify.current) {
-      choicesContainerRef.current.scrollTop = choicesContainerRef.current.scrollHeight;
-      otherSpecify.current.focus();
+    if (otherSelected) {
+      otherSpecify.current?.focus();
     }
   }, [otherSelected]);
-
   return (
     <form
       key={question.id}
@@ -90,8 +86,7 @@ export default function MultipleChoiceSingleQuestion({
 
           <div
             className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
-            role="radiogroup"
-            ref={choicesContainerRef}>
+            role="radiogroup">
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
