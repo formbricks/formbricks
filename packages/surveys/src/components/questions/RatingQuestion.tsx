@@ -103,7 +103,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="bg-survey-bg relative h-[41px] flex-1 cursor-pointer text-center text-sm leading-[2.8rem]">
+                className="bg-survey-bg relative flex-1 cursor-pointer text-center text-sm leading-[2.8rem]">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
@@ -117,7 +117,7 @@ export default function RatingQuestion({
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
-                      "text-heading focus:bg-accent-bg block h-full w-full border focus:outline-none"
+                      "text-heading focus:bg-accent-bg block h-12 w-full border focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -131,7 +131,7 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      "flex h-full max-h-16 justify-center focus:outline-none",
+                      "flex h-16 max-h-16 justify-center focus:outline-none",
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
                         : "text-slate-300",
@@ -150,7 +150,7 @@ export default function RatingQuestion({
                 ) : (
                   <label
                     className={cn(
-                      "flex h-full max-h-16 justify-center",
+                      "flex h-16 max-h-16 justify-center",
                       value === number || hoveredNumber === number
                         ? "stroke-rating-selected text-rating-selected"
                         : "stroke-heading text-heading"
