@@ -48,3 +48,21 @@ export const lightenDarkenColor = (hexColor: string, magnitude: number) => {
     return hexColor;
   }
 };
+
+export const mixColor = (hexColor: string, mixWithHex: string, weight: number) => {
+  // Convert both colors to RGBA format
+  const color1 = hexToRGBA(hexColor, 1) || "";
+  const color2 = hexToRGBA(mixWithHex, 1) || "";
+
+  // Extract RGBA values
+  const [r1, g1, b1] = color1.match(/\d+/g)?.map(Number) || [0, 0, 0];
+  const [r2, g2, b2] = color2.match(/\d+/g)?.map(Number) || [0, 0, 0];
+
+  // Mix the colors
+  const r = Math.round(r1 * (1 - weight) + r2 * weight);
+  const g = Math.round(g1 * (1 - weight) + g2 * weight);
+  const b = Math.round(b1 * (1 - weight) + b2 * weight);
+
+  // Convert back to RGBA string with 100% opacity
+  return `rgba(${r}, ${g}, ${b}, 1)`;
+};

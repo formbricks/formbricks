@@ -70,8 +70,6 @@ export const PREVIEW_SURVEY = {
     enabled: true,
     headline: "Thank you!",
     subheader: "We appreciate your feedback.",
-    buttonLink: "https://formbricks.com/signup",
-    buttonLabel: "Create your own Survey",
   },
   hiddenFields: {
     enabled: true,

@@ -24,7 +24,7 @@ export default function ResponseOptionsCard({
   setLocalSurvey,
   responseCount,
 }: ResponseOptionsCardProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
   const [surveyCloseOnDateToggle, setSurveyCloseOnDateToggle] = useState(false);

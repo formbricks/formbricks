@@ -3,7 +3,7 @@ import FormStylingSettings from "@/app/(app)/environments/[environmentId]/survey
 import StylingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingCard";
 import { RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -29,6 +29,10 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
     return !!localSurvey?.styling?.overwriteUnifiedStyling;
   }, [localSurvey?.styling?.overwriteUnifiedStyling, product.styling?.unifiedStyling]);
 
+  const [formStylingOpen, setFormStylingOpen] = useState(false);
+  const [cardStylingOpen, setCardStylingOpen] = useState(false);
+  const [stylingOpen, setStylingOpen] = useState(false);
+
   const setOverwriteUnifiedStyling = (value: boolean) => {
     setLocalSurvey((prev) => ({ ...prev, styling: { ...prev.styling, overwriteUnifiedStyling: value } }));
   };
@@ -36,7 +40,6 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
   const onResetUnifiedStyling = () => {
     const { styling: productStyling } = product;
     const { unifiedStyling, allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
-    // const { background, hideProgressBar } = localSurvey.styling ?? {};
 
     setLocalSurvey((prev) => ({
       ...prev,
@@ -48,6 +51,20 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
 
     toast.success("Styling set to unified styles");
   };
+
+  useEffect(() => {
+    if (!overwriteUnifiedStyling) {
+      setFormStylingOpen(false);
+      setCardStylingOpen(false);
+      setStylingOpen(false);
+    }
+  }, [overwriteUnifiedStyling]);
+
+  useEffect(() => {
+    if (!product.styling?.unifiedStyling) {
+      setFormStylingOpen(true);
+    }
+  }, [product.styling?.unifiedStyling]);
 
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -64,18 +81,24 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
       )}
 
       <FormStylingSettings
+        open={formStylingOpen}
+        setOpen={setFormStylingOpen}
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         disabled={!overwriteUnifiedStyling}
       />
 
       <CardStylingSettings
+        open={cardStylingOpen}
+        setOpen={setCardStylingOpen}
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         disabled={!overwriteUnifiedStyling}
       />
 
       <StylingCard
+        open={stylingOpen}
+        setOpen={setStylingOpen}
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
         colours={colours}
@@ -94,6 +117,7 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
             To set unified styling, go to the{" "}
             <Link
               href={`/environments/${environment.id}/settings/lookandfeel`}
+              target="_blank"
               className="font-semibold underline">
               Look & Feel
             </Link>{" "}

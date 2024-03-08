@@ -12,13 +12,20 @@ import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabe
 import { Switch } from "@formbricks/ui/Switch";
 
 type CardStylingSettingsProps = {
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   disabled?: boolean;
 };
 
-const CardStylingSettings = ({ localSurvey, setLocalSurvey, disabled }: CardStylingSettingsProps) => {
-  const [open, setOpen] = useState(false);
+const CardStylingSettings = ({
+  localSurvey,
+  setLocalSurvey,
+  disabled,
+  open,
+  setOpen,
+}: CardStylingSettingsProps) => {
   const [isHighlightBorderAllowed, setIsHighlightBorderAllowed] = useState(false);
 
   const cardBgColor = localSurvey.styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;

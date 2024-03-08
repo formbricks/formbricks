@@ -18,6 +18,7 @@ module.exports = {
         subheading: "var(--fb-subheading-color)",
         "info-text": "var(--fb-info-text-color)",
         signature: "var(--fb-signature-text-color)",
+        "branding-text": "var(--fb-branding-text-color)",
         "survey-bg": "var(--fb-survey-background-color)",
         "accent-bg": "var(--fb-accent-background-color)",
         "accent-selected-bg": "var(--fb-accent-background-color-selected)",

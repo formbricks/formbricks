@@ -2,7 +2,7 @@ import { isLight } from "@/lib/utils";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 
-import { hexToRGBA, lightenDarkenColor } from "@formbricks/lib/utils";
+import { hexToRGBA, lightenDarkenColor, mixColor } from "@formbricks/lib/utils";
 import { TProductStyling } from "@formbricks/types/product";
 
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
@@ -37,6 +37,9 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
     }
   };
 
+  // if roundness is defined, even if it's 0, set the border-radius
+  const roundness = styling.roundness ?? 8;
+
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
   if (!!styling.brandColor?.light) {
@@ -47,15 +50,42 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
     cssVariables += `--fb-brand-text-color: white;\n`;
   }
   appendCssVariable("heading-color", styling.questionColor?.light);
+  appendCssVariable("subheading-color", styling.questionColor?.light);
   appendCssVariable("border-color", styling.inputBorderColor?.light);
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
-  appendCssVariable("border-radius", styling.roundness ? `${styling.roundness}px` : undefined);
+  appendCssVariable("border-radius", `${roundness}px`);
   appendCssVariable("input-background-color", styling.inputColor?.light);
   if (!!styling.inputColor?.light) {
-    appendCssVariable("input-background-color-selected", lightenDarkenColor(styling.inputColor?.light, -20));
+    if (
+      styling.inputColor.light === "#fff" ||
+      styling.inputColor.light === "#ffffff" ||
+      styling.inputColor.light === "white"
+    ) {
+      appendCssVariable("input-background-color-selected", "rgb(248, 250, 252)");
+    } else {
+      appendCssVariable(
+        "input-background-color-selected",
+        lightenDarkenColor(styling.inputColor?.light, -20)
+      );
+    }
   }
-  appendCssVariable("accent-background-color", hexToRGBA(styling.brandColor?.light ?? "", 0.1));
-  appendCssVariable("accent-selected-background-color", hexToRGBA(styling.brandColor?.light ?? "", 0.2));
+
+  if (styling.brandColor?.light) {
+    const brandColor = styling.brandColor.light;
+
+    const mixWith = isLight(brandColor) ? "#000000" : "#ffffff";
+    const mixedBrandColor = mixColor(brandColor, mixWith, 0.8);
+    const mixedBrandColorSelected = mixColor(brandColor, mixWith, 0.7);
+
+    appendCssVariable("accent-background-color", mixedBrandColor);
+    appendCssVariable("accent-background-color-selected", mixedBrandColorSelected);
+  }
+
+  // when the card background gets too dark, we change the formbricks signature color to off white:
+  if (styling.cardBackgroundColor?.light && !isLight(styling.cardBackgroundColor?.light)) {
+    appendCssVariable("signature-text-color", "var(--slate-50)");
+    appendCssVariable("branding-text-color", "var(--slate-100)");
+  }
 
   // Close the :root block
   cssVariables += "}";

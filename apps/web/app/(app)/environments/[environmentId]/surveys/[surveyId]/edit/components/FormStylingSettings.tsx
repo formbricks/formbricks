@@ -2,7 +2,7 @@
 
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import React, { useState } from "react";
+import React from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
@@ -12,12 +12,18 @@ import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabe
 type FormStylingSettingsProps = {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   disabled?: boolean;
 };
 
-const FormStylingSettings = ({ localSurvey, setLocalSurvey, disabled = false }: FormStylingSettingsProps) => {
-  const [open, setOpen] = useState(false);
-
+const FormStylingSettings = ({
+  localSurvey,
+  setLocalSurvey,
+  disabled = false,
+  open,
+  setOpen,
+}: FormStylingSettingsProps) => {
   const brandColor = localSurvey.styling?.brandColor?.light || COLOR_DEFAULTS.brandColor;
   const setBrandColor = (color: string) => {
     setLocalSurvey((prev) => ({

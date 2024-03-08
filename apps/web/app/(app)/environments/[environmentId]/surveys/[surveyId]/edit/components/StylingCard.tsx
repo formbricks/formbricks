@@ -16,6 +16,8 @@ import Placement from "./Placement";
 import SurveyBgSelectorTab from "./SurveyBgSelectorTab";
 
 interface StylingCardProps {
+  open: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colours: string[];
@@ -24,13 +26,14 @@ interface StylingCardProps {
 }
 
 export default function StylingCard({
+  open,
+  setOpen,
   localSurvey,
   setLocalSurvey,
   colours,
   environmentId,
   disabled,
 }: StylingCardProps) {
-  const [open, setOpen] = useState(false);
   const progressBarHidden = localSurvey.styling?.hideProgressBar ?? false;
   const { type, productOverwrites, styling } = localSurvey;
   const { clickOutsideClose, darkOverlay, placement } = productOverwrites ?? {};
@@ -218,11 +221,12 @@ export default function StylingCard({
 
           <div className="my-3 flex flex-col gap-4 p-3">
             <div className="flex flex-col">
-              <h3 className="text-base font-semibold text-slate-900">Roundness</h3>
-              <p className="text-sm text-slate-800">Change the border radius of the card and the inputs.</p>
+              <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
+              <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
             </div>
-
-            <Slider value={[roundness]} max={16} onValueChange={(value) => setRoundness(value[0])} />
+            <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
+              <Slider value={[roundness]} max={16} onValueChange={(value) => setRoundness(value[0])} />
+            </div>
           </div>
 
           {/* Positioning */}
