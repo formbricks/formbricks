@@ -26,7 +26,7 @@ export const getFileNameWithIdFromUrl = (fileURL: string) => {
       ? fileURL.split("/").pop()
       : new URL(fileURL).pathname.split("/").pop();
 
-    return fileNameFromURL;
+    return fileNameFromURL ? decodeURIComponent(fileNameFromURL || "") : "";
   } catch (error) {
     console.error("Error parsing file URL:", error);
   }
