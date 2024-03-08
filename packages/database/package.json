@@ -24,7 +24,7 @@
     "post-install": "pnpm generate",
     "predev": "pnpm generate",
     "data-migration:v1.6": "ts-node ./migrations/20240207041922_advanced_targeting/data-migration.ts",
-    "data-migration:styling": "ts-node ./migrations/20240307132610_add_form_styling/data-migration.ts"
+    "data-migration:styling": "ts-node ./migrations/20240308063937_add_form_styling/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.10.2",
