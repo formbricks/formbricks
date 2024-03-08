@@ -100,7 +100,7 @@ export async function removeAvatarAction(environmentId: string, fileName: string
   if (!isUserAuthorized) {
     throw new Error("Not Authorized");
   }
-  //Also delete the image from the storage
+  //Delete image from the storage
   const deletionResult = await deleteFile(environmentId, "public", fileName);
 
   if (deletionResult.success) {
