@@ -22,7 +22,7 @@ export const DefaultLanguageSelect = ({
     <div className="space-y-4">
       <p className="text-sm">1. Choose the default language for this survey:</p>
       <div className="flex items-center space-x-4">
-        <div className=" w-48 ">
+        <div className="w-48 ">
           <Select
             value={`${defaultLanguage?.code}`}
             defaultValue={`${defaultLanguage?.code}`}
@@ -31,7 +31,7 @@ export const DefaultLanguageSelect = ({
               setConfirmationModalInfo({
                 open: true,
                 title: `Set ${getLanguageLabel(languageCode)} as default language`,
-                text: `The default value can only be changed by deleting all existing translations. Are you sure?`,
+                text: `Once set, the default language for this survey can only be changed by disabling the multi-language option and deleting all translations.`,
                 buttonText: `Set ${getLanguageLabel(languageCode)} as default language`,
                 onConfirm: () => handleDefaultLanguageChange(languageCode),
                 buttonVariant: "darkCTA",
