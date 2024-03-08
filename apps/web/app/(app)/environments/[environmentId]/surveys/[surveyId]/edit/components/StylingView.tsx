@@ -106,7 +106,7 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
         disabled={!overwriteUnifiedStyling}
       />
 
-      {overwriteUnifiedStyling && (
+      {product.styling?.unifiedStyling && (
         <div className="mt-4 flex items-center justify-between">
           <Button variant="minimal" className="flex items-center gap-2" onClick={onResetUnifiedStyling}>
             Reset to unified styles

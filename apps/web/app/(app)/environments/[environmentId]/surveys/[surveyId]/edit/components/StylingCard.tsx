@@ -225,7 +225,7 @@ export default function StylingCard({
               <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
             </div>
             <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-              <Slider value={[roundness]} max={16} onValueChange={(value) => setRoundness(value[0])} />
+              <Slider value={[roundness]} max={22} onValueChange={(value) => setRoundness(value[0])} />
             </div>
           </div>
 

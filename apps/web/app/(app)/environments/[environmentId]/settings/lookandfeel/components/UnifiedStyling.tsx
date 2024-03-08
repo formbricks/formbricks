@@ -351,7 +351,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
             <Slider
               value={[roundness]}
-              max={16}
+              max={22}
               min={0}
               onValueChange={(value) => setRoundness(value[0])}
               disabled={!unifiedStyling}
