@@ -307,6 +307,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
 };
 
 export const getResponsesFileName = (surveyName: string, extension: string) => {
+  // replacing / with : to avoid url issues
   surveyName = surveyName.replaceAll("/", ":");
   const formattedDateString = getTodaysDateTimeFormatted("-");
   return `export-${surveyName.split(" ").join("-")}-${formattedDateString}.${extension}`.toLocaleLowerCase();
