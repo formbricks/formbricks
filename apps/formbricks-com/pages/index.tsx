@@ -4,7 +4,6 @@ import Hero from "@/components/home/Hero";
 import Highlights from "@/components/home/Highlights";
 import ScrollToTopButton from "@/components/home/ScrollToTop";
 import Steps from "@/components/home/Steps";
-import BestPractices from "@/components/shared/BestPractices";
 import BreakerCTA from "@/components/shared/BreakerCTA";
 import Layout from "@/components/shared/Layout";
 
@@ -13,7 +12,7 @@ const IndexPage = () => (
     title="Formbricks | Privacy-first Experience Management"
     description="Build qualitative user research into your product. Leverage Best practices to increase Product-Market Fit.">
     <Hero />
-    <BestPractices />
+    {/* <BestPractices /> */}
     <Features />
     <Highlights />
     <ScrollToTopButton />

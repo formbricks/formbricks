@@ -7,6 +7,12 @@ import { Button } from "@formbricks/ui/Button";
 
 import { FooterLogo } from "../shared/Logo";
 
+const mainNav = [
+  { name: "Link Surveys", href: "/open-source-typeform", status: true },
+  { name: "Website Surveys", href: "/website-survey", status: true },
+  { name: "In-app Surveys", href: "/in-app-survey", status: true },
+];
+
 export default function HeaderLight() {
   const plausible = usePlausible();
   const router = useRouter();
@@ -19,16 +25,18 @@ export default function HeaderLight() {
             <FooterLogo className="h-8 w-auto sm:h-10" />
           </Link>
         </div>
+        <div>
+          {mainNav.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className="px-8 text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
+              {item.name}
+            </Link>
+          ))}
+        </div>
 
         <div className="flex-1 items-center justify-end md:flex">
-          {/*  <Button
-            variant="secondary"
-            onClick={() => {
-              router.push("https://cal.com/johannes/formbricks-demo");
-              plausible("Demo_CTA_TalkToUs");
-            }}>
-            Talk to us
-          </Button> */}
           <Button
             variant="highlight"
             className="px-4 md:px-6"

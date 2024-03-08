@@ -191,9 +191,9 @@ export default function LinkSurveyPage() {
         />
         <SalesTestimonial
           quote="As an open source company we highly value data privacy. It's so cool that we could self-host Formbricks within a few minutes using Docker. Great product, finally we have good open source survey software!"
-          author="ente.io"
+          author="Vishnu Mohandas, Co-Founder @ ente.io"
           imgSrc={Vishnu}
-          imgAlt="ente.io"
+          imgAlt="Vishnu Mohandas, Co-Founder @ ente.io"
           textSize="base"
         />
       </div>
