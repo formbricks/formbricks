@@ -311,6 +311,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={brandColor}
             setColor={setBrandColor}
             description="Change the brand color of the survey"
+            className="max-w-full"
             disabled={!unifiedStyling}
           />
 
@@ -319,6 +320,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={questionColor}
             setColor={setQuestionColor}
             description="Change the text color of the questions, descriptions and answer options."
+            className="max-w-full"
             disabled={!unifiedStyling}
           />
 
@@ -326,6 +328,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             label="Input color"
             color={inputColor}
             setColor={setInputColor}
+            className="max-w-full"
             description="Change the background color of the input fields"
             disabled={!unifiedStyling}
           />
@@ -335,6 +338,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={inputBorderColor}
             setColor={setInputBorderColor}
             description="Change the border color of the input fields"
+            className="max-w-full"
             disabled={!unifiedStyling}
           />
 
@@ -343,6 +347,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={cardBackgroundColor}
             setColor={setCardBackgroundColor}
             description="Change the background color of the card"
+            className="max-w-full"
             disabled={!unifiedStyling}
           />
 
@@ -370,7 +375,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             )}
           </div>
 
-          <div className="flex max-w-xs flex-col gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col">
               <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
               <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
