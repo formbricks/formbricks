@@ -196,7 +196,7 @@ const AliasTooltip = () => {
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          The alias is an alternate name to identify the language in link surveys and the SDK.
+          The alias is an alternate name to identify the language in link surveys and the SDK (optional)
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
