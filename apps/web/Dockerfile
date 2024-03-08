@@ -30,9 +30,9 @@ RUN apk add --no-cache curl \
     && chmod +x /tmp/supercronic
 
 # Set hardcoded environment variables
-ENV DATABASE_URL="placeholder_for_build@database.url"
-ENV NEXTAUTH_SECRET="placeholder_for_build_nextauth_secret"
-ENV ENCRYPTION_KEY="placeholder_for_build_encryption_key"
+ENV DATABASE_URL="postgresql://placeholder:for@build:5432/gets_overwritten_at_runtime?schema=public"
+ENV NEXTAUTH_SECRET="placeholder_for_next_auth_of_64_chars_get_overwritten_at_runtime"
+ENV ENCRYPTION_KEY="placeholder_for_build_key_of_64_chars_get_overwritten_at_runtime"
 
 ARG NEXT_PUBLIC_SENTRY_DSN
 
