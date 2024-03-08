@@ -73,7 +73,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
   if (styling.brandColor?.light) {
     const brandColor = styling.brandColor.light;
 
-    const mixWith = isLight(brandColor) ? "#000000" : "#ffffff";
+    const mixWith = isLight(brandColor) ? "#ffffff" : "#ffffff";
     const mixedBrandColor = mixColor(brandColor, mixWith, 0.8);
     const mixedBrandColorSelected = mixColor(brandColor, mixWith, 0.7);
 
