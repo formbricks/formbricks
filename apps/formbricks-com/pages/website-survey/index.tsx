@@ -7,9 +7,7 @@ import SalesPageHero from "@/components/salespage/SalesPageHero";
 import SalesSteps from "@/components/salespage/SalesSteps";
 import SalesTestimonial from "@/components/salespage/SalesTestimonial";
 import Marius from "@/images/clients/headshots/marius.jpeg";
-import Peer from "@/images/clients/headshots/peer.jpeg";
-import Ram from "@/images/clients/headshots/ram.jpeg";
-import PlaceholderImg from "@/images/placeholder.png";
+import Vishnu from "@/images/clients/headshots/vishnu.jpeg";
 import {
   IoCalendarNumber,
   IoCaretDownCircle,
@@ -18,6 +16,17 @@ import {
   IoPlayForward,
   IoStopwatch,
 } from "react-icons/io5";
+
+import Img1 from "./1-website-survey-open-source-free-gdpr-compliant-like-hotjar-ask.png";
+import Img2 from "./2-open-source-website-survey-free-hotjar-ask-alternative-gdpr.png";
+import Img3 from "./3-no-code-targeting-website-survey-open-source-survey.png";
+import Img4 from "./4-privacy-first-website-form-survey-on-landing-page-open-source.png";
+import Img5 from "./5-fast-loading-website-form-open-source-gdpr-ccpa-hotjar-ask-alternative.png";
+import Img6 from "./5-multi-language-website-forms-open-source-for-free.png";
+import Img7 from "./7-landing-page-survey-forms-open-source-hotjar-alternative.png";
+import Img8 from "./8-targeting-website-surveys-open-source-trigger.png";
+import Img9 from "./9-increase-conversion-rate-website-survey-open-source.png";
+import Img10 from "./10-screenshot-of-website-survey-run-open-source-for-data-privacy-gpdr-ccpa.png";
 
 const websiteSurveySteps = [
   {
@@ -42,7 +51,7 @@ const websiteSurveyFeatures = [
     headline: "No-code targeting",
     subheadline:
       "No need to make changes to your code base. Use generic triggers like clicks, page views, scroll depth or exit intent to trigger surveys when you need it.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img3,
     imgAlt: "tba",
     imgLeft: false,
   },
@@ -50,14 +59,15 @@ const websiteSurveyFeatures = [
     headline: "100% privacy-first",
     subheadline:
       "Formbricks can be self-hosted with 1 click. Prefer a managed service? We run our Cloud as a German company, hosted in Germany: Fully GDPR- and CCPA-compliant.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img4,
     imgAlt: "tba",
     imgLeft: true,
   },
   {
-    headline: "Super fast",
-    subheadline: "The Formbricks SDK is tiny (7KB). Keep your website lightning fast for better SEO!",
-    imgSrc: PlaceholderImg,
+    headline: "Super fast ⚡",
+    subheadline:
+      "The Formbricks SDK is tiny (7KB). Keep your website lightning fast for better SEO. Formbricks loads deferred so never slows down your page.",
+    imgSrc: Img5,
     imgAlt: "tba",
     imgLeft: false,
   },
@@ -65,7 +75,7 @@ const websiteSurveyFeatures = [
     headline: "Multi-language surveys",
     subheadline:
       "Have your website in several languages? No problem! Easily manage multi language surveys with Formbricks.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img6,
     imgAlt: "tba",
     imgLeft: true,
   },
@@ -73,7 +83,7 @@ const websiteSurveyFeatures = [
     headline: "Fully on brand design",
     subheadline:
       "Freely customize the look and feel of your surveys. Make them match your website design for better conversion rates.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img7,
     imgAlt: "tba",
     imgLeft: false,
   },
@@ -84,15 +94,15 @@ const linkSurveyFeaturesPt2 = [
     headline: "Fine-grained targeting with custom attributes",
     subheadline:
       "Attach custom attributes to your visitors and target only visitors who match. Built for scale.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img8,
     imgAlt: "tba",
     imgLeft: true,
   },
   {
-    headline: "Forget ad blockers",
+    headline: "Forget about ad blockers",
     subheadline:
-      "Many survey tools are considered tracking tools and are blocked by browsers. Self-host Formbricks and increase your response rate significantly.",
-    imgSrc: PlaceholderImg,
+      "Many survey tools are considered tracking tools and get blocked by browsers. Self-host Formbricks and increase your response rate significantly.",
+    imgSrc: Img9,
     imgAlt: "tba",
     imgLeft: false,
   },
@@ -100,7 +110,7 @@ const linkSurveyFeaturesPt2 = [
     headline: "Snap a screenshot for more context",
     subheadline:
       "Understand the context of users filling in your survey with a screenshot. Erase potentially personalized data out automatically.",
-    imgSrc: PlaceholderImg,
+    imgSrc: Img10,
     imgAlt: "tba",
     imgLeft: true,
   },
@@ -168,30 +178,30 @@ export default function LinkSurveyPage() {
       <SalesPageHero
         headline="Website Surveys, Privacy-First 🔒"
         subheadline="Understand what people need on your website. Keep full control over your data, always."
-        imgSrc={PlaceholderImg}
+        imgSrc={Img1}
         imgAlt="Run targeted website surveys to optimize conversions and learn from your visitors."
       />
       <div className="grid gap-4 md:grid-cols-2">
         <SalesTestimonial
-          quote="We run NPS surveys for several products with Formbricks. It's open source, the team is super responsive and we can use one license on unlimited domains - definitely recommended!"
+          quote="We run NPS surveys for several products with Formbricks. It's open source and the team lays a strong focus on keeping user data secure and compliant - definitely recommended!"
           author="Marius Cristea, CTO @ ThemeIsle"
           imgSrc={Marius}
           imgAlt="Marius Cristea, CTO @ ThemeIsle"
           textSize="base"
         />
         <SalesTestimonial
-          quote="We're using a self-hosted instance of Formbricks with tens of thousands of users. The insights we gather with Formbricks are invaluable for our product decisions. Great product, built for scale!"
-          author="Ram Pasala, CEO @ NeverInstall"
-          imgSrc={Ram}
-          imgAlt="Ram Pasala, CEO @ NeverInstall"
+          quote="As an open source company we highly value data privacy. It's so cool that we could self-host Formbricks within a few minutes using Docker. Great product, finally we have good open source survey software!"
+          author="ente.io"
+          imgSrc={Vishnu}
+          imgAlt="ente.io"
           textSize="base"
         />
       </div>
       <SalesPageFeature
         headline="Keep all data private and secure"
-        subheadline="Formbricks is open source and can be self-hosted easily. Fly through compliance reviews by keeping all data on premise - or use our EU cloud 🇪🇺"
-        imgSrc={PlaceholderImg}
-        imgAlt="tba"
+        subheadline="Formbricks is open source and can be self-hosted easily. Fly through compliance reviews by keeping all data on premise - or use our EU Cloud 🇪🇺"
+        imgSrc={Img2}
+        imgAlt="Formbricks is open source and can be self-hosted easily. Fly through compliance reviews by keeping all data on premise - or use our EU cloud "
         imgLeft
       />
 
@@ -221,12 +231,9 @@ export default function LinkSurveyPage() {
           />
         );
       })}
-      <SalesTestimonial
-        quote="We measure the clarity of our docs and learn from churn all on one platform. Great product, very responsive team!"
-        author="Peer Richelsen, CEO @ cal.com"
-        imgSrc={Peer}
-        imgAlt="Peer Richelsen, Co-Founder and CEO of Cal.com"
-        textSize="large"
+      <SalesBreaker
+        headline="All clear? Get started!"
+        subheadline="Run targeted website surveys, all privacy-first. Make the most out of your website traffic while keeping your data private and secure."
       />
       <div className="space-y-12">
         <h2 className="text-balance text-center text-3xl font-bold text-slate-800">More Features</h2>
@@ -243,10 +250,6 @@ export default function LinkSurveyPage() {
           })}
         </div>
       </div>
-      <SalesBreaker
-        headline="All clear? Get started!"
-        subheadline="Run targeted website surveys, all privacy-first. Make the most out of your website traffic while keeping your data private and secure."
-      />
       <div className="space-y-12">
         <h2 className="text-balance text-center text-3xl font-bold text-slate-800">FAQ</h2>
         <div className="gap-4">

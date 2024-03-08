@@ -6,10 +6,9 @@ import SalesPageFeature from "@/components/salespage/SalesPageFeature";
 import SalesPageHero from "@/components/salespage/SalesPageHero";
 import SalesSteps from "@/components/salespage/SalesSteps";
 import SalesTestimonial from "@/components/salespage/SalesTestimonial";
-import Peer from "@/images/clients/headshots/peer.jpeg";
+import Bailey from "@/images/clients/headshots/bailey.jpeg";
 import Ram from "@/images/clients/headshots/ram.jpeg";
 import Sachin from "@/images/clients/headshots/sachin.jpeg";
-import PlaceholderImg from "@/images/placeholder.png";
 import {
   IoCalendarNumber,
   IoCaretDownCircle,
@@ -19,6 +18,7 @@ import {
   IoStopwatch,
 } from "react-icons/io5";
 
+import Img1 from "./1-in-app-survey-open-source-free-gdpr-compliant-for-in-product-research.png";
 import Img2 from "./2-in-app-survey-open-source-sprig-alternative.png";
 import Img3 from "./3-granular-targeting-for-in-app-surveys-open-source.png";
 import Img4 from "./4-multi-language-in-app-survey-translation-rtl-ltr.png";
@@ -172,7 +172,7 @@ export default function LinkSurveyPage() {
           </span>
         }
         subheadline="In-product user research with a native look and feel. Ask only the right cohort, ask gracefully."
-        imgSrc={PlaceholderImg}
+        imgSrc={Img1}
         imgAlt="Targeted in app surveys built on open source technology."
       />
       <div className="grid gap-4 md:grid-cols-2">
@@ -225,7 +225,13 @@ export default function LinkSurveyPage() {
           />
         );
       })}
-      <SalesTestimonial quote="tba" author="tba" imgSrc={Peer} imgAlt="tba" textSize="large" />
+      <SalesTestimonial
+        quote="As a product-led growth company, we run surveys at key moments in our user journey. We spent a lot of time crafting our UX and I love how seamless Formbricks fits in! Should be a no-brainer for every product team."
+        author="Bailey Pumfleet, Co-CEO @ Cal.com"
+        imgSrc={Bailey}
+        imgAlt="tba"
+        textSize="large"
+      />
       <div className="space-y-12">
         <h2 className="text-balance text-center text-3xl font-bold text-slate-800">More Features</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -18,7 +18,7 @@ export default function SalesTestimonial({
   return (
     <div className="flex flex-col items-center space-y-4 rounded-xl border border-slate-200 bg-slate-100 p-8 text-center">
       <h3
-        className={`text-balance font-medium text-slate-700 ${textSize === "base" ? "text-xl" : "text-2xl"} `}>
+        className={`text-balance font-medium text-slate-700 ${textSize === "base" ? "text-xl" : "text-xl lg:text-2xl"} `}>
         {quote}
       </h3>
       <p className="text-lg text-slate-500">{author}</p>

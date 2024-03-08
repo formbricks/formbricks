@@ -28,7 +28,7 @@ export default function SalesPageFeature({
         <Image
           src={imgSrc}
           alt={imgAlt}
-          className="rounded-3xl border border-slate-200 bg-white transition delay-75 duration-500 group-hover:border-slate-300"
+          className="rounded-3xl border border-slate-200 bg-white transition delay-75 duration-[1500ms] group-hover:scale-[105%] group-hover:border-slate-300"
         />
       </div>
     </div>
