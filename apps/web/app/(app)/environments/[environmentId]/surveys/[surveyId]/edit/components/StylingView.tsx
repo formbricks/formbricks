@@ -103,7 +103,6 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
           colours={colours}
-          environmentId={environment.id}
           disabled={!overwriteUnifiedStyling}
         />
       )}

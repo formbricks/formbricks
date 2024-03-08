@@ -2,14 +2,10 @@
 
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import Link from "next/link";
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyBackgroundBgType } from "@formbricks/types/surveys";
-import { Label } from "@formbricks/ui/Label";
-import { Slider } from "@formbricks/ui/Slider";
-import { Switch } from "@formbricks/ui/Switch";
 
 import SurveyBgSelectorTab from "./SurveyBgSelectorTab";
 
@@ -19,7 +15,6 @@ interface BackgroundStylingCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colours: string[];
-  environmentId: string;
   disabled?: boolean;
 }
 
@@ -29,11 +24,9 @@ export default function BackgroundStylingCard({
   localSurvey,
   setLocalSurvey,
   colours,
-  environmentId,
   disabled,
 }: BackgroundStylingCardProps) {
-  const progressBarHidden = localSurvey.styling?.hideProgressBar ?? false;
-  const { type, styling } = localSurvey;
+  const { styling } = localSurvey;
   const { bgType } = styling?.background ?? {};
 
   const [inputValue, setInputValue] = useState(100);
@@ -68,27 +61,6 @@ export default function BackgroundStylingCard({
           ...localSurvey.styling?.background,
           brightness: percent,
         },
-      },
-    });
-  };
-
-  const toggleProgressBarVisibility = () => {
-    setLocalSurvey({
-      ...localSurvey,
-      styling: {
-        ...localSurvey.styling,
-        hideProgressBar: !progressBarHidden,
-      },
-    });
-  };
-
-  const roundness = localSurvey.styling?.roundness ?? 8;
-  const setRoundness = (value: number) => {
-    setLocalSurvey({
-      ...localSurvey,
-      styling: {
-        ...localSurvey.styling,
-        roundness: value,
       },
     });
   };
@@ -164,48 +136,6 @@ export default function BackgroundStylingCard({
                 />
               </div>
             </div>
-          </div>
-
-          {/* Roundness */}
-          <div className="flex flex-col gap-4 p-3">
-            <div className="flex flex-col">
-              <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
-              <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
-            </div>
-            <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-              <Slider value={[roundness]} max={22} onValueChange={(value) => setRoundness(value[0])} />
-            </div>
-          </div>
-
-          {/* Hide progress bar */}
-          <div className="p-3">
-            <div className="ml-2 flex items-center space-x-1">
-              <Switch
-                id="hideProgressBar"
-                checked={progressBarHidden}
-                onCheckedChange={toggleProgressBarVisibility}
-              />
-              <Label htmlFor="hideProgressBar" className="cursor-pointer">
-                <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
-                  <p className="text-xs font-normal text-slate-500">
-                    Disable the visibility of survey progress
-                  </p>
-                </div>
-              </Label>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3 rounded-lg px-4 py-2 text-slate-500">
-            <p className="text-xs">
-              To keep the styling over all surveys consistent, you can{" "}
-              <Link
-                href={`/environments/${environmentId}/settings/lookandfeel`}
-                className="underline hover:text-slate-900"
-                target="_blank">
-                set global styles in the Look & Feel settings.
-              </Link>{" "}
-            </p>
           </div>
         </div>
       </Collapsible.CollapsibleContent>

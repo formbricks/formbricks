@@ -3,7 +3,7 @@
 import Placement from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Placement";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import React, { useState } from "react";
+import React from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
@@ -30,8 +30,7 @@ const CardStylingSettings = ({
   open,
   setOpen,
 }: CardStylingSettingsProps) => {
-  const [isHighlightBorderAllowed, setIsHighlightBorderAllowed] = useState(false);
-  const { styling, productOverwrites, type } = localSurvey;
+  const { styling, productOverwrites } = localSurvey;
   const { hideProgressBar } = styling ?? {};
   const { placement, clickOutsideClose, darkOverlay } = productOverwrites ?? {};
 
@@ -47,6 +46,31 @@ const CardStylingSettings = ({
         },
       },
     }));
+  };
+
+  const isHighlightBorderAllowed = !!localSurvey.styling?.highlightBorderColor;
+  const setIsHighlightBorderAllowed = (open: boolean) => {
+    if (!open) {
+      const { highlightBorderColor, ...rest } = localSurvey.styling ?? {};
+
+      setLocalSurvey((prev) => ({
+        ...prev,
+        styling: {
+          ...rest,
+        },
+      }));
+    } else {
+      setLocalSurvey((prev) => ({
+        ...prev,
+        styling: {
+          ...prev.styling,
+          highlightBorderColor: {
+            ...(prev.styling?.highlightBorderColor ?? {}),
+            light: highlightBorderColor,
+          },
+        },
+      }));
+    }
   };
 
   const highlightBorderColor =
@@ -147,11 +171,6 @@ const CardStylingSettings = ({
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
-            {/* {containsEmptyTriggers ? (
-                <div className="h-8 w-8 rounded-full border border-amber-500 bg-amber-50" />
-              ) : (
-                <CheckCircleIcon className="h-8 w-8 text-green-400" />
-              )} */}
           </div>
 
           <div>
@@ -174,11 +193,11 @@ const CardStylingSettings = ({
 
           {localSurvey.type === "web" && (
             <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
                 <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
                 <div className="flex flex-col">
-                  <h3 className="text-base font-semibold">Add highlight border</h3>
-                  <p className="text-sm text-slate-800">Add an outer border to your survey card</p>
+                  <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
+                  <p className="text-xs text-slate-500">Add an outer border to your survey card</p>
                 </div>
               </div>
 
@@ -192,7 +211,7 @@ const CardStylingSettings = ({
             </div>
           )}
 
-          <div className="my-3 flex flex-col gap-4 p-3">
+          <div className="flex max-w-xs flex-col gap-4">
             <div className="flex flex-col">
               <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
               <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
@@ -204,8 +223,8 @@ const CardStylingSettings = ({
 
           {/* Positioning */}
           {localSurvey.type !== "link" && (
-            <div className="p-3 ">
-              <div className="ml-2 flex items-center space-x-1">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center space-x-1">
                 <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />
                 <Label htmlFor="surveyDeadline" className="cursor-pointer">
                   <div className="ml-2">
@@ -215,8 +234,8 @@ const CardStylingSettings = ({
                 </Label>
               </div>
               {placement && (
-                <div className="ml-2 mt-4 flex items-center space-x-1 pb-4">
-                  <div className="flex w-full cursor-pointer items-center rounded-lg  border bg-slate-50 p-4">
+                <div className="flex items-center space-x-1 pb-4">
+                  <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                     <div className="w-full items-center">
                       <Placement
                         currentPlacement={placement}
@@ -233,22 +252,20 @@ const CardStylingSettings = ({
             </div>
           )}
 
-          <div className="p-3">
-            <div className="ml-2 flex items-center space-x-1">
-              <Switch
-                id="hideProgressBar"
-                checked={!!hideProgressBar}
-                onCheckedChange={toggleProgressBarVisibility}
-              />
-              <Label htmlFor="hideProgressBar" className="cursor-pointer">
-                <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
-                  <p className="text-xs font-normal text-slate-500">
-                    Disable the visibility of survey progress
-                  </p>
-                </div>
-              </Label>
-            </div>
+          <div className="flex items-center space-x-1">
+            <Switch
+              id="hideProgressBar"
+              checked={!!hideProgressBar}
+              onCheckedChange={toggleProgressBarVisibility}
+            />
+            <Label htmlFor="hideProgressBar" className="cursor-pointer">
+              <div className="ml-2">
+                <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
+                <p className="text-xs font-normal text-slate-500">
+                  Disable the visibility of survey progress
+                </p>
+              </div>
+            </Label>
           </div>
         </div>
       </Collapsible.CollapsibleContent>

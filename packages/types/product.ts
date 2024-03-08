@@ -17,7 +17,7 @@ export const ZProduct = z.object({
   updatedAt: z.date(),
   name: z.string(),
   teamId: z.string(),
-  brandColor: ZColor,
+  brandColor: ZColor.nullable(),
   highlightBorderColor: ZColor.nullable(),
   styling: ZProductStyling.nullable(),
   recontactDays: z.number().int(),

@@ -24,7 +24,49 @@ type UnifiedStylingProps = {
 const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
-  const [isHighlightBorderAllowed, setIsHighlightBorderAllowed] = useState(false);
+
+  const highlightBorderColor =
+    localProduct.styling?.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
+  const setHighlightBorderColor = (color: string) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        highlightBorderColor: {
+          ...(prev.styling?.highlightBorderColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
+
+  const isHighlightBorderAllowed = !!localProduct.styling?.highlightBorderColor;
+  const setIsHighlightBorderAllowed = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        const { highlightBorderColor, ...rest } = localProduct.styling ?? {};
+
+        setLocalProduct((prev) => ({
+          ...prev,
+          styling: {
+            ...rest,
+          },
+        }));
+      } else {
+        setLocalProduct((prev) => ({
+          ...prev,
+          styling: {
+            ...prev.styling,
+            highlightBorderColor: {
+              ...(prev.styling?.highlightBorderColor ?? {}),
+              light: highlightBorderColor,
+            },
+          },
+        }));
+      }
+    },
+    [highlightBorderColor, localProduct.styling]
+  );
 
   const unifiedStyling = localProduct.styling?.unifiedStyling ?? false;
   const setUnifiedStyling = (value: boolean) => {
@@ -114,21 +156,6 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
         ...prev.styling,
         cardBackgroundColor: {
           ...(prev.styling?.cardBackgroundColor ?? {}),
-          light: color,
-        },
-      },
-    }));
-  };
-
-  const highlightBorderColor =
-    localProduct.styling?.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
-  const setHighlightBorderColor = (color: string) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        highlightBorderColor: {
-          ...(prev.styling?.highlightBorderColor ?? {}),
           light: color,
         },
       },
@@ -241,7 +268,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
     toast.success("Styling updated successfully.");
     router.refresh();
-  }, [product.id, router]);
+  }, [product.id, router, setIsHighlightBorderAllowed]);
 
   return (
     <div className="flex">
@@ -343,19 +370,19 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             )}
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex max-w-xs flex-col gap-4">
             <div className="flex flex-col">
               <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
               <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
             </div>
-
-            <Slider
-              value={[roundness]}
-              max={22}
-              min={0}
-              onValueChange={(value) => setRoundness(value[0])}
-              disabled={!unifiedStyling}
-            />
+            <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
+              <Slider
+                value={[roundness]}
+                max={22}
+                onValueChange={(value) => setRoundness(value[0])}
+                disabled={!unifiedStyling}
+              />
+            </div>
           </div>
         </div>
 

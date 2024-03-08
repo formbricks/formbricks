@@ -120,7 +120,6 @@ export default function PreviewSurvey({
   const { placement: surveyPlacement } = productOverwrites || {};
 
   const placement = surveyPlacement || product.placement;
-  // const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
 
   const styling: TSurveyStyling | TProductStyling = useMemo(() => {
     // unified styling is disabled from the product
@@ -153,16 +152,6 @@ export default function PreviewSurvey({
       },
     };
   }, [product.brandColor, product.styling, survey.styling]);
-
-  const highlightBorderColor = useMemo(() => {
-    if (survey.styling?.highlightBorderColor?.light) {
-      return survey.styling.highlightBorderColor.light;
-    }
-
-    if (product.styling?.highlightBorderColor?.light) {
-      return product.styling.highlightBorderColor.light;
-    }
-  }, [product.styling, survey.styling]);
 
   useEffect(() => {
     // close modal if there are no questions left
@@ -243,10 +232,10 @@ export default function PreviewSurvey({
                 <Modal
                   isOpen={isModalOpen}
                   placement={placement}
-                  highlightBorderColor={highlightBorderColor}
+                  highlightBorderColor={styling.highlightBorderColor?.light}
                   previewMode="mobile"
-                  borderRadius={styling.roundness ?? 12}
-                  background={styling.cardBackgroundColor?.light}>
+                  borderRadius={styling?.roundness ?? 12}
+                  background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
                     survey={survey}
                     activeQuestionId={activeQuestionId || undefined}
@@ -315,7 +304,7 @@ export default function PreviewSurvey({
               <Modal
                 isOpen={isModalOpen}
                 placement={placement}
-                highlightBorderColor={highlightBorderColor}
+                highlightBorderColor={styling.highlightBorderColor?.light}
                 previewMode="desktop"
                 borderRadius={styling.roundness ?? 12}
                 background={styling.cardBackgroundColor?.light}>
