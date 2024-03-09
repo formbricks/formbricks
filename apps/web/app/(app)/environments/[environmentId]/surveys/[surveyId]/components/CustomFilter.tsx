@@ -89,7 +89,7 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
     if (!firstMountRef.current) {
       resetState();
     }
-  }, [survey?.id]);
+  }, [survey?.id, resetState]);
 
   // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
   useEffect(() => {

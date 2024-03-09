@@ -169,7 +169,7 @@ export default function SingleResponseCard({
 
   const renderTooltip = Boolean(
     (response.personAttributes && Object.keys(response.personAttributes).length > 0) ||
-      (response.meta?.userAgent && Object.keys(response.meta.userAgent).length > 0)
+      (response.meta.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
 
   function isSubmissionTimeMoreThan5Minutes(submissionTimeISOString: Date) {
@@ -199,22 +199,22 @@ export default function SingleResponseCard({
         </div>
       )}
 
-      {response.meta?.userAgent && Object.keys(response.meta.userAgent).length > 0 && (
+      {response.meta.userAgent && Object.keys(response.meta.userAgent).length > 0 && (
         <div className="text-slate-600">
           {response.personAttributes && Object.keys(response.personAttributes).length > 0 && (
             <hr className="my-2 border-slate-200" />
           )}
           <p className="py-1 font-bold text-slate-700">Device info:</p>
-          {response.meta?.userAgent?.browser && <p>Browser: {response.meta.userAgent.browser}</p>}
-          {response.meta?.userAgent?.os && <p>OS: {response.meta.userAgent.os}</p>}
-          {response.meta?.userAgent && (
+          {response.meta.userAgent?.browser && <p>Browser: {response.meta.userAgent.browser}</p>}
+          {response.meta.userAgent?.os && <p>OS: {response.meta.userAgent.os}</p>}
+          {response.meta.userAgent && (
             <p>
               Device:{" "}
               {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}
             </p>
           )}
-          {response.meta?.source && <p>Source: {response.meta.source}</p>}
-          {response.meta?.country && <p>Country: {response.meta.country}</p>}
+          {response.meta.source && <p>Source: {response.meta.source}</p>}
+          {response.meta.country && <p>Country: {response.meta.country}</p>}
         </div>
       )}
     </>
