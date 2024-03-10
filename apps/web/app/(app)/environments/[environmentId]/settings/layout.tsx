@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
-import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
+import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -15,11 +15,10 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsLayout({ children, params }) {
-  const [team, product, session, isEnterpriseEdition] = await Promise.all([
+  const [team, product, session] = await Promise.all([
     getTeamByEnvironmentId(params.environmentId),
     getProductByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
-    getIsEnterpriseEdition(),
   ]);
 
   if (!team) {
@@ -34,6 +33,8 @@ export default async function SettingsLayout({ children, params }) {
     throw new Error("Unauthenticated");
   }
 
+  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
+
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   return (
@@ -45,7 +46,7 @@ export default async function SettingsLayout({ children, params }) {
           team={team}
           product={product}
           membershipRole={currentUserMembership?.role}
-          isEnterpriseEdition={isEnterpriseEdition}
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
         <div className="w-full md:ml-64">
           <div className="max-w-4xl px-20 pb-6 pt-14 md:pt-6">

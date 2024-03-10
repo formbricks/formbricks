@@ -29,21 +29,23 @@ import { TProduct } from "@formbricks/types/product";
 import { TTeam } from "@formbricks/types/teams";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 
+interface SettingsNavbarProps {
+  environmentId: string;
+  isFormbricksCloud: boolean;
+  team: TTeam;
+  product: TProduct;
+  membershipRole?: TMembershipRole;
+  isMultiLanguageAllowed: boolean;
+}
+
 export default function SettingsNavbar({
   environmentId,
   isFormbricksCloud,
   team,
   product,
   membershipRole,
-  isEnterpriseEdition,
-}: {
-  environmentId: string;
-  isFormbricksCloud: boolean;
-  team: TTeam;
-  product: TProduct;
-  membershipRole?: TMembershipRole;
-  isEnterpriseEdition: boolean;
-}) {
+  isMultiLanguageAllowed,
+}: SettingsNavbarProps) {
   const pathname = usePathname();
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
@@ -108,7 +110,7 @@ export default function SettingsNavbar({
             href: `/environments/${environmentId}/settings/language`,
             icon: LanguageIcon,
             current: pathname?.includes("/language"),
-            hidden: !isEnterpriseEdition,
+            hidden: !isMultiLanguageAllowed,
           },
           {
             name: "API Keys",
@@ -216,7 +218,7 @@ export default function SettingsNavbar({
         hidden: false,
       },
     ],
-    [environmentId, isFormbricksCloud, pathname, isPricingDisabled, isViewer, isEnterpriseEdition]
+    [environmentId, pathname, isViewer, isMultiLanguageAllowed, isFormbricksCloud, isPricingDisabled]
   );
 
   if (!navigation) return null;

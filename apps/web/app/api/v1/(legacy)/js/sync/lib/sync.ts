@@ -6,7 +6,7 @@ import {
   PRICING_USERTARGETING_FREE_MTU,
 } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { reverseTranslateSurvey } from "@formbricks/lib/i18n/utils";
+import { reverseTranslateSurvey } from "@formbricks/lib/i18n/reverseTranslation";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveys, getSyncSurveys } from "@formbricks/lib/survey/service";

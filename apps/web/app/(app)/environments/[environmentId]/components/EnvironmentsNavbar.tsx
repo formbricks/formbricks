@@ -1,7 +1,7 @@
 import Navigation from "@/app/(app)/environments/[environmentId]/components/Navigation";
 import type { Session } from "next-auth";
 
-import { getIsEnterpriseEdition } from "@formbricks/ee/lib/service";
+import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -12,20 +12,20 @@ import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 interface EnvironmentsNavbarProps {
   environmentId: string;
   session: Session;
-  isFormbricksCloud: boolean;
 }
 
 export default async function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
-  const [environment, teams, team, isEnterpriseEdition] = await Promise.all([
+  const [environment, teams, team] = await Promise.all([
     getEnvironment(environmentId),
     getTeamsByUserId(session.user.id),
     getTeamByEnvironmentId(environmentId),
-    getIsEnterpriseEdition(),
   ]);
 
   if (!team || !environment) {
     return <ErrorComponent />;
   }
+
+  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
 
   const [products, environments] = await Promise.all([
     getProducts(team.id),
@@ -48,7 +48,7 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       webAppUrl={WEBAPP_URL}
       membershipRole={currentUserMembership?.role}
-      isEnterpriseEdition={isEnterpriseEdition}
+      isMultiLanguageAllowed={isMultiLanguageAllowed}
     />
   );
 }

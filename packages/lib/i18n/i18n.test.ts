@@ -11,9 +11,9 @@ import {
   mockTranslatedWelcomeCard,
   mockWelcomeCard,
 } from "./i18n.mock";
+import { reverseTranslateSurvey } from "./reverseTranslation";
 import {
   createI18nString,
-  reverseTranslateSurvey,
   translateChoice,
   translateSurvey,
   translateThankYouCard,

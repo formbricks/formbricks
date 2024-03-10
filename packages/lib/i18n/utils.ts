@@ -1,15 +1,17 @@
 import {
   TI18nString,
+  TSurvey,
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
   TSurveyLanguage,
+  TSurveyMultipleChoiceMultiQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
+  TSurveyQuestion,
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
-import { TSurvey, TSurveyMultipleChoiceMultiQuestion, TSurveyQuestion } from "@formbricks/types/surveys";
 
 // Helper function to create an i18nString from a regular string.
 export const createI18nString = (
@@ -52,10 +54,12 @@ export const createI18nString = (
   }
 };
 
-// Helper function to check if a property is an i18n object
-const isI18nObject = (obj: any) => {
-  return obj !== null && typeof obj === "object" && "default" in obj;
-};
+// Type guard to check if an object is an I18nString
+export function isI18nObject(obj: any): obj is TI18nString {
+  return (
+    obj !== null && typeof obj === "object" && Object.values(obj).every((value) => typeof value === "string")
+  );
+}
 
 // Function to translate a choice label
 export const translateChoice = (choice: any, languages: string[], targetLanguageCode?: string) => {
@@ -268,52 +272,4 @@ export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string
   return surveyLanguages.map((surveyLanguage) =>
     surveyLanguage.default ? "default" : surveyLanguage.language.code
   );
-};
-
-// Helper function to extract a regular string from an i18nString.
-const extractStringFromI18n = (i18nString: TI18nString, languageCode: string): string => {
-  if (typeof i18nString === "object" && i18nString !== null) {
-    return i18nString[languageCode] || "";
-  }
-  return i18nString;
-};
-
-// Recursive function to process each property of an object
-const reverseTranslateObject = (obj: any, languageCode: string) => {
-  for (let key in obj) {
-    if (isI18nObject(obj[key])) {
-      obj[key] = extractStringFromI18n(obj[key], languageCode);
-    } else if (typeof obj[key] === "object" && obj[key] !== null) {
-      reverseTranslateObject(obj[key], languageCode);
-    }
-  }
-};
-
-// Modified reverse translate functions using the generic approach
-const reverseTranslateQuestion = (question: TSurveyQuestion, languageCode: string) => {
-  const clonedQuestion = structuredClone(question);
-  reverseTranslateObject(clonedQuestion, languageCode);
-  return clonedQuestion;
-};
-
-const reverseTranslateWelcomeCard = (welcomeCard: TSurveyWelcomeCard, languageCode: string) => {
-  const clonedWelcomeCard = structuredClone(welcomeCard);
-  reverseTranslateObject(clonedWelcomeCard, languageCode);
-  return clonedWelcomeCard;
-};
-
-const reverseTranslateThankYouCard = (thankYouCard: TSurveyThankYouCard, languageCode: string) => {
-  const clonedThankYouCard = structuredClone(thankYouCard);
-  reverseTranslateObject(clonedThankYouCard, languageCode);
-  return clonedThankYouCard;
-};
-
-export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "default") => {
-  const reversedSurvey = structuredClone(survey);
-  reversedSurvey.questions = reversedSurvey.questions.map((question) =>
-    reverseTranslateQuestion(question, languageCode)
-  );
-  reversedSurvey.welcomeCard = reverseTranslateWelcomeCard(reversedSurvey.welcomeCard, languageCode);
-  reversedSurvey.thankYouCard = reverseTranslateThankYouCard(reversedSurvey.thankYouCard, languageCode);
-  return reversedSurvey;
 };

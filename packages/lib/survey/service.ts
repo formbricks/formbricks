@@ -18,7 +18,8 @@ import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
-import { reverseTranslateSurvey, translateSurvey } from "../i18n/utils";
+import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
+import { translateSurvey } from "../i18n/utils";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { productCache } from "../product/cache";
@@ -352,7 +353,7 @@ export const transformToLegacySurvey = async (
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return formatDateFields(transformedSurvey as TLegacySurvey, ZLegacySurvey);
+  return formatDateFields(transformedSurvey, ZLegacySurvey);
 };
 
 export const transformSurveyToSpecificLanguage = async (

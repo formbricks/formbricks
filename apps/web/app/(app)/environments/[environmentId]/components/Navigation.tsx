@@ -70,7 +70,7 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   webAppUrl: string;
   membershipRole?: TMembershipRole;
-  isEnterpriseEdition: boolean;
+  isMultiLanguageAllowed: boolean;
 }
 
 export default function Navigation({
@@ -83,7 +83,7 @@ export default function Navigation({
   isFormbricksCloud,
   webAppUrl,
   membershipRole,
-  isEnterpriseEdition,
+  isMultiLanguageAllowed,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -173,7 +173,7 @@ export default function Navigation({
           icon: LanguageIcon,
           label: "Survey Languages",
           href: `/environments/${environment.id}/settings/language`,
-          hidden: !isEnterpriseEdition,
+          hidden: !isMultiLanguageAllowed,
         },
       ],
     },
