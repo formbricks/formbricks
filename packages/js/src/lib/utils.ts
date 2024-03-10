@@ -14,7 +14,9 @@ export const getLanguageCode = (survey: TSurvey, attributes: TPersonAttributes):
     if (selectedLanguage?.default) {
       return "default";
     }
-    if (!selectedLanguage || !availableLanguageCodes.includes(selectedLanguage.language.code)) return;
+    if (!selectedLanguage || !availableLanguageCodes.includes(selectedLanguage.language.code)) {
+      return undefined;
+    }
     return selectedLanguage.language.code;
   }
 };

@@ -39,7 +39,6 @@ export const renderWidget = async (survey: TSurvey) => {
   const product = config.get().state.product;
   const attributes = config.get().state.attributes;
 
-  const defaultLanguageCode = getDefaultLanguageCode(survey);
   const languageCode = getLanguageCode(survey, attributes);
 
   //if survey is not available in selected language, survey wont be shown
@@ -160,7 +159,7 @@ export const renderWidget = async (survey: TSurvey) => {
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
-          language: languageCode === "default" ? defaultLanguageCode : languageCode,
+          language: languageCode === "default" ? getDefaultLanguageCode(survey) : languageCode,
         });
       },
       onClose: closeSurvey,
