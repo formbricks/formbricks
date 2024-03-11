@@ -65,7 +65,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
     } else {
       appendCssVariable(
         "input-background-color-selected",
-        lightenDarkenColor(styling.inputColor?.light, -20)
+        mixColor(styling.inputColor?.light, "#ffffff", 0.2)
       );
     }
   }
@@ -73,9 +73,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
   if (styling.brandColor?.light) {
     const brandColor = styling.brandColor.light;
 
-    const mixWith = isLight(brandColor) ? "#ffffff" : "#ffffff";
-    const mixedBrandColor = mixColor(brandColor, mixWith, 0.8);
-    const mixedBrandColorSelected = mixColor(brandColor, mixWith, 0.7);
+    const mixedBrandColor = mixColor(brandColor, "#ffffff", 0.8);
+    const mixedBrandColorSelected = mixColor(brandColor, "#ffffff", 0.7);
 
     appendCssVariable("accent-background-color", mixedBrandColor);
     appendCssVariable("accent-background-color-selected", mixedBrandColorSelected);
