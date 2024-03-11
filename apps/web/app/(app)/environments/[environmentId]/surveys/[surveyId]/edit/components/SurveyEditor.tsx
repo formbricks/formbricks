@@ -3,7 +3,7 @@
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { LoadingSkeleton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LoadingSkeleton";
 import { isEqual } from "lodash";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
@@ -59,8 +59,6 @@ export default function SurveyEditor({
   const surveyEditorRef = useRef(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
 
-  const isFirstQuestionAvailable = useMemo(() => (localSurvey?.questions?.length ?? 0) > 0, [localSurvey]);
-
   const fetchLatestProduct = useCallback(async () => {
     const latestProduct = await refetchProduct(localProduct.id);
     if (latestProduct) {
@@ -69,24 +67,16 @@ export default function SurveyEditor({
   }, [localProduct.id]);
 
   useDocumentVisibility(fetchLatestProduct);
+
   useEffect(() => {
     if (survey) {
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
-
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
     }
   }, [survey]);
-
-  useEffect(() => {
-    if (!survey) return;
-    setLocalSurvey(structuredClone(survey));
-    if (isFirstQuestionAvailable) {
-      setActiveQuestionId(survey.questions[0].id);
-    }
-  }, [survey, isFirstQuestionAvailable]);
 
   useEffect(() => {
     if (!localSurvey) return;
