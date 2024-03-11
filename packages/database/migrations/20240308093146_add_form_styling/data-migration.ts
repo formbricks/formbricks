@@ -32,40 +32,26 @@ async function main() {
           continue;
         }
 
-        if (product.brandColor) {
-          await tx.product.update({
-            where: {
-              id: product.id,
-            },
-            data: {
-              styling: {
-                unifiedStyling: false,
-                allowStyleOverwrite: true,
-                brandColor: {
-                  light: product.brandColor,
-                },
-              },
-              brandColor: null,
-            },
-          });
-        }
-
-        if (product.highlightBorderColor) {
-          await tx.product.update({
-            where: {
-              id: product.id,
-            },
-            data: {
-              styling: {
-                ...(product.styling ?? {}),
+        await tx.product.update({
+          where: {
+            id: product.id,
+          },
+          data: {
+            styling: {
+              ...(product.styling ?? {}),
+              ...(product.brandColor && {
+                brandColor: { light: product.brandColor },
+              }),
+              ...(product.highlightBorderColor && {
                 highlightBorderColor: {
                   light: product.highlightBorderColor,
                 },
-              },
-              highlightBorderColor: null,
+              }),
             },
-          });
-        }
+            brandColor: null,
+            highlightBorderColor: null,
+          },
+        });
       }
 
       // find all surveys with product overwrites
@@ -83,35 +69,21 @@ async function main() {
       for (const survey of surveysWithProductOverwrites) {
         const { brandColor, highlightBorderColor } = survey.productOverwrites ?? {};
 
-        if (brandColor) {
-          await tx.survey.update({
-            where: { id: survey.id },
-            data: {
-              styling: {
-                ...(survey.styling ?? {}),
-                brandColor: { light: brandColor },
-              },
-              productOverwrites: {
-                brandColor: null,
-              },
+        // single query to update the survey with the product overwrites
+        await tx.survey.update({
+          where: { id: survey.id },
+          data: {
+            styling: {
+              ...(survey.styling ?? {}),
+              ...(brandColor && { brandColor: { light: brandColor } }),
+              ...(highlightBorderColor && { highlightBorderColor: { light: highlightBorderColor } }),
             },
-          });
-        }
-
-        if (highlightBorderColor) {
-          await tx.survey.update({
-            where: { id: survey.id },
-            data: {
-              styling: {
-                ...(survey.styling ?? {}),
-                highlightBorderColor: { light: highlightBorderColor },
-              },
-              productOverwrites: {
-                highlightBorderColor: null,
-              },
+            productOverwrites: {
+              ...(brandColor && { brandColor: null }),
+              ...(highlightBorderColor && { highlightBorderColor: null }),
             },
-          });
-        }
+          },
+        });
       }
     }
   });

@@ -192,7 +192,7 @@ const CardStylingSettings = ({
           />
 
           {localSurvey.type === "web" && (
-            <div className="flex flex-col gap-4">
+            <div className="flex max-w-xs flex-col gap-4">
               <div className="flex items-center gap-2">
                 <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
                 <div className="flex flex-col">
