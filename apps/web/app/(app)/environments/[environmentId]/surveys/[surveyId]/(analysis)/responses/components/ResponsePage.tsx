@@ -2,8 +2,8 @@
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import {
+  getResponseCountAction,
   getResponsesAction,
-  getResponsesCountAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
@@ -105,7 +105,7 @@ const ResponsePage = ({
 
   useEffect(() => {
     const handleResponsesCount = async () => {
-      const responseCount = await getResponsesCountAction(surveyId, filters);
+      const responseCount = await getResponseCountAction(surveyId, filters);
       setResponseCount(responseCount);
     };
     handleResponsesCount();

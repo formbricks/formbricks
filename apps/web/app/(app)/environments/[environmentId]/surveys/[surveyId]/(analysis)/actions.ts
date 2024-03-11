@@ -59,7 +59,7 @@ export const getSurveySummaryAction = async (
   return await getSurveySummary(surveyId, filterCriteria);
 };
 
-export const getResponsesCountAction = async (
+export const getResponseCountAction = async (
   surveyId: string,
   filters?: TResponseFilterCriteria
 ): Promise<number> => {

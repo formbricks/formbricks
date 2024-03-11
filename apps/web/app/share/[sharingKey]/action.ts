@@ -26,7 +26,7 @@ export const getSurveySummaryUnauthorizedAction = async (
   return await getSurveySummary(surveyId, filterCriteria);
 };
 
-export const getResponsesCountUnauthorizedAction = async (
+export const getResponseCountUnauthorizedAction = async (
   surveyId: string,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<number> => {

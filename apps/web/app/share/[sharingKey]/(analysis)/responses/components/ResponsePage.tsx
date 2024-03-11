@@ -5,7 +5,7 @@ import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/share/[sharingKey]/(analysis)/responses/components/ResponseTimeline";
 import {
-  getResponsesCountUnauthorizedAction,
+  getResponseCountUnauthorizedAction,
   getResponsesUnauthorizedAction,
 } from "@/app/share/[sharingKey]/action";
 import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
@@ -90,7 +90,7 @@ const ResponsePage = ({
 
   useEffect(() => {
     const handleResponsesCount = async () => {
-      const responseCount = await getResponsesCountUnauthorizedAction(surveyId, filters);
+      const responseCount = await getResponseCountUnauthorizedAction(surveyId, filters);
       setResponseCount(responseCount);
     };
     handleResponsesCount();

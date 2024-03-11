@@ -7,7 +7,7 @@ import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[s
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
 import {
-  getResponsesCountUnauthorizedAction,
+  getResponseCountUnauthorizedAction,
   getSurveySummaryUnauthorizedAction,
 } from "@/app/share/[sharingKey]/action";
 import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
@@ -70,7 +70,7 @@ const SummaryPage = ({
 
   useEffect(() => {
     const handleResponsesCount = async () => {
-      const responseCount = await getResponsesCountUnauthorizedAction(surveyId, filters);
+      const responseCount = await getResponseCountUnauthorizedAction(surveyId, filters);
       setResponseCount(responseCount);
     };
 
