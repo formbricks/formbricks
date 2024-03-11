@@ -1,4 +1,4 @@
-import { signUpAndLogin, skipOnboarding } from "@/playwright/utils/helper";
+import { finishOnboarding, signUpAndLogin } from "@/playwright/utils/helper";
 import { users } from "@/playwright/utils/mock";
 import { expect, test } from "@playwright/test";
 
@@ -10,7 +10,7 @@ test.describe("API Tests", () => {
   let apiKey: string;
   test("Copy API Key for API Calls", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await skipOnboarding(page);
+    await finishOnboarding(page);
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     environmentId =
