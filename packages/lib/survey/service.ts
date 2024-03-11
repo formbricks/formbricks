@@ -775,11 +775,14 @@ export const getSyncSurveys = async (
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const getSurveyByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
+export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
   try {
     const survey = await prisma.survey.findFirst({
       where: {
         resultShareKey,
+      },
+      select: {
+        id: true,
       },
     });
 
