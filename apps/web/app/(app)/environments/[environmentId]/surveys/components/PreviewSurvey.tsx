@@ -75,7 +75,7 @@ export default function PreviewSurvey({
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
-  const [shrink, setshrink] = useState(false);
+  const [shrink, setShrink] = useState(false);
   const { productOverwrites } = survey || {};
 
   const previewScreenVariants: Variants = {
@@ -256,7 +256,7 @@ export default function PreviewSurvey({
                     <ArrowsPointingInIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setshrink(true);
+                        setShrink(true);
                         setPreviewPosition("relative");
                         setTimeout(() => setIsFullScreenPreview(false), 300);
                       }}
@@ -265,7 +265,7 @@ export default function PreviewSurvey({
                     <ArrowsPointingOutIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setshrink(false);
+                        setShrink(false);
                         setIsFullScreenPreview(true);
                         setTimeout(() => setPreviewPosition("fixed"), 300);
                       }}
