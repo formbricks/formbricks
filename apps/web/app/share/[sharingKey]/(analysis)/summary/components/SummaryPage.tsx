@@ -65,7 +65,7 @@ const SummaryPage = ({
 
   useEffect(() => {
     const fetchSurveySummary = async () => {
-      const response = await getSurveySummaryUnauthorizedAction(sharingKey, surveyId, filters);
+      const response = await getSurveySummaryUnauthorizedAction(sharingKey, filters);
       setSurveySummary(response);
     };
     fetchSurveySummary();

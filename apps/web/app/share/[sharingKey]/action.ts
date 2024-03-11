@@ -15,7 +15,7 @@ export async function getResponsesUnauthorizedAction(
   batchSize?: number,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TResponse[]> {
-  const surveyId = await getResultShareUrlSurveyAction(sharingKey);
+  const surveyId = await getSurveyByResultShareKey(sharingKey);
   if (!surveyId) throw new AuthorizationError("Not authorized");
 
   batchSize = batchSize ?? 10;
@@ -27,7 +27,7 @@ export const getSurveySummaryUnauthorizedAction = async (
   sharingKey: string,
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TSurveySummary> => {
-  const surveyId = await getResultShareUrlSurveyAction(sharingKey);
+  const surveyId = await getSurveyByResultShareKey(sharingKey);
   if (!surveyId) throw new AuthorizationError("Not authorized");
 
   return await getSurveySummary(surveyId, filterCriteria);
