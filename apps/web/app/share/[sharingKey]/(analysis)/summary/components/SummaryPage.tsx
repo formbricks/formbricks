@@ -69,7 +69,7 @@ const SummaryPage = ({
       setSurveySummary(response);
     };
     fetchSurveySummary();
-  }, [filters, surveyId, sharingKey]);
+  }, [filters, sharingKey]);
 
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey);

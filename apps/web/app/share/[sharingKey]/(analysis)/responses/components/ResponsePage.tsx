@@ -72,7 +72,7 @@ const ResponsePage = ({
       setResponses(responses);
     };
     fetchInitialResponses();
-  }, [surveyId, filters, responsesPerPage, sharingKey]);
+  }, [filters, responsesPerPage, sharingKey]);
 
   const fetchNextPage = useCallback(async () => {
     const newPage = page + 1;
@@ -82,7 +82,7 @@ const ResponsePage = ({
     }
     setResponses([...responses, ...newResponses]);
     setPage(newPage);
-  }, [filters, page, responses, responsesPerPage, surveyId, sharingKey]);
+  }, [filters, page, responses, responsesPerPage, sharingKey]);
 
   return (
     <ContentWrapper>
