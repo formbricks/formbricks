@@ -2,26 +2,23 @@
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
   TI18nString,
-  TSurveyCTAQuestion,
   TSurveyConsentQuestion,
   TSurveyLanguage,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
+  TSurveyThankYouCard,
+  TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
 
 // Utility function to check if label is valid for all required languages
-const isLabelValidForAllLanguages = (
-  label: string | TI18nString,
-  surveyLanguages: TSurveyLanguage[]
-): boolean => {
-  const languages = extractLanguageCodes(surveyLanguages);
-  if (typeof label === "string") {
-    return label.trim() !== "";
-  } else {
-    return languages.every((language) => label && label[language] && label[language].trim() !== "");
-  }
+const isLabelValidForAllLanguages = (label: TI18nString, surveyLanguages: TSurveyLanguage[]): boolean => {
+  const filteredLanguages = surveyLanguages.filter((surveyLanguages) => {
+    return surveyLanguages.enabled;
+  });
+  const languages = extractLanguageCodes(filteredLanguages);
+  return languages.every((language) => label && label[language] && label[language].trim() !== "");
 };
 
 // Validation logic for multiple choice questions
@@ -51,11 +48,8 @@ const validationRules = {
     let isValid = isLabelValidForAllLanguages(question.headline, languages);
     let isValidCTADismissLabel = true;
     const defaultLanguageCode = "default";
-    if (question.type === "cta" && !question.required) {
-      isValidCTADismissLabel = isLabelValidForAllLanguages(
-        (question as TSurveyCTAQuestion).dismissButtonLabel ?? "",
-        languages
-      );
+    if (question.type === "cta" && !question.required && question.dismissButtonLabel) {
+      isValidCTADismissLabel = isLabelValidForAllLanguages(question.dismissButtonLabel, languages);
     }
     const fieldsToValidate = [
       "subheader",
@@ -88,6 +82,45 @@ const validateQuestion = (question: TSurveyQuestion, surveyLanguages: TSurveyLan
 
   // Return true only if both specific and default validation pass
   return specificValidationResult && defaultValidationResult;
+};
+
+export const validateSurveyQuestionsInBatch = (
+  question: TSurveyQuestion,
+  invalidQuestions: string[] | null,
+  surveyLanguages: TSurveyLanguage[]
+) => {
+  if (invalidQuestions === null) {
+    return [];
+  }
+
+  if (validateQuestion(question, surveyLanguages)) {
+    return invalidQuestions.filter((id) => id !== question.id);
+  } else if (!invalidQuestions.includes(question.id)) {
+    return [...invalidQuestions, question.id];
+  }
+
+  return invalidQuestions;
+};
+
+export const isCardValid = (
+  card: TSurveyWelcomeCard | TSurveyThankYouCard,
+  cardType: "start" | "end",
+  surveyLanguages: TSurveyLanguage[]
+): boolean => {
+  const defaultLanguageCode = "default";
+  const isContentValid = (content: Record<string, string> | undefined) => {
+    return (
+      !content || content[defaultLanguageCode] === "" || isLabelValidForAllLanguages(content, surveyLanguages)
+    );
+  };
+
+  return (
+    (card.headline ? isLabelValidForAllLanguages(card.headline, surveyLanguages) : true) &&
+    isContentValid(
+      cardType === "start" ? (card as TSurveyWelcomeCard).html : (card as TSurveyThankYouCard).subheader
+    ) &&
+    isContentValid(card.buttonLabel)
+  );
 };
 
 export { validateQuestion, isLabelValidForAllLanguages };

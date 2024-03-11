@@ -23,7 +23,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 import { updateSurveyAction } from "../actions";
-import { isLabelValidForAllLanguages, isValidUrl, validateQuestion } from "./Validation";
+import { isCardValid, isValidUrl, validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
@@ -32,7 +32,7 @@ interface SurveyMenuBarProps {
   environment: TEnvironment;
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
-  setInvalidQuestions: (invalidQuestions: String[]) => void;
+  setInvalidQuestions: (invalidQuestions: string[]) => void;
   product: TProduct;
   responseCount: number;
   selectedLanguageCode: string;
@@ -56,9 +56,8 @@ export default function SurveyMenuBar({
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
-  const defaultLanguageCode = "default";
 
-  let faultyQuestions: String[] = [];
+  let faultyQuestions: string[] = [];
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -124,24 +123,19 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question");
       return;
     }
-    if (survey.thankYouCard.enabled) {
-      if (
-        !isLabelValidForAllLanguages(survey.thankYouCard.headline ?? "", survey.languages) ||
-        (survey.thankYouCard.subheader &&
-          survey.thankYouCard.subheader[defaultLanguageCode] !== "" &&
-          !isLabelValidForAllLanguages(survey.thankYouCard.subheader, survey.languages)) ||
-        (survey.thankYouCard.buttonLabel &&
-          survey.thankYouCard.buttonLabel[defaultLanguageCode] !== "" &&
-          !isLabelValidForAllLanguages(survey.thankYouCard.buttonLabel, survey.languages))
-      ) {
-        faultyQuestions.push("end");
-      }
-    }
+
     if (survey.welcomeCard.enabled) {
-      if (!isLabelValidForAllLanguages(survey.welcomeCard.headline, survey.languages)) {
+      if (!isCardValid(survey.welcomeCard, "start", survey.languages)) {
         faultyQuestions.push("start");
       }
     }
+
+    if (survey.thankYouCard.enabled) {
+      if (!isCardValid(survey.thankYouCard, "end", survey.languages)) {
+        faultyQuestions.push("end");
+      }
+    }
+
     let pin = survey?.pin;
     if (pin !== null && pin!.toString().length !== 4) {
       toast.error("PIN must be a four digit number.");

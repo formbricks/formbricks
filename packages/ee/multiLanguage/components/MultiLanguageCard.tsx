@@ -59,8 +59,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     onConfirm: () => {},
   });
 
-  const surveyLanguageCodes =
-    localSurvey.languages?.map((surveyLanguage) => surveyLanguage.language.code) ?? [];
   const [defaultLanguage, setDefaultLanguage] = useState(
     localSurvey.languages?.find((language) => {
       return language.default === true;
@@ -76,11 +74,20 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   };
 
   const updateSurveyLanguages = (language: TLanguage) => {
-    const newLanguages = localSurvey.languages?.filter((lang) => lang.language.code !== language.code) ?? [];
-    if (!surveyLanguageCodes.includes(language.code)) {
-      newLanguages.push({ enabled: true, default: false, language });
+    let updatedLanguages = localSurvey.languages;
+    const languageIndex = localSurvey.languages.findIndex(
+      (surveyLanguage) => surveyLanguage.language.code === language.code
+    );
+    if (languageIndex >= 0) {
+      // Toggle the 'enabled' property of the existing language
+      updatedLanguages = updatedLanguages.map((surveyLanguage, index) =>
+        index === languageIndex ? { ...surveyLanguage, enabled: !surveyLanguage.enabled } : surveyLanguage
+      );
+    } else {
+      // Add the new language
+      updatedLanguages = [...updatedLanguages, { enabled: true, default: false, language }];
     }
-    updateSurvey({ languages: newLanguages });
+    updateSurvey({ languages: updatedLanguages });
   };
 
   const updateSurvey = (data: { languages: TSurveyLanguage[] }) => {
@@ -229,7 +236,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                             defaultLanguage={defaultLanguage}
                             localSurvey={localSurvey}
                             updateSurveyLanguages={updateSurveyLanguages}
-                            surveyLanguageCodes={surveyLanguageCodes}
                             setActiveQuestionId={setActiveQuestionId}
                             setSelectedLanguageCode={setSelectedLanguageCode}
                           />

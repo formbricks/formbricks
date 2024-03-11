@@ -17,7 +17,7 @@ import EditThankYouCard from "./EditThankYouCard";
 import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
-import { isLabelValidForAllLanguages, validateQuestion } from "./Validation";
+import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "./Validation";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;
@@ -25,8 +25,8 @@ interface QuestionsViewProps {
   activeQuestionId: string | null;
   setActiveQuestionId: (questionId: string | null) => void;
   product: TProduct;
-  invalidQuestions: String[] | null;
-  setInvalidQuestions: (invalidQuestions: String[] | null) => void;
+  invalidQuestions: string[] | null;
+  setInvalidQuestions: (invalidQuestions: string[] | null) => void;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
@@ -54,7 +54,6 @@ export default function QuestionsView({
   }, [localSurvey.questions]);
   const surveyLanguages = localSurvey.languages;
   const [backButtonLabel, setbackButtonLabel] = useState(null);
-  const defaultLanguageCode = "default";
   const handleQuestionLogicChange = (survey: TSurvey, compareId: string, updatedId: string): TSurvey => {
     survey.questions.forEach((question) => {
       if (question.headline[selectedLanguageCode].includes(`recall:${compareId}`)) {
@@ -74,7 +73,7 @@ export default function QuestionsView({
   };
 
   // function to validate individual questions
-  const validateSurvey = (question: TSurveyQuestion) => {
+  const validateSurveyQuestion = (question: TSurveyQuestion) => {
     // prevent this function to execute further if user hasnt still tried to save the survey
     if (invalidQuestions === null) {
       return;
@@ -119,7 +118,7 @@ export default function QuestionsView({
       setbackButtonLabel(updatedAttributes.backButtonLabel);
     }
     setLocalSurvey(updatedSurvey);
-    validateSurvey(updatedSurvey.questions[questionIdx]);
+    validateSurveyQuestion(updatedSurvey.questions[questionIdx]);
   };
 
   const deleteQuestion = (questionIdx: number) => {
@@ -212,35 +211,8 @@ export default function QuestionsView({
   useEffect(() => {
     if (invalidQuestions === null) return;
 
-    const isCardValid = (card, cardType) => {
-      if (cardType === "start") {
-        // welcomeCard identified as "start"
-        return (
-          isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
-          (card.html && card.html[defaultLanguageCode] === ""
-            ? true
-            : isLabelValidForAllLanguages(card.html, surveyLanguages)) &&
-          (card.buttonLabel && card.buttonLabel[defaultLanguageCode] === ""
-            ? true
-            : isLabelValidForAllLanguages(card.buttonLabel, surveyLanguages))
-        );
-      } else if (cardType === "end") {
-        // thankYouCard identified as "end"
-        return (
-          isLabelValidForAllLanguages(card.headline, surveyLanguages) &&
-          (card.subheader && card.subheader[defaultLanguageCode] === ""
-            ? true
-            : isLabelValidForAllLanguages(card.subheader, surveyLanguages)) &&
-          (card.buttonLabel && card.buttonLabel[defaultLanguageCode] === ""
-            ? true
-            : isLabelValidForAllLanguages(card.buttonLabel, surveyLanguages))
-        );
-      }
-      return true;
-    };
-
     const updateInvalidQuestions = (card, cardId, currentInvalidQuestions) => {
-      if (card.enabled && !isCardValid(card, cardId)) {
+      if (card.enabled && !isCardValid(card, cardId, surveyLanguages)) {
         return currentInvalidQuestions.includes(cardId)
           ? currentInvalidQuestions
           : [...currentInvalidQuestions, cardId];
@@ -258,6 +230,42 @@ export default function QuestionsView({
     setInvalidQuestions(updatedQuestionsEnd);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
+
+  useEffect(() => {
+    if (!invalidQuestions) return;
+    let updatedInvalidQuestions: string[] = invalidQuestions;
+    // Validate each question
+    localSurvey.questions.forEach((question) => {
+      updatedInvalidQuestions = validateSurveyQuestionsInBatch(
+        question,
+        updatedInvalidQuestions,
+        surveyLanguages
+      );
+    });
+
+    // Check welcome card
+    if (!isCardValid(localSurvey.welcomeCard, "start", surveyLanguages)) {
+      if (!updatedInvalidQuestions.includes("start")) {
+        updatedInvalidQuestions.push("start");
+      }
+    } else {
+      updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== "start");
+    }
+
+    // Check thank you card
+    if (!isCardValid(localSurvey.thankYouCard, "end", surveyLanguages)) {
+      if (!updatedInvalidQuestions.includes("end")) {
+        updatedInvalidQuestions.push("end");
+      }
+    } else {
+      updatedInvalidQuestions = updatedInvalidQuestions.filter((questionId) => questionId !== "end");
+    }
+
+    if (JSON.stringify(updatedInvalidQuestions) !== JSON.stringify(invalidQuestions)) {
+      setInvalidQuestions(updatedInvalidQuestions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localSurvey.languages, localSurvey.questions]);
 
   useEffect(() => {
     const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);

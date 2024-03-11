@@ -1,6 +1,7 @@
 import { Languages } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys";
 
@@ -15,17 +16,18 @@ interface LanguageDropdownProps {
 export const LanguageDropdown = ({ survey, setLanguage }: LanguageDropdownProps) => {
   const [showLanguageSelect, setShowLanguageSelect] = useState(false);
   const languageDropdownRef = useRef(null);
+  const enabledLanguages = getEnabledLanguages(survey.languages);
 
   useClickOutside(languageDropdownRef, () => setShowLanguageSelect(false));
 
   return (
-    survey.languages.length > 1 && (
+    enabledLanguages.length > 1 && (
       <div className="relative">
         {showLanguageSelect && (
           <div
             className="absolute top-12 z-30 w-fit rounded-lg border bg-slate-900 p-1 text-sm text-white"
             ref={languageDropdownRef}>
-            {survey.languages.map((surveyLanguage) => (
+            {enabledLanguages.map((surveyLanguage) => (
               <div
                 key={surveyLanguage.language.code}
                 className="rounded-md p-2 hover:cursor-pointer hover:bg-slate-700"

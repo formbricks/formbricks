@@ -174,7 +174,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
       const selectedLanguage = survey.languages.find((surveyLanguage) => {
         return surveyLanguage.language.code === langParam || surveyLanguage.language.alias === langParam;
       });
-      if (selectedLanguage?.default) {
+      if (selectedLanguage?.default || !selectedLanguage?.enabled) {
         return "default";
       }
       return selectedLanguage ? selectedLanguage.language.code : "default";

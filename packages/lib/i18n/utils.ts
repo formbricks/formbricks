@@ -57,7 +57,10 @@ export const createI18nString = (
 // Type guard to check if an object is an I18nString
 export function isI18nObject(obj: any): obj is TI18nString {
   return (
-    obj !== null && typeof obj === "object" && Object.values(obj).every((value) => typeof value === "string")
+    obj !== null &&
+    typeof obj === "object" &&
+    Object.values(obj).every((value) => typeof value === "string") &&
+    Object.keys(obj).includes("default")
   );
 }
 
@@ -247,13 +250,6 @@ export const isLabelValidForAllLanguages = (label: TI18nString, languages: strin
   return languages.every((language) => label[language] && label[language].trim() !== "");
 };
 
-export const isSurveyAvailableInSelectedLanguage = (languageSymbol: string, survey: TSurvey) => {
-  if (survey.questions[0].headline[languageSymbol]) {
-    return true;
-  }
-  return false;
-};
-
 export const getLocalizedValue = (value: TI18nString | undefined, languageId: string): string => {
   if (!value) {
     return "";
@@ -272,4 +268,8 @@ export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string
   return surveyLanguages.map((surveyLanguage) =>
     surveyLanguage.default ? "default" : surveyLanguage.language.code
   );
+};
+
+export const getEnabledLanguages = (surveyLanguages: TSurveyLanguage[]) => {
+  return surveyLanguages.filter((surveyLanguage) => surveyLanguage.enabled);
 };

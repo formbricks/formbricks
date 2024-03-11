@@ -1,3 +1,7 @@
+import { mockSegment } from "segment/tests/__mocks__/segment.mock";
+
+import { mockSurveyLanguages } from "survey/tests/__mock__/survey.mock";
+
 import {
   TSurvey,
   TSurveyCTAQuestion,
@@ -246,9 +250,9 @@ export const mockThankYouCard: TSurveyThankYouCard = {
 } as unknown as TSurveyThankYouCard;
 
 export const mockSurvey: TSurvey = {
-  id: "surveyId",
-  createdAt: "2024-02-06T20:12:03.521Z",
-  updatedAt: "2024-02-06T20:12:03.521Z",
+  id: "eddb4fbgaml6z52eomejy77w",
+  createdAt: new Date("2024-02-06T20:12:03.521Z"),
+  updatedAt: new Date("2024-02-06T20:12:03.521Z"),
   name: "New Survey",
   type: "link",
   environmentId: "envId",
@@ -301,8 +305,10 @@ export const mockSurvey: TSurvey = {
   },
   pin: null,
   resultShareKey: null,
+  inlineTriggers: {},
   triggers: [],
-  attributeFilters: [],
+  languages: mockSurveyLanguages,
+  segment: mockSegment,
 } as unknown as TSurvey;
 
 export const mockTranslatedWelcomeCard = {
@@ -354,6 +360,7 @@ export const mockLegacySingleSelectQuestion = {
   ...mockSingleSelectQuestion,
   headline: "What do you do?",
   subheader: "Can't do both.",
+  otherOptionPlaceholder: undefined,
   choices: mockSingleSelectQuestion.choices.map((choice) => ({
     ...choice,
     label: choice.label.default,
@@ -373,6 +380,7 @@ export const mockTranslatedMultiSelectQuestion = {
 export const mockLegacyMultiSelectQuestion = {
   ...mockMultiSelectQuestion,
   headline: "What's important on vacay?",
+  otherOptionPlaceholder: undefined,
   choices: mockMultiSelectQuestion.choices.map((choice) => ({
     ...choice,
     label: choice.label.default,
@@ -518,8 +526,8 @@ export const mockTranslatedSurvey = {
 
 export const mockLegacySurvey = {
   ...mockSurvey,
-  createdAt: "2024-02-06T20:12:03.521Z",
-  updatedAt: "2024-02-06T20:12:03.521Z",
+  createdAt: new Date("2024-02-06T20:12:03.521Z"),
+  updatedAt: new Date("2024-02-06T20:12:03.521Z"),
   questions: [
     mockLegacyOpenTextQuestion,
     mockLegacySingleSelectQuestion,

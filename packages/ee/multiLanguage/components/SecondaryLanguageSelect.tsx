@@ -6,7 +6,6 @@ import { LanguageToggle } from "./LanguageToggle";
 interface secondaryLanguageSelectProps {
   product: TProduct;
   defaultLanguage: TLanguage;
-  surveyLanguageCodes: string[];
   setSelectedLanguageCode: (languageCode: string) => void;
   setActiveQuestionId: (questionId: string) => void;
   localSurvey: TSurvey;
@@ -16,12 +15,17 @@ interface secondaryLanguageSelectProps {
 export const SecondaryLanguageSelect = ({
   product,
   defaultLanguage,
-  surveyLanguageCodes,
   setSelectedLanguageCode,
   setActiveQuestionId,
   localSurvey,
   updateSurveyLanguages,
 }: secondaryLanguageSelectProps) => {
+  const isLanguageToggled = (language: TLanguage) => {
+    return localSurvey.languages.some(
+      (surveyLanguage) => surveyLanguage.language.code === language.code && surveyLanguage.enabled
+    );
+  };
+
   return (
     <div className="space-y-4">
       <p className="text-sm">2. Activate translation for specific languages:</p>
@@ -31,7 +35,7 @@ export const SecondaryLanguageSelect = ({
           <LanguageToggle
             key={language.id}
             language={language}
-            isChecked={surveyLanguageCodes.includes(language.code)}
+            isChecked={isLanguageToggled(language)}
             onToggle={() => updateSurveyLanguages(language)}
             onEdit={() => {
               setSelectedLanguageCode(language.code);

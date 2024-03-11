@@ -5,7 +5,7 @@ import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import {
   extractId,
   extractRecallInfo,
@@ -76,7 +76,7 @@ export const QuestionFormInput = ({
   const isWelcomeCard = questionId === "start";
   const choiceIdx = getChoiceIndex(id, isChoice);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-
+  const enabledLanguages = getEnabledLanguages(localSurvey.languages);
   const question: TSurveyQuestion = localSurvey.questions.find((question) => question.id === questionId)!;
 
   const getElementTextBasedOnType = (): TI18nString => {
@@ -399,10 +399,10 @@ export const QuestionFormInput = ({
               maxLength={maxLength ?? undefined}
               isInvalid={isInvalid && text[selectedLanguageCode]?.trim() === ""}
             />
-            {localSurvey.languages?.length > 1 && (
+            {enabledLanguages.length > 1 && (
               <LanguageIndicator
                 selectedLanguageCode={selectedLanguageCode}
-                surveyLanguages={localSurvey.languages}
+                surveyLanguages={enabledLanguages}
                 setSelectedLanguageCode={setSelectedLanguageCode}
               />
             )}

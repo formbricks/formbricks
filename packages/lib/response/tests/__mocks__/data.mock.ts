@@ -496,7 +496,7 @@ export const mockSurveySummaryOutput: TSurveySummary = {
   summary: [
     {
       question: {
-        headline: "Question Text",
+        headline: { default: "Question Text", de: "Fragetext" },
         id: "ars2tjk8hsi8oqk1uac00mo8",
         inputType: "text",
         required: false,

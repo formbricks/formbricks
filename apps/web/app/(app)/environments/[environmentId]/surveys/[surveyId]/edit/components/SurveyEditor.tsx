@@ -6,7 +6,7 @@ import { isEqual } from "lodash";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
-import { extractLanguageCodes, translateSurvey } from "@formbricks/lib/i18n/utils";
+import { extractLanguageCodes, getEnabledLanguages, translateSurvey } from "@formbricks/lib/i18n/utils";
 import useDocumentVisibility from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -54,7 +54,7 @@ export default function SurveyEditor({
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
-  const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
+  const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
@@ -135,7 +135,8 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (!localSurvey?.languages) return;
-    if (!extractLanguageCodes(localSurvey.languages).includes(selectedLanguageCode)) {
+    const enabledLanguageCodes = extractLanguageCodes(getEnabledLanguages(localSurvey.languages));
+    if (!enabledLanguageCodes.includes(selectedLanguageCode)) {
       setSelectedLanguageCode("default");
     }
   }, [localSurvey?.languages, selectedLanguageCode]);
@@ -146,6 +147,7 @@ export default function SurveyEditor({
 
   return (
     <>
+      {console.log(localSurvey)}
       <div className="flex h-full flex-col">
         <SurveyMenuBar
           setLocalSurvey={setLocalSurvey}
