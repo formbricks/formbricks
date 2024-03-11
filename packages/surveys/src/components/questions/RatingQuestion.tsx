@@ -103,7 +103,7 @@ export default function RatingQuestion({
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="bg-survey-bg flex-1 cursor-pointer text-center text-sm">
+                className="bg-survey-bg flex-1 text-center text-sm">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
@@ -117,7 +117,7 @@ export default function RatingQuestion({
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
-                      "text-heading focus:bg-accent-bg flex min-h-[41px] w-full items-center justify-center border focus:outline-none"
+                      "text-heading focus:bg-accent-bg flex min-h-[41px] w-full cursor-pointer items-center justify-center border focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -131,7 +131,7 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      "flex max-h-16 min-h-9 justify-center focus:outline-none",
+                      "flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none",
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
                         : "text-slate-300",
@@ -152,7 +152,7 @@ export default function RatingQuestion({
                 ) : (
                   <label
                     className={cn(
-                      "flex max-h-16 min-h-9 w-full justify-center",
+                      "flex max-h-16 min-h-9 w-full cursor-pointer justify-center",
                       value === number || hoveredNumber === number
                         ? "stroke-rating-selected text-rating-selected"
                         : "stroke-heading text-heading"
