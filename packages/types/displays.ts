@@ -49,3 +49,14 @@ export const ZDisplaysWithSurveyName = ZDisplay.extend({
 });
 
 export type TDisplaysWithSurveyName = z.infer<typeof ZDisplaysWithSurveyName>;
+
+export const ZDisplayFilters = z.object({
+  createdAt: z
+    .object({
+      min: z.date().optional(),
+      max: z.date().optional(),
+    })
+    .optional(),
+});
+
+export type TDisplayFilters = z.infer<typeof ZDisplayFilters>;
