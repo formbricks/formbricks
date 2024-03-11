@@ -26,18 +26,13 @@ RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 # Install Supercronic (cron for containers without super user privileges)
 RUN apk add --no-cache curl \
     && curl -fsSLo /tmp/supercronic \
-       "https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64" \
+    "https://github.com/aptible/supercronic/releases/download/v0.2.27/supercronic-linux-amd64" \
     && chmod +x /tmp/supercronic
 
-# Set environment variables
-ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
-
-ARG NEXTAUTH_SECRET
-ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
-
-ARG ENCRYPTION_KEY
-ENV ENCRYPTION_KEY=$ENCRYPTION_KEY
+# Set hardcoded environment variables
+ENV DATABASE_URL="postgresql://placeholder:for@build:5432/gets_overwritten_at_runtime?schema=public"
+ENV NEXTAUTH_SECRET="placeholder_for_next_auth_of_64_chars_get_overwritten_at_runtime"
+ENV ENCRYPTION_KEY="placeholder_for_build_key_of_64_chars_get_overwritten_at_runtime"
 
 ARG NEXT_PUBLIC_SENTRY_DSN
 

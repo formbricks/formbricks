@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import { segmentCache } from "@formbricks/lib/segment/cache";
 import {
   cloneSegment,
   createSegment,
@@ -14,7 +13,6 @@ import {
   updateSegment,
 } from "@formbricks/lib/segment/service";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
 import { formatDateFields } from "@formbricks/lib/utils/datetime";
 import { AuthorizationError } from "@formbricks/types/errors";
@@ -55,8 +53,6 @@ export const createSegmentAction = async ({
     isPrivate,
     filters,
   });
-  surveyCache.revalidate({ id: surveyId });
-  segmentCache.revalidate({ id: segment.id, environmentId });
 
   return segment;
 };

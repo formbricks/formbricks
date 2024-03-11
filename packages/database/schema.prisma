@@ -313,6 +313,7 @@ model Survey {
   displayPercentage Int?
 
   @@index([environmentId])
+  @@index([segmentId])
 }
 
 enum ActionType {
