@@ -7,8 +7,8 @@ import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[s
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
 import {
-  getResponseCountUnauthorizedAction,
-  getSurveySummaryUnauthorizedAction,
+  getResponseCountBySurveySharingKeyAction,
+  getSummaryBySurveySharingKeyAction,
 } from "@/app/share/[sharingKey]/action";
 import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
 import SummaryHeader from "@/app/share/[sharingKey]/components/SummaryHeader";
@@ -70,13 +70,13 @@ const SummaryPage = ({
 
   useEffect(() => {
     const handleInitialData = async () => {
-      const responseCount = await getResponseCountUnauthorizedAction(sharingKey, filters);
+      const responseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
       setResponseCount(responseCount);
       if (responseCount === 0) {
         setSurveySummary(initialSurveySummary);
         return;
       }
-      const response = await getSurveySummaryUnauthorizedAction(sharingKey, filters);
+      const response = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
       setSurveySummary(response);
     };
 
