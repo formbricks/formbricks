@@ -8,9 +8,15 @@ interface SurveyResultsTabProps {
   activeId: string;
   environmentId: string;
   surveyId: string;
+  responseCount: number;
 }
 
-export default function SurveyResultsTab({ activeId, environmentId, surveyId }: SurveyResultsTabProps) {
+export default function SurveyResultsTab({
+  activeId,
+  environmentId,
+  surveyId,
+  responseCount,
+}: SurveyResultsTabProps) {
   const tabs = [
     {
       id: "summary",
@@ -20,7 +26,7 @@ export default function SurveyResultsTab({ activeId, environmentId, surveyId }: 
     },
     {
       id: "responses",
-      label: "Responses",
+      label: `Responses ${responseCount > 0 ? `(${responseCount})` : ""}`,
       icon: <InboxStackIcon />,
       href: `/environments/${environmentId}/surveys/${surveyId}/responses?referer=true`,
     },

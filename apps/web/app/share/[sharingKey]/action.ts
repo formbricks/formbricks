@@ -1,6 +1,6 @@
 "use server";
 
-import { getResponses, getSurveySummary } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId, getResponses, getSurveySummary } from "@formbricks/lib/response/service";
 import { getSurveyByResultShareKey } from "@formbricks/lib/survey/service";
 import { TResponse, TResponseFilterCriteria, TSurveySummary } from "@formbricks/types/responses";
 
@@ -24,4 +24,11 @@ export const getSurveySummaryUnauthorizedAction = async (
   filterCriteria?: TResponseFilterCriteria
 ): Promise<TSurveySummary> => {
   return await getSurveySummary(surveyId, filterCriteria);
+};
+
+export const getResponsesCountUnauthorizedAction = async (
+  surveyId: string,
+  filterCriteria?: TResponseFilterCriteria
+): Promise<number> => {
+  return await getResponseCountBySurveyId(surveyId, filterCriteria);
 };

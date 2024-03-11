@@ -826,7 +826,7 @@ export const getResponseCountBySurveyId = async (
         throw error;
       }
     },
-    [`getResponseCountBySurveyId-${surveyId}`],
+    [`getResponseCountBySurveyId-${surveyId}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

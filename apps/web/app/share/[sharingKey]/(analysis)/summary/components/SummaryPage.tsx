@@ -6,7 +6,10 @@ import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surve
 import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
-import { getSurveySummaryUnauthorizedAction } from "@/app/share/[sharingKey]/action";
+import {
+  getResponsesCountUnauthorizedAction,
+  getSurveySummaryUnauthorizedAction,
+} from "@/app/share/[sharingKey]/action";
 import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
 import SummaryHeader from "@/app/share/[sharingKey]/components/SummaryHeader";
 import { useSearchParams } from "next/navigation";
@@ -39,8 +42,10 @@ const SummaryPage = ({
   sharingKey,
   environmentTags,
   attributes,
-  responseCount,
+  responseCount: totalResponseCount,
 }: SummaryPageProps) => {
+  const [responseCount, setResponseCount] = useState<number>(0);
+
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>({
     meta: {
@@ -64,10 +69,17 @@ const SummaryPage = ({
   );
 
   useEffect(() => {
+    const handleResponsesCount = async () => {
+      const responseCount = await getResponsesCountUnauthorizedAction(surveyId, filters);
+      setResponseCount(responseCount);
+    };
+
     const fetchSurveySummary = async () => {
       const response = await getSurveySummaryUnauthorizedAction(surveyId, filters);
       setSurveySummary(response);
     };
+
+    handleResponsesCount();
     fetchSurveySummary();
   }, [filters, surveyId]);
 
@@ -91,6 +103,7 @@ const SummaryPage = ({
         activeId="summary"
         environmentId={environment.id}
         surveyId={surveyId}
+        responseCount={responseCount}
         sharingKey={sharingKey}
       />
       <SummaryMetadata
@@ -103,7 +116,7 @@ const SummaryPage = ({
 
       <SummaryList
         summary={surveySummary.summary}
-        responseCount={responseCount}
+        responseCount={totalResponseCount}
         survey={survey}
         environment={environment}
       />

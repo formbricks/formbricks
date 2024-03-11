@@ -4,7 +4,10 @@ import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/comp
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/share/[sharingKey]/(analysis)/responses/components/ResponseTimeline";
-import { getResponsesUnauthorizedAction } from "@/app/share/[sharingKey]/action";
+import {
+  getResponsesCountUnauthorizedAction,
+  getResponsesUnauthorizedAction,
+} from "@/app/share/[sharingKey]/action";
 import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
 import SummaryHeader from "@/app/share/[sharingKey]/components/SummaryHeader";
 import { useSearchParams } from "next/navigation";
@@ -43,6 +46,7 @@ const ResponsePage = ({
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [responseCount, setResponseCount] = useState<number>(0);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -56,6 +60,16 @@ const ResponsePage = ({
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey);
   }, [survey]);
+
+  const fetchNextPage = useCallback(async () => {
+    const newPage = page + 1;
+    const newResponses = await getResponsesUnauthorizedAction(surveyId, newPage, responsesPerPage, filters);
+    if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
+      setHasMore(false);
+    }
+    setResponses([...responses, ...newResponses]);
+    setPage(newPage);
+  }, [filters, page, responses, responsesPerPage, surveyId]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -74,15 +88,13 @@ const ResponsePage = ({
     fetchInitialResponses();
   }, [surveyId, filters, responsesPerPage]);
 
-  const fetchNextPage = useCallback(async () => {
-    const newPage = page + 1;
-    const newResponses = await getResponsesUnauthorizedAction(surveyId, newPage, responsesPerPage, filters);
-    if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
-      setHasMore(false);
-    }
-    setResponses([...responses, ...newResponses]);
-    setPage(newPage);
-  }, [filters, page, responses, responsesPerPage, surveyId]);
+  useEffect(() => {
+    const handleResponsesCount = async () => {
+      const responseCount = await getResponsesCountUnauthorizedAction(surveyId, filters);
+      setResponseCount(responseCount);
+    };
+    handleResponsesCount();
+  }, [filters, surveyId]);
 
   return (
     <ContentWrapper>
@@ -92,6 +104,7 @@ const ResponsePage = ({
         activeId="responses"
         environmentId={environment.id}
         surveyId={surveyId}
+        responseCount={responseCount}
         sharingKey={sharingKey}
       />
       <ResponseTimeline

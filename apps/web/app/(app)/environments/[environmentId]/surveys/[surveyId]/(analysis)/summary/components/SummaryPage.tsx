@@ -1,7 +1,10 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getSurveySummaryAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import {
+  getResponsesCountAction,
+  getSurveySummaryAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
@@ -47,8 +50,9 @@ const SummaryPage = ({
   environmentTags,
   attributes,
   membershipRole,
-  responseCount,
+  responseCount: totalResponseCount,
 }: SummaryPageProps) => {
+  const [responseCount, setResponseCount] = useState<number>(0);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>({
     meta: {
@@ -72,10 +76,17 @@ const SummaryPage = ({
   );
 
   useEffect(() => {
+    const handleResponsesCount = async () => {
+      const responseCount = await getResponsesCountAction(surveyId, filters);
+      setResponseCount(responseCount);
+    };
+
     const fetchSurveySummary = async () => {
       const response = await getSurveySummaryAction(surveyId, filters);
       setSurveySummary(response);
     };
+
+    handleResponsesCount();
     fetchSurveySummary();
   }, [filters, surveyId]);
 
@@ -89,6 +100,10 @@ const SummaryPage = ({
       resetState();
     }
   }, [searchParams, resetState]);
+
+  useEffect(() => {
+    document.title = `${responseCount} Responses | ${survey?.name} Results`;
+  }, [responseCount, survey?.name]);
 
   return (
     <ContentWrapper>
@@ -105,7 +120,12 @@ const SummaryPage = ({
         <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
       </div>
-      <SurveyResultsTabs activeId="summary" environmentId={environment.id} surveyId={surveyId} />
+      <SurveyResultsTabs
+        activeId="summary"
+        environmentId={environment.id}
+        surveyId={surveyId}
+        responseCount={responseCount}
+      />
       <SummaryMetadata
         survey={survey}
         surveySummary={surveySummary.meta}
@@ -115,7 +135,7 @@ const SummaryPage = ({
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <SummaryList
         summary={surveySummary.summary}
-        responseCount={responseCount}
+        responseCount={totalResponseCount}
         survey={survey}
         environment={environment}
       />
