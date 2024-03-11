@@ -36,6 +36,7 @@ interface SurveyMenuBarProps {
   product: TProduct;
   responseCount: number;
   selectedLanguageCode: string;
+  setSelectedLanguageCode: (selectedLanguage: string) => void;
 }
 
 export default function SurveyMenuBar({
@@ -49,6 +50,7 @@ export default function SurveyMenuBar({
   product,
   responseCount,
   selectedLanguageCode,
+  setSelectedLanguageCode,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -174,6 +176,7 @@ export default function SurveyMenuBar({
     // if there are any faulty questions, the user won't be allowed to save the survey
     if (faultyQuestions.length > 0) {
       setInvalidQuestions(faultyQuestions);
+      setSelectedLanguageCode("default");
       toast.error("Please fill all required fields.");
       return false;
     }
