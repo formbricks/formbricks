@@ -88,6 +88,9 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
+# Install Prisma globally
+RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
+
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
 USER nextjs
@@ -96,12 +99,6 @@ USER nextjs
 RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
-CMD PRISMA_VERSION=$(cat prisma_version.txt) && \
-    supercronic -quiet /app/docker/cronjobs & \
-    if [ "$NEXTAUTH_SECRET" != "RANDOM_STRING" ]; then \
-        pnpm dlx prisma@$PRISMA_VERSION migrate deploy && \
-        exec node apps/web/server.js; \
-    else \
-        echo "ERROR: Please set a value for NEXTAUTH_SECRET in your docker compose variables!" >&2; \
-        exit 1; \
-    fi
+CMD supercronic -quiet /app/docker/cronjobs & \
+    prisma migrate deploy && \
+    exec node apps/web/server.js
