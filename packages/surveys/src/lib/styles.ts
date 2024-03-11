@@ -62,10 +62,16 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
       styling.inputColor.light === "white"
     ) {
       appendCssVariable("input-background-color-selected", "rgb(248, 250, 252)");
+    } else if (
+      styling.inputColor.light === "#000" ||
+      styling.inputColor.light === "#000000" ||
+      styling.inputColor.light === "black"
+    ) {
+      appendCssVariable("input-background-color-selected", "rgb(40, 40, 40)");
     } else {
       appendCssVariable(
         "input-background-color-selected",
-        lightenDarkenColor(styling.inputColor?.light, -20)
+        lightenDarkenColor(styling.inputColor?.light, +10)
       );
     }
   }
