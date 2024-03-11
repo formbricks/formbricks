@@ -2,7 +2,7 @@ import { isLight } from "@/lib/utils";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 
-import { lightenDarkenColor, mixColor } from "@formbricks/lib/utils";
+import { mixColor } from "@formbricks/lib/utils";
 import { TProductStyling } from "@formbricks/types/product";
 
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
@@ -71,7 +71,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
     } else {
       appendCssVariable(
         "input-background-color-selected",
-        lightenDarkenColor(styling.inputColor?.light, +10)
+        mixColor(styling.inputColor?.light, "#ffffff", 0.2)
       );
     }
   }
@@ -79,9 +79,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) =
   if (styling.brandColor?.light) {
     const brandColor = styling.brandColor.light;
 
-    const mixWith = isLight(brandColor) ? "#ffffff" : "#ffffff";
-    const mixedBrandColor = mixColor(brandColor, mixWith, 0.8);
-    const mixedBrandColorSelected = mixColor(brandColor, mixWith, 0.7);
+    const mixedBrandColor = mixColor(brandColor, "#ffffff", 0.8);
+    const mixedBrandColorSelected = mixColor(brandColor, "#ffffff", 0.7);
 
     appendCssVariable("accent-background-color", mixedBrandColor);
     appendCssVariable("accent-background-color-selected", mixedBrandColorSelected);
