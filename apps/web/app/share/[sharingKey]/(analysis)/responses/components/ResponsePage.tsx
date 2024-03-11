@@ -65,24 +65,36 @@ const ResponsePage = ({
 
   useEffect(() => {
     const fetchInitialResponses = async () => {
-      const responses = await getResponsesUnauthorizedAction(surveyId, 1, responsesPerPage, filters);
+      const responses = await getResponsesUnauthorizedAction(
+        sharingKey,
+        surveyId,
+        1,
+        responsesPerPage,
+        filters
+      );
       if (responses.length < responsesPerPage) {
         setHasMore(false);
       }
       setResponses(responses);
     };
     fetchInitialResponses();
-  }, [surveyId, filters, responsesPerPage]);
+  }, [surveyId, filters, responsesPerPage, sharingKey]);
 
   const fetchNextPage = useCallback(async () => {
     const newPage = page + 1;
-    const newResponses = await getResponsesUnauthorizedAction(surveyId, newPage, responsesPerPage, filters);
+    const newResponses = await getResponsesUnauthorizedAction(
+      sharingKey,
+      surveyId,
+      newPage,
+      responsesPerPage,
+      filters
+    );
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
       setHasMore(false);
     }
     setResponses([...responses, ...newResponses]);
     setPage(newPage);
-  }, [filters, page, responses, responsesPerPage, surveyId]);
+  }, [filters, page, responses, responsesPerPage, surveyId, sharingKey]);
 
   return (
     <ContentWrapper>

@@ -65,11 +65,11 @@ const SummaryPage = ({
 
   useEffect(() => {
     const fetchSurveySummary = async () => {
-      const response = await getSurveySummaryUnauthorizedAction(surveyId, filters);
+      const response = await getSurveySummaryUnauthorizedAction(sharingKey, surveyId, filters);
       setSurveySummary(response);
     };
     fetchSurveySummary();
-  }, [filters, surveyId]);
+  }, [filters, surveyId, sharingKey]);
 
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey);
