@@ -27,6 +27,21 @@ import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
 import ResultsShareButton from "../../../components/ResultsShareButton";
 
+const initialSurveySummary: TSurveySummary = {
+  meta: {
+    completedPercentage: 0,
+    completedResponses: 0,
+    displayCount: 0,
+    dropOffPercentage: 0,
+    dropOffCount: 0,
+    startsPercentage: 0,
+    totalResponses: 0,
+    ttcAverage: 0,
+  },
+  dropOff: [],
+  summary: [],
+};
+
 interface SummaryPageProps {
   environment: TEnvironment;
   survey: TSurvey;
@@ -37,7 +52,6 @@ interface SummaryPageProps {
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
   membershipRole?: TMembershipRole;
-  responseCount: number;
 }
 
 const SummaryPage = ({
@@ -50,24 +64,10 @@ const SummaryPage = ({
   environmentTags,
   attributes,
   membershipRole,
-  responseCount: totalResponseCount,
 }: SummaryPageProps) => {
   const [responseCount, setResponseCount] = useState<number>(0);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
-  const [surveySummary, setSurveySummary] = useState<TSurveySummary>({
-    meta: {
-      completedPercentage: 0,
-      completedResponses: 0,
-      displayCount: 0,
-      dropOffPercentage: 0,
-      dropOffCount: 0,
-      startsPercentage: 0,
-      totalResponses: 0,
-      ttcAverage: 0,
-    },
-    dropOff: [],
-    summary: [],
-  });
+  const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
 
   const filters = useMemo(
@@ -76,18 +76,18 @@ const SummaryPage = ({
   );
 
   useEffect(() => {
-    const handleResponsesCount = async () => {
+    const handleInitialData = async () => {
       const responseCount = await getResponseCountAction(surveyId, filters);
       setResponseCount(responseCount);
-    };
-
-    const fetchSurveySummary = async () => {
+      if (responseCount === 0) {
+        setSurveySummary(initialSurveySummary);
+        return;
+      }
       const response = await getSurveySummaryAction(surveyId, filters);
       setSurveySummary(response);
     };
 
-    handleResponsesCount();
-    fetchSurveySummary();
+    handleInitialData();
   }, [filters, surveyId]);
 
   const searchParams = useSearchParams();
@@ -135,7 +135,7 @@ const SummaryPage = ({
       {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
       <SummaryList
         summary={surveySummary.summary}
-        responseCount={totalResponseCount}
+        responseCount={responseCount}
         survey={survey}
         environment={environment}
       />
