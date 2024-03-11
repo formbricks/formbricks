@@ -503,7 +503,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 export const duplicateSurvey = async (environmentId: string, surveyId: string, userId: string) => {
   validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
-
+  const currentDate = new Date();
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
@@ -516,6 +516,8 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       ...existingSurvey,
       id: undefined, // id is auto-generated
       environmentId: undefined, // environmentId is set below
+      createdAt: currentDate,
+      updatedAt: currentDate,
       createdBy: undefined,
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
