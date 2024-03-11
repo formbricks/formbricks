@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 const DEFAULT_BRAND_COLOR = "#64748b";
 const DEFAULT_STYLING = {
@@ -38,6 +38,7 @@ async function main() {
             },
             data: {
               brandColor: null,
+              highlightBorderColor: null,
               styling: {
                 unifiedStyling: false,
                 allowStyleOverwrite: true,
@@ -53,6 +54,32 @@ async function main() {
             },
           });
         }
+      }
+
+      // find all surveys with product overwrites
+      const surveysWithProductOverwrites = await tx.survey.findMany({
+        where: {
+          productOverwrites: { not: Prisma.JsonNull },
+        },
+      });
+
+      if (!surveysWithProductOverwrites || !surveysWithProductOverwrites.length) {
+        // no surveys with product overwrites found, return early
+        return;
+      }
+
+      for (const survey of surveysWithProductOverwrites) {
+        const { brandColor, highlightBorderColor } = survey.productOverwrites ?? {};
+        await tx.survey.update({
+          where: { id: survey.id },
+          data: {
+            styling: {
+              ...(survey.styling ?? {}),
+              ...(brandColor && { brandColor: { light: brandColor } }),
+              ...(highlightBorderColor && { highlightBorderColor: { light: highlightBorderColor } }),
+            },
+          },
+        });
       }
     }
   });
