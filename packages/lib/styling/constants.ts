@@ -7,7 +7,7 @@ export const COLOR_DEFAULTS = {
   inputBorderColor: "#cbd5e1",
   cardBackgroundColor: "#ffffff",
   highlightBorderColor: "#64748b",
-};
+} as const;
 
 export const PREVIEW_SURVEY = {
   id: "mppwcoocbqln3kvhbe3wqp4j",

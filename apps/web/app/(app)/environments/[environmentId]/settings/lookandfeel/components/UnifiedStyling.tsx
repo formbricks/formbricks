@@ -179,6 +179,12 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     setActiveQuestionId(PREVIEW_SURVEY.questions[0].id);
   }, []);
 
+  useEffect(() => {
+    // sync the local product with the product prop
+    // TODO: this is not ideal, we should find a better way to do this.
+    setLocalProduct(product);
+  }, [product]);
+
   const onSave = useCallback(async () => {
     await updateProductAction(product.id, {
       styling: {
