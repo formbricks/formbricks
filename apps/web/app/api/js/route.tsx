@@ -66,9 +66,7 @@ async function handleInit(req: NextRequest) {
     }
 
     if (environment) {
-      const enableDebug =
-        req.nextUrl.searchParams.get("debug") === "true" || req.nextUrl.searchParams.get("debug") === "1";
-      return `formbricks.init({environmentId: "${environmentId}", apiHost: "${WEBAPP_URL}", debug: ${enableDebug}});`;
+      return `formbricks.init({environmentId: "${environmentId}", apiHost: "${WEBAPP_URL}"});`;
     }
   }
   return "";

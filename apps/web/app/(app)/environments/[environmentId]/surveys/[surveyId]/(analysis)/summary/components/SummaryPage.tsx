@@ -90,8 +90,6 @@ const SummaryPage = ({
     }
   }, [searchParams, resetState]);
 
-  console.log({ surveySummary });
-
   return (
     <ContentWrapper>
       <SummaryHeader
