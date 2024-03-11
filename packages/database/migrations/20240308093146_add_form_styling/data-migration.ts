@@ -22,6 +22,16 @@ async function main() {
         // 1. product's brandColor is equal to the default one
         // 2. product's styling object is equal the default one
         // 3. product has no highlightBorderColor
+        console.log(product.brandColor);
+
+        if (product.brandColor === DEFAULT_BRAND_COLOR) {
+          console.log("product Id: ", product.id, " has default brand color");
+          console.log("styling: ", product.styling);
+
+          if (JSON.stringify(product.styling) === JSON.stringify(DEFAULT_STYLING)) {
+            console.log("product Id: ", product.id, " has default styling");
+          }
+        }
 
         if (
           product.brandColor === DEFAULT_BRAND_COLOR &&
