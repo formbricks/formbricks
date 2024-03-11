@@ -2,8 +2,8 @@ import { Prisma, PrismaClient } from "@prisma/client";
 
 const DEFAULT_BRAND_COLOR = "#64748b";
 const DEFAULT_STYLING = {
-  unifiedStyling: true,
-  allowStyleOverwrite: false,
+  unifiedStyling: false,
+  allowStyleOverwrite: true,
 };
 
 const prisma = new PrismaClient();
@@ -22,23 +22,12 @@ async function main() {
         // 1. product's brandColor is equal to the default one
         // 2. product's styling object is equal the default one
         // 3. product has no highlightBorderColor
-        console.log(product.brandColor);
-
-        if (product.brandColor === DEFAULT_BRAND_COLOR) {
-          console.log("product Id: ", product.id, " has default brand color");
-          console.log("styling: ", product.styling);
-
-          if (JSON.stringify(product.styling) === JSON.stringify(DEFAULT_STYLING)) {
-            console.log("product Id: ", product.id, " has default styling");
-          }
-        }
 
         if (
           product.brandColor === DEFAULT_BRAND_COLOR &&
           JSON.stringify(product.styling) === JSON.stringify(DEFAULT_STYLING) &&
           !product.highlightBorderColor
         ) {
-          console.log("No migration needed for product with id: ", product.id);
           continue;
         }
 
