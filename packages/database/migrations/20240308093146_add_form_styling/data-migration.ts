@@ -28,6 +28,7 @@ async function main() {
           JSON.stringify(product.styling) === JSON.stringify(DEFAULT_STYLING) &&
           !product.highlightBorderColor
         ) {
+          console.log("No migration needed for product with id: ", product.id);
           continue;
         }
 
@@ -37,20 +38,31 @@ async function main() {
               id: product.id,
             },
             data: {
-              brandColor: null,
-              highlightBorderColor: null,
               styling: {
                 unifiedStyling: false,
                 allowStyleOverwrite: true,
                 brandColor: {
                   light: product.brandColor,
                 },
-                ...(product.highlightBorderColor && {
-                  highlightBorderColor: {
-                    light: product.highlightBorderColor,
-                  },
-                }),
               },
+              brandColor: null,
+            },
+          });
+        }
+
+        if (product.highlightBorderColor) {
+          await tx.product.update({
+            where: {
+              id: product.id,
+            },
+            data: {
+              styling: {
+                ...(product.styling ?? {}),
+                highlightBorderColor: {
+                  light: product.highlightBorderColor,
+                },
+              },
+              highlightBorderColor: null,
             },
           });
         }
@@ -70,16 +82,36 @@ async function main() {
 
       for (const survey of surveysWithProductOverwrites) {
         const { brandColor, highlightBorderColor } = survey.productOverwrites ?? {};
-        await tx.survey.update({
-          where: { id: survey.id },
-          data: {
-            styling: {
-              ...(survey.styling ?? {}),
-              ...(brandColor && { brandColor: { light: brandColor } }),
-              ...(highlightBorderColor && { highlightBorderColor: { light: highlightBorderColor } }),
+
+        if (brandColor) {
+          await tx.survey.update({
+            where: { id: survey.id },
+            data: {
+              styling: {
+                ...(survey.styling ?? {}),
+                brandColor: { light: brandColor },
+              },
+              productOverwrites: {
+                brandColor: null,
+              },
             },
-          },
-        });
+          });
+        }
+
+        if (highlightBorderColor) {
+          await tx.survey.update({
+            where: { id: survey.id },
+            data: {
+              styling: {
+                ...(survey.styling ?? {}),
+                highlightBorderColor: { light: highlightBorderColor },
+              },
+              productOverwrites: {
+                highlightBorderColor: null,
+              },
+            },
+          });
+        }
       }
     }
   });
