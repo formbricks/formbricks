@@ -6,7 +6,7 @@ import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surve
 import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
-import { getSurveySummaryUnauthorizedAction } from "@/app/share/[sharingKey]/action";
+import { getSummaryBySurveySharingKeyAction } from "@/app/share/[sharingKey]/action";
 import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
 import SummaryHeader from "@/app/share/[sharingKey]/components/SummaryHeader";
 import { useSearchParams } from "next/navigation";
@@ -65,7 +65,7 @@ const SummaryPage = ({
 
   useEffect(() => {
     const fetchSurveySummary = async () => {
-      const response = await getSurveySummaryUnauthorizedAction(sharingKey, filters);
+      const response = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
       setSurveySummary(response);
     };
     fetchSurveySummary();

@@ -4,7 +4,7 @@ import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/comp
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/share/[sharingKey]/(analysis)/responses/components/ResponseTimeline";
-import { getResponsesUnauthorizedAction } from "@/app/share/[sharingKey]/action";
+import { getResponsesBySurveySharingKeyAction } from "@/app/share/[sharingKey]/action";
 import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
 import SummaryHeader from "@/app/share/[sharingKey]/components/SummaryHeader";
 import { useSearchParams } from "next/navigation";
@@ -65,7 +65,7 @@ const ResponsePage = ({
 
   useEffect(() => {
     const fetchInitialResponses = async () => {
-      const responses = await getResponsesUnauthorizedAction(sharingKey, 1, responsesPerPage, filters);
+      const responses = await getResponsesBySurveySharingKeyAction(sharingKey, 1, responsesPerPage, filters);
       if (responses.length < responsesPerPage) {
         setHasMore(false);
       }
@@ -76,7 +76,12 @@ const ResponsePage = ({
 
   const fetchNextPage = useCallback(async () => {
     const newPage = page + 1;
-    const newResponses = await getResponsesUnauthorizedAction(sharingKey, newPage, responsesPerPage, filters);
+    const newResponses = await getResponsesBySurveySharingKeyAction(
+      sharingKey,
+      newPage,
+      responsesPerPage,
+      filters
+    );
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
       setHasMore(false);
     }
