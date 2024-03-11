@@ -70,18 +70,18 @@ const SummaryPage = ({
 
   useEffect(() => {
     const handleInitialData = async () => {
-      const responseCount = await getResponseCountUnauthorizedAction(surveyId, filters);
+      const responseCount = await getResponseCountUnauthorizedAction(sharingKey, filters);
       setResponseCount(responseCount);
       if (responseCount === 0) {
         setSurveySummary(initialSurveySummary);
         return;
       }
-      const response = await getSurveySummaryUnauthorizedAction(surveyId, filters);
+      const response = await getSurveySummaryUnauthorizedAction(sharingKey, filters);
       setSurveySummary(response);
     };
 
     handleInitialData();
-  }, [filters, surveyId]);
+  }, [filters, sharingKey]);
 
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey);
