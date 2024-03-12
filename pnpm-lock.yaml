@@ -65,8 +65,8 @@ importers:
         specifier: ^1.13.0
         version: 1.13.0(@algolia/client-search@4.22.0)(algoliasearch@4.22.0)(search-insights@2.13.0)
       '@calcom/embed-react':
-        specifier: ^1.3.0
-        version: 1.3.0(react-dom@18.2.0)(react@18.2.0)
+        specifier: ^1.3.2
+        version: 1.3.2(react-dom@18.2.0)(react@18.2.0)
       '@docsearch/react':
         specifier: ^3.5.2
         version: 3.5.2(@algolia/client-search@4.22.0)(@types/react@18.2.61)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)
@@ -3303,37 +3303,25 @@ packages:
     resolution: {integrity: sha512-4iri8i1AqYHJE2DstZYkyEprg6Pq6sKx3xn5FpySk9sNhH7qN2LLlHJCfDTZRILNwQNPD7mATWM0TBui7uC1pA==}
     dev: true
 
-  /@calcom/embed-core@1.3.2:
-    resolution: {integrity: sha512-qxVfWpmPcYN5hTnwoKTP9QAlhEAHy4TFh+Xu+IoCnJma/uI2BjqsUWJ0BXsmm0m8sTFthaBkGiFomS1LeMYO+Q==}
-    dev: false
-
   /@calcom/embed-core@1.3.3:
     resolution: {integrity: sha512-bz7S9cvz1JMVWFcJI+dvoOQd5F63YzdQ5gOp1vunob5idje7PoYfiTf6ncMSVeX6vsrJA1oVFD07JMxuYt/d+A==}
-    dev: true
 
-  /@calcom/embed-react@1.3.0(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-NbqkLd6J+VUy8jILY4GI1HEXRv3pZk1wnmL3CRrouB2y7pU5sV1qPjkgy+hwCRlYJJGiAIrspXkI/czMsfHxRQ==}
+  /@calcom/embed-react@1.3.2(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-tya/NJQJs0g70RLeeKtfhzF8vX7RzwwWTxlXCojCthuqKdMbx/8WEwZsdDzuJ8OjbPEiLiV3ImO2rgRRftZxNw==}
     peerDependencies:
       react: ^18.2.0
       react-dom: ^18.2.0
     dependencies:
-      '@calcom/embed-core': 1.3.2
-      '@calcom/embed-snippet': 1.1.2
+      '@calcom/embed-core': 1.3.3
+      '@calcom/embed-snippet': 1.1.3
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-    dev: false
-
-  /@calcom/embed-snippet@1.1.2:
-    resolution: {integrity: sha512-UKz4BRyxWLPfCIr7FfZP2Aa8w3ZMXcfwc3frCjNfWphJvJjaCLi0nAUBXFx6ooIPhVkbzvelnkllbqigZRZPiA==}
-    dependencies:
-      '@calcom/embed-core': 1.3.2
     dev: false
 
   /@calcom/embed-snippet@1.1.3:
     resolution: {integrity: sha512-whtpkc54btyIIDfCXsCP7BN8wE3GGgh8cTX5JiprvbcHaej+OEUcuMuhMcLlBersMADwGENpFrlB6AhSJfEA/Q==}
     dependencies:
       '@calcom/embed-core': 1.3.3
-    dev: true
 
   /@changesets/apply-release-plan@7.0.0:
     resolution: {integrity: sha512-vfi69JR416qC9hWmFGSxj7N6wA5J222XNBmezSVATPWDVPIF7gkd4d8CpbEbXmRWbVrkoli3oerGS6dcL/BGsQ==}
