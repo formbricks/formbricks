@@ -52,7 +52,7 @@ export default function LinkSurvey({
   const suId = searchParams?.get("suId");
   const startAt = searchParams?.get("startAt");
 
-  const isValidStartAt = useMemo(() => {
+  const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
     const isValid = survey?.questions.some((question) => question.id === startAt) || startAt === "start";
 
@@ -69,7 +69,7 @@ export default function LinkSurvey({
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    startAt && isValidStartAt ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
+    startAt && isStartAtValid ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
 
   const prefillResponseData: TResponseData | undefined = prefillAnswer
