@@ -3,6 +3,8 @@
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import React, { useEffect, useRef } from "react";
 
+import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -60,6 +62,9 @@ export default function ResponseTimeline({
     };
   }, [fetchNextPage, hasMore]);
 
+  const { membershipRole } = useMembershipRole(survey.environmentId);
+  const { isViewer } = getAccessFlags(membershipRole);
+
   return (
     <div className="space-y-4">
       {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
@@ -84,6 +89,7 @@ export default function ResponseTimeline({
                   environment={environment}
                   updateResponse={updateResponse}
                   deleteResponse={deleteResponse}
+                  isViewer={isViewer}
                 />
               </div>
             );

@@ -21,7 +21,7 @@ export const PictureSelectionResponse = ({ choices, selected }: PictureSelection
   return (
     <div className="my-1 flex flex-wrap gap-x-5 gap-y-4">
       {selected.map((id) => (
-        <div className="relative h-32 w-56">
+        <div className="relative h-32 w-56" key={id}>
           {choiceImageMapping[id] && (
             <Image
               src={choiceImageMapping[id]}

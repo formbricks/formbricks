@@ -44,6 +44,23 @@ export function Onboarding({
   const [iframeVisible, setIframeVisible] = useState(false);
   const [fade, setFade] = useState(false);
 
+  const handleSurveyCompletion = () => {
+    setFade(false);
+
+    setTimeout(() => {
+      setIframeVisible(false); // Hide the iframe after fade-out effect is complete
+      setCurrentStep(5); // Assuming you want to move to the next step after survey completion
+    }, 1000); // Adjust timeout duration based on your fade-out CSS transition
+  };
+
+  const handleMessageEvent = (event: MessageEvent) => {
+    if (event.origin !== webAppUrl) return;
+
+    if (event.data === "formbricksSurveyCompleted") {
+      handleSurveyCompletion();
+    }
+  };
+
   useEffect(() => {
     if (currentStep === 2 && selectedPathway === "link") {
       setIframeVisible(true);
@@ -55,23 +72,13 @@ export function Onboarding({
   useEffect(() => {
     if (iframeVisible) {
       setFade(true);
-
-      const handleSurveyCompletion = () => {
-        setFade(false);
-
-        setTimeout(() => {
-          setIframeVisible(false); // Hide the iframe after fade-out effect is complete
-          setCurrentStep(5); // Assuming you want to move to the next step after survey completion
-        }, 1000); // Adjust timeout duration based on your fade-out CSS transition
-      };
-
-      window.addEventListener("formbricksSurveyCompleted", handleSurveyCompletion);
-
+      window.addEventListener("message", handleMessageEvent, false);
       // Cleanup function to remove the event listener
       return () => {
-        window.removeEventListener("formbricksSurveyCompleted", handleSurveyCompletion);
+        window.removeEventListener("message", handleMessageEvent, false);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
 
   useEffect(() => {
@@ -144,7 +151,7 @@ export function Onboarding({
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center bg-slate-50">
+    <div className="group flex h-full w-full flex-col items-center bg-slate-50">
       <div className="hidden">
         <button
           id="FB__INTERNAL__SKIP_ONBOARDING"
