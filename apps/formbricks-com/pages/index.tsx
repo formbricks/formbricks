@@ -4,21 +4,22 @@ import Hero from "@/components/home/Hero";
 import Highlights from "@/components/home/Highlights";
 import ScrollToTopButton from "@/components/home/ScrollToTop";
 import Steps from "@/components/home/Steps";
+import BestPractices from "@/components/shared/BestPractices";
 import BreakerCTA from "@/components/shared/BreakerCTA";
 import Layout from "@/components/shared/Layout";
+import AnimationFallback from "@/public/animations/opensource-xm-platform-formbricks-fallback.png";
+
+import HeroAnimation from "../components/home/HeroAnimation";
 
 const IndexPage = () => (
   <Layout
     title="Formbricks | Privacy-first Experience Management"
     description="Build qualitative user research into your product. Leverage Best practices to increase Product-Market Fit.">
     <Hero />
-    {/* <BestPractices /> */}
+    <HeroAnimation fallbackImage={AnimationFallback} />
     <Features />
     <Highlights />
     <ScrollToTopButton />
-    {/*     <div className="block lg:hidden">
-      <GitHubSponsorship />
-    </div> */}
     <div className="hidden lg:block">
       <BreakerCTA
         teaser="READY?"
@@ -28,9 +29,7 @@ const IndexPage = () => (
         href="https://app.formbricks.com/auth/signup"
       />
     </div>
-    <div className="pb-16">&nbsp;</div>
     <Steps />
-
     <BreakerCTA
       teaser="Curious?"
       headline="Give it a squeeze 🍋"
@@ -39,8 +38,8 @@ const IndexPage = () => (
       href="https://app.formbricks.com/auth/signup"
       inverted
     />
-
     <Faq />
+    <BestPractices />
   </Layout>
 );
 

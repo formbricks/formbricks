@@ -478,7 +478,7 @@ export default function LinkSurveyPage() {
           })}
         </div>
       </div>
-      <div className="">
+      <div>
         <HeadingCentered heading="Frequently asked questions" teaser="FAQ" />
         <SEOFAQ
           faqs={FAQs}
