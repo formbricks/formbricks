@@ -64,14 +64,36 @@ export function isI18nObject(obj: any): obj is TI18nString {
   );
 }
 
-// Function to translate a choice label
-export const translateChoice = (choice: any, languages: string[], targetLanguageCode?: string) => {
-  // Assuming choice is a simple object and choice.label is a string.
-  return {
-    ...choice,
-    label: createI18nString(choice.label, languages, targetLanguageCode),
-  };
+export const isLabelValidForAllLanguages = (label: TI18nString, languages: string[]): boolean => {
+  return languages.every((language) => label[language] && label[language].trim() !== "");
 };
+
+export const getLocalizedValue = (value: TI18nString | undefined, languageId: string): string => {
+  if (!value) {
+    return "";
+  }
+  if (isI18nObject(value)) {
+    if (value[languageId]) {
+      return value[languageId];
+    }
+    return "";
+  }
+  return "";
+};
+
+export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string[] => {
+  if (!surveyLanguages) return [];
+  return surveyLanguages.map((surveyLanguage) =>
+    surveyLanguage.default ? "default" : surveyLanguage.language.code
+  );
+};
+
+export const getEnabledLanguages = (surveyLanguages: TSurveyLanguage[]) => {
+  return surveyLanguages.filter((surveyLanguage) => surveyLanguage.enabled);
+};
+
+// LGEGACY
+// Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateWelcomeCard = (
   welcomeCard: TSurveyWelcomeCard,
   languages: string[],
@@ -95,6 +117,8 @@ export const translateWelcomeCard = (
   return clonedWelcomeCard;
 };
 
+// LGEGACY
+// Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateThankYouCard = (
   thankYouCard: TSurveyThankYouCard,
   languages: string[],
@@ -118,7 +142,8 @@ export const translateThankYouCard = (
   return clonedThankYouCard;
 };
 
-// Function that will translate a single question
+// LGEGACY
+// Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateQuestion = (
   question: TSurveyQuestion,
   languages: string[],
@@ -146,9 +171,10 @@ export const translateQuestion = (
 
   if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
     (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
-      question.choices.map((choice) =>
-        translateChoice(structuredClone(choice), languages, targetLanguageCode)
-      );
+      question.choices.map((choice) => ({
+        ...choice,
+        label: createI18nString(choice.label, languages, targetLanguageCode),
+      }));
     (
       clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion
     ).otherOptionPlaceholder = question.otherOptionPlaceholder
@@ -224,7 +250,8 @@ export const translateQuestion = (
   return clonedQuestion;
 };
 
-// Function to translate an entire survey
+// LGEGACY
+// Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateSurvey = (
   survey: TSurvey,
   surveyLanguages: TSurveyLanguage[],
@@ -244,32 +271,4 @@ export const translateSurvey = (
     welcomeCard: translatedWelcomeCard,
     thankYouCard: translatedThankYouCard,
   };
-};
-
-export const isLabelValidForAllLanguages = (label: TI18nString, languages: string[]): boolean => {
-  return languages.every((language) => label[language] && label[language].trim() !== "");
-};
-
-export const getLocalizedValue = (value: TI18nString | undefined, languageId: string): string => {
-  if (!value) {
-    return "";
-  }
-  if (isI18nObject(value)) {
-    if (value[languageId]) {
-      return value[languageId];
-    }
-    return "";
-  }
-  return "";
-};
-
-export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string[] => {
-  if (!surveyLanguages) return [];
-  return surveyLanguages.map((surveyLanguage) =>
-    surveyLanguage.default ? "default" : surveyLanguage.language.code
-  );
-};
-
-export const getEnabledLanguages = (surveyLanguages: TSurveyLanguage[]) => {
-  return surveyLanguages.filter((surveyLanguage) => surveyLanguage.enabled);
 };

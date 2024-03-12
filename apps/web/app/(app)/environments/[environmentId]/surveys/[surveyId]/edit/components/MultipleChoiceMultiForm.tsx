@@ -5,7 +5,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import {
   createI18nString,
   extractLanguageCodes,
@@ -15,6 +14,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface OpenQuestionFormProps {

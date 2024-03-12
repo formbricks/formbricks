@@ -1,12 +1,12 @@
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
-import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;

@@ -12,13 +12,7 @@ import {
   mockWelcomeCard,
 } from "./i18n.mock";
 import { reverseTranslateSurvey } from "./reverseTranslation";
-import {
-  createI18nString,
-  translateChoice,
-  translateSurvey,
-  translateThankYouCard,
-  translateWelcomeCard,
-} from "./utils";
+import { createI18nString, translateSurvey, translateThankYouCard, translateWelcomeCard } from "./utils";
 
 describe("createI18nString", () => {
   it("should create an i18n string from a regular string", () => {
@@ -48,52 +42,6 @@ describe("createI18nString", () => {
     const result = createI18nString(i18nObject, newLanguages);
     expect(result).toEqual({
       default: "Hello",
-    });
-  });
-});
-
-describe("translateChoice", () => {
-  it("should translate a choice label to specified languages", () => {
-    const choice = { label: "choice", id: "someId" };
-    const languages = ["default", "de"];
-    const translatedChoice = translateChoice(choice, languages);
-    expect(translatedChoice).toEqual({
-      label: {
-        default: "choice",
-        de: "",
-      },
-      id: "someId",
-    });
-  });
-
-  it("should handle cases where choice label is already an i18n object", () => {
-    const choice = {
-      label: {
-        default: "choice",
-        de: "",
-      },
-      id: "someId",
-    };
-    const languages = ["default", "de"];
-    const translatedChoice = translateChoice(choice, languages);
-    expect(translatedChoice).toEqual(choice);
-  });
-
-  it("should handle cases where translations are disabled", () => {
-    const choice = {
-      label: {
-        default: "choice",
-        de: "",
-      },
-      id: "someId",
-    };
-    const languages = ["default"];
-    const translatedChoice = translateChoice(choice, languages);
-    expect(translatedChoice).toEqual({
-      label: {
-        default: "choice",
-      },
-      id: "someId",
     });
   });
 });

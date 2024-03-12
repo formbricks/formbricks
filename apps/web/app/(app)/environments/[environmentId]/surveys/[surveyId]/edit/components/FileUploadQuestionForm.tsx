@@ -4,7 +4,6 @@ import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
-import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
@@ -14,6 +13,7 @@ import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
+import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;

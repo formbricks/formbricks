@@ -2,11 +2,11 @@ import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outlin
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
-import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
 
 import Dropdown from "./RatingTypeDropdown";
 

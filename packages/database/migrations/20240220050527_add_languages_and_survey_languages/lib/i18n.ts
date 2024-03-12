@@ -49,7 +49,7 @@ export const createI18nString = (text: string | TI18nString, languages: string[]
 };
 
 // Function to translate a choice label
-export const translateChoice = (choice: any, languages: string[]) => {
+const translateChoice = (choice: any, languages: string[]) => {
   // Assuming choice is a simple object and choice.label is a string.
   return {
     ...choice,
@@ -70,7 +70,7 @@ export const translateWelcomeCard = (
   return clonedWelcomeCard;
 };
 
-export const translateThankYouCard = (
+const translateThankYouCard = (
   thankYouCard: TSurveyThankYouCard,
   languages: string[]
 ): TSurveyThankYouCard => {
@@ -90,7 +90,7 @@ export const translateThankYouCard = (
 };
 
 // Function that will translate a single question
-export const translateQuestion = (question: TSurveyQuestion, languages: string[]) => {
+const translateQuestion = (question: TSurveyQuestion, languages: string[]) => {
   // Clone the question to avoid mutating the original
   const clonedQuestion = structuredClone(question);
 

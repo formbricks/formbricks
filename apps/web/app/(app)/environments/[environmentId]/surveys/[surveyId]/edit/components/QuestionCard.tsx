@@ -23,12 +23,12 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
-import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
+import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 import CTAQuestionForm from "./CTAQuestionForm";

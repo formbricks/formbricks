@@ -2,11 +2,10 @@
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { LoadingSkeleton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LoadingSkeleton";
-import { isEqual } from "lodash";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
-import { extractLanguageCodes, getEnabledLanguages, translateSurvey } from "@formbricks/lib/i18n/utils";
+import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import useDocumentVisibility from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -77,16 +76,6 @@ export default function SurveyEditor({
       }
     }
   }, [survey]);
-
-  useEffect(() => {
-    if (!localSurvey) return;
-    const translatedSurvey = translateSurvey(localSurvey, localSurvey.languages);
-    // Check if the translated survey is different from the current localSurvey
-    if (!isEqual(translatedSurvey, localSurvey)) {
-      setLocalSurvey(translatedSurvey);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey?.id, localSurvey?.questions.length, selectedLanguageCode, localSurvey?.languages]);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {

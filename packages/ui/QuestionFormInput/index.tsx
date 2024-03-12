@@ -95,9 +95,6 @@ export const QuestionFormInput = ({
 
   const [text, setText] = useState(getElementTextBasedOnType());
   const [renderedText, setRenderedText] = useState<JSX.Element[]>();
-  const highlightContainerRef = useRef<HTMLInputElement>(null);
-  const fallbackInputRef = useRef<HTMLInputElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
     determineImageUploaderVisibility(questionId, localSurvey)
   );
@@ -108,14 +105,19 @@ export const QuestionFormInput = ({
       ? getRecallQuestions(getLocalizedValue(text, selectedLanguageCode), localSurvey, selectedLanguageCode)
       : []
   );
-  const filteredRecallQuestions = Array.from(new Set(recallQuestions.map((q) => q.id))).map((id) => {
-    return recallQuestions.find((q) => q.id === id);
-  });
   const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(
     getLocalizedValue(text, selectedLanguageCode).includes("/fallback:")
       ? getFallbackValues(getLocalizedValue(text, selectedLanguageCode))
       : {}
   );
+
+  const highlightContainerRef = useRef<HTMLInputElement>(null);
+  const fallbackInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filteredRecallQuestions = Array.from(new Set(recallQuestions.map((q) => q.id))).map((id) => {
+    return recallQuestions.find((q) => q.id === id);
+  });
 
   // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
   useSyncScroll(highlightContainerRef, inputRef, getLocalizedValue(text, selectedLanguageCode));

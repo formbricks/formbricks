@@ -10,7 +10,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
-import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
   TSurvey,
@@ -19,6 +18,7 @@ import {
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
+import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
 
 const questionTypes = [

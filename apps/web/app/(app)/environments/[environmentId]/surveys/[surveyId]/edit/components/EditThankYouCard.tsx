@@ -3,12 +3,12 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 
-import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface EditThankYouCardProps {

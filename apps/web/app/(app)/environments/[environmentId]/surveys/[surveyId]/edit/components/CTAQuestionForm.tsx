@@ -3,10 +3,10 @@
 import { useState } from "react";
 
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
-import { LocalizedInput } from "@formbricks/ee/multiLanguage/components/LocalizedInput";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface CTAQuestionFormProps {
