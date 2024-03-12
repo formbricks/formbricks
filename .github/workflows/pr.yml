@@ -25,6 +25,7 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
 
+      - uses: actions/checkout@v2
       - uses: ./.github/actions/dangerous-git-checkout
       - uses: dorny/paths-filter@v2
         id: filter
