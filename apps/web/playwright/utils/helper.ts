@@ -193,7 +193,7 @@ export const createSurvey = async (
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Call-to-Action" }).click();
-  await page.getByLabel("Question").fill(params.ctaQuestion.question);
+  await page.getByPlaceholder("Your question here. Recall").fill(params.ctaQuestion.question);
   await page.getByPlaceholder("Finish").fill(params.ctaQuestion.buttonLabel);
 
   // Consent Question

@@ -40,6 +40,8 @@ test.describe("Invite, accept and remove team member", async () => {
 
   test("Copy invite Link", async ({ page }) => {
     await login(page, email, password);
+    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await expect(page.getByText("My Product")).toBeVisible();
 
     const dropdownTrigger = page.locator("#userDropdownTrigger");
     await expect(dropdownTrigger).toBeVisible();

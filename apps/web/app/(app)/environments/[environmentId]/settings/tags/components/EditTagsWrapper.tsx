@@ -6,7 +6,7 @@ import {
   updateTagNameAction,
 } from "@/app/(app)/environments/[environmentId]/settings/tags/actions";
 import MergeTagsCombobox from "@/app/(app)/environments/[environmentId]/settings/tags/components/MergeTagsCombobox";
-import { ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import { AlertCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -69,7 +69,7 @@ const SingleTag: React.FC<{
                     if (error?.message.includes("Unique constraint failed on the fields")) {
                       toast.error("Tag already exists", {
                         duration: 2000,
-                        icon: <ExclamationCircleIcon className="h-5 w-5 text-orange-500" />,
+                        icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
                       });
                     } else {
                       toast.error(error?.message ?? "Something went wrong", {

@@ -1,7 +1,7 @@
 "use client";
 
 import { forgotPassword } from "@/app/lib/users/users";
-import { XCircleIcon } from "@heroicons/react/24/solid";
+import { XCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

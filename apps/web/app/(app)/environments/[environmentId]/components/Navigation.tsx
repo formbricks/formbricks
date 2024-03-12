@@ -2,23 +2,23 @@
 
 import FaveIcon from "@/app/favicon.ico";
 import { formbricksLogout } from "@/app/lib/formbricks";
+import clsx from "clsx";
 import {
-  AdjustmentsVerticalIcon,
-  ArrowRightOnRectangleIcon,
-  ChatBubbleBottomCenterTextIcon,
+  BrushIcon,
   ChevronDownIcon,
-  CodeBracketIcon,
+  CodeIcon,
   CreditCardIcon,
-  DocumentCheckIcon,
-  EnvelopeIcon,
+  FileCheckIcon,
   HeartIcon,
   LinkIcon,
-  PaintBrushIcon,
+  LogOutIcon,
+  MailIcon,
+  MessageSquareTextIcon,
   PlusIcon,
+  SlidersIcon,
   UserCircleIcon,
   UsersIcon,
-} from "@heroicons/react/24/solid";
-import clsx from "clsx";
+} from "lucide-react";
 import { MenuIcon } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
@@ -155,13 +155,13 @@ export default function Navigation({
       title: "Survey",
       links: [
         {
-          icon: AdjustmentsVerticalIcon,
+          icon: SlidersIcon,
           label: "Product Settings",
           href: `/environments/${environment.id}/settings/product`,
           hidden: false,
         },
         {
-          icon: PaintBrushIcon,
+          icon: BrushIcon,
           label: "Look & Feel",
           href: `/environments/${environment.id}/settings/lookandfeel`,
           hidden: isViewer,
@@ -189,7 +189,7 @@ export default function Navigation({
       title: "Setup",
       links: [
         {
-          icon: DocumentCheckIcon,
+          icon: FileCheckIcon,
           label: "Setup checklist",
           href: `/environments/${environment.id}/settings/setup`,
           hidden: widgetSetupCompleted,
@@ -203,7 +203,7 @@ export default function Navigation({
           },
         },
         {
-          icon: CodeBracketIcon,
+          icon: CodeIcon,
           label: "Developer Docs",
           href: "https://formbricks.com/docs",
           target: "_blank",
@@ -483,7 +483,7 @@ export default function Navigation({
                           <DropdownMenuItem>
                             <a href="mailto:johannes@formbricks.com">
                               <div className="flex items-center">
-                                <EnvelopeIcon className="mr-2 h-4 w-4" />
+                                <MailIcon className="mr-2 h-4 w-4" />
                                 <span>Email us!</span>
                               </div>
                             </a>
@@ -494,7 +494,7 @@ export default function Navigation({
                                 formbricks.track("Top Menu: Product Feedback");
                               }}>
                               <div className="flex items-center">
-                                <ChatBubbleBottomCenterTextIcon className="mr-2 h-4 w-4" />
+                                <MessageSquareTextIcon className="mr-2 h-4 w-4" />
                                 <span>Product Feedback</span>
                               </div>
                             </button>
@@ -507,7 +507,7 @@ export default function Navigation({
                           await formbricksLogout();
                         }}>
                         <div className="flex h-full w-full items-center">
-                          <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
+                          <LogOutIcon className="mr-2 h-4 w-4" />
                           Logout
                         </div>
                       </DropdownMenuItem>

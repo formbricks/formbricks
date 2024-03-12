@@ -1,4 +1,4 @@
-import { CheckIcon } from "@heroicons/react/24/solid";
+import { CheckIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 interface Validation {
