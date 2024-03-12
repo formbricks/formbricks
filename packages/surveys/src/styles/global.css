@@ -83,7 +83,7 @@ p.fb-editor-paragraph {
   --fb-close-btn-color-hover: var(--slate-700);
 }
 
-@keyframes ShrinkWidthToZero {
+@keyframes shrink-width-to-zero {
   from {
     width: 100%;
   }

@@ -1,15 +1,15 @@
 interface AutoCloseProgressBarProps {
-  timeout: number;
+  autoCloseTimeout: number;
 }
 
-export function AutoCloseProgressBar({ timeout }: AutoCloseProgressBarProps) {
+export function AutoCloseProgressBar({ autoCloseTimeout }: AutoCloseProgressBarProps) {
   return (
     <div className="bg-accent-bg h-2 w-full overflow-hidden rounded-full">
       <div
-        key={timeout}
+        key={autoCloseTimeout}
         className="bg-brand z-20 h-2 rounded-full"
         style={{
-          animation: `ShrinkWidthToZero ${timeout}s linear forwards`,
+          animation: `shrink-width-to-zero ${autoCloseTimeout}s linear forwards`,
         }}></div>
     </div>
   );
