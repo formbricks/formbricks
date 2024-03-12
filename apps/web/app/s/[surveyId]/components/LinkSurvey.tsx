@@ -51,10 +51,25 @@ export default function LinkSurvey({
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
   const startAt = searchParams?.get("startAt");
+
+  const isValidStartAt = useMemo(() => {
+    if (!startAt) return false;
+    const isValid = survey?.questions.some((question) => question.id === startAt) || startAt === "start";
+
+    // To remove startAt query param from URL if it is not valid:
+    if (!isValid && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("startAt");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    return isValid;
+  }, [survey, startAt]);
+
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    startAt ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
+    startAt && isValidStartAt ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
 
   const prefillResponseData: TResponseData | undefined = prefillAnswer
