@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ArrowUpOnSquareStackIcon,
-  DocumentDuplicateIcon,
-  EyeIcon,
-  LinkIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/solid";
+import { ArrowUpFromLineIcon, CopyIcon, EyeIcon, LinkIcon, SquarePenIcon, TrashIcon } from "lucide-react";
 import { MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -118,7 +111,7 @@ export default function SurveyDropDownMenu({
                   <Link
                     className="flex w-full items-center"
                     href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                    <PencilSquareIcon className="mr-2 h-4 w-4" />
+                    <SquarePenIcon className="mr-2 h-4 w-4" />
                     Edit
                   </Link>
                 </DropdownMenuItem>
@@ -132,7 +125,7 @@ export default function SurveyDropDownMenu({
                       setIsDropDownOpen(false);
                       duplicateSurveyAndRefresh(survey.id);
                     }}>
-                    <DocumentDuplicateIcon className="mr-2 h-4 w-4" />
+                    <CopyIcon className="mr-2 h-4 w-4" />
                     Duplicate
                   </button>
                 </DropdownMenuItem>
@@ -150,7 +143,7 @@ export default function SurveyDropDownMenu({
                         setIsDropDownOpen(false);
                         copyToOtherEnvironment(survey.id);
                       }}>
-                      <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                      <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
                       Copy to Prod
                     </button>
                   </DropdownMenuItem>
@@ -164,7 +157,7 @@ export default function SurveyDropDownMenu({
                         setIsDropDownOpen(false);
                         copyToOtherEnvironment(survey.id);
                       }}>
-                      <ArrowUpOnSquareStackIcon className="mr-2 h-4 w-4" />
+                      <ArrowUpFromLineIcon className="mr-2 h-4 w-4" />
                       Copy to Dev
                     </button>
                   </DropdownMenuItem>

@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon, XCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 

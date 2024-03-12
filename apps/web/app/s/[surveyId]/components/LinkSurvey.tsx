@@ -3,7 +3,7 @@
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { RefreshCcwIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -151,7 +151,7 @@ export default function LinkSurvey({
               onClick={() =>
                 setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
               }>
-              Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
+              Restart <RefreshCcwIcon className="ml-2 h-4 w-4" />
             </button>
           </div>
         )}

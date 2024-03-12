@@ -1,6 +1,5 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
-import { ChatBubbleBottomCenterTextIcon, InboxStackIcon } from "@heroicons/react/24/solid";
-import { Link } from "lucide-react";
+import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
 import { FC } from "react";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
@@ -22,11 +21,11 @@ const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment, questi
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
-            <ChatBubbleBottomCenterTextIcon className="mr-2 h-4 w-4" />
+            <MessageSquareTextIcon className="mr-2 h-4 w-4" />
             Hidden Field
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
-            <InboxStackIcon className="mr-2 h-4 w-4" />
+            <InboxIcon className="mr-2 h-4 w-4" />
             {questionSummary.responseCount} {questionSummary.responseCount === 1 ? "Response" : "Responses"}
           </div>
         </div>

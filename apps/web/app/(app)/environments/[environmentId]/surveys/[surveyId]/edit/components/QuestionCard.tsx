@@ -4,22 +4,22 @@ import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[
 import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
 import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
+import * as Collapsible from "@radix-ui/react-collapsible";
 import {
-  ArrowUpTrayIcon,
+  ArrowUpFromLineIcon,
   CalendarDaysIcon,
-  ChatBubbleBottomCenterTextIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  CursorArrowRippleIcon,
-  ListBulletIcon,
+  ImageIcon,
+  ListIcon,
+  MessageSquareTextIcon,
+  MousePointerClickIcon,
   PhoneIcon,
-  PhotoIcon,
-  PresentationChartBarIcon,
-  QueueListIcon,
+  PresentationIcon,
+  Rows3Icon,
   StarIcon,
-} from "@heroicons/react/24/solid";
-import * as Collapsible from "@radix-ui/react-collapsible";
+} from "lucide-react";
 import { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
@@ -163,27 +163,27 @@ export default function QuestionCard({
                 <div className="inline-flex">
                   <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
                     {question.type === TSurveyQuestionType.FileUpload ? (
-                      <ArrowUpTrayIcon />
+                      <ArrowUpFromLineIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.OpenText ? (
-                      <ChatBubbleBottomCenterTextIcon />
+                      <MessageSquareTextIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
-                      <QueueListIcon />
+                      <Rows3Icon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
-                      <ListBulletIcon />
+                      <ListIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.NPS ? (
-                      <PresentationChartBarIcon />
+                      <PresentationIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.CTA ? (
-                      <CursorArrowRippleIcon />
+                      <MousePointerClickIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Rating ? (
-                      <StarIcon />
+                      <StarIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Consent ? (
-                      <CheckIcon />
+                      <CheckIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.PictureSelection ? (
-                      <PhotoIcon />
+                      <ImageIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Date ? (
-                      <CalendarDaysIcon />
+                      <CalendarDaysIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Cal ? (
-                      <PhoneIcon />
+                      <PhoneIcon className="h-5 w-5" />
                     ) : null}
                   </div>
                   <div>

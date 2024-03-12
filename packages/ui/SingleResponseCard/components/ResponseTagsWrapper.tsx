@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog6ToothIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
+import { AlertCircleIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -64,7 +64,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
         onClick={() => {
           router.push(`/environments/${environmentId}/settings/tags`);
         }}>
-        <Cog6ToothIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" />
+        <SettingsIcon className="h-5 w-5 text-slate-300 hover:text-slate-400" />
       </Button>
       <div className="flex flex-wrap items-center gap-2">
         {tagsState?.map((tag) => (
@@ -106,7 +106,7 @@ const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
                 if (err?.message.includes("Unique constraint failed on the fields")) {
                   toast.error("Tag already exists", {
                     duration: 2000,
-                    icon: <ExclamationCircleIcon className="h-5 w-5 text-orange-500" />,
+                    icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
                   });
                 } else {
                   toast.error(err?.message ?? "Something went wrong", {
