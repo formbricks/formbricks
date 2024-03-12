@@ -6,7 +6,7 @@ import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/uti
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 import Dropdown from "./RatingTypeDropdown";
 
@@ -35,9 +35,8 @@ export default function RatingQuestionForm({
 
   return (
     <form>
-      <LocalizedInput
+      <QuestionFormInput
         id="headline"
-        name="headline"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -51,9 +50,8 @@ export default function RatingQuestionForm({
         {showSubheader && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">
-              <LocalizedInput
+              <QuestionFormInput
                 id="subheader"
-                name="subheader"
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
@@ -128,9 +126,8 @@ export default function RatingQuestionForm({
 
       <div className="mt-3 flex justify-between gap-8">
         <div className="flex-1">
-          <LocalizedInput
+          <QuestionFormInput
             id="lowerLabel"
-            name="lowerLabel"
             placeholder="Not good"
             value={question.lowerLabel}
             localSurvey={localSurvey}
@@ -142,9 +139,8 @@ export default function RatingQuestionForm({
           />
         </div>
         <div className="flex-1">
-          <LocalizedInput
+          <QuestionFormInput
             id="upperLabel"
-            name="upperLabel"
             placeholder="Very satisfied"
             value={question.upperLabel}
             localSurvey={localSurvey}
@@ -160,9 +156,8 @@ export default function RatingQuestionForm({
       <div className="mt-3">
         {!question.required && (
           <div className="flex-1">
-            <LocalizedInput
+            <QuestionFormInput
               id="buttonLabel"
-              name="buttonLabel"
               value={question.buttonLabel}
               localSurvey={localSurvey}
               questionIdx={questionIdx}

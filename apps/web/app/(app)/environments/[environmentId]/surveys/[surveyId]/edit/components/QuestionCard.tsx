@@ -28,7 +28,7 @@ import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TProduct } from "@formbricks/types/product";
 import { TI18nString, TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 import CTAQuestionForm from "./CTAQuestionForm";
@@ -335,9 +335,8 @@ export default function QuestionCard({
                     question.type !== TSurveyQuestionType.CTA ? (
                       <div className="mt-2 flex space-x-2">
                         <div className="w-full">
-                          <LocalizedInput
+                          <QuestionFormInput
                             id="buttonLabel"
-                            name="buttonLabel"
                             value={question.buttonLabel}
                             localSurvey={localSurvey}
                             questionIdx={questionIdx}
@@ -360,9 +359,8 @@ export default function QuestionCard({
                           />
                         </div>
                         {questionIdx !== 0 && (
-                          <LocalizedInput
+                          <QuestionFormInput
                             id="backButtonLabel"
-                            name="backButtonLabel"
                             value={question.backButtonLabel}
                             localSurvey={localSurvey}
                             questionIdx={questionIdx}
@@ -380,9 +378,8 @@ export default function QuestionCard({
                       question.type === TSurveyQuestionType.NPS) &&
                       questionIdx !== 0 && (
                         <div className="mt-4">
-                          <LocalizedInput
+                          <QuestionFormInput
                             id="backButtonLabel"
-                            name="backButtonLabel"
                             value={question.backButtonLabel}
                             localSurvey={localSurvey}
                             questionIdx={questionIdx}

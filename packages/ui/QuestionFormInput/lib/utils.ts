@@ -1,15 +1,5 @@
 import { isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
-import { TI18nString, TSurvey } from "@formbricks/types/surveys";
-
-export const determineQuestionId = (questionIdx: number, localSurvey: TSurvey) => {
-  //its a welcome card
-  if (questionIdx === -1) return "start";
-
-  //Its a thank you card
-  if (questionIdx === localSurvey.questions.length) return "end";
-  //Its a question card
-  else return localSurvey.questions[questionIdx].id;
-};
+import { TI18nString } from "@formbricks/types/surveys";
 
 export const isValueIncomplete = (
   id: string,

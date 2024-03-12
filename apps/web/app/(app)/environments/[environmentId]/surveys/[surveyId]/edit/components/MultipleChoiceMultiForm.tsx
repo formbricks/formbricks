@@ -14,7 +14,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TI18nString, TSurvey, TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface OpenQuestionFormProps {
@@ -176,9 +176,8 @@ export default function MultipleChoiceMultiForm({
 
   return (
     <form>
-      <LocalizedInput
+      <QuestionFormInput
         id="headline"
-        name="headline"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -192,9 +191,8 @@ export default function MultipleChoiceMultiForm({
         {showSubheader && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
-              <LocalizedInput
+              <QuestionFormInput
                 id="subheader"
-                name="subheader"
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
@@ -240,10 +238,9 @@ export default function MultipleChoiceMultiForm({
             question.choices.map((choice, choiceIdx) => (
               <div key={choiceIdx} className="inline-flex w-full items-center">
                 <div className="flex w-full space-x-2">
-                  <LocalizedInput
+                  <QuestionFormInput
                     key={choice.id}
                     id={`choice-${choiceIdx}`}
-                    name={`choice-${choiceIdx}`}
                     localSurvey={localSurvey}
                     placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
                     questionIdx={questionIdx}
@@ -267,9 +264,8 @@ export default function MultipleChoiceMultiForm({
                     className={`${choice.id === "other" ? "border border-dashed" : ""}`}
                   />
                   {choice.id === "other" && (
-                    <LocalizedInput
+                    <QuestionFormInput
                       id="otherOptionPlaceholder"
-                      name="otherOptionPlaceholder"
                       localSurvey={localSurvey}
                       placeholder={"Please specify"}
                       questionIdx={questionIdx}

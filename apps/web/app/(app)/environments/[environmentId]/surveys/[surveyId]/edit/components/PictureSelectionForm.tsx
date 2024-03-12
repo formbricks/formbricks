@@ -8,7 +8,7 @@ import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surv
 import { Button } from "@formbricks/ui/Button";
 import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface PictureSelectionFormProps {
@@ -37,9 +37,8 @@ export default function PictureSelectionForm({
 
   return (
     <form>
-      <LocalizedInput
+      <QuestionFormInput
         id="headline"
-        name="headline"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -52,9 +51,8 @@ export default function PictureSelectionForm({
         {showSubheader && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">
-              <LocalizedInput
+              <QuestionFormInput
                 id="subheader"
-                name="subheader"
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}

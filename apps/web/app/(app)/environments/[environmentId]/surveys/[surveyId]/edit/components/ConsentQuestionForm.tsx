@@ -5,7 +5,7 @@ import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;
@@ -30,9 +30,8 @@ export default function ConsentQuestionForm({
 
   return (
     <form>
-      <LocalizedInput
+      <QuestionFormInput
         id="headline"
-        name="headline"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -60,9 +59,8 @@ export default function ConsentQuestionForm({
         </div>
       </div>
 
-      <LocalizedInput
+      <QuestionFormInput
         id="label"
-        name="label"
         label="Checkbox Label"
         placeholder="I agree to the terms and conditions"
         value={question.label}
@@ -73,17 +71,6 @@ export default function ConsentQuestionForm({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
       />
-      {/* <div className="mt-3">
-        <Label htmlFor="buttonLabel">Button Label</Label>
-        <Input
-          id="buttonLabel"
-          name="buttonLabel"
-          className="mt-2"
-          value={question.buttonLabel}
-          placeholder={lastQuestion ? "Finish" : "Next"}
-          onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
-        />
-      </div> */}
     </form>
   );
 }

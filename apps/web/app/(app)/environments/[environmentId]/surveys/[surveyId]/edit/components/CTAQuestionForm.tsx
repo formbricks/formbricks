@@ -6,7 +6,7 @@ import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/Localiz
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 
 interface CTAQuestionFormProps {
@@ -34,9 +34,8 @@ export default function CTAQuestionForm({
 
   return (
     <form>
-      <LocalizedInput
+      <QuestionFormInput
         id="headline"
-        name="headline"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -85,9 +84,8 @@ export default function CTAQuestionForm({
 
       <div className="mt-2 flex justify-between gap-8">
         <div className="flex w-full space-x-2">
-          <LocalizedInput
+          <QuestionFormInput
             id="buttonLabel"
-            name="buttonLabel"
             value={question.buttonLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
@@ -100,9 +98,8 @@ export default function CTAQuestionForm({
           />
 
           {questionIdx !== 0 && (
-            <LocalizedInput
+            <QuestionFormInput
               id="backButtonLabel"
-              name="backButtonLabel"
               value={question.backButtonLabel}
               localSurvey={localSurvey}
               questionIdx={questionIdx}
@@ -136,9 +133,8 @@ export default function CTAQuestionForm({
         <div className="mt-3 flex-1">
           <Label htmlFor="buttonLabel">Skip Button Label</Label>
           <div className="mt-2">
-            <LocalizedInput
+            <QuestionFormInput
               id="dismissButtonLabel"
-              name="dismissButtonLabel"
               value={question.dismissButtonLabel}
               localSurvey={localSurvey}
               questionIdx={questionIdx}

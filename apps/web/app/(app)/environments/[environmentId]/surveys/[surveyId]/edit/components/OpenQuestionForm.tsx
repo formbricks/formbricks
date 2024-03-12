@@ -18,7 +18,7 @@ import {
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
 
 const questionTypes = [
@@ -63,9 +63,8 @@ export default function OpenQuestionForm({
 
   return (
     <form>
-      <LocalizedInput
+      <QuestionFormInput
         id="headline"
-        name="headline"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -79,9 +78,8 @@ export default function OpenQuestionForm({
         {showSubheader && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
-              <LocalizedInput
+              <QuestionFormInput
                 id="subheader"
-                name="subheader"
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
@@ -119,9 +117,8 @@ export default function OpenQuestionForm({
         )}
       </div>
       <div className="mt-2">
-        <LocalizedInput
+        <QuestionFormInput
           id="placeholder"
-          name="placeholder"
           value={
             question.placeholder
               ? question.placeholder

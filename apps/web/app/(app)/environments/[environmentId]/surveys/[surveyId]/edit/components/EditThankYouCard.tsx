@@ -8,7 +8,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface EditThankYouCardProps {
@@ -107,9 +107,8 @@ export default function EditThankYouCard({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className="px-4 pb-6">
           <form>
-            <LocalizedInput
+            <QuestionFormInput
               id="headline"
-              name="headline"
               value={localSurvey?.thankYouCard?.headline}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
@@ -119,9 +118,8 @@ export default function EditThankYouCard({
               setSelectedLanguageCode={setSelectedLanguageCode}
             />
 
-            <LocalizedInput
+            <QuestionFormInput
               id="subheader"
-              name="subheader"
               value={localSurvey.thankYouCard.subheader}
               localSurvey={localSurvey}
               questionIdx={localSurvey.questions.length}
@@ -159,9 +157,8 @@ export default function EditThankYouCard({
               {showThankYouCardCTA && (
                 <div className="border-1 mt-4 space-y-4 rounded-md border bg-slate-100 p-4 pt-2">
                   <div className="space-y-2">
-                    <LocalizedInput
+                    <QuestionFormInput
                       id="buttonLabel"
-                      name="buttonLabel"
                       label="Button Label"
                       placeholder="Create your own Survey"
                       className="bg-white"

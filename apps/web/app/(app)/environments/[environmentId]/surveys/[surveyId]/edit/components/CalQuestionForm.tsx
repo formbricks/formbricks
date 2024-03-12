@@ -6,7 +6,7 @@ import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;
@@ -33,9 +33,8 @@ export default function CalQuestionForm({
 
   return (
     <form>
-      <LocalizedInput
+      <QuestionFormInput
         id="headline"
-        name="headline"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -48,9 +47,8 @@ export default function CalQuestionForm({
         {showSubheader && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
-              <LocalizedInput
+              <QuestionFormInput
                 id="subheader"
-                name="subheader"
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}

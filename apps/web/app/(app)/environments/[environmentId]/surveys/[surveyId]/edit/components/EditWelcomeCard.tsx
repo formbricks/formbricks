@@ -9,7 +9,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import FileInput from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
 interface EditWelcomeCardProps {
@@ -120,9 +120,8 @@ export default function EditWelcomeCard({
               />
             </div>
             <div className="mt-3">
-              <LocalizedInput
+              <QuestionFormInput
                 id="headline"
-                name="headline"
                 value={localSurvey.welcomeCard.headline}
                 label="Headline"
                 localSurvey={localSurvey}
@@ -154,9 +153,8 @@ export default function EditWelcomeCard({
             <div className="mt-3 flex justify-between gap-8">
               <div className="flex w-full space-x-2">
                 <div className="w-full">
-                  <LocalizedInput
+                  <QuestionFormInput
                     id="buttonLabel"
-                    name="buttonLabel"
                     value={localSurvey.welcomeCard.buttonLabel}
                     localSurvey={localSurvey}
                     questionIdx={-1}

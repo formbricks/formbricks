@@ -6,7 +6,7 @@ import { useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { LocalizedInput } from "@formbricks/ui/LocalizedInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;
@@ -33,9 +33,8 @@ export default function NPSQuestionForm({
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   return (
     <form>
-      <LocalizedInput
+      <QuestionFormInput
         id="headline"
-        name="headline"
         value={question.headline}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
@@ -49,9 +48,8 @@ export default function NPSQuestionForm({
         {showSubheader && (
           <div className="mt-2 inline-flex w-full items-center">
             <div className="w-full">
-              <LocalizedInput
+              <QuestionFormInput
                 id="subheader"
-                name="subheader"
                 value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
@@ -92,9 +90,8 @@ export default function NPSQuestionForm({
 
       <div className="mt-3 flex justify-between space-x-2">
         <div className="w-full">
-          <LocalizedInput
+          <QuestionFormInput
             id="lowerLabel"
-            name="lowerLabel"
             value={question.lowerLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
@@ -105,9 +102,8 @@ export default function NPSQuestionForm({
           />
         </div>
         <div className="w-full">
-          <LocalizedInput
+          <QuestionFormInput
             id="upperLabel"
-            name="upperLabel"
             value={question.upperLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
@@ -121,9 +117,8 @@ export default function NPSQuestionForm({
 
       {!question.required && (
         <div className="mt-3">
-          <LocalizedInput
+          <QuestionFormInput
             id="buttonLabel"
-            name="buttonLabel"
             value={question.buttonLabel}
             localSurvey={localSurvey}
             questionIdx={questionIdx}
