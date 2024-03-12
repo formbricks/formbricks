@@ -5,9 +5,14 @@ import { FooterLogo } from "./Logo";
 
 const navigation = {
   products: [
-    { name: "Link Surveys", href: "/open-source-typeform", status: true },
+    { name: "Link Surveys", href: "/open-source-form-builder", status: true },
     { name: "Website Surveys", href: "/website-survey", status: true },
     { name: "In-app Surveys", href: "/in-app-survey", status: true },
+  ],
+  comparisons: [
+    { name: "vs. Google Forms", href: "/vs-google-forms", status: true },
+    { name: "vs. Formspree", href: "/vs-formspree", status: true },
+    { name: "vs. OhMyForm", href: "/vs-ohmyform", status: true },
   ],
   footernav: [
     { name: "Community", href: "/community", status: true },
@@ -99,6 +104,15 @@ export default function Footer() {
           <div>
             <h4 className="mb-2 font-medium text-slate-700">Product</h4>
             {navigation.products.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="my-1 block text-slate-500 hover:text-slate-600">
+                {item.name}
+              </Link>
+            ))}
+            <h4 className="mb-2 mt-5 font-medium text-slate-700">Comparison</h4>
+            {navigation.comparisons.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}

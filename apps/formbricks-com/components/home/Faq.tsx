@@ -73,7 +73,7 @@ export default function FAQ() {
   return (
     <div className="max-w-7xl py-4 sm:px-6 sm:pb-6 lg:px-8" id="faq">
       <FAQPageJsonLd mainEntity={faqJsonLdData} />
-      <HeadingCentered heading="Frequently Asked Questions" teaser="FAQ" closer />
+      <HeadingCentered heading="Frequently Asked Questions" teaser="FAQ" />
       <Accordion type="single" collapsible className="px-4 sm:px-0">
         {FAQ_DATA.map((faq, index) => (
           <AccordionItem key={`item-${index}`} value={`item-${index + 1}`}>

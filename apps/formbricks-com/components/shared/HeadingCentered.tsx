@@ -1,15 +1,12 @@
-import clsx from "clsx";
-
 interface Props {
   teaser?: string;
   heading: string;
   subheading?: string;
-  closer?: boolean;
 }
 
-export default function HeadingCentered({ teaser, heading, subheading, closer }: Props) {
+export default function HeadingCentered({ teaser, heading, subheading }: Props) {
   return (
-    <div className={clsx(closer ? "pt-16 lg:pt-24" : "pt-24 lg:pt-40", "px-2 pb-4 text-center md:pb-12")}>
+    <div className="mb-12 text-center">
       <p className="text-md text-brand-dark dark:text-brand-light mx-auto mb-3 max-w-2xl font-semibold uppercase sm:mt-4">
         {teaser}
       </p>

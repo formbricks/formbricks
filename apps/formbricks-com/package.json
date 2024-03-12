@@ -59,6 +59,7 @@
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.0",
     "remark-mdx": "^3.0.0",
+    "schema-dts": "^1.1.2",
     "sharp": "^0.33.1",
     "shiki": "^0.14.7",
     "simple-functional-loader": "^1.2.1",
