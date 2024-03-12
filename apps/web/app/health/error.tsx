@@ -1,6 +1,6 @@
 "use client";
 
-import { XCircleIcon } from "@heroicons/react/24/outline";
+import { XCircleIcon } from "lucide-react";
 
 export default function Error({ error }: { error: Error & { digest?: string } }) {
   return (
