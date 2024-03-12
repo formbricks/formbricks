@@ -49,12 +49,12 @@ const previewParentContainerVariant: Variants = {
   },
 };
 
-export default function UnifiedStylingPreviewSurvey({
+export const UnifiedStylingPreviewSurvey = ({
   setActiveQuestionId,
   activeQuestionId,
   survey,
   product,
-}: UnifiedStylingPreviewSurveyProps) {
+}: UnifiedStylingPreviewSurveyProps) => {
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
@@ -240,9 +240,9 @@ export default function UnifiedStylingPreviewSurvey({
       </div>
     </div>
   );
-}
+};
 
-function ResetProgressButton({ resetQuestionProgress }) {
+const ResetProgressButton = ({ resetQuestionProgress }: { resetQuestionProgress: () => void }) => {
   return (
     <Button
       variant="minimal"
@@ -252,4 +252,4 @@ function ResetProgressButton({ resetQuestionProgress }) {
       <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
     </Button>
   );
-}
+};

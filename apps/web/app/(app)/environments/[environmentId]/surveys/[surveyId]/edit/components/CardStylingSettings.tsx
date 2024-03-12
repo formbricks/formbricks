@@ -12,7 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 import { Slider } from "@formbricks/ui/Slider";
-import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabel";
+import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 import { Switch } from "@formbricks/ui/Switch";
 
 type CardStylingSettingsProps = {

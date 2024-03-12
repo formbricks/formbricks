@@ -1,6 +1,6 @@
 import { cn } from "@formbricks/lib/cn";
 
-import { ColorPicker } from "../ColorPicker";
+import { ColorPicker } from "../../ColorPicker";
 
 type ColorSelectorWithLabelProps = {
   label: string;
@@ -11,7 +11,7 @@ type ColorSelectorWithLabelProps = {
   disabled?: boolean;
 };
 
-const ColorSelectorWithLabel = ({
+export const ColorSelectorWithLabel = ({
   color,
   description = "",
   label,
@@ -30,5 +30,3 @@ const ColorSelectorWithLabel = ({
     </div>
   );
 };
-
-export default ColorSelectorWithLabel;

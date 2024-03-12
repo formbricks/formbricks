@@ -99,11 +99,9 @@ export const renderWidget = async (survey: TSurvey) => {
   setTimeout(() => {
     formbricksSurveys.renderSurveyModal({
       survey: survey,
-      // brandColor,
       isBrandingEnabled: isBrandingEnabled,
       clickOutside,
       darkOverlay,
-      // highlightBorderColor,
       placement,
       styling: getStyling(),
       getSetIsError: (f: (value: boolean) => void) => {

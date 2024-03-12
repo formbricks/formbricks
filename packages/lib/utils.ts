@@ -21,7 +21,7 @@ export const hexToRGBA = (hex: string | undefined, opacity: number): string | un
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 
-export const lightenDarkenColor = (hexColor: string, magnitude: number) => {
+export const lightenDarkenColor = (hexColor: string, magnitude: number): string => {
   hexColor = hexColor.replace(`#`, ``);
 
   // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
@@ -49,7 +49,7 @@ export const lightenDarkenColor = (hexColor: string, magnitude: number) => {
   }
 };
 
-export const mixColor = (hexColor: string, mixWithHex: string, weight: number) => {
+export const mixColor = (hexColor: string, mixWithHex: string, weight: number): string => {
   // Convert both colors to RGBA format
   const color1 = hexToRGBA(hexColor, 1) || "";
   const color2 = hexToRGBA(mixWithHex, 1) || "";

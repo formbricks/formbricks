@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 
-import { Button } from "../Button";
+import { Button } from "../../Button";
 
 type CardArrangementProps = {
   surveyType: "link" | "web";
@@ -12,7 +12,7 @@ type CardArrangementProps = {
   disabled?: boolean;
 };
 
-const CardArrangement = ({
+export const CardArrangement = ({
   activeCardArrangement,
   surveyType,
   setActiveCardArrangement,
@@ -78,5 +78,3 @@ const CardArrangement = ({
     </div>
   );
 };
-
-export default CardArrangement;

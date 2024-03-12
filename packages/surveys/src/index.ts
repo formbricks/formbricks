@@ -16,7 +16,6 @@ declare global {
 
 export const renderSurveyInline = (props: SurveyInlineProps) => {
   addStylesToDom();
-  // addCustomThemeToDom({ brandColor: props.styling?.brandColor?.light ?? "" });
   addCustomThemeToDom({ styling: props.styling });
 
   const element = document.getElementById(props.containerId);
@@ -28,7 +27,6 @@ export const renderSurveyInline = (props: SurveyInlineProps) => {
 
 export const renderSurveyModal = (props: SurveyModalProps) => {
   addStylesToDom();
-  // addCustomThemeToDom({ brandColor: props.styling?.brandColor?.light ?? "" });
   addCustomThemeToDom({ styling: props.styling });
 
   // add container element to DOM

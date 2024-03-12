@@ -15,7 +15,7 @@ import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
 import { EditFormbricksBranding } from "./components/EditBranding";
 import { EditPlacement } from "./components/EditPlacement";
-import UnifiedStyling from "./components/UnifiedStyling";
+import { UnifiedStyling } from "./components/UnifiedStyling";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [session, team, product] = await Promise.all([

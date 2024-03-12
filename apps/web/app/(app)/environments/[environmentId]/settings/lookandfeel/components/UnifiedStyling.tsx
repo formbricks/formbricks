@@ -1,6 +1,6 @@
 "use client";
 
-import UnifiedStylingPREVIEW_SURVEY from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
+import { UnifiedStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -12,7 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Slider } from "@formbricks/ui/Slider";
-import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabel";
+import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 import { Switch } from "@formbricks/ui/Switch";
 
 import { updateProductAction } from "../actions";
@@ -21,7 +21,7 @@ type UnifiedStylingProps = {
   product: TProduct;
 };
 
-const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
+export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
 
@@ -413,7 +413,7 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
       <div className="relative w-1/2 bg-slate-100 pt-4">
         <div className="sticky top-4 mb-4 h-full max-h-[600px]">
-          <UnifiedStylingPREVIEW_SURVEY
+          <UnifiedStylingPreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             survey={PREVIEW_SURVEY as TSurvey}
@@ -424,5 +424,3 @@ const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     </div>
   );
 };
-
-export default UnifiedStyling;

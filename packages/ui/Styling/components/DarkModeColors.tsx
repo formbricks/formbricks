@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-import { colorDefaults } from "@formbricks/lib/styling/constants";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 
-import { Switch } from "../Switch";
-import ColorSelectorWithLabel from "./ColorSelectorWithLabel";
+import { Switch } from "../../Switch";
+import { ColorSelectorWithLabel } from "./ColorSelectorWithLabel";
 
 type DarModeColorProps = {
   isDarkMode: boolean;
@@ -23,7 +23,7 @@ type DarModeColorProps = {
   disabled?: boolean;
 };
 
-const DarkModeColors = ({
+export const DarkModeColors = ({
   isDarkMode,
   setIsDarkMode,
   brandColor,
@@ -67,37 +67,37 @@ const DarkModeColors = ({
         <div className="grid grid-cols-2 gap-4">
           <ColorSelectorWithLabel
             label="Brand color"
-            color={brandColor ?? colorDefaults.brandColor}
+            color={brandColor ?? COLOR_DEFAULTS.brandColor}
             setColor={setBrandColor}
             className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Text color"
-            color={questionColor ?? colorDefaults.questionColor}
+            color={questionColor ?? COLOR_DEFAULTS.questionColor}
             setColor={setQuestionColor}
             className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Input color"
-            color={inputColor ?? colorDefaults.inputColor}
+            color={inputColor ?? COLOR_DEFAULTS.inputColor}
             setColor={setInputColor}
             className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Input border color"
-            color={inputBorderColor ?? colorDefaults.inputBorderColor}
+            color={inputBorderColor ?? COLOR_DEFAULTS.inputBorderColor}
             setColor={setInputBorderColor}
             className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Card background color"
-            color={cardBackgroundColor ?? colorDefaults.cardBackgroundColor}
+            color={cardBackgroundColor ?? COLOR_DEFAULTS.cardBackgroundColor}
             setColor={setCardBackgroundColor}
             className="gap-2"
           />
           <ColorSelectorWithLabel
             label="Highlight border color"
-            color={highlightBorderColor ?? colorDefaults.highlightBorderColor}
+            color={highlightBorderColor ?? COLOR_DEFAULTS.highlightBorderColor}
             setColor={setHighlighBorderColor}
             className="gap-2"
           />
@@ -106,5 +106,3 @@ const DarkModeColors = ({
     </div>
   );
 };
-
-export default DarkModeColors;

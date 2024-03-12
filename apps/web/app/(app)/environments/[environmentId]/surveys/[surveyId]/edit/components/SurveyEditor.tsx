@@ -3,6 +3,7 @@
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import StylingView from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
@@ -47,6 +48,7 @@ export default function SurveyEditor({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
 }: SurveyEditorProps): JSX.Element {
+  const router = useRouter();
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
@@ -55,6 +57,7 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
+      if (localSurvey) return;
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
 
@@ -104,13 +107,15 @@ export default function SurveyEditor({
 
     const createSegment = async () => {
       const createdSegment = await createSegmentAction({
-        title: survey.id,
+        title: localSurvey.id,
         description: "",
         environmentId: environment.id,
         surveyId: localSurvey.id,
         filters: [],
         isPrivate: true,
       });
+
+      console.log("created segment: ", createdSegment);
 
       setLocalSurvey({
         ...localSurvey,
@@ -120,6 +125,7 @@ export default function SurveyEditor({
 
     if (!localSurvey.segment?.id) {
       try {
+        console.log("creating segment");
         createSegment();
       } catch (err) {
         throw new Error("Error creating segment");
@@ -127,7 +133,7 @@ export default function SurveyEditor({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environment.id, isUserTargetingAllowed, localSurvey?.type, survey.id]);
+  }, [localSurvey?.type]);
 
   if (!localSurvey) {
     return <Loading />;

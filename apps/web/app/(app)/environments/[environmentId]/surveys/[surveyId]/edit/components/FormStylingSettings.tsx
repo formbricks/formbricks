@@ -7,7 +7,7 @@ import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TSurvey } from "@formbricks/types/surveys";
-import ColorSelectorWithLabel from "@formbricks/ui/Styling/ColorSelectorWithLabel";
+import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 
 type FormStylingSettingsProps = {
   localSurvey: TSurvey;

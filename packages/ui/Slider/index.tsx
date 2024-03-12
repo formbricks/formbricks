@@ -5,7 +5,7 @@ import * as React from "react";
 
 import { cn } from "@formbricks/lib/cn";
 
-const Slider = React.forwardRef<
+export const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
 >(({ className, ...props }, ref) => (
@@ -20,5 +20,3 @@ const Slider = React.forwardRef<
   </SliderPrimitive.Root>
 ));
 Slider.displayName = SliderPrimitive.Root.displayName;
-
-export { Slider };
