@@ -158,30 +158,43 @@ function FloatingLinkEditor({ editor }: { editor: LexicalEditor }) {
     }
   }, [isEditMode]);
 
+  useEffect(() => {
+    setEditMode(true);
+  }, []);
+
+  const handleSubmit = () => {
+    if (lastSelection && linkUrl) {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
+    }
+    setEditMode(false);
+  };
+
   return (
     <div ref={editorRef} className="link-editor">
-      <Input
-        className="bg-white"
-        ref={inputRef}
-        value={linkUrl}
-        onChange={(event) => {
-          setLinkUrl(event.target.value);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            if (lastSelection !== null) {
-              if (linkUrl !== "") {
-                editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
+      {isEditMode && (
+        <div className="flex">
+          <Input
+            className="bg-white"
+            ref={inputRef}
+            value={linkUrl}
+            onChange={(event) => {
+              setLinkUrl(event.target.value);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                handleSubmit();
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                setEditMode(false);
               }
-              setEditMode(false);
-            }
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            setEditMode(false);
-          }
-        }}
-      />
+            }}
+          />
+          <Button variant="darkCTA" className="py-2" onClick={handleSubmit}>
+            Add
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
