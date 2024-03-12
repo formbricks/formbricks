@@ -21,8 +21,13 @@ jobs:
       has-files-requiring-all-checks: ${{ steps.filter.outputs.has-files-requiring-all-checks }}
     steps:
       - uses: actions/checkout@v3
+        name: Checkout PR code
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      # - uses: actions/checkout@v3
+      #   with:
+      #     ref: ${{ github.event.pull_request.head.sha }}
 
       # - uses: ./.github/actions/dangerous-git-checkout
       - uses: dorny/paths-filter@v2
