@@ -287,15 +287,16 @@ export default function WebsiteSurveyPage() {
           })}
         </div>
       </div>
-
-      <HeadingCentered heading="Frequently asked questions" teaser="FAQ" />
-      <SEOFAQ
-        faqs={FAQs}
-        headline="Targeted website surveys, open source. Like HotJar Ask but GDPR compliant."
-        description="Make the most out of your website traffic by asking pointed quesitons in online surveys."
-        datePublished="2024-03-12"
-        dateModified="2024-03-12"
-      />
+      <div>
+        <HeadingCentered heading="Frequently asked questions" teaser="FAQ" />
+        <SEOFAQ
+          faqs={FAQs}
+          headline="Targeted website surveys, open source. Like HotJar Ask but GDPR compliant."
+          description="Make the most out of your website traffic by asking pointed quesitons in online surveys."
+          datePublished="2024-03-12"
+          dateModified="2024-03-12"
+        />
+      </div>
     </LayoutLight>
   );
 }
