@@ -48,6 +48,20 @@ const CardStylingSettings = ({
     }));
   };
 
+  const cardBorderColor = localSurvey.styling?.cardBorderColor?.light || COLOR_DEFAULTS.cardBorderColor;
+  const setCardBorderColor = (color: string) => {
+    setLocalSurvey((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        cardBorderColor: {
+          ...(prev.styling?.cardBorderColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
+
   const isHighlightBorderAllowed = !!localSurvey.styling?.highlightBorderColor;
   const setIsHighlightBorderAllowed = (open: boolean) => {
     if (!open) {
@@ -189,6 +203,14 @@ const CardStylingSettings = ({
             color={cardBgColor}
             setColor={setCardBgColor}
             description="Change the highlight color used for buttons, selects, etc."
+          />
+
+          <ColorSelectorWithLabel
+            label="Card Border color"
+            color={cardBorderColor}
+            setColor={setCardBorderColor}
+            description="Change the border color of the card."
+            disabled={isHighlightBorderAllowed}
           />
 
           {localSurvey.type === "web" && (

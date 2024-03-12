@@ -6,7 +6,9 @@ import React from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
+import { mixColor } from "@formbricks/lib/utils";
 import { TSurvey } from "@formbricks/types/surveys";
+import { Button } from "@formbricks/ui/Button";
 import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 
 type FormStylingSettingsProps = {
@@ -76,6 +78,38 @@ const FormStylingSettings = ({
     }));
   };
 
+  const suggestColors = () => {
+    // mix the brand color with different weights of white and set the result as the other colors
+    setQuestionColor(mixColor(brandColor, "#000000", 0.2));
+    setInputColor(mixColor(brandColor, "#ffffff", 0.8));
+    setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
+
+    // card background:
+    setLocalSurvey((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        cardBackgroundColor: {
+          ...(prev.styling?.cardBackgroundColor ?? {}),
+          light: mixColor(brandColor, "#ffffff", 0.9),
+        },
+      },
+    }));
+
+    if (localSurvey.styling?.highlightBorderColor) {
+      setLocalSurvey((prev) => ({
+        ...prev,
+        styling: {
+          ...prev.styling,
+          highlightBorderColor: {
+            ...(prev.styling?.highlightBorderColor ?? {}),
+            light: mixColor(brandColor, "#ffffff", 0.7),
+          },
+        },
+      }));
+    }
+  };
+
   return (
     <Collapsible.Root
       open={open}
@@ -94,11 +128,6 @@ const FormStylingSettings = ({
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
             <CheckCircleIcon className="h-8 w-8 text-green-400" />
-            {/* {containsEmptyTriggers ? (
-                <div className="h-8 w-8 rounded-full border border-amber-500 bg-amber-50" />
-              ) : (
-                <CheckCircleIcon className="h-8 w-8 text-green-400" />
-              )} */}
           </div>
 
           <div>
@@ -114,12 +143,18 @@ const FormStylingSettings = ({
         <hr className="py-1 text-slate-600" />
 
         <div className="flex flex-col gap-6 p-6 pt-2">
-          <ColorSelectorWithLabel
-            label="Brand color"
-            color={brandColor}
-            setColor={setBrandColor}
-            description="Change the brand color of the survey"
-          />
+          <div className="flex flex-col gap-2">
+            <ColorSelectorWithLabel
+              label="Brand color"
+              color={brandColor}
+              setColor={setBrandColor}
+              description="Change the brand color of the survey"
+            />
+
+            <Button variant="secondary" size="sm" className="w-fit" onClick={() => suggestColors()}>
+              Suggest colors
+            </Button>
+          </div>
 
           <ColorSelectorWithLabel
             label="Text color"

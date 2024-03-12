@@ -179,7 +179,7 @@ export const UnifiedStylingPreviewSurvey = ({
               highlightBorderColor={highlightBorderColor}
               previewMode="desktop"
               background={product.styling.cardBackgroundColor?.light}
-              borderRadius={product.styling.roundness ?? 12}>
+              borderRadius={product.styling.roundness ?? 8}>
               <SurveyInline
                 survey={survey}
                 activeQuestionId={activeQuestionId || undefined}

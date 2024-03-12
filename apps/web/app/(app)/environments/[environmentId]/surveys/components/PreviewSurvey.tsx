@@ -234,7 +234,7 @@ export default function PreviewSurvey({
                   placement={placement}
                   highlightBorderColor={styling.highlightBorderColor?.light}
                   previewMode="mobile"
-                  borderRadius={styling?.roundness ?? 12}
+                  borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
                     survey={survey}
@@ -244,6 +244,7 @@ export default function PreviewSurvey({
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
                     styling={styling}
+                    isCardBorderVisible={!styling.highlightBorderColor?.light}
                   />
                 </Modal>
               ) : (
@@ -306,7 +307,7 @@ export default function PreviewSurvey({
                 placement={placement}
                 highlightBorderColor={styling.highlightBorderColor?.light}
                 previewMode="desktop"
-                borderRadius={styling.roundness ?? 12}
+                borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
                   survey={survey}
@@ -316,6 +317,7 @@ export default function PreviewSurvey({
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
                   styling={styling}
+                  isCardBorderVisible={!styling.highlightBorderColor?.light}
                 />
               </Modal>
             ) : (

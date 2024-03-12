@@ -69,7 +69,7 @@ async function main() {
       }
 
       for (const survey of surveysWithProductOverwrites) {
-        const { brandColor, highlightBorderColor } = survey.productOverwrites ?? {};
+        const { brandColor, highlightBorderColor, ...rest } = survey.productOverwrites ?? {};
 
         // single query to update the survey with the product overwrites
         await tx.survey.update({
@@ -81,8 +81,7 @@ async function main() {
               ...(highlightBorderColor && { highlightBorderColor: { light: highlightBorderColor } }),
             },
             productOverwrites: {
-              brandColor: null,
-              highlightBorderColor: null,
+              ...rest,
             },
           },
         });

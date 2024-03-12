@@ -56,6 +56,23 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
   appendCssVariable("border-radius", `${roundness}px`);
   appendCssVariable("input-background-color", styling.inputColor?.light);
+
+  if (styling.questionColor?.light) {
+    let signatureColor = "";
+    let brandingColor = "";
+
+    if (isLight(styling.questionColor?.light)) {
+      signatureColor = mixColor(styling.questionColor?.light, "#000000", 0.2);
+      brandingColor = mixColor(styling.questionColor?.light, "#000000", 0.3);
+    } else {
+      signatureColor = mixColor(styling.questionColor?.light, "#ffffff", 0.2);
+      brandingColor = mixColor(styling.questionColor?.light, "#ffffff", 0.3);
+    }
+
+    appendCssVariable("signature-text-color", signatureColor);
+    appendCssVariable("branding-text-color", brandingColor);
+  }
+
   if (!!styling.inputColor?.light) {
     if (
       styling.inputColor.light === "#fff" ||
@@ -79,12 +96,6 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
 
     appendCssVariable("accent-background-color", mixedBrandColor);
     appendCssVariable("accent-background-color-selected", mixedBrandColorSelected);
-  }
-
-  // when the card background gets too dark, we change the formbricks signature color to off white:
-  if (styling.cardBackgroundColor?.light && !isLight(styling.cardBackgroundColor?.light)) {
-    appendCssVariable("signature-text-color", "var(--slate-50)");
-    appendCssVariable("branding-text-color", "var(--slate-100)");
   }
 
   // Close the :root block

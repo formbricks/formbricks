@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
 import { mixColor } from "@formbricks/lib/utils";
 import { TProduct } from "@formbricks/types/product";
@@ -354,7 +355,12 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
               disabled={!unifiedStyling}
             />
 
-            <Button variant="darkCTA" className="w-fit" onClick={() => suggestColors()}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-fit"
+              onClick={() => suggestColors()}
+              disabled={!unifiedStyling}>
               Suggest colors
             </Button>
           </div>
@@ -401,10 +407,10 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             setColor={setCardBorderColor}
             description="Change the border color of the card"
             className="max-w-full"
-            disabled={!unifiedStyling}
+            disabled={!unifiedStyling || isHighlightBorderAllowed}
           />
 
-          <div className="flex flex-col gap-4">
+          <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
             <div className="flex items-center gap-6">
               <Switch
                 checked={isHighlightBorderAllowed}
@@ -424,11 +430,12 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
                 color={highlightBorderColor}
                 onChange={setHighlightBorderColor}
                 containerClass="my-0"
+                disabled={!unifiedStyling}
               />
             )}
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
             <div className="flex flex-col">
               <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
               <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
