@@ -112,7 +112,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
 
   return (
     <div>
-      <MediaBackground survey={survey}>
+      <MediaBackground survey={survey} product={product}>
         <LinkSurvey
           survey={survey}
           product={product}

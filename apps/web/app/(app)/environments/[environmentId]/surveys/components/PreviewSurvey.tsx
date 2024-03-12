@@ -227,7 +227,7 @@ export default function PreviewSurvey({
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
-            <MediaBackground survey={survey} ContentRef={ContentRef} isMobilePreview>
+            <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isMobilePreview>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
@@ -321,7 +321,7 @@ export default function PreviewSurvey({
                 />
               </Modal>
             ) : (
-              <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
+              <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
                 <div className="z-0 w-full max-w-md rounded-lg p-4">
                   <SurveyInline
                     survey={survey}

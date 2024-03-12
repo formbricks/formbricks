@@ -2,11 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;
   survey: TSurvey;
+  product: TProduct;
   isEditorView?: boolean;
   isMobilePreview?: boolean;
   ContentRef?: React.RefObject<HTMLDivElement>;
@@ -14,6 +16,7 @@ interface MediaBackgroundProps {
 
 export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   children,
+  product,
   survey,
   isEditorView = false,
   isMobilePreview = false,
@@ -53,6 +56,10 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
 
   const renderBackground = () => {
     const filterStyle = getFilterStyle();
+
+    if (!product.styling.allowStyleOverwrite) {
+      return <div className={`${baseClasses} ${loadedClass} bg-white`} />;
+    }
 
     switch (survey.styling?.background?.bgType) {
       case "color":

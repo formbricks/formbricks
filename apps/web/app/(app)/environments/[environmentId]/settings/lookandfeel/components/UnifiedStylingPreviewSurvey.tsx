@@ -192,7 +192,7 @@ export const UnifiedStylingPreviewSurvey = ({
               />
             </Modal>
           ) : (
-            <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
+            <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
               <div className="z-0 w-full max-w-md rounded-lg p-4">
                 <SurveyInline
                   survey={survey}
