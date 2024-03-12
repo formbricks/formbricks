@@ -16,6 +16,7 @@ async function main() {
       // something went wrong, could not find any products
       return;
     }
+
     if (products.length) {
       for (const product of products) {
         // no migration needed
@@ -37,10 +38,12 @@ async function main() {
           },
           data: {
             styling: {
-              ...(product.styling ?? {}),
-              ...(product.brandColor && {
-                brandColor: { light: product.brandColor },
-              }),
+              ...product.styling,
+              // only if the brand color is not null and not equal to the default one, we need to update the styling object. Otherwise, we'll just use the default value
+              ...(product.brandColor &&
+                product.brandColor !== DEFAULT_BRAND_COLOR && {
+                  brandColor: { light: product.brandColor },
+                }),
               ...(product.highlightBorderColor && {
                 highlightBorderColor: {
                   light: product.highlightBorderColor,
@@ -78,8 +81,8 @@ async function main() {
               ...(highlightBorderColor && { highlightBorderColor: { light: highlightBorderColor } }),
             },
             productOverwrites: {
-              ...(brandColor && { brandColor: null }),
-              ...(highlightBorderColor && { highlightBorderColor: null }),
+              brandColor: null,
+              highlightBorderColor: null,
             },
           },
         });

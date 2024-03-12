@@ -4,6 +4,7 @@ import preflight from "@/styles/preflight.css?inline";
 
 import { mixColor } from "@formbricks/lib/utils";
 import { TProductStyling } from "@formbricks/types/product";
+import { TSurveyStyling } from "@formbricks/types/surveys";
 
 import editorCss from "../../../ui/Editor/stylesEditorFrontend.css?inline";
 
@@ -16,7 +17,7 @@ export const addStylesToDom = () => {
   }
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling }) => {
+export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TSurveyStyling }) => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom");
 

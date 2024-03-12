@@ -26,21 +26,21 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const [localProduct, setLocalProduct] = useState(product);
 
   const highlightBorderColor =
-    localProduct.styling?.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
+    localProduct.styling.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
   const setHighlightBorderColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
       styling: {
         ...prev.styling,
         highlightBorderColor: {
-          ...(prev.styling?.highlightBorderColor ?? {}),
+          ...(prev.styling.highlightBorderColor ?? {}),
           light: color,
         },
       },
     }));
   };
 
-  const isHighlightBorderAllowed = !!localProduct.styling?.highlightBorderColor;
+  const isHighlightBorderAllowed = !!localProduct.styling.highlightBorderColor;
   const setIsHighlightBorderAllowed = useCallback(
     (open: boolean) => {
       if (!open) {
@@ -58,7 +58,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
           styling: {
             ...prev.styling,
             highlightBorderColor: {
-              ...(prev.styling?.highlightBorderColor ?? {}),
+              ...(prev.styling.highlightBorderColor ?? {}),
               light: highlightBorderColor,
             },
           },
@@ -68,7 +68,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     [highlightBorderColor, localProduct.styling]
   );
 
-  const unifiedStyling = localProduct.styling?.unifiedStyling ?? false;
+  const unifiedStyling = localProduct.styling.unifiedStyling ?? false;
   const setUnifiedStyling = (value: boolean) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -79,7 +79,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const allowStyleOverwrite = localProduct.styling?.allowStyleOverwrite ?? false;
+  const allowStyleOverwrite = localProduct.styling.allowStyleOverwrite ?? false;
   const setAllowStyleOverwrite = (value: boolean) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -90,56 +90,56 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const brandColor = localProduct.styling?.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
+  const brandColor = localProduct.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
   const setBrandColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
       styling: {
         ...prev.styling,
         brandColor: {
-          ...(prev.styling?.brandColor ?? {}),
+          ...(prev.styling.brandColor ?? {}),
           light: color,
         },
       },
     }));
   };
 
-  const questionColor = localProduct.styling?.questionColor?.light ?? COLOR_DEFAULTS.questionColor;
+  const questionColor = localProduct.styling.questionColor?.light ?? COLOR_DEFAULTS.questionColor;
   const setQuestionColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
       styling: {
         ...prev.styling,
         questionColor: {
-          ...(prev.styling?.questionColor ?? {}),
+          ...(prev.styling.questionColor ?? {}),
           light: color,
         },
       },
     }));
   };
 
-  const inputColor = localProduct.styling?.inputColor?.light ?? COLOR_DEFAULTS.inputColor;
+  const inputColor = localProduct.styling.inputColor?.light ?? COLOR_DEFAULTS.inputColor;
   const setInputColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
       styling: {
         ...prev.styling,
         inputColor: {
-          ...(prev.styling?.inputColor ?? {}),
+          ...(prev.styling.inputColor ?? {}),
           light: color,
         },
       },
     }));
   };
 
-  const inputBorderColor = localProduct.styling?.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor;
+  const inputBorderColor = localProduct.styling.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor;
   const setInputBorderColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
       styling: {
         ...prev.styling,
         inputBorderColor: {
-          ...(prev.styling?.inputBorderColor ?? {}),
+          ...(prev.styling.inputBorderColor ?? {}),
           light: color,
         },
       },
@@ -147,7 +147,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   };
 
   const cardBackgroundColor =
-    localProduct.styling?.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor;
+    localProduct.styling.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor;
 
   const setCardBackgroundColor = (color: string) => {
     setLocalProduct((prev) => ({
@@ -155,14 +155,14 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
       styling: {
         ...prev.styling,
         cardBackgroundColor: {
-          ...(prev.styling?.cardBackgroundColor ?? {}),
+          ...(prev.styling.cardBackgroundColor ?? {}),
           light: color,
         },
       },
     }));
   };
 
-  const roundness = localProduct.styling?.roundness ?? 8;
+  const roundness = localProduct.styling.roundness ?? 8;
   const setRoundness = (value: number) => {
     setLocalProduct((prev) => ({
       ...prev,

@@ -5,8 +5,8 @@ import { ZEnvironment } from "./environment";
 import { ZBaseStyling } from "./styling";
 
 export const ZProductStyling = ZBaseStyling.extend({
-  unifiedStyling: z.boolean().nullish(),
-  allowStyleOverwrite: z.boolean().nullish(),
+  unifiedStyling: z.boolean(),
+  allowStyleOverwrite: z.boolean(),
 });
 
 export type TProductStyling = z.infer<typeof ZProductStyling>;
@@ -19,7 +19,7 @@ export const ZProduct = z.object({
   teamId: z.string(),
   brandColor: ZColor.nullable(),
   highlightBorderColor: ZColor.nullable(),
-  styling: ZProductStyling.nullable(),
+  styling: ZProductStyling,
   recontactDays: z.number().int(),
   inAppSurveyBranding: z.boolean(),
   linkSurveyBranding: z.boolean(),
