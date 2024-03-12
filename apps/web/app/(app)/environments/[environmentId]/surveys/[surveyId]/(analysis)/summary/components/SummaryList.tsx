@@ -8,6 +8,7 @@ import { TSurveySummary } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
+import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
 
 import CTASummary from "./CTASummary";
 import DateQuestionSummary from "./DateQuestionSummary";
@@ -23,21 +24,28 @@ interface SummaryListProps {
   responseCount: number;
   environment: TEnvironment;
   survey: TSurvey;
+  fetchingSummary: boolean;
 }
 
-export default function SummaryList({ summary, environment, responseCount, survey }: SummaryListProps) {
+export default function SummaryList({
+  summary,
+  environment,
+  responseCount,
+  survey,
+  fetchingSummary,
+}: SummaryListProps) {
   return (
     <div className="mt-10 space-y-8">
       {survey.type === "web" && responseCount === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
+      ) : fetchingSummary ? (
+        <SkeletonLoader type="summary" />
       ) : responseCount === 0 ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}
           noWidgetRequired={survey.type === "link"}
         />
-      ) : !summary.length ? (
-        <EmptySpaceFiller type="summary" environment={environment} />
       ) : (
         summary.map((questionSummary) => {
           if (questionSummary.type === TSurveyQuestionType.OpenText) {

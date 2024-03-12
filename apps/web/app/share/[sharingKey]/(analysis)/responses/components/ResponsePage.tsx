@@ -47,6 +47,7 @@ const ResponsePage = ({
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [responseCount, setResponseCount] = useState<number>(0);
+  const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -83,23 +84,33 @@ const ResponsePage = ({
   }, [searchParams, resetState]);
 
   useEffect(() => {
-    const fetchInitialResponses = async () => {
-      const responses = await getResponsesBySurveySharingKeyAction(sharingKey, 1, responsesPerPage, filters);
-      if (responses.length < responsesPerPage) {
-        setHasMore(false);
-      }
-      setResponses(responses);
-    };
-    fetchInitialResponses();
-  }, [filters, responsesPerPage, sharingKey]);
-
-  useEffect(() => {
     const handleResponsesCount = async () => {
       const responseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
       setResponseCount(responseCount);
     };
     handleResponsesCount();
   }, [filters, sharingKey]);
+
+  useEffect(() => {
+    const fetchInitialResponses = async () => {
+      try {
+        setFetchingFirstPage(true);
+        const responses = await getResponsesBySurveySharingKeyAction(
+          sharingKey,
+          1,
+          responsesPerPage,
+          filters
+        );
+        if (responses.length < responsesPerPage) {
+          setHasMore(false);
+        }
+        setResponses(responses);
+      } finally {
+        setFetchingFirstPage(false);
+      }
+    };
+    fetchInitialResponses();
+  }, [filters, responsesPerPage, sharingKey]);
 
   return (
     <ContentWrapper>
@@ -120,6 +131,8 @@ const ResponsePage = ({
         environmentTags={environmentTags}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
+        fetchingFirstPage={isFetchingFirstPage}
+        responseCount={responseCount}
       />
     </ContentWrapper>
   );
