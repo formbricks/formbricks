@@ -3,7 +3,9 @@ name: Build & Cache Web App
 runs:
   using: "composite"
   steps:
+    - name: Checkout repo	
     - uses: actions/checkout@v2
+
     - uses: ./.github/actions/dangerous-git-checkout
 
     - name: Cache Build
