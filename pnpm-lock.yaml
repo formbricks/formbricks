@@ -42,9 +42,9 @@ importers:
       '@formbricks/js':
         specifier: workspace:*
         version: link:../../packages/js
-      '@heroicons/react':
-        specifier: ^2.1.1
-        version: 2.1.1(react@18.2.0)
+      lucide-react:
+        specifier: ^0.344.0
+        version: 0.344.0(react@18.2.0)
       next:
         specifier: 14.1.1
         version: 14.1.1(react-dom@18.2.0)(react@18.2.0)
@@ -85,9 +85,6 @@ importers:
       '@headlessui/tailwindcss':
         specifier: ^0.2.0
         version: 0.2.0(tailwindcss@3.4.0)
-      '@heroicons/react':
-        specifier: ^2.1.1
-        version: 2.1.1(react@18.2.0)
       '@mapbox/rehype-prism':
         specifier: ^0.9.0
         version: 0.9.0
@@ -142,6 +139,9 @@ importers:
       lottie-web:
         specifier: ^5.12.2
         version: 5.12.2
+      lucide-react:
+        specifier: ^0.344.0
+        version: 0.344.0(react@18.2.0)
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
@@ -318,9 +318,6 @@ importers:
       '@headlessui/react':
         specifier: ^1.7.18
         version: 1.7.18(react-dom@18.2.0)(react@18.2.0)
-      '@heroicons/react':
-        specifier: ^2.1.1
-        version: 2.1.1(react@18.2.0)
       '@json2csv/node':
         specifier: ^7.0.6
         version: 7.0.6
@@ -860,9 +857,6 @@ importers:
       '@formbricks/surveys':
         specifier: workspace:*
         version: link:../surveys
-      '@heroicons/react':
-        specifier: ^2.1.1
-        version: 2.1.1(react@18.2.0)
       '@lexical/code':
         specifier: ^0.13.1
         version: 0.13.1(lexical@0.13.1)
@@ -4056,14 +4050,6 @@ packages:
       tailwindcss: ^3.0
     dependencies:
       tailwindcss: 3.4.0
-    dev: false
-
-  /@heroicons/react@2.1.1(react@18.2.0):
-    resolution: {integrity: sha512-JyyN9Lo66kirbCMuMMRPtJxtKJoIsXKS569ebHGGRKbl8s4CtUfLnyKJxteA+vIKySocO4s1SkTkGS4xtG/yEA==}
-    peerDependencies:
-      react: '>= 16'
-    dependencies:
-      react: 18.2.0
     dev: false
 
   /@httptoolkit/websocket-stream@6.0.1:

@@ -1,5 +1,4 @@
-import { FaceSmileIcon, HashtagIcon, StarIcon } from "@heroicons/react/24/outline";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { HashIcon, PlusIcon, SmileIcon, StarIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys";
@@ -84,9 +83,9 @@ export default function RatingQuestionForm({
           <div className="mt-2">
             <Dropdown
               options={[
-                { label: "Number", value: "number", icon: HashtagIcon },
+                { label: "Number", value: "number", icon: HashIcon },
                 { label: "Star", value: "star", icon: StarIcon },
-                { label: "Smiley", value: "smiley", icon: FaceSmileIcon },
+                { label: "Smiley", value: "smiley", icon: SmileIcon },
               ]}
               defaultValue={question.scale || "number"}
               onSelect={(option) => updateQuestion(questionIdx, { scale: option.value })}

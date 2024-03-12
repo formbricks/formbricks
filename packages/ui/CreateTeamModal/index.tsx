@@ -1,4 +1,4 @@
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -52,7 +52,7 @@ export default function CreateTeamModal({ open, setOpen }: CreateTeamModalProps)
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-10 w-10 text-slate-500">
-                <PlusCircleIcon />
+                <PlusCircleIcon className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">Create team</div>

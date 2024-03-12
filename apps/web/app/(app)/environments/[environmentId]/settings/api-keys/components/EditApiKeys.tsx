@@ -1,7 +1,6 @@
 "use client";
 
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { FilesIcon } from "lucide-react";
+import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
