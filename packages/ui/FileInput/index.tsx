@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 
-import { uploadFile } from "./lib/fileUpload";
+import { getAllowedFiles, uploadFile } from "./lib/fileUpload";
 
 const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
 const isImage = (name: string) => {
@@ -24,6 +24,7 @@ interface FileInputProps {
   fileUrl?: string | string[];
   multiple?: boolean;
   imageFit?: "cover" | "contain";
+  maxSizeInMB?: number;
 }
 
 interface SelectedFile {
@@ -40,6 +41,7 @@ const FileInput: React.FC<FileInputProps> = ({
   fileUrl,
   multiple = false,
   imageFit = "cover",
+  maxSizeInMB,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
 
@@ -49,19 +51,9 @@ const FileInput: React.FC<FileInputProps> = ({
       toast.error("Only one file is allowed");
     }
 
-    const allowedFiles = files.filter(
-      (file) =>
-        file &&
-        file.type &&
-        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtension)
-    );
-
-    if (allowedFiles.length < files.length) {
-      if (allowedFiles.length === 0) {
-        toast.error("No files are supported");
-        return;
-      }
-      toast.error("Some files are not supported");
+    const allowedFiles = getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
+    if (allowedFiles.length === 0) {
+      return;
     }
 
     setSelectedFiles(
@@ -126,21 +118,9 @@ const FileInput: React.FC<FileInputProps> = ({
   };
 
   const handleUploadMore = async (files: File[]) => {
-    let filesToUpload: File[] = files;
-
-    const allowedFiles = filesToUpload.filter(
-      (file) =>
-        file &&
-        file.type &&
-        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtension)
-    );
-
-    if (allowedFiles.length < filesToUpload.length) {
-      if (allowedFiles.length === 0) {
-        toast.error("No files are supported");
-        return;
-      }
-      toast.error("Some files are not supported");
+    const allowedFiles = getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
+    if (allowedFiles.length === 0) {
+      return;
     }
 
     setSelectedFiles((prevFiles) => [
@@ -200,6 +180,7 @@ const FileInput: React.FC<FileInputProps> = ({
                       src={file.url}
                       alt={file.name}
                       fill
+                      sizes="100%"
                       style={{ objectFit: "cover" }}
                       quality={100}
                       className={!file.uploaded ? "opacity-50" : ""}
@@ -254,6 +235,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   src={selectedFiles[0].url}
                   alt={selectedFiles[0].name}
                   fill
+                  sizes="100%"
                   style={{ objectFit: imageFit }}
                   quality={100}
                   className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
