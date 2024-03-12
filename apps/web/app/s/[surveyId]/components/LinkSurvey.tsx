@@ -54,7 +54,9 @@ export default function LinkSurvey({
 
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
-    const isValid = survey?.questions.some((question) => question.id === startAt) || startAt === "start";
+    if (survey?.welcomeCard.enabled && startAt === "start") return true;
+
+    const isValid = survey?.questions.some((question) => question.id === startAt);
 
     // To remove startAt query param from URL if it is not valid:
     if (!isValid && typeof window !== "undefined") {
