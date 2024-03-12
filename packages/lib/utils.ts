@@ -63,6 +63,23 @@ export const mixColor = (hexColor: string, mixWithHex: string, weight: number): 
   const g = Math.round(g1 * (1 - weight) + g2 * weight);
   const b = Math.round(b1 * (1 - weight) + b2 * weight);
 
-  // Convert back to RGBA string with 100% opacity
-  return `rgba(${r}, ${g}, ${b}, 1)`;
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 };
+
+export function isLight(color: string) {
+  let r: number | undefined, g: number | undefined, b: number | undefined;
+
+  if (color.length === 4) {
+    r = parseInt(color[1] + color[1], 16);
+    g = parseInt(color[2] + color[2], 16);
+    b = parseInt(color[3] + color[3], 16);
+  } else if (color.length === 7) {
+    r = parseInt(color[1] + color[2], 16);
+    g = parseInt(color[3] + color[4], 16);
+    b = parseInt(color[5] + color[6], 16);
+  }
+  if (r === undefined || g === undefined || b === undefined) {
+    throw new Error("Invalid color");
+  }
+  return r * 0.299 + g * 0.587 + b * 0.114 > 128;
+}

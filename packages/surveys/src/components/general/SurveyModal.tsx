@@ -70,6 +70,7 @@ export function SurveyModal({
           isRedirectDisabled={isRedirectDisabled}
           responseCount={responseCount}
           styling={styling}
+          isCardBorderVisible={!!highlightBorderColor ? false : true}
         />
       </Modal>
     </div>

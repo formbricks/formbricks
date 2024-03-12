@@ -20,6 +20,7 @@ module.exports = {
         signature: "var(--fb-signature-text-color)",
         "branding-text": "var(--fb-branding-text-color)",
         "survey-bg": "var(--fb-survey-background-color)",
+        "survey-border": "var(--fb-survey-border-color)",
         "accent-bg": "var(--fb-accent-background-color)",
         "accent-selected-bg": "var(--fb-accent-background-color-selected)",
         "input-bg": "var(--fb-input-background-color)",

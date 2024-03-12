@@ -1,8 +1,7 @@
-import { isLight } from "@/lib/utils";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
 
-import { mixColor } from "@formbricks/lib/utils";
+import { isLight, mixColor } from "@formbricks/lib/utils";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling } from "@formbricks/types/surveys";
 
@@ -54,6 +53,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   appendCssVariable("subheading-color", styling.questionColor?.light);
   appendCssVariable("border-color", styling.inputBorderColor?.light);
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
+  appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
   appendCssVariable("border-radius", `${roundness}px`);
   appendCssVariable("input-background-color", styling.inputColor?.light);
   if (!!styling.inputColor?.light) {

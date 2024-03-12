@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
+import { mixColor } from "@formbricks/lib/utils";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -148,7 +149,6 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
   const cardBackgroundColor =
     localProduct.styling.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor;
-
   const setCardBackgroundColor = (color: string) => {
     setLocalProduct((prev) => ({
       ...prev,
@@ -156,6 +156,20 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
         ...prev.styling,
         cardBackgroundColor: {
           ...(prev.styling.cardBackgroundColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
+
+  const cardBorderColor = localProduct.styling.cardBorderColor?.light ?? COLOR_DEFAULTS.cardBorderColor;
+  const setCardBorderColor = (color: string) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        cardBorderColor: {
+          ...(prev.styling.cardBorderColor ?? {}),
           light: color,
         },
       },
@@ -205,6 +219,9 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
         cardBackgroundColor: {
           light: cardBackgroundColor,
         },
+        cardBorderColor: {
+          light: cardBorderColor,
+        },
         highlightBorderColor: isHighlightBorderAllowed
           ? {
               light: highlightBorderColor,
@@ -221,6 +238,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     allowStyleOverwrite,
     brandColor,
     cardBackgroundColor,
+    cardBorderColor,
     highlightBorderColor,
     inputBorderColor,
     inputColor,
@@ -252,6 +270,9 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
         cardBackgroundColor: {
           light: COLOR_DEFAULTS.cardBackgroundColor,
         },
+        cardBorderColor: {
+          light: COLOR_DEFAULTS.cardBorderColor,
+        },
         highlightBorderColor: undefined,
         isDarkModeEnabled: false,
         roundness: 8,
@@ -275,6 +296,17 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     toast.success("Styling updated successfully.");
     router.refresh();
   }, [product.id, router, setIsHighlightBorderAllowed]);
+
+  const suggestColors = useCallback(() => {
+    // mix the brand color with different weights of white and set the result as the other colors
+    setQuestionColor(mixColor(brandColor, "#000000", 0.2));
+    setInputColor(mixColor(brandColor, "#ffffff", 0.8));
+    setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
+    setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.9));
+    if (isHighlightBorderAllowed) {
+      setHighlightBorderColor(mixColor(brandColor, "#ffffff", 0.7));
+    }
+  }, [brandColor, isHighlightBorderAllowed]);
 
   return (
     <div className="flex">
@@ -312,14 +344,20 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             </div>
           </div>
 
-          <ColorSelectorWithLabel
-            label="Brand color"
-            color={brandColor}
-            setColor={setBrandColor}
-            description="Change the brand color of the survey"
-            className="max-w-full"
-            disabled={!unifiedStyling}
-          />
+          <div className="flex flex-col gap-2">
+            <ColorSelectorWithLabel
+              label="Brand color"
+              color={brandColor}
+              setColor={setBrandColor}
+              description="Change the brand color of the survey"
+              className="max-w-full"
+              disabled={!unifiedStyling}
+            />
+
+            <Button variant="darkCTA" className="w-fit" onClick={() => suggestColors()}>
+              Suggest colors
+            </Button>
+          </div>
 
           <ColorSelectorWithLabel
             label="Text color"
@@ -353,6 +391,15 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={cardBackgroundColor}
             setColor={setCardBackgroundColor}
             description="Change the background color of the card"
+            className="max-w-full"
+            disabled={!unifiedStyling}
+          />
+
+          <ColorSelectorWithLabel
+            label="Card border color"
+            color={cardBorderColor}
+            setColor={setCardBorderColor}
+            description="Change the border color of the card"
             className="max-w-full"
             disabled={!unifiedStyling}
           />

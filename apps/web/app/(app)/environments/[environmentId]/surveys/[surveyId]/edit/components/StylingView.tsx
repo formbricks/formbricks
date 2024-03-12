@@ -24,10 +24,10 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
   const overwriteUnifiedStyling = useMemo(() => {
     // unified styling is disabled from the product.
     // we don't need to show the switch
-    if (!product.styling?.unifiedStyling) return true;
+    if (!product.styling.unifiedStyling) return true;
 
     return !!localSurvey?.styling?.overwriteUnifiedStyling;
-  }, [localSurvey?.styling?.overwriteUnifiedStyling, product.styling?.unifiedStyling]);
+  }, [localSurvey?.styling?.overwriteUnifiedStyling, product.styling.unifiedStyling]);
 
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
@@ -61,14 +61,14 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
   }, [overwriteUnifiedStyling]);
 
   useEffect(() => {
-    if (!product.styling?.unifiedStyling) {
+    if (!product.styling.unifiedStyling) {
       setFormStylingOpen(true);
     }
-  }, [product.styling?.unifiedStyling]);
+  }, [product.styling.unifiedStyling]);
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      {!!product?.styling?.unifiedStyling && (
+      {!!product.styling.unifiedStyling && (
         <div className="flex items-center gap-4 py-4">
           <Switch checked={overwriteUnifiedStyling} onCheckedChange={setOverwriteUnifiedStyling} />
           <div className="flex flex-col">
@@ -107,7 +107,7 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
         />
       )}
 
-      {product.styling?.unifiedStyling && (
+      {product.styling.unifiedStyling && (
         <div className="mt-4 flex items-center justify-between">
           <Button variant="minimal" className="flex items-center gap-2" onClick={onResetUnifiedStyling}>
             Reset to unified styles

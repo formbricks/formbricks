@@ -1,4 +1,3 @@
-import { isLight } from "@/app/lib/utils";
 import {
   Column,
   Container,
@@ -17,6 +16,7 @@ import { cn } from "@formbricks/lib/cn";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { isLight } from "@formbricks/lib/utils";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
 

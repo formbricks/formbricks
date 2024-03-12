@@ -32,6 +32,7 @@ export function Survey({
   getSetIsResponseSendingFinished,
   onFileUpload,
   responseCount,
+  isCardBorderVisible = true,
 }: SurveyBaseProps) {
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
@@ -278,7 +279,11 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        <div className="no-scrollbar rounded-custom flex h-full w-full flex-col justify-between bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
+        <div
+          className={cn(
+            "no-scrollbar rounded-custom bg-survey-bg flex h-full w-full flex-col justify-between px-6 pb-3 pt-6",
+            isCardBorderVisible ? "border-survey-border border" : ""
+          )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled

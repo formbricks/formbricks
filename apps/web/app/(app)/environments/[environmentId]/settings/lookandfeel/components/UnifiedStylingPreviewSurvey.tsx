@@ -5,10 +5,9 @@ import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 import { ArrowsPointingInIcon, ArrowsPointingOutIcon } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
-import { TProductStyling } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";
@@ -103,21 +102,7 @@ export const UnifiedStylingPreviewSurvey = ({
 
   const placement = surveyPlacement || product.placement;
 
-  const highlightBorderColor = product.styling?.highlightBorderColor?.light;
-
-  const styling: TProductStyling = useMemo(() => {
-    if (product.styling) {
-      return product.styling;
-    }
-
-    return {
-      unifiedStyling: true,
-      allowStyleOverwrite: true,
-      brandColor: {
-        light: product.brandColor || "#64748b",
-      },
-    };
-  }, [product.brandColor, product.styling]);
+  const highlightBorderColor = product.styling.highlightBorderColor?.light;
 
   // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
   useEffect(() => {
@@ -193,8 +178,8 @@ export const UnifiedStylingPreviewSurvey = ({
               placement={placement}
               highlightBorderColor={highlightBorderColor}
               previewMode="desktop"
-              background={styling.cardBackgroundColor?.light}
-              borderRadius={styling.roundness ?? 12}>
+              background={product.styling.cardBackgroundColor?.light}
+              borderRadius={product.styling.roundness ?? 12}>
               <SurveyInline
                 survey={survey}
                 activeQuestionId={activeQuestionId || undefined}
@@ -202,7 +187,8 @@ export const UnifiedStylingPreviewSurvey = ({
                 onActiveQuestionChange={setActiveQuestionId}
                 isRedirectDisabled={true}
                 onFileUpload={onFileUpload}
-                styling={styling}
+                styling={product.styling}
+                isCardBorderVisible={!highlightBorderColor}
               />
             </Modal>
           ) : (
@@ -216,7 +202,7 @@ export const UnifiedStylingPreviewSurvey = ({
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
                   responseCount={42}
-                  styling={styling}
+                  styling={product.styling}
                 />
               </div>
             </MediaBackground>
