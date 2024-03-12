@@ -1,10 +1,6 @@
 name: E2E Tests
 on:
   workflow_call:
-    inputs:
-      head_sha:
-        required: true
-        type: string
   workflow_dispatch:
 jobs:
   build:
@@ -12,15 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      # - uses: actions/checkout@v3
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.inputs.head_sha }}
-      # - uses: actions/checkout@v3
-      #   with:
-      #     ref: ${{ github.event.workflow_run.head_sha }}
-
-      # - uses: ./.github/actions/dangerous-git-checkout
+      - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Build & Cache Web Binaries
         uses: ./.github/actions/cache-build-web
