@@ -1,4 +1,4 @@
-import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, XIcon } from "lucide-react";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
@@ -54,13 +54,9 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
                   </Tooltip>
                 </TooltipProvider>
               ) : feature.free ? (
-                <div className="h-6 w-6 rounded-full border border-green-300 bg-green-100 p-0.5 dark:border-green-600 dark:bg-green-900">
-                  <CheckIcon className=" text-green-500 dark:text-green-300" />
-                </div>
+                <CheckIcon className=" rounded-full border border-green-300 bg-green-100 p-0.5 text-green-500 dark:border-green-600 dark:bg-green-900 dark:text-green-300" />
               ) : (
-                <div className="h-6 w-6 rounded-full border border-red-300 bg-red-100 p-0.5 dark:border-red-500 dark:bg-red-300">
-                  <XMarkIcon className="text-red-500 dark:text-red-600" />
-                </div>
+                <XIcon className="rounded-full border border-red-300 bg-red-100 p-0.5 text-red-500 dark:border-red-500 dark:bg-red-300 dark:text-red-600" />
               )}
             </div>
             <div className="flex w-1/3 items-center justify-center text-center text-sm text-slate-800 dark:text-slate-100">
@@ -78,13 +74,9 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
                   </Tooltip>
                 </TooltipProvider>
               ) : feature.paid ? (
-                <div className="h-6 w-6 rounded-full border border-green-300 bg-green-100 p-0.5 dark:border-green-600 dark:bg-green-900">
-                  <CheckIcon className="text-green-500 dark:text-green-300" />
-                </div>
+                <CheckIcon className=" rounded-full border border-green-300 bg-green-100 p-0.5 text-green-500 dark:border-green-600 dark:bg-green-900 dark:text-green-300" />
               ) : (
-                <div className="h-6 w-6 rounded-full border border-red-300 bg-red-100 p-0.5 dark:border-red-600 dark:bg-red-900">
-                  <XMarkIcon className="text-red-500 dark:text-red-600" />
-                </div>
+                <XIcon className="rounded-full border border-red-300 bg-red-100 p-0.5 text-red-500 dark:border-red-500 dark:bg-red-300 dark:text-red-600" />
               )}
             </div>
           </div>

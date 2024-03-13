@@ -34,6 +34,7 @@ test.describe("Survey Create & Submit Response", async () => {
 
     await expect(page.locator("#howToSendCardOption-web")).toBeVisible();
     await page.locator("#howToSendCardOption-web").click();
+    await page.locator("#howToSendCardOption-web").click();
 
     await expect(page.getByText("Survey Trigger")).toBeVisible();
     await page.getByText("Survey Trigger").click();
@@ -118,7 +119,7 @@ test.describe("Survey Create & Submit Response", async () => {
     expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
     await expect(page.getByRole("button", { name: "Next" })).not.toBeVisible();
     await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
-    await page.getByLabel("").nth(3).click();
+    await page.locator("path").nth(3).click();
 
     // NPS Question
     await expect(page.getByText(surveys.createAndSubmit.npsQuestion.question)).toBeVisible();

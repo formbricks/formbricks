@@ -26,7 +26,7 @@ import {
 import { TTag } from "@formbricks/types/tags";
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, WEBAPP_URL } from "../constants";
-import { deleteDisplayByResponseId } from "../display/service";
+import { deleteDisplayByResponseId, getDisplayCountBySurveyId } from "../display/service";
 import { createPerson, getPerson, getPersonByUserId, transformPrismaPerson } from "../person/service";
 import {
   buildWhereClause,
@@ -534,7 +534,7 @@ export const getSurveySummary = (
       }
 
       const batchSize = 3000;
-      const responseCount = await getResponseCountBySurveyId(surveyId);
+      const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
       const pages = Math.ceil(responseCount / batchSize);
 
       const responsesArray = await Promise.all(
@@ -544,10 +544,8 @@ export const getSurveySummary = (
       );
       const responses = responsesArray.flat();
 
-      const displayCount = await prisma.display.count({
-        where: {
-          surveyId,
-        },
+      const displayCount = await getDisplayCountBySurveyId(surveyId, {
+        createdAt: filterCriteria?.createdAt,
       });
 
       const meta = getSurveySummaryMeta(responses, displayCount);
@@ -583,7 +581,7 @@ export const getResponseDownloadUrl = async (
 
     const accessType = "private";
     const batchSize = 3000;
-    const responseCount = await getResponseCountBySurveyId(surveyId);
+    const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
     const pages = Math.ceil(responseCount / batchSize);
 
     const responsesArray = await Promise.all(
@@ -826,7 +824,7 @@ export const getResponseCountBySurveyId = async (
         throw error;
       }
     },
-    [`getResponseCountBySurveyId-${surveyId}`],
+    [`getResponseCountBySurveyId-${surveyId}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [responseCache.tag.bySurveyId(surveyId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
