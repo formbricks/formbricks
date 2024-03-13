@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilIcon } from "@heroicons/react/24/solid";
+import { PencilIcon } from "lucide-react";
 import { ImagePlusIcon } from "lucide-react";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import React from "react";

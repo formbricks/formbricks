@@ -1,4 +1,4 @@
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TSurveySummary } from "@formbricks/types/responses";

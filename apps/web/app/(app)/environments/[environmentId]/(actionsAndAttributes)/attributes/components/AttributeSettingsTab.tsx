@@ -1,7 +1,7 @@
 "use client";
 
-import { ArchiveBoxArrowDownIcon, ArchiveBoxXMarkIcon } from "@heroicons/react/24/solid";
 import type { AttributeClass } from "@prisma/client";
+import { ArchiveIcon, ArchiveXIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -86,13 +86,13 @@ export default function AttributeSettingsTab({ attributeClass, setOpen }: Attrib
                 {attributeClass.archived ? (
                   <>
                     {" "}
-                    <ArchiveBoxXMarkIcon className="mr-2 h-4 text-slate-600" />
+                    <ArchiveXIcon className="mr-2 h-4 text-slate-600" />
                     <span>Unarchive</span>
                   </>
                 ) : (
                   <>
                     {" "}
-                    <ArchiveBoxArrowDownIcon className="mr-2 h-4  text-slate-600" />
+                    <ArchiveIcon className="mr-2 h-4  text-slate-600" />
                     <span>Archive</span>
                   </>
                 )}
