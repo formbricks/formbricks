@@ -21,6 +21,7 @@ type StylingViewProps = {
 };
 
 const StylingView = ({ colours, environment, product, localSurvey, setLocalSurvey }: StylingViewProps) => {
+  console.log(product.styling);
   const overwriteUnifiedStyling = useMemo(() => {
     // unified styling is disabled from the product.
     // we don't need to show the switch

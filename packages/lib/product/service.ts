@@ -25,8 +25,6 @@ const selectProduct = {
   updatedAt: true,
   name: true,
   teamId: true,
-  brandColor: true,
-  highlightBorderColor: true,
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,

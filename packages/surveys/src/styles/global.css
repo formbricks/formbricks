@@ -89,3 +89,12 @@ p.fb-editor-paragraph {
 
   --fb-border-radius: 8px;
 }
+
+@keyframes shrink-width-to-zero {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
