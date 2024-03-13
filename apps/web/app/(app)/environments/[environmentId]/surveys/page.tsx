@@ -10,7 +10,7 @@ import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSurveyCountByEnvironmentId } from "@formbricks/lib/survey/service";
+import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import SurveysList from "@formbricks/ui/SurveysList";
@@ -43,7 +43,7 @@ export default async function SurveysPage({ params }) {
     throw new Error("Environment not found");
   }
 
-  const surveyCount = await getSurveyCountByEnvironmentId(params.environmentId);
+  const surveyCount = await getSurveyCount(params.environmentId);
 
   const environments = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;

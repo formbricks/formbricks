@@ -330,7 +330,7 @@ export const getSurveys = async (
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const getSurveyCountByEnvironmentId = async (environmentId: string): Promise<number> => {
+export const getSurveyCount = async (environmentId: string): Promise<number> => {
   const count = await unstable_cache(
     async () => {
       validateInputs([environmentId, ZId]);
@@ -351,7 +351,7 @@ export const getSurveyCountByEnvironmentId = async (environmentId: string): Prom
         throw error;
       }
     },
-    [`getSurveyCountByEnvironmentId-${environmentId}`],
+    [`getSurveyCount-${environmentId}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
