@@ -282,7 +282,6 @@ export default function QuestionsView({
   return (
     <div className="mt-16 px-5 py-4">
       <div className="mb-5 flex flex-col gap-5">
-        {console.log({ invalidQuestions })}
         <EditWelcomeCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
