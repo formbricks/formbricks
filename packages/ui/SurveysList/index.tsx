@@ -128,8 +128,8 @@ export default function SurveysList({
           )}
 
           {hasMore && (
-            <div className="flex justify-center py-2">
-              <Button onClick={fetchNextPage} variant="darkCTA" size="sm" loading={isFetching}>
+            <div className="flex justify-center py-5">
+              <Button onClick={fetchNextPage} variant="secondary" size="sm" loading={isFetching}>
                 Load more
               </Button>
             </div>
