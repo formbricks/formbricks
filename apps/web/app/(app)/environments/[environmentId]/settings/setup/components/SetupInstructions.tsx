@@ -42,7 +42,6 @@ if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "${environmentId}",
     apiHost: "${webAppUrl}",
-    debug: true, // remove when in production 
   });
 }`}</CodeBlock>
 

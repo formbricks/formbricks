@@ -36,6 +36,8 @@ export default function SummaryList({ summary, environment, responseCount, surve
           environment={environment}
           noWidgetRequired={survey.type === "link"}
         />
+      ) : !summary.length ? (
+        <EmptySpaceFiller type="summary" environment={environment} />
       ) : (
         summary.map((questionSummary) => {
           if (questionSummary.type === TSurveyQuestionType.OpenText) {
