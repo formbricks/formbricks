@@ -202,7 +202,7 @@ export default function FileInput({
   }, [allowMultipleFiles, fileUrls, isUploading]);
 
   return (
-    <div className="items-left relative mt-3 flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:cursor-pointer hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
+    <div className="items-left bg-input-bg hover:bg-input-bg-selected relative mt-3 flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 hover:cursor-pointer dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
       <div className="max-h-[30vh] overflow-auto">
         {fileUrls &&
           fileUrls?.map((file, index) => {
@@ -252,7 +252,7 @@ export default function FileInput({
 
       <div>
         {isUploading && (
-          <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg bg-slate-100 py-4">
+          <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg py-4">
             <label htmlFor="selectedFile" className="text-sm font-medium text-slate-500">
               Uploading...
             </label>

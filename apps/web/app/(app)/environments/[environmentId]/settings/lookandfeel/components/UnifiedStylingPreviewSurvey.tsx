@@ -16,6 +16,8 @@ interface UnifiedStylingPreviewSurveyProps {
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
   product: TProduct;
+  previewType: "link" | "web";
+  setPreviewType: (type: "link" | "web") => void;
 }
 
 let surveyNameTemp;
@@ -52,13 +54,13 @@ export const UnifiedStylingPreviewSurvey = ({
   activeQuestionId,
   survey,
   product,
+  previewType,
+  setPreviewType,
 }: UnifiedStylingPreviewSurveyProps) => {
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink, setshrink] = useState(false);
-
-  const [previewType, setPreviewType] = useState<"link" | "web">("link");
 
   const { productOverwrites } = survey || {};
 

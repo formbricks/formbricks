@@ -130,7 +130,7 @@ export default function DateQuestion({
 
       <div className={cn("my-4", errorMessage && "rounded-lg border-2 border-red-500")} id="date-picker-root">
         {loading && (
-          <div className="relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          <div className="bg-survey-bg relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 text-left text-base font-normal text-slate-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
             <span
               className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
               style={{ borderTopColor: "transparent" }}></span>

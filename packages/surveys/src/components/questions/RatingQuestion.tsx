@@ -113,7 +113,7 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      value === number ? "bg-accent-selected-bg border-border-highlight z-10" : "",
+                      value === number ? "bg-accent-selected-bg border-border z-10" : "",
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
@@ -134,7 +134,7 @@ export default function RatingQuestion({
                       "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none",
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
-                        : "text-slate-300",
+                        : "text-input-bg",
                       hoveredNumber === number ? "text-amber-400 " : ""
                     )}
                     onFocus={() => setHoveredNumber(number)}

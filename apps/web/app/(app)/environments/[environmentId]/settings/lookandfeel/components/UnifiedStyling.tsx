@@ -11,6 +11,7 @@ import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constant
 import { mixColor } from "@formbricks/lib/utils";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
+import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Slider } from "@formbricks/ui/Slider";
@@ -37,6 +38,8 @@ interface Survey {
 export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
+  const [previewSurveyType, setPreviewSurveyType] = useState<"link" | "web">("link");
+  const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
 
   const highlightBorderColor =
     localProduct.styling.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
@@ -307,6 +310,19 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     setIsHighlightBorderAllowed(false);
     setRoundness(8);
 
+    // Update the background of the PREVIEW SURVEY
+    setStyledPreviewSurvey((currentSurvey) => ({
+      ...currentSurvey,
+      styling: {
+        ...currentSurvey.styling,
+        background: {
+          ...currentSurvey.styling.background,
+          bg: "#ffffff",
+          bgType: "color",
+        },
+      },
+    }));
+
     toast.success("Styling updated successfully.");
     router.refresh();
   }, [product.id, router, setIsHighlightBorderAllowed]);
@@ -335,6 +351,15 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
       },
     }));
   }, [brandColor, isHighlightBorderAllowed]);
+
+  useEffect(() => {
+    // when preview survey type is link, we update the highlightBorderColor to undefined
+    if (previewSurveyType === "link") {
+      setIsHighlightBorderAllowed(false);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewSurveyType]);
 
   return (
     <div className="flex">
@@ -437,30 +462,32 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             disabled={!unifiedStyling || isHighlightBorderAllowed}
           />
 
-          <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
-            <div className="flex items-center gap-6">
-              <Switch
-                checked={isHighlightBorderAllowed}
-                onCheckedChange={(value) => {
-                  setIsHighlightBorderAllowed(value);
-                }}
-                disabled={!unifiedStyling}
-              />
-              <div className="flex flex-col">
-                <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
-                <p className="text-xs text-slate-500">Add on outer border to your survey card</p>
+          {previewSurveyType === "web" && (
+            <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
+              <div className="flex items-center gap-6">
+                <Switch
+                  checked={isHighlightBorderAllowed}
+                  onCheckedChange={(value) => {
+                    setIsHighlightBorderAllowed(value);
+                  }}
+                  disabled={!unifiedStyling}
+                />
+                <div className="flex flex-col">
+                  <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
+                  <p className="text-xs text-slate-500">Add on outer border to your survey card</p>
+                </div>
               </div>
-            </div>
 
-            {isHighlightBorderAllowed && (
-              <ColorPicker
-                color={highlightBorderColor}
-                onChange={setHighlightBorderColor}
-                containerClass="my-0"
-                disabled={!unifiedStyling}
-              />
-            )}
-          </div>
+              {isHighlightBorderAllowed && (
+                <ColorPicker
+                  color={highlightBorderColor}
+                  onChange={setHighlightBorderColor}
+                  containerClass="my-0"
+                  disabled={!unifiedStyling}
+                />
+              )}
+            </div>
+          )}
 
           <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
             <div className="flex flex-col">
@@ -482,7 +509,10 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
           <Button variant="darkCTA" onClick={onSave}>
             Save changes
           </Button>
-          <Button variant="minimal" className="flex items-center gap-2" onClick={onReset}>
+          <Button
+            variant="minimal"
+            className="flex items-center gap-2"
+            onClick={() => setConfirmResetStylingModalOpen(true)}>
             Reset
             <RotateCcwIcon className="h-4 w-4" />
           </Button>
@@ -498,9 +528,25 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             setActiveQuestionId={setActiveQuestionId}
             survey={styledPreviewSurvey as TSurvey}
             product={localProduct}
+            previewType={previewSurveyType}
+            setPreviewType={setPreviewSurveyType}
           />
         </div>
       </div>
+
+      {/* Confirm reset styling modal */}
+      <AlertDialog
+        open={confirmResetStylingModalOpen}
+        setOpen={setConfirmResetStylingModalOpen}
+        headerText="Reset styling"
+        mainText="Are you sure you want to reset the styling to default?"
+        confirmBtnLabel="Confirm"
+        onConfirm={() => {
+          onReset();
+          setConfirmResetStylingModalOpen(false);
+        }}
+        onDecline={() => setConfirmResetStylingModalOpen(false)}
+      />
     </div>
   );
 };
