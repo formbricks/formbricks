@@ -74,14 +74,13 @@ COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./packages/database/migrations
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
 # Install Prisma globally
 RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
-# Install turbo
-RUN npm install -g turbo
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
@@ -92,5 +91,5 @@ RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
 CMD supercronic -quiet /app/docker/cronjobs & \
-    pnpm db:migrate:deploy && \
+    (cd packages/database && pnpm db:migrate:deploy) && \
     exec node apps/web/server.js

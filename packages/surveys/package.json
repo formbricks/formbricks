@@ -45,19 +45,16 @@
     "autoprefixer": "^10.4.18",
     "concurrently": "8.2.2",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.10.12",
+    "eslint-config-turbo": "1.12.5",
     "isomorphic-dompurify": "^2.4.0",
     "postcss": "^8.4.35",
     "preact": "^10.19.6",
     "react-date-picker": "^10.6.0",
     "serve": "14.2.1",
     "tailwindcss": "^3.4.1",
-    "terser": "^5.28.1",
-    "vite": "^5.1.4",
+    "terser": "^5.29.1",
+    "vite": "^5.1.6",
     "vite-plugin-dts": "^3.7.3",
     "vite-tsconfig-paths": "^4.3.1"
-  },
-  "dependencies": {
-    "@t3-oss/env-nextjs": "^0.9.2"
   }
 }
