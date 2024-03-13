@@ -47,8 +47,14 @@ export const updateProductAction = async (
     throw new AuthorizationError("Not authorized");
   }
 
-  if (membership.role === "viewer" || membership.role === "developer") {
-    throw new AuthorizationError("You are not allowed to update products.");
+  if (membership.role === "viewer") {
+    throw new AuthorizationError("Not authorized");
+  }
+
+  if (membership.role === "developer") {
+    if (!!data.name || !!data.brandColor || !!data.teamId || !!data.environments) {
+      throw new AuthorizationError("Not authorized");
+    }
   }
 
   const updatedProduct = await updateProduct(productId, data);
