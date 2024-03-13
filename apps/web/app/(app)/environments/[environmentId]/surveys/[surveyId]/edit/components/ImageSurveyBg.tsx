@@ -1,10 +1,10 @@
 import FileInput from "@formbricks/ui/FileInput";
 
-type ImageSurveyBgProps = {
+interface ImageSurveyBgProps {
   environmentId: string;
   handleBgChange: (url: string, bgType: string) => void;
   background: string;
-};
+}
 
 export const ImageSurveyBg = ({ environmentId, handleBgChange, background }: ImageSurveyBgProps) => {
   return (

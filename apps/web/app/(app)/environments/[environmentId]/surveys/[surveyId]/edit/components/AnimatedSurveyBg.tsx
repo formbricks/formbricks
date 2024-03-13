@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-type AnimatedSurveyBgProps = {
+interface AnimatedSurveyBgProps {
   handleBgChange: (bg: string, bgType: string) => void;
   background: string;
-};
+}
 
 export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
   const [animation, setAnimation] = useState(background || "/animated-bgs/4K/1_4k.mp4");

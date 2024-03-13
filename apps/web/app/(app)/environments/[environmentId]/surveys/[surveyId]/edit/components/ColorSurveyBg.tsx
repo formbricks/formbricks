@@ -2,11 +2,11 @@ import { useState } from "react";
 
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 
-type ColorSurveyBgProps = {
+interface ColorSurveyBgProps {
   handleBgChange: (bg: string, bgType: string) => void;
   colours: string[];
   background: string;
-};
+}
 
 export const ColorSurveyBg = ({ handleBgChange, colours, background }: ColorSurveyBgProps) => {
   const [color, setColor] = useState(background || "#ffff");
