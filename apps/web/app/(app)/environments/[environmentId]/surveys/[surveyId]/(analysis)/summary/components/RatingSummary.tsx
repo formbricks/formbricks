@@ -1,7 +1,6 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
-import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
+import { CircleSlash2, InboxIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
 
 import { TSurveySummaryRating } from "@formbricks/types/responses";
@@ -33,7 +32,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
             {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxStackIcon className="mr-2 h-4 w-4 " />
+            <InboxIcon className="mr-2 h-4 w-4 " />
             {questionSummary.responseCount} responses
           </div>
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">

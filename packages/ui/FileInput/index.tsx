@@ -1,7 +1,6 @@
 "use client";
 
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
+import { ArrowUpFromLineIcon, XIcon } from "lucide-react";
 import { FileIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -189,7 +188,7 @@ const FileInput: React.FC<FileInputProps> = ({
                       <div
                         className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                         onClick={() => handleRemove(idx)}>
-                        <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                        <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                       </div>
                     ) : (
                       <Loader />
@@ -205,7 +204,7 @@ const FileInput: React.FC<FileInputProps> = ({
                       <div
                         className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                         onClick={() => handleRemove(idx)}>
-                        <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                        <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                       </div>
                     ) : (
                       <Loader />
@@ -244,7 +243,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   <div
                     className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                     onClick={() => handleRemove(0)}>
-                    <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                    <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                   </div>
                 ) : (
                   <Loader />
@@ -260,7 +259,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   <div
                     className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                     onClick={() => handleRemove(0)}>
-                    <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                    <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                   </div>
                 ) : (
                   <Loader />
@@ -318,7 +317,7 @@ const Uploader = ({
       onDragOver={(e) => handleDragOver(e)}
       onDrop={(e) => handleDrop(e)}>
       <div className="flex flex-col items-center justify-center pb-6 pt-5">
-        <ArrowUpTrayIcon className="h-6 text-slate-500" />
+        <ArrowUpFromLineIcon className="h-6 text-slate-500" />
         <p className={cn("mt-2 text-center text-sm text-slate-500", uploadMore && "text-xs")}>
           <span className="font-semibold">Click or drag to upload files.</span>
         </p>
