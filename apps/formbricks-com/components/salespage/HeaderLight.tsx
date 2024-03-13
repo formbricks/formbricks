@@ -1,5 +1,5 @@
 import { Popover, Transition } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Menu, X } from "lucide-react";
 import { usePlausible } from "next-plausible";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -48,7 +48,7 @@ export default function HeaderLight() {
       <Popover className="block lg:hidden">
         <Popover.Button className="inline-flex items-center justify-center rounded-md bg-slate-100 p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 lg:hidden dark:bg-slate-700 dark:text-slate-200">
           <span className="sr-only">Open menu</span>
-          <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+          <Menu className="h-6 w-6" aria-hidden="true" />
         </Popover.Button>
         <Transition
           as={Fragment}
@@ -70,7 +70,7 @@ export default function HeaderLight() {
                   <div className="-mr-2">
                     <Popover.Button className="inline-flex items-center justify-center rounded-md bg-white p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500 dark:bg-slate-700 dark:text-slate-200">
                       <span className="sr-only">Close menu</span>
-                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                      <X className="h-6 w-6" aria-hidden="true" />
                     </Popover.Button>
                   </div>
                 </div>
