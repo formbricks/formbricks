@@ -75,8 +75,8 @@ export const QuestionFormInput = ({
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
   const questionId = question?.id;
   const isChoice = id.includes("choice");
-  const isThankYouCard = questionId === "end";
-  const isWelcomeCard = questionId === "start";
+  const isThankYouCard = questionIdx === localSurvey.questions.length;
+  const isWelcomeCard = questionIdx === -1;
   const choiceIdx = getChoiceIndex(id, isChoice);
 
   const enabledLanguages = useMemo(

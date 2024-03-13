@@ -231,6 +231,7 @@ export default function QuestionsView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey.welcomeCard, localSurvey.thankYouCard]);
 
+  //useEffect to validate survey when changes are made to languages
   useEffect(() => {
     if (!invalidQuestions) return;
     let updatedInvalidQuestions: string[] = invalidQuestions;
@@ -244,7 +245,7 @@ export default function QuestionsView({
     });
 
     // Check welcome card
-    if (!isCardValid(localSurvey.welcomeCard, "start", surveyLanguages)) {
+    if (localSurvey.welcomeCard.enabled && !isCardValid(localSurvey.welcomeCard, "start", surveyLanguages)) {
       if (!updatedInvalidQuestions.includes("start")) {
         updatedInvalidQuestions.push("start");
       }
@@ -253,7 +254,7 @@ export default function QuestionsView({
     }
 
     // Check thank you card
-    if (!isCardValid(localSurvey.thankYouCard, "end", surveyLanguages)) {
+    if (localSurvey.thankYouCard.enabled && !isCardValid(localSurvey.thankYouCard, "end", surveyLanguages)) {
       if (!updatedInvalidQuestions.includes("end")) {
         updatedInvalidQuestions.push("end");
       }
@@ -281,6 +282,7 @@ export default function QuestionsView({
   return (
     <div className="mt-16 px-5 py-4">
       <div className="mb-5 flex flex-col gap-5">
+        {console.log({ invalidQuestions })}
         <EditWelcomeCard
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}

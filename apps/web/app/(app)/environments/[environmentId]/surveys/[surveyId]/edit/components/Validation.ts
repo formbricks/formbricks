@@ -17,7 +17,8 @@ const isLabelValidForAllLanguages = (label: TI18nString, surveyLanguages: TSurve
   const filteredLanguages = surveyLanguages.filter((surveyLanguages) => {
     return surveyLanguages.enabled;
   });
-  const languages = extractLanguageCodes(filteredLanguages);
+  const languageCodes = extractLanguageCodes(filteredLanguages);
+  const languages = languageCodes.length === 0 ? ["default"] : languageCodes;
   return languages.every((language) => label && label[language] && label[language].trim() !== "");
 };
 

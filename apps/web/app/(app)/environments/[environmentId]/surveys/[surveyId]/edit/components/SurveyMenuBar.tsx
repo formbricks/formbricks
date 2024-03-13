@@ -144,26 +144,6 @@ export default function SurveyMenuBar({
       return;
     }
 
-    const { thankYouCard } = localSurvey;
-    if (thankYouCard.enabled) {
-      const { buttonLabel, buttonLink } = thankYouCard;
-
-      if (buttonLabel && !buttonLink) {
-        toast.error("Button Link missing on Thank you card.");
-        return;
-      }
-
-      if (!buttonLabel && buttonLink) {
-        toast.error("Button Label missing on Thank you card.");
-        return;
-      }
-
-      if (buttonLink && !isValidUrl(buttonLink)) {
-        toast.error("Invalid URL on Thank You card.");
-        return;
-      }
-    }
-
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
       const isValid = validateQuestion(question, survey.languages);

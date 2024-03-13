@@ -10,7 +10,7 @@ import {
   CreditCardIcon,
   FileCheckIcon,
   HeartIcon,
-  LanguageIcon,
+  LanguagesIcon,
   LinkIcon,
   LogOutIcon,
   MailIcon,
@@ -170,7 +170,7 @@ export default function Navigation({
           hidden: isViewer,
         },
         {
-          icon: LanguageIcon,
+          icon: LanguagesIcon,
           label: "Survey Languages",
           href: `/environments/${environment.id}/settings/language`,
           hidden: !isMultiLanguageAllowed,
