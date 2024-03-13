@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon } from "lucide-react";
 import React from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -80,21 +80,39 @@ const FormStylingSettings = ({
 
   const suggestColors = () => {
     // mix the brand color with different weights of white and set the result as the other colors
-    setQuestionColor(mixColor(brandColor, "#000000", 0.2));
-    setInputColor(mixColor(brandColor, "#ffffff", 0.8));
+    setQuestionColor(mixColor(brandColor, "#000000", 0.35));
+    setInputColor(mixColor(brandColor, "#ffffff", 0.9));
     setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
 
-    // card background:
+    // card background and border:
     setLocalSurvey((prev) => ({
       ...prev,
       styling: {
         ...prev.styling,
         cardBackgroundColor: {
           ...(prev.styling?.cardBackgroundColor ?? {}),
-          light: mixColor(brandColor, "#ffffff", 0.9),
+          light: mixColor(brandColor, "#ffffff", 0.95),
+        },
+        cardBorderColor: {
+          ...(prev.styling?.cardBorderColor ?? {}),
+          light: mixColor(brandColor, "#ffffff", 0.8),
         },
       },
     }));
+
+    if (!localSurvey.styling?.background?.bg) {
+      setLocalSurvey((prev) => ({
+        ...prev,
+        styling: {
+          ...prev.styling,
+          background: {
+            ...prev.styling?.background,
+            bg: prev.styling?.background?.bg ?? mixColor(brandColor, "#ffffff", 0.855),
+            bgType: prev.styling?.background?.bgType ?? "color",
+          },
+        },
+      }));
+    }
 
     if (localSurvey.styling?.highlightBorderColor) {
       setLocalSurvey((prev) => ({
@@ -103,7 +121,7 @@ const FormStylingSettings = ({
           ...prev.styling,
           highlightBorderColor: {
             ...(prev.styling?.highlightBorderColor ?? {}),
-            light: mixColor(brandColor, "#ffffff", 0.7),
+            light: mixColor(brandColor, "#ffffff", 0.25),
           },
         },
       }));
@@ -127,7 +145,10 @@ const FormStylingSettings = ({
         )}>
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400" />
+            <CheckIcon
+              strokeWidth={3}
+              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+            />
           </div>
 
           <div>

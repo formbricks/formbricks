@@ -1,8 +1,8 @@
 "use client";
 
 import Placement from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Placement";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon } from "lucide-react";
 import React from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -184,7 +184,10 @@ const CardStylingSettings = ({
         )}>
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400" />
+            <CheckIcon
+              strokeWidth={3}
+              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+            />
           </div>
 
           <div>
@@ -199,14 +202,14 @@ const CardStylingSettings = ({
 
         <div className="flex flex-col gap-6 p-6 pt-2">
           <ColorSelectorWithLabel
-            label="Card Background color"
+            label="Card background color"
             color={cardBgColor}
             setColor={setCardBgColor}
             description="Change the highlight color used for buttons, selects, etc."
           />
 
           <ColorSelectorWithLabel
-            label="Card Border color"
+            label="Card border color"
             color={cardBorderColor}
             setColor={setCardBorderColor}
             description="Change the border color of the card."

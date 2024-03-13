@@ -23,6 +23,17 @@ type UnifiedStylingProps = {
   product: TProduct;
 };
 
+interface SurveyStyling {
+  background?: {
+    bg?: string;
+    bgType?: string;
+  };
+}
+
+interface Survey {
+  styling: SurveyStyling;
+}
+
 export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
@@ -190,6 +201,8 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
+  const [styledPreviewSurvey, setStyledPreviewSurvey] = useState<Survey>(PREVIEW_SURVEY);
+
   useEffect(() => {
     setActiveQuestionId(PREVIEW_SURVEY.questions[0].id);
   }, []);
@@ -300,13 +313,27 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
   const suggestColors = useCallback(() => {
     // mix the brand color with different weights of white and set the result as the other colors
-    setQuestionColor(mixColor(brandColor, "#000000", 0.2));
-    setInputColor(mixColor(brandColor, "#ffffff", 0.8));
+    setQuestionColor(mixColor(brandColor, "#000000", 0.35));
+    setInputColor(mixColor(brandColor, "#ffffff", 0.9));
     setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
-    setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.9));
+    setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.95));
+    setCardBorderColor(mixColor(brandColor, "#ffffff", 0.8));
     if (isHighlightBorderAllowed) {
-      setHighlightBorderColor(mixColor(brandColor, "#ffffff", 0.7));
+      setHighlightBorderColor(mixColor(brandColor, "#ffffff", 0.25));
     }
+
+    // Update the background of the PREVIEW SURVEY
+    setStyledPreviewSurvey((currentSurvey) => ({
+      ...currentSurvey,
+      styling: {
+        ...currentSurvey.styling,
+        background: {
+          ...currentSurvey.styling.background,
+          bg: mixColor(brandColor, "#ffffff", 0.855),
+          bgType: "color",
+        },
+      },
+    }));
   }, [brandColor, isHighlightBorderAllowed]);
 
   return (
@@ -451,14 +478,13 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-end gap-2">
+        <div className="mt-8 flex items-center gap-2">
+          <Button variant="darkCTA" onClick={onSave}>
+            Save changes
+          </Button>
           <Button variant="minimal" className="flex items-center gap-2" onClick={onReset}>
             Reset
             <RotateCcwIcon className="h-4 w-4" />
-          </Button>
-
-          <Button variant="darkCTA" onClick={onSave}>
-            Save changes
           </Button>
         </div>
       </div>
@@ -470,7 +496,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
           <UnifiedStylingPreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
-            survey={PREVIEW_SURVEY as TSurvey}
+            survey={styledPreviewSurvey as TSurvey}
             product={localProduct}
           />
         </div>

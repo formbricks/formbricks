@@ -6,7 +6,7 @@ export const COLOR_DEFAULTS = {
   inputColor: "#ffffff",
   inputBorderColor: "#cbd5e1",
   cardBackgroundColor: "#ffffff",
-  cardBorderColor: "#f8fafc",
+  cardBorderColor: "#e2e8f0",
   highlightBorderColor: "#64748b",
 } as const;
 
@@ -86,7 +86,7 @@ export const PREVIEW_SURVEY = {
   verifyEmail: null,
   redirectUrl: null,
   productOverwrites: null,
-  styling: null,
+  styling: {},
   surveyClosedMessage: null,
   singleUse: {
     enabled: false,

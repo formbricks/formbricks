@@ -2,9 +2,8 @@
 
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
-import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
-import { ArrowsPointingInIcon, ArrowsPointingOutIcon } from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
+import { Repeat2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
@@ -148,25 +147,6 @@ export const UnifiedStylingPreviewSurvey = ({
               <p>{previewType === "web" ? "Your web app" : "Preview"}</p>
 
               <div className="flex items-center">
-                {isFullScreenPreview ? (
-                  <ArrowsPointingInIcon
-                    className="mr-2 h-4 w-4 cursor-pointer"
-                    onClick={() => {
-                      setshrink(true);
-                      setPreviewPosition("relative");
-                      setTimeout(() => setIsFullScreenPreview(false), 300);
-                    }}
-                  />
-                ) : (
-                  <ArrowsPointingOutIcon
-                    className="mr-2 h-4 w-4 cursor-pointer"
-                    onClick={() => {
-                      setshrink(false);
-                      setIsFullScreenPreview(true);
-                      setTimeout(() => setPreviewPosition("fixed"), 300);
-                    }}
-                  />
-                )}
                 <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
               </div>
             </div>
@@ -235,7 +215,7 @@ const ResetProgressButton = ({ resetQuestionProgress }: { resetQuestionProgress:
       className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
       onClick={resetQuestionProgress}>
       Restart
-      <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
+      <Repeat2 className="ml-2 h-4 w-4" />
     </Button>
   );
 };
