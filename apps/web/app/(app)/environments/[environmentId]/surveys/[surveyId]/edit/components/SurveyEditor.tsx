@@ -3,7 +3,6 @@
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import StylingView from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
 import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
@@ -48,7 +47,6 @@ export default function SurveyEditor({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
 }: SurveyEditorProps): JSX.Element {
-  const router = useRouter();
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();

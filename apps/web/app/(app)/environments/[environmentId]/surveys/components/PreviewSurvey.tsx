@@ -8,7 +8,6 @@ import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-reac
 import { RefreshCcwIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
