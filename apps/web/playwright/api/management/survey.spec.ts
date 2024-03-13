@@ -25,7 +25,7 @@ test.describe("API Tests", () => {
     await page.getByRole("button", { name: "Add Production API Key" }).click();
     await page.getByPlaceholder("e.g. GitHub, PostHog, Slack").fill("E2E Test API Key");
     await page.getByRole("button", { name: "Add API Key" }).click();
-    await page.locator("main").filter({ hasText: "Account" }).getByRole("img").click();
+    await page.locator("main").filter({ hasText: "Account" }).getByRole("img").nth(1).click();
 
     apiKey = await page.evaluate("navigator.clipboard.readText()");
   });
