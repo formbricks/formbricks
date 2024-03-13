@@ -1,6 +1,6 @@
 "use client";
 
-import { CodeBracketIcon, DocumentDuplicateIcon, EnvelopeIcon } from "@heroicons/react/24/solid";
+import { Code2Icon, CopyIcon, MailIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -69,7 +69,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
               navigator.clipboard.writeText(emailHtml);
             }}
             className="shrink-0"
-            EndIcon={DocumentDuplicateIcon}>
+            EndIcon={CopyIcon}>
             Copy code
           </Button>
         ) : (
@@ -79,7 +79,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
               title="send preview email"
               aria-label="send preview email"
               onClick={() => sendPreviewEmail(emailHtmlPreview)}
-              EndIcon={EnvelopeIcon}
+              EndIcon={MailIcon}
               className="shrink-0">
               Send Preview
             </Button>
@@ -92,7 +92,7 @@ export default function EmailTab({ surveyId, email }: EmailTabProps) {
           onClick={() => {
             setShowEmbed(!showEmbed);
           }}
-          EndIcon={CodeBracketIcon}
+          EndIcon={Code2Icon}
           className="shrink-0">
           {showEmbed ? "Hide Embed Code" : "View Embed Code"}
         </Button>

@@ -1,12 +1,14 @@
 "use client";
 
 import jsPackageJson from "@/../../packages/js/package.json";
+import { finishOnboardingAction } from "@/app/(app)/onboarding/actions";
 import { ConnectWithFormbricks } from "@/app/(app)/onboarding/components/inapp/ConnectWithFormbricks";
 import { InviteTeamMate } from "@/app/(app)/onboarding/components/inapp/InviteTeamMate";
 import { Objective } from "@/app/(app)/onboarding/components/inapp/SurveyObjective";
 import { Role } from "@/app/(app)/onboarding/components/inapp/SurveyRole";
 import { CreateFirstSurvey } from "@/app/(app)/onboarding/components/link/CreateFirstSurvey";
 import { Session } from "next-auth";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -33,6 +35,7 @@ export function Onboarding({
   team,
   webAppUrl,
 }: OnboardingProps) {
+  const router = useRouter();
   const [selectedPathway, setSelectedPathway] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(16);
   const [formbricksResponseId, setFormbricksResponseId] = useState<string | undefined>();
@@ -40,6 +43,23 @@ export function Onboarding({
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeVisible, setIframeVisible] = useState(false);
   const [fade, setFade] = useState(false);
+
+  const handleSurveyCompletion = () => {
+    setFade(false);
+
+    setTimeout(() => {
+      setIframeVisible(false); // Hide the iframe after fade-out effect is complete
+      setCurrentStep(5); // Assuming you want to move to the next step after survey completion
+    }, 1000); // Adjust timeout duration based on your fade-out CSS transition
+  };
+
+  const handleMessageEvent = (event: MessageEvent) => {
+    if (event.origin !== webAppUrl) return;
+
+    if (event.data === "formbricksSurveyCompleted") {
+      handleSurveyCompletion();
+    }
+  };
 
   useEffect(() => {
     if (currentStep === 2 && selectedPathway === "link") {
@@ -52,23 +72,13 @@ export function Onboarding({
   useEffect(() => {
     if (iframeVisible) {
       setFade(true);
-
-      const handleSurveyCompletion = () => {
-        setFade(false);
-
-        setTimeout(() => {
-          setIframeVisible(false); // Hide the iframe after fade-out effect is complete
-          setCurrentStep(5); // Assuming you want to move to the next step after survey completion
-        }, 1000); // Adjust timeout duration based on your fade-out CSS transition
-      };
-
-      window.addEventListener("formbricksSurveyCompleted", handleSurveyCompletion);
-
+      window.addEventListener("message", handleMessageEvent, false);
       // Cleanup function to remove the event listener
       return () => {
-        window.removeEventListener("formbricksSurveyCompleted", handleSurveyCompletion);
+        window.removeEventListener("message", handleMessageEvent, false);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
 
   useEffect(() => {
@@ -141,7 +151,18 @@ export function Onboarding({
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center bg-slate-50">
+    <div className="group flex h-full w-full flex-col items-center bg-slate-50">
+      <div className="hidden">
+        <button
+          id="FB__INTERNAL__SKIP_ONBOARDING"
+          onClick={async () => {
+            await finishOnboardingAction();
+            router.push(`/environments/${environment.id}/surveys`);
+          }}>
+          Skip onboarding
+        </button>
+      </div>
+
       <OnboardingHeader progress={progress} />
       <div className="mt-20 flex w-full justify-center bg-slate-50">
         {renderOnboardingStep()}

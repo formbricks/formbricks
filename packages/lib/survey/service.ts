@@ -23,7 +23,7 @@ import { productCache } from "../product/cache";
 import { getProductByEnvironmentId } from "../product/service";
 import { responseCache } from "../response/cache";
 import { segmentCache } from "../segment/cache";
-import { evaluateSegment, getSegment, updateSegment } from "../segment/service";
+import { createSegment, evaluateSegment, getSegment, updateSegment } from "../segment/service";
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
@@ -100,7 +100,10 @@ const getActionClassIdFromName = (actionClasses: TActionClass[], actionClassName
   return actionClasses.find((actionClass) => actionClass.name === actionClassName)!.id;
 };
 
-const revalidateSurveyByActionClassId = (actionClasses: TActionClass[], actionClassNames: string[]): void => {
+const revalidateSurveyByActionClassName = (
+  actionClasses: TActionClass[],
+  actionClassNames: string[]
+): void => {
   for (const actionClassName of actionClassNames) {
     const actionClassId: string = getActionClassIdFromName(actionClasses, actionClassName);
     surveyCache.revalidate({
@@ -128,7 +131,7 @@ const processTriggerUpdates = (
   // find removed triggers
   for (const trigger of currentSurveyTriggers) {
     if (!triggers.includes(trigger)) {
-      removedTriggers.push(getActionClassIdFromName(actionClasses, trigger));
+      removedTriggers.push(trigger);
     }
   }
 
@@ -143,10 +146,12 @@ const processTriggerUpdates = (
 
   if (removedTriggers.length > 0) {
     triggersUpdate.deleteMany = {
-      actionClassId: { in: removedTriggers },
+      actionClassId: {
+        in: removedTriggers.map((trigger) => getActionClassIdFromName(actionClasses, trigger)),
+      },
     };
   }
-  revalidateSurveyByActionClassId(actionClasses, [...newTriggers, ...removedTriggers]);
+  revalidateSurveyByActionClassName(actionClasses, [...newTriggers, ...removedTriggers]);
   return triggersUpdate;
 };
 
@@ -379,6 +384,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     surveyCache.revalidate({
       id: modifiedSurvey.id,
       environmentId: modifiedSurvey.environmentId,
+      segmentId: modifiedSurvey.segment?.id,
     });
 
     return modifiedSurvey;
@@ -438,7 +444,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 
   if (surveyBody.triggers) {
     const actionClasses = await getActionClasses(environmentId);
-    revalidateSurveyByActionClassId(actionClasses, surveyBody.triggers);
+    revalidateSurveyByActionClassName(actionClasses, surveyBody.triggers);
   }
 
   const createdBy = surveyBody.createdBy;
@@ -544,24 +550,67 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       verifyEmail: existingSurvey.verifyEmail
         ? JSON.parse(JSON.stringify(existingSurvey.verifyEmail))
         : Prisma.JsonNull,
-      segment: existingSurvey.segment ? { connect: { id: existingSurvey.segment.id } } : undefined,
+      // we'll update the segment later
+      segment: undefined,
     },
   });
+
+  // if the existing survey has an inline segment, we copy the filters and create a new inline segment and connect it to the new survey
+  if (existingSurvey.segment) {
+    if (existingSurvey.segment.isPrivate) {
+      const newInlineSegment = await createSegment({
+        environmentId,
+        title: `${newSurvey.id}`,
+        isPrivate: true,
+        surveyId: newSurvey.id,
+        filters: existingSurvey.segment.filters,
+      });
+
+      await prisma.survey.update({
+        where: {
+          id: newSurvey.id,
+        },
+        data: {
+          segment: {
+            connect: {
+              id: newInlineSegment.id,
+            },
+          },
+        },
+      });
+
+      segmentCache.revalidate({
+        id: newInlineSegment.id,
+        environmentId: newSurvey.environmentId,
+      });
+    } else {
+      await prisma.survey.update({
+        where: {
+          id: newSurvey.id,
+        },
+        data: {
+          segment: {
+            connect: {
+              id: existingSurvey.segment.id,
+            },
+          },
+        },
+      });
+
+      segmentCache.revalidate({
+        id: existingSurvey.segment.id,
+        environmentId: newSurvey.environmentId,
+      });
+    }
+  }
 
   surveyCache.revalidate({
     id: newSurvey.id,
     environmentId: newSurvey.environmentId,
   });
 
-  if (newSurvey.segmentId) {
-    segmentCache.revalidate({
-      id: newSurvey.segmentId,
-      environmentId: newSurvey.environmentId,
-    });
-  }
-
   // Revalidate surveys by actionClassId
-  revalidateSurveyByActionClassId(actionClasses, existingSurvey.triggers);
+  revalidateSurveyByActionClassName(actionClasses, existingSurvey.triggers);
 
   return newSurvey;
 };
@@ -726,11 +775,14 @@ export const getSyncSurveys = async (
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const getSurveyByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
+export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
   try {
     const survey = await prisma.survey.findFirst({
       where: {
         resultShareKey,
+      },
+      select: {
+        id: true,
       },
     });
 

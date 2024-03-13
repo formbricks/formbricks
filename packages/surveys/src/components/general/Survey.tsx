@@ -37,8 +37,10 @@ export function Survey({
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
   const [showError, setShowError] = useState(false);
-  // flag state to store whether response processing has been completed or not
-  const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(false);
+  // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
+  const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
+    getSetIsResponseSendingFinished ? false : true
+  );
 
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
@@ -54,7 +56,7 @@ export function Survey({
     } else {
       return survey.questions.find((q) => q.id === questionId);
     }
-  }, [questionId, survey]);
+  }, [questionId, survey, history]);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !survey.styling?.hideProgressBar;
 
@@ -150,9 +152,8 @@ export function Survey({
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
-      // Dispatching a custom event when the survey is completed
-      const event = new CustomEvent("formbricksSurveyCompleted", { detail: { surveyId: survey.id } });
-      window.top?.dispatchEvent(event);
+      // Post a message to the parent window indicating that the survey is completed.
+      window.parent.postMessage("formbricksSurveyCompleted", "*");
       onFinished();
     }
     setQuestionId(nextQuestionId);

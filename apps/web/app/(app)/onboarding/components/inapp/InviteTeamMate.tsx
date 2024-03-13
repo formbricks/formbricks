@@ -84,7 +84,7 @@ export function InviteTeamMate({ team, environmentId, setCurrentStep }: InviteTe
   };
 
   return (
-    <div className="group mb-8 w-full max-w-xl space-y-8">
+    <div className="mb-8 w-full max-w-xl space-y-8">
       <OnboardingTitle
         title="Invite your team to help out"
         subtitle="Ask your tech-savvy co-worker to finish the setup:"
@@ -105,17 +105,18 @@ export function InviteTeamMate({ team, environmentId, setCurrentStep }: InviteTe
           />
 
           <div className="flex w-full justify-between">
-            <Button variant="minimal" onClick={() => goBackToConnectPage()}>
+            <Button id="onboarding-inapp-invite-back" variant="minimal" onClick={() => goBackToConnectPage()}>
               Back
             </Button>
-            <Button variant="darkCTA" onClick={handleInvite}>
+            <Button id="onboarding-inapp-invite-send-invite" variant="darkCTA" onClick={handleInvite}>
               Invite
             </Button>
           </div>
         </div>
         <div className="mt-auto flex justify-center">
           <Button
-            className="opacity-0 transition-all delay-[3000ms] duration-500 ease-in-out group-hover:opacity-100"
+            id="onboarding-inapp-invite-have-a-look-first"
+            className="font-normal text-slate-400"
             variant="minimal"
             onClick={goToProduct}
             loading={isLoading}>

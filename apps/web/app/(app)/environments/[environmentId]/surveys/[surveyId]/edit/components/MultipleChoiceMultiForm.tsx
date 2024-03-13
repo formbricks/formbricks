@@ -1,7 +1,7 @@
 "use client";
 
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";

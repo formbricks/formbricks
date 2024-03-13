@@ -7,7 +7,7 @@
       "maxDuration": 10,
       "memory": 300
     },
-    "**/*.ts": {
+    "app/**/*.ts": {
       "maxDuration": 10,
       "memory": 512
     }

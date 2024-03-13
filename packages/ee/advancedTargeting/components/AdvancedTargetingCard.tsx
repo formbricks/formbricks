@@ -1,8 +1,7 @@
 "use client";
 
-import { CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
@@ -176,7 +175,10 @@ export function AdvancedTargetingCard({
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400 " />
+            <CheckIcon
+              strokeWidth={3}
+              className="h-7 w-7 rounded-full border bg-green-400 p-1.5 text-white"
+            />
           </div>
           <div>
             <p className="font-semibold text-slate-800">Target Audience</p>

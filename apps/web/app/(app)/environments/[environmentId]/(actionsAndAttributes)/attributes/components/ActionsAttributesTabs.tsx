@@ -1,5 +1,5 @@
 import SecondNavbar from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/SecondNavbar";
-import { CursorArrowRaysIcon, TagIcon } from "@heroicons/react/24/solid";
+import { MousePointerClickIcon, TagIcon } from "lucide-react";
 
 interface ActionsAttributesTabsProps {
   activeId: string;
@@ -11,13 +11,13 @@ export default function ActionsAttributesTabs({ activeId, environmentId }: Actio
     {
       id: "actions",
       label: "Actions",
-      icon: <CursorArrowRaysIcon />,
+      icon: <MousePointerClickIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/actions`,
     },
     {
       id: "attributes",
       label: "Attributes",
-      icon: <TagIcon />,
+      icon: <TagIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/attributes`,
     },
   ];

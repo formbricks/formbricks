@@ -40,6 +40,8 @@ test.describe("Invite, accept and remove team member", async () => {
 
   test("Copy invite Link", async ({ page }) => {
     await login(page, email, password);
+    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await expect(page.getByText("My Product")).toBeVisible();
 
     const dropdownTrigger = page.locator("#userDropdownTrigger");
     await expect(dropdownTrigger).toBeVisible();
@@ -58,7 +60,7 @@ test.describe("Invite, accept and remove team member", async () => {
     const pendingSpan = lastMemberInfo.locator("span").filter({ hasText: "Pending" });
     await expect(pendingSpan).toBeVisible();
 
-    const shareInviteButton = page.locator("#shareInviteButton");
+    const shareInviteButton = page.locator(".shareInviteButton").last();
     await expect(shareInviteButton).toBeVisible();
 
     await shareInviteButton.click();
