@@ -23,14 +23,16 @@ test.describe("JS Package Test", async () => {
       .click();
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
-    await page.getByText("Survey Type").click();
+    await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
+    await page.locator("#howToSendCardTrigger").click();
 
-    await page.locator("label").filter({ hasText: "In-App SurveyEmbed a survey" }).click();
-    await page
-      .locator("div")
-      .filter({ hasText: /^Survey TriggerChoose the actions which trigger the survey\.$/ })
-      .nth(1)
-      .click();
+    await expect(page.locator("#howToSendCardOption-web")).toBeVisible();
+    await page.locator("#howToSendCardOption-web").click();
+    await page.locator("#howToSendCardOption-web").click();
+
+    await expect(page.getByText("Survey Trigger")).toBeVisible();
+    await page.getByText("Survey Trigger").click();
+
     await page.getByRole("combobox").click();
     await page.getByLabel("New Session").click();
     await page.getByRole("button", { name: "Publish" }).click();
@@ -66,21 +68,6 @@ test.describe("JS Package Test", async () => {
 
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1500);
-  });
-
-  test("Admin checks Display", async ({ page }) => {
-    await login(page, email, password);
-
-    await page.getByRole("link", { name: "In-app Open options Product" }).click();
-    (await page.waitForSelector("text=Responses")).isVisible();
-
-    // Survey should have 1 Display
-    await page.waitForTimeout(1000);
-    await expect(page.getByText("Displays1")).toBeVisible();
-
-    // Survey should have 0 Responses
-    await page.waitForTimeout(1000);
-    await expect(page.getByRole("button", { name: "Responses0% -" })).toBeVisible();
   });
 
   test("JS submits Response to Survey", async ({ page }) => {
@@ -121,7 +108,7 @@ test.describe("JS Package Test", async () => {
     await page.waitForTimeout(1500);
   });
 
-  test("Admin validates Response", async ({ page }) => {
+  test("Admin validates Displays & Response", async ({ page }) => {
     await login(page, email, password);
 
     await page.getByRole("link", { name: "In-app Open options Product" }).click();

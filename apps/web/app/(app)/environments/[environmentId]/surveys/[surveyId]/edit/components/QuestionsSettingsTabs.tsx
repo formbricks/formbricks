@@ -1,4 +1,4 @@
-import { Cog8ToothIcon, QueueListIcon } from "@heroicons/react/24/solid";
+import { Rows3Icon, SettingsIcon } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 
@@ -12,12 +12,12 @@ const tabs: Tab[] = [
   {
     id: "questions",
     label: "Questions",
-    icon: <QueueListIcon />,
+    icon: <Rows3Icon className="h-5 w-5" />,
   },
   {
     id: "settings",
     label: "Settings",
-    icon: <Cog8ToothIcon />,
+    icon: <SettingsIcon className="h-5 w-5" />,
   },
 ];
 

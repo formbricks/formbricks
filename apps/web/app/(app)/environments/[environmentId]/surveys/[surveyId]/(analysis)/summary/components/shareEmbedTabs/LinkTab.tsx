@@ -1,5 +1,3 @@
-"use client";
-
 import UrlShortenerForm from "@/app/(app)/environments/[environmentId]/components/UrlShortenerForm";
 import Link from "next/link";
 

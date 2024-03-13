@@ -1,7 +1,7 @@
 "use client";
 
 import { sendLinkSurveyEmailAction } from "@/app/s/[surveyId]/actions";
-import { EnvelopeIcon } from "@heroicons/react/24/solid";
+import { MailIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
@@ -87,7 +87,7 @@ export default function VerifyEmail({
       <StackedCardsContainer>
         {!emailSent && !showPreviewQuestions && (
           <div>
-            <EnvelopeIcon className="mx-auto h-24 w-24 rounded-full bg-slate-300 p-6 text-white" />
+            <MailIcon className="mx-auto h-24 w-24 rounded-full bg-slate-300 p-6 text-white" />
             <p className="mt-8 text-2xl font-bold lg:text-4xl">Verify your email to respond.</p>
             <p className="mt-4 text-sm text-slate-500 lg:text-base">
               To respond to this survey, please verify your email.

@@ -1,9 +1,9 @@
 "use client";
 
 import { getQuestionDefaults, questionTypes, universalQuestionPresets } from "@/app/lib/questions";
-import { PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";

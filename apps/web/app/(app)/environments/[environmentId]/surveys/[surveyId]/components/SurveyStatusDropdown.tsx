@@ -1,7 +1,7 @@
 "use client";
 
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { CheckCircleIcon, PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircle2Icon, PauseCircleIcon, PlayCircleIcon } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -82,7 +82,7 @@ export default function SurveyStatusDropdown({
                   Paused
                 </SelectItem>
                 <SelectItem className="group  font-normal hover:text-slate-900" value="completed">
-                  <CheckCircleIcon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
+                  <CheckCircle2Icon className="-mt-1 mr-1 inline h-5 w-5 text-slate-500 group-hover:text-slate-800" />
                   Completed
                 </SelectItem>
               </SelectContent>

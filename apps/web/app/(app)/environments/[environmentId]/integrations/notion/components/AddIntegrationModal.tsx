@@ -6,8 +6,8 @@ import {
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import { questionTypes } from "@/app/lib/questions";
 import NotionLogo from "@/images/notion.png";
-import { ArrowPathIcon, ChevronDownIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDownIcon, PlusIcon, RefreshCcwIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -402,7 +402,7 @@ export default function AddIntegrationModal({
               mapping.length > 1 ? "visible" : "invisible"
             }`}
             onClick={deleteRow}>
-            <XMarkIcon className="h-5 w-5 text-red-500" />
+            <XIcon className="h-5 w-5 text-red-500" />
           </button>
         </div>
       </div>
@@ -582,7 +582,7 @@ const DropdownSelector = ({
             onClick={() => {
               refetch();
             }}>
-            <ArrowPathIcon className="h-5 w-5 font-bold text-slate-500" />
+            <RefreshCcwIcon className="h-5 w-5 font-bold text-slate-500" />
           </button>
         )}
       </div>

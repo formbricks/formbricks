@@ -1,5 +1,5 @@
-import { ArrowUpIcon } from "@heroicons/react/24/solid";
 import throttle from "lodash/throttle";
+import { ArrowUpIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@formbricks/ui/Button";

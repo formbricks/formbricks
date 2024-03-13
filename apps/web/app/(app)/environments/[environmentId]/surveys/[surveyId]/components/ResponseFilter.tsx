@@ -5,9 +5,9 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import QuestionFilterComboBox from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
-import { TrashIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
 import { isEqual } from "lodash";
+import { TrashIcon } from "lucide-react";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 

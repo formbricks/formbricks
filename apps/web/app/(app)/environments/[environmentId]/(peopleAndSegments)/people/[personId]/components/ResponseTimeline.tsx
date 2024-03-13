@@ -1,7 +1,7 @@
 "use client";
 
 import ResponseFeed from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ResponsesFeed";
-import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
+import { ArrowDownUpIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -41,7 +41,7 @@ export default function ResponseTimeline({
             type="button"
             onClick={toggleSortResponses}
             className="hover:text-brand-dark flex items-center px-1 text-slate-800">
-            <ArrowsUpDownIcon className="inline h-4 w-4" />
+            <ArrowDownUpIcon className="inline h-4 w-4" />
           </button>
         </div>
       </div>

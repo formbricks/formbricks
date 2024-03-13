@@ -1,8 +1,8 @@
 "use client";
 
 import { isLabelValidForAllLanguages } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Validation";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 

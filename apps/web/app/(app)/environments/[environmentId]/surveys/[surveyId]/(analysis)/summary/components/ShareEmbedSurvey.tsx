@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon, CodeBracketIcon, EnvelopeIcon, LinkIcon } from "@heroicons/react/24/outline";
-import { BellRing, BlocksIcon, Code2Icon } from "lucide-react";
+import { ArrowLeftIcon, BellRing, BlocksIcon, Code2Icon, LinkIcon, MailIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -31,8 +30,8 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
   const { email } = user;
 
   const tabs = [
-    { id: "email", label: "Embed in an Email", icon: EnvelopeIcon },
-    { id: "webpage", label: "Embed in a Web Page", icon: CodeBracketIcon },
+    { id: "email", label: "Embed in an Email", icon: MailIcon },
+    { id: "webpage", label: "Embed in a Web Page", icon: Code2Icon },
     { id: "link", label: `${isSingleUseLinkSurvey ? "Single Use Links" : "Share the Link"}`, icon: LinkIcon },
   ];
 

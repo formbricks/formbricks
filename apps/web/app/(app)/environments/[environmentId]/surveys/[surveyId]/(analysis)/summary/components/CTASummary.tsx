@@ -1,6 +1,6 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
+import { InboxIcon } from "lucide-react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveySummaryCta } from "@formbricks/types/responses";
@@ -24,7 +24,7 @@ export default function CTASummary({ questionSummary }: CTASummaryProps) {
             {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"}
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxStackIcon className="mr-2 h-4 w-4 " />
+            <InboxIcon className="mr-2 h-4 w-4 " />
             {questionSummary.responseCount} responses
           </div>
           {!questionSummary.question.required && (

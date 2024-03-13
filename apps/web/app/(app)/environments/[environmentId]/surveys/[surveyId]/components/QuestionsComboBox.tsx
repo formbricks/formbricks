@@ -1,18 +1,18 @@
 "use client";
 
+import clsx from "clsx";
 import {
   CheckIcon,
-  CursorArrowRippleIcon,
-  DevicePhoneMobileIcon,
-  HashtagIcon,
-  LanguageIcon,
-  ListBulletIcon,
-  PhotoIcon,
-  QuestionMarkCircleIcon,
-  QueueListIcon,
+  HashIcon,
+  HelpCircleIcon,
+  ImageIcon,
+  LanguagesIcon,
+  ListIcon,
+  MousePointerClickIcon,
+  Rows3Icon,
+  SmartphoneIcon,
   StarIcon,
-} from "@heroicons/react/24/solid";
-import clsx from "clsx";
+} from "lucide-react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 
@@ -54,31 +54,31 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
           case TSurveyQuestionType.Rating:
             return <StarIcon width={18} className="text-white" />;
           case TSurveyQuestionType.CTA:
-            return <CursorArrowRippleIcon width={18} className="text-white" />;
+            return <MousePointerClickIcon width={18} className="text-white" />;
           case TSurveyQuestionType.OpenText:
-            return <QuestionMarkCircleIcon width={18} className="text-white" />;
+            return <HelpCircleIcon width={18} className="text-white" />;
           case TSurveyQuestionType.MultipleChoiceMulti:
-            return <ListBulletIcon width={18} className="text-white" />;
+            return <ListIcon width={18} className="text-white" />;
           case TSurveyQuestionType.MultipleChoiceSingle:
-            return <QueueListIcon width={18} className="text-white" />;
+            return <Rows3Icon width={18} className="text-white" />;
           case TSurveyQuestionType.NPS:
             return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.Consent:
             return <CheckIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.PictureSelection:
-            return <PhotoIcon width={18} className="text-white" />;
+            return <ImageIcon width={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
-        return <HashtagIcon width={18} className="text-white" />;
+        return <HashIcon width={18} className="text-white" />;
       case OptionsType.METADATA:
         switch (label) {
           case "Language":
-            return <LanguageIcon width={18} height={18} className="text-white" />;
+            return <LanguagesIcon width={18} height={18} className="text-white" />;
           case "Device Type":
-            return <DevicePhoneMobileIcon width={18} height={18} className="text-white" />;
+            return <SmartphoneIcon width={18} height={18} className="text-white" />;
         }
       case OptionsType.TAGS:
-        return <HashtagIcon width={18} className="text-white" />;
+        return <HashIcon width={18} className="text-white" />;
     }
   };
 
