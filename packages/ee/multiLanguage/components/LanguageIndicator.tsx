@@ -10,11 +10,13 @@ interface LanguageIndicatorProps {
   selectedLanguageCode: string;
   surveyLanguages: TSurveyLanguage[];
   setSelectedLanguageCode: (languageCode: string) => void;
+  setFirstRender?: (firstRender: boolean) => void;
 }
 export function LanguageIndicator({
   surveyLanguages,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  setFirstRender,
 }: LanguageIndicatorProps) {
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const toggleDropdown = () => setShowLanguageDropdown((prev) => !prev);
@@ -22,6 +24,10 @@ export function LanguageIndicator({
 
   const changeLanguage = (language: TSurveyLanguage) => {
     setSelectedLanguageCode(language.language.code);
+    if (setFirstRender) {
+      //for lexical editor
+      setFirstRender(true);
+    }
     setShowLanguageDropdown(false);
   };
 

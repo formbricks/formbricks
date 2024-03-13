@@ -85,6 +85,7 @@ export const LocalizedEditor = ({
             selectedLanguageCode={selectedLanguageCode}
             surveyLanguages={localSurvey.languages}
             setSelectedLanguageCode={setSelectedLanguageCode}
+            setFirstRender={setFirstRender}
           />
 
           {value && selectedLanguageCode !== "default" && value["default"] && (
