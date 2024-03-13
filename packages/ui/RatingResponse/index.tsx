@@ -1,4 +1,4 @@
-import { StarIcon } from "@heroicons/react/24/solid";
+import { StarIcon } from "lucide-react";
 
 import {
   ConfusedFace,

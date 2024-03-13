@@ -1,4 +1,4 @@
-import { QuestionMarkCircleIcon, TagIcon } from "@heroicons/react/24/solid";
+import { HelpCircleIcon, TagIcon } from "lucide-react";
 
 import { Button } from "@formbricks/ui/Button";
 
@@ -10,7 +10,7 @@ export default function Loading() {
           <Button
             variant="secondary"
             className="pointer-events-none animate-pulse cursor-not-allowed select-none">
-            <QuestionMarkCircleIcon className="mr-2 h-4 w-4" />
+            <HelpCircleIcon className="mr-2 h-4 w-4" />
             Loading Attributes
           </Button>
         </div>

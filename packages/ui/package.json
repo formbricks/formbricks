@@ -19,7 +19,6 @@
     "@formbricks/database": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/surveys": "workspace:*",
-    "@heroicons/react": "^2.1.1",
     "@lexical/code": "^0.13.1",
     "@lexical/link": "^0.13.1",
     "@lexical/list": "^0.13.1",

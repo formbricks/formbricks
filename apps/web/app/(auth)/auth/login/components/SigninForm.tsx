@@ -6,7 +6,7 @@ import { GoogleButton } from "@/app/(auth)/auth/components/GoogleButton";
 import { OpenIdButton } from "@/app/(auth)/auth/components/OpenIdButton";
 import TwoFactor from "@/app/(auth)/auth/login/components/TwoFactor";
 import TwoFactorBackup from "@/app/(auth)/auth/login/components/TwoFactorBackup";
-import { XCircleIcon } from "@heroicons/react/24/solid";
+import { XCircleIcon } from "lucide-react";
 import { signIn } from "next-auth/react";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";

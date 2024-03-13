@@ -1,8 +1,8 @@
 "use client";
 
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { isEqual } from "lodash";
+import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -372,7 +372,7 @@ export default function SurveyMenuBar({
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
-                  <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
+                  <AlertTriangleIcon className=" h-5 w-5 text-amber-400" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"} className="lg:hidden">
                   <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400 ">
@@ -408,7 +408,7 @@ export default function SurveyMenuBar({
                 setAudiencePrompt(false);
                 setActiveId("settings");
               }}
-              EndIcon={Cog8ToothIcon}>
+              EndIcon={SettingsIcon}>
               Continue to Settings
             </Button>
           )}

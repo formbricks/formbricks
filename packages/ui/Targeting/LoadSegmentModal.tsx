@@ -1,7 +1,6 @@
 "use client";
 
-import { UserGroupIcon } from "@heroicons/react/24/solid";
-import { Loader2 } from "lucide-react";
+import { Loader2, UsersIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -99,7 +98,7 @@ const SegmentDetail = ({
       <div className="col-span-3 flex items-center pl-6 text-sm">
         <div className="flex items-center gap-4">
           <div className="ph-no-capture h-8 w-8 flex-shrink-0 text-slate-700">
-            <UserGroupIcon />
+            <UsersIcon className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
             <div className="ph-no-capture font-medium text-slate-900">{segment.title}</div>

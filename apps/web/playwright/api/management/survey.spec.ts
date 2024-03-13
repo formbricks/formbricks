@@ -2,7 +2,7 @@ import { finishOnboarding, signUpAndLogin } from "@/playwright/utils/helper";
 import { users } from "@/playwright/utils/mock";
 import { expect, test } from "@playwright/test";
 
-const { name, email, password } = users.survey[1];
+const { name, email, password } = users.survey[2];
 
 test.describe("API Tests", () => {
   let surveyId: string;

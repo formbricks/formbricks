@@ -1,8 +1,7 @@
 "use client";
 
-import { EnvelopeIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { CheckCircle2Icon, MailIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
@@ -330,7 +329,7 @@ export default function SingleResponseCard({
             {survey.verifyEmail && response.data["verifiedEmail"] && (
               <div>
                 <p className="flex items-center space-x-2 text-sm text-slate-500">
-                  <EnvelopeIcon className="h-4 w-4" />
+                  <MailIcon className="h-4 w-4" />
 
                   <span>Verified Email</span>
                 </p>
@@ -416,7 +415,7 @@ export default function SingleResponseCard({
           )}
           {response.finished && (
             <div className="mt-4 flex">
-              <CheckCircleIcon className="h-6 w-6 text-slate-400" />
+              <CheckCircle2Icon className="h-6 w-6 text-slate-400" />
               <p className="mx-2 rounded-lg bg-slate-100 px-2 text-slate-700">Completed</p>
             </div>
           )}
