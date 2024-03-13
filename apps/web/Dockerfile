@@ -80,6 +80,8 @@ COPY /docker/cronjobs /app/docker/cronjobs
 
 # Install Prisma globally
 RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
+# Install turbo
+RUN npm install -g turbo
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
@@ -90,5 +92,5 @@ RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
 CMD supercronic -quiet /app/docker/cronjobs & \
-    prisma migrate deploy && \
+    pnpm db:migrate:deploy && \
     exec node apps/web/server.js
