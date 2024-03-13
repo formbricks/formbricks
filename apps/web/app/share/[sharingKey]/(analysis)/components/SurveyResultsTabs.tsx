@@ -8,6 +8,7 @@ interface SurveyResultsTabProps {
   activeId: string;
   environmentId: string;
   surveyId: string;
+  responseCount: number | null;
   sharingKey: string;
 }
 
@@ -15,6 +16,7 @@ export default function SurveyResultsTab({
   activeId,
   environmentId,
   surveyId,
+  responseCount,
   sharingKey,
 }: SurveyResultsTabProps) {
   const tabs = [
@@ -26,7 +28,7 @@ export default function SurveyResultsTab({
     },
     {
       id: "responses",
-      label: "Responses",
+      label: `Responses ${responseCount !== null ? `(${responseCount})` : ""}`,
       icon: <InboxIcon className="h-5 w-5" />,
       href: `/share/${sharingKey}/responses?referer=true`,
     },

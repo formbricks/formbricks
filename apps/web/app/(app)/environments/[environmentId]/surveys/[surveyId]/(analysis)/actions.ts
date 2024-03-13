@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { getResponses, getSurveySummary } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId, getResponses, getSurveySummary } from "@formbricks/lib/response/service";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria, TSurveySummary } from "@formbricks/types/responses";
@@ -57,4 +57,17 @@ export const getSurveySummaryAction = async (
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await getSurveySummary(surveyId, filterCriteria);
+};
+
+export const getResponseCountAction = async (
+  surveyId: string,
+  filters?: TResponseFilterCriteria
+): Promise<number> => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await getResponseCountBySurveyId(surveyId, filters);
 };
