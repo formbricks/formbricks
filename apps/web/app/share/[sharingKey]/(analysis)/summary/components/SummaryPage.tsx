@@ -57,7 +57,7 @@ const SummaryPage = ({
   environmentTags,
   attributes,
 }: SummaryPageProps) => {
-  const [responseCount, setResponseCount] = useState<number>(0);
+  const [responseCount, setResponseCount] = useState<number | null>(null);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);

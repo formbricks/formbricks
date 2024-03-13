@@ -65,7 +65,7 @@ const SummaryPage = ({
   attributes,
   membershipRole,
 }: SummaryPageProps) => {
-  const [responseCount, setResponseCount] = useState<number>(0);
+  const [responseCount, setResponseCount] = useState<number | null>(null);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
@@ -100,10 +100,6 @@ const SummaryPage = ({
       resetState();
     }
   }, [searchParams, resetState]);
-
-  useEffect(() => {
-    document.title = `${responseCount} Responses | ${survey?.name} Results`;
-  }, [responseCount, survey?.name]);
 
   return (
     <ContentWrapper>

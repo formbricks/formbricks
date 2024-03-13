@@ -50,7 +50,7 @@ const ResponsePage = ({
   responsesPerPage,
   membershipRole,
 }: ResponsePageProps) => {
-  const [responseCount, setResponseCount] = useState<number>(0);
+  const [responseCount, setResponseCount] = useState<number | null>(null);
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -116,10 +116,6 @@ const ResponsePage = ({
     setHasMore(true);
     setResponses([]);
   }, [filters]);
-
-  useEffect(() => {
-    document.title = `${responseCount} Responses | ${survey?.name} Results`;
-  }, [responseCount, survey?.name]);
 
   return (
     <ContentWrapper>

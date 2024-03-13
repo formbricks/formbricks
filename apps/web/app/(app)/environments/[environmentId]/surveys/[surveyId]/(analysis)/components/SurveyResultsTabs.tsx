@@ -8,7 +8,7 @@ interface SurveyResultsTabProps {
   activeId: string;
   environmentId: string;
   surveyId: string;
-  responseCount: number;
+  responseCount: number | null;
 }
 
 export default function SurveyResultsTab({
@@ -26,7 +26,7 @@ export default function SurveyResultsTab({
     },
     {
       id: "responses",
-      label: `Responses ${responseCount > 0 ? `(${responseCount})` : ""}`,
+      label: `Responses ${responseCount !== null ? `(${responseCount})` : ""}`,
       icon: <InboxIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/surveys/${surveyId}/responses?referer=true`,
     },
