@@ -1,11 +1,11 @@
 import { useState } from "react";
 
-interface AnimatedSurveyBgProps {
+type AnimatedSurveyBgProps = {
   handleBgChange: (bg: string, bgType: string) => void;
   background: string;
-}
+};
 
-export function AnimatedSurveyBg({ handleBgChange, background }: AnimatedSurveyBgProps) {
+export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
   const [animation, setAnimation] = useState(background || "/animated-bgs/4K/1_4k.mp4");
   const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
@@ -103,4 +103,4 @@ export function AnimatedSurveyBg({ handleBgChange, background }: AnimatedSurveyB
       </div>
     </div>
   );
-}
+};

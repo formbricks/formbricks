@@ -77,7 +77,7 @@ const FileInput: React.FC<FileInputProps> = ({
     const uploadedUrls: string[] = [];
     uploadedFiles.forEach((file) => {
       if (file.status === "fulfilled") {
-        uploadedUrls.push(file.value.url);
+        uploadedUrls.push(encodeURI(file.value.url));
       }
     });
 
@@ -145,7 +145,7 @@ const FileInput: React.FC<FileInputProps> = ({
     const uploadedUrls: string[] = [];
     uploadedFiles.forEach((file) => {
       if (file.status === "fulfilled") {
-        uploadedUrls.push(file.value.url);
+        uploadedUrls.push(encodeURI(file.value.url));
       }
     });
 

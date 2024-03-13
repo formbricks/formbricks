@@ -1,12 +1,12 @@
 import FileInput from "@formbricks/ui/FileInput";
 
-interface ImageSurveyBgProps {
+type ImageSurveyBgProps = {
   environmentId: string;
   handleBgChange: (url: string, bgType: string) => void;
   background: string;
-}
+};
 
-export function ImageSurveyBg({ environmentId, handleBgChange, background }: ImageSurveyBgProps) {
+export const ImageSurveyBg = ({ environmentId, handleBgChange, background }: ImageSurveyBgProps) => {
   return (
     <div className="mt-2 w-full">
       <div className="flex w-full items-center justify-center">
@@ -27,4 +27,4 @@ export function ImageSurveyBg({ environmentId, handleBgChange, background }: Ima
       </div>
     </div>
   );
-}
+};
