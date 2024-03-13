@@ -29,6 +29,8 @@ interface SurveyDropDownMenuProps {
   webAppUrl: string;
   singleUseId?: string;
   isSurveyCreationDeletionDisabled?: boolean;
+  duplicateSurvey: (survey: TSurvey) => void;
+  deleteSurvey: (surveyId: string) => void;
 }
 
 export default function SurveyDropDownMenu({
@@ -39,6 +41,8 @@ export default function SurveyDropDownMenu({
   webAppUrl,
   singleUseId,
   isSurveyCreationDeletionDisabled,
+  deleteSurvey,
+  duplicateSurvey,
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,6 +55,7 @@ export default function SurveyDropDownMenu({
     setLoading(true);
     try {
       await deleteSurveyAction(survey.id);
+      deleteSurvey(survey.id);
       router.refresh();
       setDeleteDialogOpen(false);
       toast.success("Survey deleted successfully.");
@@ -63,8 +68,9 @@ export default function SurveyDropDownMenu({
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
-      await duplicateSurveyAction(environmentId, surveyId);
+      const duplicatedSurvey = await duplicateSurveyAction(environmentId, surveyId);
       router.refresh();
+      if (duplicatedSurvey) duplicateSurvey(duplicatedSurvey);
       toast.success("Survey duplicated successfully.");
     } catch (error) {
       toast.error("Failed to duplicate the survey.");
