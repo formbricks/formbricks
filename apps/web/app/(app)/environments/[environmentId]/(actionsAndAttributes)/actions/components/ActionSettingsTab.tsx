@@ -4,7 +4,7 @@ import {
   deleteActionClassAction,
   updateActionClassAction,
 } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";

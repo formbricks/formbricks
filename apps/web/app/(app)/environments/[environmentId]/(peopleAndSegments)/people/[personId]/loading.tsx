@@ -2,7 +2,7 @@ import {
   ActivityItemIcon,
   ActivityItemPopover,
 } from "@/app/(app)/environments/[environmentId]/(peopleAndSegments)/people/[personId]/components/ActivityItemComponents";
-import { ArrowsUpDownIcon } from "@heroicons/react/24/outline";
+import { ArrowDownUpIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
 
 import { TAction } from "@formbricks/types/actions";
@@ -100,7 +100,7 @@ export default function Loading() {
                 <h2 className="text-lg font-bold text-slate-700">Responses</h2>
                 <div className="text-right">
                   <button className="hover:text-brand-dark pointer-events-none flex animate-pulse cursor-not-allowed select-none items-center px-1 text-slate-800">
-                    <ArrowsUpDownIcon className="inline h-4 w-4" />
+                    <ArrowDownUpIcon className="inline h-4 w-4" />
                   </button>
                 </div>
               </div>

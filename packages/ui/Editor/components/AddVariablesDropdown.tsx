@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "lucide-react";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
 

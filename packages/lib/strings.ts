@@ -24,3 +24,8 @@ export const truncateMiddle = (str: string, length: number) => {
   }
   return str;
 };
+
+// write a function that takes a string and removes all characters that could cause issues with the url and truncates it to the specified length
+export const sanitizeString = (str: string, delimiter: string = "_", length: number = 255) => {
+  return str.replace(/[^0-9a-zA-Z\-._]+/g, delimiter).substring(0, length);
+};

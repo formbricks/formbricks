@@ -1,21 +1,21 @@
 "use client";
 
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import clsx from "clsx";
 import {
-  AdjustmentsVerticalIcon,
-  BellAlertIcon,
+  BellRingIcon,
   BoltIcon,
+  BrushIcon,
+  ChevronDownIcon,
   CreditCardIcon,
-  DocumentCheckIcon,
-  DocumentMagnifyingGlassIcon,
-  HashtagIcon,
+  FileCheckIcon,
+  FileSearch2Icon,
+  HashIcon,
   KeyIcon,
   LinkIcon,
-  PaintBrushIcon,
+  SlidersIcon,
   UserCircleIcon,
   UsersIcon,
-} from "@heroicons/react/24/solid";
-import clsx from "clsx";
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -76,7 +76,7 @@ export default function SettingsNavbar({
           {
             name: "Notifications",
             href: `/environments/${environmentId}/settings/notifications`,
-            icon: BellAlertIcon,
+            icon: BellRingIcon,
             current: pathname?.includes("/notifications"),
             hidden: false,
           },
@@ -89,14 +89,14 @@ export default function SettingsNavbar({
           {
             name: "Settings",
             href: `/environments/${environmentId}/settings/product`,
-            icon: AdjustmentsVerticalIcon,
+            icon: SlidersIcon,
             current: pathname?.includes("/product"),
             hidden: false,
           },
           {
             name: "Look & Feel",
             href: `/environments/${environmentId}/settings/lookandfeel`,
-            icon: PaintBrushIcon,
+            icon: BrushIcon,
             current: pathname?.includes("/lookandfeel"),
             hidden: isViewer,
           },
@@ -110,7 +110,7 @@ export default function SettingsNavbar({
           {
             name: "Tags",
             href: `/environments/${environmentId}/settings/tags`,
-            icon: HashtagIcon,
+            icon: HashIcon,
             current: pathname?.includes("/tags"),
             hidden: isViewer,
           },
@@ -150,14 +150,14 @@ export default function SettingsNavbar({
           {
             name: "Setup Checklist",
             href: `/environments/${environmentId}/settings/setup`,
-            icon: DocumentCheckIcon,
+            icon: FileCheckIcon,
             current: pathname?.includes("/setup"),
             hidden: false,
           },
           {
             name: "Documentation",
             href: "https://formbricks.com/docs",
-            icon: DocumentMagnifyingGlassIcon,
+            icon: FileSearch2Icon,
             target: "_blank",
             hidden: false,
           },
