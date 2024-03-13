@@ -76,6 +76,27 @@ GOOGLE_CLIENT_SECRET=your-client-secret-here
    - Navigate to your Docker setup directory where your `docker-compose.yml` file is located.
    - Run the following command to bring down your current Docker containers and then bring them back up with the updated environment configuration:
 
+## Azure SSO Integration
+
+Have an Azure Active Directory (AAD) instance? Integrate it with your Formbricks instance to allow users to log in using their existing AAD credentials. This guide will walk you through the process of setting up Azure SSO for your Formbricks instance.
+
+### Requirements
+
+- An Azure Active Directory (AAD) instance.
+- A Formbricks instance running and accessible.
+
+### Steps
+
+1. Create a new Tenant in Azure Active Directory as per their [official documentation](https://learn.microsoft.com/en-us/entra/fundamentals/create-new-tenant).
+2. Add Users & Groups to your AAD instance.
+3. Now we need to fill the below environment variables in our Formbricks instance so get them from your AD configuration:
+   - `AZUREAD_CLIENT_ID`
+   - `AZUREAD_CLIENT_SECRET`
+   - `AZUREAD_TENANT_ID`
+4. Update these environment variables in your `docker-compose.yml` or pass it like your other environment variables to the Formbricks container.
+5. Restart your Formbricks instance.
+6. You're all set! Users can now signup & log in using their AAD credentials.
+
 ## OpenID Integration
 
 Integrating your own OIDC (OpenID Connect) instance with your Formbricks instance allows users to log in using their OIDC credentials, ensuring a secure and streamlined user experience. Please follow the steps below to set up OIDC for your Formbricks instance.
