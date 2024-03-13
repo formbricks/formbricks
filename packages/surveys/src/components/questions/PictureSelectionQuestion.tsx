@@ -127,14 +127,13 @@ export default function PictureSelectionQuestion({
                   alt={choice.imageUrl.split("/").pop()}
                   className="h-full w-full object-cover"
                 />
-
                 <a
                   href={choice.imageUrl}
                   target="_blank"
+                  title="Open in new tab"
                   rel="noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="z-2 absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-md bg-gray-800 p-2 text-xs text-white opacity-0 transition duration-300 ease-in-out hover:bg-gray-700 group-hover/image:opacity-100">
-                  <span>Open in new tab</span>
+                  className="absolute bottom-2 right-2 flex items-center gap-2 whitespace-nowrap rounded-md bg-gray-800 bg-opacity-40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out hover:bg-opacity-65 group-hover/image:opacity-100">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -142,13 +141,14 @@ export default function PictureSelectionQuestion({
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2"
+                    stroke-width="1"
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    class="lucide lucide-square-arrow-up-right">
-                    <rect width="18" height="18" x="3" y="3" rx="2" />
-                    <path d="M8 8h8v8" />
-                    <path d="m8 16 8-8" />
+                    class="lucide lucide-expand">
+                    <path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8" />
+                    <path d="M3 16.2V21m0 0h4.8M3 21l6-6" />
+                    <path d="M21 7.8V3m0 0h-4.8M21 3l-6 6" />
+                    <path d="M3 7.8V3m0 0h4.8M3 3l6 6" />
                   </svg>
                 </a>
                 {question.allowMulti ? (
