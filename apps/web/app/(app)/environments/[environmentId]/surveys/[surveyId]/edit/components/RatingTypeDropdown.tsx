@@ -1,5 +1,5 @@
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type Option = {
