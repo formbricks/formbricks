@@ -1,7 +1,7 @@
 "use client";
 
 import { getSegmentsByAttributeClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/actions";
-import { TagIcon } from "@heroicons/react/24/solid";
+import { TagIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { capitalizeFirstLetter } from "@formbricks/lib/strings";
@@ -86,7 +86,7 @@ export default function AttributeActivityTab({ attributeClass }: EventActivityTa
           <Label className="block text-xs font-normal text-slate-500">Type</Label>
           <div className="mt-1 flex items-center">
             <div className="mr-1.5  h-4 w-4 text-slate-600">
-              <TagIcon />
+              <TagIcon className="h-4 w-4" />
             </div>
             <p className="text-sm text-slate-700 ">{capitalizeFirstLetter(attributeClass.type)}</p>
           </div>

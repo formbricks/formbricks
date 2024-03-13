@@ -1,4 +1,4 @@
-import { CheckBadgeIcon } from "@heroicons/react/24/outline";
+import { BadgeCheckIcon } from "lucide-react";
 import { Metadata } from "next";
 
 import { prisma } from "@formbricks/database";
@@ -43,7 +43,7 @@ export default async function HealthPage() {
 
   return (
     <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center">
-      <CheckBadgeIcon height={40} color="green" />
+      <BadgeCheckIcon height={40} color="green" />
       <p className="text-md mt-4 font-bold text-zinc-900">All systems are up and running</p>
     </div>
   );

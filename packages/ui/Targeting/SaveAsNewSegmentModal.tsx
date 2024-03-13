@@ -1,6 +1,6 @@
 "use client";
 
-import { UserGroupIcon } from "@heroicons/react/24/solid";
+import { UsersIcon } from "lucide-react";
 import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -110,7 +110,7 @@ const SaveAsNewSegmentModal: React.FC<SaveAsNewSegmentModalProps> = ({
         <div className="flex w-full items-center gap-4 p-6">
           <div className="flex items-center space-x-2">
             <div className="mr-1.5 h-6 w-6 text-slate-500">
-              <UserGroupIcon />
+              <UsersIcon className="h-5 w-5" />
             </div>
             <div>
               <h3 className="text-base font-medium">Save as new segment</h3>

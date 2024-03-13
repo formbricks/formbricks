@@ -1,4 +1,4 @@
-import { XCircleIcon } from "@heroicons/react/24/solid";
+import { XCircleIcon } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 

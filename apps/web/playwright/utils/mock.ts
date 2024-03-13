@@ -21,13 +21,18 @@ export const users = {
   survey: [
     {
       name: "Survey User 1",
-      email: "survey3@formbricks.com",
+      email: "survey1@formbricks.com",
       password: "Y1I*EpURUSb32j5XijP",
     },
     {
       name: "Survey User 2",
       email: "survey2@formbricks.com",
       password: "G73*Gjif22F4JKM1pA",
+    },
+    {
+      name: "Survey User 3",
+      email: "survey3@formbricks.com",
+      password: "Gj2DGji27D&M8u53V",
     },
   ],
   js: [
