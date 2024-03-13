@@ -1,6 +1,6 @@
 "use server";
 
-import { getResponses, getSurveySummary } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId, getResponses, getSurveySummary } from "@formbricks/lib/response/service";
 import { getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria, TSurveySummary } from "@formbricks/types/responses";
@@ -27,4 +27,14 @@ export const getSummaryBySurveySharingKeyAction = async (
   if (!surveyId) throw new AuthorizationError("Not authorized");
 
   return await getSurveySummary(surveyId, filterCriteria);
+};
+
+export const getResponseCountBySurveySharingKeyAction = async (
+  sharingKey: string,
+  filterCriteria?: TResponseFilterCriteria
+): Promise<number> => {
+  const surveyId = await getSurveyIdByResultShareKey(sharingKey);
+  if (!surveyId) throw new AuthorizationError("Not authorized");
+
+  return await getResponseCountBySurveyId(surveyId, filterCriteria);
 };
