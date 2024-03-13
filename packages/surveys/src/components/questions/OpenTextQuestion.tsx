@@ -89,7 +89,7 @@ export default function OpenTextQuestion({
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
-            className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
+            className="border-border bg-survey-bg placeholder:text-placeholder focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
           />
@@ -109,7 +109,7 @@ export default function OpenTextQuestion({
               handleInputResize(e);
             }}
             autoFocus={autoFocus}
-            className="border-border bg-input-bg text-subheading focus:border-border-highlight rounded-custom block w-full border p-2 shadow-sm focus:ring-0 sm:text-sm"
+            className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-border-highlight rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
           />

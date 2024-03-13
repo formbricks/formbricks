@@ -16,6 +16,7 @@ module.exports = {
         focus: "var(--fb-focus-color)",
         heading: "var(--fb-heading-color)",
         subheading: "var(--fb-subheading-color)",
+        placeholder: "var(--fb-placeholder-color)",
         "info-text": "var(--fb-info-text-color)",
         signature: "var(--fb-signature-text-color)",
         "branding-text": "var(--fb-branding-text-color)",

@@ -51,6 +51,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   }
   appendCssVariable("heading-color", styling.questionColor?.light);
   appendCssVariable("subheading-color", styling.questionColor?.light);
+
+  if (styling.questionColor?.light) {
+    appendCssVariable("placeholder-color", mixColor(styling.questionColor?.light, "#ffffff", 0.3));
+  }
+
   appendCssVariable("border-color", styling.inputBorderColor?.light);
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);

@@ -1,6 +1,5 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import SurveyState from "@formbricks/lib/surveyState";
 import { TJSStateDisplay } from "@formbricks/types/js";
 import { TResponseUpdate } from "@formbricks/types/responses";
@@ -56,8 +55,6 @@ export const renderWidget = async (survey: TSurvey) => {
   );
 
   const productOverwrites = survey.productOverwrites ?? {};
-  // const brandColor = productOverwrites.brandColor ?? product.brandColor;
-  // const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
   const clickOutside = productOverwrites.clickOutsideClose ?? product.clickOutsideClose;
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
@@ -66,17 +63,17 @@ export const renderWidget = async (survey: TSurvey) => {
 
   const getStyling = () => {
     // unified styling is disabled from the product
-    if (!product.styling?.unifiedStyling && !!survey.styling) {
+    if (!product.styling.unifiedStyling && !!survey.styling) {
       return survey.styling;
     }
 
     // allow style overwrite is disabled from the product
-    if (product.styling?.unifiedStyling && !product.styling?.allowStyleOverwrite) {
+    if (product.styling.unifiedStyling && !product.styling.allowStyleOverwrite) {
       return product.styling;
     }
 
     // allow style overwrite is enabled from the product
-    if (product.styling?.unifiedStyling && product.styling?.allowStyleOverwrite) {
+    if (product.styling.unifiedStyling && product.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteUnifiedStyling) {
         return product.styling;
@@ -86,14 +83,7 @@ export const renderWidget = async (survey: TSurvey) => {
       return survey.styling;
     }
 
-    // no styling is set (default styling)
-    return {
-      unifiedStyling: true,
-      allowStyleOverwrite: true,
-      brandColor: {
-        light: product.brandColor || COLOR_DEFAULTS.brandColor,
-      },
-    };
+    return product.styling;
   };
 
   setTimeout(() => {
