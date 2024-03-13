@@ -1,7 +1,6 @@
 "use client";
 
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ArrowUpTrayIcon } from "@heroicons/react/24/solid";
+import { ArrowUpFromLineIcon, XIcon } from "lucide-react";
 import { FileIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -10,7 +9,7 @@ import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 
-import { uploadFile } from "./lib/fileUpload";
+import { getAllowedFiles, uploadFile } from "./lib/fileUpload";
 
 const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
 const isImage = (name: string) => {
@@ -24,6 +23,7 @@ interface FileInputProps {
   fileUrl?: string | string[];
   multiple?: boolean;
   imageFit?: "cover" | "contain";
+  maxSizeInMB?: number;
 }
 
 interface SelectedFile {
@@ -40,6 +40,7 @@ const FileInput: React.FC<FileInputProps> = ({
   fileUrl,
   multiple = false,
   imageFit = "cover",
+  maxSizeInMB,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
 
@@ -49,19 +50,9 @@ const FileInput: React.FC<FileInputProps> = ({
       toast.error("Only one file is allowed");
     }
 
-    const allowedFiles = files.filter(
-      (file) =>
-        file &&
-        file.type &&
-        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtension)
-    );
-
-    if (allowedFiles.length < files.length) {
-      if (allowedFiles.length === 0) {
-        toast.error("No files are supported");
-        return;
-      }
-      toast.error("Some files are not supported");
+    const allowedFiles = getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
+    if (allowedFiles.length === 0) {
+      return;
     }
 
     setSelectedFiles(
@@ -86,7 +77,7 @@ const FileInput: React.FC<FileInputProps> = ({
     const uploadedUrls: string[] = [];
     uploadedFiles.forEach((file) => {
       if (file.status === "fulfilled") {
-        uploadedUrls.push(file.value.url);
+        uploadedUrls.push(encodeURI(file.value.url));
       }
     });
 
@@ -126,21 +117,9 @@ const FileInput: React.FC<FileInputProps> = ({
   };
 
   const handleUploadMore = async (files: File[]) => {
-    let filesToUpload: File[] = files;
-
-    const allowedFiles = filesToUpload.filter(
-      (file) =>
-        file &&
-        file.type &&
-        allowedFileExtensions.includes(file.name.split(".").pop() as TAllowedFileExtension)
-    );
-
-    if (allowedFiles.length < filesToUpload.length) {
-      if (allowedFiles.length === 0) {
-        toast.error("No files are supported");
-        return;
-      }
-      toast.error("Some files are not supported");
+    const allowedFiles = getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
+    if (allowedFiles.length === 0) {
+      return;
     }
 
     setSelectedFiles((prevFiles) => [
@@ -166,7 +145,7 @@ const FileInput: React.FC<FileInputProps> = ({
     const uploadedUrls: string[] = [];
     uploadedFiles.forEach((file) => {
       if (file.status === "fulfilled") {
-        uploadedUrls.push(file.value.url);
+        uploadedUrls.push(encodeURI(file.value.url));
       }
     });
 
@@ -200,6 +179,7 @@ const FileInput: React.FC<FileInputProps> = ({
                       src={file.url}
                       alt={file.name}
                       fill
+                      sizes="100%"
                       style={{ objectFit: "cover" }}
                       quality={100}
                       className={!file.uploaded ? "opacity-50" : ""}
@@ -208,7 +188,7 @@ const FileInput: React.FC<FileInputProps> = ({
                       <div
                         className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                         onClick={() => handleRemove(idx)}>
-                        <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                        <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                       </div>
                     ) : (
                       <Loader />
@@ -224,7 +204,7 @@ const FileInput: React.FC<FileInputProps> = ({
                       <div
                         className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                         onClick={() => handleRemove(idx)}>
-                        <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                        <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                       </div>
                     ) : (
                       <Loader />
@@ -254,6 +234,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   src={selectedFiles[0].url}
                   alt={selectedFiles[0].name}
                   fill
+                  sizes="100%"
                   style={{ objectFit: imageFit }}
                   quality={100}
                   className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
@@ -262,7 +243,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   <div
                     className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                     onClick={() => handleRemove(0)}>
-                    <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                    <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                   </div>
                 ) : (
                   <Loader />
@@ -278,7 +259,7 @@ const FileInput: React.FC<FileInputProps> = ({
                   <div
                     className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                     onClick={() => handleRemove(0)}>
-                    <XMarkIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                    <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                   </div>
                 ) : (
                   <Loader />
@@ -336,7 +317,7 @@ const Uploader = ({
       onDragOver={(e) => handleDragOver(e)}
       onDrop={(e) => handleDrop(e)}>
       <div className="flex flex-col items-center justify-center pb-6 pt-5">
-        <ArrowUpTrayIcon className="h-6 text-slate-500" />
+        <ArrowUpFromLineIcon className="h-6 text-slate-500" />
         <p className={cn("mt-2 text-center text-sm text-slate-500", uploadMore && "text-xs")}>
           <span className="font-semibold">Click or drag to upload files.</span>
         </p>

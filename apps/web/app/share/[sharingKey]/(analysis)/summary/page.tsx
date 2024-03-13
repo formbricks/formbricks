@@ -1,4 +1,3 @@
-import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import SummaryPage from "@/app/share/[sharingKey]/(analysis)/summary/components/SummaryPage";
 import { notFound } from "next/navigation";
 
@@ -23,10 +22,7 @@ export default async function Page({ params }) {
   if (!survey) {
     throw new Error("Survey not found");
   }
-  const [{ responseCount }, environment] = await Promise.all([
-    getAnalysisData(survey.id, survey.environmentId),
-    getEnvironment(survey.environmentId),
-  ]);
+  const environment = await getEnvironment(survey.environmentId);
 
   if (!environment) {
     throw new Error("Environment not found");
@@ -50,7 +46,6 @@ export default async function Page({ params }) {
         product={product}
         environmentTags={tags}
         attributes={attributes}
-        responseCount={responseCount}
       />
     </>
   );

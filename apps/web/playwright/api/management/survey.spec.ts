@@ -1,8 +1,8 @@
-import { signUpAndLogin, skipOnboarding } from "@/playwright/utils/helper";
+import { finishOnboarding, signUpAndLogin } from "@/playwright/utils/helper";
 import { users } from "@/playwright/utils/mock";
 import { expect, test } from "@playwright/test";
 
-const { name, email, password } = users.survey[1];
+const { name, email, password } = users.survey[2];
 
 test.describe("API Tests", () => {
   let surveyId: string;
@@ -10,7 +10,7 @@ test.describe("API Tests", () => {
   let apiKey: string;
   test("Copy API Key for API Calls", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await skipOnboarding(page);
+    await finishOnboarding(page);
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     environmentId =
@@ -25,7 +25,7 @@ test.describe("API Tests", () => {
     await page.getByRole("button", { name: "Add Production API Key" }).click();
     await page.getByPlaceholder("e.g. GitHub, PostHog, Slack").fill("E2E Test API Key");
     await page.getByRole("button", { name: "Add API Key" }).click();
-    await page.locator("main").filter({ hasText: "Account" }).getByRole("img").click();
+    await page.locator("main").filter({ hasText: "Account" }).getByRole("img").nth(1).click();
 
     apiKey = await page.evaluate("navigator.clipboard.readText()");
   });

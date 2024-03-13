@@ -22,7 +22,6 @@
     "@formbricks/types": "workspace:*",
     "@formbricks/ui": "workspace:*",
     "@headlessui/react": "^1.7.18",
-    "@heroicons/react": "^2.1.1",
     "@json2csv/node": "^7.0.6",
     "@paralleldrive/cuid2": "^2.2.2",
     "@radix-ui/react-collapsible": "^1.0.3",

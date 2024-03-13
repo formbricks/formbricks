@@ -8,8 +8,9 @@ export const env = createEnv({
    */
   server: {
     AIRTABLE_CLIENT_ID: z.string().optional(),
-    AWS_ACCESS_KEY: z.string().optional(),
-    AWS_SECRET_KEY: z.string().optional(),
+    AWS_ACCESS_KEY_ID: z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    AWS_REGION: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_SECRET: z.string().optional(),
     AZUREAD_TENANT_ID: z.string().optional(),
@@ -77,6 +78,7 @@ export const env = createEnv({
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
+    UPLOADS_DIR: z.string().min(1).optional(),
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
   },
@@ -106,8 +108,9 @@ export const env = createEnv({
    */
   runtimeEnv: {
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
-    AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
-    AWS_SECRET_KEY: process.env.AWS_SECRET_KEY,
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+    AWS_REGION: process.env.AWS_REGION,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
@@ -169,6 +172,7 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     TERMS_URL: process.env.TERMS_URL,
+    UPLOADS_DIR: process.env.UPLOADS_DIR,
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
   },

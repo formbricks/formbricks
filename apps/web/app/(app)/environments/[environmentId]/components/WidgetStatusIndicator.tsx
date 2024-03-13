@@ -1,5 +1,5 @@
-import { CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { AlertTriangleIcon, CheckIcon } from "lucide-react";
 import Link from "next/link";
 
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -18,7 +18,7 @@ export default async function WidgetStatusIndicator({ environmentId, type }: Wid
 
   const stati = {
     notImplemented: {
-      icon: ExclamationTriangleIcon,
+      icon: AlertTriangleIcon,
       title: "Connect Formbricks to your app or website.",
       subtitle:
         "Your app or website is not yet connected with Formbricks. To run in-app surveys follow the setup guide.",

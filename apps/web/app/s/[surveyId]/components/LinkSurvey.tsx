@@ -3,7 +3,7 @@
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { RefreshCcwIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -50,11 +50,28 @@ export default function LinkSurvey({
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
+  const startAt = searchParams?.get("startAt");
+
+  const isStartAtValid = useMemo(() => {
+    if (!startAt) return false;
+    if (survey?.welcomeCard.enabled && startAt === "start") return true;
+
+    const isValid = survey?.questions.some((question) => question.id === startAt);
+
+    // To remove startAt query param from URL if it is not valid:
+    if (!isValid && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("startAt");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    return isValid;
+  }, [survey, startAt]);
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
+    startAt && isStartAtValid ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
 
   const prefillResponseData: TResponseData | undefined = prefillAnswer
@@ -151,7 +168,7 @@ export default function LinkSurvey({
               onClick={() =>
                 setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
               }>
-              Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
+              Restart <RefreshCcwIcon className="ml-2 h-4 w-4" />
             </button>
           </div>
         )}

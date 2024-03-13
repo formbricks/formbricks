@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -176,7 +176,10 @@ export default function StylingCard({
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400" />
+            <CheckIcon
+              strokeWidth={3}
+              className="h-7 w-7 rounded-full border bg-green-400 p-1.5 text-white"
+            />
           </div>
           <div>
             <p className="font-semibold text-slate-800">Styling</p>
