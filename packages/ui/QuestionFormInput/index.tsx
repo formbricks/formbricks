@@ -73,13 +73,16 @@ export const QuestionFormInput = ({
   className,
 }: QuestionFormInputProps) => {
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
-  const questionId = question.id;
+  const questionId = question?.id;
   const isChoice = id.includes("choice");
   const isThankYouCard = questionId === "end";
   const isWelcomeCard = questionId === "start";
   const choiceIdx = getChoiceIndex(id, isChoice);
 
-  const enabledLanguages = useMemo(() => getEnabledLanguages(localSurvey.languages), [localSurvey.languages]);
+  const enabledLanguages = useMemo(
+    () => getEnabledLanguages(localSurvey.languages ?? []),
+    [localSurvey.languages]
+  );
 
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
@@ -100,7 +103,8 @@ export const QuestionFormInput = ({
     }
 
     return (
-      (question[id as keyof TSurveyQuestion] as TI18nString) || createI18nString("", surveyLanguageCodes)
+      (question && (question[id as keyof TSurveyQuestion] as TI18nString)) ||
+      createI18nString("", surveyLanguageCodes)
     );
   };
 
@@ -346,13 +350,11 @@ export const QuestionFormInput = ({
   };
 
   return (
-    <>
+    <div className="w-full">
       <div className="w-full">
-        {
-          <div className="mb-2 mt-3">
-            <Label htmlFor={id}>{label ?? getLabelById(id)}</Label>
-          </div>
-        }
+        <div className="mb-2 mt-3">
+          <Label htmlFor={id}>{label ?? getLabelById(id)}</Label>
+        </div>
         <div className="flex flex-col gap-6">
           {showImageUploader && id === "headline" && (
             <FileInput
@@ -390,7 +392,7 @@ export const QuestionFormInput = ({
                 </button>
               )}
               <Input
-                key={`${questionId}-${id}`}
+                key={`${questionId}-${id}-${selectedLanguageCode}`}
                 className={`absolute top-0 text-black caret-black ${localSurvey.languages?.length > 1 ? "pr-24" : ""} ${className}`}
                 placeholder={placeholder ? placeholder : getPlaceHolderById(id)}
                 id={id}
@@ -465,7 +467,7 @@ export const QuestionFormInput = ({
       {selectedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (
         <div className="mt-1 text-xs text-red-400">Contains Incomplete translations</div>
       )}
-    </>
+    </div>
   );
 };
 QuestionFormInput.displayName = "QuestionFormInput";

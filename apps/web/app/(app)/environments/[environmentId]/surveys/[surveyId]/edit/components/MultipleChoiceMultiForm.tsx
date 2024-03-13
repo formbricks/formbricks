@@ -237,7 +237,7 @@ export default function MultipleChoiceMultiForm({
           {question.choices &&
             question.choices.map((choice, choiceIdx) => (
               <div key={choiceIdx} className="inline-flex w-full items-center">
-                <div className="flex w-full space-x-2">
+                <div className="w-full space-x-2">
                   <QuestionFormInput
                     key={choice.id}
                     id={`choice-${choiceIdx}`}

@@ -11,7 +11,7 @@ import {
   FileSearch2Icon,
   HashIcon,
   KeyIcon,
-  LanguageIcon,
+  LanguagesIcon,
   LinkIcon,
   SlidersIcon,
   UserCircleIcon,
@@ -108,7 +108,7 @@ export default function SettingsNavbar({
           {
             name: "Survey Languages",
             href: `/environments/${environmentId}/settings/language`,
-            icon: LanguageIcon,
+            icon: LanguagesIcon,
             current: pathname?.includes("/language"),
             hidden: !isMultiLanguageAllowed,
           },

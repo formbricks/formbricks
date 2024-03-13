@@ -124,7 +124,7 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (!localSurvey?.languages) return;
-    const enabledLanguageCodes = extractLanguageCodes(getEnabledLanguages(localSurvey.languages));
+    const enabledLanguageCodes = extractLanguageCodes(getEnabledLanguages(localSurvey.languages ?? []));
     if (!enabledLanguageCodes.includes(selectedLanguageCode)) {
       setSelectedLanguageCode("default");
     }

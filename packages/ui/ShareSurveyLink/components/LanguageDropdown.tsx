@@ -16,7 +16,7 @@ interface LanguageDropdownProps {
 export const LanguageDropdown = ({ survey, setLanguage }: LanguageDropdownProps) => {
   const [showLanguageSelect, setShowLanguageSelect] = useState(false);
   const languageDropdownRef = useRef(null);
-  const enabledLanguages = getEnabledLanguages(survey.languages);
+  const enabledLanguages = getEnabledLanguages(survey.languages ?? []);
 
   useClickOutside(languageDropdownRef, () => setShowLanguageSelect(false));
 
