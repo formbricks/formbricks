@@ -5,7 +5,7 @@ interface AnimatedSurveyBgProps {
   background: string;
 }
 
-export default function AnimatedSurveyBg({ handleBgChange, background }: AnimatedSurveyBgProps) {
+export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
   const [animation, setAnimation] = useState(background || "/animated-bgs/4K/1_4k.mp4");
   const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
@@ -103,4 +103,4 @@ export default function AnimatedSurveyBg({ handleBgChange, background }: Animate
       </div>
     </div>
   );
-}
+};
