@@ -79,6 +79,7 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
+    SIGNOZ_LISTENER_URL: z.string().optional(),
   },
 
   /*
@@ -171,5 +172,6 @@ export const env = createEnv({
     TERMS_URL: process.env.TERMS_URL,
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
+    SIGNOZ_LISTENER_URL: process.env.SIGNOZ_LISTENER_URL,
   },
 });
