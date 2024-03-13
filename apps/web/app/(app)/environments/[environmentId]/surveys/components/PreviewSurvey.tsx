@@ -70,8 +70,7 @@ export default function PreviewSurvey({
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
-  const [shrink, setshrink] = useState(false);
-
+  const [shrink, setShrink] = useState(false);
   const { productOverwrites } = survey || {};
 
   const previewScreenVariants: Variants = {
@@ -141,7 +140,7 @@ export default function PreviewSurvey({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
-  function resetQuestionProgress() {
+  const resetQuestionProgress = () => {
     let storePreviewMode = previewMode;
     setPreviewMode("null");
     setTimeout(() => {
@@ -149,7 +148,7 @@ export default function PreviewSurvey({
     }, 10);
 
     setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
-  }
+  };
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -158,6 +157,13 @@ export default function PreviewSurvey({
       setWidgetSetupCompleted(false);
     }
   }, [environment]);
+
+  const handlePreviewModalClose = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setIsModalOpen(true);
+    }, 1000);
+  };
 
   if (!previewType) {
     previewType = widgetSetupCompleted ? "modal" : "fullwidth";
@@ -208,6 +214,7 @@ export default function PreviewSurvey({
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
+                    onClose={handlePreviewModalClose}
                   />
                 </Modal>
               ) : (
@@ -244,7 +251,7 @@ export default function PreviewSurvey({
                     <ShrinkIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setshrink(true);
+                        setShrink(true);
                         setPreviewPosition("relative");
                         setTimeout(() => setIsFullScreenPreview(false), 300);
                       }}
@@ -253,7 +260,7 @@ export default function PreviewSurvey({
                     <ExpandIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setshrink(false);
+                        setShrink(false);
                         setIsFullScreenPreview(true);
                         setTimeout(() => setPreviewPosition("fixed"), 300);
                       }}
@@ -278,6 +285,7 @@ export default function PreviewSurvey({
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
+                  onClose={handlePreviewModalClose}
                 />
               </Modal>
             ) : (
