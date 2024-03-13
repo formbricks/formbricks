@@ -1,6 +1,6 @@
 interface Props {
   teaser?: string;
-  heading: string;
+  heading: React.ReactNode;
   subheading?: string;
 }
 

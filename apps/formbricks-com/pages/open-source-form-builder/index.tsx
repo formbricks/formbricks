@@ -44,26 +44,27 @@ import Img10 from "./10-multi-language-surveys-free-and-open-source.png";
 const linkSurveySteps = [
   {
     id: "1",
-    name: "Register for Free",
-    description: "Sign up for our open source form builder for lifelong access at no cost.",
+    name: "Register for free",
+    description: "Sign up for lifelong access to our open source at no cost.",
   },
   {
     id: "2",
-    name: "Design Your Open Source Form",
-    description: "Build your free online form in minutes. Style it to match your brand.",
+    name: "Design your forms",
+    description: "Build your open source forms in minutes. Style it to match your brand.",
   },
   {
     id: "3",
-    name: "AI Insights",
-    description: "Analyze responses right in Formbricks or pipe them to where you need them",
+    name: "AI insights",
+    description:
+      "Analyze responses right in Formbricks. Or pipe them to where you need them via one of our native integrations.",
   },
 ];
 
 const linkSurveyFeaturesPt1 = [
   {
-    headline: "Free forever, unlimited",
+    headline: "Free forms forever, unlimited",
     subheadline:
-      "Get unlimited forms, responses, team members and workspaces in our open source web forms builder. In the Cloud we only charge for branding removal. Self-host with 1 click and remove the branding from all forms for free.",
+      "Get unlimited forms, responses, team members and workspaces in our open source web forms builder. In the Cloud we only charge for branding removal. Self-host with one click and remove the branding from all forms for free.",
     imgSrc: Img3,
     imgAlt: "Unlimited open source web forms displayed on various devices",
     imgLeft: false,
@@ -79,7 +80,7 @@ const linkSurveyFeaturesPt1 = [
   {
     headline: "100% on brand design",
     subheadline:
-      "Create your open source web surveys in exactly the look & feel of your brand. Change colors and roundness, set background images or animations to get exactly the look you want. Because Formbricks is open source you get maximum customizability.",
+      "Create your open source web surveys in exactly the look & feel of your brand. Change colors or roundness, and set background images or animations to get exactly the look you want. Formbricks open source approach let's you customize your forms as much as you want.",
     imgSrc: Img5,
     imgAlt: "Customizable open source survey design matching brand identity",
     imgLeft: false,
@@ -95,15 +96,15 @@ const linkSurveyFeaturesPt1 = [
   {
     headline: "Embed anywhere",
     subheadline:
-      "On your website, in an email. Get your open source forms in front of the right people effortlessly. You're website runs on WordPress? Our community is working on a free WordPress form plugin as we speak.",
+      "Embed forms websites and in emails. Get your open source surveys in front of the right people effortlessly. You want to embed forms on a WordPress page? Our community is working on a free WordPress form plugin as we speak.",
     imgSrc: Img7,
     imgAlt: "Embeddable open source form on a website and email",
     imgLeft: false,
   },
   {
-    headline: "Pre-populate fields",
+    headline: "Pre-populate form fields",
     subheadline:
-      "Prefill fields with data you already have. Enrich your analysis by gathering all data points in one secure place. Versatile link prefilling let's you collect all data on our open source survey platform.",
+      "Prefill form fields with data you already have. Enrich your analysis by gathering all data points in one secure place. Versatile link prefilling let's you collect all data on one open source survey platform.",
     imgSrc: Img8,
     imgAlt: "Data pre-population feature in an open source forms builder",
     imgLeft: true,
@@ -111,7 +112,7 @@ const linkSurveyFeaturesPt1 = [
   {
     headline: "Conditional logic",
     subheadline:
-      "Jump questions based on previous answers for higher completion rate. Conditional logic let’s you freely personalize the survey experience. Formbricks is the only open source form builder with comprehensive logic capabilities built-in.",
+      "Jump questions based on previous answers for higher completion rates. Conditional logic let’s you freely personalize the survey experience. Formbricks is the only open source form builder with comprehensive logic capabilities built-in.",
     imgSrc: Img9,
     imgAlt: "Open source form with conditional logic for personalized surveys",
     imgLeft: false,
@@ -119,7 +120,7 @@ const linkSurveyFeaturesPt1 = [
   {
     headline: "Multi-language surveys",
     subheadline:
-      "Run the same survey in several languages. Analyse all languages together or filter out feedback provided in specific languages. Not even Typeform has multi-language surveys but our open source forms builder does.",
+      "Run the same survey in several languages. Analyse all languages together or filter for specific languages. Not even Typeform has multi-language surveys but our open source forms builder does.",
     imgSrc: Img10,
     imgAlt: "Multi-language survey capability in open source form builder",
     imgLeft: true,
@@ -335,19 +336,19 @@ const allQuestionTypes = [
 
 const FAQs = [
   {
-    question: "Is Formbricks truly a free and open source form solution?",
+    question: "Is Formbricks truly a free and open source forms builder?",
     answer:
-      "Absolutely, Formbricks is crafted for the community by the community as a free web form builder open source project. Our open source license ensures its longevity for as long as the internet exists.",
+      "Absolutely, Formbricks is crafted for the community by the community. It's an open source project to build a free form builder for the web. Our open source license ensures its longevity for as long as the internet exists.",
   },
   {
     question: "Can I self-host Formbricks, the open source web forms builder?",
     answer:
-      "Certainly. You can easily self-host Formbricks with a single click through our Docker image, making it a flexible open source forms builder solution.",
+      "Certainly. You can easily self-host Formbricks with a single click using our Docker image. We aim to build the most developer-friendly open source forms builder ever.",
   },
   {
-    question: "How does Formbricks stack up against Typeform and other JavaScript form builders?",
+    question: "How does Formbricks stack up against other JavaScript form builders?",
     answer:
-      "We've conducted a detailed side-by-side comparison with other tools, including JavaScript form builders, and shared our findings on our blog.",
+      "We've conducted a detailed side-by-side comparison with other tools, including JavaScript form builders. You find the findings on our blog.",
   },
   {
     question: "Is Formbricks GDPR- and CCPA-compliant?",
@@ -356,14 +357,14 @@ const FAQs = [
   },
   {
     question:
-      "I want to help ship this JavaScript form build, how can I contribute to building the open source form project?",
+      "I want to help ship this JavaScript form build, how can I contribute to this open source form project?",
     answer:
-      "We're thrilled to have more hands on deck! Join our community and start contributing to Formbricks, the opensource forms project, by connecting with us on Discord.",
+      "We're thrilled to have more hands on deck! Join our community on Discord and start contributing to Formbricks. This opensource forms project is carried by its community.",
   },
   {
-    question: "What sets Formbricks apart in the sea of open source web form builders?",
+    question: "What sets Formbricks apart from other open source web form builders?",
     answer:
-      "What really makes Formbricks shine is its blend of advanced features like snappy conditional logic, seamless multi-language support, and a rich collection of form fields, all wrapped up in a developer-friendly package. It’s built with JavaScript at its core, offering the kind of flexibility and customization that tech folks love in a free web form builder.",
+      "Unlike other open source forms builders, Formbricks is not a hobby project. We build this free web forms builder as a form of marketing for the wider Formbricks experience management platform. While this open source form builder will always be free, more advanced features for enterprise clients are licensed differently.",
   },
   {
     question: "Can Formbricks handle the nitty-gritty of complex form logic and third-party integrations?",
@@ -378,7 +379,7 @@ const FAQs = [
   {
     question: "What kind of customization can you actually do with Formbricks?",
     answer:
-      "The sky's the limit when it comes to tweaking your forms. Formbricks hands you the keys to the kingdom with full code access, allowing for total customization. Whether you want to adjust the color scheme or overhaul the entire form layout, it’s all doable with extensive CSS and JavaScript options.",
+      "The sky's the limit when it comes to tweaking your forms. Formbricks hands you the keys to the kingdom with full code access, allowing for total customization. Whether you want to adjust the color scheme or overhaul the entire form layout, it’s all doable if you know how to code!",
   },
 ];
 
@@ -396,7 +397,7 @@ export default function LinkSurveyPage() {
       <LogoBar />
       <SalesPageFeature
         headline="A worthy open source Typeform alternative"
-        subheadline="Everyone needs online forms and yet, there was no good open source builder for them. That’s why we are building it together with our community."
+        subheadline="Everyone needs online forms and yet, there was no good open source builder for them. That’s why we - together with our community - have set out to build the best open source forms builder mankind has seen."
         imgSrc={Img2}
         imgAlt="tba"
         imgLeft
@@ -416,7 +417,7 @@ export default function LinkSurveyPage() {
         );
       })}
       <SalesTestimonial
-        quote="Finally a great open source survey builder! Formbricks proves once again that open source surveys can be both powerful and user-friendly."
+        quote="Finally a great open source survey builder! Formbricks proves that open source surveys can be both powerful and user-friendly."
         author="Jonathan Reimer, CEO @ crowd.dev"
         imgSrc={Jonathan}
         imgAlt="Jonathan Reimer, CEO @ crowd.dev"
@@ -457,7 +458,7 @@ export default function LinkSurveyPage() {
         </div>
       </div>
       <SalesTestimonial
-        quote="I've been looking for a solid open source Typeform alternative for a while. Super happy to see Formbricks building it!"
+        quote="I've been looking for a solid open source form builder for a while. Super happy to see Formbricks building it!"
         author="Peer Richelsen, CEO @ cal.com"
         imgSrc={Peer}
         imgAlt="Peer Richelsen, Co-Founder and CEO of Cal.com"

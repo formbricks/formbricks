@@ -34,33 +34,36 @@ const inAppSurveySteps = [
   {
     id: "1",
     name: "Connect your app",
-    description: "Connect Formbricks with your web app in 5 minutes.",
+    description:
+      "Install the Formbricks SDK with your favorite package manager in seconds. Run native inapp surveys within minutes.",
   },
   {
     id: "2",
     name: "Pre-segment cohorts",
-    description: "Send attributes and event to Formbricks to create usage-based cohorts.",
+    description:
+      "Send attributes and event to Formbricks to create usage-based cohorts. Send out highly targeted app surveys for better insights.",
   },
   {
     id: "3",
     name: "AI analysis",
-    description: "Analyze insights in Formbricks in a breeze with our AI.",
+    description:
+      "Analyze insights in Formbricks in a breeze with our AI. Enable everyone in your team to get the most out of your in-product research.",
   },
 ];
 
 const inAppSurveyFeatures = [
   {
-    headline: "Granular targeting",
+    headline: "Granular in-app targeting",
     subheadline:
-      "Combine usage data with custom attributes and device information for fine-grained targeting. Targeted embedded surveys mean better insights for you and a better UX for your users.",
+      "Combine usage data with custom attributes and device information for fine-grained targeting. Targeted embedded surveys mean better insights for your research team and a better UX for your users.",
     imgSrc: Img3,
     imgAlt: "Screenshot of granular targeting feature in an in-app survey tool",
     imgLeft: false,
   },
   {
-    headline: "Multi-language surveys",
+    headline: "Multi-language app surveys",
     subheadline:
-      "For app surveys to fit in smoothly, they should feel like a part of your UI. Matching languages plays a big role in a seamless product research experience. Formbricks lets you handle translations easily.",
+      "For app surveys to fit in smoothly, they should feel like a part of your UI. Matching languages plays a big role for seamless product research. Formbricks lets you handle survey translations easily.",
     imgSrc: Img4,
     imgAlt: "Example of a multi-language survey embedded in a mobile app",
     imgLeft: true,
@@ -68,7 +71,7 @@ const inAppSurveyFeatures = [
   {
     headline: "Super fast loading",
     subheadline:
-      "The Formbricks SDK is tiny (7KB). Keep your app lightning fast and your users engaged. This in app survey tool always loads deferred and never slows down your app.",
+      "The Formbricks SDK is tiny (7KB). Keep your app lightning fast and your users engaged. The in app survey SDK always loads deferred and never slows down your app.",
     imgSrc: Img5,
     imgAlt: "Demonstration of super fast loading times for an embedded survey in an app",
     imgLeft: false,
@@ -76,7 +79,7 @@ const inAppSurveyFeatures = [
   {
     headline: "On brand design",
     subheadline:
-      "Customize your embedded surveys so they really fit in. Match the look & feel of your app with our no-code design editor (or load your own style sheet). Don't distrub anyone with surveys which feel bolted onto your app.",
+      "Customize your embedded surveys to fit in. Match the look & feel of your embedded surveys with your app. Leverage our no-code design editor or load a custom style sheet - all on the free plan!",
     imgSrc: Img6,
     imgAlt: "Preview of an on-brand design survey custom designed to fit within an app",
     imgLeft: true,
@@ -95,17 +98,17 @@ const linkSurveyFeaturesPt2 = [
   {
     headline: "Team roles",
     subheadline:
-      "Control who can set up app surveys, and who gets to work with the insights gathered by your reserach. Granular access control enables more people to work with the insights gathered via in app surveys.",
+      "Control who can set up app surveys, and who gets to work with the insights gathered by your reserach. Granular access control allows everyone to work with the insights gathered with in-product research.",
     imgSrc: Img8,
-    imgAlt: "Interface showcasing team roles and access rights for survey setup and insights",
+    imgAlt: "Interface showcasing team roles and access rights for in app survey setup and insights",
     imgLeft: true,
   },
   {
-    headline: "Reusable segments to reliable targeting",
+    headline: "Reuse segments to target consistently",
     subheadline:
       "Compose segments of app users with advanced filters. Reuse these segments to survey the same cohorts consistently. Keeping your targeting consistent allows to measure how much your app experience improves over time.",
     imgSrc: Img9,
-    imgAlt: "Visualization of creating and reusing segments for targeted surveys in app",
+    imgAlt: "Visualization of creating and reusing segments for targeted surveys inapp",
     imgLeft: false,
   },
 ];
@@ -145,40 +148,39 @@ const allFeaturesList = [
 
 const FAQs = [
   {
-    question: "Is Formbricks really free for creating embedded surveys and in-app survey tools?",
+    question: "Is Formbricks really free for creating embedded or in-app surveys?",
     answer:
-      "Yes, Formbricks offers both a free Cloud plan and an open source community edition, making it an accessible choice for deploying embedded surveys and in-app survey tools. Advanced features are available for those needing more specialized capabilities.",
+      "Yes, Formbricks offers both a free Cloud plan and an open source community edition. This makes it an accessible choice for deploying embedded surveys and in-app survey. Advanced features are available for those needing more specialized capabilities.",
   },
   {
-    question: "Can I self-host Formbricks for more control over my app survey and product survey tools?",
+    question: "Can I self-host Formbricks for more control over my product research tools?",
     answer:
-      "Absolutely. Formbricks can be self-hosted with one click via our Docker image, giving you full control over your app surveys and product survey tools, while ensuring data privacy and compliance.",
+      "Absolutely. Formbricks can be self-hosted with one click via our Docker image. This gives you full control over your product survey tools, while ensuring data privacy and compliance.",
   },
   {
     question:
-      "How does Formbricks compare to Sprig and other micro survey software in terms of features and flexibility?",
+      "How does Formbricks compare to other micro survey software in terms of features and flexibility?",
     answer:
-      "Formbricks is competitive with Sprig and other micro survey software, offering a comprehensive suite of features for embedded surveys, in-app feedback, and micro surveys. Its flexibility allows for custom development to meet specific needs.",
+      "Formbricks offers a comprehensive suite of features for embedded surveys, in-app feedback, and micro surveys. For see the speed development, have a look at the Formbricks repository on GitHub linked in the Footer. In case you're missing something, just let us know and we'll build it.",
   },
   {
     question: "Is Formbricks GDPR-compliant for use as an in-app survey tool and embedded survey platform?",
     answer:
-      "Yes, Formbricks is fully GDPR and CCPA compliant, making it a reliable choice for businesses seeking an in-app survey tool and embedded survey platform. Hosted in Frankfurt, Germany, by a German company, it ensures the highest standards of data protection.",
+      "Yes, Formbricks is fully GDPR and CCPA compliant. It's a reliable choice for businesses seeking an in-app survey tool which handles potentially personalized data. Hosted in Frankfurt, Germany, and developed by a German company, it ensures the highest standards of data protection.",
+  },
+  {
+    question: "Can Formbricks help in conducting micro surveys within a mobile app?",
+    answer: "Currently, we do not offer SDKs for mobile apps yet. However, this is on the roadmap for 2024.",
   },
   {
     question: "What are the best tools for creating an app survey?",
     answer:
-      "For creating app surveys, Formbricks is among the top tools, offering a seamless integration process for mobile app surveys. It's designed for both developers and marketers looking to gather insights directly within their apps.",
+      "For creating app surveys, Formbricks is among the top tools. As an open source product, we keep developer requirements at heart. However, the UX of Formbricks is designed also support marketers, researchers and sales reps in their work.",
   },
   {
     question: "How can I implement an in-app survey effectively?",
     answer:
-      "To implement an in-app survey effectively, use Formbricks to embed surveys directly into your mobile application. This method enhances user engagement and provides real-time feedback without disrupting the app experience.",
-  },
-  {
-    question: "Can I use Formbricks for product survey tools?",
-    answer:
-      "Absolutely! Formbricks is versatile enough to be used as a product survey tool, allowing you to collect valuable customer insights about your products through embedded surveys and in-app feedback mechanisms.",
+      "To implement an in-app survey effectively, use Formbricks to embed surveys directly into your application. In-product research has higher conversion and completion rates than any other form of surveying.",
   },
   {
     question: "What is a micro survey and how can I use it with Formbricks?",
@@ -193,11 +195,7 @@ const FAQs = [
   {
     question: "What advantages does Formbricks offer for in-app survey tools?",
     answer:
-      "Formbricks offers numerous advantages for in-app surveys, including easy integration, real-time analytics, customizable survey templates, and micro survey capabilities, making it a powerful tool for enhancing user engagement and feedback collection.",
-  },
-  {
-    question: "Can Formbricks help in conducting micro surveys within a mobile app?",
-    answer: "Currently, we do not offer SDKs for mobile apps. However, this is on the roadmap for 2024.",
+      "Formbricks offers numerous advantages for in-app surveys, including easy integration, real-time analytics, customizable survey templates, and micro survey capabilities. It's a powerful tool for enhancing user engagement and feedback collection.",
   },
 ];
 
@@ -225,16 +223,16 @@ export default function LinkSurveyPage() {
           textSize="base"
         />
         <SalesTestimonial
-          quote="We're using Formbricks with Amplitude. The surveys fit in perfectly with our UI and the event-based targeting is super useful. The team loves it!"
-          author="Sachin Jain, CEO @ Requestly (YC W22)"
-          imgSrc={Sachin}
-          imgAlt="Sachin Jain, CEO @ Requestly"
-          textSize="base"
+          quote="As a product-led growth company, we run surveys at key moments in our user journey. We spent a lot of time crafting our UX and I love how seamless Formbricks fits in! Should be a no-brainer for every product team."
+          author="Bailey Pumfleet, Co-CEO @ Cal.com"
+          imgSrc={Bailey}
+          imgAlt="tba"
+          textSize="large"
         />
       </div>
       <SalesPageFeature
         headline="Native look and feel, powered by open source"
-        subheadline="Formbricks is fully open source. Integrate it natively and keep engineers, designers and researchers happy. Formbricks is the most versatile open source in product survey tool available."
+        subheadline="Formbricks is fully open source. Integrate it natively and keep engineers, designers and researchers happy. Formbricks is the most versatile open source in-product survey tool available."
         imgSrc={Img2}
         imgAlt="tba"
         imgLeft
@@ -267,14 +265,21 @@ export default function LinkSurveyPage() {
         );
       })}
       <SalesTestimonial
-        quote="As a product-led growth company, we run surveys at key moments in our user journey. We spent a lot of time crafting our UX and I love how seamless Formbricks fits in! Should be a no-brainer for every product team."
-        author="Bailey Pumfleet, Co-CEO @ Cal.com"
-        imgSrc={Bailey}
-        imgAlt="tba"
-        textSize="large"
+        quote="We're using Formbricks with Amplitude. The surveys fit in perfectly with our UI and the event-based targeting is super useful. The team loves it!"
+        author="Sachin Jain, CEO @ Requestly (YC W22)"
+        imgSrc={Sachin}
+        imgAlt="Sachin Jain, CEO @ Requestly"
+        textSize="base"
       />
       <div className="space-y-12">
-        <h2 className="text-balance text-center text-3xl font-bold text-slate-800">More Features</h2>
+        <HeadingCentered
+          heading={
+            <span>
+              In app surveys <i>exactly</i> how you want them
+            </span>
+          }
+          teaser="All features backed in"
+        />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {allFeaturesList.map((feature) => {
             return (
@@ -289,7 +294,7 @@ export default function LinkSurveyPage() {
         </div>
       </div>
       <SalesBreaker
-        headline="In-app surveys people WANT to reply to"
+        headline="Embed surveys the right way - natively."
         subheadline="You spent months crafting your product, don’t ruin it with pop-ups."
       />
       <div>

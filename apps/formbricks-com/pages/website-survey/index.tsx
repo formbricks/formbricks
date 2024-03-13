@@ -34,17 +34,19 @@ const websiteSurveySteps = [
   {
     id: "1",
     name: "Connect your website",
-    description: "Copy a code snippet to the HEAD of your website and you're good to go!",
+    description:
+      "Copy a code snippet to the <HEAD> of your website and you're good to go! Works on all types of websites, including WordPress and Shopify.",
   },
   {
     id: "2",
     name: "Set up trigger",
-    description: "Create a survey and trigger it at the perfect time. No coding required.",
+    description: "Create a website survey and trigger it at the perfect time. No coding required.",
   },
   {
     id: "3",
     name: "AI analysis",
-    description: "Analyze insights in Formbricks in a breeze with our AI.",
+    description:
+      "Analyze insights from your internet survey in Formbricks easily. Our privacy-first AI highlights key insights without leaking any data.",
   },
 ];
 
@@ -52,7 +54,7 @@ const websiteSurveyFeatures = [
   {
     headline: "No-code targeting",
     subheadline:
-      "No need to make changes to your code base. Use generic triggers like clicks, page views, scroll depth or exit intent to trigger surveys when you need it. No-code targeting is a great way to enable less technical team mates to run open source online surveys.",
+      "To set up and run an online survey, no code changes are needed. Use generic triggers like clicks, page views, scroll depth or exit intents to trigger web surveys whenever you want. Enable less technical team mates to run online surveys in minutes.",
     imgSrc: Img3,
     imgAlt: "Illustration of no-code online survey targeting",
     imgLeft: false,
@@ -60,7 +62,7 @@ const websiteSurveyFeatures = [
   {
     headline: "100% privacy-first",
     subheadline:
-      "Formbricks can be self-hosted with 1 click. Prefer a managed service? We run our Cloud as a German company, hosted in Germany: Fully GDPR- and CCPA-compliant. Keeping your data private has never been easier.",
+      "Formbricks can be self-hosted with one click. Prefer a managed service? We run our Cloud as a German company, hosted in Germany with full GDPR- and CCPA-compliance. Keeping survey data private has never been easier.",
     imgSrc: Img4,
     imgAlt: "GDPR and CCPA-compliant privacy-first online survey tool",
     imgLeft: true,
@@ -74,9 +76,9 @@ const websiteSurveyFeatures = [
     imgLeft: false,
   },
   {
-    headline: "Multi-language surveys",
+    headline: "Multi-language website surveys",
     subheadline:
-      "You offer your website in several languages? No problem for surveys! Display online surveys in the language your visitor prefers automatically. Easily manage multi-language surveys with Formbricks.",
+      "You offer your website in several languages? No problem! Display your online surveys in the language your visitor prefers automatically. Easily manage multi-language survey translations with Formbricks.",
     imgSrc: Img6,
     imgAlt: "Multi-language online surveys for global audience engagement",
     imgLeft: true,
@@ -84,7 +86,7 @@ const websiteSurveyFeatures = [
   {
     headline: "Fully on brand design",
     subheadline:
-      "Freely customize the look and feel of your website surveys. Make them match your user interface design for better conversion rates. Especially open source surveys provide the deepest level of customizability.",
+      "Freely customize the look and feel of your website surveys. Make them match your user interface for better conversion rates. Especially open source surveys provide the deepest level of customizability.",
     imgSrc: Img7,
     imgAlt: "Customizable on-brand design for online surveys",
     imgLeft: false,
@@ -95,7 +97,7 @@ const linkSurveyFeaturesPt2 = [
   {
     headline: "Fine-grained targeting with custom attributes",
     subheadline:
-      "Attach custom attributes to website visitors and target only the ones who match. Targeted online research yields much better insights at a lower cost. Our solution is built for scale (millions of visitors).",
+      "Attach custom attributes to website visitors and target only the ones who match. Targeted online research yields much better insights at a lower cost. Formbricks is built for scale, it can handle millions of visitors smoothly.",
     imgSrc: Img8,
     imgAlt: "Custom attribute targeting in online surveys for precise data collection",
     imgLeft: true,
@@ -103,7 +105,7 @@ const linkSurveyFeaturesPt2 = [
   {
     headline: "Forget about ad blockers",
     subheadline:
-      "Many survey tools are considered tracking tools and get blocked by browsers. Formbricks does not track any persona information. Plus, you can always self-host Formbricks and increase your response rates significantly.",
+      "Many survey tools are considered tracking tools and get blocked by browsers. Formbricks does not track any personal information out of the box. Plus, you can always self-host Formbricks and increase your response rates significantly.",
     imgSrc: Img9,
     imgAlt: "Ad-blocker resistant online survey tool for higher response rates",
     imgLeft: false,
@@ -111,7 +113,7 @@ const linkSurveyFeaturesPt2 = [
   {
     headline: "Snap a screenshot for more context",
     subheadline:
-      "Understand the context of users filling in your website surveys with a screenshot. Erase potentially personalized data out automatically.",
+      "Understand the context of users filling in your website surveys with a screenshot. Erase potentially personalized data form your online questionnaire automatically.",
     imgSrc: Img10,
     imgAlt: "Context-enhancing screenshots for comprehensive online survey data",
     imgLeft: true,
@@ -153,54 +155,49 @@ const allFeaturesList = [
 
 const FAQs = [
   {
-    question: "Is Formbricks really a free solution?",
+    question: "Is it really free to run website surveys with Formbricks?",
     answer:
-      "Absolutely! Formbricks offers both a complimentary Cloud plan and a community edition that's open source. You'll only invest in advanced features should you need them, ensuring that survey creation and data analysis are accessible to everyone.",
+      "Absolutely! Formbricks offers both a free Cloud plan and a community edition that's open source. If you self-host you can gather unlimited responses. If you use the Formbricks Cloud to run online surveys, we charge a small fee for every response which exceeds the generous free tier. For enterprise customers with advanced feature needs, we have a specific license and volume pricing.",
   },
   {
-    question: "How can I host Formbricks myself?",
+    question: "Can I host Formbricks myself?",
     answer:
-      "Certainly! With just a single click, you can self-host Formbricks using our Docker image. This gives you total control over your survey data and privacy, aligning with GDPR and CCPA compliance.",
+      "Certainly! With just a single click, you can self-host Formbricks using our Docker image. This lets you run online questionnaires with total control over your survey data.",
   },
   {
-    question: "How does Formbricks stand against tools like Hotjar Ask?",
+    question: "How does Formbricks stand against other website survey tools on the market?",
     answer:
-      "Formbricks rivals the capabilities of many leading survey tools like Hotjar Ask, offering comprehensive feedback and insight mechanisms. Missing a feature? Let us know, and we're on it to add it!",
+      "Formbricks is the only open source tool specializing in surveying. We pride ourselves to match if not beat existing tools with feature depth and usability. In terms of data privacy and compliance, Formbricks remains unbeaten due to its open source approach.",
   },
   {
     question: "Does Formbricks meet GDPR compliance standards?",
     answer:
-      "Indeed. As a product developed by a German company and hosted in Frankfurt, Germany, Formbricks ensures full compliance with GDPR and CCPA, prioritizing data security and privacy.",
-  },
-  {
-    question: "Can Formbricks integrate with my website analytics?",
-    answer:
-      "Yes, Formbricks seamlessly integrates with various analytics tools, providing deeper insights into your survey data and how it correlates with your website's performance metrics.",
+      "Indeed. As a product developed by a German company and hosted in Frankfurt, Germany, Formbricks ensures full compliance with GDPR and CCPA. We provide everything you need for a swift compliance review.",
   },
   {
     question: "Is Formbricks suitable for mobile surveys?",
     answer:
-      "Definitely! Formbricks is designed to be fully responsive, ensuring that your surveys look great and function perfectly on mobile devices, enhancing the user experience for all participants.",
+      "Definitely, Formbricks online surveys are fully responsive. Your surveys look great and function perfectly on mobile devices, no matter on which device or browser the online questionnaire is displayed.",
   },
   {
     question: "How customizable are Formbricks surveys?",
     answer:
-      "Formbricks surveys are highly customizable, allowing you to adjust the design to match your brand's look and feel. This level of personalization helps improve response rates and engagement.",
+      "Formbricks surveys are highly customizable. The visual editor enables teams to easily match brand design guidelines and existing UIs. Tech-savvy users can load their own stylesheet for maximum flexibilioty. This depth of customization helps improve response rates of website surveys significantly.",
   },
   {
     question: "Does Formbricks support multi-language surveys?",
     answer:
-      "Yes, Formbricks supports multiple languages, making it easy to create and manage surveys in different languages, catering to a global audience and enhancing the reach of your surveys.",
+      "Yes, Formbricks supports multiple languages. This makes it easy to create and manage online surveys in different languages. The internet is global and audiences diverse so Formbricks let's you display website surveys dynamically.",
   },
   {
-    question: "What makes Formbricks different from other survey tools?",
+    question: "What makes Formbricks different from other website survey tools?",
     answer:
-      "Formbricks stands out with its open-source nature, privacy-first approach, and flexibility in hosting options. This unique combination ensures you can conduct surveys with full data control and compliance.",
+      "Formbricks stands out with its open-source nature, privacy-first approach, and flexibility in hosting options. This unique combination ensures you can run beautiful online surveys with full data control and compliance.",
   },
   {
     question: "How quick is the setup process with Formbricks?",
     answer:
-      "Setting up with Formbricks is swift and straightforward. Whether you're opting for the cloud version or self-hosting, you can get your surveys up and running in no time, with no coding required.",
+      "Setting up with Formbricks is swift and straightforward. Whether you're opting for the cloud version or self-hosting, you can get your website surveys up and running in no time, with no coding required.",
   },
 ];
 
@@ -233,7 +230,7 @@ export default function WebsiteSurveyPage() {
       </div>
       <SalesPageFeature
         headline="Keep all data private and secure"
-        subheadline="Formbricks is open source and can be self-hosted easily. Fly through compliance reviews by keeping all data on premise - or use our EU Cloud 🇪🇺. Formbricks works in full compliance with data privacy regulation."
+        subheadline="Formbricks is open source and can be self-hosted easily. Fly through compliance reviews by keeping all data on premise - or use our EU Cloud 🇪🇺. Formbricks works in full compliance with data privacy regulation worldwide."
         imgSrc={Img2}
         imgAlt="Formbricks is open source and can be self-hosted easily. Fly through compliance reviews by keeping all data on premise - or use our EU cloud "
         imgLeft
@@ -266,13 +263,17 @@ export default function WebsiteSurveyPage() {
         );
       })}
       <SalesBreaker
-        headline="All clear? Get started!"
-        subheadline="Run targeted website surveys, all privacy-first. Make the most out of your website traffic while keeping your data private and secure."
+        headline="All clear? Run your first website survey 👉"
+        subheadline="Targeted website surveys, all privacy-first. Run professional research without compromising data privacy."
       />
       <div className="">
         <HeadingCentered
-          heading="All form builder features"
-          teaser="Build open source forms like never before"
+          heading={
+            <span>
+              Website surveys <i>exactly</i> how you want them
+            </span>
+          }
+          teaser="All features you need"
         />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {allFeaturesList.map((feature) => {
