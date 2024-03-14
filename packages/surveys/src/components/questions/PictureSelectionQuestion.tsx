@@ -118,7 +118,7 @@ export default function PictureSelectionQuestion({
                   Array.isArray(value) && value.includes(choice.id)
                     ? `border-brand text-brand z-10 border-4 shadow-xl focus:border-4`
                     : "",
-                  "border-border focus:border-border-highlight focus:bg-accent-selected-bg relative box-border inline-block h-28 w-full overflow-hidden rounded-xl border focus:outline-none"
+                  "border-border focus:bg-accent-selected-bg relative box-border inline-block h-28 w-full overflow-hidden rounded-xl border focus:outline-none"
                 )}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img

@@ -44,10 +44,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   appendCssVariable("brand-color", styling.brandColor?.light);
   if (!!styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
-    cssVariables += `--fb-brand-text-color: ${isLight(styling.brandColor?.light) ? "black" : "white"};\n`;
+    appendCssVariable("brand-text-color", isLight(styling.brandColor?.light) ? "black" : "white");
+    appendCssVariable("survey-shadow-color", mixColor(styling.brandColor?.light, "#000000", 0.5));
   } else {
     // If the brand color is undefined, default to white
-    cssVariables += `--fb-brand-text-color: white;\n`;
+    appendCssVariable("brand-text-color", "#ffffff");
   }
   appendCssVariable("heading-color", styling.questionColor?.light);
   appendCssVariable("subheading-color", styling.questionColor?.light);
