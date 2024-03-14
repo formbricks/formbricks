@@ -83,19 +83,33 @@ export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE;
 export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
 
 // Storage constants
+export const AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID;
+export const AWS_SECRET_ACCESS_KEY = env.AWS_SECRET_ACCESS_KEY;
+export const AWS_REGION = env.AWS_REGION;
 export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
 export const S3_SECRET_KEY = env.S3_SECRET_KEY;
 export const S3_REGION = env.S3_REGION;
 export const S3_ENDPOINT_URL = env.S3_ENDPOINT_URL;
 export const S3_BUCKET_NAME = env.S3_BUCKET_NAME;
-export const UPLOADS_DIR = "./uploads";
+export const UPLOADS_DIR = env.UPLOADS_DIR || "./uploads";
 export const MAX_SIZES = {
   public: 1024 * 1024 * 10, // 10MB
   free: 1024 * 1024 * 10, // 10MB
   pro: 1024 * 1024 * 1024, // 1GB
 } as const;
-export const IS_S3_CONFIGURED: boolean =
-  env.S3_ACCESS_KEY && env.S3_SECRET_KEY && env.S3_REGION && env.S3_BUCKET_NAME ? true : false;
+
+export const isS3Configured = () => {
+  // for aws sdk, it can pick up the creds for access key, secret key and the region from the environment variables
+  if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY && AWS_REGION) {
+    // so we only need to check if the bucket name is set
+    return !!S3_BUCKET_NAME;
+  }
+
+  // for other s3 compatible services, we need to provide the access key and secret key
+  return S3_ACCESS_KEY && S3_SECRET_KEY && (S3_ENDPOINT_URL ? S3_REGION : true) && S3_BUCKET_NAME
+    ? true
+    : false;
+};
 
 // Pricing
 export const PRICING_USERTARGETING_FREE_MTU = 2500;

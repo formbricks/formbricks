@@ -26,17 +26,16 @@
     "data-migration:v1.6": "ts-node ./migrations/20240207041922_advanced_targeting/data-migration.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.10.2",
+    "@prisma/client": "^5.11.0",
     "@prisma/extension-accelerate": "^1.0.0",
-    "@t3-oss/env-nextjs": "^0.9.2",
-    "dotenv-cli": "^7.3.0"
+    "dotenv-cli": "^7.4.1"
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "eslint-config-formbricks": "workspace:*",
-    "prisma": "^5.10.2",
+    "prisma": "^5.11.0",
     "prisma-dbml-generator": "^0.12.0",
     "prisma-json-types-generator": "^3.0.4",
     "ts-node": "^10.9.2",
