@@ -49,39 +49,48 @@ export const SigninForm = ({
 
   const formMethods = useForm<TSigninFormState>();
 
+  const handleSignInResponse = async (data: TSigninFormState) => {
+    const signInResponse = await signIn("credentials", {
+      callbackUrl: searchParams?.get("callbackUrl") || "/",
+      email: data.email.toLowerCase(),
+      password: data.password,
+      ...(totpLogin && { totpCode: data.totpCode }),
+      ...(totpBackup && { backupCode: data.backupCode }),
+      redirect: false,
+    });
+  
+    return signInResponse;
+  };
+  
+  const handleSignInError = (signInResponse: any, data: TSigninFormState) => {
+    if (signInResponse?.error === "second factor required") {
+      setTotpLogin(true);
+      setLoggingIn(false);
+      return;
+    }
+  
+    if (signInResponse?.error === "Email Verification is Pending") {
+      router.push(`/auth/verification-requested?email=${data.email}`);
+      return;
+    }
+  
+    if (signInResponse?.error) {
+      setLoggingIn(false);
+      setSignInError(signInResponse.error);
+      return;
+    }
+  
+    if (!signInResponse?.error) {
+      router.push(searchParams?.get("callbackUrl") || "/");
+    }
+  };
+  
   const onSubmit: SubmitHandler<TSigninFormState> = async (data) => {
     setLoggingIn(true);
-
+  
     try {
-      const signInResponse = await signIn("credentials", {
-        callbackUrl: searchParams?.get("callbackUrl") || "/",
-        email: data.email.toLowerCase(),
-        password: data.password,
-        ...(totpLogin && { totpCode: data.totpCode }),
-        ...(totpBackup && { backupCode: data.backupCode }),
-        redirect: false,
-      });
-
-      if (signInResponse?.error === "second factor required") {
-        setTotpLogin(true);
-        setLoggingIn(false);
-        return;
-      }
-
-      if (signInResponse?.error === "Email Verification is Pending") {
-        router.push(`/auth/verification-requested?email=${data.email}`);
-        return;
-      }
-
-      if (signInResponse?.error) {
-        setLoggingIn(false);
-        setSignInError(signInResponse.error);
-        return;
-      }
-
-      if (!signInResponse?.error) {
-        router.push(searchParams?.get("callbackUrl") || "/");
-      }
+      const signInResponse = await handleSignInResponse(data);
+      handleSignInError(signInResponse, data);
     } catch (error) {
       const errorMessage = error.toString();
       const errorFeedback = errorMessage.includes("Invalid URL")
@@ -92,15 +101,6 @@ export const SigninForm = ({
       setLoggingIn(false);
     }
   };
-
-  const [loggingIn, setLoggingIn] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const [totpLogin, setTotpLogin] = useState(false);
-  const [totpBackup, setTotpBackup] = useState(false);
-  const [signInError, setSignInError] = useState("");
-  const formRef = useRef<HTMLFormElement>(null);
-  const error = searchParams?.get("error");
   const callbackUrl = searchParams?.get("callbackUrl");
   const inviteToken = callbackUrl ? new URL(callbackUrl).searchParams.get("token") : null;
 
