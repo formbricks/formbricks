@@ -113,8 +113,6 @@ export default function SurveyEditor({
         isPrivate: true,
       });
 
-      console.log("created segment: ", createdSegment);
-
       setLocalSurvey({
         ...localSurvey,
         segment: createdSegment,
@@ -123,7 +121,6 @@ export default function SurveyEditor({
 
     if (!localSurvey.segment?.id) {
       try {
-        console.log("creating segment");
         createSegment();
       } catch (err) {
         throw new Error("Error creating segment");

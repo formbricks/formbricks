@@ -45,11 +45,16 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   if (!!styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
     appendCssVariable("brand-text-color", isLight(styling.brandColor?.light) ? "black" : "white");
-    appendCssVariable("survey-shadow-color", mixColor(styling.brandColor?.light, "#000000", 0.5));
   } else {
     // If the brand color is undefined, default to white
     appendCssVariable("brand-text-color", "#ffffff");
   }
+
+  if (styling.cardShadowColor?.light) {
+    // mix the shadow color with white to get a lighter shadow
+    appendCssVariable("survey-shadow-color", mixColor(styling.cardShadowColor.light, "#ffffff", 0.4));
+  }
+
   appendCssVariable("heading-color", styling.questionColor?.light);
   appendCssVariable("subheading-color", styling.questionColor?.light);
 

@@ -7,6 +7,7 @@ export const COLOR_DEFAULTS = {
   inputBorderColor: "#cbd5e1",
   cardBackgroundColor: "#ffffff",
   cardBorderColor: "#e2e8f0",
+  cardShadowColor: "#000000",
   highlightBorderColor: "#64748b",
 } as const;
 

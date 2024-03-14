@@ -84,7 +84,7 @@ const FormStylingSettings = ({
     setInputColor(mixColor(brandColor, "#ffffff", 0.9));
     setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
 
-    // card background and border:
+    // card background, border and shadow colors
     setLocalSurvey((prev) => ({
       ...prev,
       styling: {
@@ -96,6 +96,10 @@ const FormStylingSettings = ({
         cardBorderColor: {
           ...(prev.styling?.cardBorderColor ?? {}),
           light: mixColor(brandColor, "#ffffff", 0.8),
+        },
+        cardShadowColor: {
+          ...(prev.styling?.cardShadowColor ?? {}),
+          light: brandColor,
         },
       },
     }));

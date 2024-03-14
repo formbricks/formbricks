@@ -62,6 +62,20 @@ const CardStylingSettings = ({
     }));
   };
 
+  const cardShadowColor = localSurvey.styling?.cardShadowColor?.light || COLOR_DEFAULTS.cardShadowColor;
+  const setCardShadowColor = (color: string) => {
+    setLocalSurvey((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        cardShadowColor: {
+          ...(prev.styling?.cardShadowColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
+
   const isHighlightBorderAllowed = !!localSurvey.styling?.highlightBorderColor;
   const setIsHighlightBorderAllowed = (open: boolean) => {
     if (!open) {
@@ -215,6 +229,15 @@ const CardStylingSettings = ({
             description="Change the border color of the card."
             disabled={isHighlightBorderAllowed}
           />
+
+          {localSurvey.type === "link" && (
+            <ColorSelectorWithLabel
+              label="Card shadow color"
+              color={cardShadowColor}
+              setColor={setCardShadowColor}
+              description="Change the shadow color of the card."
+            />
+          )}
 
           {localSurvey.type === "web" && (
             <div className="flex max-w-xs flex-col gap-4">

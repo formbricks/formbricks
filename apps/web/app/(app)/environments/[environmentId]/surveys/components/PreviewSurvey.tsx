@@ -136,7 +136,10 @@ export default function PreviewSurvey({
       return survey.styling;
     }
 
-    return product.styling;
+    return {
+      unifiedStyling: true,
+      allowStyleOverwrite: true,
+    };
   }, [product.styling, survey.styling]);
 
   useEffect(() => {

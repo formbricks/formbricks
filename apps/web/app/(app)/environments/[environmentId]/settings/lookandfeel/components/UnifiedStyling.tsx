@@ -191,6 +191,20 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
+  const cardShadowColor = localProduct.styling.cardShadowColor?.light ?? COLOR_DEFAULTS.cardShadowColor;
+  const setCardShadowColor = (color: string) => {
+    setLocalProduct((prev) => ({
+      ...prev,
+      styling: {
+        ...prev.styling,
+        cardShadowColor: {
+          ...(prev.styling.cardShadowColor ?? {}),
+          light: color,
+        },
+      },
+    }));
+  };
+
   const roundness = localProduct.styling.roundness ?? 8;
   const setRoundness = (value: number) => {
     setLocalProduct((prev) => ({
@@ -334,6 +348,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
     setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.95));
     setCardBorderColor(mixColor(brandColor, "#ffffff", 0.8));
+    setCardShadowColor(brandColor);
     if (isHighlightBorderAllowed) {
       setHighlightBorderColor(mixColor(brandColor, "#ffffff", 0.25));
     }
@@ -461,6 +476,17 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             className="max-w-full"
             disabled={!unifiedStyling || isHighlightBorderAllowed}
           />
+
+          {previewSurveyType === "link" && (
+            <ColorSelectorWithLabel
+              label="Card shadow color"
+              color={cardShadowColor}
+              setColor={setCardShadowColor}
+              description="Change the shadow color of the card"
+              className="max-w-full"
+              disabled={!unifiedStyling}
+            />
+          )}
 
           {previewSurveyType === "web" && (
             <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
