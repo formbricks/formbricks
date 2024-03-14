@@ -54,29 +54,14 @@ export const login = async (page: Page, email: string, password: string): Promis
   await page.getByRole("button", { name: "Login with Email" }).click();
 };
 
-export const finishOnboarding = async (page: Page): Promise<void> => {
+export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean = true): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
-
-  // await page.getByRole("button", { name: "Link Surveys Create a new" }).click();
-  // await page.getByRole("button", { name: "Start from scratch" }).click();
-
-  // await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit/);
-
-  // await page.getByRole("button", { name: "Continue to Settings" }).click();
-  // await page.getByRole("button", { name: "Publish" }).click();
-
-  // await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
-  // await expect(page.getByText("Your survey is public 🎉")).toBeVisible();
-  // await page.getByRole("button", { name: "Close" }).click();
-  // await page.getByRole("link", { name: "Surveys" }).click();
 
   const hiddenSkipButton = page.locator("#FB__INTERNAL__SKIP_ONBOARDING");
   hiddenSkipButton.evaluate((el: HTMLElement) => el.click());
 
   await expect(page.getByText("My Product")).toBeVisible();
-
-  // await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
 
   let currentDir = process.cwd();
   let htmlFilePath = currentDir + "/packages/js/index.html";
@@ -97,28 +82,12 @@ export const finishOnboarding = async (page: Page): Promise<void> => {
   await page.goto("/");
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
-  // await page.locator("#survey-actions").click();
-  await page.click("#example-survey-survey-actions");
-  await page.getByRole("menuitem", { name: "Delete" }).click();
-  await page.getByRole("button", { name: "Delete" }).click();
-  await page.reload();
-  await page.screenshot();
-
-  // const hiddenSkipButton = page.locator("#FB__INTERNAL__SKIP_ONBOARDING");
-  // hiddenSkipButton.evaluate((el: HTMLElement) => el.click());
-
-  // await page.getByRole("button", { name: "In-app Surveys Run a survey" }).click();
-
-  // await page.getByRole("button", { name: "Skip" }).click();
-  // await page.getByRole("button", { name: "Skip" }).click();
-
-  // await page.getByRole("button", { name: "I am not sure how to do this" }).click();
-  // await page.locator("input").click();
-  // await page.locator("input").fill("test@gmail.com");
-  // await page.getByRole("button", { name: "Invite" }).click();
-
-  // await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  // await expect(page.getByText("My Product")).toBeVisible();
+  if (deleteExampleSurvey) {
+    await page.click("#example-survey-survey-actions");
+    await page.getByRole("menuitem", { name: "Delete" }).click();
+    await page.getByRole("button", { name: "Delete" }).click();
+    await page.reload();
+  }
 };
 
 export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
@@ -160,7 +129,7 @@ export const createSurvey = async (
   const addQuestion = "Add QuestionAdd a new question to your survey";
 
   await signUpAndLogin(page, name, email, password);
-  await finishOnboarding(page);
+  await finishOnboarding(page, false);
 
   await page.getByRole("link", { name: "New survey", exact: true }).click();
   await page.getByRole("heading", { name: "Start from Scratch" }).click();
@@ -275,11 +244,7 @@ export const createSurvey = async (
   await page.getByLabel("Question").fill(params.fileUploadQuestion.question);
 
   // Thank You Card
-  await page
-    .locator("div")
-    .filter({ hasText: /^Thank You CardShown$/ })
-    .nth(1)
-    .click();
+  page.getByText("Thank You CardShownShow").click();
   await page.getByLabel("Question").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

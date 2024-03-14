@@ -112,8 +112,8 @@ test.describe("JS Package Test", async () => {
 
     // Formbricks Modal is not visible
     await expect(page.getByText("Powered by Formbricks")).not.toBeVisible({ timeout: 10000 });
-    // await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(3000);
   });
 
   test("Admin validates Displays & Response", async ({ page }) => {
