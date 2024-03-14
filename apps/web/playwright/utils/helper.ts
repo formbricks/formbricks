@@ -58,8 +58,54 @@ export const finishOnboarding = async (page: Page): Promise<void> => {
   await page.waitForURL("/onboarding");
   await expect(page).toHaveURL("/onboarding");
 
+  // await page.getByRole("button", { name: "Link Surveys Create a new" }).click();
+  // await page.getByRole("button", { name: "Start from scratch" }).click();
+
+  // await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit/);
+
+  // await page.getByRole("button", { name: "Continue to Settings" }).click();
+  // await page.getByRole("button", { name: "Publish" }).click();
+
+  // await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
+  // await expect(page.getByText("Your survey is public 🎉")).toBeVisible();
+  // await page.getByRole("button", { name: "Close" }).click();
+  // await page.getByRole("link", { name: "Surveys" }).click();
+
   const hiddenSkipButton = page.locator("#FB__INTERNAL__SKIP_ONBOARDING");
   hiddenSkipButton.evaluate((el: HTMLElement) => el.click());
+
+  await expect(page.getByText("My Product")).toBeVisible();
+
+  // await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
+
+  let currentDir = process.cwd();
+  let htmlFilePath = currentDir + "/packages/js/index.html";
+
+  const environmentId =
+    /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+    (() => {
+      throw new Error("Unable to parse environmentId from URL");
+    })();
+
+  let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
+  await page.goto(htmlFile);
+
+  // Formbricks In App Sync has happened
+  const syncApi = await page.waitForResponse((response) => response.url().includes("/in-app/sync"));
+  expect(syncApi.status()).toBe(200);
+
+  await page.goto("/");
+  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+
+  // await page.locator("#survey-actions").click();
+  await page.click("#example-survey-survey-actions");
+  await page.getByRole("menuitem", { name: "Delete" }).click();
+  await page.getByRole("button", { name: "Delete" }).click();
+  await page.reload();
+  await page.screenshot();
+
+  // const hiddenSkipButton = page.locator("#FB__INTERNAL__SKIP_ONBOARDING");
+  // hiddenSkipButton.evaluate((el: HTMLElement) => el.click());
 
   // await page.getByRole("button", { name: "In-app Surveys Run a survey" }).click();
 
@@ -70,8 +116,9 @@ export const finishOnboarding = async (page: Page): Promise<void> => {
   // await page.locator("input").click();
   // await page.locator("input").fill("test@gmail.com");
   // await page.getByRole("button", { name: "Invite" }).click();
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-  await expect(page.getByText("My Product")).toBeVisible();
+
+  // await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  // await expect(page.getByText("My Product")).toBeVisible();
 };
 
 export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
@@ -115,7 +162,9 @@ export const createSurvey = async (
   await signUpAndLogin(page, name, email, password);
   await finishOnboarding(page);
 
+  await page.getByRole("link", { name: "New survey", exact: true }).click();
   await page.getByRole("heading", { name: "Start from Scratch" }).click();
+  await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();

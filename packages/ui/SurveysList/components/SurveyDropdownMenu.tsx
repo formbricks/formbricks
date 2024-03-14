@@ -107,7 +107,9 @@ export default function SurveyDropDownMenu({
     );
   }
   return (
-    <>
+    <div
+      id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
+      onClick={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
           <div className="rounded-lg border p-2 hover:bg-slate-50">
@@ -240,6 +242,6 @@ export default function SurveyDropDownMenu({
           text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
         />
       )}
-    </>
+    </div>
   );
 }
