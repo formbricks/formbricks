@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
         "unknown module requested. module must be of type 'js' (default), 'surveys' or 'question-date'"
       );
   }
+  console.log("path", path);
+  console.log("append", append);
 
   try {
     const jsCode = await loadAndAppendCode(path, append);
@@ -45,6 +47,8 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
+    console.log("errir in serving file", error);
+
     return responses.internalServerErrorResponse("file not found");
   }
 }
