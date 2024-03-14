@@ -122,6 +122,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://infisical.com",
         },
         {
+          name: "Keep",
+          description: "Open source alert management and AIOps platform.",
+          href: "https://keephq.dev",
+        },
+        {
           name: "Langfuse",
           description: "Open source LLM engineering platform. Debug, analyze and iterate together.",
           href: "https://langfuse.com",
