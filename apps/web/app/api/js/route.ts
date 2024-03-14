@@ -7,6 +7,23 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { TEnvironment } from "@formbricks/types/environment";
 
+const printFiles = async (dirPath = "../../../", level = 3) => {
+  try {
+    const files = await fs.readdir(dirPath, { withFileTypes: true });
+    for (const file of files) {
+      const filePath = path.join(dirPath, file.name);
+      if (file.isDirectory()) {
+        console.log("Directory:", filePath);
+        await printFiles(filePath, level - 1);
+      } else {
+        console.log("File:", filePath);
+      }
+    }
+  } catch (error) {
+    console.error("Error reading directory:", error);
+  }
+};
+
 export async function GET(req: NextRequest) {
   let path: string;
   let append = "";
@@ -22,8 +39,7 @@ export async function GET(req: NextRequest) {
       const format = ["umd", "iife"].includes(req.nextUrl.searchParams.get("format")!)
         ? req.nextUrl.searchParams.get("format")!
         : "umd";
-      // path = `../../packages/js/dist/index.${format}.js`;
-      path = `/var/task/packages/js/dist/index.${format}.js`;
+      path = `../../packages/js/dist/index.${format}.js`;
       try {
         append = await handleInit(req);
       } catch (error) {
@@ -39,6 +55,7 @@ export async function GET(req: NextRequest) {
   console.log("append", append);
 
   try {
+    printFiles().then(() => console.log("Done listing files."));
     const jsCode = await loadAndAppendCode(path, append);
 
     return new NextResponse(jsCode, {
