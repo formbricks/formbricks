@@ -2,6 +2,7 @@
 
 import { UnifiedStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
 import { RotateCcwIcon } from "lucide-react";
+import { SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -425,6 +426,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             <Button
               variant="secondary"
               size="sm"
+              EndIcon={SparklesIcon}
               className="w-fit"
               onClick={() => suggestColors()}
               disabled={!unifiedStyling}>

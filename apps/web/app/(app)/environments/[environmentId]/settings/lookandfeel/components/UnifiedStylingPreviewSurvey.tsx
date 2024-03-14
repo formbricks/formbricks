@@ -203,7 +203,7 @@ export const UnifiedStylingPreviewSurvey = ({
         <div
           className={`${previewType === "web" ? "rounded-full bg-slate-200" : ""} cursor-pointer px-3 py-1 text-sm`}
           onClick={() => setPreviewType("web")}>
-          App survey
+          In-App survey
         </div>
       </div>
     </div>

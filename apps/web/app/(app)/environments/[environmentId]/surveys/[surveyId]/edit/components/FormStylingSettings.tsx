@@ -1,7 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, SparklesIcon } from "lucide-react";
 import React from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -176,7 +176,12 @@ const FormStylingSettings = ({
               description="Change the brand color of the survey"
             />
 
-            <Button variant="secondary" size="sm" className="w-fit" onClick={() => suggestColors()}>
+            <Button
+              variant="secondary"
+              size="sm"
+              EndIcon={SparklesIcon}
+              className="w-fit"
+              onClick={() => suggestColors()}>
               Suggest colors
             </Button>
           </div>
