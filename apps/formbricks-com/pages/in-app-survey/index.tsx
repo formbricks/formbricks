@@ -41,7 +41,7 @@ const inAppSurveySteps = [
     id: "2",
     name: "Pre-segment cohorts",
     description:
-      "Send attributes and event to Formbricks to create usage-based cohorts. Send out highly targeted app surveys for better insights.",
+      "Send attributes and events to Formbricks to create usage-based cohorts. Send out highly targeted app surveys for better insights.",
   },
   {
     id: "3",
