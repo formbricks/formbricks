@@ -47,7 +47,7 @@ importers:
         version: 0.356.0(react@18.2.0)
       next:
         specifier: 14.1.3
-        version: 14.1.3(react-dom@18.2.0)(react@18.2.0)
+        version: 14.1.3(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -389,7 +389,7 @@ importers:
         version: 4.0.1
       next:
         specifier: 14.1.3
-        version: 14.1.3(react-dom@18.2.0)(react@18.2.0)
+        version: 14.1.3(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       nodemailer:
         specifier: ^6.9.12
         version: 6.9.12
@@ -8464,7 +8464,7 @@ packages:
       '@sentry/vercel-edge': 7.106.1
       '@sentry/webpack-plugin': 1.21.0(encoding@0.1.13)
       chalk: 3.0.0
-      next: 14.1.3(react-dom@18.2.0)(react@18.2.0)
+      next: 14.1.3(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
       resolve: 1.22.8
       rollup: 2.78.0
@@ -10071,6 +10071,35 @@ packages:
       '@types/node': 20.11.24
     dev: true
 
+  /@types/hapi__catbox@10.2.6:
+    resolution: {integrity: sha512-qdMHk4fBlwRfnBBDJaoaxb+fU9Ewi2xqkXD3mNjSPl2v/G/8IJbDpVRBuIcF7oXrcE8YebU5M8cCeKh1NXEn0w==}
+    dev: false
+
+  /@types/hapi__hapi@20.0.13:
+    resolution: {integrity: sha512-LP4IPfhIO5ZPVOrJo7H8c8Slc0WYTFAUNQX1U0LBPKyXioXhH5H2TawIgxKujIyOhbwoBbpvOsBf6o5+ToJIrQ==}
+    dependencies:
+      '@hapi/boom': 9.1.4
+      '@hapi/iron': 6.0.0
+      '@hapi/podium': 4.1.3
+      '@types/hapi__catbox': 10.2.6
+      '@types/hapi__mimos': 4.1.4
+      '@types/hapi__shot': 4.1.6
+      '@types/node': 20.11.24
+      joi: 17.12.2
+    dev: false
+
+  /@types/hapi__mimos@4.1.4:
+    resolution: {integrity: sha512-i9hvJpFYTT/qzB5xKWvDYaSXrIiNqi4ephi+5Lo6+DoQdwqPXQgmVVOZR+s3MBiHoFqsCZCX9TmVWG3HczmTEQ==}
+    dependencies:
+      '@types/mime-db': 1.43.5
+    dev: false
+
+  /@types/hapi__shot@4.1.6:
+    resolution: {integrity: sha512-h33NBjx2WyOs/9JgcFeFhkxnioYWQAZxOHdmqDuoJ1Qjxpcs+JGvSjEEoDeWfcrF+1n47kKgqph5IpfmPOnzbg==}
+    dependencies:
+      '@types/node': 20.11.24
+    dev: false
+
   /@types/hast@2.3.8:
     resolution: {integrity: sha512-aMIqAlFd2wTIDZuvLbhUT+TGvMxrNC8ECUIVtH6xxy0sQLs3iu6NO8Kp/VT5je7i5ufnebXzdV1dNDMnvaH6IQ==}
     dependencies:
@@ -10229,6 +10258,12 @@ packages:
   /@types/ms@0.7.34:
     resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
 
+  /@types/mysql@2.15.22:
+    resolution: {integrity: sha512-wK1pzsJVVAjYCSZWQoWHziQZbNggXFDUEIGf54g4ZM/ERuP86uGdWeKZWMYlqTPMZfHJJvLPyogXGvCOg87yLQ==}
+    dependencies:
+      '@types/node': 20.11.24
+    dev: false
+
   /@types/node@12.20.55:
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
     dev: false
@@ -10252,6 +10287,20 @@ packages:
 
   /@types/normalize-package-data@2.4.4:
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
+
+  /@types/pg-pool@2.0.4:
+    resolution: {integrity: sha512-qZAvkv1K3QbmHHFYSNRYPkRjOWRLBYrL4B9c+wG0GSVGBw0NtJwPcgx/DSddeDJvRGMHCEQ4VMEVfuJ/0gZ3XQ==}
+    dependencies:
+      '@types/pg': 8.6.1
+    dev: false
+
+  /@types/pg@8.6.1:
+    resolution: {integrity: sha512-1Kc4oAGzAl7uqUStZCDvaLFqZrW9qWSjXOmBfdgyBP5La7Us6Mg4GBvRlSoaZMhQF/zSj1C8CtKMBkoiT8eL8w==}
+    dependencies:
+      '@types/node': 20.11.24
+      pg-protocol: 1.6.0
+      pg-types: 2.2.0
+    dev: false
 
   /@types/prismjs@1.26.3:
     resolution: {integrity: sha512-A0D0aTXvjlqJ5ZILMz3rNfDBOx9hHxLZYv2by47Sm/pqW35zzjusrZTryatjN/Rf8Us2gZrJD+KeHbUSTux1Cw==}
@@ -10696,7 +10745,7 @@ packages:
       vue-router:
         optional: true
     dependencies:
-      next: 14.1.3(react-dom@18.2.0)(react@18.2.0)
+      next: 14.1.3(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
     dev: false
 
@@ -15038,6 +15087,16 @@ packages:
     resolution: {integrity: sha512-8wb9Yw966OSxApiCt0K3yNJL8pnNeIv+OEq2YMidz4FKP6nonSRoOXc80iXY4JaN2FC11B9qsNmDsm+ZOfMROA==}
     dev: true
 
+  /joi@17.12.2:
+    resolution: {integrity: sha512-RonXAIzCiHLc8ss3Ibuz45u28GOsWE1UpfDXLbN/9NKbL4tCJf8TWYVKsoYuuh+sAUt7fsSNpA+r2+TBA6Wjmw==}
+    dependencies:
+      '@hapi/hoek': 9.3.0
+      '@hapi/topo': 5.1.0
+      '@sideway/address': 4.1.5
+      '@sideway/formula': 3.0.1
+      '@sideway/pinpoint': 2.0.0
+    dev: false
+
   /jose@4.15.5:
     resolution: {integrity: sha512-jc7BFxgKPKi94uOvEmzlSWFFe2+vASyXaKUpdQKatWAESU2MWjDfFf0fdfc83CDKcA5QecabZeNLyfhe3yKNkg==}
     dev: false
@@ -16551,7 +16610,7 @@ packages:
       '@panva/hkdf': 1.1.1
       cookie: 0.5.0
       jose: 4.15.5
-      next: 14.1.3(react-dom@18.2.0)(react@18.2.0)
+      next: 14.1.3(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       nodemailer: 6.9.12
       oauth: 0.9.15
       openid-client: 5.6.1
@@ -16692,7 +16751,7 @@ packages:
       - babel-plugin-macros
     dev: false
 
-  /next@14.1.3(react-dom@18.2.0)(react@18.2.0):
+  /next@14.1.3(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-oexgMV2MapI0UIWiXKkixF8J8ORxpy64OuJ/J9oVUmIthXOUCcuVEZX+dtpgq7wIfIqtBwQsKEDXejcjTsan9g==}
     engines: {node: '>=18.17.0'}
     hasBin: true
@@ -16708,6 +16767,7 @@ packages:
         optional: true
     dependencies:
       '@next/env': 14.1.3
+      '@opentelemetry/api': 1.4.1
       '@swc/helpers': 0.5.2
       busboy: 1.6.0
       caniuse-lite: 1.0.30001591
@@ -17496,6 +17556,28 @@ packages:
       nanoid: 3.3.7
       picocolors: 1.0.0
       source-map-js: 1.0.2
+
+  /postgres-array@2.0.0:
+    resolution: {integrity: sha512-VpZrUqU5A69eQyW2c5CA1jtLecCsN2U/bD6VilrFDWq5+5UIEVO7nazS3TEcHf1zuPYO/sqGvUvW62g86RXZuA==}
+    engines: {node: '>=4'}
+    dev: false
+
+  /postgres-bytea@1.0.0:
+    resolution: {integrity: sha512-xy3pmLuQqRBZBXDULy7KbaitYqLcmxigw14Q5sj8QBVLqEwXfeybIKVWiqAXTlcvdvb0+xkOtDbfQMOf4lST1w==}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
+  /postgres-date@1.0.7:
+    resolution: {integrity: sha512-suDmjLVQg78nMK2UZ454hAG+OAW+HQPZ6n++TNDUX+L0+uUlLywnoxJKDou51Zm+zTCjrCl0Nq6J9C5hP9vK/Q==}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
+  /postgres-interval@1.2.0:
+    resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
+    engines: {node: '>=0.10.0'}
+    dependencies:
+      xtend: 4.0.2
+    dev: false
 
   /posthog-js@1.114.2:
     resolution: {integrity: sha512-YkXl2XtDpKSylWsTpVTW4QfMfXywYHuxiyBMu/r36qLcuqLcsI2CYj+Mb/sYZicJ0g+yGl6URjLkvc78vvYNYA==}
