@@ -175,7 +175,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           name: "Requestly",
           description:
             "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
-          href: "https://requestly.io",
+          href: "https://requestly.com",
         },
         {
           name: "Revert",
