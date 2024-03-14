@@ -55,48 +55,50 @@ export default function NPSQuestion({
         <fieldset>
           <legend className="sr-only">Options</legend>
           <div className="flex">
-            {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => (
-              <label
-                key={number}
-                tabIndex={idx + 1}
-                onMouseOver={() => setHoveredNumber(number)}
-                onMouseLeave={() => setHoveredNumber(-1)}
-                onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                    setTtc(updatedTtcObj);
-                    onSubmit({ [question.id]: number }, updatedTtcObj);
-                  }
-                }}
-                className={cn(
-                  value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
-                  "bg-survey-bg text-heading first:rounded-l-custom last:rounded-r-custom relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 focus:outline-none",
-                  hoveredNumber === number ? "bg-accent-bg" : ""
-                )}>
-                <input
-                  type="radio"
-                  name="nps"
-                  value={number}
-                  checked={value === number}
-                  className="absolute h-full w-full cursor-pointer opacity-0"
-                  onClick={() => {
-                    if (question.required) {
+            {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => {
+              return (
+                <label
+                  key={number}
+                  tabIndex={idx + 1}
+                  onMouseOver={() => setHoveredNumber(number)}
+                  onMouseLeave={() => setHoveredNumber(-1)}
+                  onKeyDown={(e) => {
+                    if (e.key == "Enter") {
                       const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                       setTtc(updatedTtcObj);
-                      onSubmit(
-                        {
-                          [question.id]: number,
-                        },
-                        updatedTtcObj
-                      );
+                      onSubmit({ [question.id]: number }, updatedTtcObj);
                     }
-                    onChange({ [question.id]: number });
                   }}
-                  required={question.required}
-                />
-                {number}
-              </label>
-            ))}
+                  className={cn(
+                    value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
+                    "text-heading first:rounded-l-custom last:rounded-r-custom relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 focus:outline-none",
+                    hoveredNumber === number ? "bg-accent-bg" : ""
+                  )}>
+                  <input
+                    type="radio"
+                    name="nps"
+                    value={number}
+                    checked={value === number}
+                    className="absolute h-full w-full cursor-pointer opacity-0"
+                    onClick={() => {
+                      if (question.required) {
+                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                        setTtc(updatedTtcObj);
+                        onSubmit(
+                          {
+                            [question.id]: number,
+                          },
+                          updatedTtcObj
+                        );
+                      }
+                      onChange({ [question.id]: number });
+                    }}
+                    required={question.required}
+                  />
+                  {number}
+                </label>
+              );
+            })}
           </div>
           <div className="text-info-text flex justify-between px-1.5 text-xs leading-6">
             <p>{question.lowerLabel}</p>

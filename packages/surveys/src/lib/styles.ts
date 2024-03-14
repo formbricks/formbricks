@@ -58,6 +58,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   }
 
   appendCssVariable("border-color", styling.inputBorderColor?.light);
+
+  if (styling.inputBorderColor?.light) {
+    appendCssVariable("border-color-highlight", mixColor(styling.inputBorderColor?.light, "#000000", 0.1));
+  }
+
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
   appendCssVariable("border-radius", `${roundness}px`);
@@ -97,11 +102,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   if (styling.brandColor?.light) {
     const brandColor = styling.brandColor.light;
 
-    const mixedBrandColor = mixColor(brandColor, "#ffffff", 0.8);
-    const mixedBrandColorSelected = mixColor(brandColor, "#ffffff", 0.7);
+    const accentColor = mixColor(brandColor, "#ffffff", 0.8);
+    const accentColorSelected = mixColor(brandColor, "#ffffff", 0.7);
 
-    appendCssVariable("accent-background-color", mixedBrandColor);
-    appendCssVariable("accent-background-color-selected", mixedBrandColorSelected);
+    appendCssVariable("accent-background-color", accentColor);
+    appendCssVariable("accent-background-color-selected", accentColorSelected);
   }
 
   // Close the :root block
