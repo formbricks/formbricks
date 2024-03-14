@@ -48,20 +48,9 @@ export default function SurveyEditor({
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
+  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(survey);
   const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
-
-  useEffect(() => {
-    if (survey) {
-      const surveyClone = structuredClone(survey);
-      setLocalSurvey(surveyClone);
-
-      if (survey.questions.length > 0) {
-        setActiveQuestionId(survey.questions[0].id);
-      }
-    }
-  }, [survey]);
 
   useEffect(() => {
     const listener = () => {
