@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TLanguage } from "@formbricks/types/product";
@@ -21,7 +21,10 @@ export const LanguageSelect = ({ language, onLanguageChange, disabled }: Languag
     iso639Languages.find((isoLang) => isoLang.alpha2 === language.code)
   );
   const items = iso639Languages;
+
   const languageSelectRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
@@ -35,6 +38,13 @@ export const LanguageSelect = ({ language, onLanguageChange, disabled }: Languag
   };
 
   const filteredItems = items.filter((item) => item.english.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  // Focus the input when the dropdown is opened
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus();
+    }
+  }, [isOpen]);
 
   return (
     <div className="group relative h-full" ref={languageSelectRef}>
@@ -54,6 +64,7 @@ export const LanguageSelect = ({ language, onLanguageChange, disabled }: Languag
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           autoComplete="off"
+          ref={inputRef}
         />
         <div className="max-h-96 overflow-auto">
           {filteredItems.map((item, index) => (

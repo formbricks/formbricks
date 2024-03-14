@@ -89,31 +89,41 @@ export default function EditLanguage({ product, environmentId }: EditLanguagePro
   };
 
   const handleDeleteLanguage = async (languageId: string) => {
-    const surveysUsingLanguage = await getSurveysUsingGivenLanguageAction(product.id, languageId);
-    if (surveysUsingLanguage.length > 0) {
-      const surveyList = surveysUsingLanguage.map((surveyName) => `• ${surveyName}`).join("\n");
-      setConfirmationModal({
-        isOpen: true,
-        languageId: languageId,
-        text: `You cannot remove this language since it’s still used in these surveys:\n\n${surveyList}\n\nPlease remove the language from these surveys in order to remove it from the product.`,
-        isButtonDisabled: true,
-      });
-    } else {
-      setConfirmationModal({
-        isOpen: true,
-        languageId: languageId,
-        text: "Are you sure you want to delete this language? This action cannot be undone.",
-        isButtonDisabled: false,
-      });
+    try {
+      const surveysUsingLanguage = await getSurveysUsingGivenLanguageAction(product.id, languageId);
+
+      if (surveysUsingLanguage.length > 0) {
+        const surveyList = surveysUsingLanguage.map((surveyName) => `• ${surveyName}`).join("\n");
+        setConfirmationModal({
+          isOpen: true,
+          languageId,
+          text: `You cannot remove this language since it’s still used in these surveys:\n\n${surveyList}\n\nPlease remove the language from these surveys in order to remove it from the product.`,
+          isButtonDisabled: true,
+        });
+      } else {
+        setConfirmationModal({
+          isOpen: true,
+          languageId,
+          text: "Are you sure you want to delete this language? This action cannot be undone.",
+          isButtonDisabled: false,
+        });
+      }
+    } catch (err) {
+      toast.error("Something went wrong. Please try again later.");
     }
   };
 
   const performLanguageDeletion = async (languageId: string) => {
-    await deleteLanguageAction(product.id, environmentId, languageId);
-    setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
-    toast.success("Language deleted successfully.");
-    // Close the modal after deletion
-    setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
+    try {
+      await deleteLanguageAction(product.id, environmentId, languageId);
+      setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
+      toast.success("Language deleted successfully.");
+      // Close the modal after deletion
+      setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
+    } catch (err) {
+      toast.error("Something went wrong. Please try again later.");
+      setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
+    }
   };
 
   const handleCancelChanges = async () => {
