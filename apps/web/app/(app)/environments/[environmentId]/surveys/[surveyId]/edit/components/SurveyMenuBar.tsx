@@ -108,7 +108,10 @@ export default function SurveyMenuBar({
   };
 
   const handleBack = () => {
-    if (!isEqual(localSurvey, survey)) {
+    const { updatedAt, ...localSurveyRest } = localSurvey;
+    const { updatedAt: _, ...surveyRest } = survey;
+
+    if (!isEqual(localSurveyRest, surveyRest)) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
@@ -394,7 +397,6 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            // disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
             disabled={disableSave}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
