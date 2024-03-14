@@ -100,15 +100,15 @@ const FormStylingSettings = ({
       },
     }));
 
-    if (!localSurvey.styling?.background?.bg) {
+    if (!localSurvey.styling?.background || localSurvey.styling?.background?.bgType === "color") {
       setLocalSurvey((prev) => ({
         ...prev,
         styling: {
           ...prev.styling,
           background: {
             ...prev.styling?.background,
-            bg: prev.styling?.background?.bg ?? mixColor(brandColor, "#ffffff", 0.855),
-            bgType: prev.styling?.background?.bgType ?? "color",
+            bg: mixColor(brandColor, "#ffffff", 0.855),
+            bgType: "color",
           },
         },
       }));

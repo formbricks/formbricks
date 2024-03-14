@@ -283,7 +283,7 @@ export function Survey({
           className={cn(
             "no-scrollbar rounded-custom bg-survey-bg flex h-full w-full flex-col justify-between px-6 pb-3 pt-6",
             isCardBorderVisible ? "border-survey-border border" : "",
-            survey.type === "link" ? "shadow-survey-shadow shadow" : ""
+            survey.type === "link" ? "shadow-survey-shadow shadow-[0_0_90px_-40px_rgba(0,0,0,0.4)]" : ""
           )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
