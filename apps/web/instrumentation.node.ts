@@ -13,7 +13,7 @@ export function startInstrumentationForNode(url: string) {
 
     const sdk = new NodeSDK({
       resource: new Resource({
-        [SEMRESATTRS_SERVICE_NAME]: "Kamal-Formbricks",
+        [SEMRESATTRS_SERVICE_NAME]: "Formbricks",
       }),
       traceExporter: exporter,
       spanProcessor: new SimpleSpanProcessor(exporter),
