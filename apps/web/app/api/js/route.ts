@@ -7,16 +7,14 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { TEnvironment } from "@formbricks/types/environment";
 
-const printFiles = async (dirPath = "../../../", level = 3) => {
+const printAllDirectories = async (dirPath = "../../../../../") => {
   try {
     const files = await fs.readdir(dirPath, { withFileTypes: true });
     for (const file of files) {
       const filePath = path.join(dirPath, file.name);
       if (file.isDirectory()) {
         console.log("Directory:", filePath);
-        await printFiles(filePath, level - 1);
-      } else {
-        console.log("File:", filePath);
+        await printAllDirectories(filePath);
       }
     }
   } catch (error) {
@@ -55,7 +53,7 @@ export async function GET(req: NextRequest) {
   console.log("append", append);
 
   try {
-    printFiles().then(() => console.log("Done listing files."));
+    printAllDirectories().then(() => console.log("Done listing files."));
     const jsCode = await loadAndAppendCode(path, append);
 
     return new NextResponse(jsCode, {
