@@ -6,18 +6,22 @@ import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { SEMRESATTRS_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
 export function startInstrumentationForNode(url: string) {
-  const exporter = new OTLPTraceExporter({
-    url,
-  });
+  try {
+    const exporter = new OTLPTraceExporter({
+      url,
+    });
 
-  const sdk = new NodeSDK({
-    resource: new Resource({
-      [SEMRESATTRS_SERVICE_NAME]: "Kamal-Formbricks",
-    }),
-    traceExporter: exporter,
-    spanProcessor: new SimpleSpanProcessor(exporter),
-    instrumentations: [getNodeAutoInstrumentations()],
-  });
+    const sdk = new NodeSDK({
+      resource: new Resource({
+        [SEMRESATTRS_SERVICE_NAME]: "Kamal-Formbricks",
+      }),
+      traceExporter: exporter,
+      spanProcessor: new SimpleSpanProcessor(exporter),
+      instrumentations: [getNodeAutoInstrumentations()],
+    });
 
-  sdk.start();
+    sdk.start();
+  } catch (err) {
+    console.error("Unable to setup Telemetry:", err);
+  }
 }
