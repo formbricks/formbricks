@@ -90,7 +90,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
       styling.inputColor.light === "#ffffff" ||
       styling.inputColor.light === "white"
     ) {
-      appendCssVariable("input-background-color-selected", "rgb(248, 250, 252)");
+      appendCssVariable("input-background-color-selected", "var(--slate-50)");
     } else {
       appendCssVariable(
         "input-background-color-selected",
