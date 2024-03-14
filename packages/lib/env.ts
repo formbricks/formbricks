@@ -79,7 +79,6 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
-    SIGNOZ_LISTENER_URL: z.string().optional(),
   },
 
   /*
@@ -98,6 +97,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+    NEXT_PUBLIC_SIGNOZ_LISTENER_URL: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -143,6 +143,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
     NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    NEXT_PUBLIC_SIGNOZ_LISTENER_URL: process.env.NEXT_PUBLIC_SIGNOZ_LISTENER_URL,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
     OIDC_CLIENT_ID: process.env.OIDC_CLIENT_ID,
@@ -172,6 +173,5 @@ export const env = createEnv({
     TERMS_URL: process.env.TERMS_URL,
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
-    SIGNOZ_LISTENER_URL: process.env.SIGNOZ_LISTENER_URL,
   },
 });

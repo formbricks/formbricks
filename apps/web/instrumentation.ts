@@ -1,8 +1,8 @@
 export async function register() {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
+  if (process.env.NEXT_RUNTIME === "nodejs" && process.env.NEXT_PUBLIC_SIGNOZ_LISTENER_URL) {
     console.log("Configuring OpenTelemetry");
     const { startInstrumentationForNode } = await import("./instrumentation.node");
 
-    startInstrumentationForNode();
+    startInstrumentationForNode(process.env.NEXT_PUBLIC_SIGNOZ_LISTENER_URL);
   }
 }
