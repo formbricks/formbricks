@@ -123,8 +123,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Keep",
-          description:
-            "Open source alert management and AIOps platform.",
+          description: "Open source alert management and AIOps platform.",
           href: "https://keephq.dev",
         },
         {
