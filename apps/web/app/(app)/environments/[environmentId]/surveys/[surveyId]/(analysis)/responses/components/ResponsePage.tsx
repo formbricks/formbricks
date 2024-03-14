@@ -80,6 +80,9 @@ const ResponsePage = ({
 
   const deleteResponse = (responseId: string) => {
     setResponses(responses.filter((response) => response.id !== responseId));
+    if (responseCount) {
+      setResponseCount(responseCount - 1);
+    }
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponse) => {
