@@ -81,7 +81,7 @@ const FormStylingSettings = ({
   const suggestColors = () => {
     // mix the brand color with different weights of white and set the result as the other colors
     setQuestionColor(mixColor(brandColor, "#000000", 0.35));
-    setInputColor(mixColor(brandColor, "#ffffff", 0.9));
+    setInputColor(mixColor(brandColor, "#ffffff", 0.92));
     setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
 
     // card background, border and shadow colors
@@ -91,7 +91,7 @@ const FormStylingSettings = ({
         ...prev.styling,
         cardBackgroundColor: {
           ...(prev.styling?.cardBackgroundColor ?? {}),
-          light: mixColor(brandColor, "#ffffff", 0.95),
+          light: mixColor(brandColor, "#ffffff", 0.97),
         },
         cardBorderColor: {
           ...(prev.styling?.cardBorderColor ?? {}),

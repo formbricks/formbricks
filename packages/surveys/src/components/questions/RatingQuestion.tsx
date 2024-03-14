@@ -113,11 +113,13 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      value === number ? "bg-accent-selected-bg border-border z-10" : "",
-                      a.length === number ? "rounded-r-md" : "",
+                      value === number
+                        ? "bg-accent-selected-bg border-border-highlight z-10"
+                        : "border-border",
+                      a.length === number ? "rounded-r-md border-r" : "",
                       number === 1 ? "rounded-l-md" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
-                      "text-heading focus:bg-accent-bg relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border focus:outline-none"
+                      "text-heading focus:bg-accent-bg relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -134,7 +136,7 @@ export default function RatingQuestion({
                       "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none",
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
-                        : "text-input-bg",
+                        : "text-input-bg-selected",
                       hoveredNumber === number ? "text-amber-400 " : ""
                     )}
                     onFocus={() => setHoveredNumber(number)}

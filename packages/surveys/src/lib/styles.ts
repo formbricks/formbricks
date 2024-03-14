@@ -99,7 +99,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
     } else {
       appendCssVariable(
         "input-background-color-selected",
-        mixColor(styling.inputColor?.light, "#ffffff", 0.2)
+        mixColor(styling.inputColor?.light, "#000000", 0.025)
       );
     }
   }

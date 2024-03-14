@@ -344,9 +344,9 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
   const suggestColors = useCallback(() => {
     // mix the brand color with different weights of white and set the result as the other colors
     setQuestionColor(mixColor(brandColor, "#000000", 0.35));
-    setInputColor(mixColor(brandColor, "#ffffff", 0.9));
+    setInputColor(mixColor(brandColor, "#ffffff", 0.92));
     setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
-    setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.95));
+    setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.97));
     setCardBorderColor(mixColor(brandColor, "#ffffff", 0.8));
     setCardShadowColor(brandColor);
     if (isHighlightBorderAllowed) {

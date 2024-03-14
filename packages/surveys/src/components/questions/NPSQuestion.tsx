@@ -7,8 +7,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useState } from "preact/hooks";
 
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 
 interface NPSQuestionProps {
@@ -71,7 +70,7 @@ export default function NPSQuestion({
                   }}
                   className={cn(
                     value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
-                    "text-heading first:rounded-l-custom last:rounded-r-custom relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 focus:outline-none",
+                    "text-heading first:rounded-l-custom last:rounded-r-custom relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:outline-none",
                     hoveredNumber === number ? "bg-accent-bg" : ""
                   )}>
                   <input
