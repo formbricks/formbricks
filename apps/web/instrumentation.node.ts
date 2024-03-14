@@ -5,14 +5,14 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { SEMRESATTRS_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
-export function startInstrumentationForNode(signozUrl: string) {
+export function startInstrumentationForNode(url: string) {
   const exporter = new OTLPTraceExporter({
-    url: signozUrl,
+    url,
   });
 
   const sdk = new NodeSDK({
     resource: new Resource({
-      [SEMRESATTRS_SERVICE_NAME]: "SigNoz-Kamal-Formbricks",
+      [SEMRESATTRS_SERVICE_NAME]: "Kamal-Formbricks",
     }),
     traceExporter: exporter,
     spanProcessor: new SimpleSpanProcessor(exporter),
