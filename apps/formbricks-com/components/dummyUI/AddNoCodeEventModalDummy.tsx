@@ -1,4 +1,4 @@
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { MousePointerClickIcon } from "lucide-react";
 
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -20,7 +20,7 @@ export const AddNoCodeEventModalDummy: React.FC<EventDetailModalProps> = ({ open
           <div className="p-4 sm:p-6">
             <div className="flex items-center space-x-2">
               <div className="h-6 w-6 text-slate-500">
-                <CursorArrowRaysIcon />
+                <MousePointerClickIcon className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-lg font-medium text-slate-700 dark:text-slate-300">Add Action</div>

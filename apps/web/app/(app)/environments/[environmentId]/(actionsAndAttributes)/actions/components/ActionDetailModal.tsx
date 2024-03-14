@@ -1,4 +1,4 @@
-import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
@@ -48,11 +48,11 @@ export default function ActionDetailModal({
         tabs={tabs}
         icon={
           actionClass.type === "code" ? (
-            <CodeBracketIcon />
+            <Code2Icon className="h-5 w-5" />
           ) : actionClass.type === "noCode" ? (
-            <CursorArrowRaysIcon />
+            <MousePointerClickIcon className="h-5 w-5" />
           ) : actionClass.type === "automatic" ? (
-            <SparklesIcon />
+            <SparklesIcon className="h-5 w-5" />
           ) : null
         }
         label={actionClass.name}

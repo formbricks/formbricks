@@ -65,6 +65,16 @@ export default function SurveysList({
     setIsFetching(false);
   }, [environment.id, surveys, surveysLimit]);
 
+  const handleDeleteSurvey = async (surveyId: string) => {
+    const newSurveys = surveys.filter((survey) => survey.id !== surveyId);
+    setSurveys(newSurveys);
+  };
+
+  const handleDuplicateSurvey = async (survey: TSurvey) => {
+    const newSurveys = [survey, ...surveys];
+    setSurveys(newSurveys);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between">
@@ -104,6 +114,8 @@ export default function SurveysList({
                     isViewer={isViewer}
                     WEBAPP_URL={WEBAPP_URL}
                     orientation={orientation}
+                    duplicateSurvey={handleDuplicateSurvey}
+                    deleteSurvey={handleDeleteSurvey}
                   />
                 );
               })}
@@ -121,6 +133,8 @@ export default function SurveysList({
                     isViewer={isViewer}
                     WEBAPP_URL={WEBAPP_URL}
                     orientation={orientation}
+                    duplicateSurvey={handleDuplicateSurvey}
+                    deleteSurvey={handleDeleteSurvey}
                   />
                 );
               })}
@@ -128,8 +142,8 @@ export default function SurveysList({
           )}
 
           {hasMore && (
-            <div className="flex justify-center py-2">
-              <Button onClick={fetchNextPage} variant="darkCTA" size="sm" loading={isFetching}>
+            <div className="flex justify-center py-5">
+              <Button onClick={fetchNextPage} variant="secondary" size="sm" loading={isFetching}>
                 Load more
               </Button>
             </div>

@@ -97,13 +97,13 @@ export default function RatingQuestion({
       <div className="mb-4 mt-6 flex items-center justify-center">
         <fieldset className="w-full">
           <legend className="sr-only">Choices</legend>
-          <div className="flex w-full pb-2">
+          <div className="flex w-full">
             {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
               <span
                 key={number}
                 onMouseOver={() => setHoveredNumber(number)}
                 onMouseLeave={() => setHoveredNumber(0)}
-                className="bg-survey-bg relative h-[41px] flex-1 cursor-pointer text-center text-sm leading-[2.8rem]">
+                className="bg-survey-bg flex-1 text-center text-sm">
                 {question.scale === "number" ? (
                   <label
                     tabIndex={i + 1}
@@ -117,7 +117,7 @@ export default function RatingQuestion({
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
-                      "text-heading focus:bg-accent-bg block h-full w-full border focus:outline-none"
+                      "text-heading focus:bg-accent-bg relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -131,7 +131,7 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      "flex h-full max-h-16 justify-center focus:outline-none",
+                      "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none",
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
                         : "text-slate-300",
@@ -140,17 +140,19 @@ export default function RatingQuestion({
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                      <path
-                        fillRule="evenodd"
-                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                      />
-                    </svg>
+                    <div className="h-full w-full max-w-[74px] object-contain">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                          fillRule="evenodd"
+                          d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                        />
+                      </svg>
+                    </div>
                   </label>
                 ) : (
                   <label
                     className={cn(
-                      "flex h-full max-h-16 justify-center",
+                      "relative flex max-h-16 min-h-9 w-full cursor-pointer justify-center",
                       value === number || hoveredNumber === number
                         ? "stroke-rating-selected text-rating-selected"
                         : "stroke-heading text-heading"
@@ -164,17 +166,19 @@ export default function RatingQuestion({
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
                     <HiddenRadioInput number={number} />
-                    <RatingSmiley
-                      active={value === number || hoveredNumber === number}
-                      idx={i}
-                      range={question.range}
-                    />
+                    <div className="h-full w-full max-w-[74px] object-contain">
+                      <RatingSmiley
+                        active={value === number || hoveredNumber === number}
+                        idx={i}
+                        range={question.range}
+                      />
+                    </div>
                   </label>
                 )}
               </span>
             ))}
           </div>
-          <div className="text-subheading flex justify-between px-1.5 text-xs leading-6">
+          <div className="text-subheading mt-4 flex justify-between px-1.5 text-xs leading-6">
             <p className="w-1/2 text-left">{question.lowerLabel}</p>
             <p className="w-1/2 text-right">{question.upperLabel}</p>
           </div>

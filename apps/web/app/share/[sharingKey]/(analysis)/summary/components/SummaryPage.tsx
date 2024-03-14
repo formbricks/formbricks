@@ -6,7 +6,10 @@ import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surve
 import SummaryMetadata from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryMetadata";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import SurveyResultsTabs from "@/app/share/[sharingKey]/(analysis)/components/SurveyResultsTabs";
-import { getSurveySummaryUnauthorizedAction } from "@/app/share/[sharingKey]/action";
+import {
+  getResponseCountBySurveySharingKeyAction,
+  getSummaryBySurveySharingKeyAction,
+} from "@/app/share/[sharingKey]/action";
 import CustomFilter from "@/app/share/[sharingKey]/components/CustomFilter";
 import SummaryHeader from "@/app/share/[sharingKey]/components/SummaryHeader";
 import { useSearchParams } from "next/navigation";
@@ -20,6 +23,21 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
+const initialSurveySummary: TSurveySummary = {
+  meta: {
+    completedPercentage: 0,
+    completedResponses: 0,
+    displayCount: 0,
+    dropOffPercentage: 0,
+    dropOffCount: 0,
+    startsPercentage: 0,
+    totalResponses: 0,
+    ttcAverage: 0,
+  },
+  dropOff: [],
+  summary: [],
+};
+
 interface SummaryPageProps {
   environment: TEnvironment;
   survey: TSurvey;
@@ -28,7 +46,6 @@ interface SummaryPageProps {
   sharingKey: string;
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
-  responseCount: number;
 }
 
 const SummaryPage = ({
@@ -39,23 +56,11 @@ const SummaryPage = ({
   sharingKey,
   environmentTags,
   attributes,
-  responseCount,
 }: SummaryPageProps) => {
+  const [responseCount, setResponseCount] = useState<number | null>(null);
+
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
-  const [surveySummary, setSurveySummary] = useState<TSurveySummary>({
-    meta: {
-      completedPercentage: 0,
-      completedResponses: 0,
-      displayCount: 0,
-      dropOffPercentage: 0,
-      dropOffCount: 0,
-      startsPercentage: 0,
-      totalResponses: 0,
-      ttcAverage: 0,
-    },
-    dropOff: [],
-    summary: [],
-  });
+  const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
 
   const filters = useMemo(
@@ -64,12 +69,19 @@ const SummaryPage = ({
   );
 
   useEffect(() => {
-    const fetchSurveySummary = async () => {
-      const response = await getSurveySummaryUnauthorizedAction(surveyId, filters);
+    const handleInitialData = async () => {
+      const responseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
+      setResponseCount(responseCount);
+      if (responseCount === 0) {
+        setSurveySummary(initialSurveySummary);
+        return;
+      }
+      const response = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
       setSurveySummary(response);
     };
-    fetchSurveySummary();
-  }, [filters, surveyId]);
+
+    handleInitialData();
+  }, [filters, sharingKey]);
 
   survey = useMemo(() => {
     return checkForRecallInHeadline(survey);
@@ -91,6 +103,7 @@ const SummaryPage = ({
         activeId="summary"
         environmentId={environment.id}
         surveyId={surveyId}
+        responseCount={responseCount}
         sharingKey={sharingKey}
       />
       <SummaryMetadata

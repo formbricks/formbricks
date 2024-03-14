@@ -1,7 +1,7 @@
 import DemoPreview from "@/components/dummyUI/DemoPreview";
 import DashboardMockupDark from "@/images/dashboard-mockup-dark.png";
 import DashboardMockup from "@/images/dashboard-mockup.png";
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { MousePointerClickIcon } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -48,7 +48,7 @@ export const Steps: React.FC = () => {
             <div className="order-last w-full rounded-lg bg-slate-100 p-4 sm:py-8 md:order-first dark:bg-slate-800">
               <div className="flex h-40 items-center justify-center">
                 <Button variant="primary">
-                  <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
+                  <MousePointerClickIcon className="mr-2 h-5 w-5 text-white" />
                   Add Action
                 </Button>
               </div>
