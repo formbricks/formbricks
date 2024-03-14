@@ -1,7 +1,9 @@
+import { env } from "@formbricks/lib/env";
+
 export async function register() {
-  if (process.env.NEXT_RUNTIME === "nodejs" && process.env.OPENTELEMETRY_LISTENER_URL) {
+  if (process.env.NEXT_RUNTIME === "nodejs" && env.OPENTELEMETRY_LISTENER_URL) {
     const { startInstrumentationForNode } = await import("./instrumentation.node");
 
-    startInstrumentationForNode(process.env.OPENTELEMETRY_LISTENER_URL);
+    startInstrumentationForNode(env.OPENTELEMETRY_LISTENER_URL);
   }
 }
