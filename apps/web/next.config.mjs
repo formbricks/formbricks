@@ -1,7 +1,8 @@
-import { fileURLToPath } from "node:url";
 import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
+import { fileURLToPath } from "node:url";
+import path from "path";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 
@@ -13,6 +14,7 @@ function getHostname(url) {
   const urlObj = new URL(url);
   return urlObj.hostname;
 }
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
@@ -20,6 +22,7 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["@aws-sdk"],
     instrumentationHook: true,
+    outputFileTracingRoot: path.join(__dirname, "../../"),
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
