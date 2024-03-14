@@ -78,6 +78,7 @@ export function Onboarding({
         window.removeEventListener("message", handleMessageEvent, false);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
 
   useEffect(() => {
@@ -150,7 +151,7 @@ export function Onboarding({
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center bg-slate-50">
+    <div className="group flex h-full w-full flex-col items-center bg-slate-50">
       <div className="hidden">
         <button
           id="FB__INTERNAL__SKIP_ONBOARDING"

@@ -99,7 +99,6 @@ if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "<environment-id>",
     apiHost: "<api-host>",
-    debug: true, // remove when in production
   });
 }
 
@@ -182,7 +181,6 @@ useEffect(() => {
 formbricks.init({
 environmentId: "<environment-id>",
 apiHost: "<api-host>",
-debug: true, // remove when in production
 });
 }, []);
 
@@ -232,7 +230,6 @@ if (typeof window !== "undefined") {
   formbricks.init({
     environmentId: "<environment-id>",
     apiHost: "<api-host>",
-    debug: true, // remove when in production
   });
 }
 
@@ -266,14 +263,6 @@ Refer to our [Example NextJS Pages Directory project](https://github.com/formbri
 <Properties>
   <Property name="api-host" type="string">
     URL of the hosted Formbricks instance.
-  </Property>
-</Properties>
-
-### Optional Customizations to be Made
-
-<Properties>
-  <Property name="debug" type="boolean">
-    Whether you want to see debug messages from Formbricks on your client-side console.
   </Property>
 </Properties>
 
@@ -355,14 +344,6 @@ router.afterEach((to, from) => {
 <Properties>
   <Property name="api-host" type="string">
     URL of the hosted Formbricks instance.
-  </Property>
-</Properties>
-
-### Optional Customizations to be Made
-
-<Properties>
-  <Property name="debug" type="boolean">
-    Whether you want to see debug messages from Formbricks on your client-side console.
   </Property>
 </Properties>
 

@@ -34,10 +34,11 @@ export default function MultipleChoiceSingleQuestion({
   setTtc,
 }: MultipleChoiceSingleProps) {
   const [startTime, setStartTime] = useState(performance.now());
+  const [otherSelected, setOtherSelected] = useState(false);
+  const otherSpecify = useRef<HTMLInputElement | null>(null);
+  const choicesContainerRef = useRef<HTMLDivElement | null>(null);
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
-
-  const [otherSelected, setOtherSelected] = useState(false);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
@@ -60,13 +61,14 @@ export default function MultipleChoiceSingleQuestion({
     setOtherSelected(isOtherSelected);
   }, [question.id, question.choices, value]);
 
-  const otherSpecify = useRef<HTMLInputElement | null>(null);
-
   useEffect(() => {
-    if (otherSelected) {
-      otherSpecify.current?.focus();
+    // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
+    if (otherSelected && choicesContainerRef.current && otherSpecify.current) {
+      choicesContainerRef.current.scrollTop = choicesContainerRef.current.scrollHeight;
+      otherSpecify.current.focus();
     }
   }, [otherSelected]);
+
   return (
     <form
       key={question.id}
@@ -86,7 +88,8 @@ export default function MultipleChoiceSingleQuestion({
 
           <div
             className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
-            role="radiogroup">
+            role="radiogroup"
+            ref={choicesContainerRef}>
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}

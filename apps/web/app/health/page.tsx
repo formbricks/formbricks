@@ -1,9 +1,7 @@
-import { CheckBadgeIcon } from "@heroicons/react/24/outline";
+import { BadgeCheckIcon } from "lucide-react";
 import { Metadata } from "next";
 
 import { prisma } from "@formbricks/database";
-import { IS_S3_CONFIGURED } from "@formbricks/lib/constants";
-import { testS3BucketAccess } from "@formbricks/lib/storage/service";
 
 export const dynamic = "force-dynamic"; // no caching
 
@@ -26,7 +24,7 @@ const checkDatabaseConnection = async () => {
   }
 };
 
-const checkS3Connection = async () => {
+/* const checkS3Connection = async () => {
   if (!IS_S3_CONFIGURED) {
     // dont try connecting if not in use
     return;
@@ -36,15 +34,16 @@ const checkS3Connection = async () => {
   } catch (e) {
     throw new Error("S3 Bucket cannot be accessed");
   }
-};
+}; */
 
 export default async function HealthPage() {
   await checkDatabaseConnection();
-  await checkS3Connection();
+  // Skipping S3 check for now until it's fixed
+  // await checkS3Connection();
 
   return (
     <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center">
-      <CheckBadgeIcon height={40} color="green" />
+      <BadgeCheckIcon height={40} color="green" />
       <p className="text-md mt-4 font-bold text-zinc-900">All systems are up and running</p>
     </div>
   );

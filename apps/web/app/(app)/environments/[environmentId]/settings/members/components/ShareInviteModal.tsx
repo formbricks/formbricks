@@ -1,7 +1,6 @@
 "use client";
 
-import { CheckIcon } from "@heroicons/react/24/outline";
-import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
+import { CheckIcon, CopyIcon } from "lucide-react";
 import { useRef } from "react";
 import toast from "react-hot-toast";
 
@@ -59,7 +58,7 @@ export default function ShareInviteModal({ inviteToken, open, setOpen }: ShareIn
               }}
               title="Copy invite link to clipboard"
               aria-label="Copy invite link to clipboard"
-              EndIcon={DocumentDuplicateIcon}>
+              EndIcon={CopyIcon}>
               Copy URL
             </Button>
           </div>

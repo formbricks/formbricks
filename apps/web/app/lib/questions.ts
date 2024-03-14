@@ -1,17 +1,17 @@
-import {
-  ArrowUpTrayIcon,
-  CalendarDaysIcon,
-  ChatBubbleBottomCenterTextIcon,
-  CheckIcon,
-  CursorArrowRippleIcon,
-  ListBulletIcon,
-  PhoneIcon,
-  PhotoIcon,
-  PresentationChartBarIcon,
-  QueueListIcon,
-  StarIcon,
-} from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+import {
+  ArrowUpFromLine,
+  CalendarDaysIcon,
+  CheckIcon,
+  ImageIcon,
+  ListIcon,
+  MessageSquareTextIcon,
+  MousePointerClickIcon,
+  PhoneIcon,
+  PresentationIcon,
+  Rows3Icon,
+  StarIcon,
+} from "lucide-react";
 
 import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 
@@ -30,7 +30,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.OpenText,
     label: "Free text",
     description: "Ask for a text-based answer",
-    icon: ChatBubbleBottomCenterTextIcon,
+    icon: MessageSquareTextIcon,
     preset: {
       headline: "Who let the dogs out?",
       subheader: "Who? Who? Who?",
@@ -43,7 +43,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.MultipleChoiceSingle,
     label: "Single-Select",
     description: "A single choice from a list of options (radio buttons)",
-    icon: QueueListIcon,
+    icon: Rows3Icon,
     preset: {
       headline: "What do you do?",
       subheader: "Can't do both.",
@@ -58,7 +58,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.MultipleChoiceMulti,
     label: "Multi-Select",
     description: "Number of choices from a list of options (checkboxes)",
-    icon: ListBulletIcon,
+    icon: ListIcon,
     preset: {
       headline: "What's important on vacay?",
       choices: [
@@ -73,7 +73,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.PictureSelection,
     label: "Picture Selection",
     description: "Ask respondents to select one or more pictures",
-    icon: PhotoIcon,
+    icon: ImageIcon,
     preset: {
       headline: "Which is the cutest puppy?",
       subheader: "You can also pick both.",
@@ -108,7 +108,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.NPS,
     label: "Net Promoter Score (NPS)",
     description: "Rate satisfaction on a 0-10 scale",
-    icon: PresentationChartBarIcon,
+    icon: PresentationIcon,
     preset: {
       headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
       lowerLabel: "Not at all likely",
@@ -119,7 +119,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.CTA,
     label: "Call-to-Action",
     description: "Prompt respondents to perform an action",
-    icon: CursorArrowRippleIcon,
+    icon: MousePointerClickIcon,
     preset: {
       headline: "You are one of our power users!",
       buttonLabel: "Book interview",
@@ -152,7 +152,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.FileUpload,
     label: "File Upload",
     description: "Allow respondents to upload a file",
-    icon: ArrowUpTrayIcon,
+    icon: ArrowUpFromLine,
     preset: {
       headline: "File Upload",
       allowMultipleFiles: false,

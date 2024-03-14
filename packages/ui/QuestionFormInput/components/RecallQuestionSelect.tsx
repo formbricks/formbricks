@@ -1,23 +1,23 @@
 import {
   CalendarDaysIcon,
-  ChatBubbleBottomCenterTextIcon,
-  ListBulletIcon,
+  ListIcon,
+  MessageSquareTextIcon,
   PhoneIcon,
-  PresentationChartBarIcon,
-  QueueListIcon,
+  PresentationIcon,
+  Rows3Icon,
   StarIcon,
-} from "@heroicons/react/24/solid";
+} from "lucide-react";
 import { RefObject, useEffect, useMemo, useState } from "react";
 
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
 const questionIconMapping = {
-  openText: ChatBubbleBottomCenterTextIcon,
-  multipleChoiceSingle: QueueListIcon,
-  multipleChoiceMulti: ListBulletIcon,
+  openText: MessageSquareTextIcon,
+  multipleChoiceSingle: Rows3Icon,
+  multipleChoiceMulti: ListIcon,
   rating: StarIcon,
-  nps: PresentationChartBarIcon,
+  nps: PresentationIcon,
   date: CalendarDaysIcon,
   cal: PhoneIcon,
 };

@@ -384,6 +384,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     surveyCache.revalidate({
       id: modifiedSurvey.id,
       environmentId: modifiedSurvey.environmentId,
+      segmentId: modifiedSurvey.segment?.id,
     });
 
     return modifiedSurvey;
@@ -502,7 +503,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 export const duplicateSurvey = async (environmentId: string, surveyId: string, userId: string) => {
   validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
-
+  const currentDate = new Date();
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
@@ -515,6 +516,8 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       ...existingSurvey,
       id: undefined, // id is auto-generated
       environmentId: undefined, // environmentId is set below
+      createdAt: currentDate,
+      updatedAt: currentDate,
       createdBy: undefined,
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
@@ -774,11 +777,14 @@ export const getSyncSurveys = async (
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const getSurveyByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
+export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
   try {
     const survey = await prisma.survey.findFirst({
       where: {
         resultShareKey,
+      },
+      select: {
+        id: true,
       },
     });
 

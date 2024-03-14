@@ -40,6 +40,23 @@ export const updateProductAction = async (
     throw new AuthorizationError("Not authorized");
   }
 
+  const team = await getTeamByEnvironmentId(environmentId);
+  const membership = team ? await getMembershipByUserIdTeamId(session.user.id, team.id) : null;
+
+  if (!membership) {
+    throw new AuthorizationError("Not authorized");
+  }
+
+  if (membership.role === "viewer") {
+    throw new AuthorizationError("Not authorized");
+  }
+
+  if (membership.role === "developer") {
+    if (!!data.name || !!data.brandColor || !!data.teamId || !!data.environments) {
+      throw new AuthorizationError("Not authorized");
+    }
+  }
+
   const updatedProduct = await updateProduct(productId, data);
   return updatedProduct;
 };
