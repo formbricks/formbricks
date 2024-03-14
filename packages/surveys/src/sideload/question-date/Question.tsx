@@ -91,11 +91,11 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
           className="bg-input-bg hover:bg-input-bg-selected border-border text-placeholder relative flex h-40 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
           <div className="flex items-center gap-2">
             {selectedDate ? (
-              <div>
+              <div className="flex items-center gap-2">
                 <CalendarCheckIcon /> <span>{formattedDate}</span>
               </div>
             ) : (
-              <div>
+              <div className="flex items-center gap-2">
                 <CalendarIcon /> <span>Select a date</span>
               </div>
             )}
