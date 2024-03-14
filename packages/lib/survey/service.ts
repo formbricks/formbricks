@@ -655,9 +655,7 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
   // Revalidate surveys by actionClassId
   revalidateSurveyByActionClassName(actionClasses, existingSurvey.triggers);
 
-  const duplicatedSurvey = await getSurvey(newSurvey.id);
-
-  return duplicatedSurvey;
+  return newSurvey;
 };
 
 export const getSyncSurveys = async (

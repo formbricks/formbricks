@@ -19,7 +19,12 @@ import {
   DropdownMenuTrigger,
 } from "../../DropdownMenu";
 import LoadingSpinner from "../../LoadingSpinner";
-import { copyToOtherEnvironmentAction, deleteSurveyAction, duplicateSurveyAction } from "../actions";
+import {
+  copyToOtherEnvironmentAction,
+  deleteSurveyAction,
+  duplicateSurveyAction,
+  getSurveyAction,
+} from "../actions";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -70,7 +75,8 @@ export default function SurveyDropDownMenu({
     try {
       const duplicatedSurvey = await duplicateSurveyAction(environmentId, surveyId);
       router.refresh();
-      if (duplicatedSurvey) duplicateSurvey(duplicatedSurvey);
+      const transformedDuplicatedSurvey = await getSurveyAction(duplicatedSurvey.id);
+      if (transformedDuplicatedSurvey) duplicateSurvey(transformedDuplicatedSurvey);
       toast.success("Survey duplicated successfully.");
     } catch (error) {
       toast.error("Failed to duplicate the survey.");

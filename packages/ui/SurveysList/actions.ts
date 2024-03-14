@@ -12,6 +12,16 @@ import { deleteSurvey, duplicateSurvey, getSurvey, getSurveys } from "@formbrick
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
+export const getSurveyAction = async (surveyId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await getSurvey(surveyId);
+};
+
 export async function duplicateSurveyAction(environmentId: string, surveyId: string) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
