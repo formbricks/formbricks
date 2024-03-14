@@ -18,6 +18,8 @@ interface SurveyCardProps {
   isViewer: boolean;
   WEBAPP_URL: string;
   orientation: string;
+  duplicateSurvey: (survey: TSurvey) => void;
+  deleteSurvey: (surveyId: string) => void;
 }
 export default function SurveyCard({
   survey,
@@ -26,6 +28,8 @@ export default function SurveyCard({
   isViewer,
   WEBAPP_URL,
   orientation,
+  deleteSurvey,
+  duplicateSurvey,
 }: SurveyCardProps) {
   const isSurveyCreationDeletionDisabled = isViewer;
 
@@ -85,6 +89,8 @@ export default function SurveyCard({
             webAppUrl={WEBAPP_URL}
             singleUseId={singleUseId}
             isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
+            duplicateSurvey={duplicateSurvey}
+            deleteSurvey={deleteSurvey}
           />
         </div>
         <div>
@@ -145,6 +151,8 @@ export default function SurveyCard({
               webAppUrl={WEBAPP_URL}
               singleUseId={singleUseId}
               isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
+              duplicateSurvey={duplicateSurvey}
+              deleteSurvey={deleteSurvey}
             />
           </div>
         </div>
