@@ -78,9 +78,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
-            DATABASE_URL=${{ env.DATABASE_URL }}
-            ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
             NEXT_PUBLIC_SENTRY_DSN=${{ env.NEXT_PUBLIC_SENTRY_DSN }}
 
       - name: Sign the images with GitHub OIDC Token

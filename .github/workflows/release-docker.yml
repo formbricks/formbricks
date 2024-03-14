@@ -52,7 +52,3 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/formbricks:${{ env.RELEASE_TAG }}
             ${{ secrets.DOCKER_USERNAME }}/formbricks:latest
-          build-args: |
-            NEXTAUTH_SECRET=${{ env.NEXTAUTH_SECRET }}
-            DATABASE_URL=${{ env.DATABASE_URL }}
-            ENCRYPTION_KEY=${{ env.ENCRYPTION_KEY }}
