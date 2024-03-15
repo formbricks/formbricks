@@ -7,28 +7,6 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { TEnvironment } from "@formbricks/types/environment";
 
-const listAllFiles = async (dirPath: string): Promise<string[]> => {
-  let filesList: string[] = [];
-  const files = await fs.readdir(dirPath, { withFileTypes: true });
-  for (const file of files) {
-    const filePath = path.join(dirPath, file.name);
-    if (file.isDirectory()) {
-      filesList = filesList.concat(await listAllFiles(filePath));
-    } else {
-      filesList.push(filePath);
-    }
-  }
-  return filesList;
-};
-
-const listDirectoriesBreadthFirst = async () => {
-  let startDir = process.cwd();
-  let jsDir = path.join(startDir, "../../packages/js");
-
-  const allFiles = await listAllFiles(jsDir);
-  console.log("All files in packages/js:", allFiles);
-};
-
 export async function GET(req: NextRequest) {
   let path: string;
   let append = "";
@@ -56,11 +34,8 @@ export async function GET(req: NextRequest) {
         "unknown module requested. module must be of type 'js' (default), 'surveys' or 'question-date'"
       );
   }
-  console.log("path", path);
-  console.log("append", append);
 
   try {
-    listDirectoriesBreadthFirst().then(() => console.log("Done listing directories."));
     const jsCode = await loadAndAppendCode(path, append);
 
     return new NextResponse(jsCode, {
@@ -71,8 +46,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.log("errir in serving file", error);
-
     return responses.internalServerErrorResponse("file not found");
   }
 }
@@ -100,21 +73,8 @@ async function handleInit(req: NextRequest) {
   return "";
 }
 
-// async function loadAndAppendCode(path: string, append: string): Promise<string> {
-//   let jsCode = await fs.readFile(path, "utf-8");
-
-//   return jsCode + append;
-// }
-
 async function loadAndAppendCode(relativePath: string, append: string): Promise<string> {
-  // Resolve the absolute path based on the relative path
-  let startDir = process.cwd();
-  const absolutePath = path.resolve(startDir, relativePath);
-  console.log("absolutePath", absolutePath);
-
-  // Read the file using the absolute path
+  const absolutePath = path.resolve(process.cwd(), relativePath);
   let jsCode = await fs.readFile(absolutePath, "utf-8");
-  console.log("jsCode", jsCode);
-
   return jsCode + append;
 }
