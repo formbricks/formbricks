@@ -387,7 +387,7 @@ export default function LinkSurveyPage() {
   return (
     <LayoutLight
       title="Finally, a Good Open Source Form Builder"
-      description="Run surveys like with Google Forms, Microsoft Forms, Typeform or Jotform with our open source form builder.">
+      description="Build free online forms with our open source form builder. Build online questionnaiers like with Google Forms, Microsoft Forms or Typeform for free! Get started now.">
       <SalesPageHero
         headline="The Open Source Form Builder that does it all"
         subheadline="Create beautiful online forms for free – all open source. Unlimited surveys, unlimited responses. Easily self-hostable."
@@ -399,7 +399,7 @@ export default function LinkSurveyPage() {
         headline="A worthy open source Typeform alternative"
         subheadline="Everyone needs online forms and yet, there was no good open source builder for them. That’s why we - together with our community - have set out to build the best open source forms builder mankind has seen."
         imgSrc={Img2}
-        imgAlt="tba"
+        imgAlt="GitHub indicator for open source forms builder project to build free and open source online forms."
         imgLeft
       />
 

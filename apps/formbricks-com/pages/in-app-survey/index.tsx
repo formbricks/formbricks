@@ -71,7 +71,7 @@ const inAppSurveyFeatures = [
   {
     headline: "Super fast loading",
     subheadline:
-      "The Formbricks SDK is tiny (7KB). Keep your app lightning fast and your users engaged. The in app survey SDK always loads deferred and never slows down your app.",
+      "The Formbricks SDK is tiny (7KB). Keep your app lightning fast and your users engaged. The in-app survey SDK always loads deferred and never slows down your app.",
     imgSrc: Img5,
     imgAlt: "Demonstration of super fast loading times for an embedded survey in an app",
     imgLeft: false,
@@ -87,7 +87,7 @@ const inAppSurveyFeatures = [
   {
     headline: "Unlimited seats & products included",
     subheadline:
-      "Embed Formbricks to run surveys in as many apps as you wish, all for free. Invite everyone who should work with user insights (hence, everyone). Product survey tools should never limit how far customer insights spread within a company.",
+      "Embed Formbricks to run surveys in as many apps as you wish, without additional cost. Invite everyone who should work with user insights (hence, everyone). Product survey tools should never limit how far customer insights spread within a company.",
     imgSrc: Img7,
     imgAlt: "Illustration of embedding Formbricks surveys across multiple mobile apps",
     imgLeft: false,
@@ -100,7 +100,7 @@ const linkSurveyFeaturesPt2 = [
     subheadline:
       "Control who can set up app surveys, and who gets to work with the insights gathered by your reserach. Granular access control allows everyone to work with the insights gathered with in-product research.",
     imgSrc: Img8,
-    imgAlt: "Interface showcasing team roles and access rights for in app survey setup and insights",
+    imgAlt: "Interface showcasing team roles and access rights for in-app survey setup and insights",
     imgLeft: true,
   },
   {
@@ -202,17 +202,17 @@ const FAQs = [
 export default function LinkSurveyPage() {
   return (
     <LayoutLight
-      title="In app Surveys, Open Source"
-      description="Run targeted inapp surveys with full control over your data.">
+      title="In-app Surveys, Open Source"
+      description="Run targeted in-app surveys with full control over your data. Natively embed open source in-product reserach to understand what your users think. Get started in minutes.">
       <SalesPageHero
         headline={
           <span>
-            In app Surveys People <i>Want</i> to Fill Out
+            In-app Surveys People <i>Want</i> to Fill Out
           </span>
         }
         subheadline="In-product user research with a native look and feel. Ask only the right cohort, ask gracefully."
         imgSrc={Img1}
-        imgAlt="Targeted in app surveys built on open source technology."
+        imgAlt="Targeted in-app surveys built on open source technology."
       />
       <div className="grid gap-4 md:grid-cols-2">
         <SalesTestimonial
@@ -226,7 +226,7 @@ export default function LinkSurveyPage() {
           quote="As a product-led growth company, we run surveys at key moments in our user journey. We spent a lot of time crafting our UX and I love how seamless Formbricks fits in! Should be a no-brainer for every product team."
           author="Bailey Pumfleet, Co-CEO @ Cal.com"
           imgSrc={Bailey}
-          imgAlt="tba"
+          imgAlt="Cal.com co-founder Bailey Pumfleet speaks about how Formbricks in-app surveys feel like a native part of the UI of their product."
           textSize="large"
         />
       </div>
@@ -234,7 +234,7 @@ export default function LinkSurveyPage() {
         headline="Native look and feel, powered by open source"
         subheadline="Formbricks is fully open source. Integrate it natively and keep engineers, designers and researchers happy. Formbricks is the most versatile open source in-product survey tool available."
         imgSrc={Img2}
-        imgAlt="tba"
+        imgAlt="Indicator of GitHub stars for open source in-app survey product Formbricks which rund embedded surveys with a native look and feel."
         imgLeft
       />
 
@@ -275,7 +275,7 @@ export default function LinkSurveyPage() {
         <HeadingCentered
           heading={
             <span>
-              In app surveys <i>exactly</i> how you want them
+              In-app surveys <i>exactly</i> how you want them
             </span>
           }
           teaser="All features backed in"

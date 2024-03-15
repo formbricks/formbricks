@@ -205,7 +205,7 @@ export default function WebsiteSurveyPage() {
   return (
     <LayoutLight
       title="Website Surveys, Free and Open Source"
-      description="Run targeted website surveys with full control over your data. Fly through compliance reviews by keeping all data on premise.">
+      description="Run targeted website surveys with full control over your data. Fly through compliance reviews by keeping all data on premise. Get started now!">
       <SalesPageHero
         headline="Website Surveys, Privacy-First 🔒"
         subheadline="Understand what people need on your website. Keep full control over your data, always."
