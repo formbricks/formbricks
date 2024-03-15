@@ -7,18 +7,53 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { TEnvironment } from "@formbricks/types/environment";
 
-const printAllDirectories = async (dirPath = "../../../../../") => {
-  try {
-    const files = await fs.readdir(dirPath, { withFileTypes: true });
-    for (const file of files) {
-      const filePath = path.join(dirPath, file.name);
-      if (file.isDirectory()) {
-        console.log("Directory:", filePath);
-        await printAllDirectories(filePath);
-      }
+const listDirectoriesBreadthFirst = async () => {
+  let startDir = process.cwd();
+  const queue = [startDir];
+  const processedDirs = new Set();
+
+  while (queue.length > 0) {
+    const currentDir = queue.shift();
+    // console.log("currentDir", currentDir);
+
+    if (typeof currentDir !== "string" || processedDirs.has(currentDir)) {
+      continue; // Skip this iteration if currentDir is not a string or has already been processed
     }
-  } catch (error) {
-    console.error("Error reading directory:", error);
+    processedDirs.add(currentDir);
+
+    if (currentDir.includes("packages")) {
+      const absolutePath = path.resolve(currentDir);
+      const relativePath = path.relative(startDir, currentDir);
+      console.log("Directory containing 'packages':", absolutePath, "(Relative:", relativePath + ")");
+    }
+
+    try {
+      const files = await fs.readdir(currentDir, { withFileTypes: true });
+      for (const file of files) {
+        if (file.isDirectory()) {
+          const dirPath = path.join(currentDir, file.name);
+          if (dirPath.includes("packages")) {
+            const absolutePath = path.resolve(dirPath);
+            const relativePath = path.relative(startDir, dirPath);
+            console.log(
+              "Subdirectory containing 'packages':",
+              absolutePath,
+              "(Relative:",
+              relativePath + ")"
+            );
+          }
+          queue.push(dirPath);
+        }
+      }
+    } catch (error) {
+      console.error("Error reading directory:", error);
+    }
+
+    // Move one level up if possible
+    const parentDir = path.dirname(currentDir);
+    if (parentDir !== currentDir) {
+      queue.push(parentDir);
+    }
   }
 };
 
@@ -53,7 +88,7 @@ export async function GET(req: NextRequest) {
   console.log("append", append);
 
   try {
-    printAllDirectories().then(() => console.log("Done listing files."));
+    listDirectoriesBreadthFirst().then(() => console.log("Done listing directories."));
     const jsCode = await loadAndAppendCode(path, append);
 
     return new NextResponse(jsCode, {
