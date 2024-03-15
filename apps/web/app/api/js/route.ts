@@ -72,7 +72,7 @@ async function handleInit(req: NextRequest) {
   return "";
 }
 
-async function loadAndAppendCode(relativePath: string, append: string): Promise<string> {
-  let jsCode = await fs.readFile(relativePath, "utf-8");
+async function loadAndAppendCode(path: string, append: string): Promise<string> {
+  let jsCode = await fs.readFile(path, "utf-8");
   return jsCode + append;
 }
