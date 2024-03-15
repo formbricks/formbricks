@@ -1,5 +1,5 @@
 import HeadingCentered from "@/components/shared/HeadingCentered";
-import SeoFaq from "@/components/shared/seo/SeoFaq";
+import SeoFaq from "@/components/shared/lawl/okcool";
 
 const FAQs = [
   {

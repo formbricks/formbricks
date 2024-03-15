@@ -7,7 +7,7 @@ import SalesPageHero from "@/components/salespage/SalesPageHero";
 import SalesSteps from "@/components/salespage/SalesSteps";
 import SalesTestimonial from "@/components/salespage/SalesTestimonial";
 import HeadingCentered from "@/components/shared/HeadingCentered";
-import SeoFaq from "@/components/shared/seo/SeoFaq";
+import SeoFaq from "@/components/shared/lawl/okcool";
 import Jonathan from "@/images/clients/headshots/jonathan.png";
 import Peer from "@/images/clients/headshots/peer.jpeg";
 import {
