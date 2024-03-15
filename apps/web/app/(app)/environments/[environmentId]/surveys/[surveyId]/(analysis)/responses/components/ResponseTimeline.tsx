@@ -26,7 +26,7 @@ interface ResponseTimelineProps {
   updateResponse: (responseId: string, responses: TResponse) => void;
   deleteResponse: (responseId: string) => void;
   fetchingFirstPage: boolean;
-  responseCount: number;
+  responseCount: number | null;
 }
 
 export default function ResponseTimeline({

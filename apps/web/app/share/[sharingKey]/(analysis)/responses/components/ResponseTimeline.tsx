@@ -22,7 +22,7 @@ interface ResponseTimelineProps {
   fetchNextPage: () => void;
   hasMore: boolean;
   fetchingFirstPage: boolean;
-  responseCount: number;
+  responseCount: number | null;
 }
 
 export default function ResponseTimeline({

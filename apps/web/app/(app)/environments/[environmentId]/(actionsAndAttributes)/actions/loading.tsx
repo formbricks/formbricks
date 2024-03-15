@@ -1,4 +1,4 @@
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { MousePointerClickIcon } from "lucide-react";
 
 import { Button } from "@formbricks/ui/Button";
 
@@ -9,7 +9,7 @@ export default function Loading() {
         <Button
           variant="darkCTA"
           className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200">
-          <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
+          <MousePointerClickIcon className="mr-2 h-5 w-5 text-white" />
           Loading
         </Button>
       </div>

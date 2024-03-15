@@ -1,5 +1,5 @@
 import UrlShortenerForm from "@/app/(app)/environments/[environmentId]/components/UrlShortenerForm";
-import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
+import { CopyIcon } from "lucide-react";
 import { RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
@@ -80,7 +80,7 @@ export default function LinkTab({
                 navigator.clipboard.writeText(surveyUrl);
                 toast.success("URL copied to clipboard!");
               }}
-              EndIcon={DocumentDuplicateIcon}>
+              EndIcon={CopyIcon}>
               Copy Link
             </Button>
             {isSingleUseLinkSurvey && (

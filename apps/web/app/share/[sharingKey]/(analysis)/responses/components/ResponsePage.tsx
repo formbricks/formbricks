@@ -46,7 +46,7 @@ const ResponsePage = ({
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [responseCount, setResponseCount] = useState<number>(0);
+  const [responseCount, setResponseCount] = useState<number | null>(null);
   const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();

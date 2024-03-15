@@ -21,7 +21,7 @@ import RatingSummary from "./RatingSummary";
 
 interface SummaryListProps {
   summary: TSurveySummary["summary"];
-  responseCount: number;
+  responseCount: number | null;
   environment: TEnvironment;
   survey: TSurvey;
   fetchingSummary: boolean;

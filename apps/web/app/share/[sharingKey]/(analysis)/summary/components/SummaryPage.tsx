@@ -57,7 +57,8 @@ const SummaryPage = ({
   environmentTags,
   attributes,
 }: SummaryPageProps) => {
-  const [responseCount, setResponseCount] = useState<number>(0);
+  const [responseCount, setResponseCount] = useState<number | null>(null);
+
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
   const [isFetchingSummary, setFetchingSummary] = useState<boolean>(true);

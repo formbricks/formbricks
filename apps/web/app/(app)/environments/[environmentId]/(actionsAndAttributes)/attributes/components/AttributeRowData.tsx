@@ -1,4 +1,4 @@
-import { TagIcon } from "@heroicons/react/24/solid";
+import { TagIcon } from "lucide-react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { Badge } from "@formbricks/ui/Badge";

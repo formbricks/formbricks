@@ -4,13 +4,13 @@ import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getSurveys } from "@formbricks/lib/survey/service";
+import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import SurveysList from "@formbricks/ui/SurveysList";
@@ -42,21 +42,22 @@ export default async function SurveysPage({ params }) {
   if (!environment) {
     throw new Error("Environment not found");
   }
-  const surveys = await getSurveys(params.environmentId, 1); // workaround for now; only get the first page; better approach is in development
+
+  const surveyCount = await getSurveyCount(params.environmentId);
 
   const environments = await getEnvironments(product.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   return (
     <ContentWrapper className="flex h-full flex-col justify-between">
-      {surveys.length > 0 ? (
+      {surveyCount > 0 ? (
         <SurveysList
           environment={environment}
-          surveys={surveys}
           otherEnvironment={otherEnvironment}
           isViewer={isViewer}
           WEBAPP_URL={WEBAPP_URL}
           userId={session.user.id}
+          surveysPerPage={SURVEYS_PER_PAGE}
         />
       ) : (
         <SurveyStarter
@@ -66,7 +67,7 @@ export default async function SurveysPage({ params }) {
           user={session.user}
         />
       )}
-      {/* <SurveysList environmentId={params.environmentId} />   */}
+
       <WidgetStatusIndicator environmentId={params.environmentId} type="mini" />
     </ContentWrapper>
   );

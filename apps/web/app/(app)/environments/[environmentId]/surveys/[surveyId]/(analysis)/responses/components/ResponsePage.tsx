@@ -50,7 +50,7 @@ const ResponsePage = ({
   responsesPerPage,
   membershipRole,
 }: ResponsePageProps) => {
-  const [responseCount, setResponseCount] = useState<number>(0);
+  const [responseCount, setResponseCount] = useState<number | null>(null);
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -81,6 +81,9 @@ const ResponsePage = ({
 
   const deleteResponse = (responseId: string) => {
     setResponses(responses.filter((response) => response.id !== responseId));
+    if (responseCount) {
+      setResponseCount(responseCount - 1);
+    }
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponse) => {

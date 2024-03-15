@@ -1,4 +1,4 @@
-import { QuestionMarkCircleIcon, UsersIcon } from "@heroicons/react/24/solid";
+import { HelpCircleIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 
 import { TUser } from "@formbricks/types/user";
@@ -51,9 +51,9 @@ export default function EditAlerts({
               <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger>
-                    <div className="col-span-1 flex cursor-default items-center justify-center">
+                    <div className="col-span-1 flex cursor-default items-center justify-center space-x-2">
                       <span className="">Every Response</span>
-                      <QuestionMarkCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
+                      <HelpCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Sends complete responses, no partials.</TooltipContent>
