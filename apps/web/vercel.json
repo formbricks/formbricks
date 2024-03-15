@@ -10,6 +10,9 @@
     "app/**/*.ts": {
       "maxDuration": 10,
       "memory": 512
+    },
+    "app/api/js.ts": {
+      "includeFiles": "packages/**/*"
     }
   }
 }
