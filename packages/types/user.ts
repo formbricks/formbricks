@@ -32,6 +32,7 @@ export const ZUser = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   onboardingCompleted: z.boolean(),
+  role: ZRole.nullable(),
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
 });

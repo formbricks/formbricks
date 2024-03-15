@@ -3,14 +3,9 @@
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
-import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
-import {
-  ArrowsPointingInIcon,
-  ArrowsPointingOutIcon,
-  ComputerDesktopIcon,
-  DevicePhoneMobileIcon,
-} from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
+import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { RefreshCcwIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -75,8 +70,7 @@ export default function PreviewSurvey({
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
-  const [shrink, setshrink] = useState(false);
-
+  const [shrink, setShrink] = useState(false);
   const { productOverwrites } = survey || {};
 
   const previewScreenVariants: Variants = {
@@ -146,7 +140,7 @@ export default function PreviewSurvey({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
-  function resetQuestionProgress() {
+  const resetQuestionProgress = () => {
     let storePreviewMode = previewMode;
     setPreviewMode("null");
     setTimeout(() => {
@@ -154,7 +148,7 @@ export default function PreviewSurvey({
     }, 10);
 
     setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
-  }
+  };
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -163,6 +157,13 @@ export default function PreviewSurvey({
       setWidgetSetupCompleted(false);
     }
   }, [environment]);
+
+  const handlePreviewModalClose = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setIsModalOpen(true);
+    }, 1000);
+  };
 
   if (!previewType) {
     previewType = widgetSetupCompleted ? "modal" : "fullwidth";
@@ -213,6 +214,7 @@ export default function PreviewSurvey({
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
+                    onClose={handlePreviewModalClose}
                   />
                 </Modal>
               ) : (
@@ -246,19 +248,19 @@ export default function PreviewSurvey({
 
                 <div className="flex items-center">
                   {isFullScreenPreview ? (
-                    <ArrowsPointingInIcon
+                    <ShrinkIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setshrink(true);
+                        setShrink(true);
                         setPreviewPosition("relative");
                         setTimeout(() => setIsFullScreenPreview(false), 300);
                       }}
                     />
                   ) : (
-                    <ArrowsPointingOutIcon
+                    <ExpandIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setshrink(false);
+                        setShrink(false);
                         setIsFullScreenPreview(true);
                         setTimeout(() => setPreviewPosition("fixed"), 300);
                       }}
@@ -283,6 +285,7 @@ export default function PreviewSurvey({
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   onFileUpload={onFileUpload}
+                  onClose={handlePreviewModalClose}
                 />
               </Modal>
             ) : (
@@ -309,12 +312,12 @@ export default function PreviewSurvey({
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <TabOption
           active={previewMode === "mobile"}
-          icon={<DevicePhoneMobileIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+          icon={<SmartphoneIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
           onClick={() => setPreviewMode("mobile")}
         />
         <TabOption
           active={previewMode === "desktop"}
-          icon={<ComputerDesktopIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+          icon={<MonitorIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
           onClick={() => setPreviewMode("desktop")}
         />
       </div>
@@ -329,7 +332,7 @@ function ResetProgressButton({ resetQuestionProgress }) {
       className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
       onClick={resetQuestionProgress}>
       Restart
-      <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
+      <RefreshCcwIcon className="ml-2 h-4 w-4" />
     </Button>
   );
 }

@@ -12,6 +12,11 @@ test.describe("Survey Create & Submit Response", async () => {
     await createSurvey(page, name, email, password, surveys.createAndSubmit);
     // Save & Publish Survey
     await page.getByRole("button", { name: "Continue to Settings" }).click();
+
+    await page.locator("#howToSendCardTrigger").click();
+    await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
+    await page.locator("#howToSendCardOption-link").click();
+
     await page.getByRole("button", { name: "Publish" }).click();
 
     // Get URL
@@ -29,14 +34,7 @@ test.describe("Survey Create & Submit Response", async () => {
     // Save & Publish Survey
     await page.getByRole("button", { name: "Continue to Settings" }).click();
 
-    await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
-    await page.locator("#howToSendCardTrigger").click();
-
-    await expect(page.locator("#howToSendCardOption-web")).toBeVisible();
-    await page.locator("#howToSendCardOption-web").click();
-
     await expect(page.getByText("Survey Trigger")).toBeVisible();
-    await page.getByText("Survey Trigger").click();
 
     await page.getByRole("button", { name: "Custom Actions" }).click();
 
@@ -118,7 +116,7 @@ test.describe("Survey Create & Submit Response", async () => {
     expect(await page.getByRole("group", { name: "Choices" }).locator("label").count()).toBe(5);
     await expect(page.getByRole("button", { name: "Next" })).not.toBeVisible();
     await expect(page.getByRole("button", { name: "Back" })).toBeVisible();
-    await page.getByLabel("").nth(3).click();
+    await page.locator("path").nth(3).click();
 
     // NPS Question
     await expect(page.getByText(surveys.createAndSubmit.npsQuestion.question)).toBeVisible();

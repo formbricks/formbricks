@@ -1,6 +1,6 @@
 "use client";
 
-import { UserGroupIcon } from "@heroicons/react/20/solid";
+import { UsersIcon } from "lucide-react";
 import { FilterIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -136,7 +136,7 @@ const BasicCreateSegmentModal = ({
             <div className="flex w-full items-center gap-4 p-6">
               <div className="flex items-center space-x-2">
                 <div className="mr-1.5 h-6 w-6 text-slate-500">
-                  <UserGroupIcon />
+                  <UsersIcon className="h-5 w-5" />
                 </div>
                 <div>
                   <h3 className="text-base font-medium">Create Segment</h3>

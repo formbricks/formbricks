@@ -263,19 +263,29 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const getSurveys = async (environmentId: string, page?: number): Promise<TSurvey[]> => {
+export const getSurveys = async (
+  environmentId: string,
+  limit?: number,
+  offset?: number
+): Promise<TSurvey[]> => {
   const surveys = await unstable_cache(
     async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+      validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
       let surveysPrisma;
+
       try {
         surveysPrisma = await prisma.survey.findMany({
           where: {
             environmentId,
           },
           select: selectSurvey,
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          orderBy: [
+            {
+              updatedAt: "desc",
+            },
+          ],
+          take: limit ? limit : undefined,
+          skip: offset ? offset : undefined,
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -308,7 +318,7 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
       }
       return surveys;
     },
-    [`getSurveys-${environmentId}-${page}`],
+    [`getSurveys-${environmentId}-${limit}-${offset}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
@@ -318,6 +328,37 @@ export const getSurveys = async (environmentId: string, page?: number): Promise<
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+};
+
+export const getSurveyCount = async (environmentId: string): Promise<number> => {
+  const count = await unstable_cache(
+    async () => {
+      validateInputs([environmentId, ZId]);
+      try {
+        const surveyCount = await prisma.survey.count({
+          where: {
+            environmentId: environmentId,
+          },
+        });
+
+        return surveyCount;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error);
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
+    },
+    [`getSurveyCount-${environmentId}`],
+    {
+      tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return count;
 };
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
@@ -503,7 +544,7 @@ export const createSurvey = async (environmentId: string, surveyBody: TSurveyInp
 export const duplicateSurvey = async (environmentId: string, surveyId: string, userId: string) => {
   validateInputs([environmentId, ZId], [surveyId, ZId]);
   const existingSurvey = await getSurvey(surveyId);
-
+  const currentDate = new Date();
   if (!existingSurvey) {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
@@ -516,6 +557,8 @@ export const duplicateSurvey = async (environmentId: string, surveyId: string, u
       ...existingSurvey,
       id: undefined, // id is auto-generated
       environmentId: undefined, // environmentId is set below
+      createdAt: currentDate,
+      updatedAt: currentDate,
       createdBy: undefined,
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
@@ -775,11 +818,14 @@ export const getSyncSurveys = async (
   return surveys.map((survey) => formatDateFields(survey, ZSurvey));
 };
 
-export const getSurveyByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
+export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
   try {
     const survey = await prisma.survey.findFirst({
       where: {
         resultShareKey,
+      },
+      select: {
+        id: true,
       },
     });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys";

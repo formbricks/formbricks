@@ -1,13 +1,14 @@
 "use client";
 
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import {
-  ChatBubbleBottomCenterTextIcon,
-  EnvelopeIcon,
-  HashtagIcon,
+  HashIcon,
   LinkIcon,
+  MailIcon,
+  MessageSquareTextIcon,
   PhoneIcon,
-} from "@heroicons/react/24/solid";
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -22,11 +23,11 @@ import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
 
 const questionTypes = [
-  { value: "text", label: "Text", icon: <ChatBubbleBottomCenterTextIcon /> },
-  { value: "email", label: "Email", icon: <EnvelopeIcon /> },
-  { value: "url", label: "URL", icon: <LinkIcon /> },
-  { value: "number", label: "Number", icon: <HashtagIcon /> },
-  { value: "phone", label: "Phone", icon: <PhoneIcon /> },
+  { value: "text", label: "Text", icon: <MessageSquareTextIcon className="h-4 w-4" /> },
+  { value: "email", label: "Email", icon: <MailIcon className="h-4 w-4" /> },
+  { value: "url", label: "URL", icon: <LinkIcon className="h-4 w-4" /> },
+  { value: "number", label: "Number", icon: <HashIcon className="h-4 w-4" /> },
+  { value: "phone", label: "Phone", icon: <PhoneIcon className="h-4 w-4" /> },
 ];
 
 interface OpenQuestionFormProps {

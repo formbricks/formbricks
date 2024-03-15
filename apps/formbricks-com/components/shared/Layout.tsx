@@ -1,5 +1,5 @@
+import HeaderLight from "../salespage/HeaderLight";
 import Footer from "./Footer";
-import Header from "./Header";
 import MetaInformation from "./MetaInformation";
 
 interface LayoutProps {
@@ -10,11 +10,11 @@ interface LayoutProps {
 
 export default function Layout({ title, description, children }: LayoutProps) {
   return (
-    <div className="flex h-screen flex-col justify-between">
+    <div className="mx-auto w-full">
       <MetaInformation title={title} description={description} />
-      <Header />
+      <HeaderLight />
       {
-        <main className="max-w-8xl relative mx-auto mb-auto flex w-full flex-col justify-center sm:px-2 lg:px-8 xl:px-12">
+        <main className="max-w-8xl relative mx-auto flex w-full flex-col justify-center space-y-32 px-6 py-24 lg:px-24 xl:px-36 ">
           {children}
         </main>
       }

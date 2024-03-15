@@ -77,10 +77,13 @@ export default function MultipleChoiceMultiQuestion({
   );
 
   const otherSpecify = useRef<HTMLInputElement | null>(null);
+  const choicesContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (otherSelected) {
-      otherSpecify.current?.focus();
+    // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
+    if (otherSelected && choicesContainerRef.current && otherSpecify.current) {
+      choicesContainerRef.current.scrollTop = choicesContainerRef.current.scrollHeight;
+      otherSpecify.current.focus();
     }
   }, [otherSelected]);
 
@@ -126,7 +129,9 @@ export default function MultipleChoiceMultiQuestion({
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
-          <div className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2">
+          <div
+            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
+            ref={choicesContainerRef}>
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}

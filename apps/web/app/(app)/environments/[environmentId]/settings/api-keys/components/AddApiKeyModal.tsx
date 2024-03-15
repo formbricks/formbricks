@@ -1,6 +1,6 @@
 "use client";
 
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { AlertTriangleIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@formbricks/ui/Button";
@@ -46,7 +46,7 @@ export default function AddMemberModal({ open, setOpen, onSubmit }: MemberModalP
               </div>
 
               <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-700">
-                <ExclamationTriangleIcon className="mx-3 h-12 w-12 text-amber-500" />
+                <AlertTriangleIcon className="mx-3 h-12 w-12 text-amber-500" />
                 <p>
                   For security reasons, the API key will only be <strong>shown once</strong> after creation.
                   Please copy it to your destination right away.
