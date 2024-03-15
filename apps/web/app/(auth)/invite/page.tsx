@@ -1,4 +1,3 @@
-import { finishOnboardingAction } from "@/app/(app)/onboarding/actions";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -7,6 +6,7 @@ import { sendInviteAcceptedEmail } from "@formbricks/lib/emails/emails";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
+import { updateUser } from "@formbricks/lib/user/service";
 
 import {
   ExpiredContent,
@@ -45,7 +45,7 @@ export default async function InvitePage({ searchParams }) {
       await deleteInvite(inviteId);
 
       sendInviteAcceptedEmail(invite.creator.name ?? "", session.user?.name ?? "", invite.creator.email);
-      finishOnboardingAction();
+      updateUser(session.user.id, { onboardingCompleted: true });
       return <RightAccountContent />;
     }
   } catch (e) {
