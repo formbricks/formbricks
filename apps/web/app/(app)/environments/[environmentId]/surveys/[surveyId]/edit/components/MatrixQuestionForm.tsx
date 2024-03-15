@@ -1,8 +1,7 @@
 "use client";
 
 import { MatrixLabelInput } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MatrixInput";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
-import { Plus } from "lucide-react";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -138,7 +137,7 @@ export default function MatrixQuestionForm({
                 e.preventDefault();
                 handleAddLabel("row");
               }}>
-              <Plus className="h-4 w-4" />
+              <PlusIcon className="h-4 w-4" />
               <span>Add Row</span>
             </Button>
           </div>
@@ -165,7 +164,7 @@ export default function MatrixQuestionForm({
                 e.preventDefault();
                 handleAddLabel("column");
               }}>
-              <Plus className="h-4 w-4" />
+              <PlusIcon className="h-4 w-4" />
               <span>Add Column</span>
             </Button>
           </div>
