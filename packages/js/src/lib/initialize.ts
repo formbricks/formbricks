@@ -160,6 +160,7 @@ export const initialize = async (
         ...config.get().state,
         attributes: { ...config.get().state.attributes, ...c.attributes },
       },
+      expiresAt: config.get().expiresAt,
     });
   }
 
