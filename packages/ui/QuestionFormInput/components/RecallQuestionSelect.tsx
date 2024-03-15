@@ -48,7 +48,8 @@ export default function RecallQuestionSelect({
       question.type === "cta" ||
       question.type === "consent" ||
       question.type === "pictureSelection" ||
-      question.type === "cal"
+      question.type === "cal" ||
+      question.type === "matrix"
     );
   };
 

@@ -18,6 +18,7 @@ import {
 } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
+import { processAnswer } from "../responses";
 import { sanitizeString } from "../strings";
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
@@ -296,6 +297,15 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
             },
           });
           break;
+        case "matrix":
+          const rowLabel = Object.keys(val.value)[0];
+          data.push({
+            data: {
+              path: [key, rowLabel],
+              equals: val.value[rowLabel],
+            },
+          });
+          break;
       }
     });
 
@@ -378,7 +388,7 @@ export const getResponsesJson = (
     questions.forEach((question, i) => {
       const questionId = survey?.questions[i].id || "";
       const answer = response.data[questionId];
-      jsonData[idx][question] = Array.isArray(answer) ? answer.join("; ") : answer;
+      jsonData[idx][question] = processAnswer(answer);
     });
 
     // user attributes
@@ -392,7 +402,7 @@ export const getResponsesJson = (
       if (Array.isArray(value)) {
         jsonData[idx][field] = value.join("; ");
       } else {
-        jsonData[idx][field] = value;
+        jsonData[idx][field] = processAnswer(value);
       }
     });
   });
@@ -969,6 +979,58 @@ export const getQuestionWiseSummary = (
           },
         });
 
+        break;
+      }
+      case TSurveyQuestionType.Matrix: {
+        const rows = question.rows;
+        const columns = question.columns;
+        let totalResponseCount = 0;
+
+        // Initialize count object
+        const countMap: Record<string, string> = rows.reduce((acc, row) => {
+          acc[row] = columns.reduce((colAcc, col) => {
+            colAcc[col] = 0;
+            return colAcc;
+          }, {});
+          return acc;
+        }, {});
+
+        responses.forEach((response) => {
+          const selectedResponses = response.data[question.id] as Record<string, string>;
+          if (selectedResponses) {
+            totalResponseCount++;
+            rows.forEach((row) => {
+              const colValue = selectedResponses[row];
+              if (colValue && columns.includes(colValue)) {
+                countMap[row][colValue] += 1;
+              }
+            });
+          }
+        });
+
+        const matrixSummary = rows.map((row) => {
+          let totalResponsesForRow = 0;
+          columns.forEach((col) => {
+            totalResponsesForRow += countMap[row][col];
+          });
+
+          const columnPercentages = columns.reduce((acc, col) => {
+            const count = countMap[row][col];
+            const percentage =
+              totalResponsesForRow > 0 ? ((count / totalResponsesForRow) * 100).toFixed(2) : "0.00";
+            acc[col] = percentage;
+            return acc;
+          }, {});
+
+          return { rowLabel: row, columnPercentages };
+        });
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: totalResponseCount,
+          data: matrixSummary,
+        });
         break;
       }
     }

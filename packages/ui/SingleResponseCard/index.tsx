@@ -13,7 +13,12 @@ import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+import {
+  TSurvey,
+  TSurveyPictureSelectionQuestion,
+  TSurveyQuestion,
+  TSurveyQuestionType,
+} from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
@@ -229,6 +234,52 @@ export default function SingleResponseCard({
     }
   };
 
+  const renderResponse = (
+    questionType: TSurveyQuestionType,
+    responseData: string | number | string[] | Record<string, string>,
+    question: TSurveyQuestion
+  ) => {
+    switch (questionType) {
+      case TSurveyQuestionType.Rating:
+        if (typeof responseData === "number")
+          return <RatingResponse scale={question.scale} answer={responseData} range={question.range} />;
+      case TSurveyQuestionType.Date:
+        if (typeof responseData === "string") return <DateResponse date={responseData} />;
+      case TSurveyQuestionType.Cal:
+        if (typeof responseData === "string")
+          return <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">{responseData}</p>;
+      case TSurveyQuestionType.PictureSelection:
+        if (Array.isArray(responseData))
+          return (
+            <PictureSelectionResponse
+              choices={(question as TSurveyPictureSelectionQuestion).choices}
+              selected={responseData}
+            />
+          );
+      case TSurveyQuestionType.FileUpload:
+        if (Array.isArray(responseData)) return <FileUploadResponse selected={responseData} />;
+      case TSurveyQuestionType.Matrix:
+        return Object.entries(responseData as Record<string, string>).map((responseValue) => {
+          return (
+            <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
+              {responseValue[0]} : {responseValue[1]}
+            </p>
+          );
+        });
+      default:
+        if (
+          typeof responseData === "string" ||
+          typeof responseData === "number" ||
+          Array.isArray(responseData)
+        )
+          return (
+            <p className="ph-no-capture my-1 whitespace-pre-line font-semibold text-slate-700">
+              {Array.isArray(responseData) ? handleArray(responseData) : responseData}
+            </p>
+          );
+    }
+  };
+
   return (
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
@@ -334,7 +385,7 @@ export default function SingleResponseCard({
                   <span>Verified Email</span>
                 </p>
                 <p className="ph-no-capture my-1 font-semibold text-slate-700">
-                  {response.data["verifiedEmail"]}
+                  {typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : ""}
                 </p>
               </div>
             )}
@@ -365,38 +416,7 @@ export default function SingleResponseCard({
                       }
                     />
                   )}
-                  {typeof response.data[question.id] !== "object" ? (
-                    question.type === TSurveyQuestionType.Rating ? (
-                      <div>
-                        <RatingResponse
-                          scale={question.scale}
-                          answer={response.data[question.id]}
-                          range={question.range}
-                        />
-                      </div>
-                    ) : question.type === TSurveyQuestionType.Date ? (
-                      <DateResponse date={response.data[question.id] as string} />
-                    ) : question.type === TSurveyQuestionType.Cal ? (
-                      <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
-                        {response.data[question.id]}
-                      </p>
-                    ) : (
-                      <p className="ph-no-capture my-1 whitespace-pre-line font-semibold text-slate-700">
-                        {response.data[question.id]}
-                      </p>
-                    )
-                  ) : question.type === TSurveyQuestionType.PictureSelection ? (
-                    <PictureSelectionResponse
-                      choices={question.choices}
-                      selected={response.data[question.id]}
-                    />
-                  ) : question.type === TSurveyQuestionType.FileUpload ? (
-                    <FileUploadResponse selected={response.data[question.id]} />
-                  ) : (
-                    <p className="ph-no-capture my-1 font-semibold text-slate-700">
-                      {handleArray(response.data[question.id])}
-                    </p>
-                  )}
+                  {renderResponse(question.type, response.data[question.id], question)}
                 </div>
               );
             })}
@@ -407,7 +427,9 @@ export default function SingleResponseCard({
                 return (
                   <div key={field}>
                     <p className="text-sm text-slate-500">Hidden Field: {field}</p>
-                    <p className="ph-no-capture my-1 font-semibold text-slate-700">{response.data[field]}</p>
+                    <p className="ph-no-capture my-1 font-semibold text-slate-700">
+                      {typeof response.data[field] === "string" ? (response.data[field] as string) : ""}
+                    </p>
                   </div>
                 );
               })}

@@ -13,7 +13,7 @@ import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -24,7 +24,7 @@ interface OpenTextQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function OpenTextQuestion({
+export const OpenTextQuestion = ({
   question,
   value,
   onChange,
@@ -35,7 +35,7 @@ export default function OpenTextQuestion({
   autoFocus = true,
   ttc,
   setTtc,
-}: OpenTextQuestionProps) {
+}: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
@@ -136,4 +136,4 @@ export default function OpenTextQuestion({
       </div>
     </form>
   );
-}
+};

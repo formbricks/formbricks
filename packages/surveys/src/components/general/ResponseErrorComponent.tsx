@@ -1,5 +1,6 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
 
+import { processAnswer } from "@formbricks/lib/responses";
 import { type TResponseData } from "@formbricks/types/responses";
 import { type TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -29,7 +30,7 @@ export const ResponseErrorComponent = ({ questions, responseData, onRetry }: Res
               <div className={"flex flex-col"}>
                 <span className={"text-sm leading-6 text-slate-900"}>{`Question ${index + 1}`}</span>
                 <span className={"mt-1 text-sm font-semibold leading-6 text-slate-900"}>
-                  {typeof response === "object" ? response.join(", ") : response}
+                  {processAnswer(response)}
                 </span>
               </div>
             );

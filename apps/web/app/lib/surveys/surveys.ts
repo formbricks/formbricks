@@ -25,6 +25,7 @@ const conditionOptions = {
   pictureSelection: ["Includes all", "Includes either"],
   userAttributes: ["Equals", "Not equals"],
   consent: ["is"],
+  matrix: [""],
 };
 const filterOptions = {
   openText: ["Filled out", "Skipped"],
@@ -77,6 +78,13 @@ export const generateQuestionAndFilterOptions = (
           type: q.type,
           filterOptions: conditionOptions[q.type],
           filterComboBoxOptions: q?.choices ? q?.choices?.map((_, idx) => `Picture ${idx + 1}`) : [""],
+          id: q.id,
+        });
+      } else if (q.type === TSurveyQuestionType.Matrix) {
+        questionFilterOptions.push({
+          type: q.type,
+          filterOptions: q.rows,
+          filterComboBoxOptions: q.columns,
           id: q.id,
         });
       } else {
@@ -282,6 +290,18 @@ export const getFormattedFilters = (
             filters.data[questionId] = {
               op: "includesOne",
               value: selectedOptions,
+            };
+          }
+        }
+        case TSurveyQuestionType.Matrix: {
+          if (
+            filterType.filterValue &&
+            filterType.filterComboBoxValue &&
+            typeof filterType.filterComboBoxValue === "string"
+          ) {
+            filters.data[questionType.id ?? ""] = {
+              op: "matrix",
+              value: { [filterType.filterValue]: filterType.filterComboBoxValue },
             };
           }
         }

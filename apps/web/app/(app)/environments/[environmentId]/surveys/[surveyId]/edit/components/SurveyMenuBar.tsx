@@ -178,16 +178,31 @@ export default function SurveyMenuBar({
         question.type === TSurveyQuestionType.MultipleChoiceSingle ||
         question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
-        const haveSameChoices =
-          question.choices.some((element) => element.label.trim() === "") ||
-          question.choices.some((element, index) =>
-            question.choices
-              .slice(index + 1)
-              .some((nextElement) => nextElement.label.trim() === element.label.trim())
-          );
+        const choiceLabels = new Set(question.choices.map((choice) => choice.label.trim().toLowerCase()));
 
-        if (haveSameChoices) {
-          toast.error("You have two identical choices.");
+        if (choiceLabels.has("") || choiceLabels.size !== question.choices.length) {
+          toast.error("You have empty or duplicate choices.");
+          return false;
+        }
+      }
+
+      if (question.type === TSurveyQuestionType.Matrix) {
+        const rowLabels = new Set(question.rows.map((row) => row.trim().toLowerCase()));
+        const columnLabels = new Set(question.columns.map((column) => column.trim().toLowerCase()));
+
+        if (rowLabels.has("") || columnLabels.has("")) {
+          toast.error("Empty row or column labels");
+          setInvalidQuestions([question.id]);
+          return false;
+        }
+
+        if (rowLabels.size !== question.rows.length) {
+          toast.error("You have duplicate row labels.");
+          return false;
+        }
+
+        if (columnLabels.size !== question.columns.length) {
+          toast.error("You have duplicate column labels.");
           return false;
         }
       }

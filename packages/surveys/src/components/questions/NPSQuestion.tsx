@@ -13,7 +13,7 @@ import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
-  value: string | number | string[];
+  value: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -23,7 +23,7 @@ interface NPSQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function NPSQuestion({
+export const NPSQuestion = ({
   question,
   value,
   onChange,
@@ -33,7 +33,7 @@ export default function NPSQuestion({
   isLastQuestion,
   ttc,
   setTtc,
-}: NPSQuestionProps) {
+}: NPSQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
 
@@ -129,4 +129,4 @@ export default function NPSQuestion({
       </div>
     </form>
   );
-}
+};

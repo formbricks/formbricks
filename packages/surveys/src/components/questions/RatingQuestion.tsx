@@ -25,7 +25,7 @@ import Subheader from "../general/Subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
-  value: string | number | string[];
+  value: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -35,7 +35,7 @@ interface RatingQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function RatingQuestion({
+export const RatingQuestion = ({
   question,
   value,
   onChange,
@@ -45,7 +45,7 @@ export default function RatingQuestion({
   isLastQuestion,
   ttc,
   setTtc,
-}: RatingQuestionProps) {
+}: RatingQuestionProps) => {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
 
@@ -209,7 +209,7 @@ export default function RatingQuestion({
       </div>
     </form>
   );
-}
+};
 
 interface RatingSmileyProps {
   active: boolean;

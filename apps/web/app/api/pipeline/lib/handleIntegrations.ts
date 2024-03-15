@@ -124,7 +124,7 @@ function buildNotionPayloadProperties(
 
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
-function getValue(colType: string, value: string | string[] | number) {
+function getValue(colType: string, value: string | string[] | number | Record<string, string>) {
   try {
     switch (colType) {
       case "select":

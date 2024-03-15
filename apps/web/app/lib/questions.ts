@@ -172,14 +172,14 @@ export const questionTypes: TSurveyQuestionType[] = [
   },
   {
     id: QuestionId.Matrix,
-    label: "Matrix question",
+    label: "Matrix",
     description: "This is a matrix question",
     icon: Grid3X3Icon,
     preset: {
-      headline: "Matrix question",
-      subheader: "This is a matrix question",
-      rows: [""],
-      columns: [""],
+      headline: "How much would you rate these flowers ?",
+      subheader: "1: Not at all, 5: Love it",
+      rows: ["Rose 🌹", "Sunflower 🌻", "Hibiscus 🌺"],
+      columns: ["1", "2", "3", "4", "5"],
     },
   },
 ];

@@ -4,7 +4,8 @@ import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useState } from "preact/hooks";
+import { JSX } from "preact";
+import { useCallback, useMemo, useState } from "preact/hooks";
 
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
@@ -12,56 +13,48 @@ import type { TSurveyMatrixQuestion } from "@formbricks/types/surveys";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
-  value: string | number | string[];
+  value: Record<string, string>;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
-  autoFocus?: boolean;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
+interface MatrixQuestionRowProps {
+  row: string;
+  rowIndex: number;
+  columns: string[];
+  value: Record<string, string>;
+  handleOnChange: (column: string, row: string) => void;
+}
 
-const RowHeaders = ({ rows }: { rows: string[] }) => {
+const MatrixQuestionRow = ({ row, rowIndex, columns, value, handleOnChange }: MatrixQuestionRowProps) => {
   return (
-    <div className={` grid grid-rows-${rows.length + 1} gap-4 pb-6`}>
-      <div>&nbsp;</div>
-      {rows.map((row) => {
-        return <div className="w-20 overflow-hidden text-ellipsis whitespace-nowrap">{row}</div>;
-      })}
-    </div>
-  );
-};
-
-const MatrixColumns = ({ columns, rows }: { columns: string[]; rows: string[] }) => {
-  return (
-    <div className={` flex w-full space-x-2 overflow-auto pb-6`}>
-      {columns.map((column) => {
-        return (
-          <div className={`grid grid-rows-${rows.length + 1} gap-4`}>
-            <div className="w-20 overflow-hidden text-ellipsis whitespace-nowrap text-center">{column}</div>
-            {rows.map((row) => {
-              if (row.trim() === "" || column.trim() === "") return;
-              return (
-                <div className="text-center">
-                  <input
-                    type="radio"
-                    id={column}
-                    name={row}
-                    value={column}
-                    className=" h-4 w-4 cursor-pointer border border-black"></input>
-                </div>
-              );
-            })}
+    <tr className={`${rowIndex % 2 === 0 ? "bg-gray-100" : ""}`}>
+      <td className="max-w-40 break-words px-4 py-2">{row}</td>
+      {columns.map((column, columnIndex) => (
+        <td key={columnIndex} className="px-4 py-2 text-gray-800">
+          <div className="flex items-center justify-center p-2">
+            <input
+              type="radio"
+              id={`${row}-${column}`}
+              name={row}
+              value={column}
+              required={true} // Adjust based on your requirements
+              checked={typeof value === "object" && !Array.isArray(value) ? value[row] === column : false}
+              className="h-4 w-4 cursor-pointer border border-black"
+              onChange={() => handleOnChange(column, row)}
+            />
           </div>
-        );
-      })}
-    </div>
+        </td>
+      ))}
+    </tr>
   );
 };
 
-export default function MatrixQuestion({
+export const MatrixQuestion = ({
   question,
   value,
   onChange,
@@ -71,47 +64,85 @@ export default function MatrixQuestion({
   isLastQuestion,
   ttc,
   setTtc,
-}: MatrixQuestionProps) {
+}: MatrixQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
-
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
+  const handleOnChange = useCallback(
+    (column: string, row: string) => {
+      const responseValue = value
+        ? { ...value }
+        : question.rows.reduce((obj: Record<string, string>, key: string) => {
+            obj[key] = "";
+            return obj;
+          }, {});
+
+      responseValue[row] = column;
+      onChange({ [question.id]: responseValue });
+    },
+    [value, question.rows, question.id, onChange] // Updated dependency array
+  );
+
+  const handleSubmit = useCallback(
+    (e: JSX.TargetedEvent<HTMLFormElement, Event>) => {
+      e.preventDefault();
+      const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+      setTtc(updatedTtc);
+      onSubmit({ [question.id]: value }, updatedTtc);
+    },
+    [ttc, question.id, startTime, value, onSubmit, setTtc]
+  );
+
+  const handleBackButtonClick = useCallback(() => {
+    const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtc);
+    onBack();
+  }, [ttc, question.id, startTime, onBack, setTtc]);
+
+  const columnsHeaders = useMemo(
+    () =>
+      question.columns.map((column, index) => (
+        <th key={index} className="max-w-40 break-words px-4 py-2 text-gray-800">
+          {column}
+        </th>
+      )),
+    [question.columns]
+  );
+
   return (
-    <form
-      key={question.id}
-      onSubmit={(e) => {
-        e.preventDefault();
-        //  if ( validateInput(value as string, question.inputType, question.required)) {
-        const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-        setTtc(updatedttc);
-        onSubmit({ [question.id]: value }, updatedttc);
-        // }
-      }}
-      className="w-full">
+    <form key={question.id} onSubmit={handleSubmit} className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline headline={question.headline} questionId={question.id} required={question.required} />
       <Subheader subheader={question.subheader} questionId={question.id} />
-      <div className="mt-4">
-        <div className="flex space-x-4">
-          <RowHeaders rows={question.rows} />
-          <MatrixColumns columns={question.columns} rows={question.rows} />
-        </div>
+      <div className="mt-4 max-h-[33vh] overflow-auto">
+        <table className="min-w-full table-auto border-collapse border border-gray-200">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 text-gray-800"></th>
+              {columnsHeaders}
+            </tr>
+          </thead>
+          <tbody>
+            {question.rows.map((row, rowIndex) => (
+              <MatrixQuestionRow
+                key={rowIndex}
+                row={row}
+                rowIndex={rowIndex}
+                columns={question.columns}
+                value={value}
+                handleOnChange={handleOnChange}
+              />
+            ))}
+          </tbody>
+        </table>
       </div>
-
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
-          <BackButton
-            backButtonLabel={question.backButtonLabel}
-            onClick={() => {
-              const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedttc);
-              onBack();
-            }}
-          />
+          <BackButton backButtonLabel={question.backButtonLabel} onClick={handleBackButtonClick} />
         )}
         <div></div>
         <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
       </div>
     </form>
   );
-}
+};

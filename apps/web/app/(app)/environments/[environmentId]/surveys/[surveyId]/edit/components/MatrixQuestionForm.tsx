@@ -1,12 +1,13 @@
 "use client";
 
+import { MatrixLabelInput } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MatrixInput";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 import { TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
 
@@ -19,28 +20,6 @@ interface MatrixQuestionFormProps {
   isInvalid: boolean;
 }
 
-interface MatrixInputProps {
-  question: TSurveyMatrixQuestion;
-  index: number;
-  type: "row" | "column";
-  onDelete: () => void;
-  handleOnChange: (index: number, type: "row" | "column", e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-const MatrixInput = ({ question, index, type, onDelete, handleOnChange }: MatrixInputProps) => {
-  return (
-    <div className="flex items-center">
-      <Input onChange={(e) => handleOnChange(index, type, e)} />
-      {(type === "row" ? question.rows.length > 1 : question.columns.length > 1) && (
-        <TrashIcon
-          className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-          onClick={onDelete}
-        />
-      )}
-    </div>
-  );
-};
-
 export default function MatrixQuestionForm({
   question,
   questionIdx,
@@ -50,36 +29,43 @@ export default function MatrixQuestionForm({
 }: MatrixQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
-  const handleAddRow = () => {
-    const updatedRows = [...question.rows, ""];
-    updateQuestion(questionIdx, { rows: updatedRows });
+  // Helper function to update question attributes
+  const updateQuestionAttributes = (attributes) => {
+    updateQuestion(questionIdx, { ...question, ...attributes });
   };
 
-  const handleAddColumn = () => {
-    const updatedColumns = [...question.columns, ""];
-    updateQuestion(questionIdx, { columns: updatedColumns });
-  };
-
-  const handleDeleteRow = (index) => {
-    const updatedRows = question.rows.filter((_, idx) => idx !== index);
-    updateQuestion(questionIdx, { ...question, rows: updatedRows });
-  };
-
-  const handleDeleteColumn = (index) => {
-    const updatedColumns = question.columns.filter((_, idx) => idx !== index);
-    updateQuestion(questionIdx, { ...question, columns: updatedColumns });
+  const handleDeleteLabel = (type: "row" | "column", index: number) => {
+    const labels = type === "row" ? question.rows : question.columns;
+    if (labels.length <= 2) return; // Prevent deleting below minimum length
+    updateQuestionAttributes({
+      [type === "row" ? "rows" : "columns"]: labels.filter((_, idx) => idx !== index),
+    });
   };
 
   const handleOnChange = (index: number, type: "row" | "column", e) => {
-    const value = e.target.value;
+    const newLabel = e.target.value;
+    if (type === "row" && question.rows.includes(newLabel)) {
+      toast.error("Duplicate row labels");
+    }
+    if (type === "column" && question.columns.includes(newLabel)) {
+      toast.error("Duplicate column labels");
+    }
+    const labels = type === "row" ? [...question.rows] : [...question.columns];
+    if (index !== undefined) {
+      labels[index] = newLabel;
+    } else {
+      labels.push("");
+    }
+    updateQuestionAttributes({ [type === "row" ? "rows" : "columns"]: labels });
+  };
+
+  const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
-      const updatedRows = [...question.rows];
-      updatedRows[index] = value; // Update the value at the specified index
+      const updatedRows = [...question.rows, ""];
       updateQuestion(questionIdx, { rows: updatedRows });
-    } else if (type === "column") {
-      const updatedColumns = [...question.columns];
-      updatedColumns[index] = value; // Update the value at the specified index
-      updateQuestion(questionIdx, { columns: updatedColumns });
+    } else {
+      const updatedColumns = [...question.columns, ""];
+      updateQuestion(questionIdx, { rows: updatedColumns });
     }
   };
 
@@ -135,12 +121,13 @@ export default function MatrixQuestionForm({
           <Label htmlFor="rows">Rows</Label>
           <div className="mt-3 space-y-2">
             {question.rows.map((_, index) => (
-              <MatrixInput
+              <MatrixLabelInput
                 question={question}
                 key={index}
                 index={index}
                 type="row"
-                onDelete={() => handleDeleteRow(index)}
+                onDelete={() => handleDeleteLabel("row", index)}
+                value={question.rows[index]}
                 handleOnChange={handleOnChange}
               />
             ))}
@@ -149,7 +136,7 @@ export default function MatrixQuestionForm({
               className="space-x-2"
               onClick={(e) => {
                 e.preventDefault();
-                handleAddRow();
+                handleAddLabel("row");
               }}>
               <Plus className="h-4 w-4" />
               <span>Add Row</span>
@@ -161,12 +148,13 @@ export default function MatrixQuestionForm({
           <Label htmlFor="columns">Columns</Label>
           <div className="mt-3 space-y-2">
             {question.columns.map((_, index) => (
-              <MatrixInput
+              <MatrixLabelInput
                 question={question}
                 key={index}
                 index={index}
                 type="column"
-                onDelete={() => handleDeleteColumn(index)}
+                onDelete={() => handleDeleteLabel("column", index)}
+                value={question.columns[index]}
                 handleOnChange={handleOnChange}
               />
             ))}
@@ -175,7 +163,7 @@ export default function MatrixQuestionForm({
               className="space-x-2"
               onClick={(e) => {
                 e.preventDefault();
-                handleAddColumn();
+                handleAddLabel("column");
               }}>
               <Plus className="h-4 w-4" />
               <span>Add Column</span>
