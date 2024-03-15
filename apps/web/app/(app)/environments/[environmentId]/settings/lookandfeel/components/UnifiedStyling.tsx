@@ -494,7 +494,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             color={cardShadowColor}
             setColor={setCardShadowColor}
             description="Change the shadow color of the card"
-            Badge={() => <Badge text={"Link Survey"} type="success" size="normal" />}
+            Badge={() => <Badge text={"Link Survey"} type="gray" size="normal" />}
             className="max-w-full"
             disabled={!unifiedStyling}
           />
@@ -511,7 +511,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
-                  <Badge text="In-App Survey" type="success" size="normal" />
+                  <Badge text="In-App Survey" type="gray" size="normal" />
                 </div>
                 <p className="text-xs text-slate-500">Add on outer border to your survey card</p>
               </div>

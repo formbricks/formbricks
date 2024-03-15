@@ -103,28 +103,32 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
           colours={colours}
-          disabled={!overwriteUnifiedStyling}
         />
       )}
 
       {product.styling.unifiedStyling && (
-        <div className="mt-4 flex items-center justify-between">
-          <Button variant="minimal" className="flex items-center gap-2" onClick={onResetUnifiedStyling}>
-            Reset to unified styles
-            <RotateCcwIcon className="h-4 w-4" />
-          </Button>
-
-          <p className="text-sm text-slate-500">
-            To set unified styling, go to the{" "}
-            <Link
-              href={`/environments/${environment.id}/settings/lookandfeel`}
-              target="_blank"
-              className="font-semibold underline">
-              Look & Feel
-            </Link>{" "}
-            settings
-          </p>
-        </div>
+        <>
+          <div className="mt-4 flex h-8 items-center justify-between">
+            <div>
+              {overwriteUnifiedStyling && (
+                <Button variant="minimal" className="flex items-center gap-2" onClick={onResetUnifiedStyling}>
+                  Reset to unified styles
+                  <RotateCcwIcon className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <p className="text-sm text-slate-500">
+              To set unified styling, go to the{" "}
+              <Link
+                href={`/environments/${environment.id}/settings/lookandfeel`}
+                target="_blank"
+                className="font-semibold underline">
+                Look & Feel
+              </Link>{" "}
+              settings
+            </p>
+          </div>
+        </>
       )}
     </div>
   );
