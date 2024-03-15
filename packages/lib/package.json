@@ -14,9 +14,9 @@
     "test": "dotenv -e ../../.env -- vitest run"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.529.1",
-    "@aws-sdk/s3-presigned-post": "3.529.1",
-    "@aws-sdk/s3-request-presigner": "3.529.1",
+    "@aws-sdk/client-s3": "3.533.0",
+    "@aws-sdk/s3-presigned-post": "3.533.0",
+    "@aws-sdk/s3-request-presigner": "3.533.0",
     "@formbricks/api": "*",
     "@formbricks/database": "*",
     "@formbricks/types": "*",

@@ -8,9 +8,19 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { canUserAccessSurvey, verifyUserRoleAccess } from "@formbricks/lib/survey/auth";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { deleteSurvey, duplicateSurvey, getSurvey } from "@formbricks/lib/survey/service";
+import { deleteSurvey, duplicateSurvey, getSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+
+export const getSurveyAction = async (surveyId: string) => {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await canUserAccessSurvey(session.user.id, surveyId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await getSurvey(surveyId);
+};
 
 export async function duplicateSurveyAction(environmentId: string, surveyId: string) {
   const session = await getServerSession(authOptions);
@@ -211,4 +221,14 @@ export async function generateSingleUseIdAction(surveyId: string, isEncrypted: b
   if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
 
   return generateSurveySingleUseId(isEncrypted);
+}
+
+export async function getSurveysAction(environmentId: string, limit?: number, offset?: number) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new AuthorizationError("Not authorized");
+
+  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
+  if (!isAuthorized) throw new AuthorizationError("Not authorized");
+
+  return await getSurveys(environmentId, limit, offset);
 }

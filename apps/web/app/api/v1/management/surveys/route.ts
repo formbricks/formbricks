@@ -10,7 +10,12 @@ export async function GET(request: Request) {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const surveys = await getSurveys(authentication.environmentId!);
+
+    const searchParams = new URL(request.url).searchParams;
+    const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
+    const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
+
+    const surveys = await getSurveys(authentication.environmentId!, limit, offset);
     return responses.successResponse(surveys);
   } catch (error) {
     if (error instanceof DatabaseError) {
