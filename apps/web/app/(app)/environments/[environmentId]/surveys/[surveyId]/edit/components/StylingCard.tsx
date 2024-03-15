@@ -355,7 +355,8 @@ export default function StylingCard({
             </div>
           </div>
 
-          {localProduct.brand?.logoUrl && (
+          {(localProduct.brand?.logoUrl ||
+            (!localProduct.brand?.logoUrl && !localSurvey.styling?.showLogo)) && (
             <div className="p-3">
               <div className="ml-2 flex items-center space-x-1">
                 <Switch id="hideLogo" checked={!showLogo} onCheckedChange={toggleShowLogo} />

@@ -225,17 +225,16 @@ export default function PreviewSurvey({
                 </Modal>
               ) : (
                 <div className="w-full px-3">
-                  {survey.styling?.showLogo && (
-                    <div className="absolute left-5 top-[1.55rem]  ">
-                      <AddLogoButton
-                        environmentId={environment.id}
-                        product={product}
-                        type="mobile"
-                        membershipRole={membershipRole}
-                        setLocalProduct={setLocalProduct}
-                      />
-                    </div>
-                  )}
+                  <div className="absolute left-5 top-[1.55rem]  ">
+                    <AddLogoButton
+                      environmentId={environment.id}
+                      product={product}
+                      type="mobile"
+                      membershipRole={membershipRole}
+                      setLocalProduct={setLocalProduct}
+                      survey={survey}
+                    />
+                  </div>
                   <div className="no-scrollbar z-10 mt-[7rem] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
@@ -307,16 +306,16 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
-                {survey.styling?.showLogo && (
-                  <div className="absolute left-10 top-6  ">
-                    <AddLogoButton
-                      environmentId={environment.id}
-                      product={product}
-                      membershipRole={membershipRole}
-                      setLocalProduct={setLocalProduct}
-                    />
-                  </div>
-                )}
+                <div className="absolute left-10 top-6  ">
+                  <AddLogoButton
+                    environmentId={environment.id}
+                    product={product}
+                    membershipRole={membershipRole}
+                    setLocalProduct={setLocalProduct}
+                    survey={survey}
+                  />
+                </div>
+
                 <div className="z-0 mt-[3rem] w-full max-w-md rounded-lg  p-4">
                   <SurveyInline
                     survey={survey}

@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys";
 
 import { Input } from "../Input";
 import { Label } from "../Label";
@@ -19,6 +20,7 @@ interface Props {
   type?: string;
   membershipRole?: TMembershipRole;
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
+  survey: TSurvey;
 }
 interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {
   target: HTMLInputElement & EventTarget;
@@ -30,6 +32,7 @@ export const AddLogoButton: React.FC<Props> = ({
   type,
   membershipRole,
   setLocalProduct,
+  survey,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(product?.brand?.logoUrl);
@@ -65,7 +68,7 @@ export const AddLogoButton: React.FC<Props> = ({
 
   return (
     <>
-      {membershipRole !== "viewer" && (
+      {membershipRole !== "viewer" && survey.styling?.showLogo && (
         <>
           {isLoading && (
             <div className="absolute inset-0 flex  items-center justify-center ">
