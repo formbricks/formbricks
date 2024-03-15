@@ -24,11 +24,6 @@ jobs:
       id-token: write  # Only necessary for sigstore/fulcio outside PRs
 
     steps:
-      - name: Generate Secrets
-        run: |
-          echo "NEXTAUTH_SECRET=$(openssl rand -hex 32)" >> $GITHUB_ENV
-          echo "ENCRYPTION_KEY=$(openssl rand -hex 32)" >> $GITHUB_ENV
-
       - name: Checkout repository
         uses: actions/checkout@v3
 
