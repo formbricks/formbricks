@@ -139,7 +139,7 @@ const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBo
               <CommandEmpty>No result found.</CommandEmpty>
               {options?.map((data) => (
                 <>
-                  {data?.option?.length > 0 && (
+                  {data?.option.length > 0 && (
                     <CommandGroup
                       heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
                       {data?.option?.map((o, i) => (
