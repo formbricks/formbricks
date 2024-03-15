@@ -12,6 +12,7 @@ test.describe("Survey Create & Submit Response", async () => {
     await createSurvey(page, name, email, password, surveys.createAndSubmit);
     // Save & Publish Survey
     await page.getByRole("button", { name: "Continue to Settings" }).click();
+
     await page.locator("#howToSendCardTrigger").click();
     await expect(page.locator("#howToSendCardOption-link")).toBeVisible();
     await page.locator("#howToSendCardOption-link").click();
