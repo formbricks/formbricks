@@ -86,7 +86,9 @@ export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean 
     await page.click("#example-survey-survey-actions");
     await page.getByRole("menuitem", { name: "Delete" }).click();
     await page.getByRole("button", { name: "Delete" }).click();
+    await expect(page.getByText("Survey deleted successfully.")).toBeVisible();
     await page.reload();
+    await expect(page.getByText("Start from scratchCreate a")).toBeVisible();
   }
 };
 
@@ -129,11 +131,9 @@ export const createSurvey = async (
   const addQuestion = "Add QuestionAdd a new question to your survey";
 
   await signUpAndLogin(page, name, email, password);
-  await finishOnboarding(page, false);
+  await finishOnboarding(page);
 
-  await page.getByRole("link", { name: "New survey", exact: true }).click();
-  await page.getByRole("heading", { name: "Start from Scratch" }).click();
-  await page.getByRole("button", { name: "Create survey", exact: true }).click();
+  await page.getByText("Start from scratchCreate a").click();
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -244,7 +244,7 @@ export const createSurvey = async (
   await page.getByLabel("Question").fill(params.fileUploadQuestion.question);
 
   // Thank You Card
-  page.getByText("Thank You CardShownShow").click();
+  await page.getByText("Thank You CardShownShow").click();
   await page.getByLabel("Question").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };
