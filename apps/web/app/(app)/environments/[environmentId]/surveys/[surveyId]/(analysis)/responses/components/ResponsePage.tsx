@@ -126,10 +126,6 @@ const ResponsePage = ({
     setResponses([]);
   }, [filters]);
 
-  useEffect(() => {
-    document.title = `${responseCount} Responses | ${survey?.name} Results`;
-  }, [responseCount, survey?.name]);
-
   return (
     <ContentWrapper>
       <SummaryHeader

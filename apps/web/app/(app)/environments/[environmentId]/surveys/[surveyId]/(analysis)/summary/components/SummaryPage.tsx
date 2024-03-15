@@ -107,10 +107,6 @@ const SummaryPage = ({
     }
   }, [searchParams, resetState]);
 
-  useEffect(() => {
-    document.title = `${responseCount} Responses | ${survey?.name} Results`;
-  }, [responseCount, survey?.name]);
-
   return (
     <ContentWrapper>
       <SummaryHeader
