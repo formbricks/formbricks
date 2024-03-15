@@ -15,8 +15,6 @@ function getHostname(url) {
   return urlObj.hostname;
 }
 let __dirname = path.join(process.cwd(), "../../");
-// const __dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), "../..");
-console.log("nextjs dirname", __dirname);
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
@@ -25,9 +23,9 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@aws-sdk"],
     instrumentationHook: true,
     outputFileTracingRoot: __dirname,
-    outputFileTracingIncludes: {
-      "app/api/js": ["../../packages/**/*"],
-    },
+    // outputFileTracingIncludes: {
+    //   "app/api/js": ["../../packages/**/*"],
+    // },
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
