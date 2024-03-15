@@ -7,54 +7,26 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { TEnvironment } from "@formbricks/types/environment";
 
-const listDirectoriesBreadthFirst = async () => {
-  let startDir = process.cwd();
-  const queue = [startDir];
-  const processedDirs = new Set();
-
-  while (queue.length > 0) {
-    const currentDir = queue.shift();
-    // console.log("currentDir", currentDir);
-
-    if (typeof currentDir !== "string" || processedDirs.has(currentDir)) {
-      continue; // Skip this iteration if currentDir is not a string or has already been processed
-    }
-    processedDirs.add(currentDir);
-
-    if (currentDir.includes("packages")) {
-      const absolutePath = path.resolve(currentDir);
-      const relativePath = path.relative(startDir, currentDir);
-      console.log("Directory containing 'packages':", absolutePath, "(Relative:", relativePath + ")");
-    }
-
-    try {
-      const files = await fs.readdir(currentDir, { withFileTypes: true });
-      for (const file of files) {
-        if (file.isDirectory()) {
-          const dirPath = path.join(currentDir, file.name);
-          if (dirPath.includes("packages")) {
-            const absolutePath = path.resolve(dirPath);
-            const relativePath = path.relative(startDir, dirPath);
-            console.log(
-              "Subdirectory containing 'packages':",
-              absolutePath,
-              "(Relative:",
-              relativePath + ")"
-            );
-          }
-          queue.push(dirPath);
-        }
-      }
-    } catch (error) {
-      console.error("Error reading directory:", error);
-    }
-
-    // Move one level up if possible
-    const parentDir = path.dirname(currentDir);
-    if (parentDir !== currentDir) {
-      queue.push(parentDir);
+const listAllFiles = async (dirPath: string): Promise<string[]> => {
+  let filesList: string[] = [];
+  const files = await fs.readdir(dirPath, { withFileTypes: true });
+  for (const file of files) {
+    const filePath = path.join(dirPath, file.name);
+    if (file.isDirectory()) {
+      filesList = filesList.concat(await listAllFiles(filePath));
+    } else {
+      filesList.push(filePath);
     }
   }
+  return filesList;
+};
+
+const listDirectoriesBreadthFirst = async () => {
+  let startDir = process.cwd();
+  let jsDir = path.join(startDir, "../../packages/js");
+
+  const allFiles = await listAllFiles(jsDir);
+  console.log("All files in packages/js:", allFiles);
 };
 
 export async function GET(req: NextRequest) {
@@ -62,17 +34,17 @@ export async function GET(req: NextRequest) {
   let append = "";
   switch (req.nextUrl.searchParams.get("module")) {
     case "surveys":
-      path = `../../../../packages/surveys/dist/index.umd.js`;
+      path = `../../packages/surveys/dist/index.umd.js`;
       break;
     case "question-date":
-      path = `../../../../packages/surveys/dist/question-date.umd.js`;
+      path = `../../packages/surveys/dist/question-date.umd.js`;
       break;
     case "js":
     case null:
       const format = ["umd", "iife"].includes(req.nextUrl.searchParams.get("format")!)
         ? req.nextUrl.searchParams.get("format")!
         : "umd";
-      path = `../../../../packages/js/dist/index.${format}.js`;
+      path = `../../packages/js/dist/index.${format}.js`;
       try {
         append = await handleInit(req);
       } catch (error) {
