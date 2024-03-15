@@ -1,3 +1,4 @@
+import { finishOnboardingAction } from "@/app/(app)/onboarding/actions";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
@@ -44,7 +45,7 @@ export default async function InvitePage({ searchParams }) {
       await deleteInvite(inviteId);
 
       sendInviteAcceptedEmail(invite.creator.name ?? "", session.user?.name ?? "", invite.creator.email);
-
+      finishOnboardingAction();
       return <RightAccountContent />;
     }
   } catch (e) {
