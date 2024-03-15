@@ -19,7 +19,6 @@ import path, { join } from "path";
 import { TAccessType } from "@formbricks/types/storage";
 
 import {
-  IS_S3_CONFIGURED,
   MAX_SIZES,
   S3_ACCESS_KEY,
   S3_BUCKET_NAME,
@@ -28,6 +27,7 @@ import {
   S3_SECRET_KEY,
   UPLOADS_DIR,
   WEBAPP_URL,
+  isS3Configured,
 } from "../constants";
 import { generateLocalSignedUrl } from "../crypto";
 import { env } from "../env";
@@ -38,15 +38,18 @@ let s3ClientInstance: S3Client | null = null;
 
 export const getS3Client = () => {
   if (!s3ClientInstance) {
+    const credentials =
+      S3_ACCESS_KEY && S3_SECRET_KEY
+        ? { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY }
+        : undefined;
+
     s3ClientInstance = new S3Client({
-      credentials: {
-        accessKeyId: S3_ACCESS_KEY!,
-        secretAccessKey: S3_SECRET_KEY!,
-      },
+      credentials,
       region: S3_REGION,
       endpoint: S3_ENDPOINT_URL,
     });
   }
+
   return s3ClientInstance;
 };
 
@@ -215,7 +218,7 @@ export const getUploadSignedUrl = async (
   const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
 
   // handle the local storage case first
-  if (!IS_S3_CONFIGURED) {
+  if (!isS3Configured()) {
     try {
       const { signature, timestamp, uuid } = generateLocalSignedUrl(updatedFileName, environmentId, fileType);
 
@@ -329,7 +332,7 @@ export const putFile = async (
   environmentId: string
 ) => {
   try {
-    if (!IS_S3_CONFIGURED) {
+    if (!isS3Configured()) {
       await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
       return { success: true, message: "File uploaded" };
     } else {
@@ -350,7 +353,7 @@ export const putFile = async (
 };
 
 export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) => {
-  if (!IS_S3_CONFIGURED) {
+  if (!isS3Configured()) {
     try {
       await deleteLocalFile(path.join(UPLOADS_DIR, environmentId, accessType, fileName));
       return { success: true, message: "File deleted" };

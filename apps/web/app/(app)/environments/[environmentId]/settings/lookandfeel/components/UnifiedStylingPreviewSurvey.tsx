@@ -57,10 +57,10 @@ export const UnifiedStylingPreviewSurvey = ({
   previewType,
   setPreviewType,
 }: UnifiedStylingPreviewSurveyProps) => {
-  const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-  const [previewPosition, setPreviewPosition] = useState("relative");
+  const [isFullScreenPreview] = useState(false);
+  const [previewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
-  const [shrink, setshrink] = useState(false);
+  const [shrink] = useState(false);
 
   const { productOverwrites } = survey || {};
 

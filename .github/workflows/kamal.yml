@@ -68,6 +68,7 @@ jobs:
       S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
       S3_REGION: ${{ vars.S3_REGION }}
       S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+      OPENTELEMETRY_LISTENER_URL: ${{ vars.OPENTELEMETRY_LISTENER_URL }}
       KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
 
     steps:
