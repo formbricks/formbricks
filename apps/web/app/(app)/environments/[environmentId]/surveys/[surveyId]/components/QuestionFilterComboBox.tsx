@@ -6,7 +6,7 @@ import * as React from "react";
 
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { Command, CommandEmpty, CommandGroup, CommandItem } from "@formbricks/ui/Command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@formbricks/ui/Command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -143,23 +143,25 @@ const QuestionFilterComboBox = ({
         <div className="relative mt-2 h-full">
           {open && (
             <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-              <CommandEmpty>No result found.</CommandEmpty>
-              <CommandGroup>
-                {options?.map((o) => (
-                  <CommandItem
-                    onSelect={() => {
-                      !isMultiple
-                        ? onChangeFilterComboBoxValue(o)
-                        : onChangeFilterComboBoxValue(
-                            Array.isArray(filterComboBoxValue) ? [...filterComboBoxValue, o] : [o]
-                          );
-                      !isMultiple && setOpen(false);
-                    }}
-                    className="cursor-pointer">
-                    {o}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              <CommandList>
+                <CommandEmpty>No result found.</CommandEmpty>
+                <CommandGroup>
+                  {options?.map((o) => (
+                    <CommandItem
+                      onSelect={() => {
+                        !isMultiple
+                          ? onChangeFilterComboBoxValue(o)
+                          : onChangeFilterComboBoxValue(
+                              Array.isArray(filterComboBoxValue) ? [...filterComboBoxValue, o] : [o]
+                            );
+                        !isMultiple && setOpen(false);
+                      }}
+                      className="cursor-pointer">
+                      {o}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
             </div>
           )}
         </div>
