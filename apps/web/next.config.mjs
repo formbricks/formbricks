@@ -2,7 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
 import { fileURLToPath } from "node:url";
-import path from "path";
+// import path from "path";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 
@@ -14,7 +14,7 @@ function getHostname(url) {
   const urlObj = new URL(url);
   return urlObj.hostname;
 }
-let __dirname = path.join(process.cwd(), "../../");
+// let __dirname = path.join(process.cwd(), "../../");
 
 const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
@@ -22,10 +22,10 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["@aws-sdk"],
     instrumentationHook: true,
-    outputFileTracingRoot: __dirname,
-    // outputFileTracingIncludes: {
-    //   "app/api/js": ["../../packages/**/*"],
-    // },
+    // outputFileTracingRoot: __dirname,
+    outputFileTracingIncludes: {
+      "app/api/js": ["../../packages/**/*"],
+    },
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
