@@ -105,7 +105,8 @@ export default function SingleResponseCard({
     return (
       (typeof value === "string" && value.trim() !== "") ||
       (Array.isArray(value) && value.length > 0) ||
-      typeof value === "number"
+      typeof value === "number" ||
+      typeof value === "object"
     );
   }
 
