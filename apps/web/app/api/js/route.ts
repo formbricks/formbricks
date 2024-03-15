@@ -62,17 +62,17 @@ export async function GET(req: NextRequest) {
   let append = "";
   switch (req.nextUrl.searchParams.get("module")) {
     case "surveys":
-      path = `../../packages/surveys/dist/index.umd.js`;
+      path = `../../../../packages/surveys/dist/index.umd.js`;
       break;
     case "question-date":
-      path = `../../packages/surveys/dist/question-date.umd.js`;
+      path = `../../../../packages/surveys/dist/question-date.umd.js`;
       break;
     case "js":
     case null:
       const format = ["umd", "iife"].includes(req.nextUrl.searchParams.get("format")!)
         ? req.nextUrl.searchParams.get("format")!
         : "umd";
-      path = `../../packages/js/dist/index.${format}.js`;
+      path = `../../../../packages/js/dist/index.${format}.js`;
       try {
         append = await handleInit(req);
       } catch (error) {
@@ -136,7 +136,8 @@ async function handleInit(req: NextRequest) {
 
 async function loadAndAppendCode(relativePath: string, append: string): Promise<string> {
   // Resolve the absolute path based on the relative path
-  const absolutePath = path.resolve(__dirname, relativePath);
+  let startDir = process.cwd();
+  const absolutePath = path.resolve(startDir, relativePath);
   console.log("absolutePath", absolutePath);
 
   // Read the file using the absolute path
