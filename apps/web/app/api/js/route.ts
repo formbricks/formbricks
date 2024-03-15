@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import fs from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 
-// import path from "path";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -75,7 +74,5 @@ async function handleInit(req: NextRequest) {
 
 async function loadAndAppendCode(relativePath: string, append: string): Promise<string> {
   let jsCode = await fs.readFile(relativePath, "utf-8");
-  // const absolutePath = path.resolve(process.cwd(), relativePath);
-  // let jsCode = await fs.readFile(absolutePath, "utf-8");
   return jsCode + append;
 }
