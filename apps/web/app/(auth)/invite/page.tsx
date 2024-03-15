@@ -44,8 +44,8 @@ export default async function InvitePage({ searchParams }) {
       await createMembership(invite.teamId, session.user.id, { accepted: true, role: invite.role });
       await deleteInvite(inviteId);
 
-      sendInviteAcceptedEmail(invite.creator.name ?? "", session.user?.name ?? "", invite.creator.email);
-      finishOnboardingAction();
+      const { name, email } = invite.creator;
+      sendInviteAcceptedEmail(name ?? "", session.user?.name ?? "", email);
       return <RightAccountContent />;
     }
   } catch (e) {
