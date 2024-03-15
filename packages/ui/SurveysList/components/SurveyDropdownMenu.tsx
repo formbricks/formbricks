@@ -19,7 +19,12 @@ import {
   DropdownMenuTrigger,
 } from "../../DropdownMenu";
 import LoadingSpinner from "../../LoadingSpinner";
-import { copyToOtherEnvironmentAction, deleteSurveyAction, duplicateSurveyAction } from "../actions";
+import {
+  copyToOtherEnvironmentAction,
+  deleteSurveyAction,
+  duplicateSurveyAction,
+  getSurveyAction,
+} from "../actions";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -29,6 +34,8 @@ interface SurveyDropDownMenuProps {
   webAppUrl: string;
   singleUseId?: string;
   isSurveyCreationDeletionDisabled?: boolean;
+  duplicateSurvey: (survey: TSurvey) => void;
+  deleteSurvey: (surveyId: string) => void;
 }
 
 export default function SurveyDropDownMenu({
@@ -39,6 +46,8 @@ export default function SurveyDropDownMenu({
   webAppUrl,
   singleUseId,
   isSurveyCreationDeletionDisabled,
+  deleteSurvey,
+  duplicateSurvey,
 }: SurveyDropDownMenuProps) {
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,6 +60,7 @@ export default function SurveyDropDownMenu({
     setLoading(true);
     try {
       await deleteSurveyAction(survey.id);
+      deleteSurvey(survey.id);
       router.refresh();
       setDeleteDialogOpen(false);
       toast.success("Survey deleted successfully.");
@@ -63,8 +73,10 @@ export default function SurveyDropDownMenu({
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
-      await duplicateSurveyAction(environmentId, surveyId);
+      const duplicatedSurvey = await duplicateSurveyAction(environmentId, surveyId);
       router.refresh();
+      const transformedDuplicatedSurvey = await getSurveyAction(duplicatedSurvey.id);
+      if (transformedDuplicatedSurvey) duplicateSurvey(transformedDuplicatedSurvey);
       toast.success("Survey duplicated successfully.");
     } catch (error) {
       toast.error("Failed to duplicate the survey.");
@@ -95,7 +107,9 @@ export default function SurveyDropDownMenu({
     );
   }
   return (
-    <>
+    <div
+      id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
+      onClick={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
           <div className="rounded-lg border p-2 hover:bg-slate-50">
@@ -228,6 +242,6 @@ export default function SurveyDropDownMenu({
           text="Are you sure you want to delete this survey and all of its responses? This action cannot be undone."
         />
       )}
-    </>
+    </div>
   );
 }
