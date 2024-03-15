@@ -7,7 +7,7 @@ import SalesPageHero from "@/components/salespage/SalesPageHero";
 import SalesSteps from "@/components/salespage/SalesSteps";
 import SalesTestimonial from "@/components/salespage/SalesTestimonial";
 import HeadingCentered from "@/components/shared/HeadingCentered";
-import SEOFAQ from "@/components/shared/SEO/SEOFAQ";
+import SeoFaq from "@/components/shared/Seo/SeoFaq";
 import Jonathan from "@/images/clients/headshots/jonathan.png";
 import Peer from "@/images/clients/headshots/peer.jpeg";
 import {
@@ -481,7 +481,7 @@ export default function LinkSurveyPage() {
       </div>
       <div>
         <HeadingCentered heading="Frequently asked questions" teaser="FAQ" />
-        <SEOFAQ
+        <SeoFaq
           faqs={FAQs}
           headline="Open Source Typeform Alternative"
           description="Build Online Forms for Free with this Open Source Typeform Alternative"

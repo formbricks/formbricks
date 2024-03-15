@@ -1,5 +1,5 @@
 import HeadingCentered from "@/components/shared/HeadingCentered";
-import SEOFAQ from "@/components/shared/SEO/SEOFAQ";
+import SeoFaq from "@/components/shared/Seo/SeoFaq";
 
 const FAQs = [
   {
@@ -54,7 +54,7 @@ export default function FAQ() {
   return (
     <div>
       <HeadingCentered heading="Frequently asked questions" teaser="FAQ" />
-      <SEOFAQ
+      <SeoFaq
         faqs={FAQs}
         headline="Open Source Experience Management Platform"
         description="Formbricks is an Experience Management Platform built of top of the largest open source survey infrastructure worldwide."

@@ -27,7 +27,7 @@ interface FAQSchemaProps {
   dateModified: string;
 }
 
-const SEOFAQ: React.FC<FAQSchemaProps> = ({ faqs, headline, description, datePublished, dateModified }) => {
+const SeoFaq: React.FC<FAQSchemaProps> = ({ faqs, headline, description, datePublished, dateModified }) => {
   const FAQMainEntity: Question[] = faqs.map((faq) => ({
     "@type": "Question",
     name: faq.question,
@@ -76,4 +76,4 @@ const SEOFAQ: React.FC<FAQSchemaProps> = ({ faqs, headline, description, datePub
   );
 };
 
-export default SEOFAQ;
+export default SeoFaq;

@@ -7,7 +7,7 @@ import SalesPageHero from "@/components/salespage/SalesPageHero";
 import SalesSteps from "@/components/salespage/SalesSteps";
 import SalesTestimonial from "@/components/salespage/SalesTestimonial";
 import HeadingCentered from "@/components/shared/HeadingCentered";
-import SEOFAQ from "@/components/shared/SEO/SEOFAQ";
+import SeoFaq from "@/components/shared/Seo/SeoFaq";
 import Marius from "@/images/clients/headshots/marius.jpeg";
 import Vishnu from "@/images/clients/headshots/vishnu.jpeg";
 import {
@@ -290,7 +290,7 @@ export default function WebsiteSurveyPage() {
       </div>
       <div>
         <HeadingCentered heading="Frequently asked questions" teaser="FAQ" />
-        <SEOFAQ
+        <SeoFaq
           faqs={FAQs}
           headline="Targeted website surveys, open source. Like HotJar Ask but GDPR compliant."
           description="Make the most out of your website traffic by asking pointed quesitons in online surveys."
