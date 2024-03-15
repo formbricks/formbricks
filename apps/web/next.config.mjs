@@ -26,7 +26,7 @@ const nextConfig = {
     instrumentationHook: true,
     outputFileTracingRoot: __dirname,
     outputFileTracingIncludes: {
-      "app/api/js": ["./packages/**/*"],
+      "app/api/js": ["../../packages/**/*"],
     },
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],

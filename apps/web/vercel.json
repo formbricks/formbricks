@@ -12,7 +12,7 @@
       "memory": 512
     },
     "app/api/js.ts": {
-      "includeFiles": "packages/**/*"
+      "includeFiles": "../../packages/**/*"
     }
   }
 }
