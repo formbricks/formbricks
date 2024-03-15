@@ -181,8 +181,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               <Switch
                 id="multi-lang-toggle"
                 checked={isMultiLanguageActivated}
-                onClick={(e) => {
-                  e.stopPropagation();
+                onCheckedChange={() => {
                   handleActivationSwitchLogic();
                 }}
                 disabled={!isMultiLanguageAllowed || product.languages.length === 0}

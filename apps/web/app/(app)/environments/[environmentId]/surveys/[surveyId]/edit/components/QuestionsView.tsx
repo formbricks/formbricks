@@ -342,6 +342,7 @@ export default function QuestionsView({
             activeQuestionId={activeQuestionId}
           />
         ) : null}
+
         <MultiLanguageCard
           localSurvey={localSurvey}
           product={product}
