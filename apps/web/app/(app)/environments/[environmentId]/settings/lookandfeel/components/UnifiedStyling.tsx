@@ -13,6 +13,7 @@ import { mixColor } from "@formbricks/lib/utils";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
+import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Slider } from "@formbricks/ui/Slider";
@@ -260,6 +261,9 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             }
           : undefined,
         isDarkModeEnabled: false,
+        cardShadowColor: {
+          light: cardShadowColor,
+        },
         roundness,
       },
     });
@@ -368,15 +372,6 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   }, [brandColor, isHighlightBorderAllowed]);
 
-  useEffect(() => {
-    // when preview survey type is link, we update the highlightBorderColor to undefined
-    if (previewSurveyType === "link") {
-      setIsHighlightBorderAllowed(false);
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewSurveyType]);
-
   return (
     <div className="flex">
       {/* Styling settings */}
@@ -413,13 +408,13 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex items-end gap-2">
             <ColorSelectorWithLabel
               label="Brand color"
               color={brandColor}
               setColor={setBrandColor}
               description="Change the brand color of the survey"
-              className="max-w-full"
+              className="max-w-full flex-grow"
               disabled={!unifiedStyling}
             />
 
@@ -427,7 +422,7 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
               variant="secondary"
               size="sm"
               EndIcon={SparklesIcon}
-              className="w-fit"
+              className="h-11 w-48 justify-center"
               onClick={() => suggestColors()}
               disabled={!unifiedStyling}>
               Suggest colors
@@ -476,46 +471,8 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             setColor={setCardBorderColor}
             description="Change the border color of the card"
             className="max-w-full"
-            disabled={!unifiedStyling || isHighlightBorderAllowed}
+            disabled={!unifiedStyling}
           />
-
-          {previewSurveyType === "link" && (
-            <ColorSelectorWithLabel
-              label="Card shadow color"
-              color={cardShadowColor}
-              setColor={setCardShadowColor}
-              description="Change the shadow color of the card"
-              className="max-w-full"
-              disabled={!unifiedStyling}
-            />
-          )}
-
-          {previewSurveyType === "web" && (
-            <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
-              <div className="flex items-center gap-6">
-                <Switch
-                  checked={isHighlightBorderAllowed}
-                  onCheckedChange={(value) => {
-                    setIsHighlightBorderAllowed(value);
-                  }}
-                  disabled={!unifiedStyling}
-                />
-                <div className="flex flex-col">
-                  <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
-                  <p className="text-xs text-slate-500">Add on outer border to your survey card</p>
-                </div>
-              </div>
-
-              {isHighlightBorderAllowed && (
-                <ColorPicker
-                  color={highlightBorderColor}
-                  onChange={setHighlightBorderColor}
-                  containerClass="my-0"
-                  disabled={!unifiedStyling}
-                />
-              )}
-            </div>
-          )}
 
           <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
             <div className="flex flex-col">
@@ -530,6 +487,44 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
                 disabled={!unifiedStyling}
               />
             </div>
+          </div>
+
+          <ColorSelectorWithLabel
+            label="Card shadow color"
+            color={cardShadowColor}
+            setColor={setCardShadowColor}
+            description="Change the shadow color of the card"
+            Badge={() => <Badge text={"Link Survey"} type="success" size="normal" />}
+            className="max-w-full"
+            disabled={!unifiedStyling}
+          />
+
+          <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
+            <div className="flex items-center gap-6">
+              <Switch
+                checked={isHighlightBorderAllowed}
+                onCheckedChange={(value) => {
+                  setIsHighlightBorderAllowed(value);
+                }}
+                disabled={!unifiedStyling}
+              />
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
+                  <Badge text="In-App Survey" type="success" size="normal" />
+                </div>
+                <p className="text-xs text-slate-500">Add on outer border to your survey card</p>
+              </div>
+            </div>
+
+            {isHighlightBorderAllowed && (
+              <ColorPicker
+                color={highlightBorderColor}
+                onChange={setHighlightBorderColor}
+                containerClass="my-0"
+                disabled={!unifiedStyling}
+              />
+            )}
           </div>
         </div>
 
