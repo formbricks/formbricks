@@ -161,6 +161,7 @@ export default function SurveyEditor({
                 colours={colours}
                 isUserTargetingAllowed={isUserTargetingAllowed}
                 isFormbricksCloud={isFormbricksCloud}
+                localProduct={localProduct}
               />
             )}
           </main>
@@ -170,9 +171,11 @@ export default function SurveyEditor({
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}
               product={localProduct}
+              setLocalProduct={setLocalProduct}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
               onFileUpload={async (file) => file.name}
+              membershipRole={membershipRole}
             />
           </aside>
         </div>

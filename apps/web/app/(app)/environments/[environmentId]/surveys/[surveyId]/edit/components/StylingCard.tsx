@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyBackgroundBgType } from "@formbricks/types/surveys";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
@@ -20,6 +21,7 @@ interface StylingCardProps {
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colours: string[];
   environmentId: string;
+  localProduct: TProduct;
 }
 
 export default function StylingCard({
@@ -27,9 +29,11 @@ export default function StylingCard({
   setLocalSurvey,
   colours,
   environmentId,
+  localProduct,
 }: StylingCardProps) {
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const progressBarHidden = localSurvey.styling?.hideProgressBar ?? false;
+  const showLogo = localSurvey.styling?.showLogo ?? false;
   const { type, productOverwrites, styling } = localSurvey;
   const { brandColor, clickOutsideClose, darkOverlay, placement, highlightBorderColor } =
     productOverwrites ?? {};
@@ -161,6 +165,16 @@ export default function StylingCard({
       styling: {
         ...localSurvey.styling,
         hideProgressBar: !progressBarHidden,
+      },
+    });
+  };
+
+  const toggleShowLogo = () => {
+    setLocalSurvey({
+      ...localSurvey,
+      styling: {
+        ...localSurvey.styling,
+        showLogo: !showLogo,
       },
     });
   };
@@ -340,6 +354,23 @@ export default function StylingCard({
               </Label>
             </div>
           </div>
+
+          {localProduct.brand?.logoUrl && (
+            <div className="p-3">
+              <div className="ml-2 flex items-center space-x-1">
+                <Switch id="hideLogo" checked={!showLogo} onCheckedChange={toggleShowLogo} />
+                <Label htmlFor="hideLogo" className="cursor-pointer">
+                  <div className="ml-2">
+                    <h3 className="text-sm font-semibold text-slate-700">Hide Logo</h3>
+                    <p className="text-xs font-normal text-slate-500">
+                      Hides the logo in this specific survey
+                    </p>
+                  </div>
+                </Label>
+              </div>
+            </div>
+          )}
+
           <div className="mt-2 flex items-center space-x-3 rounded-lg px-4 py-2 text-slate-500">
             <p className="text-xs">
               To keep the styling over all surveys consistent, you can{" "}
