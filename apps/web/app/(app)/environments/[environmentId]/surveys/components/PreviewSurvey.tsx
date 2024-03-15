@@ -9,9 +9,11 @@ import { RefreshCcwIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
+import { TMembershipRole } from "@formbricks/types/memberships";
 import type { TProduct } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
+import { AddLogoButton } from "@formbricks/ui/AddLogoButton";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
@@ -25,6 +27,8 @@ interface PreviewSurveyProps {
   product: TProduct;
   environment: TEnvironment;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
+  membershipRole?: TMembershipRole;
+  setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
 }
 
 let surveyNameTemp;
@@ -63,6 +67,8 @@ export default function PreviewSurvey({
   product,
   environment,
   onFileUpload,
+  membershipRole,
+  setLocalProduct,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -219,7 +225,18 @@ export default function PreviewSurvey({
                 </Modal>
               ) : (
                 <div className="w-full px-3">
-                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                  {survey.styling?.showLogo && (
+                    <div className="absolute left-5 top-[1.55rem]  ">
+                      <AddLogoButton
+                        environmentId={environment.id}
+                        product={product}
+                        type="mobile"
+                        membershipRole={membershipRole}
+                        setLocalProduct={setLocalProduct}
+                      />
+                    </div>
+                  )}
+                  <div className="no-scrollbar z-10 mt-[7rem] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
                       brandColor={brandColor}
@@ -290,7 +307,17 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
-                <div className="z-0 w-full max-w-md rounded-lg p-4">
+                {survey.styling?.showLogo && (
+                  <div className="absolute left-10 top-6  ">
+                    <AddLogoButton
+                      environmentId={environment.id}
+                      product={product}
+                      membershipRole={membershipRole}
+                      setLocalProduct={setLocalProduct}
+                    />
+                  </div>
+                )}
+                <div className="z-0 mt-[3rem] w-full max-w-md rounded-lg  p-4">
                   <SurveyInline
                     survey={survey}
                     brandColor={brandColor}

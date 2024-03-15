@@ -1,3 +1,4 @@
+import { EditLogo } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/EditLogo";
 import { getServerSession } from "next-auth";
 
 import {
@@ -42,6 +43,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
   const isBrandColorEditDisabled = isDeveloper ? true : isViewer;
+  const isLogoEditDisabled = isViewer ? true : false;
 
   if (isViewer) {
     return <ErrorComponent />;
@@ -55,6 +57,13 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           product={product}
           isBrandColorDisabled={isBrandColorEditDisabled}
           environmentId={params.environmentId}
+        />
+      </SettingsCard>{" "}
+      <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
+        <EditLogo
+          product={product}
+          environmentId={params.environmentId}
+          isLogoEditDisabled={isLogoEditDisabled}
         />
       </SettingsCard>
       <SettingsCard

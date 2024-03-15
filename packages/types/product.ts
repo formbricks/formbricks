@@ -3,6 +3,13 @@ import { z } from "zod";
 import { ZColor, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
 
+export const ZBrand = z.object({
+  logoUrl: z.string(),
+  bgColor: z.string(),
+});
+
+export type TBrand = z.infer<typeof ZBrand>;
+
 export const ZProduct = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -18,6 +25,7 @@ export const ZProduct = z.object({
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
   environments: z.array(ZEnvironment),
+  brand: ZBrand,
 });
 
 export type TProduct = z.infer<typeof ZProduct>;
@@ -34,6 +42,7 @@ export const ZProductUpdateInput = z.object({
   clickOutsideClose: z.boolean().optional(),
   darkOverlay: z.boolean().optional(),
   environments: z.array(ZEnvironment).optional(),
+  brand: ZBrand.optional(),
 });
 
 export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;

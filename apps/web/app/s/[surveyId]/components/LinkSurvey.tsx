@@ -4,6 +4,7 @@ import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
 import { RefreshCcwIcon } from "lucide-react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -156,8 +157,19 @@ export default function LinkSurvey({
   }
 
   return (
-    <>
-      <ContentWrapper className="my-12 h-full w-full p-0 md:max-w-md">
+    <div className="flex h-screen items-center justify-center">
+      {survey.styling?.showLogo && product.brand?.logoUrl && (
+        <div className="absolute left-0 top-3  p-1">
+          <Image
+            src={product.brand.logoUrl}
+            className="max-w-64  rounded-md object-contain"
+            alt="Company Logo"
+            width={256}
+            height={56}
+          />
+        </div>
+      )}
+      <ContentWrapper className="w-full  p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
@@ -241,6 +253,6 @@ export default function LinkSurvey({
           responseCount={responseCount}
         />
       </ContentWrapper>
-    </>
+    </div>
   );
 }

@@ -299,7 +299,7 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyStyling)
   /// [SurveyStyling]
-  styling Json?
+  styling Json? @default("{\"showLogo\": true}")
 
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
@@ -426,6 +426,9 @@ model Product {
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
+  /// @zod.custom(imports.ZBrand)
+  /// [Brand]
+  brand                Json?           @default("{\"logoUrl\": \"\", \"bgColor\": \"#ffffff\"}")
 
   @@unique([teamId, name])
   @@index([teamId])
