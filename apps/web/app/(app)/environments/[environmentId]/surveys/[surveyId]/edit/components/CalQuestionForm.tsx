@@ -1,4 +1,4 @@
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys";

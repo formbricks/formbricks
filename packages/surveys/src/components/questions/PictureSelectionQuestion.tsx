@@ -118,7 +118,7 @@ export default function PictureSelectionQuestion({
                   Array.isArray(value) && value.includes(choice.id)
                     ? `border-brand text-brand z-10 border-4 shadow-xl focus:border-4`
                     : "",
-                  "border-border focus:border-border-highlight focus:bg-accent-selected-bg relative box-border inline-block h-28 w-full overflow-hidden rounded-xl border focus:outline-none"
+                  "border-border focus:border-border-highlight focus:bg-accent-selected-bg group/image relative box-border inline-block h-28 w-full cursor-pointer overflow-hidden rounded-xl border focus:outline-none"
                 )}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -127,6 +127,30 @@ export default function PictureSelectionQuestion({
                   alt={choice.imageUrl.split("/").pop()}
                   className="h-full w-full object-cover"
                 />
+                <a
+                  href={choice.imageUrl}
+                  target="_blank"
+                  title="Open in new tab"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute bottom-2 right-2 flex items-center gap-2 whitespace-nowrap rounded-md bg-gray-800 bg-opacity-40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out hover:bg-opacity-65 group-hover/image:opacity-100">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-expand">
+                    <path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8" />
+                    <path d="M3 16.2V21m0 0h4.8M3 21l6-6" />
+                    <path d="M21 7.8V3m0 0h-4.8M21 3l-6 6" />
+                    <path d="M3 7.8V3m0 0h4.8M3 3l6 6" />
+                  </svg>
+                </a>
                 {question.allowMulti ? (
                   <input
                     id={`${choice.id}-checked`}

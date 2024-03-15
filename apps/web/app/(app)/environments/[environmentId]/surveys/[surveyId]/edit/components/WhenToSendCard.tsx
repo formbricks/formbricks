@@ -2,8 +2,8 @@
 
 import AddNoCodeActionModal from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/AddActionModal";
 import InlineTriggers from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/InlineTriggers";
-import { CheckCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -217,7 +217,10 @@ export default function WhenToSendCard({
               {containsEmptyTriggers ? (
                 <div className="h-8 w-8 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
-                <CheckCircleIcon className="h-8 w-8 text-green-400" />
+                <CheckIcon
+                  strokeWidth={3}
+                  className="h-7 w-7 rounded-full border bg-green-400 p-1.5 text-white"
+                />
               )}
             </div>
 

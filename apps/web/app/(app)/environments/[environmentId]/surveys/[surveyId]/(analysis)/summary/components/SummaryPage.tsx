@@ -1,7 +1,10 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getSurveySummaryAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import {
+  getResponseCountAction,
+  getSurveySummaryAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import SummaryDropOffs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import SummaryList from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryList";
@@ -24,6 +27,21 @@ import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
 import ResultsShareButton from "../../../components/ResultsShareButton";
 
+const initialSurveySummary: TSurveySummary = {
+  meta: {
+    completedPercentage: 0,
+    completedResponses: 0,
+    displayCount: 0,
+    dropOffPercentage: 0,
+    dropOffCount: 0,
+    startsPercentage: 0,
+    totalResponses: 0,
+    ttcAverage: 0,
+  },
+  dropOff: [],
+  summary: [],
+};
+
 interface SummaryPageProps {
   environment: TEnvironment;
   survey: TSurvey;
@@ -34,7 +52,6 @@ interface SummaryPageProps {
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
   membershipRole?: TMembershipRole;
-  responseCount: number;
 }
 
 const SummaryPage = ({
@@ -47,23 +64,10 @@ const SummaryPage = ({
   environmentTags,
   attributes,
   membershipRole,
-  responseCount,
 }: SummaryPageProps) => {
+  const [responseCount, setResponseCount] = useState<number | null>(null);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
-  const [surveySummary, setSurveySummary] = useState<TSurveySummary>({
-    meta: {
-      completedPercentage: 0,
-      completedResponses: 0,
-      displayCount: 0,
-      dropOffPercentage: 0,
-      dropOffCount: 0,
-      startsPercentage: 0,
-      totalResponses: 0,
-      ttcAverage: 0,
-    },
-    dropOff: [],
-    summary: [],
-  });
+  const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
 
   const filters = useMemo(
@@ -72,11 +76,18 @@ const SummaryPage = ({
   );
 
   useEffect(() => {
-    const fetchSurveySummary = async () => {
+    const handleInitialData = async () => {
+      const responseCount = await getResponseCountAction(surveyId, filters);
+      setResponseCount(responseCount);
+      if (responseCount === 0) {
+        setSurveySummary(initialSurveySummary);
+        return;
+      }
       const response = await getSurveySummaryAction(surveyId, filters);
       setSurveySummary(response);
     };
-    fetchSurveySummary();
+
+    handleInitialData();
   }, [filters, surveyId]);
 
   const searchParams = useSearchParams();
@@ -105,7 +116,12 @@ const SummaryPage = ({
         <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
       </div>
-      <SurveyResultsTabs activeId="summary" environmentId={environment.id} surveyId={surveyId} />
+      <SurveyResultsTabs
+        activeId="summary"
+        environmentId={environment.id}
+        surveyId={surveyId}
+        responseCount={responseCount}
+      />
       <SummaryMetadata
         survey={survey}
         surveySummary={surveySummary.meta}

@@ -1,42 +1,35 @@
-import {
-  CommandLineIcon,
-  CubeTransparentIcon,
-  SquaresPlusIcon,
-  SwatchIcon,
-  UserGroupIcon,
-  UsersIcon,
-} from "@heroicons/react/24/outline";
+import { BlocksIcon, BoxIcon, LockIcon, SwatchBookIcon, TerminalIcon, UsersIcon } from "lucide-react";
 
 const features = [
   {
     name: "Futureproof",
     description: "Form needs change. With Formbricks you’ll avoid island solutions right from the start.",
-    icon: CubeTransparentIcon,
+    icon: BoxIcon,
   },
   {
     name: "Privacy by design",
     description: "Self-host the entire product and fly through privacy compliance reviews.",
-    icon: UsersIcon,
+    icon: LockIcon,
   },
   {
     name: "Community driven",
     description: "We're building for you. If you need something specific, we’re happy to build it!",
-    icon: UserGroupIcon,
+    icon: UsersIcon,
   },
   {
     name: "Great DX",
     description: "We love a solid developer experience. We felt your pain and do our best to avoid it.",
-    icon: CommandLineIcon,
+    icon: TerminalIcon,
   },
   {
     name: "Customizable",
     description: "We have to build opinionated. If it doesn't suit your need, just change it up.",
-    icon: SwatchIcon,
+    icon: SwatchBookIcon,
   },
   {
     name: "Extendable",
     description: "Even though we try, we cannot build every single integration. With Formbricks, you can.",
-    icon: SquaresPlusIcon,
+    icon: BlocksIcon,
   },
 ];
 

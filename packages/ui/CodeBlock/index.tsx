@@ -1,6 +1,6 @@
 "use client";
 
-import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+import { CopyIcon } from "lucide-react";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import React, { useEffect } from "react";
@@ -33,7 +33,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
     <div className="group relative mt-4 rounded-md text-sm text-slate-200">
       {showCopyToClipboard && (
         <div className="absolute right-2 top-2 z-20 h-8 w-8 cursor-pointer rounded-md bg-slate-100 p-1.5 text-slate-600 hover:bg-slate-200">
-          <DocumentDuplicateIcon
+          <CopyIcon
             className=""
             onClick={() => {
               const childText = children?.toString() || "";

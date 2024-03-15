@@ -82,3 +82,12 @@ p.fb-editor-paragraph {
   --fb-close-btn-color: var(--slate-500);
   --fb-close-btn-color-hover: var(--slate-700);
 }
+
+@keyframes shrink-width-to-zero {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}

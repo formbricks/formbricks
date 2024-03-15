@@ -3,25 +3,25 @@ import {
   ClockIcon,
   CogIcon,
   CreditCardIcon,
-  DocumentChartBarIcon,
+  FileBarChartIcon,
+  HelpCircleIcon,
   HomeIcon,
-  QuestionMarkCircleIcon,
   ScaleIcon,
   ShieldCheckIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/outline";
+  UsersIcon,
+} from "lucide-react";
 
 const navigation = [
   { name: "Home", href: "#", icon: HomeIcon, current: true },
   { name: "History", href: "#", icon: ClockIcon, current: false },
   { name: "Balances", href: "#", icon: ScaleIcon, current: false },
   { name: "Cards", href: "#", icon: CreditCardIcon, current: false },
-  { name: "Recipients", href: "#", icon: UserGroupIcon, current: false },
-  { name: "Reports", href: "#", icon: DocumentChartBarIcon, current: false },
+  { name: "Recipients", href: "#", icon: UsersIcon, current: false },
+  { name: "Reports", href: "#", icon: FileBarChartIcon, current: false },
 ];
 const secondaryNavigation = [
   { name: "Settings", href: "#", icon: CogIcon },
-  { name: "Help", href: "#", icon: QuestionMarkCircleIcon },
+  { name: "Help", href: "#", icon: HelpCircleIcon },
   { name: "Privacy", href: "#", icon: ShieldCheckIcon },
 ];
 

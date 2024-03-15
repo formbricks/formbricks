@@ -1,4 +1,4 @@
-import { UsersIcon } from "@heroicons/react/24/solid";
+import { UsersIcon } from "lucide-react";
 import Link from "next/link";
 
 import { TUser } from "@formbricks/types/user";

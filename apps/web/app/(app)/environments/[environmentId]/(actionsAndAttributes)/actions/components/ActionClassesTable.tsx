@@ -1,6 +1,6 @@
 "use client";
 
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { MousePointerClickIcon } from "lucide-react";
 import { useState } from "react";
 
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
@@ -53,7 +53,7 @@ export default function ActionClassesTable({
               onClick={() => {
                 setAddActionModalOpen(true);
               }}>
-              <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
+              <MousePointerClickIcon className="mr-2 h-5 w-5 text-white" />
               Add Action
             </Button>
           </div>
