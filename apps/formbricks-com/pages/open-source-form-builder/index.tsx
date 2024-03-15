@@ -7,7 +7,7 @@ import SalesPageHero from "@/components/salespage/SalesPageHero";
 import SalesSteps from "@/components/salespage/SalesSteps";
 import SalesTestimonial from "@/components/salespage/SalesTestimonial";
 import HeadingCentered from "@/components/shared/HeadingCentered";
-import SeoFaq from "@/components/shared/Seo/SeoFaq";
+import SeoFaq from "@/components/shared/seo/SeoFaq";
 import Jonathan from "@/images/clients/headshots/jonathan.png";
 import Peer from "@/images/clients/headshots/peer.jpeg";
 import {
@@ -100,30 +100,6 @@ const linkSurveyFeaturesPt1 = [
     imgSrc: Img7,
     imgAlt: "Embeddable open source form on a website and email",
     imgLeft: false,
-  },
-  {
-    headline: "Pre-populate form fields",
-    subheadline:
-      "Prefill form fields with data you already have. Enrich your analysis by gathering all data points in one secure place. Versatile link prefilling let's you collect all data on one open source survey platform.",
-    imgSrc: Img8,
-    imgAlt: "Data pre-population feature in an open source forms builder",
-    imgLeft: true,
-  },
-  {
-    headline: "Conditional logic",
-    subheadline:
-      "Jump questions based on previous answers for higher completion rates. Conditional logic let’s you freely personalize the survey experience. Formbricks is the only open source form builder with comprehensive logic capabilities built-in.",
-    imgSrc: Img9,
-    imgAlt: "Open source form with conditional logic for personalized surveys",
-    imgLeft: false,
-  },
-  {
-    headline: "Multi-language surveys",
-    subheadline:
-      "Run the same survey in several languages. Analyse all languages together or filter for specific languages. Not even Typeform has multi-language surveys but our open source forms builder does.",
-    imgSrc: Img10,
-    imgAlt: "Multi-language survey capability in open source form builder",
-    imgLeft: true,
   },
 ];
 const linkSurveyFeaturesPt2 = [
