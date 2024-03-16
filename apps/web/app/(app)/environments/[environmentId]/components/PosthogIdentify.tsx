@@ -30,7 +30,12 @@ export default function PosthogIdentify({
 
   useEffect(() => {
     if (posthogEnabled && session.user && posthog) {
-      posthog.identify(session.user.id, { name: session.user.name, email: session.user.email });
+      posthog.identify(session.user.id, {
+        name: session.user.name,
+        email: session.user.email,
+        role: session.user.role,
+        objective: session.user.objective,
+      });
       if (environmentId) {
         posthog.group("environment", environmentId, { name: environmentId });
       }

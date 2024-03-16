@@ -76,6 +76,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
             muted
             loop
             autoPlay
+            playsInline
             className={`${baseClasses} ${loadedClass} object-cover`}
             style={{ filter: `${filterStyle}` }}>
             <source src={survey.styling?.background?.bg || ""} type="video/mp4" />
