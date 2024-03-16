@@ -4,11 +4,13 @@ import { TJsConfigInput } from "@formbricks/types/js";
 import { trackAction } from "./lib/actions";
 import { getApi } from "./lib/api";
 import { CommandQueue } from "./lib/commandQueue";
+import { Config } from "./lib/config";
 import { ErrorHandler } from "./lib/errors";
 import { initialize } from "./lib/initialize";
 import { Logger } from "./lib/logger";
 import { checkPageUrl } from "./lib/noCodeActions";
 import { logoutPerson, resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
+import { renderWidget } from "./lib/widget";
 
 declare global {
   interface Window {
@@ -65,6 +67,18 @@ const registerRouteChange = async (): Promise<void> => {
   await queue.wait();
 };
 
+const renderSurveyModal = async (uuid: string): Promise<void> => {
+  const survey = Config.getInstance()
+    .get()
+    .state.surveys.find((s) => s.id === uuid);
+  if (!survey) {
+    logger.error(`Survey with uuid ${uuid} not found`);
+    return;
+  }
+  queue.add(true, renderWidget, survey);
+  await queue.wait();
+};
+
 const formbricks = {
   init,
   setUserId,
@@ -75,6 +89,7 @@ const formbricks = {
   reset,
   registerRouteChange,
   getApi,
+  renderSurveyModal,
 };
 
 export type FormbricksType = typeof formbricks;
