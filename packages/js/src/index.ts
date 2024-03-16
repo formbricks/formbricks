@@ -72,14 +72,14 @@ const registerRouteChange = async (): Promise<void> => {
  * Please note: ignores normal actions/triggers & displayPercentage
  * survey delay will be taken into account
  *
- * @param uuid: uuid of the survey (status has to be in-progress)
+ * @param cuid: uuid of the survey (status has to be in-progress)
  */
-const renderSurveyModal = async (uuid: string): Promise<void> => {
+const renderSurveyModal = async (cuid: string): Promise<void> => {
   const survey = Config.getInstance()
     .get()
-    .state.surveys.find((s) => s.id === uuid);
+    .state.surveys.find((s) => s.id === cuid);
   if (!survey) {
-    logger.error(`Survey with uuid ${uuid} not found`);
+    logger.error(`Survey with cuid ${cuid} not found`);
     return;
   }
   queue.add(true, renderWidget, survey);
