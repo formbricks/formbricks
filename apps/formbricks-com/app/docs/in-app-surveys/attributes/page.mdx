@@ -117,9 +117,9 @@ formbricks.logout();
 </CodeGroup>
 </Col>
 
-### Render Survey Modal
+### Manually Rendering the Survey Modal
 
-You can also trigger the survey modal manually. To do this, you only need the survey id and the survey must be in-progress. Please note that the survey is displayed independently of other targeting (e.g. URL, actions, user attributes, display percentage, recontact options, ...). Only the survey delay is applied. This feature is therefore primarily aimed at advanced users.
+For advanced users, trigger the survey modal by providing the survey ID and ensuring its status is in-progress. Please note that this method disregards other triggering configurations, such as URL, actions, user attributes, display percentage, and recontact options. Only the survey delay setting is applied.
 
 <Col>
 <CodeGroup title="Render Survey Modal">
@@ -130,4 +130,4 @@ formbricks.renderSurveyModal("survey_id");
 
 </CodeGroup>
 </Col>
-Where `survey_id` is the id of the survey (you can find it at the buttom of the survey summeray page)
+Replace `survey_id` with the survey id found at the bottom of the survey summary page.
