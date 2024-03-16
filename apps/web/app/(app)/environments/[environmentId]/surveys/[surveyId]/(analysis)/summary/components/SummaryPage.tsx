@@ -24,6 +24,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { SettingsId } from "@formbricks/ui/SettingsId";
 
 import ResultsShareButton from "../../../components/ResultsShareButton";
 
@@ -135,6 +136,7 @@ const SummaryPage = ({
         survey={survey}
         environment={environment}
       />
+      <SettingsId title="Survey" id={surveyId}></SettingsId>
     </ContentWrapper>
   );
 };
