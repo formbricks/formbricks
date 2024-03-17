@@ -1,28 +1,20 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
+import { InboxIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
-import type { TSurveyQuestionSummary } from "@formbricks/types/surveys";
-import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
+import { TSurveySummaryAddress } from "@formbricks/types/responses";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 
-interface OpenTextSummaryProps {
-  questionSummary: TSurveyQuestionSummary<TSurveyOpenTextQuestion>;
+interface AddressSummaryProps {
+  questionSummary: TSurveySummaryAddress;
   environmentId: string;
-  responsesPerPage: number;
 }
 
-export default function AddressSummary({
-  questionSummary,
-  environmentId,
-  responsesPerPage,
-}: OpenTextSummaryProps) {
+export default function AddressSummary({ questionSummary, environmentId }: AddressSummaryProps) {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
-  const [displayCount, setDisplayCount] = useState(responsesPerPage);
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -34,8 +26,8 @@ export default function AddressSummary({
             {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxStackIcon className="mr-2 h-4 w-4" />
-            {questionSummary.responses.length} Responses
+            <InboxIcon className="mr-2 h-4 w-4" />
+            {questionSummary.responseCount} Responses
           </div>
           {!questionSummary.question.required && (
             <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
@@ -48,8 +40,7 @@ export default function AddressSummary({
           <div className="col-span-2 pl-4 md:pl-6">Response</div>
           <div className="px-4 md:px-6">Time</div>
         </div>
-        {questionSummary.responses.slice(0, displayCount).map((response) => {
-          const displayIdentifier = getPersonIdentifier(response.person!);
+        {questionSummary.samples.map((response) => {
           return (
             <div
               key={response.id}
@@ -63,7 +54,7 @@ export default function AddressSummary({
                       <PersonAvatar personId={response.person.id} />
                     </div>
                     <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                      {displayIdentifier}
+                      {getPersonIdentifier(response.person)}
                     </p>
                   </Link>
                 ) : (
@@ -116,21 +107,13 @@ export default function AddressSummary({
                 </div>
               }
 
-              <div className="px-4 text-slate-500 md:px-6">{timeSince(response.updatedAt.toISOString())}</div>
+              <div className="px-4 text-slate-500 md:px-6">
+                {" "}
+                {timeSince(new Date(response.updatedAt).toISOString())}
+              </div>
             </div>
           );
         })}
-
-        {displayCount < questionSummary.responses.length && (
-          <div className="flex justify-center py-1">
-            <button
-              type="button"
-              onClick={() => setDisplayCount((prevCount) => prevCount + responsesPerPage)}
-              className="my-2 flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700">
-              Show more
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

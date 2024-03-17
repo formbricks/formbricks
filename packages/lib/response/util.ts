@@ -8,6 +8,7 @@ import {
   TResponseFilterCriteria,
   TResponseTtc,
   TSurveySummary,
+  TSurveySummaryAddress,
   TSurveySummaryDate,
   TSurveySummaryFileUpload,
   TSurveySummaryHiddenField,
@@ -969,6 +970,32 @@ export const getQuestionWiseSummary = (
           },
         });
 
+        break;
+      }
+      case TSurveyQuestionType.address: {
+        let values: TSurveySummaryAddress["samples"] = [];
+        console.log(responses);
+        responses.forEach((response) => {
+          const answer = response.data[question.id];
+          if (Array.isArray(answer)) {
+            values.push({
+              id: response.id,
+              updatedAt: response.updatedAt,
+              value: answer,
+              person: response.person,
+            });
+          }
+        });
+        console.log(values);
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: values.length,
+          samples: values.slice(0, VALUES_LIMIT),
+        });
+
+        values = [];
         break;
       }
     }

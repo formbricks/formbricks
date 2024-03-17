@@ -11,7 +11,7 @@ import type { TSurveyAddressQuestion } from "@formbricks/types/surveys";
 
 interface AddressQuestionProps {
   question: TSurveyAddressQuestion;
-  value: [];
+  value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
