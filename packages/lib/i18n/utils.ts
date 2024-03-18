@@ -262,8 +262,10 @@ export const translateSurvey = (
   const translatedQuestions = survey.questions.map((question) => {
     return translateQuestion(question, languages, targetLanguageCode);
   });
-  const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languages, targetLanguageCode);
-  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languages, targetLanguageCode);
+  const translatedWelcomeCard =
+    survey.welcomeCard && translateWelcomeCard(survey.welcomeCard, languages, targetLanguageCode);
+  const translatedThankYouCard =
+    survey.thankYouCard && translateThankYouCard(survey.thankYouCard, languages, targetLanguageCode);
   const translatedSurvey = structuredClone(survey);
   return {
     ...translatedSurvey,
