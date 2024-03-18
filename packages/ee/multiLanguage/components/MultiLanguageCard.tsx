@@ -2,6 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
+import Link from "next/link";
 import { FC, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -48,9 +49,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 }) => {
   const environmentId = localSurvey.environmentId;
   const open = activeQuestionId == "multiLanguage";
-  const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(
-    localSurvey.languages ? localSurvey.languages.length > 1 : false
-  );
+  const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages?.length > 1);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalProps>({
     title: "",
     open: false,
@@ -140,7 +139,6 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       } else {
         setIsMultiLanguageActivated(false);
       }
-      return;
     } else {
       setIsMultiLanguageActivated(true);
     }
@@ -222,6 +220,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                         </div>
                       )}
                     </div>
+
                     {isMultiLanguageActivated && (
                       <div className="space-y-4">
                         <DefaultLanguageSelect
@@ -244,25 +243,24 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                     )}
                   </div>
                 )}
-                <Button
-                  className="mt-2"
-                  variant="secondary"
-                  size="sm"
-                  href={`/environments/${environmentId}/settings/language`}
-                  target="_blank">
-                  Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
-                </Button>
-                <ConfirmationModal
-                  title={confirmationModalInfo.title}
-                  open={confirmationModalInfo.open}
-                  setOpen={() => setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }))}
-                  text={confirmationModalInfo.text}
-                  onConfirm={confirmationModalInfo.onConfirm}
-                  buttonText={confirmationModalInfo.buttonText}
-                  buttonVariant={confirmationModalInfo.buttonVariant}
-                />
+
+                <Link href={`/environments/${environmentId}/settings/language`} target="_blank">
+                  <Button className="mt-2" variant="secondary" size="sm">
+                    Manage Languages <ArrowUpRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
               </>
             )}
+
+            <ConfirmationModal
+              title={confirmationModalInfo.title}
+              open={confirmationModalInfo.open}
+              setOpen={() => setConfirmationModalInfo((prev) => ({ ...prev, open: !prev.open }))}
+              text={confirmationModalInfo.text}
+              onConfirm={confirmationModalInfo.onConfirm}
+              buttonText={confirmationModalInfo.buttonText}
+              buttonVariant={confirmationModalInfo.buttonVariant}
+            />
           </div>
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>
