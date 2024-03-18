@@ -13,7 +13,7 @@ interface OpenTextSummaryProps {
   environmentId: string;
 }
 
-export default function OpenTextSummary({ questionSummary, environmentId }: OpenTextSummaryProps) {
+export const OpenTextSummary = ({ questionSummary, environmentId }: OpenTextSummaryProps) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   return (
@@ -76,4 +76,4 @@ export default function OpenTextSummary({ questionSummary, environmentId }: Open
       </div>
     </div>
   );
-}
+};

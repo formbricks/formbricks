@@ -28,36 +28,38 @@ export default function MatrixQuestionForm({
 }: MatrixQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
-  // Helper function to update question attributes
-  const updateQuestionAttributes = (attributes) => {
-    updateQuestion(questionIdx, { ...question, ...attributes });
-  };
-
+  // Function to delete a label input field
   const handleDeleteLabel = (type: "row" | "column", index: number) => {
     const labels = type === "row" ? question.rows : question.columns;
     if (labels.length <= 2) return; // Prevent deleting below minimum length
-    updateQuestionAttributes({
-      [type === "row" ? "rows" : "columns"]: labels.filter((_, idx) => idx !== index),
-    });
+    const updatedLabels = labels.filter((_, idx) => idx !== index);
+    if (type === "row") {
+      updateQuestion(questionIdx, { ...question, ...{ rows: updatedLabels } });
+    } else {
+      updateQuestion(questionIdx, { ...question, ...{ columns: updatedLabels } });
+    }
   };
 
   const handleOnChange = (index: number, type: "row" | "column", e) => {
     const newLabel = e.target.value;
-    if (type === "row" && question.rows.includes(newLabel)) {
-      toast.error("Duplicate row labels");
-    }
-    if (type === "column" && question.columns.includes(newLabel)) {
-      toast.error("Duplicate column labels");
-    }
     const labels = type === "row" ? [...question.rows] : [...question.columns];
+
+    // Check for duplicate labels
+    const isDuplicate = labels.includes(newLabel);
+    if (isDuplicate) {
+      toast.error(`Duplicate ${type} labels`);
+    }
+
+    // Update the label at the given index, or add a new label if index is undefined
     if (index !== undefined) {
       labels[index] = newLabel;
     } else {
-      labels.push("");
+      labels.push(newLabel);
     }
-    updateQuestionAttributes({ [type === "row" ? "rows" : "columns"]: labels });
+    updateQuestion(questionIdx, { ...question, [type]: labels });
   };
 
+  // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
       const updatedRows = [...question.rows, ""];

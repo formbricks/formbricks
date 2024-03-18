@@ -72,15 +72,16 @@ export const MatrixQuestion = ({
     (column: string, row: string) => {
       const responseValue = value
         ? { ...value }
-        : question.rows.reduce((obj: Record<string, string>, key: string) => {
-            obj[key] = "";
+        : // mapping each row in `question.rows` to an empty string.
+          question.rows.reduce((obj: Record<string, string>, key: string) => {
+            obj[key] = ""; // Initialize each row key with an empty string
             return obj;
           }, {});
 
       responseValue[row] = column;
       onChange({ [question.id]: responseValue });
     },
-    [value, question.rows, question.id, onChange] // Updated dependency array
+    [value, question.rows, question.id, onChange]
   );
 
   const handleSubmit = useCallback(

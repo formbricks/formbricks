@@ -10,7 +10,7 @@ interface CalSummaryProps {
   environmentId: string;
 }
 
-export default function CalSummary({ questionSummary }: CalSummaryProps) {
+export const CalSummary = ({ questionSummary }: CalSummaryProps) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   return (
@@ -68,4 +68,4 @@ export default function CalSummary({ questionSummary }: CalSummaryProps) {
       </div>
     </div>
   );
-}
+};

@@ -1,6 +1,7 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
+import { useMemo } from "react";
 
 import { TSurveySummaryMatrix } from "@formbricks/types/responses";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
@@ -9,7 +10,7 @@ interface MatrixQuestionSummaryProps {
   questionSummary: TSurveySummaryMatrix;
 }
 
-export default function MatrixQuestionSummary({ questionSummary }: MatrixQuestionSummaryProps) {
+export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummaryProps) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   const getAlphaValue = (percentage: number) => {
@@ -39,6 +40,7 @@ export default function MatrixQuestionSummary({ questionSummary }: MatrixQuestio
         </div>
       </div>
       <div className="overflow-x-auto rounded-b-lg bg-white p-6">
+        {/* Summary Table  */}
         <table className="mx-auto border-collapse text-left">
           <thead>
             <tr>
@@ -80,34 +82,29 @@ export default function MatrixQuestionSummary({ questionSummary }: MatrixQuestio
       </div>
     </div>
   );
-}
+};
 
-const ToolTip = ({
-  children,
-  percentage,
-  totalResponses,
-  label,
-}: {
+interface ToolTipProps {
   children: React.ReactNode;
   percentage?: number;
   totalResponses?: number;
   label?: string;
-}) => {
-  const isLabelTooltip = label ? true : false;
-  const getTooltipContent = () => {
-    if (isLabelTooltip) {
+}
+
+const ToolTip = ({ children, percentage, totalResponses, label }: ToolTipProps) => {
+  const tooltipContent = useMemo(() => {
+    if (label) {
       return label;
     } else if (percentage !== undefined && totalResponses !== undefined) {
-      const responseCount = Math.round((percentage / 100) * totalResponses);
-      return `${responseCount} responses`;
+      return `${Math.round((percentage / 100) * totalResponses)} responses`;
     }
-  };
+  }, [label, percentage, totalResponses]);
   return (
     <TooltipProvider delayDuration={50}>
       <Tooltip>
         <TooltipTrigger>{children}</TooltipTrigger>
         <TooltipContent side={"top"}>
-          <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{getTooltipContent()}</p>
+          <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{tooltipContent}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

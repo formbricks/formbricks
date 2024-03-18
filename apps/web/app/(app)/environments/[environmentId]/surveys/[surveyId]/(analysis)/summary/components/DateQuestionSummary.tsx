@@ -14,7 +14,7 @@ interface DateQuestionSummary {
   environmentId: string;
 }
 
-export default function DateQuestionSummary({ questionSummary, environmentId }: DateQuestionSummary) {
+export const DateQuestionSummary = ({ questionSummary, environmentId }: DateQuestionSummary) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   return (
@@ -78,4 +78,4 @@ export default function DateQuestionSummary({ questionSummary, environmentId }: 
       </div>
     </div>
   );
-}
+};

@@ -10,7 +10,7 @@ interface PictureChoiceSummaryProps {
   questionSummary: TSurveySummaryPictureSelection;
 }
 
-export default function PictureChoiceSummary({ questionSummary }: PictureChoiceSummaryProps) {
+export const PictureChoiceSummary = ({ questionSummary }: PictureChoiceSummaryProps) => {
   const isMulti = questionSummary.question.allowMulti;
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
@@ -68,4 +68,4 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
       </div>
     </div>
   );
-}
+};

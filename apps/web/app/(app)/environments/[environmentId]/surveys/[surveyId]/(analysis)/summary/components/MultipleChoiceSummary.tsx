@@ -14,11 +14,11 @@ interface MultipleChoiceSummaryProps {
   surveyType: string;
 }
 
-export default function MultipleChoiceSummary({
+export const MultipleChoiceSummary = ({
   questionSummary,
   environmentId,
   surveyType,
-}: MultipleChoiceSummaryProps) {
+}: MultipleChoiceSummaryProps) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   // sort by count and transform to array
@@ -116,4 +116,4 @@ export default function MultipleChoiceSummary({
       </div>
     </div>
   );
-}
+};

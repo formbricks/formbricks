@@ -9,7 +9,7 @@ interface ConsentSummaryProps {
   questionSummary: TSurveySummaryConsent;
 }
 
-export default function ConsentSummary({ questionSummary }: ConsentSummaryProps) {
+export const ConsentSummary = ({ questionSummary }: ConsentSummaryProps) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   return (
@@ -69,4 +69,4 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
       </div>
     </div>
   );
-}
+};
