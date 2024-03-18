@@ -5,7 +5,7 @@ export const getIsDebug = () => window.location.search.includes("formbricksDebug
 
 export const getLanguageCode = (survey: TSurvey, attributes: TPersonAttributes): string | undefined => {
   const language = attributes.language;
-  const availableLanguageCodes = Object.keys(survey.questions[0].headline);
+  const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
   if (!language) return "default";
   else {
     const selectedLanguage = survey.languages.find((surveyLanguage) => {

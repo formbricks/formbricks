@@ -39,13 +39,18 @@ export const renderWidget = async (survey: TSurvey) => {
   const product = config.get().state.product;
   const attributes = config.get().state.attributes;
 
-  const languageCode = getLanguageCode(survey, attributes);
+  const isMultiLanguageSurvey = survey.languages.length > 1;
+  let languageCode = "default";
 
-  //if survey is not available in selected language, survey wont be shown
-  if (!languageCode) {
-    logger.debug("Survey not available in specified language.");
-    setIsSurveyRunning(true);
-    return;
+  if (isMultiLanguageSurvey) {
+    const displayLanguage = getLanguageCode(survey, attributes);
+    //if survey is not available in selected language, survey wont be shown
+    if (!displayLanguage) {
+      logger.debug("Survey not available in specified language.");
+      setIsSurveyRunning(true);
+      return;
+    }
+    languageCode = displayLanguage;
   }
 
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);

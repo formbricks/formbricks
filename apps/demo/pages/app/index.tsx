@@ -23,7 +23,9 @@ export default function AppPage({}) {
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const isUserId = window.location.href.includes("userId=true");
-      const defaultAttributes = { language: "gu" };
+      const defaultAttributes = {
+        language: "gu",
+      };
       const userInitAttributes = { "Init Attribute 1": "eight", "Init Attribute 2": "two" };
 
       const attributes = isUserId ? { ...defaultAttributes, ...userInitAttributes } : defaultAttributes;
