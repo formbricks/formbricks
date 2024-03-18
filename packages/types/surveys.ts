@@ -541,3 +541,26 @@ export interface TSurveyQuestionSummary<T> {
     person: TPerson | null;
   }[];
 }
+
+export const ZSurveyFilterCriteria = z.object({
+  name: z.string().optional(),
+  status: z.array(ZSurveyStatus).optional(),
+  type: z.array(ZSurveyType).optional(),
+  createdBy: z
+    .object({
+      userId: z.string(),
+      value: z.array(z.enum(["you", "others"])),
+    })
+    .optional(),
+  sortBy: z.enum(["createdAt", "updatedAt", "name"]).optional(),
+});
+
+export type TSurveyFilterCriteria = z.infer<typeof ZSurveyFilterCriteria>;
+
+export type TSurveyFilters = {
+  name: string;
+  createdBy: ("you" | "others")[];
+  status: TSurveyStatus[];
+  type: TSurveyType[];
+  sortBy: "createdAt" | "updatedAt" | "name";
+};

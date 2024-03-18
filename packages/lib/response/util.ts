@@ -30,7 +30,7 @@ export function calculateTtcTotal(ttc: TResponseTtc) {
 }
 
 export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
-  const whereClause: Record<string, any>[] = [];
+  const whereClause: Prisma.ResponseWhereInput["AND"] = [];
 
   // For finished
   if (filterCriteria?.finished !== undefined) {
