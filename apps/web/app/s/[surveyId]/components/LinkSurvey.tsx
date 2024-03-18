@@ -159,13 +159,15 @@ export default function LinkSurvey({
   return (
     <div className="flex h-screen items-center justify-center">
       {survey.styling?.showLogo && product.brand?.logoUrl && (
-        <div className="absolute left-0 top-3  p-1">
+         <div
+          className={`absolute left-0 top-3 h-auto rounded-md  p-2 `}
+          style={{ backgroundColor: product.brand?.bgColor }}>
           <Image
             src={product.brand.logoUrl}
-            className="max-w-64  rounded-md object-contain"
+            className="h-24 w-auto max-w-64 rounded-md  object-contain"
             alt="Company Logo"
             width={256}
-            height={56}
+            height={256}
           />
         </div>
       )}
