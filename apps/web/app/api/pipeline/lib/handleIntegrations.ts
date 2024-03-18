@@ -1,6 +1,7 @@
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
+import { processResponseData } from "@formbricks/lib/responses";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { TIntegration } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -60,11 +61,7 @@ async function extractResponses(data: TPipelineInput, questionIds: string[]): Pr
   for (const questionId of questionIds) {
     const responseValue = data.response.data[questionId];
 
-    if (responseValue !== undefined) {
-      responses.push(Array.isArray(responseValue) ? responseValue.join("\n") : String(responseValue));
-    } else {
-      responses.push("");
-    }
+    responses.push(processResponseData(responseValue));
 
     const question = survey?.questions.find((q) => q.id === questionId);
     questions.push(question?.headline || "");

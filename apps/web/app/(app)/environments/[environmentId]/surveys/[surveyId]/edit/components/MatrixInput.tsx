@@ -22,7 +22,7 @@ export const MatrixLabelInput = ({
 }: MatrixLabelInputProps) => {
   return (
     <div className="flex items-center">
-      <Input onChange={(e) => handleOnChange(index, type, e)} value={value} />
+      <Input onChange={(e) => handleOnChange(index, type, e)} value={value} autoFocus />
       {(type === "row" ? question.rows.length > 2 : question.columns.length > 2) && (
         <TrashIcon
           className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

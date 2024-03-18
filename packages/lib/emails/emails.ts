@@ -12,7 +12,7 @@ import {
   WEBAPP_URL,
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
-import { getQuestionResponseMapping } from "../responses";
+import { getQuestionResponseMapping, processResponseData } from "../responses";
 import { getOriginalFileNameFromUrl } from "../storage/utils";
 import { getTeamByEnvironmentId } from "../team/service";
 import { withEmailTemplate } from "./email-template";
@@ -228,7 +228,7 @@ export const sendResponseFinishedEmail = async (
                `;
                     })
                     .join("")
-                : `<p style="margin:0px; white-space:pre-wrap"><b>${question.answer}</b></p>`
+                : `<p style="margin:0px; white-space:pre-wrap"><b>${processResponseData(question.answer)}</b></p>`
             }
             
           </div>`

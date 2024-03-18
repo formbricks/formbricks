@@ -27,6 +27,18 @@ export default function MatrixQuestionForm({
   localSurvey,
 }: MatrixQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const environmentId = localSurvey.environmentId;
+
+  // Function to add a new Label input field
+  const handleAddLabel = (type: "row" | "column") => {
+    if (type === "row") {
+      const updatedRows = [...question.rows, ""];
+      updateQuestion(questionIdx, { rows: updatedRows });
+    } else {
+      const updatedColumns = [...question.columns, ""];
+      updateQuestion(questionIdx, { columns: updatedColumns });
+    }
+  };
 
   // Function to delete a label input field
   const handleDeleteLabel = (type: "row" | "column", index: number) => {
@@ -34,9 +46,9 @@ export default function MatrixQuestionForm({
     if (labels.length <= 2) return; // Prevent deleting below minimum length
     const updatedLabels = labels.filter((_, idx) => idx !== index);
     if (type === "row") {
-      updateQuestion(questionIdx, { ...question, ...{ rows: updatedLabels } });
+      updateQuestion(questionIdx, { rows: updatedLabels });
     } else {
-      updateQuestion(questionIdx, { ...question, ...{ columns: updatedLabels } });
+      updateQuestion(questionIdx, { columns: updatedLabels });
     }
   };
 
@@ -56,21 +68,12 @@ export default function MatrixQuestionForm({
     } else {
       labels.push(newLabel);
     }
-    updateQuestion(questionIdx, { ...question, [type]: labels });
-  };
-
-  // Function to add a new Label input field
-  const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {
-      const updatedRows = [...question.rows, ""];
-      updateQuestion(questionIdx, { rows: updatedRows });
+      updateQuestion(questionIdx, { rows: labels });
     } else {
-      const updatedColumns = [...question.columns, ""];
-      updateQuestion(questionIdx, { columns: updatedColumns });
+      updateQuestion(questionIdx, { columns: labels });
     }
   };
-
-  const environmentId = localSurvey.environmentId;
 
   return (
     <form>

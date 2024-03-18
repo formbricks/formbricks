@@ -185,9 +185,9 @@ export default function QuestionCard({
                     ) : question.type === TSurveyQuestionType.Date ? (
                       <CalendarDaysIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Cal ? (
-                      <PhoneIcon />
+                      <PhoneIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Matrix ? (
-                      <Grid3X3Icon />
+                      <Grid3X3Icon className="h-5 w-5" />
                     ) : null}
                   </div>
                   <div>

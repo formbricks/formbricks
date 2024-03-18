@@ -25,7 +25,7 @@ export const getQuestionResponseMapping = (
             // as array
           }
         } else {
-          return answer.toString();
+          return processResponseData(answer);
         }
       }
     };
@@ -42,10 +42,12 @@ export const getQuestionResponseMapping = (
 
 export const processResponseData = (
   responseData: string | number | string[] | Record<string, string>
-): string | number => {
+): string => {
   if (!responseData) return "";
-  if (typeof responseData === "string" || typeof responseData === "number") {
+  if (typeof responseData === "string") {
     return responseData;
+  } else if (typeof responseData === "number") {
+    return responseData.toString();
   } else if (Array.isArray(responseData)) {
     return responseData.join("; ");
   } else {
