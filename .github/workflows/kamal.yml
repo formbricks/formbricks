@@ -16,6 +16,7 @@ jobs:
       DOCKER_BUILDKIT: 1
       IS_FORMBRICKS_CLOUD: ${{ vars.IS_FORMBRICKS_CLOUD }}
       WEBAPP_URL: ${{ vars.WEBAPP_URL }}
+      NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
       ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
