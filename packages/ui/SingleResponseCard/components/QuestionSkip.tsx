@@ -1,5 +1,6 @@
 import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveyQuestion } from "@formbricks/types/surveys";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../Tooltip";
@@ -64,7 +65,10 @@ export default function QuestionSkip({
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {questions.find((question) => question.id === questionId)!.headline}
+                        {getLocalizedValue(
+                          questions.find((question) => question.id === questionId)!.headline,
+                          "default"
+                        )}
                       </p>
                     );
                   })}
@@ -89,7 +93,10 @@ export default function QuestionSkip({
                   skippedQuestions.map((questionId) => {
                     return (
                       <p className="my-2" key={questionId}>
-                        {questions.find((question) => question.id === questionId)!.headline}
+                        {getLocalizedValue(
+                          questions.find((question) => question.id === questionId)!.headline,
+                          "default"
+                        )}
                       </p>
                     );
                   })}

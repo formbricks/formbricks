@@ -26,4 +26,5 @@ export {
 
 export { ZSegmentFilters } from "@formbricks/types/segment";
 export { ZTeamBilling } from "@formbricks/types/teams";
+export { ZLanguages } from "@formbricks/types/product";
 export { ZUserNotificationSettings } from "@formbricks/types/user";
