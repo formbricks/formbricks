@@ -146,30 +146,32 @@ const QuestionFilterComboBox = ({
         <div className="relative mt-2 h-full">
           {open && (
             <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-              <CommandEmpty>No result found.</CommandEmpty>
-              <CommandGroup>
-                {options?.map((o) => (
-                  <CommandItem
-                    onSelect={() => {
-                      !isMultiple
-                        ? onChangeFilterComboBoxValue(
-                            typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
-                          )
-                        : onChangeFilterComboBoxValue(
-                            Array.isArray(filterComboBoxValue)
-                              ? [
-                                  ...filterComboBoxValue,
-                                  typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
-                                ]
-                              : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
-                          );
-                      !isMultiple && setOpen(false);
-                    }}
-                    className="cursor-pointer">
-                    {typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              <CommandList>
+                <CommandEmpty>No result found.</CommandEmpty>
+                <CommandGroup>
+                  {options?.map((o) => (
+                    <CommandItem
+                      onSelect={() => {
+                        !isMultiple
+                          ? onChangeFilterComboBoxValue(
+                              typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
+                            )
+                          : onChangeFilterComboBoxValue(
+                              Array.isArray(filterComboBoxValue)
+                                ? [
+                                    ...filterComboBoxValue,
+                                    typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
+                                  ]
+                                : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
+                            );
+                        !isMultiple && setOpen(false);
+                      }}
+                      className="cursor-pointer">
+                      {typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
             </div>
           )}
         </div>
