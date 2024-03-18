@@ -20,7 +20,7 @@ import RatingSummary from "./RatingSummary";
 
 interface SummaryListProps {
   summary: TSurveySummary["summary"];
-  responseCount: number;
+  responseCount: number | null;
   environment: TEnvironment;
   survey: TSurvey;
 }
@@ -30,7 +30,7 @@ export default function SummaryList({ summary, environment, responseCount, surve
     <div className="mt-10 space-y-8">
       {survey.type === "web" && responseCount === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
-      ) : responseCount === 0 ? (
+      ) : !responseCount ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}

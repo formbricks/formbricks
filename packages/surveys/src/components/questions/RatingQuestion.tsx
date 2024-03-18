@@ -127,7 +127,7 @@ export default function RatingQuestion({
                       a.length === number ? "rounded-r-md" : "",
                       number === 1 ? "rounded-l-md" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
-                      "text-heading focus:bg-accent-bg flex min-h-[41px] w-full cursor-pointer items-center justify-center border focus:outline-none"
+                      "text-heading focus:bg-accent-bg relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border focus:outline-none"
                     )}>
                     <HiddenRadioInput number={number} />
                     {number}
@@ -141,7 +141,7 @@ export default function RatingQuestion({
                       }
                     }}
                     className={cn(
-                      "flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none",
+                      "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none",
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
                         : "text-slate-300",
@@ -162,7 +162,7 @@ export default function RatingQuestion({
                 ) : (
                   <label
                     className={cn(
-                      "flex max-h-16 min-h-9 w-full cursor-pointer justify-center",
+                      "relative flex max-h-16 min-h-9 w-full cursor-pointer justify-center",
                       value === number || hoveredNumber === number
                         ? "stroke-rating-selected text-rating-selected"
                         : "stroke-heading text-heading"

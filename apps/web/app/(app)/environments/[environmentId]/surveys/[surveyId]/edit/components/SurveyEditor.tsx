@@ -52,7 +52,7 @@ export default function SurveyEditor({
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>();
+  const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(survey);
   const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
@@ -76,6 +76,24 @@ export default function SurveyEditor({
       }
     }
   }, [survey]);
+
+  useEffect(() => {
+    const listener = () => {
+      if (document.visibilityState === "visible") {
+        const fetchLatestProduct = async () => {
+          const latestProduct = await refetchProduct(localProduct.id);
+          if (latestProduct) {
+            setLocalProduct(latestProduct);
+          }
+        };
+        fetchLatestProduct();
+      }
+    };
+    document.addEventListener("visibilitychange", listener);
+    return () => {
+      document.removeEventListener("visibilitychange", listener);
+    };
+  }, [localProduct.id]);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {

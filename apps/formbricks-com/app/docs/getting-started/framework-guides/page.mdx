@@ -130,7 +130,7 @@ The app initializes 'formbricks' when it's loaded in a browser environment (due 
 
 <Image
   src={ReactApp}
-  alt="In app survey in React app for micro surveys"
+  alt="In-app survey in React app for micro surveys"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
@@ -266,14 +266,6 @@ Refer to our [Example NextJS Pages Directory project](https://github.com/formbri
   </Property>
 </Properties>
 
-### Optional Customizations to be Made
-
-<Properties>
-  <Property name="debug" type="boolean">
-    Whether you want to see debug messages from Formbricks on your client-side console.
-  </Property>
-</Properties>
-
 ### What are we doing here?
 
 First we need to initialize the Formbricks SDK, making sure it only runs on the client side.
@@ -355,14 +347,6 @@ router.afterEach((to, from) => {
   </Property>
 </Properties>
 
-### Optional Customizations to be Made
-
-<Properties>
-  <Property name="debug" type="boolean">
-    Whether you want to see debug messages from Formbricks on your client-side console.
-  </Property>
-</Properties>
-
 Refer to our [Example VueJs project](https://github.com/formbricks/examples/tree/main/vuejs) for more help! Now visit the [Validate your Setup](#validate-your-setup) section to verify your setup!
 
 ## Validate your setup
@@ -393,10 +377,9 @@ Enabling Formbricks debug mode in your browser is a useful troubleshooting step 
 
 To activate Formbricks debug mode:
 
-1. **In Your Integration Code:**
+1. **Via URL Parameter:**
 
-   - Locate the initialization code for Formbricks in your application (HTML, ReactJS, NextJS, VueJS).
-   - Set the `debug` option to `true` when initializing Formbricks.
+   - Enable debug mode mode by adding `?formbricksDebug=true` to your application's URL (e.g. `https://example.com?formbricksDebug=true` or `https://example.com?page=123&formbricksDebug=true`). This parameter will enable debugging for the current page.
 
 2. **View Debug Logs:**
 
@@ -410,29 +393,21 @@ To activate Formbricks debug mode:
      - **Safari:** Press `Option + Command + C` to open the developer tools and navigate to the "Console" tab.
      - **Edge:** Press `F12` or right-click, select "Inspect Element," and go to the "Console" tab.
 
-3. **Via URL Parameter:**
-
-   - For quick activation, add `?formbricksDebug=true` to your application's URL.
-
-   This parameter will enable debugging for the current session.
-
 ### Common Use Cases
 
 Debug mode is beneficial for scenarios such as:
 
-- Verifying Formbricks functionality.
-- Identifying integration issues.
+- Verifying Formbricks initialization.
+- Identifying survey trigger issues.
 - Troubleshooting unexpected behavior.
 
 ### Debug Log Messages
 
-Specific debug log messages may provide insights into:
+Debug log messages provide insights into:
 
 - API calls and responses.
-- Event tracking and form interactions.
-- Integration errors.
-
-**Note:** Disable debugging in production to prevent unnecessary logs and improve performance.
+- Event tracking, survey triggers and form interactions.
+- Initialization errors.
 
 ## Overwrite CSS Styles for In-App Surveys
 

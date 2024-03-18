@@ -1,59 +1,55 @@
+import { AutoCloseProgressBar } from "@/components/general/AutoCloseProgressBar";
+import React from "preact/compat";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 import { TSurvey } from "@formbricks/types/surveys";
 
-import Progress from "../general/Progress";
-
 interface AutoCloseProps {
   survey: TSurvey;
   onClose: () => void;
-  children: any;
+  children: React.ReactNode;
 }
 
 export function AutoCloseWrapper({ survey, onClose, children }: AutoCloseProps) {
-  const [countdownProgress, setCountdownProgress] = useState(100);
-  const [countdownStop, setCountdownStop] = useState(false);
-  const startRef = useRef(performance.now());
-  const frameRef = useRef<number | null>(null);
+  const [countDownActive, setCountDownActive] = useState(true);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showAutoCloseProgressBar = countDownActive && survey.type === "web";
 
-  const handleStopCountdown = () => {
-    if (frameRef.current !== null) {
-      setCountdownStop(true);
-      cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
+  const startCountdown = () => {
+    if (!survey.autoClose) return;
+
+    if (timeoutRef.current) {
+      stopCountdown();
+    }
+    setCountDownActive(true);
+    timeoutRef.current = setTimeout(() => {
+      onClose();
+      setCountDownActive(false);
+    }, survey.autoClose * 1000);
+  };
+
+  const stopCountdown = () => {
+    setCountDownActive(false);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
   };
 
   useEffect(() => {
-    if (!survey.autoClose) return;
-
-    const updateCountdown = () => {
-      const timeout = survey.autoClose! * 1000;
-      const elapsed = performance.now() - startRef.current;
-      const remaining = Math.max(0, timeout - elapsed);
-
-      setCountdownProgress(remaining / timeout);
-
-      if (remaining > 0) {
-        frameRef.current = requestAnimationFrame(updateCountdown);
-      } else {
-        handleStopCountdown();
-        onClose();
-      }
-    };
-
-    setCountdownProgress(1);
-    frameRef.current = requestAnimationFrame(updateCountdown);
-
-    return () => handleStopCountdown();
-  }, [survey.autoClose, onClose]);
+    startCountdown();
+    return stopCountdown;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [survey.autoClose]);
 
   return (
-    <>
-      {!countdownStop && survey.autoClose && <Progress progress={countdownProgress} />}
-      <div onClick={handleStopCountdown} onMouseOver={handleStopCountdown} className="h-full w-full">
+    <div>
+      {survey.autoClose && showAutoCloseProgressBar && (
+        <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />
+      )}
+      <div onClick={stopCountdown} onMouseOver={stopCountdown} className="h-full w-full">
         {children}
       </div>
-    </>
+    </div>
   );
 }

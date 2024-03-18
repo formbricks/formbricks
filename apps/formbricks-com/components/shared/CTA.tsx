@@ -9,7 +9,7 @@ export default function CTA() {
   return (
     <>
       <div className="mx-auto px-4 py-16 sm:px-6 lg:px-8 lg:pb-40 lg:pt-24">
-        <HeadingCentered closer teaser="Get started" heading="Ready for the last form tool you need?" />
+        <HeadingCentered teaser="Get started" heading="Ready for the last form tool you need?" />
 
         <div className="mt-12 grid grid-cols-1 content-center md:grid-cols-2">
           <div className="-mb-4 rounded-t-xl bg-gradient-to-br from-slate-300 to-slate-200 px-8 py-24  text-center text-slate-900 md:-mr-5 md:mb-0 md:ml-2.5 md:rounded-l-xl lg:p-24 dark:from-slate-800 dark:to-slate-900 dark:text-slate-100">

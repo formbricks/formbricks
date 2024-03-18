@@ -339,10 +339,10 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
 };
 
 export const getResponsesFileName = (surveyName: string, extension: string) => {
-  surveyName = sanitizeString(surveyName);
+  const sanitizedSurveyName = sanitizeString(surveyName);
 
   const formattedDateString = getTodaysDateTimeFormatted("-");
-  return `export-${surveyName.split(" ").join("-")}-${formattedDateString}.${extension}`.toLocaleLowerCase();
+  return `export-${sanitizedSurveyName.split(" ").join("-")}-${formattedDateString}.${extension}`.toLocaleLowerCase();
 };
 
 export const extracMetadataKeys = (obj: TResponse["meta"]) => {
