@@ -18,7 +18,7 @@ import {
 } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
-import { processAnswer } from "../responses";
+import { processResponseData } from "../responses";
 import { sanitizeString } from "../strings";
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
@@ -388,7 +388,7 @@ export const getResponsesJson = (
     questions.forEach((question, i) => {
       const questionId = survey?.questions[i].id || "";
       const answer = response.data[questionId];
-      jsonData[idx][question] = processAnswer(answer);
+      jsonData[idx][question] = processResponseData(answer);
     });
 
     // user attributes
@@ -402,7 +402,7 @@ export const getResponsesJson = (
       if (Array.isArray(value)) {
         jsonData[idx][field] = value.join("; ");
       } else {
-        jsonData[idx][field] = processAnswer(value);
+        jsonData[idx][field] = processResponseData(value);
       }
     });
   });

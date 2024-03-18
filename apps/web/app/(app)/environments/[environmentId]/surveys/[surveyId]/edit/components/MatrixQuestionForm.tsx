@@ -64,7 +64,7 @@ export default function MatrixQuestionForm({
       updateQuestion(questionIdx, { rows: updatedRows });
     } else {
       const updatedColumns = [...question.columns, ""];
-      updateQuestion(questionIdx, { rows: updatedColumns });
+      updateQuestion(questionIdx, { columns: updatedColumns });
     }
   };
 

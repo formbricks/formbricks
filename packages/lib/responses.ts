@@ -40,13 +40,16 @@ export const getQuestionResponseMapping = (
   return questionResponseMapping;
 };
 
-export const processAnswer = (answer: string | number | string[] | Record<string, string>) => {
-  if (typeof answer === "string" || typeof answer === "number") {
-    return answer;
-  } else if (Array.isArray(answer)) {
-    return answer.join("; ");
+export const processResponseData = (
+  responseData: string | number | string[] | Record<string, string>
+): string | number => {
+  if (!responseData) return "";
+  if (typeof responseData === "string" || typeof responseData === "number") {
+    return responseData;
+  } else if (Array.isArray(responseData)) {
+    return responseData.join("; ");
   } else {
-    const formattedString = Object.entries(answer)
+    const formattedString = Object.entries(responseData)
       .map(([key, value]) => `${key}: ${value}`)
       .join("\n");
     return formattedString;

@@ -35,6 +35,13 @@ import QuestionSkip from "./components/QuestionSkip";
 import ResponseNotes from "./components/ResponseNote";
 import ResponseTagsWrapper from "./components/ResponseTagsWrapper";
 
+const isSubmissionTimeMoreThan5Minutes = (submissionTimeISOString: Date) => {
+  const submissionTime: Date = new Date(submissionTimeISOString);
+  const currentTime: Date = new Date();
+  const timeDifference: number = (currentTime.getTime() - submissionTime.getTime()) / (1000 * 60); // Convert milliseconds to minutes
+  return timeDifference > 5;
+};
+
 export interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponse;
@@ -101,14 +108,14 @@ export default function SingleResponseCard({
 
   const isFirstQuestionAnswered = response.data[survey.questions[0].id] ? true : false;
 
-  function isValidValue(value: any) {
+  const isValidValue = (value: any) => {
     return (
       (typeof value === "string" && value.trim() !== "") ||
       (Array.isArray(value) && value.length > 0) ||
       typeof value === "number" ||
       typeof value === "object"
     );
-  }
+  };
 
   if (response.finished) {
     survey.questions.forEach((question) => {
@@ -144,13 +151,13 @@ export default function SingleResponseCard({
     skippedQuestions.push(temp);
   }
 
-  function handleArray(data: string | number | string[]): string {
+  const handleArray = (data: string | number | string[]): string => {
     if (Array.isArray(data)) {
       return data.join(", ");
     } else {
       return String(data);
     }
-  }
+  };
 
   const handleDeleteResponse = async () => {
     setIsDeleting(true);
@@ -175,13 +182,6 @@ export default function SingleResponseCard({
     (response.personAttributes && Object.keys(response.personAttributes).length > 0) ||
       (response.meta.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
-
-  function isSubmissionTimeMoreThan5Minutes(submissionTimeISOString: Date) {
-    const submissionTime: Date = new Date(submissionTimeISOString);
-    const currentTime: Date = new Date();
-    const timeDifference: number = (currentTime.getTime() - submissionTime.getTime()) / (1000 * 60); // Convert milliseconds to minutes
-    return timeDifference > 5;
-  }
 
   const tooltipContent = (
     <>
@@ -403,7 +403,10 @@ export default function SingleResponseCard({
               return (
                 <div key={`${question.id}`}>
                   {isValidValue(response.data[question.id]) ? (
-                    <p className="text-sm text-slate-500">{question.headline}</p>
+                    <div>
+                      <p className="text-sm text-slate-500">{question.headline}</p>
+                      {renderResponse(question.type, response.data[question.id], question)}
+                    </div>
                   ) : (
                     <QuestionSkip
                       skippedQuestions={skipped}
@@ -417,7 +420,6 @@ export default function SingleResponseCard({
                       }
                     />
                   )}
-                  {renderResponse(question.type, response.data[question.id], question)}
                 </div>
               );
             })}
