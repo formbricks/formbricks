@@ -1,13 +1,13 @@
 import { LRUCache } from "lru-cache";
 
-import { IS_FORMBRICKS_CLOUD, REDIS_HTTP_CLIENT_URL } from "@formbricks/lib/constants";
+import { REDIS_HTTP_CLIENT_URL } from "@formbricks/lib/constants";
 
 type Options = {
   interval: number;
   allowedPerInterval: number;
 };
 
-const cloudRateLimiter = (options: Options) => {
+const inMemoryRateLimiter = (options: Options) => {
   const tokenCache = new LRUCache<string, number>({
     max: 1000,
     ttl: options.interval,
@@ -22,7 +22,7 @@ const cloudRateLimiter = (options: Options) => {
   };
 };
 
-const selfHostingRateLimiter = (options: Options) => {
+const redisRateLimiter = (options: Options) => {
   return async (token: string) => {
     const tokenCountResponse = await fetch(`${REDIS_HTTP_CLIENT_URL}/INCR/${token}`);
     const tokenCountData = await tokenCountResponse.json();
@@ -38,9 +38,9 @@ const selfHostingRateLimiter = (options: Options) => {
 };
 
 export default function rateLimit(options: Options) {
-  if (IS_FORMBRICKS_CLOUD || !REDIS_HTTP_CLIENT_URL) {
-    return cloudRateLimiter(options);
+  if (REDIS_HTTP_CLIENT_URL) {
+    return redisRateLimiter(options);
   } else {
-    return selfHostingRateLimiter(options);
+    return inMemoryRateLimiter(options);
   }
 }
