@@ -160,6 +160,7 @@ export const setPersonAttribute = async (
           [key]: value.toString(),
         },
       },
+      expiresAt: config.get().expiresAt,
     });
     return okVoid();
   }
