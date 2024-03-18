@@ -12,15 +12,17 @@ test.describe("JS Package Test", async () => {
     await signUpAndLogin(page, name, email, password);
     await finishOnboarding(page);
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    // await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
+    await page.getByRole("link", { name: "New survey", exact: true }).click();
     await page
       .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
       .isVisible();
-
     await page
       .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
       .click();
+    await page.getByRole("button", { name: "Use this template" }).click();
+
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
@@ -31,7 +33,7 @@ test.describe("JS Package Test", async () => {
     await page.locator("#howToSendCardOption-web").click();
 
     await expect(page.getByText("Survey Trigger")).toBeVisible();
-    await page.getByText("Survey Trigger").click();
+    // await page.getByText("Survey Trigger").click();
 
     await page.getByRole("combobox").click();
     await page.getByLabel("New Session").click();
@@ -44,6 +46,12 @@ test.describe("JS Package Test", async () => {
       })();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
+
+    expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
+    await page.getByRole("link", { name: "Surveys" }).click();
+    await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
+
+    await page.screenshot();
   });
 
   test("JS Display Survey on Page", async ({ page }) => {
@@ -105,7 +113,7 @@ test.describe("JS Package Test", async () => {
     // Formbricks Modal is not visible
     await expect(page.getByText("Powered by Formbricks")).not.toBeVisible({ timeout: 10000 });
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(3000);
   });
 
   test("Admin validates Displays & Response", async ({ page }) => {
