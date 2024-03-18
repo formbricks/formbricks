@@ -10,17 +10,17 @@ const icons = [
   {
     iconPath: FeedbackIcon,
     iconName: "feedback-icon.svg",
-    altText: "feedback-icon",
+    altText: "download feedback icon",
   },
   {
     iconPath: CommentsIcon,
     iconName: "comments-icon.svg",
-    altText: "comments-icon",
+    altText: "download feedback icon for comments",
   },
   {
     iconPath: CommentsIcon2,
     iconName: "comments-icon-2.svg",
-    altText: "comments-icon",
+    altText: "download feedback icon for comments",
   },
 ];
 
@@ -35,17 +35,23 @@ export default function FeedbackBoxPage() {
   };
 
   return (
-    <Layout title="Feedback Icon" description="Feedback Icon Collection: Direct Download">
-      <HeroTitle headingPt1="" headingTeal="Feedback Icon" subheading="Directly download feedback icons" />
+    <Layout
+      title="Download Free Feedback Icons"
+      description="Feedback Icon Collection: Directly Download High-Quality Feedback Icons">
+      <HeroTitle
+        headingPt1=""
+        headingTeal="Feedback Icons"
+        subheading="Click on each card to directly download high-quality SVG feedbackicons"
+      />
       <div className="grid grid-cols-2 items-center gap-8 md:grid-cols-2 md:gap-10 lg:grid-cols-6">
         {icons.map((icon) => {
-          const { iconPath, iconName } = icon;
+          const { iconPath, iconName, altText } = icon;
           return (
             <div
               onClick={() => handleDownload(iconPath, iconName)}
               className="h-40 w-40 cursor-pointer rounded-md border-slate-300 bg-slate-200 p-6 
         transition-transform duration-150 hover:scale-110 dark:border-slate-500 dark:bg-slate-700">
-              <Image src={iconPath} className="w-full rounded-lg border" alt="feedback-icon" />
+              <Image src={iconPath} className="w-full rounded-lg border" alt={altText} />
             </div>
           );
         })}
