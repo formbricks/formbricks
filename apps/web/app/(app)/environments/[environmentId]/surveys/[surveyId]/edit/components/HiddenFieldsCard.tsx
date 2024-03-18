@@ -1,6 +1,6 @@
 "use client";
 
-import { validateId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Validation";
+import { validateId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FC, useState } from "react";
 import { toast } from "react-hot-toast";
