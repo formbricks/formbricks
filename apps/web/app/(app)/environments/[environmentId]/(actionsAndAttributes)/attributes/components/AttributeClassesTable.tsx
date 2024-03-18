@@ -1,22 +1,21 @@
 "use client";
 
-import { AttributeClassDataRow } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeRowData";
-import { AttributeTableHeading } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeTableHeading";
-import { HowToAddAttributesButton } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/HowToAddAttributesButton";
 import { useState } from "react";
 import { useMemo } from "react";
 
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { Switch } from "@formbricks/ui/Switch";
 
-import { AttributeDetailModal } from "./AttributeDetailModal";
-import { UploadAttributesModal } from "./UploadAttributesModal";
+import AttributeDetailModal from "./AttributeDetailModal";
+import UploadAttributesModal from "./UploadAttributesModal";
 
-interface AttributeClassesTableProps {
+export default function AttributeClassesTable({
+  attributeClasses,
+  children: [TableHeading, howToAddAttributeButton, attributeRows],
+}: {
   attributeClasses: TAttributeClass[];
-}
-
-export const AttributeClassesTable = ({ attributeClasses }: AttributeClassesTableProps) => {
+  children: [JSX.Element, JSX.Element, JSX.Element[]];
+}) {
   const [isAttributeDetailModalOpen, setAttributeDetailModalOpen] = useState(false);
   const [isUploadCSVModalOpen, setUploadCSVModalOpen] = useState(false);
   const [activeAttributeClass, setActiveAttributeClass] = useState<TAttributeClass | null>(null);
@@ -52,17 +51,17 @@ export const AttributeClassesTable = ({ attributeClasses }: AttributeClassesTabl
             <Switch className="mx-3" checked={showArchived} onCheckedChange={toggleShowArchived} />
           </div>
         )}
-        <HowToAddAttributesButton />
+        {howToAddAttributeButton}
       </div>
       <div className="rounded-lg border border-slate-200">
-        <AttributeTableHeading />
+        {TableHeading}
         <div className="grid-cols-7">
           {displayedAttributeClasses.map((attributeClass, index) => (
             <button
               onClick={() => handleOpenAttributeDetailModalClick(attributeClass)}
               className="w-full"
               key={attributeClass.id}>
-              <AttributeClassDataRow attributeClass={attributeClass} key={index} />
+              {attributeRows[index]}
             </button>
           ))}
         </div>
@@ -78,4 +77,4 @@ export const AttributeClassesTable = ({ attributeClasses }: AttributeClassesTabl
       </div>
     </>
   );
-};
+}

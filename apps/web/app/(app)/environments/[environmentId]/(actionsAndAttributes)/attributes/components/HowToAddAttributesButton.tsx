@@ -2,7 +2,7 @@ import { HelpCircleIcon } from "lucide-react";
 
 import { Button } from "@formbricks/ui/Button";
 
-export const HowToAddAttributesButton = () => {
+export default function HowToAddAttributesButton() {
   return (
     <Button
       variant="secondary"
@@ -12,4 +12,4 @@ export const HowToAddAttributesButton = () => {
       How to add attributes
     </Button>
   );
-};
+}
