@@ -1,4 +1,4 @@
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestion, TSurveyQuestionsObject } from "@formbricks/types/surveys";
 
 export interface fallbacks {
   [id: string]: string;
@@ -48,7 +48,11 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
 };
 
 // Converts recall information in a headline to a corresponding recall question headline, with or without a slash.
-export const recallToHeadline = (headline: string, survey: TSurvey, withSlash: boolean): string => {
+export const recallToHeadline = <T extends TSurveyQuestionsObject>(
+  headline: string,
+  survey: T,
+  withSlash: boolean
+): string => {
   let newHeadline = headline;
   if (!headline.includes("#recall:")) return headline;
 
@@ -99,7 +103,7 @@ export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | n
 };
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
-export const checkForRecallInHeadline = (survey: TSurvey): TSurvey => {
+export const checkForRecallInHeadline = <T extends TSurveyQuestionsObject>(survey: T): T => {
   const modifiedSurvey = structuredClone(survey);
   modifiedSurvey.questions.forEach((question) => {
     question.headline = recallToHeadline(question.headline, modifiedSurvey, false);
