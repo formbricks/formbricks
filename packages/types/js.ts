@@ -88,7 +88,7 @@ export const ZJsConfigUpdateInput = z.object({
   apiHost: z.string(),
   userId: z.string().optional(),
   state: ZJsState,
-  expiresAt: z.date().optional(),
+  expiresAt: z.date(),
   status: z.enum(["success", "error"]).optional(),
 });
 

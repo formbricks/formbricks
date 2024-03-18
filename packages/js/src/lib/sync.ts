@@ -117,6 +117,7 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
       environmentId: params.environmentId,
       userId: params.userId,
       state,
+      expiresAt: new Date(new Date().getTime() + 2 * 60000), // 2 minutes in the future
     });
   } catch (error) {
     logger.error(`Error during sync: ${error}`);
