@@ -1,29 +1,27 @@
 "use client";
 
 import { UnifiedStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
+import BackgroundStylingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
+import CardStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
+import FormStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
 import { RotateCcwIcon } from "lucide-react";
-import { SparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS, PREVIEW_SURVEY } from "@formbricks/lib/styling/constants";
-import { mixColor } from "@formbricks/lib/utils";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import AlertDialog from "@formbricks/ui/AlertDialog";
-import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
-import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import { Slider } from "@formbricks/ui/Slider";
-import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 import { Switch } from "@formbricks/ui/Switch";
 
 import { updateProductAction } from "../actions";
 
 type UnifiedStylingProps = {
   product: TProduct;
+  environmentId: string;
+  colors: string[];
 };
 
 interface SurveyStyling {
@@ -37,54 +35,17 @@ interface Survey {
   styling: SurveyStyling;
 }
 
-export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
+export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
   const [previewSurveyType, setPreviewSurveyType] = useState<"link" | "web">("link");
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
 
-  const highlightBorderColor =
-    localProduct.styling.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
-  const setHighlightBorderColor = (color: string) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        highlightBorderColor: {
-          ...(prev.styling.highlightBorderColor ?? {}),
-          light: color,
-        },
-      },
-    }));
-  };
+  const [styling, setStyling] = useState(product.styling);
 
-  const isHighlightBorderAllowed = !!localProduct.styling.highlightBorderColor;
-  const setIsHighlightBorderAllowed = useCallback(
-    (open: boolean) => {
-      if (!open) {
-        const { highlightBorderColor, ...rest } = localProduct.styling ?? {};
-
-        setLocalProduct((prev) => ({
-          ...prev,
-          styling: {
-            ...rest,
-          },
-        }));
-      } else {
-        setLocalProduct((prev) => ({
-          ...prev,
-          styling: {
-            ...prev.styling,
-            highlightBorderColor: {
-              ...(prev.styling.highlightBorderColor ?? {}),
-              light: highlightBorderColor,
-            },
-          },
-        }));
-      }
-    },
-    [highlightBorderColor, localProduct.styling]
-  );
+  const [formStylingOpen, setFormStylingOpen] = useState(false);
+  const [cardStylingOpen, setCardStylingOpen] = useState(false);
+  const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
 
   const unifiedStyling = localProduct.styling.unifiedStyling ?? false;
   const setUnifiedStyling = (value: boolean) => {
@@ -108,116 +69,6 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
     }));
   };
 
-  const brandColor = localProduct.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
-  const setBrandColor = (color: string) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        brandColor: {
-          ...(prev.styling.brandColor ?? {}),
-          light: color,
-        },
-      },
-    }));
-  };
-
-  const questionColor = localProduct.styling.questionColor?.light ?? COLOR_DEFAULTS.questionColor;
-  const setQuestionColor = (color: string) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        questionColor: {
-          ...(prev.styling.questionColor ?? {}),
-          light: color,
-        },
-      },
-    }));
-  };
-
-  const inputColor = localProduct.styling.inputColor?.light ?? COLOR_DEFAULTS.inputColor;
-  const setInputColor = (color: string) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        inputColor: {
-          ...(prev.styling.inputColor ?? {}),
-          light: color,
-        },
-      },
-    }));
-  };
-
-  const inputBorderColor = localProduct.styling.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor;
-  const setInputBorderColor = (color: string) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        inputBorderColor: {
-          ...(prev.styling.inputBorderColor ?? {}),
-          light: color,
-        },
-      },
-    }));
-  };
-
-  const cardBackgroundColor =
-    localProduct.styling.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor;
-  const setCardBackgroundColor = (color: string) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        cardBackgroundColor: {
-          ...(prev.styling.cardBackgroundColor ?? {}),
-          light: color,
-        },
-      },
-    }));
-  };
-
-  const cardBorderColor = localProduct.styling.cardBorderColor?.light ?? COLOR_DEFAULTS.cardBorderColor;
-  const setCardBorderColor = (color: string) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        cardBorderColor: {
-          ...(prev.styling.cardBorderColor ?? {}),
-          light: color,
-        },
-      },
-    }));
-  };
-
-  const cardShadowColor = localProduct.styling.cardShadowColor?.light ?? COLOR_DEFAULTS.cardShadowColor;
-  const setCardShadowColor = (color: string) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        cardShadowColor: {
-          ...(prev.styling.cardShadowColor ?? {}),
-          light: color,
-        },
-      },
-    }));
-  };
-
-  const roundness = localProduct.styling.roundness ?? 8;
-  const setRoundness = (value: number) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        roundness: value,
-      },
-    }));
-  };
-
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
   const [styledPreviewSurvey, setStyledPreviewSurvey] = useState<Survey>(PREVIEW_SURVEY);
@@ -234,57 +85,12 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
   const onSave = useCallback(async () => {
     await updateProductAction(product.id, {
-      styling: {
-        unifiedStyling,
-        allowStyleOverwrite,
-        brandColor: {
-          light: brandColor,
-        },
-        questionColor: {
-          light: questionColor,
-        },
-        inputColor: {
-          light: inputColor,
-        },
-        inputBorderColor: {
-          light: inputBorderColor,
-        },
-        cardBackgroundColor: {
-          light: cardBackgroundColor,
-        },
-        cardBorderColor: {
-          light: cardBorderColor,
-        },
-        highlightBorderColor: isHighlightBorderAllowed
-          ? {
-              light: highlightBorderColor,
-            }
-          : undefined,
-        isDarkModeEnabled: false,
-        cardShadowColor: {
-          light: cardShadowColor,
-        },
-        roundness,
-      },
+      styling: localProduct.styling,
     });
 
     toast.success("Styling updated successfully.");
     router.refresh();
-  }, [
-    allowStyleOverwrite,
-    brandColor,
-    cardBackgroundColor,
-    cardBorderColor,
-    highlightBorderColor,
-    inputBorderColor,
-    inputColor,
-    isHighlightBorderAllowed,
-    product.id,
-    questionColor,
-    roundness,
-    router,
-    unifiedStyling,
-  ]);
+  }, [localProduct, product.id, router]);
 
   const onReset = useCallback(async () => {
     await updateProductAction(product.id, {
@@ -321,13 +127,36 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
     setUnifiedStyling(true);
     setAllowStyleOverwrite(true);
-    setBrandColor(COLOR_DEFAULTS.brandColor);
-    setQuestionColor(COLOR_DEFAULTS.questionColor);
-    setInputColor(COLOR_DEFAULTS.inputColor);
-    setInputBorderColor(COLOR_DEFAULTS.inputBorderColor);
-    setCardBackgroundColor(COLOR_DEFAULTS.cardBackgroundColor);
-    setIsHighlightBorderAllowed(false);
-    setRoundness(8);
+
+    setStyling({
+      unifiedStyling: true,
+      allowStyleOverwrite: true,
+      brandColor: {
+        light: COLOR_DEFAULTS.brandColor,
+      },
+      questionColor: {
+        light: COLOR_DEFAULTS.questionColor,
+      },
+      inputColor: {
+        light: COLOR_DEFAULTS.inputColor,
+      },
+      inputBorderColor: {
+        light: COLOR_DEFAULTS.inputBorderColor,
+      },
+      cardBackgroundColor: {
+        light: COLOR_DEFAULTS.cardBackgroundColor,
+      },
+      cardBorderColor: {
+        light: COLOR_DEFAULTS.cardBorderColor,
+      },
+      highlightBorderColor: undefined,
+      isDarkModeEnabled: false,
+      roundness: 8,
+      cardArrangement: {
+        linkSurveys: "simple",
+        inAppSurveys: "simple",
+      },
+    });
 
     // Update the background of the PREVIEW SURVEY
     setStyledPreviewSurvey((currentSurvey) => ({
@@ -344,33 +173,25 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
 
     toast.success("Styling updated successfully.");
     router.refresh();
-  }, [product.id, router, setIsHighlightBorderAllowed]);
+  }, [product.id, router]);
 
-  const suggestColors = useCallback(() => {
-    // mix the brand color with different weights of white and set the result as the other colors
-    setQuestionColor(mixColor(brandColor, "#000000", 0.35));
-    setInputColor(mixColor(brandColor, "#ffffff", 0.92));
-    setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
-    setCardBackgroundColor(mixColor(brandColor, "#ffffff", 0.97));
-    setCardBorderColor(mixColor(brandColor, "#ffffff", 0.8));
-    setCardShadowColor(brandColor);
-    if (isHighlightBorderAllowed) {
-      setHighlightBorderColor(mixColor(brandColor, "#ffffff", 0.25));
+  useEffect(() => {
+    if (!unifiedStyling) {
+      setFormStylingOpen(false);
+      setCardStylingOpen(false);
     }
+  }, [unifiedStyling]);
 
-    // Update the background of the PREVIEW SURVEY
-    setStyledPreviewSurvey((currentSurvey) => ({
-      ...currentSurvey,
+  useEffect(() => {
+    setLocalProduct((prev) => ({
+      ...prev,
       styling: {
-        ...currentSurvey.styling,
-        background: {
-          ...currentSurvey.styling.background,
-          bg: mixColor(brandColor, "#ffffff", 0.855),
-          bgType: "color",
-        },
+        ...styling,
+        unifiedStyling,
+        allowStyleOverwrite,
       },
     }));
-  }, [brandColor, isHighlightBorderAllowed]);
+  }, [allowStyleOverwrite, styling, unifiedStyling]);
 
   return (
     <div className="flex">
@@ -408,123 +229,35 @@ export const UnifiedStyling = ({ product }: UnifiedStylingProps) => {
             </div>
           </div>
 
-          <div className="flex items-end gap-2">
-            <ColorSelectorWithLabel
-              label="Brand color"
-              color={brandColor}
-              setColor={setBrandColor}
-              description="Change the brand color of the survey"
-              className="max-w-full flex-grow"
+          <div className="flex flex-col gap-3 bg-slate-50 p-4">
+            <FormStylingSettings
+              open={formStylingOpen}
+              setOpen={setFormStylingOpen}
+              styling={styling}
+              setStyling={setStyling}
               disabled={!unifiedStyling}
+              hideCheckmark
             />
 
-            <Button
-              variant="secondary"
-              size="sm"
-              EndIcon={SparklesIcon}
-              className="h-11 w-48 justify-center"
-              onClick={() => suggestColors()}
-              disabled={!unifiedStyling}>
-              Suggest colors
-            </Button>
-          </div>
+            <CardStylingSettings
+              open={cardStylingOpen}
+              setOpen={setCardStylingOpen}
+              styling={styling}
+              setStyling={setStyling}
+              disabled={!unifiedStyling}
+              hideCheckmark
+            />
 
-          <ColorSelectorWithLabel
-            label="Text color"
-            color={questionColor}
-            setColor={setQuestionColor}
-            description="Change the text color of the questions, descriptions and answer options."
-            className="max-w-full"
-            disabled={!unifiedStyling}
-          />
-
-          <ColorSelectorWithLabel
-            label="Input color"
-            color={inputColor}
-            setColor={setInputColor}
-            className="max-w-full"
-            description="Change the background color of the input fields"
-            disabled={!unifiedStyling}
-          />
-
-          <ColorSelectorWithLabel
-            label="Input border color"
-            color={inputBorderColor}
-            setColor={setInputBorderColor}
-            description="Change the border color of the input fields"
-            className="max-w-full"
-            disabled={!unifiedStyling}
-          />
-
-          <ColorSelectorWithLabel
-            label="Card background color"
-            color={cardBackgroundColor}
-            setColor={setCardBackgroundColor}
-            description="Change the background color of the card"
-            className="max-w-full"
-            disabled={!unifiedStyling}
-          />
-
-          <ColorSelectorWithLabel
-            label="Card border color"
-            color={cardBorderColor}
-            setColor={setCardBorderColor}
-            description="Change the border color of the card"
-            className="max-w-full"
-            disabled={!unifiedStyling}
-          />
-
-          <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
-            <div className="flex flex-col">
-              <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
-              <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
-            </div>
-            <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-              <Slider
-                value={[roundness]}
-                max={22}
-                onValueChange={(value) => setRoundness(value[0])}
-                disabled={!unifiedStyling}
-              />
-            </div>
-          </div>
-
-          <ColorSelectorWithLabel
-            label="Card shadow color"
-            color={cardShadowColor}
-            setColor={setCardShadowColor}
-            description="Change the shadow color of the card"
-            Badge={() => <Badge text={"Link Survey"} type="gray" size="normal" />}
-            className="max-w-full"
-            disabled={!unifiedStyling}
-          />
-
-          <div className={cn("flex flex-col gap-4", !unifiedStyling ? "opacity-40" : "")}>
-            <div className="flex items-center gap-6">
-              <Switch
-                checked={isHighlightBorderAllowed}
-                onCheckedChange={(value) => {
-                  setIsHighlightBorderAllowed(value);
-                }}
-                disabled={!unifiedStyling}
-              />
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
-                  <Badge text="In-App Survey" type="gray" size="normal" />
-                </div>
-                <p className="text-xs text-slate-500">Add on outer border to your survey card</p>
-              </div>
-            </div>
-
-            {isHighlightBorderAllowed && (
-              <ColorPicker
-                color={highlightBorderColor}
-                onChange={setHighlightBorderColor}
-                containerClass="my-0"
-                disabled={!unifiedStyling}
-              />
-            )}
+            <BackgroundStylingCard
+              open={backgroundStylingOpen}
+              setOpen={setBackgroundStylingOpen}
+              styling={styling}
+              setStyling={setStyling}
+              environmentId={environmentId}
+              colors={colors}
+              key={styling.background?.bg}
+              hideCheckmark
+            />
           </div>
         </div>
 

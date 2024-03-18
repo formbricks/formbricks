@@ -29,7 +29,7 @@ interface SurveyEditorProps {
   segments: TSegment[];
   responseCount: number;
   membershipRole?: TMembershipRole;
-  colours: string[];
+  colors: string[];
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
 }
@@ -43,7 +43,7 @@ export default function SurveyEditor({
   segments,
   responseCount,
   membershipRole,
-  colours,
+  colors,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
 }: SurveyEditorProps): JSX.Element {
@@ -158,7 +158,7 @@ export default function SurveyEditor({
 
             {activeView === "styling" && product.styling?.allowStyleOverwrite && (
               <StylingView
-                colours={colours}
+                colors={colors}
                 environment={environment}
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}

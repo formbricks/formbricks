@@ -5,6 +5,7 @@ import {
   getRemoveLinkBrandingPermission,
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
+import { SURVEY_BG_COLORS } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -51,7 +52,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         title="Unified Styling"
         className="max-w-7xl"
         description="Set styling for all surveys in this project. You can still overwrite these styles in the survey editor.">
-        <UnifiedStyling product={product} />
+        <UnifiedStyling environmentId={params.environmentId} product={product} colors={SURVEY_BG_COLORS} />
       </SettingsCard>
       <SettingsCard
         title="In-app Survey Placement"

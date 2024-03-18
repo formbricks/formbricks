@@ -5,28 +5,33 @@ import { CheckIcon } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey, TSurveyBackgroundBgType } from "@formbricks/types/surveys";
+import { TProductStyling } from "@formbricks/types/product";
+import { TSurveyBackgroundBgType, TSurveyStyling } from "@formbricks/types/surveys";
+import { Badge } from "@formbricks/ui/Badge";
 
 import SurveyBgSelectorTab from "./SurveyBgSelectorTab";
 
 interface BackgroundStylingCardProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  colours: string[];
+  styling: TSurveyStyling | TProductStyling;
+  setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
+  colors: string[];
+  hideCheckmark?: boolean;
   disabled?: boolean;
+  environmentId: string;
 }
 
 export default function BackgroundStylingCard({
   open,
   setOpen,
-  localSurvey,
-  setLocalSurvey,
-  colours,
+  styling,
+  setStyling,
+  colors,
+  hideCheckmark,
   disabled,
+  environmentId,
 }: BackgroundStylingCardProps) {
-  const { styling } = localSurvey;
   const { bgType } = styling?.background ?? {};
 
   const [inputValue, setInputValue] = useState(100);
@@ -38,31 +43,28 @@ export default function BackgroundStylingCard({
 
   const handleBgChange = (color: string, type: TSurveyBackgroundBgType) => {
     setInputValue(100);
-    setLocalSurvey({
-      ...localSurvey,
-      styling: {
-        ...localSurvey.styling,
-        background: {
-          ...localSurvey.styling?.background,
-          bg: color,
-          bgType: type,
-          brightness: undefined,
-        },
+
+    const { background } = styling;
+    const { brightness, ...rest } = background ?? {};
+
+    setStyling({
+      ...styling,
+      background: {
+        ...rest,
+        bg: color,
+        bgType: type,
       },
     });
   };
 
   const handleBrightnessChange = (percent: number) => {
-    setLocalSurvey({
-      ...localSurvey,
-      styling: {
-        ...(localSurvey.styling || {}),
-        background: {
-          ...localSurvey.styling?.background,
-          brightness: percent,
-        },
+    setStyling((prev) => ({
+      ...prev,
+      background: {
+        ...prev.background,
+        brightness: percent,
       },
-    });
+    }));
   };
 
   return (
@@ -84,14 +86,19 @@ export default function BackgroundStylingCard({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
-            <CheckIcon
-              strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
-            />
-          </div>
-          <div>
-            <p className="font-semibold text-slate-800">Background Styling</p>
+          {!hideCheckmark && (
+            <div className="flex items-center pl-2 pr-5">
+              <CheckIcon
+                strokeWidth={3}
+                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              />
+            </div>
+          )}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-slate-800">Background Styling</p>
+              <Badge text="Link Surveys" type="gray" size="normal" />
+            </div>
             <p className="mt-1 truncate text-sm text-slate-500">
               Change the background to a color, image or animation.
             </p>
@@ -110,10 +117,11 @@ export default function BackgroundStylingCard({
               </p>
             </div>
             <SurveyBgSelectorTab
-              localSurvey={localSurvey}
+              styling={styling}
               handleBgChange={handleBgChange}
-              colours={colours}
+              colors={colors}
               bgType={bgType}
+              environmentId={environmentId}
             />
           </div>
 

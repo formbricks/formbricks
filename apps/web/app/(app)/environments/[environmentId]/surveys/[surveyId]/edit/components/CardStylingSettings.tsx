@@ -3,12 +3,14 @@
 import Placement from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Placement";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
-import React from "react";
+import React, { useMemo } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TPlacement } from "@formbricks/types/common";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TProductStyling } from "@formbricks/types/product";
+import { TSurveyProductOverwrites, TSurveyStyling } from "@formbricks/types/surveys";
+import { Badge } from "@formbricks/ui/Badge";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
 import { Slider } from "@formbricks/ui/Slider";
@@ -18,168 +20,155 @@ import { Switch } from "@formbricks/ui/Switch";
 type CardStylingSettingsProps = {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  styling: TSurveyStyling | TProductStyling;
+  setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
+  hideCheckmark?: boolean;
   disabled?: boolean;
+  productOverwrites?: TSurveyProductOverwrites | null;
+  setProductOverwrites?: React.Dispatch<React.SetStateAction<TSurveyProductOverwrites>>;
+};
+
+const isSurveyStyling = (styling: TSurveyStyling | TProductStyling): styling is TSurveyStyling => {
+  return (styling as TSurveyStyling).overwriteUnifiedStyling !== undefined;
 };
 
 const CardStylingSettings = ({
-  localSurvey,
-  setLocalSurvey,
+  setStyling,
+  styling,
+  productOverwrites,
+  setProductOverwrites,
+  hideCheckmark,
   disabled,
   open,
   setOpen,
 }: CardStylingSettingsProps) => {
-  const { styling, productOverwrites } = localSurvey;
-  const { hideProgressBar } = styling ?? {};
   const { placement, clickOutsideClose, darkOverlay } = productOverwrites ?? {};
 
-  const cardBgColor = localSurvey.styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
+  const cardBgColor = styling.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
   const setCardBgColor = (color: string) => {
-    setLocalSurvey((prev) => ({
+    setStyling((prev) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        cardBackgroundColor: {
-          ...(prev.styling?.cardBackgroundColor ?? {}),
-          light: color,
-        },
+      cardBackgroundColor: {
+        ...(prev.cardBackgroundColor ?? {}),
+        light: color,
       },
     }));
   };
 
-  const cardBorderColor = localSurvey.styling?.cardBorderColor?.light || COLOR_DEFAULTS.cardBorderColor;
+  const cardBorderColor = styling.cardBorderColor?.light || COLOR_DEFAULTS.cardBorderColor;
   const setCardBorderColor = (color: string) => {
-    setLocalSurvey((prev) => ({
+    setStyling((prev) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        cardBorderColor: {
-          ...(prev.styling?.cardBorderColor ?? {}),
-          light: color,
-        },
+      cardBorderColor: {
+        ...(prev.cardBorderColor ?? {}),
+        light: color,
       },
     }));
   };
 
-  const cardShadowColor = localSurvey.styling?.cardShadowColor?.light || COLOR_DEFAULTS.cardShadowColor;
+  const cardShadowColor = styling.cardShadowColor?.light || COLOR_DEFAULTS.cardShadowColor;
   const setCardShadowColor = (color: string) => {
-    setLocalSurvey((prev) => ({
+    setStyling((prev) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        cardShadowColor: {
-          ...(prev.styling?.cardShadowColor ?? {}),
-          light: color,
-        },
+      cardShadowColor: {
+        ...(prev.cardShadowColor ?? {}),
+        light: color,
       },
     }));
   };
 
-  const isHighlightBorderAllowed = !!localSurvey.styling?.highlightBorderColor;
+  const isHighlightBorderAllowed = !!styling.highlightBorderColor;
   const setIsHighlightBorderAllowed = (open: boolean) => {
     if (!open) {
-      const { highlightBorderColor, ...rest } = localSurvey.styling ?? {};
+      const { highlightBorderColor, ...rest } = styling ?? {};
 
-      setLocalSurvey((prev) => ({
-        ...prev,
-        styling: {
-          ...rest,
-        },
-      }));
+      setStyling({
+        ...rest,
+      });
     } else {
-      setLocalSurvey((prev) => ({
+      setStyling((prev) => ({
         ...prev,
-        styling: {
-          ...prev.styling,
-          highlightBorderColor: {
-            ...(prev.styling?.highlightBorderColor ?? {}),
-            light: highlightBorderColor,
-          },
+        highlightBorderColor: {
+          ...(prev.highlightBorderColor ?? {}),
+          light: COLOR_DEFAULTS.highlightBorderColor,
         },
       }));
     }
   };
 
-  const highlightBorderColor =
-    localSurvey.styling?.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
+  const highlightBorderColor = styling.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
   const setHighlightBorderColor = (color: string) => {
-    setLocalSurvey((prev) => ({
+    setStyling((prev) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        highlightBorderColor: {
-          ...(prev.styling?.highlightBorderColor ?? {}),
-          light: color,
-        },
+      highlightBorderColor: {
+        ...(prev.highlightBorderColor ?? {}),
+        light: color,
       },
     }));
   };
 
-  const roundness = localSurvey.styling?.roundness ?? 8;
+  const roundness = styling.roundness ?? 8;
   const setRoundness = (value: number) => {
-    setLocalSurvey({
-      ...localSurvey,
-      styling: {
-        ...localSurvey.styling,
-        roundness: value,
-      },
-    });
+    setStyling((prev) => ({
+      ...prev,
+      roundness: value,
+    }));
   };
 
   const togglePlacement = () => {
-    setLocalSurvey({
-      ...localSurvey,
-      productOverwrites: {
-        ...localSurvey.productOverwrites,
+    if (setProductOverwrites) {
+      setProductOverwrites({
+        ...productOverwrites,
         placement: !!placement ? null : "bottomRight",
         clickOutsideClose: false,
         darkOverlay: false,
-      },
-    });
+      });
+    }
   };
 
   const handlePlacementChange = (placement: TPlacement) => {
-    setLocalSurvey({
-      ...localSurvey,
-      productOverwrites: {
-        ...localSurvey.productOverwrites,
+    if (setProductOverwrites) {
+      setProductOverwrites({
+        ...productOverwrites,
         placement,
-      },
-    });
+      });
+    }
   };
 
   const handleOverlay = (overlayType: string) => {
     const darkOverlay = overlayType === "dark";
 
-    setLocalSurvey({
-      ...localSurvey,
-      productOverwrites: {
-        ...localSurvey.productOverwrites,
+    if (setProductOverwrites) {
+      setProductOverwrites({
+        ...productOverwrites,
         darkOverlay,
-      },
-    });
+      });
+    }
   };
 
   const handleClickOutsideClose = (clickOutsideClose: boolean) => {
-    setLocalSurvey({
-      ...localSurvey,
-      productOverwrites: {
-        ...localSurvey.productOverwrites,
+    if (setProductOverwrites) {
+      setProductOverwrites({
+        ...productOverwrites,
         clickOutsideClose,
-      },
+      });
+    }
+  };
+
+  const toggleProgressBarVisibility = (hideProgressBar: boolean) => {
+    setStyling({
+      ...styling,
+      hideProgressBar,
     });
   };
 
-  const toggleProgressBarVisibility = () => {
-    setLocalSurvey({
-      ...localSurvey,
-      styling: {
-        ...localSurvey.styling,
-        hideProgressBar: !hideProgressBar,
-      },
-    });
-  };
+  const hideProgressBar = useMemo(() => {
+    if (isSurveyStyling(styling)) {
+      return styling.hideProgressBar;
+    }
+
+    return false;
+  }, [styling]);
 
   return (
     <Collapsible.Root
@@ -197,12 +186,14 @@ const CardStylingSettings = ({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
-            <CheckIcon
-              strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
-            />
-          </div>
+          {!hideCheckmark && (
+            <div className="flex items-center pl-2 pr-5">
+              <CheckIcon
+                strokeWidth={3}
+                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              />
+            </div>
+          )}
 
           <div>
             <p className="font-semibold text-slate-800">Card Styling</p>
@@ -227,37 +218,37 @@ const CardStylingSettings = ({
             color={cardBorderColor}
             setColor={setCardBorderColor}
             description="Change the border color of the card."
+            Badge={() => <Badge text={"Link Survey"} type="gray" size="normal" />}
             disabled={isHighlightBorderAllowed}
           />
 
-          {localSurvey.type === "link" && (
-            <ColorSelectorWithLabel
-              label="Card shadow color"
-              color={cardShadowColor}
-              setColor={setCardShadowColor}
-              description="Change the shadow color of the card."
-            />
-          )}
+          <ColorSelectorWithLabel
+            label="Card shadow color"
+            color={cardShadowColor}
+            setColor={setCardShadowColor}
+            description="Change the shadow color of the card."
+          />
 
-          {localSurvey.type === "web" && (
-            <div className="flex max-w-xs flex-col gap-4">
-              <div className="flex items-center gap-2">
-                <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
-                <div className="flex flex-col">
+          <div className="flex max-w-xs flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
                   <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
-                  <p className="text-xs text-slate-500">Add an outer border to your survey card</p>
+                  <Badge text="In-App Surveys" type="gray" size="normal" />
                 </div>
+                <p className="text-xs text-slate-500">Add an outer border to your survey card</p>
               </div>
-
-              {isHighlightBorderAllowed && (
-                <ColorPicker
-                  color={highlightBorderColor}
-                  onChange={setHighlightBorderColor}
-                  containerClass="my-0"
-                />
-              )}
             </div>
-          )}
+
+            {isHighlightBorderAllowed && (
+              <ColorPicker
+                color={highlightBorderColor}
+                onChange={setHighlightBorderColor}
+                containerClass="my-0"
+              />
+            )}
+          </div>
 
           <div className="flex max-w-xs flex-col gap-4">
             <div className="flex flex-col">
@@ -270,41 +261,42 @@ const CardStylingSettings = ({
           </div>
 
           {/* Positioning */}
-          {localSurvey.type !== "link" && (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center space-x-1">
-                <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />
-                <Label htmlFor="surveyDeadline" className="cursor-pointer">
-                  <div className="ml-2">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center space-x-1">
+              <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />
+              <Label htmlFor="surveyDeadline" className="cursor-pointer">
+                <div className="ml-2">
+                  <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold text-slate-700">Overwrite Placement</h3>
-                    <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
+                    <Badge text="In-App Surveys" type="gray" size="normal" />
                   </div>
-                </Label>
-              </div>
-              {placement && (
-                <div className="flex items-center space-x-1 pb-4">
-                  <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                    <div className="w-full items-center">
-                      <Placement
-                        currentPlacement={placement}
-                        setCurrentPlacement={handlePlacementChange}
-                        setOverlay={handleOverlay}
-                        overlay={darkOverlay ? "dark" : "light"}
-                        setClickOutsideClose={handleClickOutsideClose}
-                        clickOutsideClose={!!clickOutsideClose}
-                      />
-                    </div>
+                  <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
+                </div>
+              </Label>
+            </div>
+            {placement && (
+              <div className="flex items-center space-x-1 pb-4">
+                <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                  <div className="w-full items-center">
+                    <Placement
+                      currentPlacement={placement}
+                      setCurrentPlacement={handlePlacementChange}
+                      setOverlay={handleOverlay}
+                      overlay={darkOverlay ? "dark" : "light"}
+                      setClickOutsideClose={handleClickOutsideClose}
+                      clickOutsideClose={!!clickOutsideClose}
+                    />
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center space-x-1">
             <Switch
               id="hideProgressBar"
               checked={!!hideProgressBar}
-              onCheckedChange={toggleProgressBarVisibility}
+              onCheckedChange={(checked) => toggleProgressBarVisibility(checked)}
             />
             <Label htmlFor="hideProgressBar" className="cursor-pointer">
               <div className="ml-2">

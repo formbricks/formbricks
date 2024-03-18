@@ -7,73 +7,68 @@ import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { mixColor } from "@formbricks/lib/utils";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TProductStyling } from "@formbricks/types/product";
+import { TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 
 type FormStylingSettingsProps = {
-  localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  styling: TSurveyStyling | TProductStyling;
+  setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  hideCheckmark?: boolean;
   disabled?: boolean;
 };
 
 const FormStylingSettings = ({
-  localSurvey,
-  setLocalSurvey,
+  styling,
+  setStyling,
+  hideCheckmark = false,
   disabled = false,
   open,
   setOpen,
 }: FormStylingSettingsProps) => {
-  const brandColor = localSurvey.styling?.brandColor?.light || COLOR_DEFAULTS.brandColor;
+  const brandColor = styling.brandColor?.light || COLOR_DEFAULTS.brandColor;
   const setBrandColor = (color: string) => {
-    setLocalSurvey((prev) => ({
+    setStyling((prev) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        brandColor: {
-          light: color,
-        },
+      brandColor: {
+        ...(prev.brandColor ?? {}),
+        light: color,
       },
     }));
   };
 
-  const questionColor = localSurvey.styling?.questionColor?.light || COLOR_DEFAULTS.questionColor;
+  const questionColor = styling.questionColor?.light || COLOR_DEFAULTS.questionColor;
   const setQuestionColor = (color: string) => {
-    setLocalSurvey((prev) => ({
+    setStyling((prev) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        questionColor: {
-          light: color,
-        },
+      questionColor: {
+        ...(prev.questionColor ?? {}),
+        light: color,
       },
     }));
   };
 
-  const inputColor = localSurvey.styling?.inputColor?.light || COLOR_DEFAULTS.inputColor;
+  const inputColor = styling.inputColor?.light || COLOR_DEFAULTS.inputColor;
   const setInputColor = (color: string) => {
-    setLocalSurvey((prev) => ({
+    setStyling((prev) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        inputColor: {
-          light: color,
-        },
+      inputColor: {
+        ...(prev.inputColor ?? {}),
+        light: color,
       },
     }));
   };
 
-  const inputBorderColor = localSurvey.styling?.inputBorderColor?.light || COLOR_DEFAULTS.inputBorderColor;
+  const inputBorderColor = styling.inputBorderColor?.light || COLOR_DEFAULTS.inputBorderColor;
   const setInputBorderColor = (color: string) => {
-    setLocalSurvey((prev) => ({
+    setStyling((prev) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        inputBorderColor: {
-          light: color,
-        },
+      inputBorderColor: {
+        ...(prev.inputBorderColor ?? {}),
+        light: color,
       },
     }));
   };
@@ -85,48 +80,39 @@ const FormStylingSettings = ({
     setInputBorderColor(mixColor(brandColor, "#ffffff", 0.6));
 
     // card background, border and shadow colors
-    setLocalSurvey((prev) => ({
+    setStyling((prev) => ({
       ...prev,
-      styling: {
-        ...prev.styling,
-        cardBackgroundColor: {
-          ...(prev.styling?.cardBackgroundColor ?? {}),
-          light: mixColor(brandColor, "#ffffff", 0.97),
-        },
-        cardBorderColor: {
-          ...(prev.styling?.cardBorderColor ?? {}),
-          light: mixColor(brandColor, "#ffffff", 0.8),
-        },
-        cardShadowColor: {
-          ...(prev.styling?.cardShadowColor ?? {}),
-          light: brandColor,
-        },
+      cardBackgroundColor: {
+        ...(prev.cardBackgroundColor ?? {}),
+        light: mixColor(brandColor, "#ffffff", 0.97),
+      },
+      cardBorderColor: {
+        ...(prev.cardBorderColor ?? {}),
+        light: mixColor(brandColor, "#ffffff", 0.8),
+      },
+      cardShadowColor: {
+        ...(prev.cardShadowColor ?? {}),
+        light: brandColor,
       },
     }));
 
-    if (!localSurvey.styling?.background || localSurvey.styling?.background?.bgType === "color") {
-      setLocalSurvey((prev) => ({
+    if (!styling.background || styling.background?.bgType === "color") {
+      setStyling((prev) => ({
         ...prev,
-        styling: {
-          ...prev.styling,
-          background: {
-            ...prev.styling?.background,
-            bg: mixColor(brandColor, "#ffffff", 0.855),
-            bgType: "color",
-          },
+        background: {
+          ...(prev.background ?? {}),
+          bg: mixColor(brandColor, "#ffffff", 0.855),
+          bgType: "color",
         },
       }));
     }
 
-    if (localSurvey.styling?.highlightBorderColor) {
-      setLocalSurvey((prev) => ({
+    if (styling.highlightBorderColor) {
+      setStyling((prev) => ({
         ...prev,
-        styling: {
-          ...prev.styling,
-          highlightBorderColor: {
-            ...(prev.styling?.highlightBorderColor ?? {}),
-            light: mixColor(brandColor, "#ffffff", 0.25),
-          },
+        highlightBorderColor: {
+          ...(prev.highlightBorderColor ?? {}),
+          light: mixColor(brandColor, "#ffffff", 0.25),
         },
       }));
     }
@@ -148,12 +134,14 @@ const FormStylingSettings = ({
           disabled && "cursor-not-allowed opacity-60 hover:bg-white"
         )}>
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
-            <CheckIcon
-              strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
-            />
-          </div>
+          {!hideCheckmark && (
+            <div className="flex items-center pl-2 pr-5">
+              <CheckIcon
+                strokeWidth={3}
+                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              />
+            </div>
+          )}
 
           <div>
             <p className="font-semibold text-slate-800">Form Styling</p>

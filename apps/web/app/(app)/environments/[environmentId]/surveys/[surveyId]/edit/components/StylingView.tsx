@@ -17,10 +17,10 @@ type StylingViewProps = {
   product: TProduct;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  colours: string[];
+  colors: string[];
 };
 
-const StylingView = ({ colours, environment, product, localSurvey, setLocalSurvey }: StylingViewProps) => {
+const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey }: StylingViewProps) => {
   const overwriteUnifiedStyling = useMemo(() => {
     // unified styling is disabled from the product.
     // we don't need to show the switch
@@ -29,12 +29,33 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
     return !!localSurvey?.styling?.overwriteUnifiedStyling;
   }, [localSurvey?.styling?.overwriteUnifiedStyling, product.styling.unifiedStyling]);
 
+  // this should be the survey styling, if it does not exist, we should use default values
+  const [styling, setStyling] = useState(
+    localSurvey.styling ?? {
+      overwriteUnifiedStyling,
+    }
+  );
+
+  const [productOverwrites, setProductOverwrites] = useState(localSurvey.productOverwrites);
+
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [stylingOpen, setStylingOpen] = useState(false);
 
   const setOverwriteUnifiedStyling = (value: boolean) => {
-    setLocalSurvey((prev) => ({ ...prev, styling: { ...prev.styling, overwriteUnifiedStyling: value } }));
+    if (!styling && product.styling) {
+      const { allowStyleOverwrite, unifiedStyling, ...baseStyles } = product.styling;
+
+      setLocalSurvey((prev) => ({
+        ...prev,
+        styling: {
+          ...baseStyles,
+          overwriteUnifiedStyling: value,
+        },
+      }));
+    } else {
+      setLocalSurvey((prev) => ({ ...prev, styling: { ...prev.styling, overwriteUnifiedStyling: value } }));
+    }
   };
 
   const onResetUnifiedStyling = () => {
@@ -66,6 +87,16 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
     }
   }, [product.styling.unifiedStyling]);
 
+  useEffect(() => {
+    if (styling) {
+      setLocalSurvey((prev) => ({ ...prev, styling }));
+    }
+
+    if (productOverwrites) {
+      setLocalSurvey((prev) => ({ ...prev, productOverwrites }));
+    }
+  }, [productOverwrites, setLocalSurvey, styling]);
+
   return (
     <div className="mt-12 space-y-3 p-5">
       {!!product.styling.unifiedStyling && (
@@ -83,16 +114,18 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
       <FormStylingSettings
         open={formStylingOpen}
         setOpen={setFormStylingOpen}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        styling={styling}
+        setStyling={setStyling}
         disabled={!overwriteUnifiedStyling}
       />
 
       <CardStylingSettings
         open={cardStylingOpen}
         setOpen={setCardStylingOpen}
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
+        styling={styling}
+        setStyling={setStyling}
+        productOverwrites={productOverwrites}
+        setProductOverwrites={setProductOverwrites}
         disabled={!overwriteUnifiedStyling}
       />
 
@@ -100,9 +133,11 @@ const StylingView = ({ colours, environment, product, localSurvey, setLocalSurve
         <BackgroundStylingCard
           open={stylingOpen}
           setOpen={setStylingOpen}
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          colours={colours}
+          styling={styling}
+          setStyling={setStyling}
+          environmentId={environment.id}
+          colors={colors}
+          disabled={!overwriteUnifiedStyling}
         />
       )}
 

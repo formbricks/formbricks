@@ -16,6 +16,14 @@ export const ZCardArrangement = z.object({
   inAppSurveys: ZCardArrangementOptions,
 });
 
+export const ZSurveyStylingBackground = z.object({
+  bg: z.string().nullish(),
+  bgType: z.enum(["animation", "color", "image"]).nullish(),
+  brightness: z.number().nullish(),
+});
+
+export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
+
 export const ZBaseStyling = z.object({
   brandColor: ZStylingColor.nullish(),
   questionColor: ZStylingColor.nullish(),
@@ -28,4 +36,5 @@ export const ZBaseStyling = z.object({
   isDarkModeEnabled: z.boolean().nullish(),
   roundness: z.number().nullish(),
   cardArrangement: ZCardArrangement.nullish(),
+  background: ZSurveyStylingBackground.nullish(),
 });

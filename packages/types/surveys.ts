@@ -58,16 +58,7 @@ export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
 
 export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
 
-export const ZSurveyStylingBackground = z.object({
-  bg: z.string().nullish(),
-  bgType: z.enum(["animation", "color", "image"]).nullish(),
-  brightness: z.number().nullish(),
-});
-
-export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
-
 export const ZSurveyStyling = ZBaseStyling.extend({
-  background: ZSurveyStylingBackground.nullish(),
   hideProgressBar: z.boolean().nullish(),
   overwriteUnifiedStyling: z.boolean().nullish(),
 });
@@ -315,17 +306,6 @@ export const ZSurveyCTAQuestion = ZSurveyQuestionBase.extend({
 });
 
 export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
-
-// export const ZSurveyWelcomeQuestion = ZSurveyQuestionBase.extend({
-//   type: z.literal(TSurveyQuestionType.Welcome),
-//   html: z.string().optional(),
-//   fileUrl: z.string().optional(),
-//   buttonUrl: z.string().optional(),
-//   timeToFinish: z.boolean().default(false),
-//   logic: z.array(ZSurveyCTALogic).optional(),
-// });
-
-// export type TSurveyWelcomeQuestion = z.infer<typeof ZSurveyWelcomeQuestion>;
 
 export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Rating),
