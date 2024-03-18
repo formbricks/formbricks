@@ -179,6 +179,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
     if (!unifiedStyling) {
       setFormStylingOpen(false);
       setCardStylingOpen(false);
+      setBackgroundStylingOpen(false);
     }
   }, [unifiedStyling]);
 
@@ -257,6 +258,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
               colors={colors}
               key={styling.background?.bg}
               hideCheckmark
+              disabled={!unifiedStyling}
             />
           </div>
         </div>

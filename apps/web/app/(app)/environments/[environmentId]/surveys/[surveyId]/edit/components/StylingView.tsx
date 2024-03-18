@@ -29,12 +29,18 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
     return !!localSurvey?.styling?.overwriteUnifiedStyling;
   }, [localSurvey?.styling?.overwriteUnifiedStyling, product.styling.unifiedStyling]);
 
-  // this should be the survey styling, if it does not exist, we should use default values
-  const [styling, setStyling] = useState(
-    localSurvey.styling ?? {
-      overwriteUnifiedStyling,
+  const [styling, setStyling] = useState(() => {
+    if (localSurvey.styling) {
+      return localSurvey.styling;
     }
-  );
+
+    const { allowStyleOverwrite, unifiedStyling, ...baseStyles } = product.styling;
+
+    return {
+      ...baseStyles,
+      overwriteUnifiedStyling,
+    };
+  });
 
   const [productOverwrites, setProductOverwrites] = useState(localSurvey.productOverwrites);
 
@@ -43,32 +49,14 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
   const [stylingOpen, setStylingOpen] = useState(false);
 
   const setOverwriteUnifiedStyling = (value: boolean) => {
-    if (!styling && product.styling) {
-      const { allowStyleOverwrite, unifiedStyling, ...baseStyles } = product.styling;
-
-      setLocalSurvey((prev) => ({
-        ...prev,
-        styling: {
-          ...baseStyles,
-          overwriteUnifiedStyling: value,
-        },
-      }));
-    } else {
-      setLocalSurvey((prev) => ({ ...prev, styling: { ...prev.styling, overwriteUnifiedStyling: value } }));
-    }
+    setStyling((prev) => ({ ...prev, overwriteUnifiedStyling: value }));
   };
 
   const onResetUnifiedStyling = () => {
     const { styling: productStyling } = product;
     const { unifiedStyling, allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
 
-    setLocalSurvey((prev) => ({
-      ...prev,
-      styling: {
-        ...baseStyling,
-        overwriteUnifiedStyling,
-      },
-    }));
+    setStyling(baseStyling);
 
     toast.success("Styling set to unified styles");
   };
@@ -89,7 +77,10 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
 
   useEffect(() => {
     if (styling) {
-      setLocalSurvey((prev) => ({ ...prev, styling }));
+      setLocalSurvey((prev) => ({
+        ...prev,
+        styling,
+      }));
     }
 
     if (productOverwrites) {
