@@ -1,7 +1,4 @@
-import AttributeClassesTable from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeClassesTable";
-import AttributeClassDataRow from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeRowData";
-import AttributeTableHeading from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeTableHeading";
-import HowToAddAttributesButton from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/HowToAddAttributesButton";
+import { AttributeClassesTable } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/attributes/components/AttributeClassesTable";
 import { Metadata } from "next";
 
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
@@ -15,14 +12,7 @@ export default async function AttributesPage({ params }) {
 
   return (
     <>
-      <AttributeClassesTable attributeClasses={attributeClasses}>
-        <AttributeTableHeading />
-        <HowToAddAttributesButton />
-
-        {attributeClasses.map((attributeClass) => (
-          <AttributeClassDataRow key={attributeClass.id} attributeClass={attributeClass} />
-        ))}
-      </AttributeClassesTable>
+      <AttributeClassesTable attributeClasses={attributeClasses} />
     </>
   );
 }
