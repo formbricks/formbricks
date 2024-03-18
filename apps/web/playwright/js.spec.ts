@@ -12,16 +12,12 @@ test.describe("JS Package Test", async () => {
     await signUpAndLogin(page, name, email, password);
     await finishOnboarding(page);
 
-    // await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-
-    await page.getByRole("link", { name: "New survey", exact: true }).click();
     await page
       .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
       .isVisible();
     await page
       .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
       .click();
-    await page.getByRole("button", { name: "Use this template" }).click();
 
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
@@ -113,7 +109,7 @@ test.describe("JS Package Test", async () => {
     // Formbricks Modal is not visible
     await expect(page.getByText("Powered by Formbricks")).not.toBeVisible({ timeout: 10000 });
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(5000);
   });
 
   test("Admin validates Displays & Response", async ({ page }) => {
