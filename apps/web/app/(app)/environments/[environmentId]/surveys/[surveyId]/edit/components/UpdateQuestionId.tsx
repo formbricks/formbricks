@@ -1,6 +1,6 @@
 "use client";
 
-import { validateId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Validation";
+import { validateId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
