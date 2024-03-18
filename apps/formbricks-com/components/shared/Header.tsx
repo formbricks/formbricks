@@ -268,12 +268,6 @@ export default function Header() {
               </>
             )}
           </Popover>
-          {/*           <Link
-            href="/community"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Community
-          </Link>
- */}
           <Link
             href="/pricing"
             className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
@@ -294,11 +288,6 @@ export default function Header() {
             className="text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
             Blog {/* <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p> */}
           </Link>
-          {/*           <Link
-            href="/careers"
-            className="text-base font-medium text-slate-400 hover:text-slate-700  dark:hover:text-slate-300">
-            Careers <p className="bg-brand inline rounded-full px-2 text-xs text-white">1</p>
-          </Link> */}
         </Popover.Group>
         <div className="hidden flex-1 items-center justify-end md:flex">
           <Button
@@ -319,11 +308,6 @@ export default function Header() {
               className="hidden dark:block"
             />
           </Button>
-          {/*           <Button variant="secondary" className="ml-2 px-2" onClick={() => setVideoModal(true)}>
-            <VideoWalkThrough open={videoModal} setOpen={() => setVideoModal(false)} />
-            <PlayCircleIcon className="h-6 w-6" />
-          </Button> */}
-
           <Button
             variant="highlight"
             className="ml-2 text-xs lg:text-sm"

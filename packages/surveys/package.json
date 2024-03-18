@@ -45,7 +45,7 @@
     "autoprefixer": "^10.4.18",
     "concurrently": "8.2.2",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.12.5",
+    "eslint-config-turbo": "1.10.12",
     "isomorphic-dompurify": "^2.4.0",
     "postcss": "^8.4.35",
     "preact": "^10.19.6",

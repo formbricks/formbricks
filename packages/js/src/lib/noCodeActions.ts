@@ -58,6 +58,7 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
         const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
 
         if (match.ok !== true) return err(match.error);
+        if (match.value === false) return;
 
         renderWidget(survey);
       }
@@ -69,28 +70,17 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
 
 let arePageUrlEventListenersAdded = false;
 const checkPageUrlWrapper = () => checkPageUrl();
+const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
 
 export const addPageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || arePageUrlEventListenersAdded) return;
-
-  window.addEventListener("hashchange", checkPageUrlWrapper);
-  window.addEventListener("popstate", checkPageUrlWrapper);
-  window.addEventListener("pushstate", checkPageUrlWrapper);
-  window.addEventListener("replacestate", checkPageUrlWrapper);
-  window.addEventListener("load", checkPageUrlWrapper);
-
+  events.forEach((event) => window.addEventListener(event, checkPageUrlWrapper));
   arePageUrlEventListenersAdded = true;
 };
 
 export const removePageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || !arePageUrlEventListenersAdded) return;
-
-  window.removeEventListener("hashchange", checkPageUrlWrapper);
-  window.removeEventListener("popstate", checkPageUrlWrapper);
-  window.removeEventListener("pushstate", checkPageUrlWrapper);
-  window.removeEventListener("replacestate", checkPageUrlWrapper);
-  window.removeEventListener("load", checkPageUrlWrapper);
-
+  events.forEach((event) => window.removeEventListener(event, checkPageUrlWrapper));
   arePageUrlEventListenersAdded = false;
 };
 
