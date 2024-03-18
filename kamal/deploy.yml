@@ -1,0 +1,194 @@
+# Name of your application. Used to uniquely configure containers.
+service: formbricks-kamal
+
+# Name of the container image.
+image: formbricks/formbricks-cloud
+
+# Deploy to these servers.
+servers:
+  web: # Use a named role, so it can be used as entrypoint by Traefik
+    hosts:
+      - 18.196.187.144
+    labels:
+      traefik.http.routers.formbricks-kamal.entrypoints: websecure
+      traefik.http.routers.formbricks-kamal.rule: Host(`app.formbricks.com`)
+      traefik.http.routers.formbricks-kamal.tls.certresolver: letsencrypt
+
+# Credentials for your image host.
+registry:
+  # Specify the registry server, if you're not using Docker Hub
+  server: ghcr.io
+  username: mattinannt
+
+  # Always use an access token rather than real password when possible.
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+# Inject ENV variables into containers (secrets come from .env).
+# Remember to run `kamal env push` after making changes!
+env:
+  # clear:
+  #   DB_HOST: 192.168.0.2
+  secret:
+    - IS_FORMBRICKS_CLOUD
+    - WEBAPP_URL
+    - NEXTAUTH_URL
+    - DATABASE_URL
+    - NEXTAUTH_SECRET
+    - ENCRYPTION_KEY
+    - SHORT_URL_BASE
+    - MAIL_FROM
+    - SMTP_HOST
+    - SMTP_PORT
+    - SMTP_USER
+    - SMTP_PASSWORD
+    - PRIVACY_URL
+    - TERMS_URL
+    - IMPRINT_URL
+    - GITHUB_ID
+    - GITHUB_SECRET
+    - GOOGLE_CLIENT_ID
+    - GOOGLE_CLIENT_SECRET
+    - AZUREAD_CLIENT_ID
+    - AZUREAD_CLIENT_SECRET
+    - AZUREAD_TENANT_ID
+    - OIDC_CLIENT_ID
+    - OIDC_CLIENT_SECRET
+    - OIDC_ISSUER
+    - OIDC_DISPLAY_NAME
+    - OIDC_SIGNING_ALGORITHM
+    - CRON_SECRET
+    - ASSET_PREFIX_URL
+    - NOTION_OAUTH_CLIENT_ID
+    - NOTION_OAUTH_CLIENT_SECRET
+    - STRIPE_SECRET_KEY
+    - STRIPE_WEBHOOK_SECRET
+    - GOOGLE_SHEETS_CLIENT_ID
+    - GOOGLE_SHEETS_CLIENT_SECRET
+    - GOOGLE_SHEETS_REDIRECT_URL
+    - AIRTABLE_CLIENT_ID
+    - ENTERPRISE_LICENSE_KEY
+    - DEFAULT_TEAM_ID
+    - ONBOARDING_DISABLED
+    - CUSTOMER_IO_API_KEY
+    - CUSTOMER_IO_SITE_ID
+    - NEXT_PUBLIC_POSTHOG_API_KEY
+    - NEXT_PUBLIC_POSTHOG_API_HOST
+    - NEXT_PUBLIC_FORMBRICKS_API_HOST
+    - NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID
+    - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
+    - OPENTELEMETRY_LISTENER_URL
+    - NEXT_PUBLIC_SENTRY_DSN
+    - CLOUDFLARE_EMAIL
+    - CLOUDFLARE_DNS_API_TOKEN
+    - S3_ACCESS_KEY
+    - S3_SECRET_KEY
+    - S3_REGION
+    - S3_BUCKET_NAME
+    - RATE_LIMITING_DISABLED
+
+# Use a different ssh user than root
+ssh:
+  user: ubuntu
+
+# Configure builder setup.
+builder:
+  context: .
+  dockerfile: ./apps/web/Dockerfile
+  args:
+    - NEXT_PUBLIC_POSTHOG_API_KEY
+    - NEXT_PUBLIC_POSTHOG_API_HOST
+    - NEXT_PUBLIC_FORMBRICKS_API_HOST
+    - NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID
+    - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
+    - NEXT_PUBLIC_SENTRY_DSN
+    - ASSET_PREFIX_URL
+
+  multiarch: false
+  cache:
+    type: registry
+    options: mode=max,image-manifest=true,oci-mediatypes=true
+#   secrets:
+#     - GITHUB_TOKEN
+#   remote:
+#     arch: amd64
+#     host: ssh://app@192.168.0.1
+
+traefik:
+  options:
+    publish:
+      - "443:443"
+    volume:
+      - "/letsencrypt/acme.json:/letsencrypt/acme.json" # To save the configuration file.
+  args:
+    entryPoints.web.address: ":80"
+    entryPoints.websecure.address: ":443"
+    entryPoints.web.http.redirections.entryPoint.to: websecure
+    entryPoints.web.http.redirections.entryPoint.scheme: https
+    entryPoints.web.http.redirections.entrypoint.permanent: true
+    entrypoints.websecure.http.tls: true
+    entrypoints.websecure.http.tls.domains[0].main: "app.formbricks.com"
+    entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
+    certificatesResolvers.letsencrypt.acme.email: "hola@formbricks.com"
+    certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
+    certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
+  env:
+    secret:
+      - CLOUDFLARE_DNS_API_TOKEN
+      - CLOUDFLARE_EMAIL
+
+# Use accessory services (secrets come from .env).
+# accessories:
+#   db:
+#     image: mysql:8.0
+#     host: 192.168.0.2
+#     port: 3306
+#     env:
+#       clear:
+#         MYSQL_ROOT_HOST: '%'
+#       secret:
+#         - MYSQL_ROOT_PASSWORD
+#     files:
+#       - config/mysql/production.cnf:/etc/mysql/my.cnf
+#       - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
+#     directories:
+#       - data:/var/lib/mysql
+#   redis:
+#     image: redis:7.0
+#     host: 192.168.0.2
+#     port: 6379
+#     directories:
+#       - data:/data
+
+# Configure custom arguments for Traefik
+# traefik:
+#   args:
+#     accesslog: true
+#     accesslog.format: json
+
+healthcheck:
+  path: /health
+  port: 3000
+  max_attempts: 7
+  interval: 20s
+# Bridge fingerprinted assets, like JS and CSS, between versions to avoid
+# hitting 404 on in-flight requests. Combines all files from new and old
+# version inside the asset_path.
+# asset_path: /rails/public/assets
+
+# Configure rolling deploys by setting a wait time between batches of restarts.
+# boot:
+#   limit: 10 # Can also specify as a percentage of total hosts, such as "25%"
+#   wait: 2
+
+# Configure the role used to determine the primary_host. This host takes
+# deploy locks, runs health checks during the deploy, and follow logs, etc.
+#
+# Caution: there's no support for role renaming yet, so be careful to cleanup
+#          the previous role on the deployed hosts.
+# primary_role: web
+
+# Controls if we abort when see a role with no hosts. Disabling this may be
+# useful for more complex deploy configurations.
+#
+# allow_empty_roles: false

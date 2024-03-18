@@ -32,7 +32,7 @@ type TSegmentEditorProps = {
   segments: TSegment[];
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
-  setSegment: React.Dispatch<React.SetStateAction<TSegment | null>>;
+  setSegment: React.Dispatch<React.SetStateAction<TSegment>>;
   viewOnly?: boolean;
 };
 

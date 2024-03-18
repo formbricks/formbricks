@@ -1,9 +1,10 @@
 "use client";
 
-import { CheckCircleIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -26,6 +27,7 @@ import {
   cloneBasicSegmentAction,
   createBasicSegmentAction,
   loadNewBasicSegmentAction,
+  resetBasicSegmentFiltersAction,
   updateBasicSegmentAction,
 } from "../actions";
 
@@ -48,13 +50,13 @@ export default function TargetingCard({
   initialSegment,
   isFormbricksCloud,
 }: TargetingCardProps) {
+  const router = useRouter();
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
   const [open, setOpen] = useState(false);
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
   const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(!!localSurvey.segment?.isPrivate);
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
-  const [loadSegmentModalStep, setLoadSegmentModalStep] = useState<"initial" | "load">("initial");
   const [resetAllFiltersModalOpen, setResetAllFiltersModalOpen] = useState(false);
   const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
 
@@ -109,9 +111,22 @@ export default function TargetingCard({
     try {
       if (!segment) throw new Error("Invalid segment");
       await updateBasicSegmentAction(environmentId, segment?.id, data);
+
+      router.refresh();
       toast.success("Segment saved successfully");
+
+      setIsSegmentEditorOpen(false);
+      setSegmentEditorViewOnly(true);
     } catch (err) {
       toast.error(err.message ?? "Error Saving Segment");
+    }
+  };
+
+  const handleResetAllFilters = async () => {
+    try {
+      return await resetBasicSegmentFiltersAction(localSurvey.id);
+    } catch (err) {
+      toast.error("Error resetting filters");
     }
   };
 
@@ -143,7 +158,10 @@ export default function TargetingCard({
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400 " />
+            <CheckIcon
+              strokeWidth={3}
+              className="h-7 w-7 rounded-full border bg-green-400 p-1.5 text-white"
+            />
           </div>
           <div>
             <p className="font-semibold text-slate-800">Target Audience</p>
@@ -161,18 +179,11 @@ export default function TargetingCard({
             <div className="flex w-full flex-col gap-2">
               {isAdvancedSegment(segment?.filters ?? []) ? (
                 <div>
-                  {!segment?.isPrivate ? (
-                    <SegmentTitle
-                      title={localSurvey.segment?.title}
-                      description={localSurvey.segment?.description}
-                    />
-                  ) : (
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">
-                        Send survey to audience who match...
-                      </p>
-                    </div>
-                  )}
+                  <SegmentTitle
+                    title={localSurvey.segment?.title}
+                    description={localSurvey.segment?.description}
+                    isPrivate={localSurvey.segment?.isPrivate}
+                  />
 
                   <p className="text-sm italic text-slate-600">
                     This is an advanced segment. Please upgrade your plan to edit it.
@@ -219,35 +230,25 @@ export default function TargetingCard({
                           Add filter
                         </Button>
 
-                        {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
+                        {isSegmentEditorOpen && !segment?.isPrivate && (
                           <Button
                             variant="secondary"
                             size="sm"
                             onClick={() => {
-                              handleSaveSegment({ filters: segment.filters });
+                              handleSaveSegment({ filters: segment?.filters ?? [] });
                             }}>
                             Save changes
                           </Button>
                         )}
 
-                        {/*                         {isSegmentEditorOpen && !!segment?.filters?.length && (
-                          <Button
-                            variant="minimal"
-                            size="sm"
-                            className="flex items-center gap-2"
-                            onClick={() => setResetAllFiltersModalOpen(true)}>
-                            <p className="text-sm">Reset all filters</p>
-                          </Button>
-                        )} */}
-
-                        {isSegmentEditorOpen && !segment?.isPrivate && !!segment?.filters?.length && (
+                        {isSegmentEditorOpen && !segment?.isPrivate && (
                           <Button
                             variant="minimal"
                             size="sm"
                             className="flex items-center gap-2"
                             onClick={() => {
                               setIsSegmentEditorOpen(false);
-                              setSegmentEditorViewOnly(false);
+                              setSegmentEditorViewOnly(true);
 
                               if (initialSegment) {
                                 setSegment(initialSegment);
@@ -263,6 +264,7 @@ export default function TargetingCard({
                       <SegmentTitle
                         title={localSurvey.segment?.title}
                         description={localSurvey.segment?.description}
+                        isPrivate={localSurvey.segment?.isPrivate}
                       />
 
                       {segmentEditorViewOnly && segment && (
@@ -304,6 +306,7 @@ export default function TargetingCard({
                             Clone & Edit Segment
                           </Button>
                         )}
+
                         {!isSegmentUsedInOtherSurveys && (
                           <Button
                             variant="secondary"
@@ -340,6 +343,12 @@ export default function TargetingCard({
               Load Segment
             </Button>
 
+            {!segment?.isPrivate && !!segment?.filters?.length && (
+              <Button variant="secondary" size="sm" onClick={() => setResetAllFiltersModalOpen(true)}>
+                Reset all filters
+              </Button>
+            )}
+
             {isSegmentEditorOpen && !!segment?.filters?.length && (
               <Button
                 variant="secondary"
@@ -372,8 +381,6 @@ export default function TargetingCard({
             open={loadSegmentModalOpen}
             setOpen={setLoadSegmentModalOpen}
             surveyId={localSurvey.id}
-            step={loadSegmentModalStep}
-            setStep={setLoadSegmentModalStep}
             currentSegment={segment}
             segments={segments}
             setSegment={setSegment}
@@ -414,14 +421,14 @@ export default function TargetingCard({
             setResetAllFiltersModalOpen(false);
           }}
           confirmBtnLabel="Remove all filters"
-          onConfirm={() => {
-            const updatedSegment = structuredClone(segment);
-            if (updatedSegment?.filters) {
-              updatedSegment.filters = [];
+          onConfirm={async () => {
+            const segment = await handleResetAllFilters();
+            if (segment) {
+              toast.success("Filters reset successfully");
+              router.refresh();
+              setSegment(segment);
+              setResetAllFiltersModalOpen(false);
             }
-
-            setSegment(updatedSegment);
-            setResetAllFiltersModalOpen(false);
           }}
         />
       </Collapsible.CollapsibleContent>

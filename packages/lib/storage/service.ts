@@ -2,41 +2,74 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   ListObjectsCommand,
+  PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
+import { add, isAfter, parseISO } from "date-fns";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
 import { unstable_cache } from "next/cache";
-import { join } from "path";
-import path from "path";
+import path, { join } from "path";
 
 import { TAccessType } from "@formbricks/types/storage";
 
-import { IS_S3_CONFIGURED, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
+import {
+  MAX_SIZES,
+  S3_ACCESS_KEY,
+  S3_BUCKET_NAME,
+  S3_ENDPOINT_URL,
+  S3_REGION,
+  S3_SECRET_KEY,
+  UPLOADS_DIR,
+  WEBAPP_URL,
+  isS3Configured,
+} from "../constants";
 import { generateLocalSignedUrl } from "../crypto";
-import { env } from "../env.mjs";
+import { env } from "../env";
 import { storageCache } from "./cache";
 
-// global variables
-
-const AWS_BUCKET_NAME = env.S3_BUCKET_NAME!;
-const AWS_REGION = env.S3_REGION!;
-const S3_ACCESS_KEY = env.S3_ACCESS_KEY!;
-const S3_SECRET_KEY = env.S3_SECRET_KEY!;
-
 // S3Client Singleton
+let s3ClientInstance: S3Client | null = null;
 
-const s3Client = new S3Client({
-  credentials: {
-    accessKeyId: S3_ACCESS_KEY,
-    secretAccessKey: S3_SECRET_KEY!,
-  },
-  region: AWS_REGION!,
-});
+export const getS3Client = () => {
+  if (!s3ClientInstance) {
+    const credentials =
+      S3_ACCESS_KEY && S3_SECRET_KEY
+        ? { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY }
+        : undefined;
+
+    s3ClientInstance = new S3Client({
+      credentials,
+      region: S3_REGION,
+      endpoint: S3_ENDPOINT_URL,
+    });
+  }
+
+  return s3ClientInstance;
+};
+
+export const testS3BucketAccess = async () => {
+  const s3Client = getS3Client();
+
+  try {
+    // Attempt to retrieve metadata about the bucket
+    const headBucketCommand = new HeadBucketCommand({
+      Bucket: S3_BUCKET_NAME,
+    });
+
+    await s3Client.send(headBucketCommand);
+
+    return true;
+  } catch (error) {
+    console.error("Failed to access S3 bucket:", error);
+    throw new Error(`S3 Bucket Access Test Failed: ${error}`);
+  }
+};
 
 const ensureDirectoryExists = async (dirPath: string) => {
   try {
@@ -79,11 +112,12 @@ const getS3SignedUrl = async (fileKey: string): Promise<string> => {
   return unstable_cache(
     async () => {
       const getObjectCommand = new GetObjectCommand({
-        Bucket: AWS_BUCKET_NAME,
+        Bucket: S3_BUCKET_NAME,
         Key: fileKey,
       });
 
       try {
+        const s3Client = getS3Client();
         return await getSignedUrl(s3Client, getObjectCommand, { expiresIn });
       } catch (err) {
         throw err;
@@ -99,6 +133,7 @@ const getS3SignedUrl = async (fileKey: string): Promise<string> => {
 
 export const getS3File = async (fileKey: string): Promise<string> => {
   const signedUrl = await getS3SignedUrl(fileKey);
+  const signedUrlObject = new URL(signedUrl);
 
   // The logic below is to check if the signed url has expired.
   // We do this by parsing the X-Amz-Date and Expires query parameters from the signed url
@@ -106,37 +141,35 @@ export const getS3File = async (fileKey: string): Promise<string> => {
   // If it is, we generate a new signed url and return that instead.
   // We do this because the time-based revalidation for the signed url is not working as expected. (mayve a bug in next.js caching?)
 
-  const amzDate = signedUrl.match(/X-Amz-Date=(.*?)&/)?.[1];
-  const amzExpires = signedUrl.match(/X-Amz-Expires=(.*?)&/)?.[1];
+  const amzDate = signedUrlObject.searchParams.get("X-Amz-Date");
+  const amzExpires = signedUrlObject.searchParams.get("X-Amz-Expires");
 
   if (amzDate && amzExpires) {
-    // Parse the X-Amz-Date and calculate the expiration date
-    const expiryDate = new Date(
-      Date.UTC(
-        parseInt(amzDate.slice(0, 4), 10), // year
-        parseInt(amzDate.slice(4, 6), 10) - 1, // month (0-indexed)
-        parseInt(amzDate.slice(6, 8), 10), // day
-        parseInt(amzDate.slice(9, 11), 10), // hour
-        parseInt(amzDate.slice(11, 13), 10), // minute
-        parseInt(amzDate.slice(13, 15), 10) // second
-      )
-    );
+    const expiresAfterSeconds = parseInt(amzExpires, 10);
+    const currentDate = new Date();
 
-    const expiryDateSeconds = expiryDate.getSeconds();
-    const expiresSeconds = parseInt(amzExpires, 10);
+    // Get the UTC components
+    const yearUTC = currentDate.getUTCFullYear();
+    const monthUTC = (currentDate.getUTCMonth() + 1).toString().padStart(2, "0");
+    const dayUTC = currentDate.getUTCDate().toString().padStart(2, "0");
+    const hoursUTC = currentDate.getUTCHours().toString().padStart(2, "0");
+    const minutesUTC = currentDate.getUTCMinutes().toString().padStart(2, "0");
+    const secondsUTC = currentDate.getUTCSeconds().toString().padStart(2, "0");
 
-    expiryDate.setSeconds(expiryDateSeconds + expiresSeconds);
+    // Construct the date-time string in UTC format
+    const currentDateTimeUTC = `${yearUTC}${monthUTC}${dayUTC}T${hoursUTC}${minutesUTC}${secondsUTC}Z`;
 
-    // Get the current UTC time
-    const now = new Date();
+    const amzSigningDate = parseISO(amzDate);
+    const amzExpiryDate = add(amzSigningDate, { seconds: expiresAfterSeconds });
+    const currentDateISO = parseISO(currentDateTimeUTC);
 
-    // Check if the current time is past the expiration time
-    const isExpired = now > expiryDate;
+    const isExpired = isAfter(currentDateISO, amzExpiryDate);
 
     if (isExpired) {
       // generate a new signed url
       storageCache.revalidate({ fileKey });
-      return await getS3SignedUrl(fileKey);
+      const signedUrlAfterRefetch = await getS3SignedUrl(fileKey);
+      return signedUrlAfterRefetch;
     }
   }
 
@@ -185,7 +218,7 @@ export const getUploadSignedUrl = async (
   const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
 
   // handle the local storage case first
-  if (!IS_S3_CONFIGURED) {
+  if (!isS3Configured()) {
     try {
       const { signature, timestamp, uuid } = generateLocalSignedUrl(updatedFileName, environmentId, fileType);
 
@@ -200,7 +233,7 @@ export const getUploadSignedUrl = async (
           uuid,
         },
         updatedFileName,
-        fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
+        fileUrl: `/storage/${environmentId}/${accessType}/${updatedFileName}`,
       };
     } catch (err) {
       throw err;
@@ -239,9 +272,10 @@ export const getS3UploadSignedUrl = async (
   const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
 
   try {
+    const s3Client = getS3Client();
     const { fields, url } = await createPresignedPost(s3Client, {
       Expires: 10 * 60, // 10 minutes
-      Bucket: AWS_BUCKET_NAME,
+      Bucket: env.S3_BUCKET_NAME!,
       Key: `${environmentId}/${accessType}/${fileName}`,
       Fields: {
         "Content-Type": contentType,
@@ -290,8 +324,36 @@ export const putFileToLocalStorage = async (
   }
 };
 
+// a single service to put file in the storage(local or S3), based on the S3 configuration
+export const putFile = async (
+  fileName: string,
+  fileBuffer: Buffer,
+  accessType: TAccessType,
+  environmentId: string
+) => {
+  try {
+    if (!isS3Configured()) {
+      await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
+      return { success: true, message: "File uploaded" };
+    } else {
+      const input = {
+        Body: fileBuffer,
+        Bucket: S3_BUCKET_NAME,
+        Key: `${environmentId}/${accessType}/${fileName}`,
+      };
+
+      const command = new PutObjectCommand(input);
+      const s3Client = getS3Client();
+      await s3Client.send(command);
+      return { success: true, message: "File uploaded" };
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
 export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) => {
-  if (!IS_S3_CONFIGURED) {
+  if (!isS3Configured()) {
     try {
       await deleteLocalFile(path.join(UPLOADS_DIR, environmentId, accessType, fileName));
       return { success: true, message: "File deleted" };
@@ -326,11 +388,12 @@ export const deleteLocalFile = async (filePath: string) => {
 
 export const deleteS3File = async (fileKey: string) => {
   const deleteObjectCommand = new DeleteObjectCommand({
-    Bucket: AWS_BUCKET_NAME,
+    Bucket: S3_BUCKET_NAME,
     Key: fileKey,
   });
 
   try {
+    const s3Client = getS3Client();
     await s3Client.send(deleteObjectCommand);
   } catch (err) {
     throw err;
@@ -340,9 +403,10 @@ export const deleteS3File = async (fileKey: string) => {
 export const deleteS3FilesByEnvironmentId = async (environmentId: string) => {
   try {
     // List all objects in the bucket with the prefix of environmentId
+    const s3Client = getS3Client();
     const listObjectsOutput = await s3Client.send(
       new ListObjectsCommand({
-        Bucket: AWS_BUCKET_NAME,
+        Bucket: S3_BUCKET_NAME,
         Prefix: environmentId,
       })
     );
@@ -360,7 +424,7 @@ export const deleteS3FilesByEnvironmentId = async (environmentId: string) => {
       // Delete the objects
       await s3Client.send(
         new DeleteObjectsCommand({
-          Bucket: AWS_BUCKET_NAME,
+          Bucket: S3_BUCKET_NAME,
           Delete: {
             Objects: objectsToDelete,
           },

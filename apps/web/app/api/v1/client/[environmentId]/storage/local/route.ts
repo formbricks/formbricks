@@ -3,11 +3,10 @@
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-import { UPLOADS_DIR } from "@formbricks/lib/constants";
+import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
-import { env } from "@formbricks/lib/env.mjs";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -18,8 +17,8 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
-  return NextResponse.json(
+export async function OPTIONS(): Promise<Response> {
+  return Response.json(
     {},
     {
       headers: {
@@ -32,7 +31,7 @@ export async function OPTIONS(): Promise<NextResponse> {
   );
 }
 
-export async function POST(req: NextRequest, context: Context): Promise<NextResponse> {
+export async function POST(req: NextRequest, context: Context): Promise<Response> {
   const environmentId = context.params.environmentId;
 
   const accessType = "private"; // private files are accessible only by authorized users
@@ -91,7 +90,7 @@ export async function POST(req: NextRequest, context: Context): Promise<NextResp
     fileType,
     Number(signedTimestamp),
     signedSignature,
-    env.ENCRYPTION_KEY
+    ENCRYPTION_KEY
   );
 
   if (!validated) {

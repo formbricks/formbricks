@@ -1,9 +1,10 @@
-import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { HelpCircle, TrashIcon } from "lucide-react";
 import { ChevronDown, SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import {
   TSurvey,
   TSurveyLogic,
@@ -44,6 +45,10 @@ export default function LogicEditor({
   questionIdx,
   updateQuestion,
 }: LogicEditorProps): JSX.Element {
+  localSurvey = useMemo(() => {
+    return checkForRecallInHeadline(localSurvey);
+  }, [localSurvey]);
+
   const questionValues = useMemo(() => {
     if ("choices" in question) {
       return question.choices.map((choice) => choice.label);
@@ -382,7 +387,7 @@ export default function LogicEditor({
         <TooltipProvider delayDuration={50}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <QuestionMarkCircleIcon className="ml-2 inline h-4 w-4 cursor-default text-slate-500" />
+              <HelpCircle className="ml-2 inline h-4 w-4 cursor-default text-slate-500" />
             </TooltipTrigger>
             <TooltipContent className="max-w-[300px]" side="top">
               With logic jumps you can skip questions based on the responses users give.

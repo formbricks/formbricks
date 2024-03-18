@@ -21,6 +21,17 @@ export default function AppPage({}) {
   }, [darkMode]);
 
   useEffect(() => {
+    // enable Formbricks debug mode by adding formbricksDebug=true GET parameter
+    const addFormbricksDebugParam = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!urlParams.has("formbricksDebug")) {
+        urlParams.set("formbricksDebug", "true");
+        const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+        window.history.replaceState({}, "", newUrl);
+      }
+    };
+    addFormbricksDebugParam();
+
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const isUserId = window.location.href.includes("userId=true");
       const attributes = isUserId ? { "Init Attribute 1": "eight", "Init Attribute 2": "two" } : undefined;
@@ -29,7 +40,6 @@ export default function AppPage({}) {
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         userId,
-        debug: true,
         attributes,
       });
       window.formbricks = formbricks;
@@ -70,7 +80,7 @@ export default function AppPage({}) {
           <div className="rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-900">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">1. Setup .env</h3>
             <p className="text-slate-700 dark:text-slate-300">
-              Copy the environment ID of your Formbricks app to the env variable in demo/.env
+              Copy the environment ID of your Formbricks app to the env variable in /apps/demo/.env
             </p>
             <Image src={fbsetup} alt="fb setup" className="mt-4 rounded" priority />
 
@@ -105,8 +115,8 @@ export default function AppPage({}) {
               Reset person / pull data from Formbricks app
             </h3>
             <p className="text-slate-700 dark:text-slate-300">
-              On formbricks.reset() a few things happen: <strong>New person is created</strong> and{" "}
-              <strong>surveys & no-code actions are pulled from Formbricks:</strong>.
+              On formbricks.reset() the local state will <strong>be deleted</strong> and formbricks gets{" "}
+              <strong>reinitialized</strong>.
             </p>
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"

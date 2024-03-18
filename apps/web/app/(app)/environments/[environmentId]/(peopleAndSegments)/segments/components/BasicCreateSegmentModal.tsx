@@ -1,15 +1,14 @@
 "use client";
 
-import { UserGroupIcon } from "@heroicons/react/20/solid";
+import { UsersIcon } from "lucide-react";
 import { FilterIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
-import { cn } from "@formbricks/lib/cn";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
-import { TBaseFilter, TSegment } from "@formbricks/types/segment";
+import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Modal } from "@formbricks/ui/Modal";
@@ -45,11 +44,8 @@ const BasicCreateSegmentModal = ({
   const [segment, setSegment] = useState<TSegment>(initialSegmentState);
   const [isCreatingSegment, setIsCreatingSegment] = useState(false);
 
-  const [titleError, setTitleError] = useState("");
-
   const handleResetState = () => {
     setSegment(initialSegmentState);
-    setTitleError("");
     setOpen(false);
   };
 
@@ -69,7 +65,7 @@ const BasicCreateSegmentModal = ({
 
   const handleCreateSegment = async () => {
     if (!segment.title) {
-      setTitleError("Title is required");
+      toast.error("Title is required.");
       return;
     }
 
@@ -87,7 +83,13 @@ const BasicCreateSegmentModal = ({
       setIsCreatingSegment(false);
       toast.success("Segment created successfully!");
     } catch (err: any) {
-      toast.error(`${err.message}`);
+      // parse the segment filters to check if they are valid
+      const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+      if (!parsedFilters.success) {
+        toast.error("Invalid filters. Please check the filters and try again.");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
       setIsCreatingSegment(false);
       return;
     }
@@ -96,6 +98,22 @@ const BasicCreateSegmentModal = ({
     setIsCreatingSegment(false);
     router.refresh();
   };
+
+  const isSaveDisabled = useMemo(() => {
+    // check if title is empty
+
+    if (!segment.title) {
+      return true;
+    }
+
+    // parse the filters to check if they are valid
+    const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+    if (!parsedFilters.success) {
+      return true;
+    }
+
+    return false;
+  }, [segment]);
 
   return (
     <>
@@ -118,7 +136,7 @@ const BasicCreateSegmentModal = ({
             <div className="flex w-full items-center gap-4 p-6">
               <div className="flex items-center space-x-2">
                 <div className="mr-1.5 h-6 w-6 text-slate-500">
-                  <UserGroupIcon />
+                  <UsersIcon className="h-5 w-5" />
                 </div>
                 <div>
                   <h3 className="text-base font-medium">Create Segment</h3>
@@ -143,14 +161,8 @@ const BasicCreateSegmentModal = ({
                         title: e.target.value,
                       }));
                     }}
-                    className={cn(titleError && "border border-red-500 focus:border-red-500")}
+                    className="w-auto"
                   />
-
-                  {titleError && (
-                    <p className="absolute right-1 bg-white text-xs text-red-500" style={{ top: "-8px" }}>
-                      {titleError}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -164,6 +176,7 @@ const BasicCreateSegmentModal = ({
                       description: e.target.value,
                     }));
                   }}
+                  className="w-auto"
                 />
               </div>
             </div>
@@ -231,6 +244,7 @@ const BasicCreateSegmentModal = ({
                   variant="darkCTA"
                   type="submit"
                   loading={isCreatingSegment}
+                  disabled={isSaveDisabled}
                   onClick={() => {
                     handleCreateSegment();
                   }}>

@@ -1,10 +1,18 @@
 "use client";
 
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { ArrowLeftIcon, CodeBracketIcon, EnvelopeIcon, LinkIcon } from "@heroicons/react/24/outline";
-import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
-import { BellRing, BlocksIcon, Code2Icon, RefreshCcw } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  BellRing,
+  BlocksIcon,
+  Code2Icon,
+  CopyIcon,
+  LinkIcon,
+  MailIcon,
+  RefreshCcw,
+} from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -28,13 +36,14 @@ interface ShareEmbedSurveyProps {
   user: TUser;
 }
 export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, user }: ShareEmbedSurveyProps) {
+  const router = useRouter();
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
 
   const tabs = [
-    { id: "email", label: "Embed in an Email", icon: EnvelopeIcon },
-    { id: "webpage", label: "Embed in a Web Page", icon: CodeBracketIcon },
+    { id: "email", label: "Embed in an Email", icon: MailIcon },
+    { id: "webpage", label: "Embed in a Web Page", icon: Code2Icon },
     { id: "link", label: `${isSingleUseLinkSurvey ? "Single Use Links" : "Share the Link"}`, icon: LinkIcon },
   ];
 
@@ -73,6 +82,9 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
     setActiveId(tabs[0].id);
     setOpen(open);
     setShowInitialPage(open); // Reset to initial page when modal opens
+
+    // fetch latest responses
+    router.refresh();
   };
 
   const handleInitialPageButton = () => {
@@ -94,7 +106,7 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
               <div className="flex max-w-full flex-col items-center justify-center space-x-2 lg:flex-row">
                 <div
                   ref={linkTextRef}
-                  className="mt-2 max-w-[70%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
+                  className="mt-2 max-w-[80%] overflow-hidden rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-800"
                   style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
                   onClick={() => handleTextSelection()}>
                   {surveyUrl}
@@ -109,7 +121,7 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
                       navigator.clipboard.writeText(surveyUrl);
                       toast.success("URL copied to clipboard!");
                     }}
-                    EndIcon={DocumentDuplicateIcon}>
+                    EndIcon={CopyIcon}>
                     Copy Link
                   </Button>
                   {survey.singleUse?.enabled && (

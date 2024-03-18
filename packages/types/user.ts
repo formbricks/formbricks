@@ -28,10 +28,11 @@ export const ZUser = z.object({
   emailVerified: z.date().nullable(),
   imageUrl: z.string().url().nullable(),
   twoFactorEnabled: z.boolean(),
-  identityProvider: z.enum(["email", "google", "github", "azuread"]),
+  identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]),
   createdAt: z.date(),
   updatedAt: z.date(),
   onboardingCompleted: z.boolean(),
+  role: ZRole.nullable(),
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
 });
@@ -45,7 +46,7 @@ export const ZUserUpdateInput = z.object({
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
-  imageUrl: z.string().url().nullish(),
+  imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
 });
 
@@ -58,7 +59,7 @@ export const ZUserCreateInput = z.object({
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
-  identityProvider: z.enum(["email", "google", "github", "azuread"]).optional(),
+  identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]).optional(),
   identityProviderAccountId: z.string().optional(),
 });
 

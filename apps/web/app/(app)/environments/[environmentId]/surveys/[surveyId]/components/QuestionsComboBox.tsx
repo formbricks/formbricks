@@ -1,22 +1,31 @@
 "use client";
 
+import clsx from "clsx";
 import {
   CheckIcon,
-  CursorArrowRippleIcon,
-  HashtagIcon,
-  ListBulletIcon,
-  QuestionMarkCircleIcon,
-  QueueListIcon,
+  ChevronDown,
+  ChevronUp,
+  HashIcon,
+  HelpCircleIcon,
+  ImageIcon,
+  ListIcon,
+  MousePointerClickIcon,
+  Rows3Icon,
   StarIcon,
   TagIcon,
-} from "@heroicons/react/24/solid";
-import clsx from "clsx";
-import { ChevronDown, ChevronUp } from "lucide-react";
+} from "lucide-react";
 import * as React from "react";
 
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@formbricks/ui/Command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@formbricks/ui/Command";
 import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 
 export enum OptionsType {
@@ -49,21 +58,23 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
         case TSurveyQuestionType.Rating:
           return <StarIcon width={18} className="text-white" />;
         case TSurveyQuestionType.CTA:
-          return <CursorArrowRippleIcon width={18} className="text-white" />;
+          return <MousePointerClickIcon width={18} className="text-white" />;
         case TSurveyQuestionType.OpenText:
-          return <QuestionMarkCircleIcon width={18} className="text-white" />;
+          return <HelpCircleIcon width={18} className="text-white" />;
         case TSurveyQuestionType.MultipleChoiceMulti:
-          return <ListBulletIcon width={18} className="text-white" />;
+          return <ListIcon width={18} className="text-white" />;
         case TSurveyQuestionType.MultipleChoiceSingle:
-          return <QueueListIcon width={18} className="text-white" />;
+          return <Rows3Icon width={18} className="text-white" />;
         case TSurveyQuestionType.NPS:
           return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
         case TSurveyQuestionType.Consent:
           return <CheckIcon width={18} height={18} className="text-white" />;
+        case TSurveyQuestionType.PictureSelection:
+          return <ImageIcon width={18} className="text-white" />;
       }
     }
     if (type === OptionsType.ATTRIBUTES) {
-      return <HashtagIcon width={18} className="text-white" />;
+      return <HashIcon width={18} className="text-white" />;
     }
     if (type === OptionsType.TAGS) {
       return <TagIcon width={18} className="text-white" />;
@@ -124,27 +135,30 @@ const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBo
       <div className="relative mt-2 h-full">
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-            <CommandEmpty>No result found.</CommandEmpty>
-            {options?.map((data) => (
-              <>
-                {data?.option.length > 0 && (
-                  <CommandGroup heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
-                    {data?.option?.map((o, i) => (
-                      <CommandItem
-                        key={`${o.label}-${i}`}
-                        onSelect={() => {
-                          setInputValue("");
-                          onChangeValue(o);
-                          setOpen(false);
-                        }}
-                        className="cursor-pointer">
-                        <SelectedCommandItem label={o.label} type={o.type} questionType={o.questionType} />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </>
-            ))}
+            <CommandList>
+              <CommandEmpty>No result found.</CommandEmpty>
+              {options?.map((data) => (
+                <>
+                  {data?.option.length > 0 && (
+                    <CommandGroup
+                      heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
+                      {data?.option?.map((o, i) => (
+                        <CommandItem
+                          key={`${o.label}-${i}`}
+                          onSelect={() => {
+                            setInputValue("");
+                            onChangeValue(o);
+                            setOpen(false);
+                          }}
+                          className="cursor-pointer">
+                          <SelectedCommandItem label={o.label} type={o.type} questionType={o.questionType} />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </>
+              ))}
+            </CommandList>
           </div>
         )}
       </div>

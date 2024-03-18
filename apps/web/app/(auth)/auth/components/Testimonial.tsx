@@ -1,6 +1,6 @@
 import CalComLogo from "@/images/cal-logo-light.svg";
 import Peer from "@/images/peer.webp";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircle2Icon } from "lucide-react";
 import Image from "next/image";
 
 export default function Testimonial() {
@@ -9,7 +9,7 @@ export default function Testimonial() {
       <div className="3xl:w-2/3 mb-10 space-y-8 px-12 xl:px-20 ">
         <div>
           <h2 className="text-3xl font-bold text-slate-800">
-            Versatile in-app surveys. Valuable user insights.
+            Turn customer insights into irresistible experiences.
           </h2>
         </div>
         {/*  <p className="text-slate-600">
@@ -18,15 +18,15 @@ export default function Testimonial() {
         </p> */}
         <div className="space-y-2">
           <div className="flex space-x-2">
-            <CheckCircleIcon className="text-brand-dark h-6 w-6" />
+            <CheckCircle2Icon className="text-brand-dark h-6 w-6" />
             <p className="inline text-lg text-slate-800">All features included</p>
           </div>
           <div className="flex space-x-2">
-            <CheckCircleIcon className="text-brand-dark h-6 w-6" />
+            <CheckCircle2Icon className="text-brand-dark h-6 w-6" />
             <p className="inline text-lg text-slate-800">Free and open-source</p>
           </div>
           <div className="flex space-x-2">
-            <CheckCircleIcon className="text-brand-dark h-6 w-6" />
+            <CheckCircle2Icon className="text-brand-dark h-6 w-6" />
             <p className="inline text-lg text-slate-800">No credit card required</p>
           </div>
         </div>

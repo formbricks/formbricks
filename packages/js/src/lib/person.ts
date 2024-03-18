@@ -13,7 +13,6 @@ import {
 } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
-import { sync } from "./sync";
 import { closeSurvey } from "./widget";
 
 const config = Config.getInstance();
@@ -38,9 +37,10 @@ export const updatePersonAttribute = async (
   };
 
   const api = new FormbricksAPI({
-    apiHost: config.get().apiHost,
-    environmentId: config.get().environmentId,
+    apiHost,
+    environmentId,
   });
+
   const res = await api.client.people.update(userId, input);
 
   if (!res.ok) {
@@ -53,13 +53,9 @@ export const updatePersonAttribute = async (
     });
   }
 
-  logger.debug("Attribute updated. Syncing...");
-
-  await sync({
-    environmentId: environmentId,
-    apiHost: apiHost,
-    userId: userId,
-  });
+  if (res.data.changed) {
+    logger.debug("Attribute updated in Formbricks");
+  }
 
   return okVoid();
 };
@@ -164,6 +160,7 @@ export const setPersonAttribute = async (
           [key]: value.toString(),
         },
       },
+      expiresAt: config.get().expiresAt,
     });
     return okVoid();
   }
@@ -173,6 +170,7 @@ export const setPersonAttribute = async (
 
 export const logoutPerson = async (): Promise<void> => {
   deinitalize();
+  config.resetConfig();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {

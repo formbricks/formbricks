@@ -18,7 +18,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         },
         {
           name: "Argos",
-          description: "Argos provides the developer tools to debug tests and detect visual regressions..",
+          description: "Argos provides the developer tools to debug tests and detect visual regressions.",
           href: "https://argos-ci.com",
         },
         {
@@ -122,6 +122,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://infisical.com",
         },
         {
+          name: "Keep",
+          description: "Open source alert management and AIOps platform.",
+          href: "https://keephq.dev",
+        },
+        {
           name: "Langfuse",
           description: "Open source LLM engineering platform. Debug, analyze and iterate together.",
           href: "https://langfuse.com",
@@ -169,7 +174,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           name: "Requestly",
           description:
             "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
-          href: "https://requestly.io",
+          href: "https://requestly.com",
         },
         {
           name: "Revert",
@@ -200,6 +205,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           href: "https://spark-framework.net",
         },
         {
+          name: "Tiledesk",
+          description:
+            "The innovative open-source framework for developing LLM-enabled chatbots, Tiledesk empowers developers to create advanced, conversational AI agents.",
+          href: "https://tiledesk.com",
+        },
+        {
           name: "Tolgee",
           description: "Software localization from A to Z made really easy.",
           href: "https://tolgee.io",
@@ -221,6 +232,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           description:
             "A modern CRM offering the flexibility of open-source, advanced features and sleek design.",
           href: "https://twenty.com",
+        },
+        {
+          name: "UnInbox",
+          description:
+            "Modern email for teams and professionals. Bringing the best of email and messaging into a single, modern, and secure platform.",
+          href: "https://uninbox.com",
         },
         {
           name: "Unkey",

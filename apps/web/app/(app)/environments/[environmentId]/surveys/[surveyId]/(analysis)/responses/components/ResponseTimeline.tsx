@@ -1,9 +1,10 @@
 "use client";
 
-import { getMoreResponses } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
+import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -19,7 +20,10 @@ interface ResponseTimelineProps {
   survey: TSurvey;
   user: TUser;
   environmentTags: TTag[];
-  responsesPerPage: number;
+  fetchNextPage: () => void;
+  hasMore: boolean;
+  updateResponse: (responseId: string, responses: TResponse) => void;
+  deleteResponse: (responseId: string) => void;
 }
 
 export default function ResponseTimeline({
@@ -28,29 +32,20 @@ export default function ResponseTimeline({
   survey,
   user,
   environmentTags,
-  responsesPerPage,
+  fetchNextPage,
+  hasMore,
+  updateResponse,
+  deleteResponse,
 }: ResponseTimelineProps) {
   const loadingRef = useRef(null);
-  const [fetchedResponses, setFetchedResponses] = useState<TResponse[]>(responses);
-  const [page, setPage] = useState(2);
-  const [hasMoreResponses, setHasMoreResponses] = useState<boolean>(responses.length > 0);
 
   useEffect(() => {
     const currentLoadingRef = loadingRef.current;
 
-    const loadResponses = async () => {
-      const newResponses = await getMoreResponses(survey.id, page);
-      if (newResponses.length === 0) {
-        setHasMoreResponses(false);
-      } else {
-        setPage(page + 1);
-      }
-      setFetchedResponses((prevResponses) => [...prevResponses, ...newResponses]);
-    };
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          if (hasMoreResponses) loadResponses();
+          if (hasMore) fetchNextPage();
         }
       },
       { threshold: 0.8 }
@@ -65,13 +60,16 @@ export default function ResponseTimeline({
         observer.unobserve(currentLoadingRef);
       }
     };
-  }, [responsesPerPage, page, survey.id, fetchedResponses.length, hasMoreResponses]);
+  }, [fetchNextPage, hasMore]);
+
+  const { membershipRole } = useMembershipRole(survey.environmentId);
+  const { isViewer } = getAccessFlags(membershipRole);
 
   return (
     <div className="space-y-4">
-      {survey.type === "web" && fetchedResponses.length === 0 && !environment.widgetSetupCompleted ? (
+      {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
-      ) : fetchedResponses.length === 0 ? (
+      ) : responses.length === 0 ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}
@@ -79,7 +77,7 @@ export default function ResponseTimeline({
         />
       ) : (
         <div>
-          {fetchedResponses.map((response) => {
+          {responses.map((response) => {
             return (
               <div key={response.id}>
                 <SingleResponseCard
@@ -89,7 +87,9 @@ export default function ResponseTimeline({
                   environmentTags={environmentTags}
                   pageType="response"
                   environment={environment}
-                  setFetchedResponses={setFetchedResponses}
+                  updateResponse={updateResponse}
+                  deleteResponse={deleteResponse}
+                  isViewer={isViewer}
                 />
               </div>
             );

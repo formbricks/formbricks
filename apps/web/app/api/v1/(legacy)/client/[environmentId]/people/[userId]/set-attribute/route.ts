@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
@@ -18,11 +17,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(req: Request, context: Context): Promise<NextResponse> {
+export async function POST(req: Request, context: Context): Promise<Response> {
   try {
     const { userId, environmentId } = context.params;
     const personId = userId; // legacy workaround for formbricks-js 1.2.0 & 1.2.1

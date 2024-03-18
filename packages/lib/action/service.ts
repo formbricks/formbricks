@@ -14,111 +14,13 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { actionClassCache } from "../actionClass/cache";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
-import { createPerson, getPersonByUserId } from "../person/service";
+import { activePersonCache } from "../person/cache";
+import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "../person/service";
 import { surveyCache } from "../survey/cache";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
 import { getStartDateOfLastMonth, getStartDateOfLastQuarter, getStartDateOfLastWeek } from "./utils";
-
-export const getLatestActionByEnvironmentId = async (environmentId: string): Promise<TAction | null> => {
-  const action = await unstable_cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-
-      try {
-        const actionPrisma = await prisma.action.findFirst({
-          where: {
-            actionClass: {
-              environmentId: environmentId,
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-          include: {
-            actionClass: true,
-          },
-        });
-        if (!actionPrisma) {
-          return null;
-        }
-        const action: TAction = {
-          id: actionPrisma.id,
-          createdAt: actionPrisma.createdAt,
-          personId: actionPrisma.personId,
-          properties: actionPrisma.properties,
-          actionClass: actionPrisma.actionClass,
-        };
-        return action;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
-        }
-
-        throw error;
-      }
-    },
-    [`getLastestActionByEnvironmentId-${environmentId}`],
-    {
-      tags: [actionCache.tag.byEnvironmentId(environmentId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return action ? formatDateFields(action, ZAction) : null;
-};
-
-export const getLatestActionByPersonId = async (personId: string): Promise<TAction | null> => {
-  const action = await unstable_cache(
-    async () => {
-      validateInputs([personId, ZId]);
-
-      try {
-        const actionPrisma = await prisma.action.findFirst({
-          where: {
-            personId,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-          include: {
-            actionClass: true,
-          },
-        });
-
-        if (!actionPrisma) {
-          return null;
-        }
-        const action: TAction = {
-          id: actionPrisma.id,
-          createdAt: actionPrisma.createdAt,
-          personId: actionPrisma.personId,
-          properties: actionPrisma.properties,
-          actionClass: actionPrisma.actionClass,
-        };
-        return action;
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          throw new DatabaseError("Database operation failed");
-        }
-
-        throw error;
-      }
-    },
-    [`getLastestActionByPersonId-${personId}`],
-    {
-      tags: [actionCache.tag.byPersonId(personId)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return action ? formatDateFields(action, ZAction) : null;
-};
 
 export const getActionsByPersonId = async (personId: string, page?: number): Promise<TAction[]> => {
   const actions = await unstable_cache(
@@ -218,7 +120,7 @@ export const getActionsByEnvironmentId = async (environmentId: string, page?: nu
 export const createAction = async (data: TActionInput): Promise<TAction> => {
   validateInputs([data, ZActionInput]);
 
-  const { environmentId, name, properties, userId } = data;
+  const { environmentId, name, userId } = data;
 
   let actionType: TActionClassType = "code";
   if (name === "Exit Intent (Desktop)" || name === "50% Scroll") {
@@ -244,7 +146,6 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
 
   const action = await prisma.action.create({
     data: {
-      properties,
       person: {
         connect: {
           id: person.id,
@@ -257,6 +158,11 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
       },
     },
   });
+
+  const isPersonMonthlyActive = await getIsPersonMonthlyActive(person.id);
+  if (!isPersonMonthlyActive) {
+    activePersonCache.revalidate({ id: person.id });
+  }
 
   actionCache.revalidate({
     environmentId,

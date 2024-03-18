@@ -78,6 +78,7 @@ export const ZJsConfig = z.object({
   userId: z.string().optional(),
   state: ZJsState,
   expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
 });
 
 export type TJsConfig = z.infer<typeof ZJsConfig>;
@@ -87,6 +88,8 @@ export const ZJsConfigUpdateInput = z.object({
   apiHost: z.string(),
   userId: z.string().optional(),
   state: ZJsState,
+  expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
 });
 
 export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
@@ -94,7 +97,6 @@ export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
 export const ZJsConfigInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  debug: z.boolean().optional(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string().optional(),
   attributes: ZPersonAttributes.optional(),
@@ -128,7 +130,6 @@ export const ZJsActionInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string().optional(),
   name: z.string(),
-  properties: z.record(z.string()),
 });
 
 export type TJsActionInput = z.infer<typeof ZJsActionInput>;

@@ -24,6 +24,16 @@ export const users = {
       email: "survey1@formbricks.com",
       password: "Y1I*EpURUSb32j5XijP",
     },
+    {
+      name: "Survey User 2",
+      email: "survey2@formbricks.com",
+      password: "G73*Gjif22F4JKM1pA",
+    },
+    {
+      name: "Survey User 3",
+      email: "survey3@formbricks.com",
+      password: "Gj2DGji27D&M8u53V",
+    },
   ],
   js: [
     {
@@ -78,7 +88,7 @@ export const teams = {
     {
       role: "Founder",
       useCase: "Increase conversion",
-      productName: "Formbricks E2E Test Suite",
+      productName: "My Product",
     },
   ],
 };
@@ -136,6 +146,8 @@ export const surveys = {
     },
   },
 };
+
+export type CreateSurveyParams = typeof surveys.createAndSubmit;
 
 export const actions = {
   create: {

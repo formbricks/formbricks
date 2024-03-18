@@ -25,12 +25,10 @@ export class Config {
 
   public update(newConfig: TJsConfigUpdateInput): void {
     if (newConfig) {
-      const expiresAt = new Date(new Date().getTime() + 15 * 60000); // 15 minutes in the future
-
       this.config = {
         ...this.config,
         ...newConfig,
-        expiresAt,
+        status: newConfig.status || "success",
       };
 
       this.saveToLocalStorage();

@@ -1,10 +1,12 @@
 import type { TActionClass } from "@formbricks/types/actionClasses";
 import type { TActionClassPageUrlRule } from "@formbricks/types/actionClasses";
+import { TSurveyInlineTriggers } from "@formbricks/types/surveys";
 
 import { trackAction } from "./actions";
 import { Config } from "./config";
 import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
+import { renderWidget } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -13,37 +15,54 @@ const errorHandler = ErrorHandler.getInstance();
 export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError | NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
   const { state } = config.get();
-  if (state?.noCodeActionClasses === undefined) {
-    return okVoid();
-  }
+  const { noCodeActionClasses = [], surveys = [] } = state ?? {};
 
-  const pageUrlEvents: TActionClass[] = (state?.noCodeActionClasses || []).filter((action) => {
+  const actionsWithPageUrl: TActionClass[] = noCodeActionClasses.filter((action) => {
     const { innerHtml, cssSelector, pageUrl } = action.noCodeConfig || {};
     return pageUrl && !innerHtml && !cssSelector;
   });
 
-  if (pageUrlEvents.length === 0) {
-    return okVoid();
+  const surveysWithInlineTriggers = surveys.filter((survey) => {
+    const { pageUrl, cssSelector, innerHtml } = survey.inlineTriggers?.noCodeConfig || {};
+    return pageUrl && !cssSelector && !innerHtml;
+  });
+
+  if (actionsWithPageUrl.length > 0) {
+    for (const event of actionsWithPageUrl) {
+      if (!event.noCodeConfig?.pageUrl) {
+        continue;
+      }
+
+      const {
+        noCodeConfig: { pageUrl },
+      } = event;
+
+      const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
+
+      if (match.ok !== true) return err(match.error);
+
+      if (match.value === false) continue;
+
+      const trackResult = await trackAction(event.name);
+
+      if (trackResult.ok !== true) return err(trackResult.error);
+    }
   }
 
-  for (const event of pageUrlEvents) {
-    if (!event.noCodeConfig?.pageUrl) {
-      continue;
-    }
+  if (surveysWithInlineTriggers.length > 0) {
+    surveysWithInlineTriggers.forEach((survey) => {
+      const { noCodeConfig } = survey.inlineTriggers ?? {};
+      const { pageUrl } = noCodeConfig ?? {};
 
-    const {
-      noCodeConfig: { pageUrl },
-    } = event;
+      if (pageUrl) {
+        const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
 
-    const match = checkUrlMatch(window.location.href, pageUrl.value, pageUrl.rule);
+        if (match.ok !== true) return err(match.error);
+        if (match.value === false) return;
 
-    if (match.ok !== true) return err(match.error);
-
-    if (match.value === false) continue;
-
-    const trackResult = await trackAction(event.name);
-
-    if (trackResult.ok !== true) return err(trackResult.error);
+        renderWidget(survey);
+      }
+    });
   }
 
   return okVoid();
@@ -51,28 +70,17 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
 
 let arePageUrlEventListenersAdded = false;
 const checkPageUrlWrapper = () => checkPageUrl();
+const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
 
 export const addPageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || arePageUrlEventListenersAdded) return;
-
-  window.addEventListener("hashchange", checkPageUrlWrapper);
-  window.addEventListener("popstate", checkPageUrlWrapper);
-  window.addEventListener("pushstate", checkPageUrlWrapper);
-  window.addEventListener("replacestate", checkPageUrlWrapper);
-  window.addEventListener("load", checkPageUrlWrapper);
-
+  events.forEach((event) => window.addEventListener(event, checkPageUrlWrapper));
   arePageUrlEventListenersAdded = true;
 };
 
 export const removePageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || !arePageUrlEventListenersAdded) return;
-
-  window.removeEventListener("hashchange", checkPageUrlWrapper);
-  window.removeEventListener("popstate", checkPageUrlWrapper);
-  window.removeEventListener("pushstate", checkPageUrlWrapper);
-  window.removeEventListener("replacestate", checkPageUrlWrapper);
-  window.removeEventListener("load", checkPageUrlWrapper);
-
+  events.forEach((event) => window.removeEventListener(event, checkPageUrlWrapper));
   arePageUrlEventListenersAdded = false;
 };
 
@@ -102,51 +110,85 @@ export function checkUrlMatch(
   }
 }
 
+const evaluateNoCodeConfig = (
+  targetElement: HTMLElement,
+  action: TActionClass | TSurveyInlineTriggers
+): boolean => {
+  const innerHtml = action.noCodeConfig?.innerHtml?.value;
+  const cssSelectors = action.noCodeConfig?.cssSelector?.value;
+  const pageUrl = action.noCodeConfig?.pageUrl?.value;
+  const pageUrlRule = action.noCodeConfig?.pageUrl?.rule;
+
+  if (!innerHtml && !cssSelectors && !pageUrl) {
+    return false;
+  }
+
+  if (innerHtml && targetElement.innerHTML !== innerHtml) {
+    return false;
+  }
+
+  if (cssSelectors) {
+    // Split selectors that start with a . or # including the . or #
+    const individualSelectors = cssSelectors.split(/\s*(?=[.#])/);
+    for (let selector of individualSelectors) {
+      if (!targetElement.matches(selector)) {
+        return false;
+      }
+    }
+  }
+
+  if (pageUrl && pageUrlRule) {
+    const urlMatch = checkUrlMatch(window.location.href, pageUrl, pageUrlRule);
+    if (!urlMatch.ok || !urlMatch.value) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 export const checkClickMatch = (event: MouseEvent) => {
   const { state } = config.get();
   if (!state) {
     return;
   }
+
+  const { noCodeActionClasses } = state;
+  if (!noCodeActionClasses) {
+    return;
+  }
+
   const targetElement = event.target as HTMLElement;
-  (state?.noCodeActionClasses || []).forEach((action: TActionClass) => {
-    const innerHtml = action.noCodeConfig?.innerHtml?.value;
-    const cssSelectors = action.noCodeConfig?.cssSelector?.value;
-    const pageUrl = action.noCodeConfig?.pageUrl?.value;
-    const pageUrlRule = action.noCodeConfig?.pageUrl?.rule;
 
-    if (!innerHtml && !cssSelectors && !pageUrl) {
-      return;
+  noCodeActionClasses.forEach((action: TActionClass) => {
+    const shouldTrack = evaluateNoCodeConfig(targetElement, action);
+    if (shouldTrack) {
+      trackAction(action.name).then((res) => {
+        match(
+          res,
+          (_value) => {},
+          (err) => {
+            errorHandler.handle(err);
+          }
+        );
+      });
     }
+  });
 
-    if (innerHtml && targetElement.innerHTML !== innerHtml) {
-      return;
-    }
+  // check for the inline triggers as well
+  const activeSurveys = state.surveys;
+  if (!activeSurveys || activeSurveys.length === 0) {
+    return;
+  }
 
-    if (cssSelectors) {
-      // Split selectors that start with a . or # including the . or #
-      const individualSelectors = cssSelectors.split(/\s*(?=[.#])/);
-      for (let selector of individualSelectors) {
-        if (!targetElement.matches(selector)) {
-          return;
-        }
+  activeSurveys.forEach((survey) => {
+    const { inlineTriggers } = survey;
+    if (inlineTriggers) {
+      const shouldTrack = evaluateNoCodeConfig(targetElement, inlineTriggers);
+      if (shouldTrack) {
+        renderWidget(survey);
       }
     }
-    if (pageUrl && pageUrlRule) {
-      const urlMatch = checkUrlMatch(window.location.href, pageUrl, pageUrlRule);
-      if (!urlMatch.ok || !urlMatch.value) {
-        return;
-      }
-    }
-
-    trackAction(action.name).then((res) => {
-      match(
-        res,
-        (_value) => {},
-        (err) => {
-          errorHandler.handle(err);
-        }
-      );
-    });
   });
 };
 

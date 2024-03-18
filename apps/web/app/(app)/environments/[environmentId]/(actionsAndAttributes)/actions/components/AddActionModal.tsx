@@ -1,16 +1,14 @@
 "use client";
 
 import { createActionClassAction } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
-import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
-import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
-import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { MousePointerClickIcon } from "lucide-react";
 import { Terminal } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { TActionClass, TActionClassInput, TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
+import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/Alert";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
@@ -157,7 +155,7 @@ export default function AddNoCodeActionModal({
           <div className="flex w-full items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <CursorArrowRaysIcon />
+                <MousePointerClickIcon className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">Track New User Action</div>
@@ -226,7 +224,7 @@ export default function AddNoCodeActionModal({
                   Cancel
                 </Button>
                 <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
-                  Track Action
+                  Create Action
                 </Button>
               </div>
             </div>
@@ -277,7 +275,7 @@ export default function AddNoCodeActionModal({
                   Cancel
                 </Button>
                 <Button variant="darkCTA" type="submit" loading={isCreatingAction}>
-                  Track Action
+                  Create Action
                 </Button>
               </div>
             </div>

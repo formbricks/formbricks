@@ -1,4 +1,4 @@
-import { LinkIcon } from "@heroicons/react/24/outline";
+import { LinkIcon } from "lucide-react";
 
 import { Modal } from "@formbricks/ui/Modal";
 
@@ -18,7 +18,7 @@ export default function UrlShortenerModal({ open, setOpen, webAppUrl }: UrlShort
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-10 w-10 text-slate-500">
-                <LinkIcon />
+                <LinkIcon className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-xl font-medium text-slate-700">URL shortener</div>

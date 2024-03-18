@@ -1,5 +1,5 @@
 import { responses } from "@/app/lib/api/response";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import {
   ENCRYPTION_KEY,
@@ -66,10 +66,10 @@ export async function GET(req: NextRequest) {
     const result = await createOrUpdateIntegration(environmentId, notionIntegration);
 
     if (result) {
-      return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/notion`);
+      return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/notion`);
     }
   } else if (error) {
-    return NextResponse.redirect(
+    return Response.redirect(
       `${WEBAPP_URL}/environments/${environmentId}/integrations/notion?error=${error}`
     );
   }

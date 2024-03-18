@@ -34,6 +34,7 @@ import {
 } from "../action/service";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { surveyCache } from "../survey/cache";
+import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
 import { segmentCache } from "./cache";
 import { isResourceFilter, searchForAttributeClassNameInSegment } from "./utils";
@@ -95,6 +96,7 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
     });
 
     segmentCache.revalidate({ id: segment.id, environmentId });
+    surveyCache.revalidate({ id: surveyId });
 
     return transformPrismaSegment(segment);
   } catch (error) {
@@ -364,6 +366,72 @@ export const getSegmentsByAttributeClassName = async (environmentId: string, att
   )();
 
   return segments;
+};
+
+export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> => {
+  const survey = await getSurvey(surveyId);
+  if (!survey) {
+    throw new ResourceNotFoundError("survey", surveyId);
+  }
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // for this survey, does a private segment already exist
+      const segment = await tx.segment.findFirst({
+        where: {
+          title: `${surveyId}`,
+          isPrivate: true,
+        },
+        select: selectSegment,
+      });
+
+      // if a private segment already exists, connect it to the survey
+      if (segment) {
+        await tx.survey.update({
+          where: { id: surveyId },
+          data: { segment: { connect: { id: segment.id } } },
+        });
+
+        // reset the filters
+        const updatedSegment = await tx.segment.update({
+          where: { id: segment.id },
+          data: { filters: [] },
+          select: selectSegment,
+        });
+
+        surveyCache.revalidate({ id: surveyId });
+        segmentCache.revalidate({ environmentId: survey.environmentId });
+
+        return transformPrismaSegment(updatedSegment);
+      } else {
+        // This case should never happen because a private segment with the title of the surveyId
+        // should always exist. But, handling it just in case.
+
+        // if a private segment does not exist, create one
+        const newPrivateSegment = await tx.segment.create({
+          data: {
+            title: `${surveyId}`,
+            isPrivate: true,
+            filters: [],
+            surveys: { connect: { id: surveyId } },
+            environment: { connect: { id: survey?.environmentId } },
+          },
+          select: selectSegment,
+        });
+
+        surveyCache.revalidate({ id: surveyId });
+        segmentCache.revalidate({ environmentId: survey.environmentId });
+
+        return transformPrismaSegment(newPrivateSegment);
+      }
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
 };
 
 const evaluateAttributeFilter = (

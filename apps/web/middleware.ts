@@ -3,9 +3,11 @@ import {
   loginLimiter,
   shareUrlLimiter,
   signUpLimiter,
+  syncUserIdentificationLimiter,
 } from "@/app/middleware/bucket";
 import {
   clientSideApiRoute,
+  isSyncWithUserIdentificationEndpoint,
   isWebAppRoute,
   loginRoute,
   shareUrlRoute,
@@ -15,17 +17,14 @@ import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
 
   if (isWebAppRoute(request.nextUrl.pathname) && !token) {
-    const loginUrl = new URL(
-      `/auth/login?callbackUrl=${encodeURIComponent(request.nextUrl.toString())}`,
-      WEBAPP_URL
-    );
-    return NextResponse.redirect(loginUrl.href);
+    const loginUrl = `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(WEBAPP_URL + request.nextUrl.pathname + request.nextUrl.search)}`;
+    return NextResponse.redirect(loginUrl);
   }
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
@@ -33,7 +32,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
 
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" || RATE_LIMITING_DISABLED) {
     return NextResponse.next();
   }
 
@@ -51,6 +50,12 @@ export async function middleware(request: NextRequest) {
         await signUpLimiter(ip);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
         await clientSideApiEndpointsLimiter(ip);
+
+        const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
+        if (envIdAndUserId) {
+          const { environmentId, userId } = envIdAndUserId;
+          await syncUserIdentificationLimiter(`${environmentId}-${userId}`);
+        }
       } else if (shareUrlRoute(request.nextUrl.pathname)) {
         await shareUrlLimiter(ip);
       }

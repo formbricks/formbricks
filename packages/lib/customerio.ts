@@ -1,13 +1,13 @@
 import { TUser } from "@formbricks/types/user";
 
-import { env } from "./env.mjs";
+import { CUSTOMER_IO_API_KEY, CUSTOMER_IO_SITE_ID } from "./constants";
 
 export const createCustomerIoCustomer = async (user: TUser) => {
-  if (!env.CUSTOMER_IO_SITE_ID || !env.CUSTOMER_IO_API_KEY) {
+  if (!CUSTOMER_IO_SITE_ID || !CUSTOMER_IO_API_KEY) {
     return;
   }
   try {
-    const auth = Buffer.from(`${env.CUSTOMER_IO_SITE_ID}:${env.CUSTOMER_IO_API_KEY}`).toString("base64");
+    const auth = Buffer.from(`${CUSTOMER_IO_SITE_ID}:${CUSTOMER_IO_API_KEY}`).toString("base64");
     const res = await fetch(`https://track-eu.customer.io/api/v1/customers/${user.id}`, {
       method: "PUT",
       headers: {

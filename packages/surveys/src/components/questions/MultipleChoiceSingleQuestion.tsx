@@ -7,8 +7,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 
 interface MultipleChoiceSingleProps {
@@ -35,10 +34,11 @@ export default function MultipleChoiceSingleQuestion({
   setTtc,
 }: MultipleChoiceSingleProps) {
   const [startTime, setStartTime] = useState(performance.now());
+  const [otherSelected, setOtherSelected] = useState(false);
+  const otherSpecify = useRef<HTMLInputElement | null>(null);
+  const choicesContainerRef = useRef<HTMLDivElement | null>(null);
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
-
-  const [otherSelected, setOtherSelected] = useState(false);
 
   const questionChoices = useMemo(() => {
     if (!question.choices) {
@@ -61,13 +61,14 @@ export default function MultipleChoiceSingleQuestion({
     setOtherSelected(isOtherSelected);
   }, [question.id, question.choices, value]);
 
-  const otherSpecify = useRef<HTMLInputElement | null>(null);
-
   useEffect(() => {
-    if (otherSelected) {
-      otherSpecify.current?.focus();
+    // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
+    if (otherSelected && choicesContainerRef.current && otherSpecify.current) {
+      choicesContainerRef.current.scrollTop = choicesContainerRef.current.scrollHeight;
+      otherSpecify.current.focus();
     }
   }, [otherSelected]);
+
   return (
     <form
       key={question.id}
@@ -86,8 +87,9 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="bg-survey-bg relative max-h-[42vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
-            role="radiogroup">
+            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
+            role="radiogroup"
+            ref={choicesContainerRef}>
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}

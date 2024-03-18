@@ -1,8 +1,6 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
-import { handleErrorResponse } from "@/app/api/v1/auth";
+import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/actionClasses";
@@ -25,7 +23,7 @@ async function fetchAndAuthorizeActionClass(
 export async function GET(
   request: Request,
   { params }: { params: { actionClassId: string } }
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -42,7 +40,7 @@ export async function GET(
 export async function PUT(
   request: Request,
   { params }: { params: { actionClassId: string } }
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -75,7 +73,7 @@ export async function PUT(
 export async function DELETE(
   request: Request,
   { params }: { params: { actionClassId: string } }
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();

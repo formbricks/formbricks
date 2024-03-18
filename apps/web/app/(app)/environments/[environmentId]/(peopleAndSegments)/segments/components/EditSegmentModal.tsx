@@ -1,8 +1,8 @@
 "use client";
 
-import { UserGroupIcon } from "@heroicons/react/24/solid";
+import { UsersIcon } from "lucide-react";
 
-import SegmentSettingsTab from "@formbricks/ee/advancedTargeting/components/SegmentSettings";
+import SegmentSettings from "@formbricks/ee/advancedTargeting/components/SegmentSettings";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
@@ -37,7 +37,7 @@ export default function EditSegmentModal({
   const SettingsTab = () => {
     if (isAdvancedTargetingAllowed) {
       return (
-        <SegmentSettingsTab
+        <SegmentSettings
           actionClasses={actionClasses}
           attributeClasses={attributeClasses}
           environmentId={environmentId}
@@ -76,7 +76,7 @@ export default function EditSegmentModal({
         open={open}
         setOpen={setOpen}
         tabs={tabs}
-        icon={<UserGroupIcon />}
+        icon={<UsersIcon className="h-5 w-5" />}
         label={currentSegment.title}
         description={currentSegment.description || ""}
         closeOnOutsideClick={false}

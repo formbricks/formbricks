@@ -1,8 +1,8 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { FilterIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
@@ -42,16 +42,12 @@ const SegmentSettings = ({
   const [isUpdatingSegment, setIsUpdatingSegment] = useState(false);
   const [isDeletingSegment, setIsDeletingSegment] = useState(false);
 
-  const [titleError, setTitleError] = useState("");
-
-  const [isSaveDisabled, setIsSaveDisabled] = useState(false);
   const [isDeleteSegmentModalOpen, setIsDeleteSegmentModalOpen] = useState(false);
 
   const handleResetState = () => {
     setSegment(initialSegment);
     setOpen(false);
 
-    setTitleError("");
     router.refresh();
   };
 
@@ -71,7 +67,7 @@ const SegmentSettings = ({
 
   const handleUpdateSegment = async () => {
     if (!segment.title) {
-      setTitleError("Title is required");
+      toast.error("Title is required");
       return;
     }
 
@@ -87,7 +83,12 @@ const SegmentSettings = ({
       setIsUpdatingSegment(false);
       toast.success("Segment updated successfully!");
     } catch (err: any) {
-      toast.error(`${err.message}`);
+      const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+      if (!parsedFilters.success) {
+        toast.error("Invalid filters. Please check the filters and try again.");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
       setIsUpdatingSegment(false);
       return;
     }
@@ -106,20 +107,26 @@ const SegmentSettings = ({
       toast.success("Segment deleted successfully!");
       handleResetState();
     } catch (err: any) {
-      toast.error(`${err.message}`);
+      toast.error("Something went wrong. Please try again.");
     }
 
     setIsDeletingSegment(false);
   };
 
-  useEffect(() => {
+  const isSaveDisabled = useMemo(() => {
+    // check if title is empty
+
+    if (!segment.title) {
+      return true;
+    }
+
     // parse the filters to check if they are valid
     const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
     if (!parsedFilters.success) {
-      setIsSaveDisabled(true);
-    } else {
-      setIsSaveDisabled(false);
+      return true;
     }
+
+    return false;
   }, [segment]);
 
   return (
@@ -139,17 +146,9 @@ const SegmentSettings = ({
                         ...prev,
                         title: e.target.value,
                       }));
-
-                      if (e.target.value) {
-                        setTitleError("");
-                      }
                     }}
-                    className={cn("w-auto", titleError && "border border-red-500 focus:border-red-500")}
+                    className="w-auto"
                   />
-
-                  {titleError && (
-                    <p className="absolute -bottom-1.5 right-2 bg-white text-xs text-red-500">{titleError}</p>
-                  )}
                 </div>
               </div>
 
@@ -173,6 +172,13 @@ const SegmentSettings = ({
 
             <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
             <div className="filter-scrollbar flex max-h-96 w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+              {segment?.filters?.length === 0 && (
+                <div className="-mb-2 flex items-center gap-1">
+                  <FilterIcon className="h-5 w-5 text-slate-700" />
+                  <h3 className="text-sm font-medium text-slate-700">Add your first filter to get started</h3>
+                </div>
+              )}
+
               <SegmentEditor
                 environmentId={environmentId}
                 segment={segment}

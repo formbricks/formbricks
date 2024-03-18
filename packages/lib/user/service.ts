@@ -26,6 +26,7 @@ const responseSelection = {
   imageUrl: true,
   createdAt: true,
   updatedAt: true,
+  role: true,
   onboardingCompleted: true,
   twoFactorEnabled: true,
   identityProvider: true,
@@ -208,6 +209,7 @@ export const deleteUser = async (id: string): Promise<TUser> => {
       const teamHasAtLeastOneAdmin = teamAdminMemberships.length > 0;
       const teamHasOnlyOneMember = teamMemberships.length === 1;
       const currentUserIsTeamOwner = role === "owner";
+      await deleteMembership(id, teamId);
 
       if (teamHasOnlyOneMember) {
         await deleteTeam(teamId);
@@ -217,8 +219,6 @@ export const deleteUser = async (id: string): Promise<TUser> => {
       } else if (currentUserIsTeamOwner) {
         await deleteTeam(teamId);
       }
-
-      await deleteMembership(id, teamId);
     }
 
     const deletedUser = await deleteUserById(id);

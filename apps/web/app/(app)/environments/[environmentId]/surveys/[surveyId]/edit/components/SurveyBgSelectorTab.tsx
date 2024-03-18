@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 
 import { TSurvey } from "@formbricks/types/surveys";
 
-import AnimatedSurveyBg from "./AnimatedSurveyBg";
-import ColorSurveyBg from "./ColorSurveyBg";
-import ImageSurveyBg from "./ImageSurveyBg";
+import { AnimatedSurveyBg } from "./AnimatedSurveyBg";
+import { ColorSurveyBg } from "./ColorSurveyBg";
+import { ImageSurveyBg } from "./ImageSurveyBg";
 
 interface SurveyBgSelectorTabProps {
   localSurvey: TSurvey;

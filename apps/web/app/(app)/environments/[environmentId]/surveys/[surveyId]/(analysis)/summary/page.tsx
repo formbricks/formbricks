@@ -1,12 +1,14 @@
-import { getAnalysisData } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/data";
 import SummaryPage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { TEXT_RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getResponsePersonAttributes } from "@formbricks/lib/response/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -17,10 +19,19 @@ export default async function Page({ params }) {
     throw new Error("Unauthorized");
   }
 
-  const [{ responses, survey, displayCount }, environment] = await Promise.all([
-    getAnalysisData(params.surveyId, params.environmentId),
-    getEnvironment(params.environmentId),
-  ]);
+  const surveyId = params.surveyId;
+
+  if (!surveyId) {
+    return notFound();
+  }
+
+  const survey = await getSurvey(surveyId);
+
+  if (!survey) {
+    throw new Error("Survey not found");
+  }
+  const environment = await getEnvironment(survey.environmentId);
+
   if (!environment) {
     throw new Error("Environment not found");
   }
@@ -44,20 +55,19 @@ export default async function Page({ params }) {
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   const tags = await getTagsByEnvironmentId(params.environmentId);
+  const attributes = await getResponsePersonAttributes(params.surveyId);
 
   return (
     <>
       <SummaryPage
         environment={environment}
-        responses={responses}
         survey={survey}
         surveyId={params.surveyId}
         webAppUrl={WEBAPP_URL}
         product={product}
         user={user}
         environmentTags={tags}
-        displayCount={displayCount}
-        responsesPerPage={TEXT_RESPONSES_PER_PAGE}
+        attributes={attributes}
         membershipRole={currentUserMembership?.role}
       />
     </>

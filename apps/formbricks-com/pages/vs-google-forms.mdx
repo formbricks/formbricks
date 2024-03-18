@@ -1,5 +1,6 @@
 import LayoutMdx from "@/components/shared/LayoutMdx";
 import Image from "next/image";
+import Link from "next/link";
 import { Callout } from "@/components/shared/Callout";
 import HeroAnimation from "@/components/shared/HeroAnimation.tsx";
 import MdxCTA from "@/components/shared/MdxCTA.tsx";
@@ -9,6 +10,8 @@ import ControllerVsProcessor from "@/images/SEO/Data Controller vs Data Processo
 import LemonadeExample from "@/images/SEO/example-lemonade-radio-field-with-image-in-react-library-Oopen-source.png";
 import GoogleExample from "@/images/SEO/Google Form Example Customize and make it comply with GDPR CCPA HIPAA open source alternative.png";
 import CrownGIF from "@/images/SEO/who gets the crown of open source forms.gif";
+import Styling1 from "@/images/SEO/styling-1-google-forms-open-source-alternative.jpeg";
+import Styling2 from "@/images/SEO/styling-2-google-form-open-source-alternative-form-builder.jpeg";
 import HeaderAnimation from "@/components/shared/HeroAnimation.tsx";
 
 export const meta = {
@@ -17,7 +20,7 @@ export const meta = {
     "Google Forms is among the most used form and survey solutions out there. However, the lack of data privacy and old-fashioned look and feel have people look for alternatives.",
 };
 
-_Google Forms is among the most used form and survey solutions out there. It’s native integration into Google Sheets makes it an obvious first choice to run surveys. However, the lack of data privacy and old-fashioned look and feel have people look for alternatives._
+_Google Forms is among the most used form and survey solutions out there. It’s native integration into Google Sheets makes it an obvious first choice to run surveys. However, the lack of data privacy and an old-fashioned look and feel have people look for online form builder alternatives._
 
 <Image
   src={HeaderImage}
@@ -103,7 +106,7 @@ That's about it! It's pretty straight forward an does not require a lot of addit
 
 ## Features & Functionality
 
-Let’s have a closer look at what you can do with Google Forms and Formbricks. Google Forms has been around for years but it has stayed pretty flat in what you can do with it. Formbricks is the new kid on the block with some features shipped and a lot more on the roadmap.
+Let’s have a closer look at what you can do with Google Forms and Formbricks. Google Forms has been around for years but it has stayed pretty flat in what you can do with it. Formbricks is the new kid on the block with many features shipped and a lot more on the roadmap.
 
 Let’s go through it in detail:
 
@@ -115,17 +118,16 @@ Let’s go through it in detail:
 | Long Text               | ✅           | ✅         |
 | Multiple Choice / Radio | ✅           | ✅         |
 | Checkbox                | ✅           | ✅         |
-| Dropdown / Select       | ✅           | ✅         |
-| File Upload             | ✅           | ⚙️         |
-| Linear Scale            | ✅           | ⚙️         |
-| Multiple Choice Grid    | ✅           | ⚙️         |
-| Checkbox Grid           | ✅           | ⚙️         |
+| File Upload             | ✅           | ✅         |
+| Linear Scale            | ✅           | ✅         |
 | Date                    | ✅           | ✅         |
-| Time                    | ✅           | ✅         |
 | Star Rating             | ❌           | ✅         |
 | NPS                     | ❌           | ✅         |
 | Toggle                  | ❌           | ✅         |
+| Dropdown / Select       | ✅           | ⚙️         |
+| Matrix Question    | ✅           | ⚙️         |
 | Payments                | ❌           | ⚙️         |
+| Signature                | ❌           | ⚙️         |
 | ⚙️ = in development     |              |            |
 
 ### Working with your data
@@ -134,38 +136,43 @@ Once your responses are in, you want to work with the qualitative data you gathe
 
 | Export to           | Google Forms | Formbricks |
 | ------------------- | ------------ | ---------- |
-| Google Sheets       | ✅           | ⚙️         |
-| Airtable            | ❌           | ⚙️         |
+| Google Sheets       | ✅           | ✅         |
+| Airtable            | ❌           | ✅         |
 | Webhook             | ❌           | ✅         |
 | Email               | ❌           | ✅         |
-| Zapier              | ❌           | ⚙️         |
-| n8n                 | ❌           | ⚙️         |
+| Zapier              | ❌           | ✅         |
+| n8n                 | ❌           | ✅         |
+| Make.com                 | ❌           | ✅         |
+| Notion                 | ❌           | ✅         |
+| Slack                 | ❌           | ✅         |
 | ⚙️ = in development |              |            |
 
 Google wants you to stay in their ecosystem of apps. If you’re familiar with Javascript you can write Google App Scripts to email your data somewhere after every submission.
 
 ### Additional functionality
 
-Google brings along a few handy features to change and enhance the user experience. Formbricks is still early, in terms of additional functionality not a lot has been built yet.
+Google brings along a few handy features to change and enhance the user experience. Google Forms can do somethings Formbricks can't - and vice versa.
 
 Let’s have a look:
 
 | Additional Features          | Google Forms | Formbricks |
 | ---------------------------- | ------------ | ---------- |
-| Turn into quiz               | ✅           | ❌         |
-| Send form data to respondent | ✅           | ✅         |
-| Allow changing form data     | ✅           | ⚙️         |
-| Progress bar                 | ✅           | ❌         |
-| Randomize questions          | ✅           | ❌         |
-| Show results                 | ✅           | ⚙️         |
-| Form Logic                   | ❌           | ⚙️         |
+| Single Use Survey Links                  | ❌           | ✅        |
+| Verify email address before submission                  | ❌           | ✅        |
+| Form Logic                   | ❌           | ✅        |
 | Forward to custom URL        | ❌           | ✅         |
-| Welcome & Thank You Page     | ❌           | ✅         |
-| Custom mail server           | ❌           | ⚙️         |
-| Custom mail templates        | ❌           | ⚙️         |
-| Schedule close date          | ❌           | ⚙️         |
-| Close on submission limit    | ❌           | ⚙️         |
-| Survey Templates             | ❌           | ⚙️         |
+| Welcome & Thank-You pages     | ❌           | ✅         |
+| Custom "Survey closed" message          | ❌           | ✅         |
+| Schedule close date          | ❌           | ✅         |
+| Close on submission limit    | ❌           | ✅         |
+| Survey templates             | ❌           | ✅         |
+| PIN protection of surveys        | ❌           | ✅         |
+| Turn into quiz               | ✅           | ⚙️         |
+| Send form data to respondent | ✅           | ⚙️         |
+| Allow changing form data     | ✅           | ⚙️         |
+| Progress bar                 | ✅           | ✅         |
+| Randomize answers          | ✅           | ✅         |
+| Show results                 | ✅           | ❌         |
 | ⚙️ = in development          |              |            |
 
 <Image
@@ -184,7 +191,7 @@ Comparing look and feel in many cases comes down to taste. However, things like 
   className="rounded-lg"
 />
 
-On the plus side the Google Forms are very accessible: They’re rich in contrast and can be filled out just with a keyboard easily. Even less tech savy users would know what to do when they see the form. It is a very pragmatic design - if you respondents **have to** fill this out, it’ll get the job done!
+On the plus side the Google Forms are very accessible: They’re rich in contrast and can be filled out just with a keyboard easily. Even less tech savy users would know what to do when they see the form. It is a very pragmatic design - if your respondents **have to** fill this out, it’ll get the job done!
 
 On the flip side this isn’t conversion-optimized. Multi-Step forms are possible to build but don’t have a great UX when you do so. You cannot add images in the options of radio buttons which is proven to drive up conversion significantly. It will always look like Google. It very much _feels_ like a form while it would be beneficial if it would feel more like an app.
 
@@ -196,37 +203,37 @@ To make your Google Form align more with your Corporate Design, you have a few o
 - Main Color
 - Header Image
 
-If you have your logo at hand and know how to place it in a 1200 x 400px image you are able to brand your survey with the header image.
+If you have your logo at hand and know how to place it in a 1200 x 400px image you are able to brand your survey with the header image. That's about it.
 
-<Callout title="Visual Builder in development" type="note">
-  As of now, Formbricks only offer the opportunity to create forms with Code (React.js). The No Code builder
-  is planned to launch in Feburary 2023.
-</Callout>
+**Formbricks on the other hand has a comprehensive styling editor.** It lets you change all kinds of colors, roundness, background images and animation and more. If you use Formrbricks for website or in-app surveys, you can even load your own stylesheets.
 
-Formbricks offers two ways to create forms: Code and No Code. If you are willing and able to code your forms, you have maximum freedom to style them. You can import your own CSS style sheet or use Tailwind CSS to style every pixel of it.
-
-[In our docs you'll find detailed information](/docs) on how to style your forms and surveys.
 
 <Image
-  src={CrownGIF}
-  alt="GIF from the Office showing who gets the crown of form and survey tools OS"
+  src={Styling1}
+  alt="Screenshot of Oppenheimer styled survey on the free and open source form builder Formbricks"
   className="rounded-lg"
 />
 
-## Overall Result: Who gets the form crown?
+<Image
+  src={Styling2}
+  alt="Open source Google Forms alternative styles forms and surveys for free like Google Forms open source"
+  className="rounded-lg"
+/>
+
+Needless to say that the customizability with Formbricks forms is a lot more powerful.
+
+<Image
+  src={CrownGIF}
+  alt="Google Forms open source survey tools are hard to find. Today we're crowning Formbricks."
+  className="rounded-lg"
+/>
+
+## Overall Result: Which form builder is better?
 
 All in all, Google Forms is a good option if you can be sure that no EU citizen will fill out your form and you want to collect data from a group of people which **has to** fill out your form.
 
-Formbricks on the other hand, at the current state of development, is only an option if you are able to code your own form or survey with React. If this is an option for you, we prepared an [in-depth comparison](/best-react-form-library-2023) of Formbricks React with other popular React libraries.
-
-If need to build your forms visually, we ask you for a little bit of patience. We plan to roll out the No Code editor early 2023.
-
-<Callout title="Looking for a Typeform Alternative?" type="note">
-  If you are looking for a Typeform alternative, we can highly recommend using Tally. Tally has a generous
-  free plan, can be used with GDPR compliance (it’s a Belgium startup) and will most likely server all your
-  needs. [Tally is great! 👏](https://tally.so)
+<Callout title="Wanna find out more?" type="note">
+Did you know that Formbricks can also run <Link href="/website-survey">targeted surveys on public websites?</Link> And <Link href="/in-app-survey">hyper-targeted surveys in apps?</Link> Find out more!
 </Callout>
-
-<MdxCTA />
 
 export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
