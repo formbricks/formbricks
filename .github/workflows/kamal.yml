@@ -16,6 +16,7 @@ jobs:
       DOCKER_BUILDKIT: 1
       IS_FORMBRICKS_CLOUD: ${{ vars.IS_FORMBRICKS_CLOUD }}
       WEBAPP_URL: ${{ vars.WEBAPP_URL }}
+      NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
       ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
@@ -69,6 +70,7 @@ jobs:
       S3_REGION: ${{ vars.S3_REGION }}
       S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
       OPENTELEMETRY_LISTENER_URL: ${{ vars.OPENTELEMETRY_LISTENER_URL }}
+      RATE_LIMITING_DISABLED: ${{ vars.RATE_LIMITING_DISABLED }}
       KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
 
     steps:
