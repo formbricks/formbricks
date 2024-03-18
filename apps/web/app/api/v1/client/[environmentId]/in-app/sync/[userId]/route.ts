@@ -12,14 +12,17 @@ import {
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import {
   getMonthlyActiveTeamPeopleCount,
   getMonthlyTeamResponseCount,
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
+import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TProduct } from "@formbricks/types/product";
 
 export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
@@ -137,6 +140,20 @@ export async function GET(
       throw new Error("Product not found");
     }
 
+    let updatedProduct: TProduct = { ...product };
+
+    if (apiVersion && !isVersionGreaterThanOrEqualTo(apiVersion, "1.7.0")) {
+      // get the brand color and the highlight border color from styling
+      const { styling } = product;
+      const { brandColor, highlightBorderColor } = styling;
+
+      updatedProduct.brandColor = brandColor?.light || COLOR_DEFAULTS.brandColor;
+
+      if (highlightBorderColor?.light) {
+        updatedProduct.highlightBorderColor = highlightBorderColor.light;
+      }
+    }
+
     // return state
     const state: TJsStateSync = {
       person: apiVersion
@@ -147,7 +164,7 @@ export async function GET(
           },
       surveys: !isInAppSurveyLimitReached ? surveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
-      product,
+      product: updatedProduct,
     };
 
     return responses.successResponse(

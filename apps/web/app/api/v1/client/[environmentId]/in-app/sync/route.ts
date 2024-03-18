@@ -12,9 +12,11 @@ import {
 } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
+import { TProduct } from "@formbricks/types/product";
 
 export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
@@ -82,6 +84,18 @@ export async function GET(
     if (!product) {
       throw new Error("Product not found");
     }
+
+    // let updatedProduct: TProduct = product;
+
+    // // get the brand color and the highlight border color from styling
+    // const { styling } = product;
+    // const { brandColor, highlightBorderColor } = styling;
+
+    // updatedProduct.brandColor = brandColor?.light || COLOR_DEFAULTS.brandColor;
+
+    // if (highlightBorderColor?.light) {
+    //   updatedProduct.highlightBorderColor = highlightBorderColor.light;
+    // }
 
     const state: TJsStateSync = {
       surveys: !isInAppSurveyLimitReached

@@ -25,6 +25,8 @@ export const ZProduct = z.object({
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
   environments: z.array(ZEnvironment),
+  brandColor: ZColor.nullish(),
+  highlightBorderColor: ZColor.nullish(),
 });
 
 export type TProduct = z.infer<typeof ZProduct>;
