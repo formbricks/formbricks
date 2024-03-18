@@ -99,6 +99,7 @@ export const AddLogoButton: React.FC<Props> = ({
           {product?.brand?.logoUrl && (
             <div className="relative">
               <div
+                 style={{ backgroundColor: product?.brand?.bgColor }}
                 className=" absolute rounded-lg border border-transparent hover:border-slate-300"
                 onClick={() => setIsLogoAddEditorOpen(true)}>
                 <Image
