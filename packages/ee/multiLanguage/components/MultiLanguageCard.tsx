@@ -210,7 +210,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   <div className="mb-4 text-sm italic text-slate-500">
                     {product.languages.length === 0
                       ? "No languages found. Add the first one to get started:"
-                      : "You need two or more languages to work with translations."}
+                      : "You need to have two or more languages set up in your product to work with translations."}
                   </div>
                 )}
                 {product.languages.length > 1 && (

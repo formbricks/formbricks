@@ -45,6 +45,7 @@ export function LanguageIndicator({
         type="button"
         className="flex items-center justify-center rounded-md bg-slate-900 p-1 px-2 text-xs text-white hover:bg-slate-700"
         onClick={toggleDropdown}
+        tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}>
         {langaugeToBeDisplayed ? getLanguageLabel(langaugeToBeDisplayed?.language.code) : ""}

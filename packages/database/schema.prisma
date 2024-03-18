@@ -611,14 +611,14 @@ model Segment {
 }
 
 model Language {
-  id             String           @id @default(cuid())
-  createdAt      DateTime         @default(now()) @map(name: "created_at")
-  updatedAt      DateTime         @updatedAt @map(name: "updated_at")
-  code           String
-  alias          String?
-  product        Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId      String
-  SurveyLanguage SurveyLanguage[]
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now()) @map(name: "created_at")
+  updatedAt       DateTime         @updatedAt @map(name: "updated_at")
+  code            String
+  alias           String?
+  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId       String
+  surveyLanguages SurveyLanguage[]
 
   @@unique([productId, code])
 }

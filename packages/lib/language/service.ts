@@ -12,7 +12,17 @@ import {
 } from "@formbricks/types/product";
 
 import { productCache } from "../product/cache";
+import { surveyCache } from "../survey/cache";
 import { validateInputs } from "../utils/validate";
+
+const languageSelect = {
+  id: true,
+  code: true,
+  alias: true,
+  productId: true,
+  createdAt: true,
+  updatedAt: true,
+};
 
 export const createLanguage = async (
   productId: string,
@@ -32,6 +42,7 @@ export const createLanguage = async (
           connect: { id: productId },
         },
       },
+      select: languageSelect,
     });
 
     productCache.revalidate({
@@ -56,10 +67,10 @@ export const getSurveysUsingGivenLanguage = async (languageId: string): Promise<
       where: {
         languageId: languageId,
       },
-      include: {
+      select: {
         survey: {
           select: {
-            name: true, // Select only the name of the survey
+            name: true,
           },
         },
       },
@@ -81,14 +92,27 @@ export const deleteLanguage = async (environmentId: string, languageId: string):
   try {
     validateInputs([languageId, ZId]);
 
-    const language = await prisma.language.delete({
+    const prismaLanguage = await prisma.language.delete({
       where: { id: languageId },
+      select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
     });
 
     productCache.revalidate({
-      id: language.productId,
+      id: prismaLanguage.productId,
       environmentId,
     });
+
+    // revalidate cache of all connected surveys
+    prismaLanguage.surveyLanguages.forEach((surveyLanguage) => {
+      surveyCache.revalidate({
+        id: surveyLanguage.surveyId,
+        environmentId,
+      });
+    });
+
+    // delete unused surveyLanguages
+    const language = { ...prismaLanguage, surveyLanguages: undefined };
+
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -107,15 +131,27 @@ export const updateLanguage = async (
   try {
     validateInputs([languageId, ZId], [languageInput, ZLanguageUpdate]);
 
-    const language = await prisma.language.update({
+    const prismaLanguage = await prisma.language.update({
       where: { id: languageId },
       data: { ...languageInput, updatedAt: new Date() },
+      select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
     });
 
     productCache.revalidate({
-      id: language.productId,
+      id: prismaLanguage.productId,
       environmentId,
     });
+
+    // revalidate cache of all connected surveys
+    prismaLanguage.surveyLanguages.forEach((surveyLanguage) => {
+      surveyCache.revalidate({
+        id: surveyLanguage.surveyId,
+        environmentId,
+      });
+    });
+
+    // delete unused surveyLanguages
+    const language = { ...prismaLanguage, surveyLanguages: undefined };
 
     return language;
   } catch (error) {

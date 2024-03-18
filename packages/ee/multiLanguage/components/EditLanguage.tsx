@@ -179,7 +179,7 @@ export default function EditLanguage({ product, environmentId }: EditLanguagePro
       </div>
       <EditSaveButtons
         isEditing={isEditing}
-        onSaveChanges={handleSaveChanges}
+        onSave={handleSaveChanges}
         onCancel={handleCancelChanges}
         onEdit={() => setIsEditing(true)}
       />
@@ -225,13 +225,13 @@ const LanguageLabels = () => (
 
 const EditSaveButtons: React.FC<{
   isEditing: boolean;
-  onSaveChanges: () => void;
+  onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
-}> = ({ isEditing, onEdit, onSaveChanges, onCancel }) =>
+}> = ({ isEditing, onEdit, onSave, onCancel }) =>
   isEditing ? (
     <div className="flex gap-4">
-      <Button variant="darkCTA" onClick={onSaveChanges}>
+      <Button variant="darkCTA" onClick={onSave}>
         Save Changes
       </Button>
       <Button variant="minimal" onClick={onCancel}>
