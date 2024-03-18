@@ -3,6 +3,8 @@
 import clsx from "clsx";
 import {
   CheckIcon,
+  ChevronDown,
+  ChevronUp,
   GridIcon,
   HashIcon,
   HelpCircleIcon,
@@ -13,12 +15,18 @@ import {
   StarIcon,
   TagIcon,
 } from "lucide-react";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@formbricks/ui/Command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@formbricks/ui/Command";
 import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 
 export enum OptionsType {
@@ -130,27 +138,30 @@ const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBo
       <div className="relative mt-2 h-full">
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-            <CommandEmpty>No result found.</CommandEmpty>
-            {options?.map((data) => (
-              <>
-                {data?.option.length > 0 && (
-                  <CommandGroup heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
-                    {data?.option?.map((o, i) => (
-                      <CommandItem
-                        key={`${o.label}-${i}`}
-                        onSelect={() => {
-                          setInputValue("");
-                          onChangeValue(o);
-                          setOpen(false);
-                        }}
-                        className="cursor-pointer">
-                        <SelectedCommandItem label={o.label} type={o.type} questionType={o.questionType} />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </>
-            ))}
+            <CommandList>
+              <CommandEmpty>No result found.</CommandEmpty>
+              {options?.map((data) => (
+                <>
+                  {data?.option.length > 0 && (
+                    <CommandGroup
+                      heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
+                      {data?.option?.map((o, i) => (
+                        <CommandItem
+                          key={`${o.label}-${i}`}
+                          onSelect={() => {
+                            setInputValue("");
+                            onChangeValue(o);
+                            setOpen(false);
+                          }}
+                          className="cursor-pointer">
+                          <SelectedCommandItem label={o.label} type={o.type} questionType={o.questionType} />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </>
+              ))}
+            </CommandList>
           </div>
         )}
       </div>

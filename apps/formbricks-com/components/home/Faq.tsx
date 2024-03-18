@@ -1,87 +1,66 @@
 import HeadingCentered from "@/components/shared/HeadingCentered";
-import { FAQPageJsonLd } from "next-seo";
+import SeoFaq from "@/components/shared/seo/SeoFaq";
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@formbricks/ui/Accordion";
-
-const FAQ_DATA = [
+const FAQs = [
   {
     question: "What is Formbricks?",
-    answer: () => (
-      <>
-        Formbricks is an open-source Experience Management tool that helps businesses understand what
-        customers think and feel about their products. It integrates natively into your platform to conduct
-        user research with a focus on data privacy and minimal development intervention.
-      </>
-    ),
+    answer:
+      "Formbricks is an experience management platform built on top of the fastest growing open source survey infrastructure out there. It aims to assist businesses in capturing and understanding customer insights and emotions towards their products and services. Designed to integrate seamlessly with various platforms, Formbricks focuses on user research, emphasizing data privacy and requiring minimal development effort for integration.",
   },
   {
     question: "How do I integrate Formbricks into my application?",
-    answer: () => (
-      <>
-        Integrating Formbricks is a breeze. Simply copy a script tag to your HTML head, or use NPM to install
-        Formbricks for platforms like React, Vue, Svelte, etc. Once installed, initialize Formbricks with your
-        environment details. Learn more with our framework guides{" "}
-        <a href="/docs/getting-started/framework-guides" className="text-brand-dark dark:text-brand-light">
-          here
-        </a>
-        .
-      </>
-    ),
+    answer:
+      "Integrating Formbricks into an application is effortless. For web applications, it involves adding a simple script tag to the HTML head. For applications built with modern frameworks such as React, Vue, or Svelte, Formbricks can be installed via NPM. Initialization with specific environment details completes the setup. Detailed instructions and framework guides are readily available in the detailed Formbricks documentation.",
   },
   {
     question: "Is Formbricks GDPR compliant?",
-    answer: () => (
-      <>
-        Yes, Formbricks is fully GDPR compliant. Whether you use our cloud solution or decide to self-host, we
-        ensure compliance with all data privacy regulations.
-      </>
-    ),
+    answer:
+      "Indeed, Formbricks ensures full GDPR compliance, emphasizing the protection of user data privacy. It offers both cloud-based solutions and self-hosting options, adhering to data privacy regulations and making it a trusted choice for secure open source survey tool deployment.",
   },
   {
     question: "Can I self-host Formbricks?",
-    answer: () => (
-      <>
-        Absolutely! We provide an option for users to host Formbricks on their own server, ensuring even more
-        control over data and compliance. And the best part? Self-hosting is available for free, always. For
-        documentation on self hosting, click{" "}
-        <a href="/docs/self-hosting/deployment" className="text-brand-dark dark:text-brand-light">
-          here
-        </a>
-        .
-      </>
-    ),
+    answer:
+      "Certainly! Formbricks encourages self-hosting, providing users with greater control over their data and compliance. This option underscores Formbricks' commitment to offering versatile and free open source experience management software, ensuring users can adapt the platform to their unique requirements. Detailed self-hosting documentation is available for users seeking to leverage this capability.",
   },
   {
     question: "How does Formbricks pricing work?",
-    answer: () => (
-      <>
-        Formbricks offers a Free forever plan on the cloud that includes unlimited surveys, in-product
-        surveys, and more. We also provide a self-hosting option which includes all free features and more,
-        available at no cost. If you require additional features or responses, check out our pricing section
-        above for more details.
-      </>
-    ),
+    answer:
+      "Formbricks introduces a 'Free forever' plan, showcasing its commitment to making open source survey platforms universally accessible. This plan features unlimited surveys and in-product surveys, among other functionalities. Self-hosting users can enjoy all the benefits of the free plan with additional features at no extra cost. For those seeking advanced features Formbricks invites you to explore the pricing section for more information.",
+  },
+  {
+    question: "How does Formbricks make money?",
+    answer:
+      "Formbricks employs the 'Open Core' business model. The core of the Formbricks application is offered for free. Formbricks monetizes by providing advanced features and services, typically catering to the needs of larger clients, thereby generating revenue.",
+  },
+  {
+    question: "What is the best open source survey software available?",
+    answer:
+      "Identifying the best open source survey software requires evaluating features, flexibility, and support. Formbricks is a noteworthy contender, offering comprehensive experience management solutions. This platform excels in enabling businesses to delve into customer insights and feedback, offering versatility and ease of system integration.",
+  },
+  {
+    question: "Can open source survey platforms be customized for my business needs?",
+    answer:
+      "Definitely. Platforms like Formbricks exemplify the customizability of open source survey tools, allowing for extensive tailoring to meet specific business requirements. Access to the source code enables deep customization, from branding adjustments to complex integrations with existing systems, underscoring the flexibility of open source experience management solutions.",
+  },
+  {
+    question:
+      "What advantages does using an experience management platform offer over traditional survey tools?",
+    answer:
+      "Experience management platforms, especially those built on open source foundations, offer a more holistic view of customer interactions compared to traditional survey tools. They enable real-time collection, analysis, and application of customer feedback, ensuring a thorough understanding of the customer journey. This comprehensive insight facilitates informed decision-making and boosts customer satisfaction.",
   },
 ];
 
-const faqJsonLdData = FAQ_DATA.map((faq) => ({
-  questionName: faq.question,
-  acceptedAnswerText: faq.answer(),
-}));
-
 export default function FAQ() {
   return (
-    <div className="max-w-7xl py-4 sm:px-6 sm:pb-6 lg:px-8" id="faq">
-      <FAQPageJsonLd mainEntity={faqJsonLdData} />
-      <HeadingCentered heading="Frequently Asked Questions" teaser="FAQ" closer />
-      <Accordion type="single" collapsible className="px-4 sm:px-0">
-        {FAQ_DATA.map((faq, index) => (
-          <AccordionItem key={`item-${index}`} value={`item-${index + 1}`}>
-            <AccordionTrigger>{faq.question}</AccordionTrigger>
-            <AccordionContent>{faq.answer()}</AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+    <div>
+      <HeadingCentered heading="Frequently asked questions" teaser="FAQ" />
+      <SeoFaq
+        faqs={FAQs}
+        headline="Open Source Experience Management Platform"
+        description="Formbricks is an Experience Management Platform built of top of the largest open source survey infrastructure worldwide."
+        datePublished="2023-10-11"
+        dateModified="2024-03-12"
+      />
     </div>
   );
 }

@@ -30,7 +30,7 @@ export const HeroAnimation: React.FC<any> = ({ fallbackImage, ...props }) => {
   }, [lottie]);
 
   return (
-    <div className="relative" {...props}>
+    <div className="relative hidden md:block" {...props}>
       <div ref={ref} />
       {!loaded && (
         <div className="absolute inset-0">

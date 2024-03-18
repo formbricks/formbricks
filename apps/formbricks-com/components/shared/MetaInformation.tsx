@@ -22,8 +22,8 @@ export default function MetaInformation({
 }: Props) {
   const router = useRouter();
   const pageTitle = `${title}`;
-  const BASE_URL = `https://${process.env.VERCEL_URL}`;
-  const canonicalLink = `${BASE_URL}${router.asPath}`;
+  const BASE_URL = `formbricks.com`;
+  const canonicalLink = `https://${BASE_URL}${router.asPath}`;
   return (
     <Head>
       <title>{pageTitle}</title>
