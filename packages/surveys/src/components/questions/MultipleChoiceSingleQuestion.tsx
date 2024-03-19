@@ -60,10 +60,20 @@ export default function MultipleChoiceSingleQuestion({
   );
 
   useEffect(() => {
+    if (isFirstQuestion && !value) {
+      const prefillAnswer = new URLSearchParams(window.location.search).get(question.id);
+      if (prefillAnswer) {
+        if (otherOption && prefillAnswer === getLocalizedValue(otherOption.label, languageCode)) {
+          setOtherSelected(true);
+          return;
+        }
+      }
+    }
+
     const isOtherSelected =
-      value !== undefined && !question.choices.some((choice) => choice.label[languageCode] === value);
+      value !== undefined && !questionChoices.some((choice) => choice.label[languageCode] === value);
     setOtherSelected(isOtherSelected);
-  }, [question.id, question.choices, value, languageCode]);
+  }, [isFirstQuestion, languageCode, otherOption, question.id, questionChoices, value]);
 
   useEffect(() => {
     // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true

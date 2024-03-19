@@ -47,6 +47,7 @@ export default function QuestionConditional({
 }: QuestionConditionalProps) {
   return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}
@@ -61,6 +62,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}
@@ -74,6 +76,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}
@@ -87,6 +90,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.NPS ? (
     <NPSQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}
@@ -100,6 +104,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.CTA ? (
     <CTAQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}
@@ -113,6 +118,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.Rating ? (
     <RatingQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}
@@ -126,6 +132,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}
@@ -139,6 +146,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.Date ? (
     <DateQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}
@@ -152,6 +160,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}
@@ -165,6 +174,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.FileUpload ? (
     <FileUploadQuestion
+      key={question.id}
       surveyId={surveyId}
       question={question}
       value={value}
@@ -180,6 +190,7 @@ export default function QuestionConditional({
     />
   ) : question.type === TSurveyQuestionType.Cal ? (
     <CalQuestion
+      key={question.id}
       question={question}
       value={value}
       onChange={onChange}

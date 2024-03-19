@@ -267,16 +267,14 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
             {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
           <Container className="mx-0 max-w-none">
-            {firstQuestion.choices
-              .filter((choice) => choice.id !== "other")
-              .map((choice) => (
-                <Link
-                  key={choice.id}
-                  className="mt-2 block rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 text-slate-800 hover:bg-slate-100"
-                  href={`${urlWithPrefilling}${firstQuestion.id}=${choice.label}`}>
-                  {getLocalizedValue(choice.label, defaultLanguageCode)}
-                </Link>
-              ))}
+            {firstQuestion.choices.map((choice) => (
+              <Link
+                key={choice.id}
+                className="mt-2 block rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 text-slate-800 hover:bg-slate-100"
+                href={`${urlWithPrefilling}${firstQuestion.id}=${getLocalizedValue(choice.label, defaultLanguageCode)}`}>
+                {getLocalizedValue(choice.label, defaultLanguageCode)}
+              </Link>
+            ))}
           </Container>
           <EmailFooter />
         </EmailTemplateWrapper>
