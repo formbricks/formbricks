@@ -109,7 +109,7 @@ jobs:
         run: |
           kamal() { command kamal "$@" -c kamal/deploy.yml; }
           set +e
-          DEPLOY_OUTPUT=$(kamal setup 2>&1)
+          DEPLOY_OUTPUT=$(kamal deploy 2>&1)
           DEPLOY_EXIT_CODE=$?
           echo "$DEPLOY_OUTPUT"
           if [[ "$DEPLOY_OUTPUT" == *"container not unhealthy (healthy)"* ]]; then
