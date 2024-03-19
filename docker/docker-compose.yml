@@ -79,8 +79,8 @@ x-environment: &environment
     # Uncomment and set to 1 to skip onboarding for new users
     # ONBOARDING_DISABLED: 1
 
-    # The below is used to configure the Redis HTTP Client for Rate Limiting using webdis
-    REDIS_HTTP_CLIENT_URL: http://webdis:7379
+    # The below is used for Rate Limiting & Next Caching (uses In-Memory Next Cache if not provided)
+    # REDIS_HTTP_CLIENT_URL:
 
 services:
   postgres:
@@ -88,13 +88,6 @@ services:
     image: postgres:15-alpine
     volumes:
       - postgres:/var/lib/postgresql/data
-    <<: *environment
-
-  webdis:
-    image: nicolas/webdis
-    ports:
-      - 7379:7379
-    restart: unless-stopped
     <<: *environment
 
   formbricks:

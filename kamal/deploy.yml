@@ -2,23 +2,23 @@
 service: formbricks-kamal
 
 # Name of the container image.
-image: shubhampalriwala/formbricks
+image: formbricks/formbricks-cloud
 
 # Deploy to these servers.
 servers:
   web: # Use a named role, so it can be used as entrypoint by Traefik
     hosts:
-      - 34.247.22.186
+      - 18.196.187.144
     labels:
       traefik.http.routers.formbricks-kamal.entrypoints: websecure
-      traefik.http.routers.formbricks-kamal.rule: Host(`kamal.shubham.formbricks.com`)
+      traefik.http.routers.formbricks-kamal.rule: Host(`app.formbricks.com`)
       traefik.http.routers.formbricks-kamal.tls.certresolver: letsencrypt
 
 # Credentials for your image host.
 registry:
   # Specify the registry server, if you're not using Docker Hub
   server: ghcr.io
-  username: shubhampalriwala
+  username: mattinannt
 
   # Always use an access token rather than real password when possible.
   password:
@@ -128,7 +128,7 @@ traefik:
     entryPoints.web.http.redirections.entryPoint.scheme: https
     entryPoints.web.http.redirections.entrypoint.permanent: true
     entrypoints.websecure.http.tls: true
-    entrypoints.websecure.http.tls.domains[0].main: "kamal.shubham.formbricks.com"
+    entrypoints.websecure.http.tls.domains[0].main: "app.formbricks.com"
     entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
     certificatesResolvers.letsencrypt.acme.email: "hola@formbricks.com"
     certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
@@ -140,15 +140,6 @@ traefik:
 
 # Use accessory services (secrets come from .env).
 accessories:
-  # postgres:
-  #   restart: always
-  #   host: 34.247.22.186
-  #   port: 5432
-  #   image: postgres:15-alpine
-  #   directories:
-  #     - postgres:/var/lib/postgresql/data
-  #   environment:
-  #     - POSTGRES_PASSWORD=postgres
   # db:
   #   image: mysql:8.0
   #   host: 192.168.0.2

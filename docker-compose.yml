@@ -6,7 +6,7 @@ x-webapp-url: &webapp_url http://localhost:3000
 # PostgreSQL DB for Formbricks to connect to
 x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
 
-x-redis-client-url: &redis_client_url http://webdis:7379
+x-redis-url: &redis_url
 
 # NextJS Auth
 # @see: https://next-auth.js.org/configuration/options#nextauth_secret
@@ -77,12 +77,6 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
 
-  webdis:
-    image: nicolas/webdis
-    ports:
-      - 7379:7379
-    restart: unless-stopped
-
   formbricks:
     restart: always
     build:
@@ -121,7 +115,7 @@ services:
       GOOGLE_CLIENT_ID: *google_client_id
       GOOGLE_CLIENT_SECRET: *google_client_secret
       CRON_SECRET: *cron_secret
-      REDIS_HTTP_CLIENT_URL: *redis_client_url
+      REDIS_HTTP_CLIENT_URL: *redis_url
 
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/
