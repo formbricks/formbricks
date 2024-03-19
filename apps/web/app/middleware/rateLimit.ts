@@ -37,8 +37,6 @@ const redisRateLimiter = (options: Options) => {
 };
 
 export default function rateLimit(options: Options) {
-  console.log("REDIS_HTTP_CLIENT_URL", REDIS_HTTP_CLIENT_URL);
-
   if (REDIS_HTTP_CLIENT_URL) {
     return redisRateLimiter(options);
   } else {

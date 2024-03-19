@@ -1,9 +1,11 @@
-import { fileURLToPath } from "node:url";
 import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 
 jiti("@formbricks/lib/env");
 
@@ -21,6 +23,7 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@aws-sdk"],
     instrumentationHook: true,
   },
+  cacheHandler: require.resolve("./cache-handler.mjs"),
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [

@@ -66,6 +66,7 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
+    "@neshca/cache-handler": "^1.0.7",
     "@types/bcryptjs": "^2.4.6",
     "@types/lodash": "^4.17.0",
     "@types/markdown-it": "^13.0.7",
