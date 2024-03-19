@@ -22,6 +22,9 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["@aws-sdk"],
     instrumentationHook: true,
+    outputFileTracingIncludes: {
+      "app/api/js": ["../../packages/**/*"],
+    },
   },
   cacheHandler: require.resolve("./cache-handler.mjs"),
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
