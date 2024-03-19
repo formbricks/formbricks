@@ -6,7 +6,7 @@ concurrency:
 on:
   push:
     branches:
-      - shubham/for-1862-reproduce-flix-scalability-issues
+      - main
 
 jobs:
   Deploy:
