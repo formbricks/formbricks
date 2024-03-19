@@ -160,7 +160,7 @@ const ResponsePage = ({
         hasMore={hasMore}
         deleteResponse={deleteResponse}
         updateResponse={updateResponse}
-        fetchingFirstPage={isFetchingFirstPage}
+        isFetchingFirstPage={isFetchingFirstPage}
         responseCount={responseCount}
         totalResponseCount={totalResponseCount}
       />

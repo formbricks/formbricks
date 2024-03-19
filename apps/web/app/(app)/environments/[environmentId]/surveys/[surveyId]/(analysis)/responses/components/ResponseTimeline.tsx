@@ -25,7 +25,7 @@ interface ResponseTimelineProps {
   hasMore: boolean;
   updateResponse: (responseId: string, responses: TResponse) => void;
   deleteResponse: (responseId: string) => void;
-  fetchingFirstPage: boolean;
+  isFetchingFirstPage: boolean;
   responseCount: number | null;
   totalResponseCount: number;
 }
@@ -40,7 +40,7 @@ export default function ResponseTimeline({
   hasMore,
   updateResponse,
   deleteResponse,
-  fetchingFirstPage,
+  isFetchingFirstPage,
   responseCount,
   totalResponseCount,
 }: ResponseTimelineProps) {
@@ -76,7 +76,7 @@ export default function ResponseTimeline({
     <div className="space-y-4">
       {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
-      ) : fetchingFirstPage ? (
+      ) : isFetchingFirstPage ? (
         <SkeletonLoader type="response" />
       ) : responseCount === 0 ? (
         <EmptySpaceFiller

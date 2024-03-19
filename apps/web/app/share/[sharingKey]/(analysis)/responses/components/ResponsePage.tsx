@@ -133,7 +133,7 @@ const ResponsePage = ({
         environmentTags={environmentTags}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
-        fetchingFirstPage={isFetchingFirstPage}
+        isFetchingFirstPage={isFetchingFirstPage}
         responseCount={responseCount}
         totalResponseCount={totalResponseCount}
       />

@@ -21,7 +21,7 @@ interface ResponseTimelineProps {
   environmentTags: TTag[];
   fetchNextPage: () => void;
   hasMore: boolean;
-  fetchingFirstPage: boolean;
+  isFetchingFirstPage: boolean;
   responseCount: number | null;
   totalResponseCount: number;
 }
@@ -33,7 +33,7 @@ export default function ResponseTimeline({
   environmentTags,
   fetchNextPage,
   hasMore,
-  fetchingFirstPage,
+  isFetchingFirstPage,
   responseCount,
   totalResponseCount,
 }: ResponseTimelineProps) {
@@ -69,7 +69,7 @@ export default function ResponseTimeline({
     <div className="space-y-4">
       {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
-      ) : fetchingFirstPage ? (
+      ) : isFetchingFirstPage ? (
         <SkeletonLoader type="response" />
       ) : responseCount === 0 ? (
         <EmptySpaceFiller
