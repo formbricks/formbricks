@@ -3,6 +3,26 @@ import { z } from "zod";
 import { ZColor, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
 
+export const ZLanguage = z.object({
+  id: z.string().cuid2(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  code: z.string(),
+  alias: z.string().nullable(),
+});
+export type TLanguage = z.infer<typeof ZLanguage>;
+
+export const ZLanguageInput = z.object({
+  code: z.string(),
+  alias: z.string().nullable(),
+});
+export type TLanguageInput = z.infer<typeof ZLanguageInput>;
+
+export const ZLanguageUpdate = z.object({
+  alias: z.string().nullable(),
+});
+export type TLanguageUpdate = z.infer<typeof ZLanguageUpdate>;
+
 export const ZBrand = z.object({
   logoUrl: z.string(),
   bgColor: z.string(),
@@ -25,6 +45,7 @@ export const ZProduct = z.object({
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
   environments: z.array(ZEnvironment),
+  languages: z.array(ZLanguage),
   brand: ZBrand,
 });
 

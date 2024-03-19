@@ -1,10 +1,9 @@
 import { useState } from "react";
 
-import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
-
 import Modal from "./Modal";
 import QuestionConditional from "./QuestionConditional";
 import ThankYouCard from "./ThankYouCard";
+import { TSurvey, TSurveyQuestion } from "./types";
 
 interface PreviewSurveyProps {
   localSurvey?: TSurvey;
@@ -67,8 +66,8 @@ export default function PreviewSurvey({
         {activeQuestionId == "thank-you-card" ? (
           <ThankYouCard
             brandColor={brandColor}
-            headline={localSurvey?.thankYouCard?.headline || ""}
-            subheader={localSurvey?.thankYouCard?.subheader || ""}
+            headline={localSurvey?.thankYouCard?.headline!}
+            subheader={localSurvey?.thankYouCard?.subheader!}
           />
         ) : (
           questions.map(
