@@ -4,9 +4,9 @@ import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
-export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
-export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
-
+const MINUTE = 60;
+const HOUR = MINUTE * 60;
+export const SERVICES_REVALIDATION_INTERVAL = MINUTE * 30; // 30 minutes
 // URLs
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
