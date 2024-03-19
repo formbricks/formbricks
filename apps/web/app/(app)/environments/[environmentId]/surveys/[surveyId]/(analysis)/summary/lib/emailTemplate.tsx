@@ -11,7 +11,7 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
-import { CalendarDaysIcon } from "lucide-react";
+import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
@@ -332,6 +332,26 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <Section className="mt-4 flex h-12 w-full items-center justify-center rounded-lg border border-solid border-slate-200 bg-white">
             <CalendarDaysIcon className="mb-1 inline h-4 w-4" />
             <Text className="inline text-sm font-medium">Select a date</Text>
+          </Section>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case TSurveyQuestionType.FileUpload:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+          </Text>
+          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
+            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+          </Text>
+          <Section className="mt-4 flex w-full items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-5">
+            <UploadIcon className="mx-auto mb-1 block h-5 w-5" />
+            <Section>
+              <Text className="inline text-sm font-medium text-slate-500 ">
+                Click or drag to upload files.
+              </Text>
+            </Section>
           </Section>
           <EmailFooter />
         </EmailTemplateWrapper>
