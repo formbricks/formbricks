@@ -63,7 +63,7 @@ const validationRules = {
     ];
 
     for (const field of fieldsToValidate) {
-      if (question[field] && question[field][defaultLanguageCode]) {
+      if (question[field] && typeof question[field][defaultLanguageCode] !== "undefined") {
         isValid =
           isValid && isLabelValidForAllLanguages(question[field], languages) && isValidCTADismissLabel;
       }

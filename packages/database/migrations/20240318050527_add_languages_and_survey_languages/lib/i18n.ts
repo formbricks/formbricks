@@ -16,10 +16,12 @@ import {
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
+  ZSurvey,
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
   ZSurveyFileUploadQuestion,
+  ZSurveyMultipleChoiceMultiQuestion,
   ZSurveyMultipleChoiceSingleQuestion,
   ZSurveyNPSQuestion,
   ZSurveyOpenTextQuestion,
@@ -170,7 +172,9 @@ const translateQuestion = (
           clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion
         ).otherOptionPlaceholder = createI18nString(question.otherOptionPlaceholder ?? "", languages);
       }
-      return ZSurveyMultipleChoiceSingleQuestion.parse(clonedQuestion);
+      if (question.type === "multipleChoiceSingle") {
+        return ZSurveyMultipleChoiceSingleQuestion.parse(clonedQuestion);
+      } else return ZSurveyMultipleChoiceMultiQuestion.parse(clonedQuestion);
 
     case "cta":
       if (typeof question.dismissButtonLabel === "string") {
@@ -255,10 +259,10 @@ export const translateSurvey = (
   const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languages);
   const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languages);
   const translatedSurvey = structuredClone(survey);
-  return {
+  return ZSurvey.parse({
     ...translatedSurvey,
     questions: translatedQuestions,
     welcomeCard: translatedWelcomeCard,
     thankYouCard: translatedThankYouCard,
-  };
+  });
 };
