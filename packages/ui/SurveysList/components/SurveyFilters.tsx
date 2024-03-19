@@ -6,9 +6,10 @@ import { TSurveyFilters } from "@formbricks/types/surveys";
 
 import { initialFilters } from "..";
 import { Button } from "../../Button";
-import { Checkbox } from "../../Checkbox";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "../../DropdownMenu";
 import { TooltipRenderer } from "../../Tooltip";
+import { SortOption } from "./SortOption";
+import { SurveyFilterDropdown } from "./SurveyFilterDropdown";
 
 interface SurveyFilterProps {
   orientation: string;
@@ -16,11 +17,11 @@ interface SurveyFilterProps {
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
 }
-interface TFilterOption {
+export interface TFilterOption {
   label: string;
   value: string;
 }
-interface TSortOption {
+export interface TSortOption {
   label: string;
   value: "createdAt" | "updatedAt" | "name";
 }
@@ -127,7 +128,7 @@ export default function SurveyFilters({
         </div>
 
         <div>
-          <FilterDropdown
+          <SurveyFilterDropdown
             title="Created By"
             id="createdBy"
             options={creatorOptions}
@@ -138,7 +139,7 @@ export default function SurveyFilters({
           />
         </div>
         <div>
-          <FilterDropdown
+          <SurveyFilterDropdown
             title="Status"
             id="status"
             options={statusOptions}
@@ -149,7 +150,7 @@ export default function SurveyFilters({
           />
         </div>
         <div>
-          <FilterDropdown
+          <SurveyFilterDropdown
             title="Type"
             id="type"
             options={typeOptions}
@@ -225,77 +226,3 @@ export default function SurveyFilters({
     </div>
   );
 }
-
-interface FilterDropdownProps {
-  title: string;
-  id: "createdBy" | "status" | "type";
-  options: TFilterOption[];
-  selectedOptions: string[];
-  setSelectedOptions: (type: "createdBy" | "status" | "type", value: string) => void;
-  isOpen: boolean;
-  toggleDropdown: (id: string) => void;
-}
-
-const FilterDropdown = ({
-  title,
-  id,
-  options,
-  selectedOptions,
-  setSelectedOptions,
-  isOpen,
-  toggleDropdown,
-}: FilterDropdownProps) => {
-  const triggerClasses = `surveyFilterDropdown min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-none 
-  ${selectedOptions.length > 0 ? "bg-slate-900 text-white" : "hover:bg-slate-900"}`;
-
-  return (
-    <DropdownMenu open={isOpen} onOpenChange={() => toggleDropdown(id)}>
-      <DropdownMenuTrigger asChild className={triggerClasses}>
-        <div className="flex w-full items-center justify-between">
-          <span className="text-sm">{title}</span>
-          <ChevronDownIcon className="ml-2 h-4 w-4" />
-        </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="bg-slate-900">
-        {options.map((option) => (
-          <DropdownMenuItem
-            key={option.value}
-            className="m-0 p-0"
-            onClick={(e) => {
-              e.preventDefault();
-              setSelectedOptions(id, option.value);
-            }}>
-            <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
-              <Checkbox
-                checked={selectedOptions.includes(option.value)}
-                className={`bg-white ${selectedOptions.includes(option.value) ? "bg-brand-dark border-none" : ""}`}
-              />
-              <p className="font-normal text-white">{option.label}</p>
-            </div>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
-interface SortOptionProps {
-  option: TSortOption;
-  sortBy: TSurveyFilters["sortBy"];
-  handleSortChange: (option: TSortOption) => void;
-}
-
-const SortOption = ({ option, sortBy, handleSortChange }: SortOptionProps) => (
-  <DropdownMenuItem
-    key={option.label}
-    className="m-0 p-0"
-    onClick={() => {
-      handleSortChange(option);
-    }}>
-    <div className="flex h-full w-full items-center space-x-2 px-2 py-1 hover:bg-slate-700">
-      <span
-        className={`h-4 w-4 rounded-full border ${sortBy === option.value ? "bg-brand-dark outline-brand-dark border-slate-900 outline" : "border-white"}`}></span>
-      <p className="font-normal text-white">{option.label}</p>
-    </div>
-  </DropdownMenuItem>
-);
