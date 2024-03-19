@@ -1,5 +1,6 @@
 import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { TJsState, TJsStateSync, TJsSyncParams } from "@formbricks/types/js";
+import { TSurvey } from "@formbricks/types/surveys";
 
 import { Config } from "./config";
 import { NetworkError, Result, err, ok } from "./errors";
@@ -88,9 +89,8 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
     } catch (e) {
       // ignore error
     }
-
     let state: TJsState = {
-      surveys: syncResult.value.surveys,
+      surveys: syncResult.value.surveys as TSurvey[],
       noCodeActionClasses: syncResult.value.noCodeActionClasses,
       product: syncResult.value.product,
       attributes: syncResult.value.person?.attributes || {},

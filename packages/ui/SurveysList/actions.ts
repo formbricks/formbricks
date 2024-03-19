@@ -105,7 +105,7 @@ export async function copyToOtherEnvironmentAction(
           description: trigger.actionClass.description,
           type: trigger.actionClass.type,
           noCodeConfig: trigger.actionClass.noCodeConfig
-            ? JSON.parse(JSON.stringify(trigger.actionClass.noCodeConfig))
+            ? structuredClone(trigger.actionClass.noCodeConfig)
             : undefined,
         },
       });
@@ -157,8 +157,8 @@ export async function copyToOtherEnvironmentAction(
       segmentId: undefined,
       name: `${existingSurvey.name} (copy)`,
       status: "draft",
-      questions: JSON.parse(JSON.stringify(existingSurvey.questions)),
-      thankYouCard: JSON.parse(JSON.stringify(existingSurvey.thankYouCard)),
+      questions: structuredClone(existingSurvey.questions),
+      thankYouCard: structuredClone(existingSurvey.thankYouCard),
       inlineTriggers: JSON.parse(JSON.stringify(existingSurvey.inlineTriggers)),
       triggers: {
         create: targetEnvironmentTriggers.map((actionClassId) => ({

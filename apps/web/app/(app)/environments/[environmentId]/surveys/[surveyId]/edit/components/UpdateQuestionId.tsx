@@ -42,9 +42,17 @@ export default function UpdateQuestionId({
       toast.error("ID should not be empty.");
       return;
     } else if (
-      ["userId", "source", "suid", "end", "start", "welcomeCard", "hidden", "verifiedEmail"].includes(
-        currentValue
-      )
+      [
+        "userId",
+        "source",
+        "suid",
+        "end",
+        "start",
+        "welcomeCard",
+        "hidden",
+        "verifiedEmail",
+        "multiLanguage",
+      ].includes(currentValue)
     ) {
       setCurrentValue(prevValue);
       updateQuestion(questionIdx, { id: prevValue });

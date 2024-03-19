@@ -31,6 +31,7 @@ interface LinkSurveyProps {
   webAppUrl: string;
   responseCount?: number;
   verifiedEmail?: string;
+  languageCode: string;
 }
 
 export default function LinkSurvey({
@@ -44,14 +45,18 @@ export default function LinkSurvey({
   webAppUrl,
   responseCount,
   verifiedEmail,
+  languageCode,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
-  const startAt = searchParams?.get("startAt");
+  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
+    return surveyLanguage.default === true;
+  })?.language.code;
 
+  const startAt = searchParams?.get("startAt");
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
     if (survey?.welcomeCard.enabled && startAt === "start") return true;
@@ -75,7 +80,7 @@ export default function LinkSurvey({
   );
 
   const prefillResponseData: TResponseData | undefined = prefillAnswer
-    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
+    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
     : undefined;
 
   const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
@@ -175,6 +180,7 @@ export default function LinkSurvey({
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
+          languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
@@ -219,6 +225,8 @@ export default function LinkSurvey({
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
+                language:
+                  languageCode === "default" && defaultLanguageCode ? defaultLanguageCode : languageCode,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",

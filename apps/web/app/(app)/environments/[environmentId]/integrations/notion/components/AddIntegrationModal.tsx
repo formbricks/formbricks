@@ -107,7 +107,7 @@ export default function AddIntegrationModal({
 
   const questionItems = useMemo(() => {
     const questions = selectedSurvey
-      ? checkForRecallInHeadline(selectedSurvey)?.questions.map((q) => ({
+      ? checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((q) => ({
           id: q.id,
           name: q.headline,
           type: q.type,
@@ -226,7 +226,7 @@ export default function AddIntegrationModal({
     return questionItems.filter((q) => !selectedQuestionIds.includes(q.id));
   };
 
-  const createCopy = (item) => JSON.parse(JSON.stringify(item));
+  const createCopy = (item) => structuredClone(item);
 
   const MappingRow = ({ idx }: { idx: number }) => {
     const filteredQuestionItems = getFilteredQuestionItems(idx);
