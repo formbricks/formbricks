@@ -81,6 +81,9 @@ async function main() {
                 ...(survey.styling ?? {}),
                 ...(brandColor && { brandColor: { light: brandColor } }),
                 ...(highlightBorderColor && { highlightBorderColor: { light: highlightBorderColor } }),
+                ...((brandColor || highlightBorderColor || Object.keys(survey.styling ?? {}).length > 0) && {
+                  overwriteUnifiedStyling: true,
+                }),
               },
               productOverwrites: {
                 ...rest,
