@@ -54,6 +54,7 @@ const ResponsePage = ({
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -96,23 +97,28 @@ const ResponsePage = ({
   }, [searchParams, resetState]);
 
   useEffect(() => {
-    const fetchInitialResponses = async () => {
-      const responses = await getResponsesAction(surveyId, 1, responsesPerPage, filters);
-      if (responses.length < responsesPerPage) {
-        setHasMore(false);
-      }
-      setResponses(responses);
-    };
-    fetchInitialResponses();
-  }, [surveyId, filters, responsesPerPage]);
-
-  useEffect(() => {
     const handleResponsesCount = async () => {
       const responseCount = await getResponseCountAction(surveyId, filters);
       setResponseCount(responseCount);
     };
     handleResponsesCount();
   }, [filters, surveyId]);
+
+  useEffect(() => {
+    const fetchInitialResponses = async () => {
+      try {
+        setFetchingFirstPage(true);
+        const responses = await getResponsesAction(surveyId, 1, responsesPerPage, filters);
+        if (responses.length < responsesPerPage) {
+          setHasMore(false);
+        }
+        setResponses(responses);
+      } finally {
+        setFetchingFirstPage(false);
+      }
+    };
+    fetchInitialResponses();
+  }, [surveyId, filters, responsesPerPage]);
 
   useEffect(() => {
     setPage(1);
@@ -152,6 +158,8 @@ const ResponsePage = ({
         hasMore={hasMore}
         deleteResponse={deleteResponse}
         updateResponse={updateResponse}
+        fetchingFirstPage={isFetchingFirstPage}
+        responseCount={responseCount}
       />
     </ContentWrapper>
   );

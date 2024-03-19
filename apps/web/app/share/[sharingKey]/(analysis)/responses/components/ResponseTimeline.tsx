@@ -11,6 +11,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import SingleResponseCard from "@formbricks/ui/SingleResponseCard";
+import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
 
 interface ResponseTimelineProps {
   environment: TEnvironment;
@@ -20,6 +21,8 @@ interface ResponseTimelineProps {
   environmentTags: TTag[];
   fetchNextPage: () => void;
   hasMore: boolean;
+  fetchingFirstPage: boolean;
+  responseCount: number | null;
 }
 
 export default function ResponseTimeline({
@@ -29,6 +32,8 @@ export default function ResponseTimeline({
   environmentTags,
   fetchNextPage,
   hasMore,
+  fetchingFirstPage,
+  responseCount,
 }: ResponseTimelineProps) {
   const loadingRef = useRef(null);
 
@@ -62,7 +67,9 @@ export default function ResponseTimeline({
     <div className="space-y-4">
       {survey.type === "web" && responses.length === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
-      ) : responses.length === 0 ? (
+      ) : fetchingFirstPage ? (
+        <SkeletonLoader type="response" />
+      ) : responseCount === 0 ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}

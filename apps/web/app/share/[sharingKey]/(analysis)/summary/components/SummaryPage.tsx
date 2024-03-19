@@ -59,9 +59,11 @@ const SummaryPage = ({
 }: SummaryPageProps) => {
   const [responseCount, setResponseCount] = useState<number | null>(null);
 
-  const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
+  const [isFetchingSummary, setFetchingSummary] = useState<boolean>(true);
+
+  const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
@@ -70,14 +72,19 @@ const SummaryPage = ({
 
   useEffect(() => {
     const handleInitialData = async () => {
-      const responseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
-      setResponseCount(responseCount);
-      if (responseCount === 0) {
-        setSurveySummary(initialSurveySummary);
-        return;
+      try {
+        setFetchingSummary(true);
+        const responseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
+        setResponseCount(responseCount);
+        if (responseCount === 0) {
+          setSurveySummary(initialSurveySummary);
+          return;
+        }
+        const response = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
+        setSurveySummary(response);
+      } finally {
+        setFetchingSummary(false);
       }
-      const response = await getSummaryBySurveySharingKeyAction(sharingKey, filters);
-      setSurveySummary(response);
     };
 
     handleInitialData();
@@ -119,6 +126,7 @@ const SummaryPage = ({
         responseCount={responseCount}
         survey={survey}
         environment={environment}
+        fetchingSummary={isFetchingSummary}
       />
     </ContentWrapper>
   );
