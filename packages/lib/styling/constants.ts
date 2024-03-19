@@ -1,4 +1,5 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
+import { TSurvey } from "@formbricks/types/surveys";
 
 export const COLOR_DEFAULTS = {
   brandColor: "#64748b",
@@ -12,66 +13,99 @@ export const COLOR_DEFAULTS = {
 } as const;
 
 export const PREVIEW_SURVEY = {
-  id: "mppwcoocbqln3kvhbe3wqp4j",
+  id: "cltxxaa6x0000g8hacxdxejeu",
   createdAt: new Date(),
   updatedAt: new Date(),
-  name: "Product Market Fit (Superhuman)",
+  name: "New Survey",
   type: "link",
-  environmentId: "cfor1u7eyy9oxj15x0yzkwdz",
-  createdBy: "m1tcr30g782beafghnuen30i",
-  status: "draft",
+  environmentId: "cltwumfcz0009echxg02fh7oa",
+  createdBy: "cltwumfbz0000echxysz6ptvq",
+  status: "inProgress",
   welcomeCard: {
-    html: "Thanks for providing your feedback - let's go!",
+    html: {
+      default: "Thanks for providing your feedback - let's go!",
+    },
     enabled: false,
-    headline: "Welcome!",
-    timeToFinish: true,
+    headline: {
+      default: "Welcome!",
+    },
+    timeToFinish: false,
     showResponseCount: false,
   },
+  styling: null,
+  segment: null,
   questions: [
     {
-      id: "xpjmvmdw5x5pv1jpkq5w2prd",
+      id: "tunaz8ricd4regvkz1j0rbf6",
       type: "openText",
-      headline: "This is a preview survey",
+      headline: {
+        default: "This is a preview survey",
+      },
       required: true,
       inputType: "text",
-      subheader: "Click through it to check the look and feel of the surveying experience.",
-      longAnswer: true,
-      placeholder: "Type your answer here...",
+      subheader: {
+        default: "Click through it to check the look and feel of the surveying experience.",
+      },
+      placeholder: {
+        default: "Type your answer here...",
+      },
     },
     {
-      id: "swfnndfht0ubsu9uh17tjcej",
+      id: "lbdxozwikh838yc6a8vbwuju",
       type: "rating",
       range: 5,
       scale: "star",
-      headline: "How would you rate My Product",
+      isDraft: true,
+      headline: {
+        default: "How would you rate My Product",
+      },
       required: true,
-      subheader: "Don't worry, be honest.",
-      lowerLabel: "Not good",
-      upperLabel: "Very good",
+      subheader: {
+        default: "Don't worry, be honest.",
+      },
+      lowerLabel: {
+        default: "Not good",
+      },
+      upperLabel: {
+        default: "Very good",
+      },
     },
     {
-      id: "je70a714xjdxc70jhxgv5web",
+      id: "rjpu42ps6dzirsn9ds6eydgt",
       type: "multipleChoiceSingle",
       choices: [
         {
-          id: "vx9q4mlr6ffaw35m99bselwm",
-          label: "Eat the cake 🍰",
+          id: "x6wty2s72v7vd538aadpurqx",
+          label: {
+            default: "Eat the cake 🍰",
+          },
         },
         {
-          id: "ynj051qawxd4dszxkbvahoe5",
-          label: "Have the cake 🎂",
+          id: "fbcj4530t2n357ymjp2h28d6",
+          label: {
+            default: "Have the cake 🎂",
+          },
         },
       ],
-      headline: "What do you do?",
+      isDraft: true,
+      headline: {
+        default: "What do you do?",
+      },
       required: true,
-      subheader: "Can't do both.",
+      subheader: {
+        default: "Can't do both.",
+      },
       shuffleOption: "none",
     },
   ],
   thankYouCard: {
     enabled: true,
-    headline: "Thank you!",
-    subheader: "We appreciate your feedback.",
+    headline: {
+      default: "Thank you!",
+    },
+    subheader: {
+      default: "We appreciate your feedback.",
+    },
   },
   hiddenFields: {
     enabled: true,
@@ -83,11 +117,10 @@ export const PREVIEW_SURVEY = {
   closeOnDate: null,
   delay: 0,
   displayPercentage: null,
-  autoComplete: null,
+  autoComplete: 50,
   verifyEmail: null,
   redirectUrl: null,
   productOverwrites: null,
-  styling: {},
   surveyClosedMessage: null,
   singleUse: {
     enabled: false,
@@ -95,7 +128,7 @@ export const PREVIEW_SURVEY = {
   },
   pin: null,
   resultShareKey: null,
+  languages: [],
   triggers: [],
   inlineTriggers: null,
-  segment: null,
-};
+} as TSurvey;

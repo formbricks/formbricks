@@ -24,17 +24,6 @@ type UnifiedStylingProps = {
   colors: string[];
 };
 
-interface SurveyStyling {
-  background?: {
-    bg?: string;
-    bgType?: string;
-  };
-}
-
-interface Survey {
-  styling: SurveyStyling;
-}
-
 export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
@@ -71,7 +60,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
 
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
-  const [styledPreviewSurvey, setStyledPreviewSurvey] = useState<Survey>(PREVIEW_SURVEY);
+  const [styledPreviewSurvey, setStyledPreviewSurvey] = useState<TSurvey>(PREVIEW_SURVEY);
 
   useEffect(() => {
     setActiveQuestionId(PREVIEW_SURVEY.questions[0].id);
@@ -164,7 +153,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
       styling: {
         ...currentSurvey.styling,
         background: {
-          ...currentSurvey.styling.background,
+          ...(currentSurvey.styling?.background ?? {}),
           bg: "#ffffff",
           bgType: "color",
         },

@@ -171,6 +171,7 @@ export const UnifiedStylingPreviewSurvey = ({
                 onFileUpload={onFileUpload}
                 styling={product.styling}
                 isCardBorderVisible={!highlightBorderColor}
+                languageCode="default"
               />
             </Modal>
           ) : (
@@ -185,6 +186,7 @@ export const UnifiedStylingPreviewSurvey = ({
                   onFileUpload={onFileUpload}
                   responseCount={42}
                   styling={product.styling}
+                  languageCode="default"
                 />
               </div>
             </MediaBackground>
