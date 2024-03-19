@@ -27,6 +27,7 @@ interface ResponseTimelineProps {
   deleteResponse: (responseId: string) => void;
   fetchingFirstPage: boolean;
   responseCount: number | null;
+  totalResponseCount: number;
 }
 
 export default function ResponseTimeline({
@@ -41,6 +42,7 @@ export default function ResponseTimeline({
   deleteResponse,
   fetchingFirstPage,
   responseCount,
+  totalResponseCount,
 }: ResponseTimelineProps) {
   const loadingRef = useRef(null);
 
@@ -81,6 +83,7 @@ export default function ResponseTimeline({
           type="response"
           environment={environment}
           noWidgetRequired={survey.type === "link"}
+          emptyMessage={totalResponseCount === 0 ? undefined : "No response matches your filter"}
         />
       ) : (
         <div>

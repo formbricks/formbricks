@@ -36,6 +36,7 @@ interface ResponsePageProps {
   attributes: TSurveyPersonAttributes;
   responsesPerPage: number;
   membershipRole?: TMembershipRole;
+  totalResponseCount: number;
 }
 
 const ResponsePage = ({
@@ -49,6 +50,7 @@ const ResponsePage = ({
   attributes,
   responsesPerPage,
   membershipRole,
+  totalResponseCount,
 }: ResponsePageProps) => {
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [responses, setResponses] = useState<TResponse[]>([]);
@@ -160,6 +162,7 @@ const ResponsePage = ({
         updateResponse={updateResponse}
         fetchingFirstPage={isFetchingFirstPage}
         responseCount={responseCount}
+        totalResponseCount={totalResponseCount}
       />
     </ContentWrapper>
   );

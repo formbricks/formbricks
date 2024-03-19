@@ -52,6 +52,7 @@ interface SummaryPageProps {
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
   membershipRole?: TMembershipRole;
+  totalResponseCount: number;
 }
 
 const SummaryPage = ({
@@ -64,6 +65,7 @@ const SummaryPage = ({
   environmentTags,
   attributes,
   membershipRole,
+  totalResponseCount,
 }: SummaryPageProps) => {
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
@@ -142,6 +144,7 @@ const SummaryPage = ({
         survey={survey}
         environment={environment}
         fetchingSummary={isFetchingSummary}
+        totalResponseCount={totalResponseCount}
       />
     </ContentWrapper>
   );

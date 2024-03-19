@@ -46,6 +46,7 @@ interface SummaryPageProps {
   sharingKey: string;
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
+  totalResponseCount: number;
 }
 
 const SummaryPage = ({
@@ -56,6 +57,7 @@ const SummaryPage = ({
   sharingKey,
   environmentTags,
   attributes,
+  totalResponseCount,
 }: SummaryPageProps) => {
   const [responseCount, setResponseCount] = useState<number | null>(null);
 
@@ -127,6 +129,7 @@ const SummaryPage = ({
         survey={survey}
         environment={environment}
         fetchingSummary={isFetchingSummary}
+        totalResponseCount={totalResponseCount}
       />
     </ContentWrapper>
   );

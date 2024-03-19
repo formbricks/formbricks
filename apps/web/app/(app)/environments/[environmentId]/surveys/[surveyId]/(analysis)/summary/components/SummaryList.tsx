@@ -25,6 +25,7 @@ interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   fetchingSummary: boolean;
+  totalResponseCount: number;
 }
 
 export default function SummaryList({
@@ -33,6 +34,7 @@ export default function SummaryList({
   responseCount,
   survey,
   fetchingSummary,
+  totalResponseCount,
 }: SummaryListProps) {
   return (
     <div className="mt-10 space-y-8">
@@ -45,6 +47,7 @@ export default function SummaryList({
           type="response"
           environment={environment}
           noWidgetRequired={survey.type === "link"}
+          emptyMessage={totalResponseCount === 0 ? undefined : "No response matches your filter"}
         />
       ) : (
         summary.map((questionSummary) => {

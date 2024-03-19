@@ -31,6 +31,7 @@ interface ResponsePageProps {
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
   responsesPerPage: number;
+  totalResponseCount: number;
 }
 
 const ResponsePage = ({
@@ -42,6 +43,7 @@ const ResponsePage = ({
   environmentTags,
   attributes,
   responsesPerPage,
+  totalResponseCount,
 }: ResponsePageProps) => {
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -133,6 +135,7 @@ const ResponsePage = ({
         hasMore={hasMore}
         fetchingFirstPage={isFetchingFirstPage}
         responseCount={responseCount}
+        totalResponseCount={totalResponseCount}
       />
     </ContentWrapper>
   );
