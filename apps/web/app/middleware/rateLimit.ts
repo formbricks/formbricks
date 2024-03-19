@@ -1,6 +1,6 @@
 import { LRUCache } from "lru-cache";
 
-import { REDIS_HTTP_CLIENT_URL } from "@formbricks/lib/constants";
+import { REDIS_HTTP_CLIENT_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 
 type Options = {
   interval: number;
@@ -24,20 +24,21 @@ const inMemoryRateLimiter = (options: Options) => {
 
 const redisRateLimiter = (options: Options) => {
   return async (token: string) => {
-    const tokenCountResponse = await fetch(`${REDIS_HTTP_CLIENT_URL}/INCR/${token}`);
-    const tokenCountData = await tokenCountResponse.json();
-    const tokenCount = parseInt(tokenCountData["INCR"]);
-    if (tokenCount === 1) {
-      await fetch(`${REDIS_HTTP_CLIENT_URL}/EXPIRE/${token}/${options.interval / 1000}`);
-    }
-
-    if (tokenCount > options.allowedPerInterval) {
+    const tokenCountResponse = await fetch(
+      `${WEBAPP_URL}/api/internal/cache?token=${token}&interval=${options.interval}&allowedPerInterval=${options.allowedPerInterval}`
+    );
+    const {
+      data: { rateLimitExceeded },
+    } = await tokenCountResponse.json();
+    if (!tokenCountResponse.ok || rateLimitExceeded) {
       throw new Error("Rate limit exceeded for IP: " + token);
     }
   };
 };
 
 export default function rateLimit(options: Options) {
+  console.log("REDIS_HTTP_CLIENT_URL", REDIS_HTTP_CLIENT_URL);
+
   if (REDIS_HTTP_CLIENT_URL) {
     return redisRateLimiter(options);
   } else {

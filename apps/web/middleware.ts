@@ -45,22 +45,24 @@ export async function middleware(request: NextRequest) {
   if (ip) {
     try {
       if (loginRoute(request.nextUrl.pathname)) {
-        await loginLimiter(ip);
+        await loginLimiter(`login-${ip}`);
       } else if (signupRoute(request.nextUrl.pathname)) {
-        await signUpLimiter(ip);
+        await signUpLimiter(`signup-${ip}`);
       } else if (clientSideApiRoute(request.nextUrl.pathname)) {
-        await clientSideApiEndpointsLimiter(ip);
+        await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
 
         const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
         if (envIdAndUserId) {
           const { environmentId, userId } = envIdAndUserId;
-          await syncUserIdentificationLimiter(`${environmentId}-${userId}`);
+          await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
         }
       } else if (shareUrlRoute(request.nextUrl.pathname)) {
-        await shareUrlLimiter(ip);
+        await shareUrlLimiter(`share-${ip}`);
       }
       return NextResponse.next();
     } catch (e) {
+      console.log("error catched in middlware", e);
+
       console.log("Rate Limiting IP: ", ip);
 
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
