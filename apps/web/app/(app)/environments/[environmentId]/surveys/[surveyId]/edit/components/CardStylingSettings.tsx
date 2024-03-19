@@ -163,11 +163,7 @@ const CardStylingSettings = ({
   };
 
   const hideProgressBar = useMemo(() => {
-    if (isSurveyStyling(styling)) {
-      return styling.hideProgressBar;
-    }
-
-    return false;
+    return styling.hideProgressBar;
   }, [styling]);
 
   return (
@@ -219,7 +215,6 @@ const CardStylingSettings = ({
             setColor={setCardBorderColor}
             description="Change the border color of the card."
             Badge={() => <Badge text={"Link Survey"} type="gray" size="normal" />}
-            disabled={isHighlightBorderAllowed}
           />
 
           <ColorSelectorWithLabel
@@ -261,36 +256,38 @@ const CardStylingSettings = ({
           </div>
 
           {/* Positioning */}
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center space-x-1">
-              <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />
-              <Label htmlFor="surveyDeadline" className="cursor-pointer">
-                <div className="ml-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Overwrite Placement</h3>
-                    <Badge text="In-App Surveys" type="gray" size="normal" />
+          {isSurveyStyling(styling) && (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center space-x-1">
+                <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />
+                <Label htmlFor="surveyDeadline" className="cursor-pointer">
+                  <div className="ml-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-slate-700">Overwrite Placement</h3>
+                      <Badge text="In-App Surveys" type="gray" size="normal" />
+                    </div>
+                    <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
                   </div>
-                  <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
-                </div>
-              </Label>
-            </div>
-            {placement && (
-              <div className="flex items-center space-x-1 pb-4">
-                <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                  <div className="w-full items-center">
-                    <Placement
-                      currentPlacement={placement}
-                      setCurrentPlacement={handlePlacementChange}
-                      setOverlay={handleOverlay}
-                      overlay={darkOverlay ? "dark" : "light"}
-                      setClickOutsideClose={handleClickOutsideClose}
-                      clickOutsideClose={!!clickOutsideClose}
-                    />
-                  </div>
-                </div>
+                </Label>
               </div>
-            )}
-          </div>
+              {placement && (
+                <div className="flex items-center space-x-1 pb-4">
+                  <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
+                    <div className="w-full items-center">
+                      <Placement
+                        currentPlacement={placement}
+                        setCurrentPlacement={handlePlacementChange}
+                        setOverlay={handleOverlay}
+                        overlay={darkOverlay ? "dark" : "light"}
+                        setClickOutsideClose={handleClickOutsideClose}
+                        clickOutsideClose={!!clickOutsideClose}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center space-x-1">
             <Switch

@@ -64,7 +64,6 @@ export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
 export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
 
 export const ZSurveyStyling = ZBaseStyling.extend({
-  hideProgressBar: z.boolean().nullish(),
   overwriteUnifiedStyling: z.boolean().nullish(),
 });
 

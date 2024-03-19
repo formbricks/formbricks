@@ -5,6 +5,7 @@ import { TSurvey, TSurveyStyling } from "./surveys";
 
 export interface SurveyBaseProps {
   survey: TSurvey;
+  styling: TSurveyStyling | TProductStyling;
   isBrandingEnabled: boolean;
   activeQuestionId?: string;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
@@ -21,7 +22,6 @@ export interface SurveyBaseProps {
   languageCode: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
-  styling: TSurveyStyling | TProductStyling;
   isCardBorderVisible?: boolean;
 }
 
