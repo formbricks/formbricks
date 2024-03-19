@@ -1,11 +1,13 @@
 "use client";
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
+import { LoadingSkeleton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LoadingSkeleton";
 import StylingView from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
-import Loading from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/loading";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
+import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
+import useDocumentVisibility from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -31,6 +33,7 @@ interface SurveyEditorProps {
   membershipRole?: TMembershipRole;
   colors: string[];
   isUserTargetingAllowed?: boolean;
+  isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
 }
 
@@ -44,14 +47,36 @@ export default function SurveyEditor({
   responseCount,
   membershipRole,
   colors,
+  isMultiLanguageAllowed,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(survey);
-  const [invalidQuestions, setInvalidQuestions] = useState<String[] | null>(null);
+  const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
+  const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
+  const surveyEditorRef = useRef(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
+
+  const fetchLatestProduct = useCallback(async () => {
+    const latestProduct = await refetchProduct(localProduct.id);
+    if (latestProduct) {
+      setLocalProduct(latestProduct);
+    }
+  }, [localProduct.id]);
+
+  useDocumentVisibility(fetchLatestProduct);
+
+  useEffect(() => {
+    if (survey) {
+      const surveyClone = structuredClone(survey);
+      setLocalSurvey(surveyClone);
+      if (survey.questions.length > 0) {
+        setActiveQuestionId(survey.questions[0].id);
+      }
+    }
+  }, [survey]);
 
   useEffect(() => {
     const listener = () => {
@@ -76,7 +101,6 @@ export default function SurveyEditor({
     if (localSurvey?.questions?.length && localSurvey.questions.length > 0) {
       setActiveQuestionId(localSurvey.questions[0].id);
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type, survey?.questions]);
 
@@ -85,7 +109,6 @@ export default function SurveyEditor({
     if (!localSurvey) {
       return;
     }
-
     // do nothing if its not an in-app survey
     if (localSurvey.type !== "web") {
       return;
@@ -118,8 +141,16 @@ export default function SurveyEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type]);
 
+  useEffect(() => {
+    if (!localSurvey?.languages) return;
+    const enabledLanguageCodes = extractLanguageCodes(getEnabledLanguages(localSurvey.languages ?? []));
+    if (!enabledLanguageCodes.includes(selectedLanguageCode)) {
+      setSelectedLanguageCode("default");
+    }
+  }, [localSurvey?.languages, selectedLanguageCode]);
+
   if (!localSurvey) {
-    return <Loading />;
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -135,13 +166,15 @@ export default function SurveyEditor({
           setInvalidQuestions={setInvalidQuestions}
           product={localProduct}
           responseCount={responseCount}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
-          <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
+          <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
             <QuestionsAudienceTabs
               activeId={activeView}
               setActiveId={setActiveView}
-              isStylingTabVisible={!!product.styling?.allowStyleOverwrite}
+              isStylingTabVisible={!!product.styling.allowStyleOverwrite}
             />
 
             {activeView === "questions" && (
@@ -153,10 +186,14 @@ export default function SurveyEditor({
                 product={localProduct}
                 invalidQuestions={invalidQuestions}
                 setInvalidQuestions={setInvalidQuestions}
+                selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                isMultiLanguageAllowed={isMultiLanguageAllowed}
+                isFormbricksCloud={isFormbricksCloud}
               />
             )}
 
-            {activeView === "styling" && product.styling?.allowStyleOverwrite && (
+            {activeView === "styling" && product.styling.allowStyleOverwrite && (
               <StylingView
                 colors={colors}
                 environment={environment}
@@ -181,6 +218,7 @@ export default function SurveyEditor({
               />
             )}
           </main>
+
           <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 py-6 md:flex md:flex-col">
             <PreviewSurvey
               survey={localSurvey}
@@ -189,6 +227,7 @@ export default function SurveyEditor({
               product={localProduct}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
+              languageCode={selectedLanguageCode}
               onFileUpload={async (file) => file.name}
             />
           </aside>

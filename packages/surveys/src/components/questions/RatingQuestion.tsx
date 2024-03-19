@@ -6,6 +6,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 
@@ -31,6 +32,7 @@ interface RatingQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -43,6 +45,7 @@ export default function RatingQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   ttc,
   setTtc,
 }: RatingQuestionProps) {
@@ -92,8 +95,15 @@ export default function RatingQuestion({
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />
       <div className="mb-4 mt-6 flex items-center justify-center">
         <fieldset className="w-full">
           <legend className="sr-only">Choices</legend>
@@ -181,8 +191,8 @@ export default function RatingQuestion({
             ))}
           </div>
           <div className="text-subheading mt-4 flex justify-between px-1.5 text-xs leading-6">
-            <p className="w-1/2 text-left">{question.lowerLabel}</p>
-            <p className="w-1/2 text-right">{question.upperLabel}</p>
+            <p className="w-1/2 text-left">{getLocalizedValue(question.lowerLabel, "default")}</p>
+            <p className="w-1/2 text-right">{getLocalizedValue(question.upperLabel, "default")}</p>
           </div>
         </fieldset>
       </div>
@@ -191,7 +201,7 @@ export default function RatingQuestion({
         {!isFirstQuestion && (
           <BackButton
             tabIndex={!question.required || value ? question.range + 2 : question.range + 1}
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -203,7 +213,7 @@ export default function RatingQuestion({
         {(!question.required || value) && (
           <SubmitButton
             tabIndex={question.range + 1}
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

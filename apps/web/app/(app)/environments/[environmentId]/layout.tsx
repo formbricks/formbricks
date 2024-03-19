@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { AuthorizationError } from "@formbricks/types/errors";
@@ -42,11 +41,7 @@ export default async function EnvironmentLayout({ children, params }) {
         />
         <FormbricksClient session={session} />
         <ToasterClient />
-        <EnvironmentsNavbar
-          environmentId={params.environmentId}
-          session={session}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-        />
+        <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
         <main className="h-full flex-1 overflow-y-auto bg-slate-50">
           {children}
           <main />

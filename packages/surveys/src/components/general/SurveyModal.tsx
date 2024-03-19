@@ -22,6 +22,7 @@ export function SurveyModal({
   onFileUpload,
   onRetry,
   isRedirectDisabled = false,
+  languageCode,
   responseCount,
   styling,
 }: SurveyModalProps) {
@@ -55,6 +56,7 @@ export function SurveyModal({
           getSetIsResponseSendingFinished={getSetIsResponseSendingFinished}
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
+          languageCode={languageCode}
           onClose={close}
           onFinished={() => {
             onFinished();

@@ -25,6 +25,7 @@ const selectProduct = {
   updatedAt: true,
   name: true,
   teamId: true,
+  languages: true,
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,
@@ -109,7 +110,6 @@ export const updateProduct = async (
   inputProduct: TProductUpdateInput
 ): Promise<TProduct> => {
   validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput]);
-
   const { environments, ...data } = inputProduct;
   let updatedProduct;
   try {

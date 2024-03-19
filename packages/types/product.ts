@@ -11,6 +11,26 @@ export const ZProductStyling = ZBaseStyling.extend({
 
 export type TProductStyling = z.infer<typeof ZProductStyling>;
 
+export const ZLanguage = z.object({
+  id: z.string().cuid2(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  code: z.string(),
+  alias: z.string().nullable(),
+});
+export type TLanguage = z.infer<typeof ZLanguage>;
+
+export const ZLanguageInput = z.object({
+  code: z.string(),
+  alias: z.string().nullable(),
+});
+export type TLanguageInput = z.infer<typeof ZLanguageInput>;
+
+export const ZLanguageUpdate = z.object({
+  alias: z.string().nullable(),
+});
+export type TLanguageUpdate = z.infer<typeof ZLanguageUpdate>;
+
 export const ZProduct = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -27,6 +47,7 @@ export const ZProduct = z.object({
   environments: z.array(ZEnvironment),
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
+  languages: z.array(ZLanguage),
 });
 
 export type TProduct = z.infer<typeof ZProduct>;

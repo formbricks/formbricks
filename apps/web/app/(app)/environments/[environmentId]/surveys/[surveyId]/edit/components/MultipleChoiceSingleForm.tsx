@@ -1,15 +1,17 @@
 "use client";
 
+import { isLabelValidForAllLanguages } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Validation";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 
-import { cn } from "@formbricks/lib/cn";
-import { TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbricks/ui/Select";
 
 interface OpenQuestionFormProps {
@@ -18,6 +20,8 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
 }
 
@@ -27,13 +31,16 @@ export default function MultipleChoiceSingleForm({
   updateQuestion,
   isInvalid,
   localSurvey,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: OpenQuestionFormProps): JSX.Element {
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);
   const questionRef = useRef<HTMLInputElement>(null);
-
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
+  const surveyLanguages = localSurvey.languages ?? [];
   const shuffleOptionsTypes = {
     none: {
       id: "none",
@@ -55,23 +62,19 @@ export default function MultipleChoiceSingleForm({
   const findDuplicateLabel = () => {
     for (let i = 0; i < question.choices.length; i++) {
       for (let j = i + 1; j < question.choices.length; j++) {
-        if (question.choices[i].label.trim() === question.choices[j].label.trim()) {
-          return question.choices[i].label.trim(); // Return the duplicate label
+        if (
+          getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim() ===
+          getLocalizedValue(question.choices[j].label, selectedLanguageCode).trim()
+        ) {
+          return getLocalizedValue(question.choices[i].label, selectedLanguageCode).trim(); // Return the duplicate label
         }
       }
     }
     return null;
   };
 
-  const findEmptyLabel = () => {
-    for (let i = 0; i < question.choices.length; i++) {
-      if (question.choices[i].label.trim() === "") return true;
-    }
-    return false;
-  };
-
-  const updateChoice = (choiceIdx: number, updatedAttributes: { label: string }) => {
-    const newLabel = updatedAttributes.label;
+  const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
+    const newLabel = updatedAttributes.label.en;
     const oldLabel = question.choices[choiceIdx].label;
     let newChoices: any[] = [];
     if (question.choices) {
@@ -87,7 +90,7 @@ export default function MultipleChoiceSingleForm({
       if (Array.isArray(logic.value)) {
         newL = logic.value.map((value) => (value === oldLabel ? newLabel : value));
       } else {
-        newL = logic.value === oldLabel ? newLabel : logic.value;
+        newL = logic.value === getLocalizedValue(oldLabel, selectedLanguageCode) ? newLabel : logic.value;
       }
       newLogic.push({ ...logic, value: newL });
     });
@@ -101,7 +104,10 @@ export default function MultipleChoiceSingleForm({
     if (otherChoice) {
       newChoices = newChoices.filter((choice) => choice.id !== "other");
     }
-    const newChoice = { id: createId(), label: "" };
+    const newChoice = {
+      id: createId(),
+      label: createI18nString("", surveyLanguageCodes),
+    };
     if (choiceIdx !== undefined) {
       newChoices.splice(choiceIdx + 1, 0, newChoice);
     } else {
@@ -116,7 +122,10 @@ export default function MultipleChoiceSingleForm({
   const addOther = () => {
     if (question.choices.filter((c) => c.id === "other").length === 0) {
       const newChoices = !question.choices ? [] : question.choices.filter((c) => c.id !== "other");
-      newChoices.push({ id: "other", label: "Other" });
+      newChoices.push({
+        id: "other",
+        label: createI18nString("Other", surveyLanguageCodes),
+      });
       updateQuestion(questionIdx, {
         choices: newChoices,
         ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
@@ -128,8 +137,7 @@ export default function MultipleChoiceSingleForm({
 
   const deleteChoice = (choiceIdx: number) => {
     const newChoices = !question.choices ? [] : question.choices.filter((_, idx) => idx !== choiceIdx);
-
-    const choiceValue = question.choices[choiceIdx].label;
+    const choiceValue = question.choices[choiceIdx].label[selectedLanguageCode];
     if (isInvalidValue === choiceValue) {
       setisInvalidValue(null);
     }
@@ -160,43 +168,43 @@ export default function MultipleChoiceSingleForm({
     }
   }, [isNew]);
 
-  const environmentId = localSurvey.environmentId;
-
   return (
     <form>
       <QuestionFormInput
+        id="headline"
+        value={question.headline}
         localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        ref={questionRef}
-        questionId={question.id}
         questionIdx={questionIdx}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        type="headline"
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
 
       <div>
         {showSubheader && (
-          <>
-            <div className="flex w-full items-center">
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
               <QuestionFormInput
+                id="subheader"
+                value={question.subheader}
                 localSurvey={localSurvey}
-                environmentId={environmentId}
-                isInvalid={isInvalid}
-                questionId={question.id}
                 questionIdx={questionIdx}
+                isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                type="subheader"
-              />
-              <TrashIcon
-                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
-                }}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: undefined });
+              }}
+            />
+          </div>
         )}
         {!showSubheader && (
           <Button
@@ -204,7 +212,13 @@ export default function MultipleChoiceSingleForm({
             variant="minimal"
             className="mt-3"
             type="button"
-            onClick={() => setShowSubheader(true)}>
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                subheader: createI18nString("", surveyLanguageCodes),
+              });
+              setShowSubheader(true);
+            }}>
+            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -213,45 +227,55 @@ export default function MultipleChoiceSingleForm({
 
       <div className="mt-3">
         <Label htmlFor="choices">Options</Label>
-        <div className="mt-2 space-y-2" id="choices">
+        <div className="mt-2 -space-y-2" id="choices">
           {question.choices &&
             question.choices.map((choice, choiceIdx) => (
-              <div key={choiceIdx} className="flex w-full items-center">
+              <div className="inline-flex w-full items-center">
                 <div className="flex w-full space-x-2">
-                  <Input
-                    ref={choiceIdx === question.choices.length - 1 ? lastChoiceRef : null}
-                    id={choice.id}
-                    name={choice.id}
-                    value={choice.label}
-                    className={cn(choice.id === "other" && "border-dashed")}
+                  <QuestionFormInput
+                    key={choice.id}
+                    id={`choice-${choiceIdx}`}
                     placeholder={choice.id === "other" ? "Other" : `Option ${choiceIdx + 1}`}
+                    localSurvey={localSurvey}
+                    questionIdx={questionIdx}
+                    value={choice.label}
                     onBlur={() => {
                       const duplicateLabel = findDuplicateLabel();
                       if (duplicateLabel) {
+                        toast.error("Duplicate choices");
                         setisInvalidValue(duplicateLabel);
-                      } else if (findEmptyLabel()) {
-                        setisInvalidValue("");
                       } else {
                         setisInvalidValue(null);
                       }
                     }}
-                    onChange={(e) => updateChoice(choiceIdx, { label: e.target.value })}
+                    updateChoice={updateChoice}
+                    selectedLanguageCode={selectedLanguageCode}
+                    setSelectedLanguageCode={setSelectedLanguageCode}
                     isInvalid={
-                      (isInvalidValue === "" && choice.label.trim() === "") ||
-                      (isInvalidValue !== null && choice.label.trim() === isInvalidValue.trim())
+                      isInvalid &&
+                      !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
                     }
+                    className={`${choice.id === "other" ? "border border-dashed" : ""}`}
                   />
                   {choice.id === "other" && (
-                    <Input
-                      id="otherInputLabel"
-                      name="otherInputLabel"
-                      value={question.otherOptionPlaceholder ?? "Please specify"}
-                      placeholder={question.otherOptionPlaceholder ?? "Please specify"}
-                      className={cn(choice.id === "other" && "border-dashed")}
-                      onChange={(e) => {
-                        if (e.target.value.trim() == "") e.target.value = "";
-                        updateQuestion(questionIdx, { otherOptionPlaceholder: e.target.value });
-                      }}
+                    <QuestionFormInput
+                      id="otherOptionPlaceholder"
+                      localSurvey={localSurvey}
+                      placeholder={"Please specify"}
+                      questionIdx={questionIdx}
+                      value={
+                        question.otherOptionPlaceholder
+                          ? question.otherOptionPlaceholder
+                          : createI18nString("Please specify", surveyLanguageCodes)
+                      }
+                      updateQuestion={updateQuestion}
+                      selectedLanguageCode={selectedLanguageCode}
+                      setSelectedLanguageCode={setSelectedLanguageCode}
+                      isInvalid={
+                        isInvalid &&
+                        !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
+                      }
+                      className="border border-dashed"
                     />
                   )}
                 </div>

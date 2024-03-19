@@ -51,7 +51,6 @@ export default async function Page({ params }) {
   if (!team) {
     throw new Error("Team not found");
   }
-
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
   const tags = await getTagsByEnvironmentId(params.environmentId);

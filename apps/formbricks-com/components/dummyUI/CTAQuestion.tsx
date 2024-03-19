@@ -1,7 +1,6 @@
-import { TSurveyCTAQuestion } from "@formbricks/types/surveys";
-
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
+import { TSurveyCTAQuestion } from "./types";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;

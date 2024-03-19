@@ -10,6 +10,7 @@ import { ErrorHandler } from "./errors";
 import { putFormbricksInErrorState } from "./initialize";
 import { Logger } from "./logger";
 import { filterPublicSurveys, sync } from "./sync";
+import { getDefaultLanguageCode, getLanguageCode } from "./utils";
 
 const containerId = "formbricks-web-container";
 
@@ -36,6 +37,21 @@ export const renderWidget = async (survey: TSurvey) => {
   }
 
   const product = config.get().state.product;
+  const attributes = config.get().state.attributes;
+
+  const isMultiLanguageSurvey = survey.languages.length > 1;
+  let languageCode = "default";
+
+  if (isMultiLanguageSurvey) {
+    const displayLanguage = getLanguageCode(survey, attributes);
+    //if survey is not available in selected language, survey wont be shown
+    if (!displayLanguage) {
+      logger.debug("Survey not available in specified language.");
+      setIsSurveyRunning(true);
+      return;
+    }
+    languageCode = displayLanguage;
+  }
 
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
@@ -53,7 +69,6 @@ export const renderWidget = async (survey: TSurvey) => {
     },
     surveyState
   );
-
   const productOverwrites = survey.productOverwrites ?? {};
   const clickOutside = productOverwrites.clickOutsideClose ?? product.clickOutsideClose;
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
@@ -92,6 +107,7 @@ export const renderWidget = async (survey: TSurvey) => {
       isBrandingEnabled: isBrandingEnabled,
       clickOutside,
       darkOverlay,
+      languageCode,
       placement,
       styling: getStyling(),
       getSetIsError: (f: (value: boolean) => void) => {
@@ -170,6 +186,7 @@ export const renderWidget = async (survey: TSurvey) => {
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
+          language: languageCode === "default" ? getDefaultLanguageCode(survey) : languageCode,
         });
       },
       onClose: closeSurvey,
