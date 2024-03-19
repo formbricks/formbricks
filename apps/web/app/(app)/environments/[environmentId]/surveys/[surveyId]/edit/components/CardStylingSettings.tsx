@@ -218,7 +218,6 @@ const CardStylingSettings = ({
             color={cardBorderColor}
             setColor={setCardBorderColor}
             description="Change the border color of the card."
-            Badge={() => <Badge text={"Link Survey"} type="gray" size="normal" />}
             disabled={isHighlightBorderAllowed}
           />
 
