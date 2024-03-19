@@ -68,7 +68,7 @@ const EmptySpaceFiller: React.FC<EmptySpaceFillerProps> = ({
             )}
             {(environment.widgetSetupCompleted || noWidgetRequired) && (
               <span className="bg-light-background-primary-500 text-center">
-                {emptyMessage || "Waiting for a response"} 🧘‍♂️
+                {emptyMessage ?? "Waiting for a response"} 🧘‍♂️
               </span>
             )}
           </div>
