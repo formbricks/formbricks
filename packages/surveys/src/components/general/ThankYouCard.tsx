@@ -5,14 +5,19 @@ import RedirectCountDown from "@/components/general/RedirectCountdown";
 import Subheader from "@/components/general/Subheader";
 import { useEffect } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TI18nString } from "@formbricks/types/surveys";
+
 interface ThankYouCardProps {
-  headline?: string;
-  subheader?: string;
+  headline?: TI18nString;
+  subheader?: TI18nString;
   redirectUrl: string | null;
   isRedirectDisabled: boolean;
-  buttonLabel?: string;
+  languageCode: string;
+  buttonLabel?: TI18nString;
   buttonLink?: string;
   imageUrl?: string;
+  replaceRecallInfo: (text: string) => string;
   isResponseSendingFinished: boolean;
 }
 
@@ -21,9 +26,11 @@ export default function ThankYouCard({
   subheader,
   redirectUrl,
   isRedirectDisabled,
+  languageCode,
   buttonLabel,
   buttonLink,
   imageUrl,
+  replaceRecallInfo,
   isResponseSendingFinished,
 }: ThankYouCardProps) {
   useEffect(() => {
@@ -65,13 +72,20 @@ export default function ThankYouCard({
       )}
 
       <div>
-        <Headline alignTextCenter={true} headline={headline} questionId="thankYouCard" />
-        <Subheader subheader={subheader} questionId="thankYouCard" />
+        <Headline
+          alignTextCenter={true}
+          headline={replaceRecallInfo(getLocalizedValue(headline, languageCode))}
+          questionId="thankYouCard"
+        />
+        <Subheader
+          subheader={replaceRecallInfo(getLocalizedValue(subheader, languageCode))}
+          questionId="thankYouCard"
+        />
         <RedirectCountDown redirectUrl={redirectUrl} isRedirectDisabled={isRedirectDisabled} />
         {buttonLabel && isResponseSendingFinished && (
           <div className="mt-6 flex w-full flex-col items-center justify-center space-y-4">
             <Button
-              buttonLabel={buttonLabel}
+              buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
               isLastQuestion={false}
               onClick={() => {
                 if (!buttonLink) return;

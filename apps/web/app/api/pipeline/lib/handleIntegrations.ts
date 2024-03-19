@@ -1,5 +1,6 @@
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
 import { writeData } from "@formbricks/lib/googleSheet/service";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
 import { processResponseData } from "@formbricks/lib/responses";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -64,7 +65,7 @@ async function extractResponses(data: TPipelineInput, questionIds: string[]): Pr
     responses.push(processResponseData(responseValue));
 
     const question = survey?.questions.find((q) => q.id === questionId);
-    questions.push(question?.headline || "");
+    questions.push(getLocalizedValue(question?.headline, "default") || "");
   }
 
   return [responses, questions];

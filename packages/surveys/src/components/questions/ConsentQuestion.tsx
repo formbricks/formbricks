@@ -6,6 +6,7 @@ import QuestionImage from "@/components/general/QuestionImage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 
@@ -17,6 +18,7 @@ interface ConsentQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -29,6 +31,7 @@ export const ConsentQuestion = ({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   ttc,
   setTtc,
 }: ConsentQuestionProps) => {
@@ -39,9 +42,12 @@ export const ConsentQuestion = ({
   return (
     <div key={question.id}>
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <HtmlBody htmlString={question.html || ""} questionId={question.id} />
-
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <HtmlBody htmlString={getLocalizedValue(question.html, languageCode) || ""} questionId={question.id} />
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -61,7 +67,7 @@ export const ConsentQuestion = ({
             type="checkbox"
             id={question.id}
             name={question.id}
-            value={question.label}
+            value={getLocalizedValue(question.label, languageCode)}
             onChange={(e) => {
               if (e.target instanceof HTMLInputElement && e.target.checked) {
                 onChange({ [question.id]: "accepted" });
@@ -75,7 +81,7 @@ export const ConsentQuestion = ({
             required={question.required}
           />
           <span id={`${question.id}-label`} className="ml-3 font-medium">
-            {question.label}
+            {getLocalizedValue(question.label, languageCode)}
           </span>
         </label>
 
@@ -83,7 +89,7 @@ export const ConsentQuestion = ({
           {!isFirstQuestion && (
             <BackButton
               tabIndex={3}
-              backButtonLabel={question.backButtonLabel}
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);
@@ -95,7 +101,7 @@ export const ConsentQuestion = ({
           <div />
           <SubmitButton
             tabIndex={2}
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

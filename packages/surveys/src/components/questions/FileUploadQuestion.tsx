@@ -2,6 +2,7 @@ import QuestionImage from "@/components/general/QuestionImage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
@@ -22,6 +23,7 @@ interface FileUploadQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   surveyId: string;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -36,6 +38,7 @@ export const FileUploadQuestion = ({
   isLastQuestion,
   surveyId,
   onFileUpload,
+  languageCode,
   ttc,
   setTtc,
 }: FileUploadQuestionProps) => {
@@ -66,9 +69,15 @@ export const FileUploadQuestion = ({
       }}
       className="w-full ">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
-
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />
       <FileInput
         surveyId={surveyId}
         onFileUpload={onFileUpload}
@@ -90,14 +99,18 @@ export const FileUploadQuestion = ({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               onBack();
             }}
           />
         )}
         <div></div>
-        <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
+        <SubmitButton
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+        />
       </div>
     </form>
   );

@@ -7,6 +7,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 import { useCallback } from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
@@ -20,6 +21,7 @@ interface OpenTextQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -32,6 +34,7 @@ export const OpenTextQuestion = ({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   autoFocus = true,
   ttc,
   setTtc,
@@ -77,8 +80,15 @@ export const OpenTextQuestion = ({
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />
       <div className="mt-4">
         {question.longAnswer === false ? (
           <input
@@ -86,8 +96,8 @@ export const OpenTextQuestion = ({
             tabIndex={1}
             name={question.id}
             id={question.id}
+            placeholder={getLocalizedValue(question.placeholder, languageCode)}
             step={"any"}
-            placeholder={question.placeholder}
             required={question.required}
             value={value ? (value as string) : ""}
             type={question.inputType}
@@ -104,7 +114,7 @@ export const OpenTextQuestion = ({
             name={question.id}
             tabIndex={1}
             id={question.id}
-            placeholder={question.placeholder}
+            placeholder={getLocalizedValue(question.placeholder, languageCode)}
             required={question.required}
             value={value as string}
             type={question.inputType}
@@ -119,11 +129,10 @@ export const OpenTextQuestion = ({
           />
         )}
       </div>
-
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedttc);
@@ -132,7 +141,11 @@ export const OpenTextQuestion = ({
           />
         )}
         <div></div>
-        <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
+        <SubmitButton
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+        />
       </div>
     </form>
   );

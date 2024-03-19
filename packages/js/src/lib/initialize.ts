@@ -86,23 +86,20 @@ export const initialize = async (
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
 
-  if (!c.userId && c.attributes) {
-    logger.error("No userId provided but attributes. Cannot update attributes without userId.");
-    return err({
-      code: "missing_field",
-      field: "userId",
-    });
-  }
-
-  // if userId and attributes are available, set them in backend
   let updatedAttributes: TPersonAttributes | null = null;
-  if (c.userId && c.attributes) {
-    const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
-
-    if (res.ok !== true) {
-      return err(res.error);
+  if (c.attributes) {
+    if (!c.userId) {
+      // Allow setting attributes for unidentified users
+      updatedAttributes = { ...c.attributes };
     }
-    updatedAttributes = res.value;
+    // If userId is available, update attributes in backend
+    else {
+      const res = await updatePersonAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+      if (res.ok !== true) {
+        return err(res.error);
+      }
+      updatedAttributes = res.value;
+    }
   }
 
   if (
@@ -149,7 +146,6 @@ export const initialize = async (
     // and track the new session event
     await trackAction("New Session");
   }
-
   // update attributes in config
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
     config.update({
@@ -160,6 +156,7 @@ export const initialize = async (
         ...config.get().state,
         attributes: { ...config.get().state.attributes, ...c.attributes },
       },
+      expiresAt: config.get().expiresAt,
     });
   }
 

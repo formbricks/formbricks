@@ -46,6 +46,7 @@ export const SignupForm = ({
   const [error, setError] = useState<string>("");
   const [signingUp, setSigningUp] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   const inviteToken = searchParams?.get("inviteToken");
   const callbackUrl = useMemo(() => {
@@ -85,7 +86,6 @@ export const SignupForm = ({
 
   const [showLogin, setShowLogin] = useState(false);
   const [isButtonEnabled, setButtonEnabled] = useState(true);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [password, setPassword] = useState<string | null>(null);
   const [isValid, setIsValid] = useState(false);
