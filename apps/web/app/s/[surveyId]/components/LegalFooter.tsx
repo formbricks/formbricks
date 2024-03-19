@@ -26,11 +26,7 @@ export default function LegalFooter({
   };
 
   return (
-    <div
-      className={`absolute bottom-0 h-12 w-full`}
-      style={{
-        backgroundColor: `${bgColor}`,
-      }}>
+    <div className={`absolute bottom-0 h-12 w-full`}>
       <div className="mx-auto max-w-lg p-3 text-center text-xs text-slate-400">
         {IMPRINT_URL && (
           <Link href={IMPRINT_URL} target="_blank" className="hover:underline">
