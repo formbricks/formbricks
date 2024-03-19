@@ -311,12 +311,21 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
     case TSurveyQuestionType.Cal:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
-          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
-          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            You have been invited to schedule a meet via cal.com Open Survey to continue{" "}
-          </Text>
+          <Container>
+            <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+            </Text>
+            <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+              You have been invited to schedule a meet via cal.com.
+            </Text>
+            <EmailButton
+              className={cn(
+                "bg-brand-color mx-auto block w-max cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium ",
+                isLight(brandColor) ? "text-black" : "text-white"
+              )}>
+              Schedule your meeting
+            </EmailButton>
+          </Container>
           <EmailFooter />
         </EmailTemplateWrapper>
       );
@@ -348,9 +357,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <Section className="mt-4 flex w-full items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-5">
             <UploadIcon className="mx-auto mb-1 block h-5 w-5" />
             <Section>
-              <Text className="inline text-sm font-medium text-slate-500 ">
-                Click or drag to upload files.
-              </Text>
+              <Text className="inline text-sm font-medium text-slate-500 ">Click to upload files</Text>
             </Section>
           </Section>
           <EmailFooter />
