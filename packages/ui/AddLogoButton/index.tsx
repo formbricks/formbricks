@@ -99,13 +99,13 @@ export const AddLogoButton: React.FC<Props> = ({
           {product?.brand?.logoUrl && (
             <div className="relative">
               <div
-                style={{ backgroundColor: product?.brand?.bgColor }}
+                 style={{ backgroundColor: product?.brand?.bgColor }}
                 className=" absolute rounded-lg border border-transparent hover:border-slate-300"
                 onClick={() => setIsLogoAddEditorOpen(true)}>
                 <Image
                   src={product?.brand?.logoUrl}
                   alt="Company Logo"
-                  className={`${type === "mobile" ? "h-12" : "h-20"} peer w-auto max-w-64 cursor-pointer rounded-lg object-contain p-1`}
+                  className={`${type === "mobile" ? "h-12" : "h-14"} peer w-auto max-w-64 cursor-pointer rounded-lg object-contain p-1`}
                   width={256}
                   height={56}
                 />
