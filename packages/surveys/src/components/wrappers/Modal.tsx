@@ -75,7 +75,7 @@ export default function Modal({
       };
 
     return {
-      borderRadius: "8px",
+      borderRadius: "var(--fb-border-radius)",
       border: "2px solid",
       borderColor: highlightBorderColor,
     };
