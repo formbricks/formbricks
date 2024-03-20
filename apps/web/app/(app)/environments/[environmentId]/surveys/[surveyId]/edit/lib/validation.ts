@@ -1,11 +1,13 @@
 // extend this object in order to add more validation rules
-import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import {
   TI18nString,
+  TSurveyCTAQuestion,
   TSurveyConsentQuestion,
   TSurveyLanguage,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
+  TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
   TSurveyThankYouCard,
@@ -32,6 +34,13 @@ const handleI18nCheckForMultipleChoice = (
 
 // Validation rules
 const validationRules = {
+  openText: (question: TSurveyOpenTextQuestion, languages: TSurveyLanguage[]) => {
+    return question.placeholder &&
+      getLocalizedValue(question.placeholder, "default").trim() !== "" &&
+      languages.length > 1
+      ? isLabelValidForAllLanguages(question.placeholder, languages)
+      : true;
+  },
   multipleChoiceMulti: (question: TSurveyMultipleChoiceMultiQuestion, languages: TSurveyLanguage[]) => {
     return handleI18nCheckForMultipleChoice(question, languages);
   },
@@ -44,14 +53,16 @@ const validationRules = {
   pictureSelection: (question: TSurveyPictureSelectionQuestion) => {
     return question.choices.length >= 2;
   },
+  cta: (question: TSurveyCTAQuestion, languages: TSurveyLanguage[]) => {
+    return !question.required && question.dismissButtonLabel
+      ? isLabelValidForAllLanguages(question.dismissButtonLabel, languages)
+      : true;
+  },
   // Assuming headline is of type TI18nString
   defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[]) => {
-    let isValid = isLabelValidForAllLanguages(question.headline, languages);
-    let isValidCTADismissLabel = true;
+    const isHeadlineValid = isLabelValidForAllLanguages(question.headline, languages);
+    let isValid = isHeadlineValid;
     const defaultLanguageCode = "default";
-    if (question.type === "cta" && !question.required && question.dismissButtonLabel) {
-      isValidCTADismissLabel = isLabelValidForAllLanguages(question.dismissButtonLabel, languages);
-    }
     const fieldsToValidate = [
       "subheader",
       "html",
@@ -59,13 +70,11 @@ const validationRules = {
       "upperLabel",
       "backButtonLabel",
       "lowerLabel",
-      "placeholder",
     ];
 
     for (const field of fieldsToValidate) {
-      if (question[field] && question[field][defaultLanguageCode]) {
-        isValid =
-          isValid && isLabelValidForAllLanguages(question[field], languages) && isValidCTADismissLabel;
+      if (question[field] && typeof question[field][defaultLanguageCode] !== "undefined") {
+        isValid = isValid && isLabelValidForAllLanguages(question[field], languages);
       }
     }
 

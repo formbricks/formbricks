@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
@@ -109,7 +110,7 @@ export default function AddIntegrationModal({
     const questions = selectedSurvey
       ? checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((q) => ({
           id: q.id,
-          name: q.headline,
+          name: getLocalizedValue(q.headline, "default"),
           type: q.type,
         }))
       : [];
