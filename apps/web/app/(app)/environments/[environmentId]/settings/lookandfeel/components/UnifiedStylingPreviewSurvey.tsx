@@ -4,7 +4,7 @@ import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/M
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
 import { Repeat2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -19,8 +19,6 @@ interface UnifiedStylingPreviewSurveyProps {
   previewType: "link" | "web";
   setPreviewType: (type: "link" | "web") => void;
 }
-
-let surveyNameTemp;
 
 const previewParentContainerVariant: Variants = {
   expanded: {
@@ -104,15 +102,6 @@ export const UnifiedStylingPreviewSurvey = ({
   const placement = surveyPlacement || product.placement;
 
   const highlightBorderColor = product.styling.highlightBorderColor?.light;
-
-  // this useEffect is fo refreshing the survey preview only if user is switching between templates on survey templates page and hence we are checking for survey.id === "someUniqeId1" which is a common Id for all templates
-  useEffect(() => {
-    if (survey.name !== surveyNameTemp && survey.id === "someUniqueId1") {
-      resetQuestionProgress();
-      surveyNameTemp = survey.name;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [survey]);
 
   function resetQuestionProgress() {
     setActiveQuestionId(survey?.questions[0]?.id);

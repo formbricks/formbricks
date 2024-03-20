@@ -2,8 +2,8 @@ import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/comp
 import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
 
 import { cn } from "@formbricks/lib/cn";
+import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
 import { Switch } from "@formbricks/ui/Switch";
@@ -38,56 +38,40 @@ export default function Loading() {
                     </p>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex max-w-xs flex-col gap-4">
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">Brand Color</h3>
-                    <p className="text-xs text-slate-500">Set the primary color for your surveys</p>
-                  </div>
-
-                  <Input placeholder="#333" />
-                </div>
-
-                <div className="flex max-w-xs flex-col gap-4">
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">Brand Color</h3>
-                    <p className="text-xs text-slate-500">Set the primary color for your surveys</p>
-                  </div>
-
-                  <Input placeholder="#333" />
-                </div>
-
-                <div className="flex max-w-xs flex-col gap-4">
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">Text Color</h3>
-                    <p className="text-xs text-slate-500">
-                      Change the text color of the questions, descriptions and answer options.
+              <div className="flex flex-col gap-4 bg-slate-50 p-4">
+                <div className="w-full rounded-lg border border-slate-300 bg-white">
+                  <div className="flex flex-col p-4">
+                    <h2 className="text-base font-semibold text-slate-700">Form Styling</h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Style the question texts, descriptions and input fields.
                     </p>
                   </div>
-
-                  <Input placeholder="#333" />
                 </div>
 
-                <div className="flex max-w-xs flex-col gap-4">
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">Input Color</h3>
-                    <p className="text-xs text-slate-500">Change the background color of the input fields.</p>
+                <div className="w-full rounded-lg border border-slate-300 bg-white">
+                  <div className="flex flex-col p-4">
+                    <h2 className="text-base font-semibold text-slate-700">Card Styling</h2>
+                    <p className="mt-1 text-sm text-slate-500">Style the survey card.</p>
                   </div>
-
-                  <Input placeholder="#333" />
                 </div>
 
-                <div className="flex max-w-xs flex-col gap-4">
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">Input border Color</h3>
-                    <p className="text-xs text-slate-500">Change the border color of the input fields.</p>
+                <div className="w-full rounded-lg border border-slate-300 bg-white">
+                  <div className="flex flex-col p-4">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-semibold text-slate-700">Background Styling</h2>
+                      <Badge text="Link Surveys" type="gray" size="normal" />
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Change the background to a color, image or animation.
+                    </p>
                   </div>
-
-                  <Input placeholder="#333" />
                 </div>
               </div>
             </div>
           </div>
+
           <div className="w-1/2 bg-slate-100 px-6 pt-4">
             <div className="relative flex h-[95] max-h-[95%] w-full items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
               <div className="flex h-full w-5/6 flex-1 flex-col">
