@@ -9,10 +9,10 @@ import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
+import { handleFileUpload } from "../../../apps/web/app/(app)/environments/[environmentId]/settings/profile/lib";
 import { Input } from "../Input";
 import { Label } from "../Label";
 import { LogoSettingModal } from "../LogoSettingModal";
-import { uploadLogo } from "./lib/uploadLogo";
 
 interface AddLogoButtonProps {
   environmentId: string;
@@ -48,7 +48,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
   const handleUpload = async (file: File, environmentId: string) => {
     setIsLoading(true);
     try {
-      const { url, error } = await uploadLogo(file, environmentId);
+      const { url, error } = await handleFileUpload(file, environmentId);
 
       if (error) {
         toast.error(error);
@@ -82,7 +82,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
               </svg>
             </div>
           )}
-          {!product?.brand?.logoUrl && (
+          {!product?.brand?.logoUrl ? (
             <Label
               htmlFor="addCompanyLogo"
               className={`${type === "mobile" ? "px-6 py-2" : "px-8 py-3"} rounded-lg border-[3px] border-dashed border-slate-300 bg-slate-100  hover:cursor-pointer hover:bg-slate-200`}>
@@ -95,8 +95,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
                 onChange={(e) => onchangeImageHandler(e)}
               />
             </Label>
-          )}
-          {product?.brand?.logoUrl && (
+          ) : (
             <div className="relative">
               <div
                 style={{ backgroundColor: product?.brand?.bgColor }}
@@ -115,11 +114,12 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
               </div>
             </div>
           )}
+
           <LogoSettingModal
             open={isLogoAddEditorOpen}
             setOpen={setIsLogoAddEditorOpen}
             imageUrl={imageUrl}
-            setImageUrl={setImageUrl}
+            setImageUrlFromLogoButton={setImageUrl}
             environmentId={environmentId}
             product={product}
             setLocalProduct={setLocalProduct}

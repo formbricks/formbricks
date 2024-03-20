@@ -14,7 +14,7 @@ interface LogoSettingModalProps {
   environmentId: string;
   product: TProduct;
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
-  setImageUrl: React.Dispatch<React.SetStateAction<string>>;
+  setImageUrlFromLogoButton: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export const LogoSettingModal: React.FC<LogoSettingModalProps> = ({
@@ -23,7 +23,7 @@ export const LogoSettingModal: React.FC<LogoSettingModalProps> = ({
   imageUrl,
   environmentId,
   product,
-  setImageUrl,
+  setImageUrlFromLogoButton,
   setLocalProduct,
 }) => {
   return (
@@ -48,7 +48,7 @@ export const LogoSettingModal: React.FC<LogoSettingModalProps> = ({
           setOpen={setOpen}
           product={product}
           setLocalProduct={setLocalProduct}
-          setImageUrl={setImageUrl}
+          setImageUrlFromLogoButton={setImageUrlFromLogoButton}
         />
       </div>
     </Modal>

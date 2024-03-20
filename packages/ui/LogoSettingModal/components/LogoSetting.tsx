@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 
-import { uploadLogo } from "../../AddLogoButton/lib/uploadLogo";
+import { handleFileUpload } from "../../../../apps/web/app/(app)/environments/[environmentId]/settings/profile/lib";
 import { Button } from "../../Button";
 import { ColorPicker } from "../../ColorPicker";
 import FileInput from "../../FileInput";
@@ -27,7 +27,7 @@ interface LogoSettingProps {
   fromLookAndFeelSetting?: boolean;
   imageUploadFromRegularFileUpload?: boolean;
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
-  setImageUrl?: React.Dispatch<React.SetStateAction<string>>;
+  setImageUrlFromLogoButton?: React.Dispatch<React.SetStateAction<string>>;
 }
 export const LogoSetting: React.FC<LogoSettingProps> = ({
   imageUrl,
@@ -38,7 +38,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   setImage,
   imageUploadFromRegularFileUpload,
   setLocalProduct,
-  setImageUrl,
+  setImageUrlFromLogoButton,
 }) => {
   const [backgroundColor, setBackgroundColor] = useState(product?.brand?.bgColor || "#ffffff");
   const [isLoading, setIsLoading] = useState(false);
@@ -59,11 +59,10 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   const handleUpload = async (file: File, environmentId: string) => {
     setIsLoading(true);
     try {
-      const { url, error } = await uploadLogo(file, environmentId);
+      const { url, error } = await handleFileUpload(file, environmentId);
 
       if (error) {
         toast.error(error);
-        setIsLoading(false);
         return;
       }
 
@@ -71,9 +70,9 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
       setIsStandardFileUploadOpen(false);
     } catch (err) {
       toast.error("Logo upload failed. Please try again.");
+    } finally {
       setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleSave = async () => {
@@ -83,7 +82,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
       };
       const updatedProductData = await updateProductAction(product.id, inputProduct);
       setLocalProduct && setLocalProduct(updatedProductData);
-      setImageUrl && setImageUrl(replacedLogo);
+      setImageUrlFromLogoButton && setImageUrlFromLogoButton(replacedLogo);
       toast.success("Logo uploaded successfully.");
     } catch (error) {
       if (error instanceof Error) {
