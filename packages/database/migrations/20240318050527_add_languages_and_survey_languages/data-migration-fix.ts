@@ -1,7 +1,7 @@
 // migration script to translate surveys where thankYouCard buttonLabel is a string or question subheaders are strings
 import { PrismaClient } from "@prisma/client";
 
-import { hasStringDismissButtonLabels, hasStringSubheaders, translateSurvey } from "./lib/i18n";
+import { hasStringSubheaders, translateSurvey } from "./lib/i18n";
 
 const prisma = new PrismaClient();
 
@@ -24,11 +24,7 @@ async function main() {
       }
 
       for (const survey of surveys) {
-        if (
-          typeof survey.thankYouCard.buttonLabel === "string" ||
-          hasStringSubheaders(survey.questions) ||
-          hasStringDismissButtonLabels(survey.questions)
-        ) {
+        if (typeof survey.thankYouCard.buttonLabel === "string" || hasStringSubheaders(survey.questions)) {
           const translatedSurvey = translateSurvey(survey, []);
 
           // Save the translated survey
