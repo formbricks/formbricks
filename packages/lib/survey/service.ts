@@ -357,7 +357,7 @@ export const transformToLegacySurvey = async (
       const targetLanguage = languageCode ?? "default";
       return reverseTranslateSurvey(survey, targetLanguage);
     },
-    [`transformToLegacySurvey-${survey}`],
+    [`transformToLegacySurvey-${survey.id}-${languageCode}`],
     {
       tags: [surveyCache.tag.byId(survey.id)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
