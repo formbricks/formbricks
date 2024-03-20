@@ -1,5 +1,5 @@
 {
-  "name": "@formbricks/js-internal",
+  "name": "@formbricks/js-core",
   "private": true,
   "license": "MIT",
   "version": "1.7.1",
