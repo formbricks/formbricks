@@ -32,14 +32,6 @@ export default function Loading() {
                 <div className="flex items-center gap-6">
                   <Switch />
                   <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">Enable unified styling</h3>
-                    <p className="text-xs text-slate-500">Set base styles for all surveys below</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6">
-                  <Switch />
-                  <div className="flex flex-col">
                     <h3 className="text-sm font-semibold text-slate-700">Allow overwriting styles</h3>
                     <p className="text-xs text-slate-500">
                       Activate if you want some surveys to be styled differently

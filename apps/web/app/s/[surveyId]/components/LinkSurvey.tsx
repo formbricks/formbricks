@@ -159,18 +159,13 @@ export default function LinkSurvey({
   }
 
   const getStyling = () => {
-    // unified styling is disabled from the product
-    if (!product.styling.unifiedStyling && !!survey.styling) {
-      return survey.styling;
-    }
-
     // allow style overwrite is disabled from the product
-    if (product.styling.unifiedStyling && !product.styling.allowStyleOverwrite) {
+    if (!product.styling.allowStyleOverwrite) {
       return product.styling;
     }
 
     // allow style overwrite is enabled from the product
-    if (product.styling.unifiedStyling && product.styling.allowStyleOverwrite) {
+    if (product.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteUnifiedStyling) {
         return product.styling;

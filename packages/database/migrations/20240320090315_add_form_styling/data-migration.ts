@@ -2,7 +2,6 @@ import { Prisma, PrismaClient } from "@prisma/client";
 
 const DEFAULT_BRAND_COLOR = "#64748b";
 const DEFAULT_STYLING = {
-  unifiedStyling: false,
   allowStyleOverwrite: true,
 };
 
@@ -40,7 +39,6 @@ async function main() {
             data: {
               styling: {
                 ...product.styling,
-                unifiedStyling: true,
                 // only if the brand color is not null and not equal to the default one, we need to update the styling object. Otherwise, we'll just use the default value
                 ...(product.brandColor &&
                   product.brandColor !== DEFAULT_BRAND_COLOR && {

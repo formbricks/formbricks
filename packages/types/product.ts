@@ -5,7 +5,6 @@ import { ZEnvironment } from "./environment";
 import { ZBaseStyling } from "./styling";
 
 export const ZProductStyling = ZBaseStyling.extend({
-  unifiedStyling: z.boolean(),
   allowStyleOverwrite: z.boolean(),
 });
 

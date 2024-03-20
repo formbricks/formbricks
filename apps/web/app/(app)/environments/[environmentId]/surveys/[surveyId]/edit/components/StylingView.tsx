@@ -22,19 +22,15 @@ type StylingViewProps = {
 
 const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey }: StylingViewProps) => {
   const overwriteUnifiedStyling = useMemo(() => {
-    // unified styling is disabled from the product.
-    // we don't need to show the switch
-    if (!product.styling.unifiedStyling) return true;
-
     return !!localSurvey?.styling?.overwriteUnifiedStyling;
-  }, [localSurvey?.styling?.overwriteUnifiedStyling, product.styling.unifiedStyling]);
+  }, [localSurvey?.styling?.overwriteUnifiedStyling]);
 
   const [styling, setStyling] = useState(() => {
     if (localSurvey.styling) {
       return localSurvey.styling;
     }
 
-    const { allowStyleOverwrite, unifiedStyling, ...baseStyles } = product.styling;
+    const { allowStyleOverwrite, ...baseStyles } = product.styling;
 
     return {
       ...baseStyles,
@@ -54,7 +50,7 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
 
   const onResetUnifiedStyling = () => {
     const { styling: productStyling } = product;
-    const { unifiedStyling, allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
+    const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
 
     setStyling(baseStyling);
 
@@ -68,12 +64,6 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
       setStylingOpen(false);
     }
   }, [overwriteUnifiedStyling]);
-
-  useEffect(() => {
-    if (!product.styling.unifiedStyling) {
-      setFormStylingOpen(true);
-    }
-  }, [product.styling.unifiedStyling]);
 
   useEffect(() => {
     if (styling) {
@@ -90,17 +80,15 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      {!!product.styling.unifiedStyling && (
-        <div className="flex items-center gap-4 py-4">
-          <Switch checked={overwriteUnifiedStyling} onCheckedChange={setOverwriteUnifiedStyling} />
-          <div className="flex flex-col">
-            <h3 className="text-base font-semibold text-slate-900">Overwrite Unified Styling</h3>
-            <p className="text-sm text-slate-800">
-              Ignore the unified style settings and style this survey individually
-            </p>
-          </div>
+      <div className="flex items-center gap-4 py-4">
+        <Switch checked={overwriteUnifiedStyling} onCheckedChange={setOverwriteUnifiedStyling} />
+        <div className="flex flex-col">
+          <h3 className="text-base font-semibold text-slate-900">Overwrite Unified Styling</h3>
+          <p className="text-sm text-slate-800">
+            Ignore the unified style settings and style this survey individually
+          </p>
         </div>
-      )}
+      </div>
 
       <FormStylingSettings
         open={formStylingOpen}
@@ -132,30 +120,26 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
         />
       )}
 
-      {product.styling.unifiedStyling && (
-        <>
-          <div className="mt-4 flex h-8 items-center justify-between">
-            <div>
-              {overwriteUnifiedStyling && (
-                <Button variant="minimal" className="flex items-center gap-2" onClick={onResetUnifiedStyling}>
-                  Reset to unified styles
-                  <RotateCcwIcon className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            <p className="text-sm text-slate-500">
-              To set unified styling, go to the{" "}
-              <Link
-                href={`/environments/${environment.id}/settings/lookandfeel`}
-                target="_blank"
-                className="font-semibold underline">
-                Look & Feel
-              </Link>{" "}
-              settings
-            </p>
-          </div>
-        </>
-      )}
+      <div className="mt-4 flex h-8 items-center justify-between">
+        <div>
+          {overwriteUnifiedStyling && (
+            <Button variant="minimal" className="flex items-center gap-2" onClick={onResetUnifiedStyling}>
+              Reset to unified styles
+              <RotateCcwIcon className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        <p className="text-sm text-slate-500">
+          To set unified styling, go to the{" "}
+          <Link
+            href={`/environments/${environment.id}/settings/lookandfeel`}
+            target="_blank"
+            className="font-semibold underline">
+            Look & Feel
+          </Link>{" "}
+          settings
+        </p>
+      </div>
     </div>
   );
 };

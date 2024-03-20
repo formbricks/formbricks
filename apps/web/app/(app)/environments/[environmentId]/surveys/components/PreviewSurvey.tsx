@@ -117,18 +117,13 @@ export default function PreviewSurvey({
   const placement = surveyPlacement || product.placement;
 
   const styling: TSurveyStyling | TProductStyling = useMemo(() => {
-    // unified styling is disabled from the product
-    if (!product.styling.unifiedStyling && !!survey.styling) {
-      return survey.styling;
-    }
-
     // allow style overwrite is disabled from the product
-    if (product.styling.unifiedStyling && !product.styling.allowStyleOverwrite) {
+    if (!product.styling.allowStyleOverwrite) {
       return product.styling;
     }
 
     // allow style overwrite is enabled from the product
-    if (product.styling.unifiedStyling && product.styling.allowStyleOverwrite) {
+    if (product.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteUnifiedStyling) {
         return product.styling;
@@ -138,10 +133,7 @@ export default function PreviewSurvey({
       return survey.styling;
     }
 
-    return {
-      unifiedStyling: true,
-      allowStyleOverwrite: true,
-    };
+    return product.styling;
   }, [product.styling, survey.styling]);
 
   useEffect(() => {

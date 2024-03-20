@@ -36,17 +36,6 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
 
-  const unifiedStyling = localProduct.styling.unifiedStyling ?? false;
-  const setUnifiedStyling = (value: boolean) => {
-    setLocalProduct((prev) => ({
-      ...prev,
-      styling: {
-        ...prev.styling,
-        unifiedStyling: value,
-      },
-    }));
-  };
-
   const allowStyleOverwrite = localProduct.styling.allowStyleOverwrite ?? false;
   const setAllowStyleOverwrite = (value: boolean) => {
     setLocalProduct((prev) => ({
@@ -84,7 +73,6 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
   const onReset = useCallback(async () => {
     await updateProductAction(product.id, {
       styling: {
-        unifiedStyling: true,
         allowStyleOverwrite: true,
         brandColor: {
           light: COLOR_DEFAULTS.brandColor,
@@ -114,11 +102,9 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
       },
     });
 
-    setUnifiedStyling(true);
     setAllowStyleOverwrite(true);
 
     setStyling({
-      unifiedStyling: true,
       allowStyleOverwrite: true,
       brandColor: {
         light: COLOR_DEFAULTS.brandColor,
@@ -165,23 +151,14 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
   }, [product.id, router]);
 
   useEffect(() => {
-    if (!unifiedStyling) {
-      setFormStylingOpen(false);
-      setCardStylingOpen(false);
-      setBackgroundStylingOpen(false);
-    }
-  }, [unifiedStyling]);
-
-  useEffect(() => {
     setLocalProduct((prev) => ({
       ...prev,
       styling: {
         ...styling,
-        unifiedStyling,
         allowStyleOverwrite,
       },
     }));
-  }, [allowStyleOverwrite, styling, unifiedStyling]);
+  }, [allowStyleOverwrite, styling]);
 
   return (
     <div className="flex">
@@ -191,24 +168,10 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
           <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
             <div className="flex items-center gap-6">
               <Switch
-                checked={unifiedStyling}
-                onCheckedChange={(value) => {
-                  setUnifiedStyling(value);
-                }}
-              />
-              <div className="flex flex-col">
-                <h3 className="text-sm font-semibold text-slate-700">Enable unified styling</h3>
-                <p className="text-xs text-slate-500">Set base styles for all surveys below</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <Switch
                 checked={allowStyleOverwrite}
                 onCheckedChange={(value) => {
                   setAllowStyleOverwrite(value);
                 }}
-                disabled={!unifiedStyling}
               />
               <div className="flex flex-col">
                 <h3 className="text-sm font-semibold text-slate-700">Allow overwriting styles</h3>
@@ -225,7 +188,6 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
               setOpen={setFormStylingOpen}
               styling={styling}
               setStyling={setStyling}
-              disabled={!unifiedStyling}
               hideCheckmark
             />
 
@@ -234,7 +196,6 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
               setOpen={setCardStylingOpen}
               styling={styling}
               setStyling={setStyling}
-              disabled={!unifiedStyling}
               hideCheckmark
             />
 
@@ -247,7 +208,6 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
               colors={colors}
               key={styling.background?.bg}
               hideCheckmark
-              disabled={!unifiedStyling}
             />
           </div>
         </div>
