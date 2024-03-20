@@ -2,14 +2,13 @@ import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
-import surveysPackageJson from "../surveys/package.json";
 import packageJson from "./package.json";
 
 const config = ({ mode }) => {
   const isDevelopment = mode === "dev";
   const formbricksSurveysScriptSrc = isDevelopment
     ? "http://localhost:3003/index.umd.js"
-    : `https://unpkg.com/@formbricks/surveys@~${surveysPackageJson.version}/dist/index.umd.js`;
+    : `hhttps://app.formbricks.com/api/js?module=surveys`;
 
   return defineConfig({
     define: {
