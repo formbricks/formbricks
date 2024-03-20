@@ -7,7 +7,7 @@ import { TProduct } from "@formbricks/types/product";
 import { Modal } from "../Modal";
 import { LogoSetting } from "./components/LogoSetting";
 
-interface Props {
+interface LogoSettingModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   imageUrl: string;
@@ -17,7 +17,7 @@ interface Props {
   setImageUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export const LogoSettingModal: React.FC<Props> = ({
+export const LogoSettingModal: React.FC<LogoSettingModalProps> = ({
   open,
   setOpen,
   imageUrl,

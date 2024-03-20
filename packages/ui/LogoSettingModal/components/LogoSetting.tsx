@@ -15,7 +15,7 @@ import FileInput from "../../FileInput";
 import { Input } from "../../Input";
 import { updateProductAction } from "../actions";
 
-interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {
+interface LogoChangeEvent extends React.ChangeEvent<HTMLInputElement> {
   target: HTMLInputElement & EventTarget;
 }
 interface Props {
@@ -50,7 +50,7 @@ export const LogoSetting: React.FC<Props> = ({
   const backgroundColorChangeHandler = (color: string) => {
     setBackgroundColor(color);
   };
-  const onchangeImageHandler = async (e: ChangeEvent) => {
+  const onchangeImageHandler = async (e: LogoChangeEvent) => {
     const file = e.target.files?.[0];
     if (file) {
       await handleUpload(file, environmentId);
