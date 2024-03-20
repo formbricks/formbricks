@@ -14,6 +14,7 @@ import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/s
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { logger } from "@formbricks/lib/utils/logger";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
@@ -131,7 +132,7 @@ export async function GET(
       "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
     );
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);
   }
 }

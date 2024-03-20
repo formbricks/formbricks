@@ -16,6 +16,7 @@ import { getProductByEnvironmentId } from "../product/service";
 import { getQuestionResponseMapping } from "../responses";
 import { getOriginalFileNameFromUrl } from "../storage/utils";
 import { getTeamByEnvironmentId } from "../team/service";
+import { logger } from "../utils/logger";
 import { withEmailTemplate } from "./email-template";
 
 const nodemailer = require("nodemailer");
@@ -65,7 +66,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
       };
       await transporter.sendMail({ ...emailDefaults, ...emailData });
     } else {
-      console.error(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
+      logger.error(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
     }
   } catch (error) {
     throw error;

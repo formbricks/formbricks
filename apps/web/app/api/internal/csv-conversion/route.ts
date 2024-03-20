@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { logger } from "@formbricks/lib/utils/logger";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
   try {
     csv = await parser.parse(json).promise();
   } catch (err) {
-    console.log({ err });
+    logger.error({ err });
     throw new Error("Failed to convert to CSV");
   }
 

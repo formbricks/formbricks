@@ -5,6 +5,8 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { SEMRESATTRS_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
+import { logger } from "@formbricks/lib/utils/logger";
+
 export function startInstrumentationForNode(url: string) {
   try {
     const exporter = new OTLPTraceExporter({
@@ -22,6 +24,6 @@ export function startInstrumentationForNode(url: string) {
 
     sdk.start();
   } catch (err) {
-    console.error("Unable to setup Telemetry:", err);
+    logger.error("Unable to setup Telemetry:", err);
   }
 }

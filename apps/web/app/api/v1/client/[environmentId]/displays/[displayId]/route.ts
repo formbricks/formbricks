@@ -2,6 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { updateDisplay } from "@formbricks/lib/display/service";
+import { logger } from "@formbricks/lib/utils/logger";
 import { ZDisplayUpdateInput } from "@formbricks/types/displays";
 
 interface Context {
@@ -35,7 +36,7 @@ export async function PUT(request: Request, context: Context): Promise<Response>
     await updateDisplay(displayId, inputValidation.data);
     return responses.successResponse({}, true);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return responses.internalServerErrorResponse(error.message, true);
   }
 }

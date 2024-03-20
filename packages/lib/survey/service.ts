@@ -30,6 +30,7 @@ import { createSegment, evaluateSegment, getSegment, updateSegment } from "../se
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
+import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
 import { anySurveyHasFilters } from "./util";
@@ -188,10 +189,9 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
+          logger.error(error);
           throw new DatabaseError(error.message);
         }
-
         throw error;
       }
 
@@ -307,7 +307,7 @@ export const getSurveys = async (
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
+          logger.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -404,7 +404,7 @@ export const getSurveyCount = async (environmentId: string): Promise<number> => 
         return surveyCount;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
+          logger.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -497,7 +497,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     try {
       await updateSegment(segment.id, segment);
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       throw new Error("Error updating survey");
     }
   }
@@ -537,7 +537,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error);
       throw new DatabaseError(error.message);
     }
 

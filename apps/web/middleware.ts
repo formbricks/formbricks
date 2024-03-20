@@ -18,6 +18,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
+import { logger } from "@formbricks/lib/utils/logger";
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
@@ -31,7 +32,6 @@ export async function middleware(request: NextRequest) {
   if (token && callbackUrl) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
-
   if (process.env.NODE_ENV !== "production" || RATE_LIMITING_DISABLED) {
     return NextResponse.next();
   }
@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
       }
       return res;
     } catch (_e) {
-      console.log("Rate Limiting IP: ", ip);
+      logger.info("Rate Limiting IP: ", ip);
 
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
