@@ -25,7 +25,8 @@
     "predev": "pnpm generate",
     "data-migration:v1.6": "ts-node ./migrations/20240207041922_advanced_targeting/data-migration.ts",
     "data-migration:mls": "ts-node ./migrations/20240318050527_add_languages_and_survey_languages/data-migration.ts",
-    "data-migration:mls-fix": "ts-node ./migrations/20240318050527_add_languages_and_survey_languages/data-migration-fix.ts"
+    "data-migration:mls-fix": "ts-node ./migrations/20240318050527_add_languages_and_survey_languages/data-migration-fix.ts",
+    "data-migration:mls-range-fix": "ts-node ./migrations/20240318050527_add_languages_and_survey_languages/data-migration-range-fix.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.11.0",
