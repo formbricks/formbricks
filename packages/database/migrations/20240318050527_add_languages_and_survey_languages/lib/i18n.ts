@@ -17,7 +17,6 @@ import {
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
-  ZSurvey,
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
@@ -260,12 +259,12 @@ export const translateSurvey = (
   const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languages);
   const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languages);
   const translatedSurvey = structuredClone(survey);
-  return ZSurvey.parse({
+  return {
     ...translatedSurvey,
     questions: translatedQuestions,
     welcomeCard: translatedWelcomeCard,
     thankYouCard: translatedThankYouCard,
-  });
+  };
 };
 
 export const hasStringSubheaders = (questions: TSurveyQuestions): boolean => {
