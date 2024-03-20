@@ -5,7 +5,7 @@ interface UploadAttributesModalProps {
   setOpen: (v: boolean) => void;
 }
 
-export default function UploadAttributesModal({ open, setOpen }: UploadAttributesModalProps) {
+export const UploadAttributesModal = ({ open, setOpen }: UploadAttributesModalProps) => {
   return (
     <>
       <Modal open={open} setOpen={setOpen}>
@@ -13,4 +13,4 @@ export default function UploadAttributesModal({ open, setOpen }: UploadAttribute
       </Modal>
     </>
   );
-}
+};
