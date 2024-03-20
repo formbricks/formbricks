@@ -24,6 +24,7 @@ interface PreviewSurveyProps {
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
+  languageCode: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
@@ -62,6 +63,7 @@ export default function PreviewSurvey({
   previewType,
   product,
   environment,
+  languageCode,
   onFileUpload,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -213,6 +215,7 @@ export default function PreviewSurvey({
                     isBrandingEnabled={product.inAppSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
+                    languageCode={languageCode}
                     onFileUpload={onFileUpload}
                     onClose={handlePreviewModalClose}
                   />
@@ -227,6 +230,7 @@ export default function PreviewSurvey({
                       isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       onFileUpload={onFileUpload}
+                      languageCode={languageCode}
                       responseCount={42}
                     />
                   </div>
@@ -284,6 +288,7 @@ export default function PreviewSurvey({
                   isBrandingEnabled={product.inAppSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
+                  languageCode={languageCode}
                   onFileUpload={onFileUpload}
                   onClose={handlePreviewModalClose}
                 />
@@ -299,6 +304,7 @@ export default function PreviewSurvey({
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
+                    languageCode={languageCode}
                     responseCount={42}
                   />
                 </div>

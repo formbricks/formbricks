@@ -32,6 +32,7 @@ env:
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
+    - NEXTAUTH_URL
     - DATABASE_URL
     - NEXTAUTH_SECRET
     - ENCRYPTION_KEY
@@ -84,6 +85,7 @@ env:
     - S3_SECRET_KEY
     - S3_REGION
     - S3_BUCKET_NAME
+    - RATE_LIMITING_DISABLED
 
 # Use a different ssh user than root
 ssh:

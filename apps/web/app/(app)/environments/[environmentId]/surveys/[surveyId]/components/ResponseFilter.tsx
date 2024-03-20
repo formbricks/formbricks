@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover"
 import QuestionsComboBox, { OptionsType, QuestionOption } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
-  type: TSurveyTSurveyQuestionType | "Attributes" | "Tags";
+  type: TSurveyTSurveyQuestionType | "Attributes" | "Tags" | "Languages";
   filterOptions: string[];
   filterComboBoxOptions: string[];
   id: string;
@@ -200,7 +200,9 @@ const ResponseFilter = () => {
                   key={`${s.questionType.id}-${i}`}
                   filterOptions={
                     selectedOptions.questionFilterOptions.find(
-                      (q) => q.type === s.questionType.type || q.type === s.questionType.questionType
+                      (q) =>
+                        (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
+                        q.id === s.questionType.id
                     )?.filterOptions
                   }
                   filterComboBoxOptions={
@@ -240,15 +242,15 @@ const ResponseFilter = () => {
           </>
         ))}
         <div className="mt-8 flex items-center justify-between">
-          <Button size="sm" variant="darkCTA" onClick={handleAddNewFilter}>
+          <Button size="sm" variant="secondary" onClick={handleAddNewFilter}>
             Add filter
             <Plus width={18} height={18} className="ml-2" />
           </Button>
           <div className="flex gap-2">
-            <Button size="sm" variant="primary" onClick={handleApplyFilters}>
-              Apply Filters
+            <Button size="sm" variant="darkCTA" onClick={handleApplyFilters}>
+              Apply filters
             </Button>
-            <Button size="sm" variant="secondary" onClick={handleClearAllFilters}>
+            <Button size="sm" variant="minimal" onClick={handleClearAllFilters}>
               Clear all
             </Button>
           </div>
