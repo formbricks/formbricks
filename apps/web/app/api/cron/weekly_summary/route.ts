@@ -176,7 +176,7 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
   const surveys: Survey[] = [];
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
-    const parsedSurvey = checkForRecallInHeadline(survey);
+    const parsedSurvey = checkForRecallInHeadline(survey, "default");
     const surveyData: Survey = {
       id: parsedSurvey.id,
       name: parsedSurvey.name,

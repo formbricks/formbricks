@@ -551,7 +551,10 @@ export const getSurveySummary = (
 
       const meta = getSurveySummaryMeta(responses, displayCount);
       const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
-      const questionWiseSummary = getQuestionWiseSummary(checkForRecallInHeadline(survey), responses);
+      const questionWiseSummary = getQuestionWiseSummary(
+        checkForRecallInHeadline(survey, "default"),
+        responses
+      );
 
       return { meta, dropOff, summary: questionWiseSummary };
     },

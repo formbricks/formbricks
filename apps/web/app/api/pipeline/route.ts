@@ -102,14 +102,14 @@ export async function POST(request: Request) {
       },
     });
 
-    const integrations = await getIntegrations(environmentId);
-    const surveyData = await getSurvey(surveyId);
-    const survey = surveyData ? checkForRecallInHeadline(surveyData) : undefined;
+    const [integrations, surveyData] = await Promise.all([
+      getIntegrations(environmentId),
+      getSurvey(surveyId),
+    ]);
+    const survey = surveyData ? checkForRecallInHeadline(surveyData, "default") : undefined;
 
-    if (integrations.length > 0) {
-      if (survey) {
-        handleIntegrations(integrations, inputValidation.data, survey);
-      }
+    if (integrations.length > 0 && survey) {
+      handleIntegrations(integrations, inputValidation.data, survey);
     }
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {

@@ -135,7 +135,7 @@ export const QuestionFormInput = ({
   });
 
   // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
-  useSyncScroll(highlightContainerRef, inputRef, getLocalizedValue(text, selectedLanguageCode));
+  useSyncScroll(highlightContainerRef, inputRef);
 
   useEffect(() => {
     if (!isWelcomeCard && (id === "headline" || id === "subheader")) {
