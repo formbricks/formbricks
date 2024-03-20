@@ -82,6 +82,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
       };
       const updatedProductData = await updateProductAction(product.id, inputProduct);
       setLocalProduct && setLocalProduct(updatedProductData);
+      setImage && setImage(replacedLogo);
       setImageUrlFromLogoButton && setImageUrlFromLogoButton(replacedLogo);
       toast.success("Logo uploaded successfully.");
     } catch (error) {
