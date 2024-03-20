@@ -22,7 +22,7 @@ interface AddLogoButtonProps {
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
   survey: TSurvey;
 }
-interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {
+interface LogoChangeEvent extends React.ChangeEvent<HTMLInputElement> {
   target: HTMLInputElement & EventTarget;
 }
 
@@ -38,7 +38,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
   const [imageUrl, setImageUrl] = useState<string>(product?.brand?.logoUrl);
   const [isLogoAddEditorOpen, setIsLogoAddEditorOpen] = useState(false);
 
-  const onchangeImageHandler = async (e: ChangeEvent) => {
+  const onchangeImageHandler = async (e: LogoChangeEvent) => {
     const file = e.target.files?.[0];
     if (file) {
       await handleUpload(file, environmentId);
