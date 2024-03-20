@@ -18,7 +18,7 @@ const config = ({ mode }) => {
   const isDevelopment = mode === "dev";
   const datePickerScriptSrc = isDevelopment
     ? "http://localhost:3003/question-date.umd.js"
-    : `https://unpkg.com/@formbricks/surveys@~${packageJson.version}/dist/question-date.umd.js`;
+    : `https://app.formbricks.com/api/js?module=question-date`; // HOTFIX: Need to be changed to a better solution that is versioned
 
   return defineConfig({
     define: {
