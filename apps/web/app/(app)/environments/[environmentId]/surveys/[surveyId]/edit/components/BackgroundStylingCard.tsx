@@ -14,7 +14,7 @@ import SurveyBgSelectorTab from "./SurveyBgSelectorTab";
 interface BackgroundStylingCardProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  styling: TSurveyStyling | TProductStyling;
+  styling: TSurveyStyling | TProductStyling | null;
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
   colors: string[];
   hideCheckmark?: boolean;
@@ -44,7 +44,7 @@ export default function BackgroundStylingCard({
   const handleBgChange = (color: string, type: TSurveyBackgroundBgType) => {
     setInputValue(100);
 
-    const { background } = styling;
+    const { background } = styling ?? {};
     const { brightness, ...rest } = background ?? {};
 
     setStyling({

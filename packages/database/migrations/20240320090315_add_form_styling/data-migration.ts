@@ -6,12 +6,16 @@ const DEFAULT_STYLING = {
 };
 
 const prisma = new PrismaClient();
+
 async function main() {
   await prisma.$transaction(
     async (tx) => {
       // product table with brand color and the highlight border color (if available)
       // styling object needs to be created for each product
-      const products = await tx.product.findMany({});
+      const products = await tx.product.findMany({
+        include: { environments: { include: { surveys: true } } },
+      });
+
       if (!products) {
         // something went wrong, could not find any products
         return;
@@ -54,6 +58,39 @@ async function main() {
               highlightBorderColor: null,
             },
           });
+
+          // for each survey in the product, we need to update the stying object with the brand color and the highlight border color
+          for (const environment of product.environments) {
+            for (const survey of environment.surveys) {
+              const { styling } = product;
+              const { brandColor, highlightBorderColor } = styling;
+
+              if (!survey.styling) {
+                console.log("no styling found");
+                continue;
+              }
+
+              await tx.survey.update({
+                where: {
+                  id: survey.id,
+                },
+                data: {
+                  styling: {
+                    ...(survey.styling ?? {}),
+                    ...(brandColor &&
+                      brandColor.light !== DEFAULT_BRAND_COLOR && {
+                        brandColor: { light: brandColor.light },
+                      }),
+                    ...(highlightBorderColor?.light && {
+                      highlightBorderColor: {
+                        light: highlightBorderColor.light,
+                      },
+                    }),
+                  },
+                },
+              });
+            }
+          }
         }
 
         // find all surveys with product overwrites

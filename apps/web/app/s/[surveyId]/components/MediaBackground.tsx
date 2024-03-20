@@ -76,10 +76,6 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   const renderBackground = () => {
     const filterStyle = getFilterStyle();
 
-    if (!isEditorView && !product.styling.allowStyleOverwrite) {
-      return <div className={`${baseClasses} ${loadedClass} bg-white`} />;
-    }
-
     switch (background?.bgType) {
       case "color":
         return (

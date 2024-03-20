@@ -20,7 +20,7 @@ import { Switch } from "@formbricks/ui/Switch";
 type CardStylingSettingsProps = {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  styling: TSurveyStyling | TProductStyling;
+  styling: TSurveyStyling | TProductStyling | null;
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
   hideCheckmark?: boolean;
   disabled?: boolean;
@@ -28,8 +28,8 @@ type CardStylingSettingsProps = {
   setProductOverwrites?: React.Dispatch<React.SetStateAction<TSurveyProductOverwrites>>;
 };
 
-const isSurveyStyling = (styling: TSurveyStyling | TProductStyling): styling is TSurveyStyling => {
-  return (styling as TSurveyStyling).overwriteUnifiedStyling !== undefined;
+const isSurveyStyling = (styling: TSurveyStyling | TProductStyling | null): styling is TSurveyStyling => {
+  return (styling as TSurveyStyling)?.overwriteUnifiedStyling !== undefined;
 };
 
 const CardStylingSettings = ({
@@ -44,7 +44,7 @@ const CardStylingSettings = ({
 }: CardStylingSettingsProps) => {
   const { placement, clickOutsideClose, darkOverlay } = productOverwrites ?? {};
 
-  const cardBgColor = styling.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
+  const cardBgColor = styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
   const setCardBgColor = (color: string) => {
     setStyling((prev) => ({
       ...prev,
@@ -55,7 +55,7 @@ const CardStylingSettings = ({
     }));
   };
 
-  const cardBorderColor = styling.cardBorderColor?.light || COLOR_DEFAULTS.cardBorderColor;
+  const cardBorderColor = styling?.cardBorderColor?.light || COLOR_DEFAULTS.cardBorderColor;
   const setCardBorderColor = (color: string) => {
     setStyling((prev) => ({
       ...prev,
@@ -66,7 +66,7 @@ const CardStylingSettings = ({
     }));
   };
 
-  const cardShadowColor = styling.cardShadowColor?.light || COLOR_DEFAULTS.cardShadowColor;
+  const cardShadowColor = styling?.cardShadowColor?.light || COLOR_DEFAULTS.cardShadowColor;
   const setCardShadowColor = (color: string) => {
     setStyling((prev) => ({
       ...prev,
@@ -77,7 +77,7 @@ const CardStylingSettings = ({
     }));
   };
 
-  const isHighlightBorderAllowed = !!styling.highlightBorderColor;
+  const isHighlightBorderAllowed = !!styling?.highlightBorderColor;
   const setIsHighlightBorderAllowed = (open: boolean) => {
     if (!open) {
       const { highlightBorderColor, ...rest } = styling ?? {};
@@ -96,7 +96,7 @@ const CardStylingSettings = ({
     }
   };
 
-  const highlightBorderColor = styling.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
+  const highlightBorderColor = styling?.highlightBorderColor?.light || COLOR_DEFAULTS.highlightBorderColor;
   const setHighlightBorderColor = (color: string) => {
     setStyling((prev) => ({
       ...prev,
@@ -107,7 +107,7 @@ const CardStylingSettings = ({
     }));
   };
 
-  const roundness = styling.roundness ?? 8;
+  const roundness = styling?.roundness ?? 8;
   const setRoundness = (value: number) => {
     setStyling((prev) => ({
       ...prev,
@@ -163,7 +163,7 @@ const CardStylingSettings = ({
   };
 
   const hideProgressBar = useMemo(() => {
-    return styling.hideProgressBar;
+    return styling?.hideProgressBar;
   }, [styling]);
 
   return (

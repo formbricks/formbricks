@@ -12,7 +12,7 @@ interface SurveyBgSelectorTabProps {
   colors: string[];
   bgType: string | null | undefined;
   environmentId: string;
-  styling: TSurveyStyling | TProductStyling;
+  styling: TSurveyStyling | TProductStyling | null;
 }
 
 const TabButton = ({ isActive, onClick, children }) => (
@@ -33,7 +33,8 @@ export default function SurveyBgSelectorTab({
   bgType,
   environmentId,
 }: SurveyBgSelectorTabProps) {
-  const background = styling.background;
+  const { background } = styling ?? {};
+
   const [backgrounds, setBackgrounds] = useState({
     image: background?.bgType === "image" ? background.bg : "",
     animation: background?.bgType === "animation" ? background.bg : "",

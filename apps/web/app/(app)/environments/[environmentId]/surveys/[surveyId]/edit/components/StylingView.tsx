@@ -3,12 +3,12 @@ import CardStylingSettings from "@/app/(app)/environments/[environmentId]/survey
 import FormStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
 import { RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -16,37 +16,30 @@ type StylingViewProps = {
   environment: TEnvironment;
   product: TProduct;
   localSurvey: TSurvey;
+  surveyStyling: TSurveyStyling | null;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
 };
 
-const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey }: StylingViewProps) => {
-  const overwriteUnifiedStyling = useMemo(() => {
-    return !!localSurvey?.styling?.overwriteUnifiedStyling;
-  }, [localSurvey?.styling?.overwriteUnifiedStyling]);
+const StylingView = ({
+  colors,
+  environment,
+  product,
+  localSurvey,
+  setLocalSurvey,
+  surveyStyling,
+}: StylingViewProps) => {
+  const [overwriteUnifiedStyling, setOverwriteUnifiedStyling] = useState(
+    !!surveyStyling?.overwriteUnifiedStyling
+  );
 
-  const [styling, setStyling] = useState(() => {
-    if (localSurvey.styling) {
-      return localSurvey.styling;
-    }
-
-    const { allowStyleOverwrite, ...baseStyles } = product.styling;
-
-    return {
-      ...baseStyles,
-      overwriteUnifiedStyling,
-    };
-  });
+  const [styling, setStyling] = useState(surveyStyling);
 
   const [productOverwrites, setProductOverwrites] = useState(localSurvey.productOverwrites);
 
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [stylingOpen, setStylingOpen] = useState(false);
-
-  const setOverwriteUnifiedStyling = (value: boolean) => {
-    setStyling((prev) => ({ ...prev, overwriteUnifiedStyling: value }));
-  };
 
   const onResetUnifiedStyling = () => {
     const { styling: productStyling } = product;
@@ -78,10 +71,48 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
     }
   }, [productOverwrites, setLocalSurvey, styling]);
 
+  const handleOverwriteToggle = (value: boolean) => {
+    // survey styling from the server is surveyStyling, it could either be set or not
+    // if its set and the toggle is turned off, we set the local styling to the server styling
+
+    if (value) {
+      console.log({ value, surveyStyling });
+      if (surveyStyling) {
+        setOverwriteUnifiedStyling(value);
+
+        setStyling({
+          ...surveyStyling,
+          overwriteUnifiedStyling: value,
+        });
+      } else {
+        // copy the product styling to the survey styling
+        const { styling: productStyling } = product;
+        const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
+
+        setOverwriteUnifiedStyling(value);
+        setStyling({
+          ...baseStyling,
+          overwriteUnifiedStyling: value,
+        });
+      }
+    }
+
+    if (!value) {
+      const { styling: productStyling } = product;
+      const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
+
+      setOverwriteUnifiedStyling(value);
+      setStyling({
+        ...baseStyling,
+        overwriteUnifiedStyling: value,
+      });
+    }
+  };
+
   return (
     <div className="mt-12 space-y-3 p-5">
       <div className="flex items-center gap-4 py-4">
-        <Switch checked={overwriteUnifiedStyling} onCheckedChange={setOverwriteUnifiedStyling} />
+        <Switch checked={overwriteUnifiedStyling} onCheckedChange={handleOverwriteToggle} />
         <div className="flex flex-col">
           <h3 className="text-base font-semibold text-slate-900">Overwrite Unified Styling</h3>
           <p className="text-sm text-slate-800">

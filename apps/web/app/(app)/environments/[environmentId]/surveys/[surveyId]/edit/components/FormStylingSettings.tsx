@@ -13,7 +13,7 @@ import { Button } from "@formbricks/ui/Button";
 import { ColorSelectorWithLabel } from "@formbricks/ui/Styling";
 
 type FormStylingSettingsProps = {
-  styling: TSurveyStyling | TProductStyling;
+  styling: TSurveyStyling | TProductStyling | null;
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | TProductStyling>>;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -29,7 +29,7 @@ const FormStylingSettings = ({
   open,
   setOpen,
 }: FormStylingSettingsProps) => {
-  const brandColor = styling.brandColor?.light || COLOR_DEFAULTS.brandColor;
+  const brandColor = styling?.brandColor?.light || COLOR_DEFAULTS.brandColor;
   const setBrandColor = (color: string) => {
     setStyling((prev) => ({
       ...prev,
@@ -40,7 +40,7 @@ const FormStylingSettings = ({
     }));
   };
 
-  const questionColor = styling.questionColor?.light || COLOR_DEFAULTS.questionColor;
+  const questionColor = styling?.questionColor?.light || COLOR_DEFAULTS.questionColor;
   const setQuestionColor = (color: string) => {
     setStyling((prev) => ({
       ...prev,
@@ -51,7 +51,7 @@ const FormStylingSettings = ({
     }));
   };
 
-  const inputColor = styling.inputColor?.light || COLOR_DEFAULTS.inputColor;
+  const inputColor = styling?.inputColor?.light || COLOR_DEFAULTS.inputColor;
   const setInputColor = (color: string) => {
     setStyling((prev) => ({
       ...prev,
@@ -62,7 +62,7 @@ const FormStylingSettings = ({
     }));
   };
 
-  const inputBorderColor = styling.inputBorderColor?.light || COLOR_DEFAULTS.inputBorderColor;
+  const inputBorderColor = styling?.inputBorderColor?.light || COLOR_DEFAULTS.inputBorderColor;
   const setInputBorderColor = (color: string) => {
     setStyling((prev) => ({
       ...prev,
@@ -96,7 +96,7 @@ const FormStylingSettings = ({
       },
     }));
 
-    if (!styling.background || styling.background?.bgType === "color") {
+    if (!styling?.background || styling?.background?.bgType === "color") {
       setStyling((prev) => ({
         ...prev,
         background: {
@@ -107,7 +107,7 @@ const FormStylingSettings = ({
       }));
     }
 
-    if (styling.highlightBorderColor) {
+    if (styling?.highlightBorderColor) {
       setStyling((prev) => ({
         ...prev,
         highlightBorderColor: {
