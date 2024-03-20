@@ -272,7 +272,6 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Consent),
   html: ZI18nString.optional(),
   label: ZI18nString,
-  dismissButtonLabel: ZI18nString.optional(),
   placeholder: z.string().optional(),
   logic: z.array(ZSurveyConsentLogic).optional(),
 });
