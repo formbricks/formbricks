@@ -1,6 +1,6 @@
 import { LRUCache } from "lru-cache";
 
-import { REDIS_HTTP_CLIENT_URL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { REDIS_CLIENT_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 
 type Options = {
   interval: number;
@@ -37,7 +37,7 @@ const redisRateLimiter = (options: Options) => {
 };
 
 export default function rateLimit(options: Options) {
-  if (REDIS_HTTP_CLIENT_URL) {
+  if (REDIS_CLIENT_URL) {
     return redisRateLimiter(options);
   } else {
     return inMemoryRateLimiter(options);

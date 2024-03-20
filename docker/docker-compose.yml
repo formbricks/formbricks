@@ -80,7 +80,7 @@ x-environment: &environment
     # ONBOARDING_DISABLED: 1
 
     # The below is used for Rate Limiting & Next Caching (uses In-Memory Next Cache if not provided)
-    # REDIS_HTTP_CLIENT_URL:
+    # REDIS_CLIENT_URL:
 
 services:
   postgres:

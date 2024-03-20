@@ -172,7 +172,7 @@ export const DEBUG = env.DEBUG === "1";
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
-export const REDIS_HTTP_CLIENT_URL = env.REDIS_HTTP_CLIENT_URL;
+export const REDIS_CLIENT_URL = env.REDIS_CLIENT_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 
 export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;

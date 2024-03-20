@@ -86,7 +86,7 @@ env:
     - S3_REGION
     - S3_BUCKET_NAME
     - RATE_LIMITING_DISABLED
-    - REDIS_HTTP_CLIENT_URL
+    - REDIS_CLIENT_URL
 
 # Use a different ssh user than root
 ssh:
