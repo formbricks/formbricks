@@ -1,16 +1,40 @@
 import {
+  TLegacySurveyChoice,
+  TLegacySurveyQuestion,
+  TLegacySurveyThankYouCard,
+  TLegacySurveyWelcomeCard,
+} from "@formbricks/types/LegacySurvey";
+import { TLanguage } from "@formbricks/types/product";
+import {
   TI18nString,
-  TSurvey,
   TSurveyCTAQuestion,
+  TSurveyChoice,
   TSurveyConsentQuestion,
-  TSurveyLanguage,
-  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceSingleQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
-  TSurveyQuestion,
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
+  ZSurveyCTAQuestion,
+  ZSurveyCalQuestion,
+  ZSurveyConsentQuestion,
+  ZSurveyFileUploadQuestion,
+  ZSurveyMultipleChoiceMultiQuestion,
+  ZSurveyMultipleChoiceSingleQuestion,
+  ZSurveyNPSQuestion,
+  ZSurveyOpenTextQuestion,
+  ZSurveyPictureSelectionQuestion,
+  ZSurveyQuestion,
+  ZSurveyRatingQuestion,
+  ZSurveyThankYouCard,
+  ZSurveyWelcomeCard,
+} from "@formbricks/types/surveys";
+import {
+  TSurvey,
+  TSurveyLanguage,
+  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyQuestion,
 } from "@formbricks/types/surveys";
 
 // Helper function to create an i18nString from a regular string.
@@ -59,7 +83,7 @@ export function isI18nObject(obj: any): obj is TI18nString {
   return (
     obj !== null &&
     typeof obj === "object" &&
-    Object.values(obj).every((value) => typeof value === "string") &&
+    Object.values(obj).every((value) => typeof value !== "undefined") &&
     Object.keys(obj).includes("default")
   );
 }
@@ -92,180 +116,198 @@ export const getEnabledLanguages = (surveyLanguages: TSurveyLanguage[]) => {
   return surveyLanguages.filter((surveyLanguage) => surveyLanguage.enabled);
 };
 
+const translateChoice = (choice: TSurveyChoice | TLegacySurveyChoice, languages: string[]): TSurveyChoice => {
+  if (typeof choice.label !== "undefined") {
+    return {
+      ...choice,
+      label: createI18nString(choice.label, languages),
+    };
+  } else {
+    return {
+      ...choice,
+      label: choice.label,
+    };
+  }
+};
+
 // LGEGACY
 // Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateWelcomeCard = (
-  welcomeCard: TSurveyWelcomeCard,
-  languages: string[],
-  targetLanguageCode?: string
+  welcomeCard: TSurveyWelcomeCard | TLegacySurveyWelcomeCard,
+  languages: string[]
 ): TSurveyWelcomeCard => {
   const clonedWelcomeCard = structuredClone(welcomeCard);
-  if (welcomeCard.headline) {
-    clonedWelcomeCard.headline = createI18nString(welcomeCard.headline, languages, targetLanguageCode);
+  if (typeof welcomeCard.headline !== "undefined") {
+    clonedWelcomeCard.headline = createI18nString(welcomeCard.headline ?? "", languages);
   }
-  if (welcomeCard.html) {
-    clonedWelcomeCard.html = createI18nString(welcomeCard.html, languages, targetLanguageCode);
+  if (typeof welcomeCard.html !== "undefined") {
+    clonedWelcomeCard.html = createI18nString(welcomeCard.html ?? "", languages);
   }
-  if (clonedWelcomeCard.buttonLabel) {
-    clonedWelcomeCard.buttonLabel = createI18nString(
-      clonedWelcomeCard.buttonLabel,
-      languages,
-      targetLanguageCode
-    );
+  if (typeof welcomeCard.buttonLabel !== "undefined") {
+    clonedWelcomeCard.buttonLabel = createI18nString(clonedWelcomeCard.buttonLabel ?? "", languages);
   }
 
-  return clonedWelcomeCard;
+  return ZSurveyWelcomeCard.parse(clonedWelcomeCard);
 };
 
 // LGEGACY
 // Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateThankYouCard = (
-  thankYouCard: TSurveyThankYouCard,
-  languages: string[],
-  targetLanguageCode?: string
+  thankYouCard: TSurveyThankYouCard | TLegacySurveyThankYouCard,
+  languages: string[]
 ): TSurveyThankYouCard => {
   const clonedThankYouCard = structuredClone(thankYouCard);
-  if (thankYouCard.headline) {
-    clonedThankYouCard.headline = createI18nString(thankYouCard.headline, languages, targetLanguageCode);
-  }
-  if (thankYouCard.subheader) {
-    clonedThankYouCard.subheader = createI18nString(thankYouCard.subheader, languages, targetLanguageCode);
-  }
-  if (thankYouCard.buttonLabel) {
-    clonedThankYouCard.buttonLabel = createI18nString(
-      thankYouCard.buttonLabel,
-      languages,
-      targetLanguageCode
-    );
+
+  if (typeof thankYouCard.headline !== "undefined") {
+    clonedThankYouCard.headline = createI18nString(thankYouCard.headline ?? "", languages);
   }
 
-  return clonedThankYouCard;
+  if (typeof thankYouCard.subheader !== "undefined") {
+    clonedThankYouCard.subheader = createI18nString(thankYouCard.subheader ?? "", languages);
+  }
+
+  if (typeof clonedThankYouCard.buttonLabel !== "undefined") {
+    clonedThankYouCard.buttonLabel = createI18nString(thankYouCard.buttonLabel ?? "", languages);
+  }
+  return ZSurveyThankYouCard.parse(clonedThankYouCard);
 };
 
 // LGEGACY
 // Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateQuestion = (
-  question: TSurveyQuestion,
-  languages: string[],
-  targetLanguageCode?: string
-) => {
+  question: TLegacySurveyQuestion | TSurveyQuestion,
+  languages: string[]
+): TSurveyQuestion => {
   // Clone the question to avoid mutating the original
   const clonedQuestion = structuredClone(question);
 
-  clonedQuestion.headline = createI18nString(question.headline, languages, targetLanguageCode);
-  if (clonedQuestion.subheader) {
-    clonedQuestion.subheader = createI18nString(question.subheader ?? "", languages, targetLanguageCode);
+  //common question properties
+  if (typeof question.headline !== "undefined") {
+    clonedQuestion.headline = createI18nString(question.headline ?? "", languages);
   }
 
-  if (clonedQuestion.buttonLabel) {
-    clonedQuestion.buttonLabel = createI18nString(question.buttonLabel ?? "", languages, targetLanguageCode);
+  if (typeof question.subheader !== "undefined") {
+    clonedQuestion.subheader = createI18nString(question.subheader ?? "", languages);
   }
 
-  if (clonedQuestion.backButtonLabel) {
-    clonedQuestion.backButtonLabel = createI18nString(
-      question.backButtonLabel ?? "",
-      languages,
-      targetLanguageCode
-    );
+  if (typeof question.buttonLabel !== "undefined") {
+    clonedQuestion.buttonLabel = createI18nString(question.buttonLabel ?? "", languages);
   }
 
-  if (question.type === "multipleChoiceSingle" || question.type === "multipleChoiceMulti") {
-    (clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
-      question.choices.map((choice) => ({
-        ...choice,
-        label: createI18nString(choice.label, languages, targetLanguageCode),
-      }));
-    (
-      clonedQuestion as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceMultiQuestion
-    ).otherOptionPlaceholder = question.otherOptionPlaceholder
-      ? createI18nString(question.otherOptionPlaceholder, languages, targetLanguageCode)
-      : undefined;
+  if (typeof question.backButtonLabel !== "undefined") {
+    clonedQuestion.backButtonLabel = createI18nString(question.backButtonLabel ?? "", languages);
   }
-  if (question.type === "openText") {
-    if (question.placeholder) {
-      (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(
-        question.placeholder,
-        languages,
-        targetLanguageCode
-      );
-    }
-  }
-  if (question.type === "cta") {
-    if (question.dismissButtonLabel) {
-      (clonedQuestion as TSurveyCTAQuestion).dismissButtonLabel = createI18nString(
-        question.dismissButtonLabel,
-        languages,
-        targetLanguageCode
-      );
-    }
-    if (question.html) {
-      (clonedQuestion as TSurveyCTAQuestion).html = createI18nString(
-        question.html,
-        languages,
-        targetLanguageCode
-      );
-    }
-  }
-  if (question.type === "consent") {
-    if (question.html) {
-      (clonedQuestion as TSurveyConsentQuestion).html = createI18nString(
-        question.html,
-        languages,
-        targetLanguageCode
-      );
-    }
 
-    if (question.label) {
-      (clonedQuestion as TSurveyConsentQuestion).label = createI18nString(
-        question.label,
-        languages,
-        targetLanguageCode
-      );
-    }
+  switch (question.type) {
+    case "openText":
+      if (typeof question.placeholder !== "undefined") {
+        (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(
+          question.placeholder ?? "",
+          languages
+        );
+      }
+      return ZSurveyOpenTextQuestion.parse(clonedQuestion);
+
+    case "multipleChoiceSingle":
+    case "multipleChoiceMulti":
+      (clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
+        question.choices.map((choice) => {
+          return translateChoice(choice, languages);
+        });
+      if (
+        typeof (clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion)
+          .otherOptionPlaceholder !== "undefined"
+      ) {
+        (
+          clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion
+        ).otherOptionPlaceholder = createI18nString(question.otherOptionPlaceholder ?? "", languages);
+      }
+      if (question.type === "multipleChoiceSingle") {
+        return ZSurveyMultipleChoiceSingleQuestion.parse(clonedQuestion);
+      } else return ZSurveyMultipleChoiceMultiQuestion.parse(clonedQuestion);
+
+    case "cta":
+      if (typeof question.dismissButtonLabel !== "undefined") {
+        (clonedQuestion as TSurveyCTAQuestion).dismissButtonLabel = createI18nString(
+          question.dismissButtonLabel ?? "",
+          languages
+        );
+      }
+      if (typeof question.html !== "undefined") {
+        (clonedQuestion as TSurveyCTAQuestion).html = createI18nString(question.html ?? "", languages);
+      }
+      return ZSurveyCTAQuestion.parse(clonedQuestion);
+
+    case "consent":
+      if (typeof question.html !== "undefined") {
+        (clonedQuestion as TSurveyConsentQuestion).html = createI18nString(question.html ?? "", languages);
+      }
+
+      if (typeof question.label !== "undefined") {
+        (clonedQuestion as TSurveyConsentQuestion).label = createI18nString(question.label ?? "", languages);
+      }
+      return ZSurveyConsentQuestion.parse(clonedQuestion);
+
+    case "nps":
+      if (typeof question.lowerLabel !== "undefined") {
+        (clonedQuestion as TSurveyNPSQuestion).lowerLabel = createI18nString(
+          question.lowerLabel ?? "",
+          languages
+        );
+      }
+      if (typeof question.upperLabel !== "undefined") {
+        (clonedQuestion as TSurveyNPSQuestion).upperLabel = createI18nString(
+          question.upperLabel ?? "",
+          languages
+        );
+      }
+      return ZSurveyNPSQuestion.parse(clonedQuestion);
+
+    case "rating":
+      if (typeof question.lowerLabel !== "undefined") {
+        (clonedQuestion as TSurveyRatingQuestion).lowerLabel = createI18nString(
+          question.lowerLabel ?? "",
+          languages
+        );
+      }
+
+      if (typeof question.upperLabel !== "undefined") {
+        (clonedQuestion as TSurveyRatingQuestion).upperLabel = createI18nString(
+          question.upperLabel ?? "",
+          languages
+        );
+      }
+      return ZSurveyRatingQuestion.parse(clonedQuestion);
+
+    case "fileUpload":
+      return ZSurveyFileUploadQuestion.parse(clonedQuestion);
+
+    case "pictureSelection":
+      return ZSurveyPictureSelectionQuestion.parse(clonedQuestion);
+
+    case "cal":
+      return ZSurveyCalQuestion.parse(clonedQuestion);
+
+    default:
+      return ZSurveyQuestion.parse(clonedQuestion);
   }
-  if (question.type === "nps") {
-    (clonedQuestion as TSurveyNPSQuestion).lowerLabel = createI18nString(
-      question.lowerLabel ?? "",
-      languages,
-      targetLanguageCode
-    );
-    (clonedQuestion as TSurveyNPSQuestion).upperLabel = createI18nString(
-      question.upperLabel ?? "",
-      languages,
-      targetLanguageCode
-    );
-  }
-  if (question.type === "rating") {
-    (clonedQuestion as TSurveyRatingQuestion).lowerLabel = createI18nString(
-      question.lowerLabel ?? "",
-      languages,
-      targetLanguageCode
-    );
-    (clonedQuestion as TSurveyRatingQuestion).upperLabel = createI18nString(
-      question.upperLabel ?? "",
-      languages,
-      targetLanguageCode
-    );
-  }
-  return clonedQuestion;
+};
+
+export const extractLanguageIds = (languages: TLanguage[]): string[] => {
+  return languages.map((language) => language.code);
 };
 
 // LGEGACY
 // Helper function to maintain backwards compatibility for old survey objects before Multi Language
 export const translateSurvey = (
-  survey: TSurvey,
-  surveyLanguages: TSurveyLanguage[],
-  targetLanguageCode?: string
-): TSurvey => {
-  const languages = extractLanguageCodes(surveyLanguages);
-
+  survey: Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard">,
+  languageCodes: string[]
+): Pick<TSurvey, "questions" | "welcomeCard" | "thankYouCard"> => {
   const translatedQuestions = survey.questions.map((question) => {
-    return translateQuestion(question, languages, targetLanguageCode);
+    return translateQuestion(question, languageCodes);
   });
-  const translatedWelcomeCard =
-    survey.welcomeCard && translateWelcomeCard(survey.welcomeCard, languages, targetLanguageCode);
-  const translatedThankYouCard =
-    survey.thankYouCard && translateThankYouCard(survey.thankYouCard, languages, targetLanguageCode);
+  const translatedWelcomeCard = translateWelcomeCard(survey.welcomeCard, languageCodes);
+  const translatedThankYouCard = translateThankYouCard(survey.thankYouCard, languageCodes);
   const translatedSurvey = structuredClone(survey);
   return {
     ...translatedSurvey,
