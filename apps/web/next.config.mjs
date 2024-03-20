@@ -26,7 +26,7 @@ const nextConfig = {
       "app/api/js": ["../../packages/**/*"],
     },
   },
-  cacheHandler: require.resolve("./cache-handler.mjs"),
+  cacheHandler: process.env.VERCEL ? require.resolve("./cache-handler.mjs") : undefined,
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
