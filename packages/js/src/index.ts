@@ -1,81 +1,72 @@
-import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
-import { TJsConfigInput } from "@formbricks/types/js";
-
-import { trackAction } from "./lib/actions";
-import { getApi } from "./lib/api";
-import { CommandQueue } from "./lib/commandQueue";
-import { ErrorHandler } from "./lib/errors";
-import { initialize } from "./lib/initialize";
-import { Logger } from "./lib/logger";
-import { checkPageUrl } from "./lib/noCodeActions";
-import { logoutPerson, resetPerson, setPersonAttribute, setPersonUserId } from "./lib/person";
-
 declare global {
   interface Window {
-    formbricksSurveys: {
-      renderSurveyInline: (props: SurveyInlineProps & { brandColor: string }) => void;
-      renderSurveyModal: (props: SurveyModalProps & { brandColor: string }) => void;
-    };
+    formbricks: any;
   }
 }
 
-const logger = Logger.getInstance();
+interface InitOptions {
+  apiHost: string;
+  environmentId: string;
+  [key: string]: any; // Allows any additional properties required in the future
+}
 
-logger.debug("Create command queue");
-const queue = new CommandQueue();
+const methodCallsInProgress = new Set();
 
-const init = async (initConfig: TJsConfigInput) => {
-  ErrorHandler.init(initConfig.errorHandler);
-  queue.add(false, initialize, initConfig);
-  await queue.wait();
+const formbricksProxyHandler: ProxyHandler<any> = {
+  get(target, prop, _receiver) {
+    if (prop === "init") {
+      return target[prop];
+    }
+    return (...args: any[]) => {
+      if (methodCallsInProgress.has(prop)) {
+        throw new Error(`Method ${String(prop)} is already being called`);
+      }
+      if (!window.formbricks) {
+        throw new Error("Formbricks SDK is not initialized");
+      }
+      if (typeof window.formbricks[prop] !== "function") {
+        throw new Error(`Formbricks SDK does not support method ${String(prop)}`);
+      }
+      methodCallsInProgress.add(prop);
+      try {
+        return window.formbricks[prop](...args);
+      } finally {
+        methodCallsInProgress.delete(prop);
+      }
+    };
+  },
 };
 
-const setUserId = async (): Promise<void> => {
-  queue.add(true, setPersonUserId);
-  await queue.wait();
-};
+const formbricks = new Proxy(
+  {
+    init: async (options: InitOptions) => {
+      const { apiHost } = options;
+      await fetch(`${apiHost}/api/js`)
+        .then((res) => (res.ok ? res.text() : Promise.reject("Failed to load Formbricks SDK")))
+        .then((sdkScript) => {
+          const scriptTag = document.createElement("script");
+          scriptTag.innerHTML = sdkScript;
+          document.head.appendChild(scriptTag);
+          return new Promise((resolve, reject) => {
+            const checkInterval = setInterval(() => {
+              if (window.formbricks) {
+                clearInterval(checkInterval);
+                resolve(true);
+              }
+            }, 100);
+            setTimeout(() => {
+              clearInterval(checkInterval);
+              reject(new Error("Formbricks SDK loading timed out"));
+            }, 10000);
+          });
+        });
 
-const setEmail = async (email: string): Promise<void> => {
-  setAttribute("email", email);
-  await queue.wait();
-};
+      if (window.formbricks) {
+        window.formbricks.init(options);
+      }
+    },
+  },
+  formbricksProxyHandler
+);
 
-const setAttribute = async (key: string, value: any): Promise<void> => {
-  queue.add(true, setPersonAttribute, key, value);
-  await queue.wait();
-};
-
-const logout = async (): Promise<void> => {
-  queue.add(true, logoutPerson);
-  await queue.wait();
-};
-
-const reset = async (): Promise<void> => {
-  queue.add(true, resetPerson);
-  await queue.wait();
-};
-
-const track = async (name: string, properties: any = {}): Promise<void> => {
-  queue.add<any>(true, trackAction, name, properties);
-  await queue.wait();
-};
-
-const registerRouteChange = async (): Promise<void> => {
-  queue.add(true, checkPageUrl);
-  await queue.wait();
-};
-
-const formbricks = {
-  init,
-  setUserId,
-  setEmail,
-  setAttribute,
-  track,
-  logout,
-  reset,
-  registerRouteChange,
-  getApi,
-};
-
-export type FormbricksType = typeof formbricks;
-export default formbricks as FormbricksType;
+export default formbricks;
