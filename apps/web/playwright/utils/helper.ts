@@ -86,7 +86,9 @@ export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean 
     await page.click("#example-survey-survey-actions");
     await page.getByRole("menuitem", { name: "Delete" }).click();
     await page.getByRole("button", { name: "Delete" }).click();
+    await expect(page.getByText("Survey deleted successfully.")).toBeVisible();
     await page.reload();
+    await expect(page.getByText("Start from scratchCreate a")).toBeVisible();
   }
 };
 
@@ -129,11 +131,9 @@ export const createSurvey = async (
   const addQuestion = "Add QuestionAdd a new question to your survey";
 
   await signUpAndLogin(page, name, email, password);
-  await finishOnboarding(page, false);
+  await finishOnboarding(page);
 
-  await page.getByRole("link", { name: "New survey", exact: true }).click();
-  await page.getByRole("heading", { name: "Start from Scratch" }).click();
-  await page.getByRole("button", { name: "Create survey", exact: true }).click();
+  await page.getByText("Start from scratchCreate a").click();
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -141,7 +141,7 @@ export const createSurvey = async (
   await page.locator("#welcome-toggle").check();
   await page.getByLabel("Headline").fill(params.welcomeCard.headline);
   await page.locator("form").getByText("Thanks for providing your").fill(params.welcomeCard.description);
-  await page.getByText("Welcome CardEnabled").click();
+  await page.getByText("Welcome CardOn").click();
 
   // Open Text Question
   await page.getByRole("button", { name: "1 What would you like to know" }).click();
@@ -198,11 +198,7 @@ export const createSurvey = async (
   await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
   await page.getByLabel("Question").fill(params.npsQuestion.question);
   await page.getByLabel("Lower label").fill(params.npsQuestion.lowLabel);
-  await page
-    .locator("div")
-    .filter({ hasText: /^Upper label$/ })
-    .locator("#subheader")
-    .fill(params.npsQuestion.highLabel);
+  await page.getByLabel("Upper label").fill(params.npsQuestion.highLabel);
 
   // CTA Question
   await page
@@ -244,7 +240,7 @@ export const createSurvey = async (
   await page.getByLabel("Question").fill(params.fileUploadQuestion.question);
 
   // Thank You Card
-  page.getByText("Thank You CardShownShow").click();
+  await page.getByText("Thank You CardShownShow").click();
   await page.getByLabel("Question").fill(params.thankYouCard.headline);
   await page.getByLabel("Description").fill(params.thankYouCard.description);
 };

@@ -7,6 +7,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 
@@ -18,6 +19,7 @@ interface MultipleChoiceSingleProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -30,6 +32,7 @@ export default function MultipleChoiceSingleQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   ttc,
   setTtc,
 }: MultipleChoiceSingleProps) {
@@ -57,9 +60,10 @@ export default function MultipleChoiceSingleQuestion({
   );
 
   useEffect(() => {
-    const isOtherSelected = value !== undefined && !question.choices.some((choice) => choice.label === value);
+    const isOtherSelected =
+      value !== undefined && !question.choices.some((choice) => choice.label[languageCode] === value);
     setOtherSelected(isOtherSelected);
-  }, [question.id, question.choices, value]);
+  }, [question.id, question.choices, value, languageCode]);
 
   useEffect(() => {
     // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
@@ -80,8 +84,15 @@ export default function MultipleChoiceSingleQuestion({
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />{" "}
       <div className="mt-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
@@ -121,13 +132,13 @@ export default function MultipleChoiceSingleQuestion({
                     aria-labelledby={`${choice.id}-label`}
                     onChange={() => {
                       setOtherSelected(false);
-                      onChange({ [question.id]: choice.label });
+                      onChange({ [question.id]: getLocalizedValue(choice.label, languageCode) });
                     }}
-                    checked={value === choice.label}
+                    checked={value === getLocalizedValue(choice.label, languageCode)}
                     required={question.required && idx === 0}
                   />
                   <span id={`${choice.id}-label`} className="ml-3 font-medium">
-                    {choice.label}
+                    {getLocalizedValue(choice.label, languageCode)}
                   </span>
                 </span>
               </label>
@@ -136,7 +147,7 @@ export default function MultipleChoiceSingleQuestion({
               <label
                 tabIndex={questionChoices.length + 1}
                 className={cn(
-                  value === otherOption.label
+                  value === getLocalizedValue(otherOption.label, languageCode)
                     ? "border-border-highlight bg-accent-selected-bg z-10"
                     : "border-border",
                   "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
@@ -153,7 +164,7 @@ export default function MultipleChoiceSingleQuestion({
                     id={otherOption.id}
                     tabIndex={-1}
                     name={question.id}
-                    value={otherOption.label}
+                    value={getLocalizedValue(otherOption.label, languageCode)}
                     className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
                     aria-labelledby={`${otherOption.id}-label`}
                     onChange={() => {
@@ -163,7 +174,7 @@ export default function MultipleChoiceSingleQuestion({
                     checked={otherSelected}
                   />
                   <span id={`${otherOption.id}-label`} className="ml-3 font-medium">
-                    {otherOption.label}
+                    {getLocalizedValue(otherOption.label, languageCode)}
                   </span>
                 </span>
                 {otherSelected && (
@@ -185,7 +196,9 @@ export default function MultipleChoiceSingleQuestion({
                         }, 100);
                       }
                     }}
-                    placeholder={question.otherOptionPlaceholder ?? "Please specify"}
+                    placeholder={
+                      getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
+                    }
                     className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus mt-3 flex h-10 w-full rounded-md border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
@@ -199,7 +212,7 @@ export default function MultipleChoiceSingleQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             tabIndex={questionChoices.length + 3}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
@@ -211,7 +224,7 @@ export default function MultipleChoiceSingleQuestion({
         <div></div>
         <SubmitButton
           tabIndex={questionChoices.length + 2}
-          buttonLabel={question.buttonLabel}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
         />

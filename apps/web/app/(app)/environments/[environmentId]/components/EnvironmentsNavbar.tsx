@@ -1,6 +1,7 @@
 import Navigation from "@/app/(app)/environments/[environmentId]/components/Navigation";
 import type { Session } from "next-auth";
 
+import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
@@ -11,7 +12,6 @@ import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 interface EnvironmentsNavbarProps {
   environmentId: string;
   session: Session;
-  isFormbricksCloud: boolean;
 }
 
 export default async function EnvironmentsNavbar({ environmentId, session }: EnvironmentsNavbarProps) {
@@ -24,6 +24,8 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
   if (!team || !environment) {
     return <ErrorComponent />;
   }
+
+  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
 
   const [products, environments] = await Promise.all([
     getProducts(team.id),
@@ -46,6 +48,7 @@ export default async function EnvironmentsNavbar({ environmentId, session }: Env
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       webAppUrl={WEBAPP_URL}
       membershipRole={currentUserMembership?.role}
+      isMultiLanguageAllowed={isMultiLanguageAllowed}
     />
   );
 }

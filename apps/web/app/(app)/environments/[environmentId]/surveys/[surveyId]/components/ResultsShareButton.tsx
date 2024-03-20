@@ -10,7 +10,6 @@ import { DownloadIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 import {
@@ -25,13 +24,11 @@ import ShareSurveyResults from "../(analysis)/summary/components/ShareSurveyResu
 
 interface ResultsShareButtonProps {
   survey: TSurvey;
-  className?: string;
   webAppUrl: string;
-  product: TProduct;
   user: TUser;
 }
 
-export default function ResultsShareButton({ survey, webAppUrl, product, user }: ResultsShareButtonProps) {
+export default function ResultsShareButton({ survey, webAppUrl, user }: ResultsShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
@@ -146,7 +143,6 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
           survey={survey}
           open={showLinkModal}
           setOpen={setShowLinkModal}
-          product={product}
           webAppUrl={webAppUrl}
           user={user}
         />
