@@ -1,6 +1,8 @@
 // migration script to convert range field in rating question from string to number
 import { PrismaClient } from "@prisma/client";
 
+import { TSurveyRatingQuestion } from "@formbricks/types/surveys";
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -20,7 +22,7 @@ async function main() {
 
       for (const survey of surveys) {
         let updateNeeded = false;
-        const updatedSurvey = structuredClone(survey);
+        const updatedSurvey = structuredClone(survey) as any;
         if (updatedSurvey.questions.length > 0) {
           for (const question of updatedSurvey.questions) {
             if (question.type === "rating" && typeof question.range === "string") {
@@ -29,7 +31,7 @@ async function main() {
                 updateNeeded = true;
                 question.range = parsedRange;
               } else {
-                throw new Error(`Invalid range value for question Id ${question.id}`);
+                throw new Error(`Invalid range value for question Id ${question.id}: ${question.range}`);
               }
             }
           }
