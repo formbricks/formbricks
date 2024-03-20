@@ -196,6 +196,13 @@ const translateQuestion = (
       if (typeof question.label !== "undefined") {
         (clonedQuestion as TSurveyConsentQuestion).label = createI18nString(question.label ?? "", languages);
       }
+
+      if (typeof question.dismissButtonLabel !== "undefined") {
+        (clonedQuestion as TSurveyConsentQuestion).dismissButtonLabel = createI18nString(
+          question.label ?? "",
+          languages
+        );
+      }
       return ZSurveyConsentQuestion.parse(clonedQuestion);
 
     case "nps":
@@ -269,6 +276,15 @@ export const translateSurvey = (
 export const hasStringSubheaders = (questions: TSurveyQuestions): boolean => {
   for (const question of questions) {
     if (typeof question.subheader !== "undefined") {
+      return true;
+    }
+  }
+  return false;
+};
+
+export const hasStringDismissButtonLabels = (questions: TSurveyQuestions): boolean => {
+  for (const question of questions) {
+    if (question.type === "consent" && typeof question.dismissButtonLabel !== "undefined") {
       return true;
     }
   }
