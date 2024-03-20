@@ -228,7 +228,7 @@ export default function PreviewSurvey({
                 </Modal>
               ) : (
                 <div className="w-full px-3">
-                  <div className="absolute left-5 top-[1.55rem]  ">
+                  <div className="absolute left-5 top-[2.3rem]  ">
                     <AddLogoButton
                       environmentId={environment.id}
                       product={product}
@@ -311,7 +311,7 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
-                <div className="absolute left-10 top-6  ">
+                <div className="absolute left-6 top-[1.9rem]">
                   <AddLogoButton
                     environmentId={environment.id}
                     product={product}

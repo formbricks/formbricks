@@ -96,7 +96,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
               />
             </Label>
           ) : (
-            <div className="relative">
+            <div className="relative -ml-[0.2rem] -mt-[0.85rem]">
               <div
                 style={{ backgroundColor: product?.brand?.bgColor }}
                 className=" absolute rounded-lg border border-transparent hover:border-slate-300"
@@ -104,11 +104,11 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
                 <Image
                   src={product?.brand?.logoUrl}
                   alt="Company Logo"
-                  className={`${type === "mobile" ? "h-12" : "h-20"} peer w-auto max-w-64 cursor-pointer rounded-lg object-contain p-1`}
+                  className={`${type === "mobile" ? "h-12" : "h-[4rem]"} peer w-auto max-w-64 cursor-pointer rounded-lg object-contain p-1`}
                   width={256}
                   height={56}
                 />
-                <div className="absolute  right-0 top-0 hidden peer-hover:block">
+                <div className="absolute  right-0 top-0 hidden hover:block  hover:cursor-pointer peer-hover:block">
                   <Pencil className="m-1 h-4 w-4 rounded-[0.3rem] bg-slate-200" />
                 </div>
               </div>

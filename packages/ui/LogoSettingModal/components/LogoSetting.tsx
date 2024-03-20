@@ -110,12 +110,13 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
         )}
         <div className="flex flex-col gap-12">
           <div className="flex  flex-col gap-[0.45rem]">
-            <div className="">Preview</div>
-            <div style={{ backgroundColor: backgroundColor }} className={`  w-full  rounded-2xl border-2 `}>
+            <div className="font-[500]">Preview</div>
+            <div className={` w-full rounded-lg  border-2 bg-slate-100 `}>
               {!isStandardFileUploadOpen ? (
                 <Image
                   src={`${replacedLogo ? replacedLogo : imageUrl}`}
                   alt="logo"
+                  style={{ backgroundColor: backgroundColor }}
                   className="m-2 h-20 w-auto  max-w-64 rounded-lg border-2 object-contain p-1 "
                   width={256}
                   height={56}
@@ -137,7 +138,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
                 <>
                   <Button
                     variant="secondary"
-                    className="rounded-md bg-slate-100"
+                    className="rounded-lg bg-slate-100"
                     onClick={() => {
                       if (replaceLogoRef.current) {
                         replaceLogoRef.current.click();
@@ -159,7 +160,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
               {(isEdit || !fromLookAndFeelSetting) && (
                 <Button
                   variant="minimal"
-                  className="rounded-md "
+                  className="rounded-lg "
                   onClick={() => {
                     setIsStandardFileUploadOpen(true);
                     setReplacedLogo("");
@@ -170,7 +171,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <div>Background Color</div>
+            <div className="font-[500]">Background Color</div>
             <div className="flex h-28 w-full flex-col justify-center rounded-lg border-2 bg-slate-100 pl-3">
               <div className="w-1/2">
                 <Label htmlFor="backgroundColor">Color (HEX)</Label>
@@ -178,7 +179,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
               </div>
             </div>
             <div className="flex flex-col gap-4">
-              <div className="mt-3 flex items-center gap-1 rounded-sm border-2 bg-slate-50 p-2 text-[0.75rem]">
+              <div className="mt-3 flex items-center gap-1 rounded-lg border-2 bg-slate-50 p-2 text-[0.75rem]">
                 <MessageCircleWarning className="w-4" />
                 <p>The logo will be updated for all surveys which have the logo setting enabled</p>
               </div>
