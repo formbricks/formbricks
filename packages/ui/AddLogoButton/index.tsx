@@ -14,7 +14,7 @@ import { Label } from "../Label";
 import { LogoSettingModal } from "../LogoSettingModal";
 import { uploadLogo } from "./lib/uploadLogo";
 
-interface Props {
+interface AddLogoButtonProps {
   environmentId: string;
   product: TProduct;
   type?: string;
@@ -26,7 +26,7 @@ interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {
   target: HTMLInputElement & EventTarget;
 }
 
-export const AddLogoButton: React.FC<Props> = ({
+export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
   environmentId,
   product,
   type,

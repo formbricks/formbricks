@@ -18,7 +18,7 @@ import { updateProductAction } from "../actions";
 interface LogoChangeEvent extends React.ChangeEvent<HTMLInputElement> {
   target: HTMLInputElement & EventTarget;
 }
-interface Props {
+interface LogoSettingProps {
   imageUrl: string;
   environmentId: string;
   setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -29,7 +29,7 @@ interface Props {
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
   setImageUrl?: React.Dispatch<React.SetStateAction<string>>;
 }
-export const LogoSetting: React.FC<Props> = ({
+export const LogoSetting: React.FC<LogoSettingProps> = ({
   imageUrl,
   environmentId,
   setOpen,
@@ -85,8 +85,12 @@ export const LogoSetting: React.FC<Props> = ({
       setLocalProduct && setLocalProduct(updatedProductData);
       setImageUrl && setImageUrl(replacedLogo);
       toast.success("Logo uploaded successfully.");
-    } catch (error: any) {
-      toast.error(`Error: ${error.message}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        throw error;
+      }
     }
   };
   return (
