@@ -5,7 +5,7 @@ import { REDIS_HTTP_CLIENT_URL } from "@formbricks/lib/constants";
 const client = createClient({
   url: REDIS_HTTP_CLIENT_URL!,
 });
-client.on("error", (err) => console.log("Redis Client Error", err));
+client.on("error", (err) => console.error("Redis Client Error", err));
 client.connect();
 
 type Options = {
