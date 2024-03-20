@@ -13,7 +13,7 @@ async function main() {
         },
       });
 
-      if (!surveys) {
+      if (surveys.length === 0) {
         // stop the migration if there are no surveys
         return;
       }
@@ -24,8 +24,13 @@ async function main() {
         if (updatedSurvey.questions.length > 0) {
           for (const question of updatedSurvey.questions) {
             if (question.type === "rating" && typeof question.range === "string") {
-              updateNeeded = true;
-              question.range = parseInt(question.range);
+              const parsedRange = parseInt(question.range);
+              if (!isNaN(parsedRange)) {
+                updateNeeded = true;
+                question.range = parsedRange;
+              } else {
+                throw new Error(`Invalid range value for question Id ${question.id}`);
+              }
             }
           }
         }
