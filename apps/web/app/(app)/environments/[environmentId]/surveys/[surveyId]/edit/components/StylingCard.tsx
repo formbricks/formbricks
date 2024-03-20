@@ -41,6 +41,9 @@ export default function StylingCard({
 
   const [inputValue, setInputValue] = useState(100);
 
+  const shouldDisplayLogo =
+    localProduct.brand?.logoUrl || (!localProduct.brand?.logoUrl && !localSurvey.styling?.showLogo);
+
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
     handleBrightnessChange(parseInt(e.target.value));
@@ -355,8 +358,7 @@ export default function StylingCard({
             </div>
           </div>
 
-          {(localProduct.brand?.logoUrl ||
-            (!localProduct.brand?.logoUrl && !localSurvey.styling?.showLogo)) && (
+          {shouldDisplayLogo && (
             <div className="p-3">
               <div className="ml-2 flex items-center space-x-1">
                 <Switch id="hideLogo" checked={!showLogo} onCheckedChange={toggleShowLogo} />

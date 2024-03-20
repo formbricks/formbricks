@@ -1,6 +1,7 @@
 "use server";
 
 import { getServerSession } from "next-auth";
+import { notFound } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessProduct, verifyUserRoleAccess } from "@formbricks/lib/product/auth";
@@ -16,8 +17,9 @@ export async function updateProductAction(productId: string, inputProduct: TProd
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   const product = await getProduct(productId);
+  if (!product) return notFound();
 
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product!.teamId, session.user.id);
+  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccess(product.teamId, session.user.id);
   if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
 
   return await updateProduct(productId, inputProduct);
