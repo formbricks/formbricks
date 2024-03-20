@@ -1,4 +1,4 @@
-import { LightBulbIcon } from "@heroicons/react/24/outline";
+import { LightbulbIcon } from "lucide-react";
 
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -20,7 +20,7 @@ export default async function EnvironmentNotice({ environmentId, subPageUrl }: E
   return (
     <div>
       <div className="flex items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
-        <LightBulbIcon className="mr-3 h-4 w-4 text-blue-400" />
+        <LightbulbIcon className="mr-3 h-4 w-4 text-blue-400" />
         <p className="text-sm">
           {`You're currently in the ${environment.type} environment.`}
           <a

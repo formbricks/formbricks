@@ -1,7 +1,10 @@
 "use client";
 
 import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
-import { getResponsesAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
+import {
+  getResponseCountAction,
+  getResponsesAction,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import SurveyResultsTabs from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyResultsTabs";
 import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTimeline";
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
@@ -47,19 +50,44 @@ const ResponsePage = ({
   responsesPerPage,
   membershipRole,
 }: ResponsePageProps) => {
+  const [responseCount, setResponseCount] = useState<number | null>(null);
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
-  const filters = useMemo(() => getFormattedFilters(selectedFilter, dateRange), [selectedFilter, dateRange]);
+  const filters = useMemo(
+    () => getFormattedFilters(survey, selectedFilter, dateRange),
+    [survey, selectedFilter, dateRange]
+  );
 
   const searchParams = useSearchParams();
 
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, "default");
   }, [survey]);
+
+  const fetchNextPage = useCallback(async () => {
+    const newPage = page + 1;
+    const newResponses = await getResponsesAction(surveyId, newPage, responsesPerPage, filters);
+    if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
+      setHasMore(false);
+    }
+    setResponses([...responses, ...newResponses]);
+    setPage(newPage);
+  }, [filters, page, responses, responsesPerPage, surveyId]);
+
+  const deleteResponse = (responseId: string) => {
+    setResponses(responses.filter((response) => response.id !== responseId));
+    if (responseCount) {
+      setResponseCount(responseCount - 1);
+    }
+  };
+
+  const updateResponse = (responseId: string, updatedResponse: TResponse) => {
+    setResponses(responses.map((response) => (response.id === responseId ? updatedResponse : response)));
+  };
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -78,27 +106,18 @@ const ResponsePage = ({
     fetchInitialResponses();
   }, [surveyId, filters, responsesPerPage]);
 
-  const fetchNextPage = useCallback(async () => {
-    const newPage = page + 1;
-    const newResponses = await getResponsesAction(surveyId, newPage, responsesPerPage, filters);
-    if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
-      setHasMore(false);
-    }
-    setResponses([...responses, ...newResponses]);
-    setPage(newPage);
-  }, [filters, page, responses, responsesPerPage, surveyId]);
-
-  const deleteResponse = (responseId: string) => {
-    setResponses(responses.filter((response) => response.id !== responseId));
-  };
-
-  const updateResponse = (responseId: string, updatedResponse: TResponse) => {
-    setResponses(responses.map((response) => (response.id === responseId ? updatedResponse : response)));
-  };
+  useEffect(() => {
+    const handleResponsesCount = async () => {
+      const responseCount = await getResponseCountAction(surveyId, filters);
+      setResponseCount(responseCount);
+    };
+    handleResponsesCount();
+  }, [filters, surveyId]);
 
   useEffect(() => {
     setPage(1);
     setHasMore(true);
+    setResponses([]);
   }, [filters]);
 
   return (
@@ -114,9 +133,14 @@ const ResponsePage = ({
       />
       <div className="flex gap-1.5">
         <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
-        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />
       </div>
-      <SurveyResultsTabs activeId="responses" environmentId={environment.id} surveyId={surveyId} />
+      <SurveyResultsTabs
+        activeId="responses"
+        environmentId={environment.id}
+        surveyId={surveyId}
+        responseCount={responseCount}
+      />
       <ResponseTimeline
         environment={environment}
         surveyId={surveyId}

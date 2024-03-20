@@ -7,6 +7,7 @@ export interface SurveyBaseProps {
   isBrandingEnabled: boolean;
   activeQuestionId?: string;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
+  getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;
   onDisplay?: () => void;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
@@ -16,6 +17,7 @@ export interface SurveyBaseProps {
   autoFocus?: boolean;
   isRedirectDisabled?: boolean;
   prefillResponseData?: TResponseData;
+  languageCode: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
 }

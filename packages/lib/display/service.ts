@@ -8,6 +8,7 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import {
   TDisplay,
   TDisplayCreateInput,
+  TDisplayFilters,
   TDisplayLegacyCreateInput,
   TDisplayLegacyUpdateInput,
   TDisplayUpdateInput,
@@ -27,7 +28,7 @@ import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 
-const selectDisplay = {
+export const selectDisplay = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -343,7 +344,10 @@ export const deleteDisplayByResponseId = async (
   }
 };
 
-export const getDisplayCountBySurveyId = async (surveyId: string): Promise<number> =>
+export const getDisplayCountBySurveyId = async (
+  surveyId: string,
+  filters?: TDisplayFilters
+): Promise<number> =>
   unstable_cache(
     async () => {
       validateInputs([surveyId, ZId]);
@@ -352,6 +356,13 @@ export const getDisplayCountBySurveyId = async (surveyId: string): Promise<numbe
         const displayCount = await prisma.display.count({
           where: {
             surveyId: surveyId,
+            ...(filters &&
+              filters.createdAt && {
+                createdAt: {
+                  gte: filters.createdAt.min,
+                  lte: filters.createdAt.max,
+                },
+              }),
           },
         });
         return displayCount;

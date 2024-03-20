@@ -52,7 +52,7 @@ export default function Modal({
 
     return {
       transform: `scale(${scaleValue})`,
-      "transform-origin": placementClass,
+      transformOrigin: placementClass,
     };
   };
 
@@ -99,7 +99,7 @@ export default function Modal({
         : "";
 
   return (
-    <div aria-live="assertive" className="relative h-full w-full bg-slate-300">
+    <div aria-live="assertive" className="relative h-full w-full overflow-hidden bg-slate-300">
       <div
         ref={modalRef}
         style={{ ...highlightBorderColorStyle, ...scalingClasses }}

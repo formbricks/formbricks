@@ -3,7 +3,7 @@
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { RefreshCcwIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -18,6 +18,7 @@ import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 let setIsError = (_: boolean) => {};
+let setIsResponseSendingFinished = (_: boolean) => {};
 
 interface LinkSurveyProps {
   survey: TSurvey;
@@ -30,6 +31,7 @@ interface LinkSurveyProps {
   webAppUrl: string;
   responseCount?: number;
   verifiedEmail?: string;
+  languageCode: string;
 }
 
 export default function LinkSurvey({
@@ -43,21 +45,42 @@ export default function LinkSurvey({
   webAppUrl,
   responseCount,
   verifiedEmail,
+  languageCode,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
+  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
+    return surveyLanguage.default === true;
+  })?.language.code;
+
+  const startAt = searchParams?.get("startAt");
+  const isStartAtValid = useMemo(() => {
+    if (!startAt) return false;
+    if (survey?.welcomeCard.enabled && startAt === "start") return true;
+
+    const isValid = survey?.questions.some((question) => question.id === startAt);
+
+    // To remove startAt query param from URL if it is not valid:
+    if (!isValid && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("startAt");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    return isValid;
+  }, [survey, startAt]);
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
+    startAt && isStartAtValid ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
 
   const prefillResponseData: TResponseData | undefined = prefillAnswer
-    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
+    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
     : undefined;
 
   const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
@@ -71,6 +94,10 @@ export default function LinkSurvey({
           retryAttempts: 2,
           onResponseSendingFailed: () => {
             setIsError(true);
+          },
+          onResponseSendingFinished: () => {
+            // when response of current question is processed successfully
+            setIsResponseSendingFinished(true);
           },
           setSurveyState: setSurveyState,
         },
@@ -127,10 +154,10 @@ export default function LinkSurvey({
   }
   if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
-      return <VerifyEmail survey={survey} isErrorComponent={true} />;
+      return <VerifyEmail survey={survey} isErrorComponent={true} languageCode={languageCode} />;
     }
     //emailVerificationStatus === "not-verified"
-    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} />;
+    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
   }
 
   return (
@@ -146,17 +173,25 @@ export default function LinkSurvey({
               onClick={() =>
                 setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
               }>
-              Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
+              Restart <RefreshCcwIcon className="ml-2 h-4 w-4" />
             </button>
           </div>
         )}
         <SurveyInline
           survey={survey}
           brandColor={brandColor}
+          languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
           }}
+          getSetIsResponseSendingFinished={
+            !isPreview
+              ? (f: (value: boolean) => void) => {
+                  setIsResponseSendingFinished = f;
+                }
+              : undefined
+          }
           onRetry={() => {
             setIsError(false);
             responseQueue.processQueue();
@@ -190,6 +225,8 @@ export default function LinkSurvey({
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
+                language:
+                  languageCode === "default" && defaultLanguageCode ? defaultLanguageCode : languageCode,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",

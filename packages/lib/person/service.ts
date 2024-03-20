@@ -13,7 +13,7 @@ import { createAttributeClass, getAttributeClassByName } from "../attributeClass
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
-import { personCache } from "./cache";
+import { activePersonCache, personCache } from "./cache";
 
 export const selectPerson = {
   id: true,
@@ -258,7 +258,7 @@ export const updatePerson = async (personId: string, personInput: TPersonUpdateI
       // Now perform the upsert for the attribute with the found or created attributeClassId
       await prisma.attribute.upsert({
         where: {
-          attributeClassId_personId: {
+          personId_attributeClassId: {
             attributeClassId: attributeClass!.id,
             personId,
           },
@@ -391,7 +391,7 @@ export const updatePersonAttribute = async (
 
   const attributes = await prisma.attribute.upsert({
     where: {
-      attributeClassId_personId: {
+      personId_attributeClassId: {
         attributeClassId,
         personId,
       },
@@ -420,3 +420,29 @@ export const updatePersonAttribute = async (
 
   return attributes;
 };
+
+export const getIsPersonMonthlyActive = async (personId: string): Promise<boolean> =>
+  unstable_cache(
+    async () => {
+      const latestAction = await prisma.action.findFirst({
+        where: {
+          personId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          createdAt: true,
+        },
+      });
+      if (!latestAction || new Date(latestAction.createdAt).getMonth() !== new Date().getMonth()) {
+        return false;
+      }
+      return true;
+    },
+    [`isPersonActive-${personId}`],
+    {
+      tags: [activePersonCache.tag.byId(personId)],
+      revalidate: 60 * 60 * 24, // 24 hours
+    }
+  )();

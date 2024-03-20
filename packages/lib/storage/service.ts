@@ -2,6 +2,7 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   ListObjectsCommand,
   PutObjectCommand,
   S3Client,
@@ -13,32 +14,62 @@ import { add, isAfter, parseISO } from "date-fns";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
 import { unstable_cache } from "next/cache";
-import { join } from "path";
-import path from "path";
+import path, { join } from "path";
 
 import { TAccessType } from "@formbricks/types/storage";
 
-import { IS_S3_CONFIGURED, MAX_SIZES, UPLOADS_DIR, WEBAPP_URL } from "../constants";
+import {
+  MAX_SIZES,
+  S3_ACCESS_KEY,
+  S3_BUCKET_NAME,
+  S3_ENDPOINT_URL,
+  S3_REGION,
+  S3_SECRET_KEY,
+  UPLOADS_DIR,
+  WEBAPP_URL,
+  isS3Configured,
+} from "../constants";
 import { generateLocalSignedUrl } from "../crypto";
-import { env } from "../env.mjs";
+import { env } from "../env";
 import { storageCache } from "./cache";
 
-// global variables
-
-const AWS_BUCKET_NAME = env.S3_BUCKET_NAME!;
-const AWS_REGION = env.S3_REGION!;
-const S3_ACCESS_KEY = env.S3_ACCESS_KEY!;
-const S3_SECRET_KEY = env.S3_SECRET_KEY!;
-
 // S3Client Singleton
+let s3ClientInstance: S3Client | null = null;
 
-export const s3Client = new S3Client({
-  credentials: {
-    accessKeyId: S3_ACCESS_KEY,
-    secretAccessKey: S3_SECRET_KEY!,
-  },
-  region: AWS_REGION!,
-});
+export const getS3Client = () => {
+  if (!s3ClientInstance) {
+    const credentials =
+      S3_ACCESS_KEY && S3_SECRET_KEY
+        ? { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY }
+        : undefined;
+
+    s3ClientInstance = new S3Client({
+      credentials,
+      region: S3_REGION,
+      endpoint: S3_ENDPOINT_URL,
+    });
+  }
+
+  return s3ClientInstance;
+};
+
+export const testS3BucketAccess = async () => {
+  const s3Client = getS3Client();
+
+  try {
+    // Attempt to retrieve metadata about the bucket
+    const headBucketCommand = new HeadBucketCommand({
+      Bucket: S3_BUCKET_NAME,
+    });
+
+    await s3Client.send(headBucketCommand);
+
+    return true;
+  } catch (error) {
+    console.error("Failed to access S3 bucket:", error);
+    throw new Error(`S3 Bucket Access Test Failed: ${error}`);
+  }
+};
 
 const ensureDirectoryExists = async (dirPath: string) => {
   try {
@@ -81,11 +112,12 @@ const getS3SignedUrl = async (fileKey: string): Promise<string> => {
   return unstable_cache(
     async () => {
       const getObjectCommand = new GetObjectCommand({
-        Bucket: AWS_BUCKET_NAME,
+        Bucket: S3_BUCKET_NAME,
         Key: fileKey,
       });
 
       try {
+        const s3Client = getS3Client();
         return await getSignedUrl(s3Client, getObjectCommand, { expiresIn });
       } catch (err) {
         throw err;
@@ -186,7 +218,7 @@ export const getUploadSignedUrl = async (
   const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
 
   // handle the local storage case first
-  if (!IS_S3_CONFIGURED) {
+  if (!isS3Configured()) {
     try {
       const { signature, timestamp, uuid } = generateLocalSignedUrl(updatedFileName, environmentId, fileType);
 
@@ -240,9 +272,10 @@ export const getS3UploadSignedUrl = async (
   const postConditions: PresignedPostOptions["Conditions"] = [["content-length-range", 0, maxSize]];
 
   try {
+    const s3Client = getS3Client();
     const { fields, url } = await createPresignedPost(s3Client, {
       Expires: 10 * 60, // 10 minutes
-      Bucket: AWS_BUCKET_NAME,
+      Bucket: env.S3_BUCKET_NAME!,
       Key: `${environmentId}/${accessType}/${fileName}`,
       Fields: {
         "Content-Type": contentType,
@@ -299,17 +332,18 @@ export const putFile = async (
   environmentId: string
 ) => {
   try {
-    if (!IS_S3_CONFIGURED) {
+    if (!isS3Configured()) {
       await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
       return { success: true, message: "File uploaded" };
     } else {
       const input = {
         Body: fileBuffer,
-        Bucket: AWS_BUCKET_NAME,
+        Bucket: S3_BUCKET_NAME,
         Key: `${environmentId}/${accessType}/${fileName}`,
       };
 
       const command = new PutObjectCommand(input);
+      const s3Client = getS3Client();
       await s3Client.send(command);
       return { success: true, message: "File uploaded" };
     }
@@ -319,7 +353,7 @@ export const putFile = async (
 };
 
 export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) => {
-  if (!IS_S3_CONFIGURED) {
+  if (!isS3Configured()) {
     try {
       await deleteLocalFile(path.join(UPLOADS_DIR, environmentId, accessType, fileName));
       return { success: true, message: "File deleted" };
@@ -354,11 +388,12 @@ export const deleteLocalFile = async (filePath: string) => {
 
 export const deleteS3File = async (fileKey: string) => {
   const deleteObjectCommand = new DeleteObjectCommand({
-    Bucket: AWS_BUCKET_NAME,
+    Bucket: S3_BUCKET_NAME,
     Key: fileKey,
   });
 
   try {
+    const s3Client = getS3Client();
     await s3Client.send(deleteObjectCommand);
   } catch (err) {
     throw err;
@@ -368,9 +403,10 @@ export const deleteS3File = async (fileKey: string) => {
 export const deleteS3FilesByEnvironmentId = async (environmentId: string) => {
   try {
     // List all objects in the bucket with the prefix of environmentId
+    const s3Client = getS3Client();
     const listObjectsOutput = await s3Client.send(
       new ListObjectsCommand({
-        Bucket: AWS_BUCKET_NAME,
+        Bucket: S3_BUCKET_NAME,
         Prefix: environmentId,
       })
     );
@@ -388,7 +424,7 @@ export const deleteS3FilesByEnvironmentId = async (environmentId: string) => {
       // Delete the objects
       await s3Client.send(
         new DeleteObjectsCommand({
-          Bucket: AWS_BUCKET_NAME,
+          Bucket: S3_BUCKET_NAME,
           Delete: {
             Objects: objectsToDelete,
           },

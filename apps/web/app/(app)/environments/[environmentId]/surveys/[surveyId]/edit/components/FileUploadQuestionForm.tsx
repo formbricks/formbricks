@@ -1,9 +1,11 @@
 "use client";
 
-import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon, XCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
@@ -11,7 +13,7 @@ import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
@@ -20,6 +22,8 @@ interface FileUploadFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
 }
 
@@ -30,6 +34,8 @@ export default function FileUploadQuestionForm({
   updateQuestion,
   isInvalid,
   product,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
@@ -38,6 +44,7 @@ export default function FileUploadQuestionForm({
     error: billingInfoError,
     isLoading: billingInfoLoading,
   } = useGetBillingInfo(product?.teamId ?? "");
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   const handleInputChange = (event) => {
     setExtension(event.target.value);
@@ -103,41 +110,42 @@ export default function FileUploadQuestionForm({
     return 10;
   }, [billingInfo, billingInfoError, billingInfoLoading]);
 
-  const environmentId = localSurvey.environmentId;
-
   return (
     <form>
       <QuestionFormInput
+        id="headline"
+        value={question.headline}
         localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
         questionIdx={questionIdx}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        type="headline"
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
       <div>
         {showSubheader && (
-          <>
-            <div className="flex w-full items-center">
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
               <QuestionFormInput
+                id="subheader"
+                value={question.subheader}
                 localSurvey={localSurvey}
-                environmentId={environmentId}
-                isInvalid={isInvalid}
-                questionId={question.id}
                 questionIdx={questionIdx}
+                isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                type="subheader"
-              />
-              <TrashIcon
-                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
-                }}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: undefined });
+              }}
+            />
+          </div>
         )}
         {!showSubheader && (
           <Button
@@ -145,7 +153,13 @@ export default function FileUploadQuestionForm({
             className="mt-3"
             variant="minimal"
             type="button"
-            onClick={() => setShowSubheader(true)}>
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                subheader: createI18nString("", surveyLanguageCodes),
+              });
+              setShowSubheader(true);
+            }}>
+            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

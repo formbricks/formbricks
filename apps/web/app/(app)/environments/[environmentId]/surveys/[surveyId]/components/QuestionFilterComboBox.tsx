@@ -1,12 +1,14 @@
 "use client";
 
+import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import * as React from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { Command, CommandEmpty, CommandGroup, CommandItem } from "@formbricks/ui/Command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@formbricks/ui/Command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +23,7 @@ type QuestionFilterComboBoxProps = {
   filterComboBoxValue: string | string[] | undefined;
   onChangeFilterValue: (o: string) => void;
   onChangeFilterComboBoxValue: (o: string | string[]) => void;
-  type: TSurveyQuestionType | "Attributes" | "Tags" | undefined;
+  type: OptionsType.METADATA | TSurveyQuestionType | OptionsType.ATTRIBUTES | OptionsType.TAGS | undefined;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
 };
@@ -40,11 +42,14 @@ const QuestionFilterComboBox = ({
   const [open, setOpen] = React.useState(false);
   const [openFilterValue, setOpenFilterValue] = React.useState<boolean>(false);
   const commandRef = React.useRef(null);
+  const defaultLanguageCode = "default";
   useClickOutside(commandRef, () => setOpen(false));
 
   // multiple when question type is multi selection
   const isMultiple =
-    type === TSurveyQuestionType.MultipleChoiceMulti || type === TSurveyQuestionType.MultipleChoiceSingle;
+    type === TSurveyQuestionType.MultipleChoiceMulti ||
+    type === TSurveyQuestionType.MultipleChoiceSingle ||
+    type === TSurveyQuestionType.PictureSelection;
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
@@ -141,23 +146,32 @@ const QuestionFilterComboBox = ({
         <div className="relative mt-2 h-full">
           {open && (
             <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-              <CommandEmpty>No result found.</CommandEmpty>
-              <CommandGroup>
-                {options?.map((o) => (
-                  <CommandItem
-                    onSelect={() => {
-                      !isMultiple
-                        ? onChangeFilterComboBoxValue(o)
-                        : onChangeFilterComboBoxValue(
-                            Array.isArray(filterComboBoxValue) ? [...filterComboBoxValue, o] : [o]
-                          );
-                      !isMultiple && setOpen(false);
-                    }}
-                    className="cursor-pointer">
-                    {o}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              <CommandList>
+                <CommandEmpty>No result found.</CommandEmpty>
+                <CommandGroup>
+                  {options?.map((o) => (
+                    <CommandItem
+                      onSelect={() => {
+                        !isMultiple
+                          ? onChangeFilterComboBoxValue(
+                              typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
+                            )
+                          : onChangeFilterComboBoxValue(
+                              Array.isArray(filterComboBoxValue)
+                                ? [
+                                    ...filterComboBoxValue,
+                                    typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o,
+                                  ]
+                                : [typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o]
+                            );
+                        !isMultiple && setOpen(false);
+                      }}
+                      className="cursor-pointer">
+                      {typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
             </div>
           )}
         </div>

@@ -6,6 +6,7 @@ import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { sendResponseFinishedEmail } from "@formbricks/lib/emails/emails";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
+  const product = await getProductByEnvironmentId(environmentId);
+  if (!product) return;
 
   // get all webhooks of this environment where event in triggers
   const webhooks = await prisma.webhook.findMany({
@@ -153,7 +156,7 @@ export async function POST(request: Request) {
       const survey = {
         id: surveyData.id,
         name: surveyData.name,
-        questions: JSON.parse(JSON.stringify(surveyData.questions)) as TSurveyQuestion[],
+        questions: structuredClone(surveyData.questions) as TSurveyQuestion[],
       };
       // send email to all users
       await Promise.all(

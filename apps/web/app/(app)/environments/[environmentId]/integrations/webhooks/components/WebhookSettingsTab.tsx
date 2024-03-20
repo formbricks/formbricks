@@ -4,8 +4,8 @@ import { triggers } from "@/app/(app)/environments/[environmentId]/integrations/
 import SurveyCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
 import TriggerCheckboxGroup from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
 import { testEndpoint } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/testEndpoint";
-import { TrashIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -63,7 +63,8 @@ export default function WebhookSettingsTab({
       return true;
     } catch (err) {
       setHittingEndpoint(false);
-      toast.error("Oh no! We are unable to ping the webhook!");
+      toast.error("Unable to ping the webhook! Please check browser console for logs");
+      console.error("Webhook Test Failed due to: ", err.message);
       setEndpointAccessible(false);
       return false;
     }

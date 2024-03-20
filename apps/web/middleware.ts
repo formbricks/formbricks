@@ -23,11 +23,8 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
 
   if (isWebAppRoute(request.nextUrl.pathname) && !token) {
-    const loginUrl = new URL(
-      `/auth/login?callbackUrl=${encodeURIComponent(request.nextUrl.toString())}`,
-      WEBAPP_URL
-    );
-    return NextResponse.redirect(loginUrl.href);
+    const loginUrl = `${WEBAPP_URL}/auth/login?callbackUrl=${encodeURIComponent(WEBAPP_URL + request.nextUrl.pathname + request.nextUrl.search)}`;
+    return NextResponse.redirect(loginUrl);
   }
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");

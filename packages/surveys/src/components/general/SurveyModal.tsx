@@ -15,6 +15,7 @@ export function SurveyModal({
   darkOverlay,
   highlightBorderColor,
   onDisplay,
+  getSetIsResponseSendingFinished,
   onActiveQuestionChange,
   onResponse,
   onClose,
@@ -22,6 +23,7 @@ export function SurveyModal({
   onFileUpload,
   onRetry,
   isRedirectDisabled = false,
+  languageCode,
   responseCount,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
@@ -49,8 +51,10 @@ export function SurveyModal({
           isBrandingEnabled={isBrandingEnabled}
           activeQuestionId={activeQuestionId}
           onDisplay={onDisplay}
+          getSetIsResponseSendingFinished={getSetIsResponseSendingFinished}
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
+          languageCode={languageCode}
           onClose={close}
           onFinished={() => {
             onFinished();

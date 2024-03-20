@@ -7,28 +7,51 @@ import { TSurvey } from "@formbricks/types/surveys";
 
 import { Config } from "./config";
 import { ErrorHandler } from "./errors";
+import { putFormbricksInErrorState } from "./initialize";
 import { Logger } from "./logger";
 import { filterPublicSurveys, sync } from "./sync";
+import { getDefaultLanguageCode, getLanguageCode } from "./utils";
 
 const containerId = "formbricks-web-container";
+
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
-let surveyRunning = false;
+let isSurveyRunning = false;
 let setIsError = (_: boolean) => {};
+let setIsResponseSendingFinished = (_: boolean) => {};
+
+export const setIsSurveyRunning = (value: boolean) => {
+  isSurveyRunning = value;
+};
 
 export const renderWidget = async (survey: TSurvey) => {
-  if (surveyRunning) {
+  if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
   }
-  surveyRunning = true;
+  setIsSurveyRunning(true);
 
   if (survey.delay) {
     logger.debug(`Delaying survey by ${survey.delay} seconds.`);
   }
 
   const product = config.get().state.product;
+  const attributes = config.get().state.attributes;
+
+  const isMultiLanguageSurvey = survey.languages.length > 1;
+  let languageCode = "default";
+
+  if (isMultiLanguageSurvey) {
+    const displayLanguage = getLanguageCode(survey, attributes);
+    //if survey is not available in selected language, survey wont be shown
+    if (!displayLanguage) {
+      logger.debug("Survey not available in specified language.");
+      setIsSurveyRunning(true);
+      return;
+    }
+    languageCode = displayLanguage;
+  }
 
   const surveyState = new SurveyState(survey.id, null, null, config.get().userId);
 
@@ -40,10 +63,12 @@ export const renderWidget = async (survey: TSurvey) => {
       onResponseSendingFailed: () => {
         setIsError(true);
       },
+      onResponseSendingFinished: () => {
+        setIsResponseSendingFinished(true);
+      },
     },
     surveyState
   );
-
   const productOverwrites = survey.productOverwrites ?? {};
   const brandColor = productOverwrites.brandColor ?? product.brandColor;
   const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
@@ -51,7 +76,6 @@ export const renderWidget = async (survey: TSurvey) => {
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;
-
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
   setTimeout(() => {
@@ -61,10 +85,14 @@ export const renderWidget = async (survey: TSurvey) => {
       isBrandingEnabled: isBrandingEnabled,
       clickOutside,
       darkOverlay,
+      languageCode,
       highlightBorderColor,
       placement,
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
+      },
+      getSetIsResponseSendingFinished: (f: (value: boolean) => void) => {
+        setIsResponseSendingFinished = f;
       },
       onDisplay: async () => {
         const { userId } = config.get();
@@ -136,6 +164,7 @@ export const renderWidget = async (survey: TSurvey) => {
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
+          language: languageCode === "default" ? getDefaultLanguageCode(survey) : languageCode,
         });
       },
       onClose: closeSurvey,
@@ -157,7 +186,7 @@ export const renderWidget = async (survey: TSurvey) => {
 
 export const closeSurvey = async (): Promise<void> => {
   // remove container element from DOM
-  document.getElementById(containerId)?.remove();
+  removeWidgetContainer();
   addWidgetContainer();
 
   // if unidentified user, refilter the surveys
@@ -168,7 +197,7 @@ export const closeSurvey = async (): Promise<void> => {
       ...config.get(),
       state: updatedState,
     });
-    surveyRunning = false;
+    setIsSurveyRunning(false);
     return;
   }
 
@@ -182,9 +211,10 @@ export const closeSurvey = async (): Promise<void> => {
       },
       true
     );
-    surveyRunning = false;
-  } catch (e) {
+    setIsSurveyRunning(false);
+  } catch (e: any) {
     errorHandler.handle(e);
+    putFormbricksInErrorState();
   }
 };
 
@@ -192,6 +222,10 @@ export const addWidgetContainer = (): void => {
   const containerElement = document.createElement("div");
   containerElement.id = containerId;
   document.body.appendChild(containerElement);
+};
+
+export const removeWidgetContainer = (): void => {
+  document.getElementById(containerId)?.remove();
 };
 
 const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {

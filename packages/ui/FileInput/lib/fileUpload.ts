@@ -1,6 +1,10 @@
 "use client";
 
-const uploadFile = async (
+import { toast } from "react-hot-toast";
+
+import { TAllowedFileExtension } from "@formbricks/types/common";
+
+export const uploadFile = async (
   file: File | Blob,
   allowedFileExtensions: string[] | undefined,
   environmentId: string | undefined
@@ -93,4 +97,43 @@ const uploadFile = async (
   }
 };
 
-export { uploadFile };
+export const getAllowedFiles = (
+  files: File[],
+  allowedFileExtensions: string[],
+  maxSizeInMB?: number
+): File[] => {
+  const sizeExceedFiles: string[] = [];
+  const unsupportedExtensionFiles: string[] = [];
+
+  const allowedFiles = files.filter((file) => {
+    if (!file || !file.type) {
+      return false;
+    }
+
+    const extension = file.name.split(".").pop();
+    const fileSizeInMB = file.size / 1000000; // Kb -> Mb
+
+    if (!allowedFileExtensions.includes(extension as TAllowedFileExtension)) {
+      unsupportedExtensionFiles.push(file.name);
+      return false; // Exclude file if extension not allowed
+    } else if (maxSizeInMB && fileSizeInMB > maxSizeInMB) {
+      sizeExceedFiles.push(file.name);
+      return false; // Exclude files larger than the maximum size
+    }
+
+    return true;
+  });
+
+  // Constructing toast messages based on the issues found
+  let toastMessage = "";
+  if (sizeExceedFiles.length > 0) {
+    toastMessage += `Files exceeding size limit (${maxSizeInMB} MB): ${sizeExceedFiles.join(", ")}. `;
+  }
+  if (unsupportedExtensionFiles.length > 0) {
+    toastMessage += `Unsupported file types: ${unsupportedExtensionFiles.join(", ")}.`;
+  }
+  if (toastMessage) {
+    toast.error(toastMessage);
+  }
+  return allowedFiles;
+};

@@ -12,6 +12,7 @@ import {
   WEBAPP_URL,
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
+import { getProductByEnvironmentId } from "../product/service";
 import { getQuestionResponseMapping } from "../responses";
 import { getOriginalFileNameFromUrl } from "../storage/utils";
 import { getTeamByEnvironmentId } from "../team/service";
@@ -126,7 +127,9 @@ export const sendInviteMemberEmail = async (
   inviteId: string,
   email: string,
   inviterName: string | null,
-  inviteeName: string | null
+  inviteeName: string | null,
+  isOnboardingInvite?: boolean,
+  inviteMessage?: string
 ) => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
@@ -134,16 +137,35 @@ export const sendInviteMemberEmail = async (
 
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
-  await sendEmail({
-    to: email,
-    subject: `You're invited to collaborate on Formbricks!`,
-    html: withEmailTemplate(`Hey ${inviteeName},<br/><br/>
-    Your colleague ${inviterName} invited you to join them at Formbricks. To accept the invitation, please click the link below:<br/><br/>
-    <a class="button" href="${verifyLink}">Join team</a><br/>
-    <br/>
-    Have a great day!<br/>
-    The Formbricks Team!`),
-  });
+  if (isOnboardingInvite && inviteMessage) {
+    await sendEmail({
+      to: email,
+      subject: `${inviterName} needs a hand setting up Formbricks.  Can you help out?`,
+      html: withEmailTemplate(`Hey 👋,<br/><br/>
+      ${inviteMessage} 
+      <h2>Get Started in Minutes</h2>
+    <ol>
+        <li>Create an account to join ${inviterName}'s team.</li>
+        <li>Connect Formbricks to your app or website via HTML Snippet or NPM in just a few minutes.</li>
+        <li>Done ✅</li>
+    </ol>
+      <a class="button" href="${verifyLink}">Join ${inviterName}'s team</a><br/>
+      <br/>
+      Have a great day!<br/>
+      The Formbricks Team!`),
+    });
+  } else {
+    await sendEmail({
+      to: email,
+      subject: `You're invited to collaborate on Formbricks!`,
+      html: withEmailTemplate(`Hey ${inviteeName},<br/><br/>
+      Your colleague ${inviterName} invited you to join them at Formbricks. To accept the invitation, please click the link below:<br/><br/>
+      <a class="button" href="${verifyLink}">Join team</a><br/>
+      <br/>
+      Have a great day!<br/>
+      The Formbricks Team!`),
+    });
+  }
 };
 
 export const sendInviteAcceptedEmail = async (inviterName: string, inviteeName: string, email: string) => {
@@ -168,6 +190,8 @@ export const sendResponseFinishedEmail = async (
 ) => {
   const personEmail = response.person?.attributes["email"];
   const team = await getTeamByEnvironmentId(environmentId);
+  const product = await getProductByEnvironmentId(environmentId);
+  if (!product) return;
   await sendEmail({
     to: email,
     subject: personEmail

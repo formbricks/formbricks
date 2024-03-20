@@ -1,28 +1,40 @@
 "use client";
 
+import clsx from "clsx";
 import {
   CheckIcon,
-  CursorArrowRippleIcon,
-  HashtagIcon,
-  ListBulletIcon,
-  QuestionMarkCircleIcon,
-  QueueListIcon,
+  ChevronDown,
+  ChevronUp,
+  HashIcon,
+  HelpCircleIcon,
+  ImageIcon,
+  LanguagesIcon,
+  ListIcon,
+  MousePointerClickIcon,
+  Rows3Icon,
+  SmartphoneIcon,
   StarIcon,
-  TagIcon,
-} from "@heroicons/react/24/solid";
-import clsx from "clsx";
-import { ChevronDown, ChevronUp } from "lucide-react";
+} from "lucide-react";
 import * as React from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import useClickOutside from "@formbricks/lib/useClickOutside";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@formbricks/ui/Command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@formbricks/ui/Command";
 import { NetPromoterScoreIcon } from "@formbricks/ui/icons";
 
 export enum OptionsType {
   QUESTIONS = "Questions",
   TAGS = "Tags",
   ATTRIBUTES = "Attributes",
+  METADATA = "Metadata",
 }
 
 export type QuestionOption = {
@@ -44,29 +56,37 @@ interface QuestionComboBoxProps {
 
 const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOption>) => {
   const getIconType = () => {
-    if (type === OptionsType.QUESTIONS) {
-      switch (questionType) {
-        case TSurveyQuestionType.Rating:
-          return <StarIcon width={18} className="text-white" />;
-        case TSurveyQuestionType.CTA:
-          return <CursorArrowRippleIcon width={18} className="text-white" />;
-        case TSurveyQuestionType.OpenText:
-          return <QuestionMarkCircleIcon width={18} className="text-white" />;
-        case TSurveyQuestionType.MultipleChoiceMulti:
-          return <ListBulletIcon width={18} className="text-white" />;
-        case TSurveyQuestionType.MultipleChoiceSingle:
-          return <QueueListIcon width={18} className="text-white" />;
-        case TSurveyQuestionType.NPS:
-          return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
-        case TSurveyQuestionType.Consent:
-          return <CheckIcon width={18} height={18} className="text-white" />;
-      }
-    }
-    if (type === OptionsType.ATTRIBUTES) {
-      return <HashtagIcon width={18} className="text-white" />;
-    }
-    if (type === OptionsType.TAGS) {
-      return <TagIcon width={18} className="text-white" />;
+    switch (type) {
+      case OptionsType.QUESTIONS:
+        switch (questionType) {
+          case TSurveyQuestionType.Rating:
+            return <StarIcon width={18} className="text-white" />;
+          case TSurveyQuestionType.CTA:
+            return <MousePointerClickIcon width={18} className="text-white" />;
+          case TSurveyQuestionType.OpenText:
+            return <HelpCircleIcon width={18} className="text-white" />;
+          case TSurveyQuestionType.MultipleChoiceMulti:
+            return <ListIcon width={18} className="text-white" />;
+          case TSurveyQuestionType.MultipleChoiceSingle:
+            return <Rows3Icon width={18} className="text-white" />;
+          case TSurveyQuestionType.NPS:
+            return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionType.Consent:
+            return <CheckIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionType.PictureSelection:
+            return <ImageIcon width={18} className="text-white" />;
+        }
+      case OptionsType.ATTRIBUTES:
+        return <HashIcon width={18} className="text-white" />;
+      case OptionsType.METADATA:
+        switch (label) {
+          case "Language":
+            return <LanguagesIcon width={18} height={18} className="text-white" />;
+          case "Device Type":
+            return <SmartphoneIcon width={18} height={18} className="text-white" />;
+        }
+      case OptionsType.TAGS:
+        return <HashIcon width={18} className="text-white" />;
     }
   };
 
@@ -75,6 +95,8 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
       return "bg-indigo-500";
     } else if (type === OptionsType.QUESTIONS) {
       return "bg-brand-dark";
+    } else if (type === OptionsType.TAGS) {
+      return "bg-indigo-500";
     } else {
       return "bg-amber-500";
     }
@@ -82,7 +104,9 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
   return (
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
-      <p className="ml-3 truncate text-base text-slate-600">{label}</p>
+      <p className="ml-3 truncate text-base text-slate-600">
+        {typeof label === "string" ? label : getLocalizedValue(label, "default")}
+      </p>
     </div>
   );
 };
@@ -124,27 +148,30 @@ const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBo
       <div className="relative mt-2 h-full">
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
-            <CommandEmpty>No result found.</CommandEmpty>
-            {options?.map((data) => (
-              <>
-                {data?.option.length > 0 && (
-                  <CommandGroup heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
-                    {data?.option?.map((o, i) => (
-                      <CommandItem
-                        key={`${o.label}-${i}`}
-                        onSelect={() => {
-                          setInputValue("");
-                          onChangeValue(o);
-                          setOpen(false);
-                        }}
-                        className="cursor-pointer">
-                        <SelectedCommandItem label={o.label} type={o.type} questionType={o.questionType} />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-              </>
-            ))}
+            <CommandList>
+              <CommandEmpty>No result found.</CommandEmpty>
+              {options?.map((data) => (
+                <>
+                  {data?.option.length > 0 && (
+                    <CommandGroup
+                      heading={<p className="text-sm font-normal text-slate-600">{data.header}</p>}>
+                      {data?.option?.map((o, i) => (
+                        <CommandItem
+                          key={`${o.label}-${i}`}
+                          onSelect={() => {
+                            setInputValue("");
+                            onChangeValue(o);
+                            setOpen(false);
+                          }}
+                          className="cursor-pointer">
+                          <SelectedCommandItem label={o.label} type={o.type} questionType={o.questionType} />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  )}
+                </>
+              ))}
+            </CommandList>
           </div>
         )}
       </div>

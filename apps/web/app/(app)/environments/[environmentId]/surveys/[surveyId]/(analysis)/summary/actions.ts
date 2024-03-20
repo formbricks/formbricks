@@ -1,7 +1,6 @@
 "use server";
 
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
-import { generateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { customAlphabet } from "nanoid";
 import { getServerSession } from "next-auth";
 
@@ -9,6 +8,7 @@ import { authOptions } from "@formbricks/lib/authOptions";
 import { sendEmbedSurveyPreviewEmail } from "@formbricks/lib/emails/emails";
 import { canUserAccessSurvey } from "@formbricks/lib/survey/auth";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 type TSendEmailActionArgs = {
@@ -16,17 +16,6 @@ type TSendEmailActionArgs = {
   subject: string;
   html: string;
 };
-
-export async function generateSingleUseIdAction(surveyId: string, isEncrypted: boolean): Promise<string> {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const hasUserSurveyAccess = await canUserAccessSurvey(session.user.id, surveyId);
-
-  if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
-
-  return generateSurveySingleUseId(isEncrypted);
-}
 
 export const sendEmailAction = async ({ html, subject, to }: TSendEmailActionArgs) => {
   const session = await getServerSession(authOptions);
@@ -54,7 +43,7 @@ export async function generateResultShareUrlAction(surveyId: string): Promise<st
     20
   )();
 
-  await updateSurvey({ ...survey, resultShareKey });
+  await updateSurvey({ ...formatSurveyDateFields(survey), resultShareKey });
 
   return resultShareKey;
 }
@@ -86,7 +75,7 @@ export async function deleteResultShareUrlAction(surveyId: string): Promise<void
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  await updateSurvey({ ...survey, resultShareKey: null });
+  await updateSurvey({ ...formatSurveyDateFields(survey), resultShareKey: null });
 }
 
 export const getEmailHtmlAction = async (surveyId: string) => {
