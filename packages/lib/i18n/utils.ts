@@ -198,16 +198,16 @@ export const translateQuestion = (
     clonedQuestion.backButtonLabel = createI18nString(question.backButtonLabel ?? "", languages);
   }
 
-  switch (question.type) {
+  const { type } = question;
+  switch (type) {
     case "openText":
-      if (typeof question.placeholder === "string") {
-        (clonedQuestion as TSurveyOpenTextQuestion).placeholder = createI18nString(
-          question.placeholder ?? "",
-          languages
-        );
-      }
-      return ZSurveyOpenTextQuestion.parse(clonedQuestion);
-
+      // ...
+    case "multipleChoiceSingle":
+    case "multipleChoiceMulti":
+      // ...
+    // ...
+  }
+}
     case "multipleChoiceSingle":
     case "multipleChoiceMulti":
       (clonedQuestion as TSurveyMultipleChoiceSingleQuestion | TSurveyMultipleChoiceMultiQuestion).choices =
