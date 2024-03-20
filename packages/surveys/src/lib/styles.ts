@@ -42,6 +42,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
 
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
+  appendCssVariable("focus-color", styling.brandColor?.light);
   if (!!styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
     appendCssVariable("brand-text-color", isLight(styling.brandColor?.light) ? "black" : "white");

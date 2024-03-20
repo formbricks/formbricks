@@ -24,7 +24,7 @@ export default function Loading() {
       <SettingsCard
         title="Unified Styling"
         className="max-w-7xl"
-        description="Set styling for all surveys in this project. You can still overwrite these styles in the survey editor.">
+        description="Set styling for all newly created surveys in this project. You can still overwrite these styles in the survey editor.">
         <div className="flex animate-pulse">
           <div className="w-1/2">
             <div className="flex flex-col gap-6">

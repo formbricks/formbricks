@@ -19,6 +19,7 @@ import WelcomeCard from "./WelcomeCard";
 
 export function Survey({
   survey,
+  styling,
   isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
@@ -61,7 +62,7 @@ export function Survey({
     }
   }, [questionId, survey, history]);
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const showProgressBar = !survey.styling?.hideProgressBar;
+  const showProgressBar = !styling.hideProgressBar;
 
   useEffect(() => {
     if (activeQuestionId === "hidden" || activeQuestionId === "multiLanguage") return;

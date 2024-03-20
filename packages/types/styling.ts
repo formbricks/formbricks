@@ -37,4 +37,5 @@ export const ZBaseStyling = z.object({
   roundness: z.number().nullish(),
   cardArrangement: ZCardArrangement.nullish(),
   background: ZSurveyStylingBackground.nullish(),
+  hideProgressBar: z.boolean().nullish(),
 });

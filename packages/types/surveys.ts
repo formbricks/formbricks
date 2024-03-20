@@ -36,7 +36,7 @@ export enum TSurveyQuestionType {
 
 export const ZSurveyWelcomeCard = z.object({
   enabled: z.boolean(),
-  headline: ZI18nString.optional(),
+  headline: ZI18nString,
   html: ZI18nString.optional(),
   fileUrl: z.string().optional(),
   buttonLabel: ZI18nString.optional(),
@@ -64,7 +64,6 @@ export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
 export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
 
 export const ZSurveyStyling = ZBaseStyling.extend({
-  hideProgressBar: z.boolean().nullish(),
   overwriteUnifiedStyling: z.boolean().nullish(),
 });
 
@@ -450,7 +449,7 @@ export const ZSurvey = z.object({
   segment: ZSegment.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
-  pin: z.string().nullable().optional(),
+  pin: z.string().nullish(),
   resultShareKey: z.string().nullable(),
   displayPercentage: z.number().min(1).max(100).nullable(),
   languages: z.array(ZSurveyLanguage),
@@ -464,21 +463,26 @@ export const ZSurveyInput = z
   .object({
     name: z.string(),
     type: ZSurveyType.optional(),
-    createdBy: z.string().cuid().optional(),
+    createdBy: z.string().cuid().nullish(),
     status: ZSurveyStatus.optional(),
     displayOption: ZSurveyDisplayOption.optional(),
-    autoClose: z.number().optional(),
-    redirectUrl: z.string().url().optional(),
-    recontactDays: z.number().optional(),
+    autoClose: z.number().nullish(),
+    redirectUrl: z.string().url().nullish(),
+    recontactDays: z.number().nullish(),
     welcomeCard: ZSurveyWelcomeCard.optional(),
     questions: ZSurveyQuestions.optional(),
     thankYouCard: ZSurveyThankYouCard.optional(),
     hiddenFields: ZSurveyHiddenFields.optional(),
     delay: z.number().optional(),
-    autoComplete: z.number().optional(),
-    closeOnDate: z.date().optional(),
-    surveyClosedMessage: ZSurveyClosedMessage.optional(),
+    autoComplete: z.number().nullish(),
+    closeOnDate: z.date().nullish(),
+    styling: ZSurveyStyling.optional(),
+    surveyClosedMessage: ZSurveyClosedMessage.nullish(),
+    singleUse: ZSurveySingleUse.nullish(),
     verifyEmail: ZSurveyVerifyEmail.optional(),
+    pin: z.string().nullish(),
+    resultShareKey: z.string().nullish(),
+    displayPercentage: z.number().min(1).max(100).nullish(),
     triggers: z.array(z.string()).optional(),
     inlineTriggers: ZSurveyInlineTriggers.optional(),
   })
