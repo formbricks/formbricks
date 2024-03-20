@@ -19,7 +19,6 @@ import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { displayCache } from "../display/cache";
 import { getDisplaysByPersonId } from "../display/service";
 import { reverseTranslateSurvey } from "../i18n/reverseTranslation";
-import { translateSurvey } from "../i18n/utils";
 import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { productCache } from "../product/cache";
@@ -364,30 +363,6 @@ export const transformToLegacySurvey = async (
     }
   )();
   return formatDateFields(transformedSurvey, ZLegacySurvey);
-};
-
-export const transformSurveyToSpecificLanguage = async (
-  survey: TSurvey,
-  targetLanguageCode?: string
-): Promise<TSurvey> => {
-  // if target language code is not available, it will be transformed to default language
-  const transformedSurvey = await unstable_cache(
-    async () => {
-      if (!survey.languages || survey.languages.length === 0) {
-        //survey do not have any translations
-        return survey;
-      }
-      return translateSurvey(survey, [], targetLanguageCode);
-    },
-    [`transformSurveyToSpecificLanguage-${survey}-${targetLanguageCode}`],
-    {
-      tags: [surveyCache.tag.byId(survey.id)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
-  // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
-  // https://github.com/vercel/next.js/issues/51613
-  return formatDateFields(transformedSurvey, ZSurvey);
 };
 
 export const getSurveyCount = async (environmentId: string): Promise<number> => {

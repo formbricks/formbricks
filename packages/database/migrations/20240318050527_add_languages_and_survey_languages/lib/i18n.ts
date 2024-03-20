@@ -13,6 +13,7 @@ import {
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyNPSQuestion,
   TSurveyOpenTextQuestion,
+  TSurveyQuestions,
   TSurveyRatingQuestion,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
@@ -265,4 +266,13 @@ export const translateSurvey = (
     welcomeCard: translatedWelcomeCard,
     thankYouCard: translatedThankYouCard,
   });
+};
+
+export const hasStringSubheaders = (questions: TSurveyQuestions): boolean => {
+  for (const question of questions) {
+    if (typeof question.subheader === "string") {
+      return true;
+    }
+  }
+  return false;
 };
