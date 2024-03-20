@@ -1,4 +1,4 @@
-export default function AttributeTableHeading() {
+export const AttributeTableHeading = () => {
   return (
     <>
       <div className="grid h-12 grid-cols-5 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
@@ -8,4 +8,4 @@ export default function AttributeTableHeading() {
       </div>
     </>
   );
-}
+};

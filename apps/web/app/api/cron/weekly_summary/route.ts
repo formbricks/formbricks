@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
@@ -173,7 +174,6 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
   };
 
   const surveys: Survey[] = [];
-
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
     const parsedSurvey = checkForRecallInHeadline(survey);
@@ -197,7 +197,7 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
         if (answer === null || answer === "" || answer?.length === 0) {
           continue;
         }
-        surveyResponse[headline] = answer;
+        surveyResponse[getLocalizedValue(headline, "default")] = answer;
       }
       surveyData.responses.push(surveyResponse);
     }

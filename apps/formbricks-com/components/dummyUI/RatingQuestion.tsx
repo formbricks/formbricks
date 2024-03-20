@@ -1,10 +1,10 @@
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { TSurveyRatingQuestion } from "./types";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;

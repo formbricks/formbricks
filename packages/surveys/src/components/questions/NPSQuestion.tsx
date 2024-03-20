@@ -7,6 +7,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
@@ -19,6 +20,7 @@ interface NPSQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -31,6 +33,7 @@ export default function NPSQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   ttc,
   setTtc,
 }: NPSQuestionProps) {
@@ -49,8 +52,15 @@ export default function NPSQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}>
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />{" "}
       <div className="my-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
@@ -99,17 +109,16 @@ export default function NPSQuestion({
             ))}
           </div>
           <div className="text-info-text flex justify-between px-1.5 text-xs leading-6">
-            <p>{question.lowerLabel}</p>
-            <p>{question.upperLabel}</p>
+            <p>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
+            <p>{getLocalizedValue(question.upperLabel, languageCode)}</p>
           </div>
         </fieldset>
       </div>
-
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
             tabIndex={isLastQuestion ? 12 : 13}
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -121,7 +130,7 @@ export default function NPSQuestion({
         {!question.required && (
           <SubmitButton
             tabIndex={12}
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
             onClick={() => {}}
           />

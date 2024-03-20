@@ -1,4 +1,6 @@
-import { TSurvey, TSurveyQuestion, TSurveyQuestionsObject } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey, TSurveyQuestion, TSurveyQuestionsObject } from "@formbricks/types/surveys";
+
+import { getLocalizedValue } from "../i18n/utils";
 
 export interface fallbacks {
   [id: string]: string;
@@ -49,18 +51,22 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
 
 // Converts recall information in a headline to a corresponding recall question headline, with or without a slash.
 export const recallToHeadline = <T extends TSurveyQuestionsObject>(
-  headline: string,
+  headline: TI18nString,
   survey: T,
-  withSlash: boolean
-): string => {
-  let newHeadline = headline;
-  if (!headline.includes("#recall:")) return headline;
+  withSlash: boolean,
+  language: string
+): TI18nString => {
+  let newHeadline = structuredClone(headline);
+  if (!newHeadline[language]?.includes("#recall:")) return headline;
 
-  while (newHeadline.includes("#recall:")) {
-    const recallInfo = extractRecallInfo(newHeadline);
+  while (newHeadline[language].includes("#recall:")) {
+    const recallInfo = extractRecallInfo(getLocalizedValue(newHeadline, language));
     if (recallInfo) {
       const questionId = extractId(recallInfo);
-      let questionHeadline = survey.questions.find((question) => question.id === questionId)?.headline;
+      let questionHeadline = getLocalizedValue(
+        survey.questions.find((question) => question.id === questionId)?.headline,
+        language
+      );
       while (questionHeadline?.includes("#recall:")) {
         const recallInfo = extractRecallInfo(questionHeadline);
         if (recallInfo) {
@@ -68,9 +74,9 @@ export const recallToHeadline = <T extends TSurveyQuestionsObject>(
         }
       }
       if (withSlash) {
-        newHeadline = newHeadline.replace(recallInfo, `/${questionHeadline}\\`);
+        newHeadline[language] = newHeadline[language].replace(recallInfo, `/${questionHeadline}\\`);
       } else {
-        newHeadline = newHeadline.replace(recallInfo, `@${questionHeadline}`);
+        newHeadline[language] = newHeadline[language].replace(recallInfo, `@${questionHeadline}`);
       }
     }
   }
@@ -78,24 +84,33 @@ export const recallToHeadline = <T extends TSurveyQuestionsObject>(
 };
 
 // Replaces recall information in a survey question's headline with an ___.
-export const replaceRecallInfoWithUnderline = (recallQuestion: TSurveyQuestion): TSurveyQuestion => {
-  while (recallQuestion.headline.includes("#recall:")) {
-    const recallInfo = extractRecallInfo(recallQuestion.headline);
+export const replaceRecallInfoWithUnderline = (
+  recallQuestion: TSurveyQuestion,
+  language: string
+): TSurveyQuestion => {
+  while (getLocalizedValue(recallQuestion.headline, language).includes("#recall:")) {
+    const recallInfo = extractRecallInfo(getLocalizedValue(recallQuestion.headline, language));
     if (recallInfo) {
-      recallQuestion.headline = recallQuestion.headline.replace(recallInfo, "___");
+      recallQuestion.headline[language] = getLocalizedValue(recallQuestion.headline, language).replace(
+        recallInfo,
+        "___"
+      );
     }
   }
   return recallQuestion;
 };
 
 // Checks for survey questions with a "recall" pattern but no fallback value.
-export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | null => {
+export const checkForEmptyFallBackValue = (survey: TSurvey, langauge: string): TSurveyQuestion | null => {
   const findRecalls = (text: string) => {
     const recalls = text.match(/#recall:[^ ]+/g);
     return recalls && recalls.some((recall) => !extractFallbackValue(recall));
   };
   for (const question of survey.questions) {
-    if (findRecalls(question.headline) || (question.subheader && findRecalls(question.subheader))) {
+    if (
+      findRecalls(getLocalizedValue(question.headline, langauge)) ||
+      (question.subheader && findRecalls(getLocalizedValue(question.subheader, langauge)))
+    ) {
       return question;
     }
   }
@@ -103,16 +118,19 @@ export const checkForEmptyFallBackValue = (survey: TSurvey): TSurveyQuestion | n
 };
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
-export const checkForRecallInHeadline = <T extends TSurveyQuestionsObject>(survey: T): T => {
-  const modifiedSurvey = structuredClone(survey);
+export const checkForRecallInHeadline = <T extends TSurveyQuestionsObject>(
+  survey: T,
+  langauge: string
+): T => {
+  const modifiedSurvey: T = structuredClone(survey);
   modifiedSurvey.questions.forEach((question) => {
-    question.headline = recallToHeadline(question.headline, modifiedSurvey, false);
+    question.headline = recallToHeadline(question.headline, modifiedSurvey, false, langauge);
   });
   return modifiedSurvey;
 };
 
 // Retrieves an array of survey questions referenced in a text containing recall information.
-export const getRecallQuestions = (text: string, survey: TSurvey): TSurveyQuestion[] => {
+export const getRecallQuestions = (text: string, survey: TSurvey, langauge: string): TSurveyQuestion[] => {
   if (!text.includes("#recall:")) return [];
 
   const ids = extractIds(text);
@@ -120,8 +138,8 @@ export const getRecallQuestions = (text: string, survey: TSurvey): TSurveyQuesti
   ids.forEach((questionId) => {
     let recallQuestion = survey.questions.find((question) => question.id === questionId);
     if (recallQuestion) {
-      let recallQuestionTemp = { ...recallQuestion };
-      recallQuestionTemp = replaceRecallInfoWithUnderline(recallQuestionTemp);
+      let recallQuestionTemp = structuredClone(recallQuestion);
+      recallQuestionTemp = replaceRecallInfoWithUnderline(recallQuestionTemp, langauge);
       recallQuestionArray.push(recallQuestionTemp);
     }
   });
@@ -147,11 +165,12 @@ export const getFallbackValues = (text: string): fallbacks => {
 export const headlineToRecall = (
   text: string,
   recallQuestions: TSurveyQuestion[],
-  fallbacks: fallbacks
+  fallbacks: fallbacks,
+  langauge: string
 ): string => {
   recallQuestions.forEach((recallQuestion) => {
     const recallInfo = `#recall:${recallQuestion.id}/fallback:${fallbacks[recallQuestion.id]}#`;
-    text = text.replace(`@${recallQuestion.headline}`, recallInfo);
+    text = text.replace(`@${recallQuestion.headline[langauge]}`, recallInfo);
   });
   return text;
 };

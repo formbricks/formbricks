@@ -74,6 +74,5 @@ async function handleInit(req: NextRequest) {
 
 async function loadAndAppendCode(path: string, append: string): Promise<string> {
   let jsCode = await fs.readFile(path, "utf-8");
-
   return jsCode + append;
 }

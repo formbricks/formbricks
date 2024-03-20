@@ -1,5 +1,6 @@
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
 import { writeData } from "@formbricks/lib/googleSheet/service";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
 import { TIntegration } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -76,7 +77,7 @@ async function extractResponses(
       responses.push("");
     }
     const question = survey?.questions.find((q) => q.id === questionId);
-    questions.push(question?.headline || "");
+    questions.push(getLocalizedValue(question?.headline, "default") || "");
   }
 
   return [responses, questions];

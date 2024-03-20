@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/api",
   "license": "MIT",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Formbricks-api is an api wrapper for the Formbricks client API",
   "keywords": [
     "Formbricks",
@@ -35,7 +35,7 @@
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.12.5",
+    "eslint-config-turbo": "1.10.12",
     "terser": "^5.29.1",
     "vite": "^5.1.6",
     "vite-plugin-dts": "^3.7.3"

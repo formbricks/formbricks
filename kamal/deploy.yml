@@ -11,7 +11,7 @@ servers:
       - 18.196.187.144
     labels:
       traefik.http.routers.formbricks-kamal.entrypoints: websecure
-      traefik.http.routers.formbricks-kamal.rule: Host(`kamal.formbricks.com`)
+      traefik.http.routers.formbricks-kamal.rule: Host(`app.formbricks.com`)
       traefik.http.routers.formbricks-kamal.tls.certresolver: letsencrypt
 
 # Credentials for your image host.
@@ -32,6 +32,7 @@ env:
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
+    - NEXTAUTH_URL
     - DATABASE_URL
     - NEXTAUTH_SECRET
     - ENCRYPTION_KEY
@@ -76,6 +77,7 @@ env:
     - NEXT_PUBLIC_FORMBRICKS_API_HOST
     - NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID
     - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
+    - OPENTELEMETRY_LISTENER_URL
     - NEXT_PUBLIC_SENTRY_DSN
     - CLOUDFLARE_EMAIL
     - CLOUDFLARE_DNS_API_TOKEN
@@ -83,6 +85,7 @@ env:
     - S3_SECRET_KEY
     - S3_REGION
     - S3_BUCKET_NAME
+    - RATE_LIMITING_DISABLED
 
 # Use a different ssh user than root
 ssh:
@@ -124,9 +127,9 @@ traefik:
     entryPoints.web.http.redirections.entryPoint.scheme: https
     entryPoints.web.http.redirections.entrypoint.permanent: true
     entrypoints.websecure.http.tls: true
-    entrypoints.websecure.http.tls.domains[0].main: "kamal.formbricks.com"
+    entrypoints.websecure.http.tls.domains[0].main: "app.formbricks.com"
     entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
-    certificatesResolvers.letsencrypt.acme.email: "shubham@formbricks.com"
+    certificatesResolvers.letsencrypt.acme.email: "hola@formbricks.com"
     certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
     certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
   env:
