@@ -14,13 +14,6 @@ export const logger = pino({
           translateTime: "yyyy-dd-mm, h:MM:ss TT",
         },
       },
-      {
-        level: "info",
-        target: "pino/file",
-        options: {
-          destination: "../../formbricks.log",
-        },
-      },
     ],
   },
   formatters: {
