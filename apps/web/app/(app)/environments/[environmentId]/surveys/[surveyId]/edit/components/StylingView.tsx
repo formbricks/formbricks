@@ -16,25 +16,17 @@ type StylingViewProps = {
   environment: TEnvironment;
   product: TProduct;
   localSurvey: TSurvey;
-  surveyStyling: TSurveyStyling | null;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
 };
 
-const StylingView = ({
-  colors,
-  environment,
-  product,
-  localSurvey,
-  setLocalSurvey,
-  surveyStyling,
-}: StylingViewProps) => {
-  const [overwriteUnifiedStyling, setOverwriteUnifiedStyling] = useState(
-    localSurvey?.styling?.overwriteUnifiedStyling ?? false
+const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey }: StylingViewProps) => {
+  const [overwriteThemeStyling, setOverwriteThemeStyling] = useState(
+    localSurvey?.styling?.overwriteThemeStyling ?? false
   );
 
   const [styling, setStyling] = useState(localSurvey.styling);
-  const [localStylingChanges, setLocalStylingChanges] = useState(localSurvey.styling);
+  const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const [productOverwrites, setProductOverwrites] = useState(localSurvey.productOverwrites);
 
@@ -42,22 +34,22 @@ const StylingView = ({
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [stylingOpen, setStylingOpen] = useState(false);
 
-  const onResetUnifiedStyling = () => {
+  const onResetThemeStyling = () => {
     const { styling: productStyling } = product;
     const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
 
     setStyling(baseStyling);
 
-    toast.success("Styling set to unified styles");
+    toast.success("Styling set to theme styles");
   };
 
   useEffect(() => {
-    if (!overwriteUnifiedStyling) {
+    if (!overwriteThemeStyling) {
       setFormStylingOpen(false);
       setCardStylingOpen(false);
       setStylingOpen(false);
     }
-  }, [overwriteUnifiedStyling]);
+  }, [overwriteThemeStyling]);
 
   useEffect(() => {
     if (styling) {
@@ -83,35 +75,41 @@ const StylingView = ({
     // survey styling from the server is surveyStyling, it could either be set or not
     // if its set and the toggle is turned off, we set the local styling to the server styling
 
-    setOverwriteUnifiedStyling(value);
+    setOverwriteThemeStyling(value);
 
+    // if the toggle is turned on, we set the local styling to the product styling
     if (value) {
       if (!styling) {
         // copy the product styling to the survey styling
         setStyling({
           ...defaultProductStyling,
-          overwriteUnifiedStyling: true,
+          overwriteThemeStyling: true,
         });
         return;
       }
 
-      // if the local styling changes are not equal to the survey styling, we set the local styling to the survey styling
-      if (surveyStyling && JSON.stringify(localStylingChanges) !== JSON.stringify(surveyStyling)) {
+      // if there are local styling changes, we set the styling to the local styling changes that were previously stored
+      if (localStylingChanges) {
         setStyling(localStylingChanges);
-      } else {
+      }
+      // if there are no local styling changes, we set the styling to the product styling
+      else {
         setStyling({
           ...defaultProductStyling,
-          overwriteUnifiedStyling: true,
+          overwriteThemeStyling: true,
         });
       }
-    } else {
+    }
+
+    // if the toggle is turned off, we store the local styling changes and set the styling to the product styling
+    else {
       // copy the styling to localStylingChanges
       setLocalStylingChanges(styling);
 
       // copy the product styling to the survey styling
       setStyling({
         ...defaultProductStyling,
-        overwriteUnifiedStyling: false,
+        overwriteThemeStyling: false,
       });
     }
   };
@@ -119,7 +117,7 @@ const StylingView = ({
   return (
     <div className="mt-12 space-y-3 p-5">
       <div className="flex items-center gap-4 py-4">
-        <Switch checked={overwriteUnifiedStyling} onCheckedChange={handleOverwriteToggle} />
+        <Switch checked={overwriteThemeStyling} onCheckedChange={handleOverwriteToggle} />
         <div className="flex flex-col">
           <h3 className="text-base font-semibold text-slate-900">Add custom styles</h3>
           <p className="text-sm text-slate-800">Override the theme with individual styles for this survey.</p>
@@ -131,7 +129,7 @@ const StylingView = ({
         setOpen={setFormStylingOpen}
         styling={styling}
         setStyling={setStyling}
-        disabled={!overwriteUnifiedStyling}
+        disabled={!overwriteThemeStyling}
       />
 
       <CardStylingSettings
@@ -141,7 +139,8 @@ const StylingView = ({
         setStyling={setStyling}
         productOverwrites={productOverwrites}
         setProductOverwrites={setProductOverwrites}
-        disabled={!overwriteUnifiedStyling}
+        surveyType={localSurvey.type}
+        disabled={!overwriteThemeStyling}
       />
 
       {localSurvey.type === "link" && (
@@ -152,14 +151,14 @@ const StylingView = ({
           setStyling={setStyling}
           environmentId={environment.id}
           colors={colors}
-          disabled={!overwriteUnifiedStyling}
+          disabled={!overwriteThemeStyling}
         />
       )}
 
       <div className="mt-4 flex h-8 items-center justify-between">
         <div>
-          {overwriteUnifiedStyling && (
-            <Button variant="minimal" className="flex items-center gap-2" onClick={onResetUnifiedStyling}>
+          {overwriteThemeStyling && (
+            <Button variant="minimal" className="flex items-center gap-2" onClick={onResetThemeStyling}>
               Reset to theme styles
               <RotateCcwIcon className="h-4 w-4" />
             </Button>

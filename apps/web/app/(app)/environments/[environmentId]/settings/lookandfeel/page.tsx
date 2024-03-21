@@ -16,7 +16,7 @@ import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
 import { EditFormbricksBranding } from "./components/EditBranding";
 import { EditPlacement } from "./components/EditPlacement";
-import { UnifiedStyling } from "./components/UnifiedStyling";
+import { ThemeStyling } from "./components/ThemeStyling";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [session, team, product] = await Promise.all([
@@ -52,7 +52,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         title="Theme"
         className="max-w-7xl"
         description="Create a style theme for all surveys. You can enable custom styling for each survey.">
-        <UnifiedStyling environmentId={params.environmentId} product={product} colors={SURVEY_BG_COLORS} />
+        <ThemeStyling environmentId={params.environmentId} product={product} colors={SURVEY_BG_COLORS} />
       </SettingsCard>
       <SettingsCard
         title="In-app Survey Placement"

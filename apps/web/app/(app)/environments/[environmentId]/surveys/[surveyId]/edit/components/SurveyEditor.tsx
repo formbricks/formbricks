@@ -203,7 +203,6 @@ export default function SurveyEditor({
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
                 product={localProduct}
-                surveyStyling={survey.styling}
               />
             )}
 
