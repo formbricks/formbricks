@@ -1,5 +1,5 @@
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 import {
   DEBUG,
@@ -12,6 +12,7 @@ import {
   WEBAPP_URL,
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
+import { getProductByEnvironmentId } from "../product/service";
 import { getQuestionResponseMapping } from "../responses";
 import { getOriginalFileNameFromUrl } from "../storage/utils";
 import { getTeamByEnvironmentId } from "../team/service";
@@ -183,12 +184,14 @@ export const sendInviteAcceptedEmail = async (inviterName: string, inviteeName: 
 export const sendResponseFinishedEmail = async (
   email: string,
   environmentId: string,
-  survey: { id: string; name: string; questions: TSurveyQuestion[] },
+  survey: TSurvey,
   response: TResponse,
   responseCount: number
 ) => {
   const personEmail = response.person?.attributes["email"];
   const team = await getTeamByEnvironmentId(environmentId);
+  const product = await getProductByEnvironmentId(environmentId);
+  if (!product) return;
   await sendEmail({
     to: email,
     subject: personEmail

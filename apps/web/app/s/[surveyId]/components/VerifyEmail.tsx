@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
@@ -16,13 +17,15 @@ export default function VerifyEmail({
   survey,
   isErrorComponent,
   singleUseId,
+  languageCode,
 }: {
   survey: TSurvey;
   isErrorComponent?: boolean;
   singleUseId?: string;
+  languageCode: string;
 }) {
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, "default");
   }, [survey]);
 
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
@@ -86,8 +89,10 @@ export default function VerifyEmail({
       <Toaster />
       <StackedCardsContainer>
         {!emailSent && !showPreviewQuestions && (
-          <div>
-            <MailIcon className="mx-auto h-24 w-24 rounded-full bg-slate-300 p-6 text-white" />
+          <div className="flex flex-col">
+            <div className="mx-auto rounded-full border bg-slate-200 p-6">
+              <MailIcon className="mx-auto h-12 w-12 text-white" />
+            </div>
             <p className="mt-8 text-2xl font-bold lg:text-4xl">Verify your email to respond.</p>
             <p className="mt-4 text-sm text-slate-500 lg:text-base">
               To respond to this survey, please verify your email.
@@ -115,7 +120,9 @@ export default function VerifyEmail({
             <p className="text-4xl font-bold">Question Preview</p>
             <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-8 text-slate-700">
               {survey.questions.map((question, index) => (
-                <p key={index} className="my-1">{`${index + 1}. ${question.headline}`}</p>
+                <p
+                  key={index}
+                  className="my-1">{`${index + 1}. ${getLocalizedValue(question.headline, languageCode)}`}</p>
               ))}
             </div>
             <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>

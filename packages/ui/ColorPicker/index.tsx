@@ -4,7 +4,7 @@
 import { useCallback, useRef, useState } from "react";
 import { HexColorInput, HexColorPicker } from "react-colorful";
 
-import useClickOutside from "@formbricks/lib/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 
 export const ColorPicker = ({ color, onChange }: { color: string; onChange: (v: string) => void }) => {
   return (
