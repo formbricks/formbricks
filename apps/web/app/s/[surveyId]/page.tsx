@@ -170,9 +170,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     throw new Error("Product not found");
   }
 
-  const isStyleOverwriteAllowed = product.styling.allowStyleOverwrite ?? false;
-  const legalFooterBg = isStyleOverwriteAllowed ? survey.styling?.background?.bg ?? "#ffffff" : "#ffffff";
-
   const getLanguageCode = (): string => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
     else {
@@ -244,7 +241,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         />
       </MediaBackground>
       <LegalFooter
-        bgColor={legalFooterBg}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}

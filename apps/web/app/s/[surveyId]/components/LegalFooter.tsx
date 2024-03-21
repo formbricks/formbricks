@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 interface LegalFooterProps {
-  bgColor?: string | null;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
@@ -9,7 +8,6 @@ interface LegalFooterProps {
 }
 
 export default function LegalFooter({
-  bgColor,
   IMPRINT_URL,
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
