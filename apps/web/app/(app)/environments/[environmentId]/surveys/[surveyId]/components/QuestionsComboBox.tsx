@@ -19,7 +19,7 @@ import {
 import * as React from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import useClickOutside from "@formbricks/lib/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import {
   Command,
