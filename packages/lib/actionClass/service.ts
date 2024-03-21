@@ -88,7 +88,7 @@ export const getActionClassByEnvironmentIdAndName = async (
     },
     [`getActionClass-${environmentId}-${name}`],
     {
-      tags: [actionClassCache.tag.byNameAndEnvironmentId(environmentId, name)],
+      tags: [actionClassCache.tag.byNameAndEnvironmentId(name, environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
