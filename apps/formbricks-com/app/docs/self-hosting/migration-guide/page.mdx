@@ -8,6 +8,84 @@ export const metadata = {
 
 # Migration Guide
 
+## v1.7
+
+Formbricks v1.7 comes with a big new feature like Multi-Language Surveys and other features to help you minimize the friction in reaching out to your users. This also involves a few changes in our environment variables. This guide will help you migrate your existing Formbricks instance to v1.7 without any hassles or build errors.
+
+<Note>
+  This upgrade requires a **data migration**. Please make sure to backup your database before proceeding with
+  the upgrade. Follow the below steps thoroughly to upgrade your Formbricks instance to v1.7.
+</Note>
+
+### Steps to Migrate
+
+This guide is for users who are self-hosting Formbricks using our one-click setup. If you are using a different setup, you might adjust the commands accordingly.
+
+To run all these steps, please navigate to the `formbricks` folder where your `docker-compose.yml` file is located.
+
+1. **Backup your Database**: This is a crucial step. Please make sure to backup your database before proceeding with the upgrade. You can use the following command to backup your database:
+
+<Col>
+<CodeGroup title="Backup Postgres">
+
+```bash
+docker exec formbricks-quickstart-postgres-1 pg_dump -U postgres -d formbricks > formbricks_pre_v1.7_$(date +%Y%m%d_%H%M%S).sql
+```
+
+</CodeGroup>
+</Col>
+
+2. Stop the running Formbricks instance & remove the related containers:
+
+<Col>
+<CodeGroup title="Stop the containers">
+
+```bash
+docker-compose down
+```
+
+</CodeGroup>
+</Col>
+
+3. Restarting the containers will automatically pull the latest version of Formbricks:
+
+<Col>
+<CodeGroup title="Restart the containers">
+
+```bash
+docker-compose up -d
+```
+
+</CodeGroup>
+</Col>
+
+4. Now let's migrate the data to the latest schema:
+
+<Note>To find your Docker Network name for your Postgres Database, find it using `docker network ps`</Note>
+
+<Col>
+<CodeGroup title="Migrate the data">
+
+```bash
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v1.7" \
+  ghcr.io/formbricks/data-migrations:v1.7
+```
+
+</CodeGroup>
+</Col>
+
+The above command will migrate your data to the latest schema. This is a crucial step to migrate your existing data to the new structure. Only if the script runs successful, changes are made to the database. The script can safely run multiple times.
+
+5. That's it! Once the migration is complete, you can **now access your Formbricks instance** at the same URL as before.
+
+### In-App Surveys with @formbricks/js
+
+From this upgrade, we now **dynamically fetch** the package from our API endpoint so that you always have the latest version of the package (v1.7.0+).
+So make sure to update your package to the latest version to use the latest features.
+
 ## v1.6
 
 Formbricks v1.6 comes with a big new features like Advanced Targeting & Segmentation of your end-users along with on-the-fly triggers for surveys and a ton of stability improvements & features. This also involves a few changes in our environment variables. This guide will help you migrate your existing Formbricks instance to v1.6 without any hassles or build errors.
