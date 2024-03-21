@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const DEFAULT_BRAND_COLOR = "#64748b";
 const DEFAULT_STYLING = {
