@@ -97,7 +97,7 @@ export default function BackgroundStylingCard({
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <p className="font-semibold text-slate-800">Background Styling</p>
-              <Badge text="Link Surveys" type="gray" size="normal" />
+              {hideCheckmark && <Badge text="Link Surveys" type="gray" size="normal" />}
             </div>
             <p className="mt-1 truncate text-sm text-slate-500">
               Change the background to a color, image or animation.

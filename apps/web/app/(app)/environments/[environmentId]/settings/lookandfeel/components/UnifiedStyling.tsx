@@ -164,7 +164,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
     <div className="flex">
       {/* Styling settings */}
       <div className="w-1/2 pr-6">
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
             <div className="flex items-center gap-6">
               <Switch
@@ -182,7 +182,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 bg-slate-50 p-4">
+          <div className="flex flex-col gap-3 rounded-lg bg-slate-50 p-4">
             <FormStylingSettings
               open={formStylingOpen}
               setOpen={setFormStylingOpen}
@@ -214,7 +214,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
 
         <div className="mt-8 flex items-center gap-2">
           <Button variant="darkCTA" onClick={onSave}>
-            Save changes
+            Save
           </Button>
           <Button
             variant="minimal"
@@ -228,7 +228,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
 
       {/* Survey Preview */}
 
-      <div className="relative w-1/2 bg-slate-100 pt-4">
+      <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
         <div className="sticky top-4 mb-4 h-full max-h-[600px]">
           <UnifiedStylingPreviewSurvey
             activeQuestionId={activeQuestionId}

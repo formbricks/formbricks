@@ -185,14 +185,14 @@ const FormStylingSettings = ({
             label="Input color"
             color={inputColor}
             setColor={setInputColor}
-            description="Change the background color of the input fields"
+            description="Change the background color of the input fields."
           />
 
           <ColorSelectorWithLabel
             label="Input border color"
             color={inputBorderColor}
             setColor={setInputBorderColor}
-            description="Change the border color of the input fields"
+            description="Change the border color of the input fields."
           />
         </div>
       </Collapsible.CollapsibleContent>

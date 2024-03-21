@@ -202,11 +202,21 @@ const CardStylingSettings = ({
         <hr className="py-1 text-slate-600" />
 
         <div className="flex flex-col gap-6 p-6 pt-2">
+          <div className="flex max-w-xs flex-col gap-4">
+            <div className="flex flex-col">
+              <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
+              <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
+            </div>
+            <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
+              <Slider value={[roundness]} max={22} onValueChange={(value) => setRoundness(value[0])} />
+            </div>
+          </div>
+
           <ColorSelectorWithLabel
             label="Card background color"
             color={cardBgColor}
             setColor={setCardBgColor}
-            description="Change the highlight color used for buttons, selects, etc."
+            description="Change the background color of the card."
           />
 
           <ColorSelectorWithLabel
@@ -224,6 +234,22 @@ const CardStylingSettings = ({
             description="Change the shadow color of the card."
           />
 
+          <div className="flex items-center space-x-1">
+            <Switch
+              id="hideProgressBar"
+              checked={!!hideProgressBar}
+              onCheckedChange={(checked) => toggleProgressBarVisibility(checked)}
+            />
+            <Label htmlFor="hideProgressBar" className="cursor-pointer">
+              <div className="ml-2">
+                <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
+                <p className="text-xs font-normal text-slate-500">
+                  Disable the visibility of survey progress.
+                </p>
+              </div>
+            </Label>
+          </div>
+
           <div className="flex max-w-xs flex-col gap-4">
             <div className="flex items-center gap-2">
               <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
@@ -232,7 +258,7 @@ const CardStylingSettings = ({
                   <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
                   <Badge text="In-App Surveys" type="gray" size="normal" />
                 </div>
-                <p className="text-xs text-slate-500">Add an outer border to your survey card</p>
+                <p className="text-xs text-slate-500">Add an outer border to your survey card.</p>
               </div>
             </div>
 
@@ -243,16 +269,6 @@ const CardStylingSettings = ({
                 containerClass="my-0"
               />
             )}
-          </div>
-
-          <div className="flex max-w-xs flex-col gap-4">
-            <div className="flex flex-col">
-              <h3 className="text-sm font-semibold text-slate-700">Roundness</h3>
-              <p className="text-xs text-slate-500">Change the border radius of the card and the inputs.</p>
-            </div>
-            <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-              <Slider value={[roundness]} max={22} onValueChange={(value) => setRoundness(value[0])} />
-            </div>
           </div>
 
           {/* Positioning */}
@@ -288,22 +304,6 @@ const CardStylingSettings = ({
               )}
             </div>
           )}
-
-          <div className="flex items-center space-x-1">
-            <Switch
-              id="hideProgressBar"
-              checked={!!hideProgressBar}
-              onCheckedChange={(checked) => toggleProgressBarVisibility(checked)}
-            />
-            <Label htmlFor="hideProgressBar" className="cursor-pointer">
-              <div className="ml-2">
-                <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
-                <p className="text-xs font-normal text-slate-500">
-                  Disable the visibility of survey progress
-                </p>
-              </div>
-            </Label>
-          </div>
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
