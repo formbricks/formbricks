@@ -1,15 +1,11 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-import { notFound } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
-import {
-  canUserAccessProduct,
-  verifyUserRoleAccess as verifyUserRoleAccessProduct,
-} from "@formbricks/lib/product/auth";
-import { getProduct, updateProduct } from "@formbricks/lib/product/service";
+import { canUserAccessProduct } from "@formbricks/lib/product/auth";
+import { getProduct } from "@formbricks/lib/product/service";
 import {
   cloneSegment,
   createSegment,
@@ -25,7 +21,7 @@ import { loadNewSegmentInSurvey } from "@formbricks/lib/survey/service";
 import { formatSurveyDateFields } from "@formbricks/lib/survey/util";
 import { formatDateFields } from "@formbricks/lib/utils/datetime";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+import { TProduct } from "@formbricks/types/product";
 import {
   TBaseFilters,
   TSegmentUpdateInput,
@@ -203,20 +199,3 @@ export const resetBasicSegmentFiltersAction = async (surveyId: string) => {
 
   return await resetSegmentInSurvey(surveyId);
 };
-
-export async function updateProductAction(productId: string, inputProduct: TProductUpdateInput) {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
-
-  const isAuthorized = await canUserAccessProduct(session.user.id, productId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-
-  const product = await getProduct(productId);
-
-  if (!product) return notFound();
-
-  const { hasCreateOrUpdateAccess } = await verifyUserRoleAccessProduct(product.teamId, session.user.id);
-  if (!hasCreateOrUpdateAccess) throw new AuthorizationError("Not authorized");
-
-  return await updateProduct(productId, inputProduct);
-}
