@@ -68,6 +68,11 @@ export const SigninForm = ({
         return;
       }
 
+      if (signInResponse?.error === "Email Verification is Pending") {
+        router.push(`/auth/verification-requested?email=${data.email}`);
+        return;
+      }
+
       if (signInResponse?.error) {
         setLoggingIn(false);
         setSignInError(signInResponse.error);

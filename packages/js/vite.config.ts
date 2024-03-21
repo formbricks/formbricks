@@ -9,7 +9,7 @@ const config = ({ mode }) => {
   const isDevelopment = mode === "dev";
   const formbricksSurveysScriptSrc = isDevelopment
     ? "http://localhost:3003/index.umd.js"
-    : `https://unpkg.com/@formbricks/surveys@^${surveysPackageJson.version}/dist/index.umd.js`;
+    : `https://unpkg.com/@formbricks/surveys@~${surveysPackageJson.version}/dist/index.umd.js`;
 
   return defineConfig({
     define: {

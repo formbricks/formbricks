@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
@@ -274,7 +275,7 @@ export default function AddIntegrationModal({
                   <Label htmlFor="Surveys">Questions</Label>
                   <div className="mt-1 rounded-lg border border-slate-200">
                     <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                      {checkForRecallInHeadline(selectedSurvey)?.questions.map((question) => (
+                      {checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((question) => (
                         <div key={question.id} className="my-1 flex items-center space-x-2">
                           <label htmlFor={question.id} className="flex cursor-pointer items-center">
                             <Checkbox
@@ -287,7 +288,7 @@ export default function AddIntegrationModal({
                                 handleCheckboxChange(question.id);
                               }}
                             />
-                            <span className="ml-2">{question.headline}</span>
+                            <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
                           </label>
                         </div>
                       ))}

@@ -4,7 +4,7 @@ import { env } from "./env";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const REVALIDATION_INTERVAL = 0; //TODO: find a good way to cache and revalidate data when it changes
-export const SERVICES_REVALIDATION_INTERVAL = 60 * 30; // 30 minutes
+export const SERVICES_REVALIDATION_INTERVAL = 60 * 60 * 3; // 3 hours
 export const MAU_LIMIT = IS_FORMBRICKS_CLOUD ? 9000 : 1000000;
 
 // URLs
@@ -81,7 +81,7 @@ export const TEXT_RESPONSES_PER_PAGE = 5;
 
 export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
 export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE;
-export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
+export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED === "1";
 
 // Storage constants
 export const AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID;

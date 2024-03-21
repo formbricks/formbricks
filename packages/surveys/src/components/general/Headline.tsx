@@ -1,5 +1,7 @@
+import { TI18nString } from "@formbricks/types/surveys";
+
 interface HeadlineProps {
-  headline?: string;
+  headline?: TI18nString | string;
   questionId: string;
   required?: boolean;
   alignTextCenter?: boolean;

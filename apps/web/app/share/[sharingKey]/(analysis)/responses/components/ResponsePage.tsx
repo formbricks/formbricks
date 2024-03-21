@@ -59,7 +59,7 @@ const ResponsePage = ({
   const searchParams = useSearchParams();
 
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, "default");
   }, [survey]);
 
   const fetchNextPage = useCallback(async () => {
