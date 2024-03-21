@@ -109,7 +109,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   return (
     <>
       <div className="relative">
-        {!isEdit && fromLookAndFeelSetting && <div className="absolute z-[999999] h-full w-full"></div>}
+        {!isEdit && fromLookAndFeelSetting && <div className="absolute z-30 h-full w-full"></div>}
         {isLoading && (
           <div className="absolute inset-0 flex  items-center justify-center ">
             <svg className="h-7 w-7 animate-spin text-slate-800" viewBox="0 0 24 24">
