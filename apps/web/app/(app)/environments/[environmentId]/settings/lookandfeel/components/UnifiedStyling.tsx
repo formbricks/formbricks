@@ -174,9 +174,9 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
                 }}
               />
               <div className="flex flex-col">
-                <h3 className="text-sm font-semibold text-slate-700">Allow overwriting styles</h3>
+                <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
                 <p className="text-xs text-slate-500">
-                  Activate if you want some surveys to be styled differently
+                  Allow users to override this unified theme in the editor.
                 </p>
               </div>
             </div>

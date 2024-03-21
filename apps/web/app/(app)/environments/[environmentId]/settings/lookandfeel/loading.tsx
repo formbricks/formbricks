@@ -22,9 +22,9 @@ export default function Loading() {
       <SettingsTitle title="Look & Feel" />
 
       <SettingsCard
-        title="Unified Styling"
+        title="Theme"
         className="max-w-7xl"
-        description="Set styling for all newly created surveys in this project. You can still overwrite these styles in the survey editor.">
+        description="Create a style theme for all surveys. You can enable custom styling for each survey.">
         <div className="flex animate-pulse">
           <div className="w-1/2">
             <div className="flex flex-col gap-6">
@@ -32,9 +32,9 @@ export default function Loading() {
                 <div className="flex items-center gap-6">
                   <Switch />
                   <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">Allow overwriting styles</h3>
+                    <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
                     <p className="text-xs text-slate-500">
-                      Activate if you want some surveys to be styled differently
+                      Allow users to override this unified theme in the editor.
                     </p>
                   </div>
                 </div>

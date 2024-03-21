@@ -49,9 +49,9 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
     <div>
       <SettingsTitle title="Look & Feel" />
       <SettingsCard
-        title="Unified Styling"
+        title="Theme"
         className="max-w-7xl"
-        description="Set styling for all newly created surveys in this project. You can still overwrite these styles in the survey editor.">
+        description="Create a style theme for all surveys. You can enable custom styling for each survey.">
         <UnifiedStyling environmentId={params.environmentId} product={product} colors={SURVEY_BG_COLORS} />
       </SettingsCard>
       <SettingsCard

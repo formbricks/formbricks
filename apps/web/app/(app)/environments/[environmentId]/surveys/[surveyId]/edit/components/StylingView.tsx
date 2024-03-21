@@ -113,10 +113,8 @@ const StylingView = ({
       <div className="flex items-center gap-4 py-4">
         <Switch checked={overwriteUnifiedStyling} onCheckedChange={handleOverwriteToggle} />
         <div className="flex flex-col">
-          <h3 className="text-base font-semibold text-slate-900">Overwrite Unified Styling</h3>
-          <p className="text-sm text-slate-800">
-            Ignore the unified style settings and style this survey individually
-          </p>
+          <h3 className="text-base font-semibold text-slate-900">Add custom styles</h3>
+          <p className="text-sm text-slate-800">Override the theme with individual styles for this survey.</p>
         </div>
       </div>
 
@@ -160,7 +158,7 @@ const StylingView = ({
           )}
         </div>
         <p className="text-sm text-slate-500">
-          To set unified styling, go to the{" "}
+          Adjust the theme in the{" "}
           <Link
             href={`/environments/${environment.id}/settings/lookandfeel`}
             target="_blank"
