@@ -34,7 +34,7 @@ export default function Loading() {
                   <div className="flex flex-col">
                     <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
                     <p className="text-xs text-slate-500">
-                      Allow users to override this unified theme in the editor.
+                      Allow users to override this theme in the editor.
                     </p>
                   </div>
                 </div>

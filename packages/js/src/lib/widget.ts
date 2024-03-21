@@ -85,7 +85,7 @@ export const renderWidget = async (survey: TSurvey) => {
     // allow style overwrite is enabled from the product
     if (product.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
-      if (!survey.styling?.overwriteUnifiedStyling) {
+      if (!survey.styling?.overwriteThemeStyling) {
         return product.styling;
       }
 

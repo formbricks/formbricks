@@ -1,6 +1,6 @@
 "use client";
 
-import { UnifiedStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/UnifiedStylingPreviewSurvey";
+import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/ThemeStylingPreviewSurvey";
 import BackgroundStylingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
 import CardStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import FormStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
@@ -18,13 +18,13 @@ import { Switch } from "@formbricks/ui/Switch";
 
 import { updateProductAction } from "../actions";
 
-type UnifiedStylingProps = {
+type ThemeStylingProps = {
   product: TProduct;
   environmentId: string;
   colors: string[];
 };
 
-export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylingProps) => {
+export const ThemeStyling = ({ product, environmentId, colors }: ThemeStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
   const [previewSurveyType, setPreviewSurveyType] = useState<"link" | "web">("link");
@@ -176,7 +176,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
               <div className="flex flex-col">
                 <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
                 <p className="text-xs text-slate-500">
-                  Allow users to override this unified theme in the editor.
+                  Allow users to override this theme in the survey editor.
                 </p>
               </div>
             </div>
@@ -230,7 +230,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
 
       <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
         <div className="sticky top-4 mb-4 h-full max-h-[600px]">
-          <UnifiedStylingPreviewSurvey
+          <ThemeStylingPreviewSurvey
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             survey={styledPreviewSurvey as TSurvey}

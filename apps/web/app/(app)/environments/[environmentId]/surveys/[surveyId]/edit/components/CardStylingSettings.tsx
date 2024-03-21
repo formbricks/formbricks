@@ -30,7 +30,7 @@ type CardStylingSettingsProps = {
 };
 
 const isSurveyStyling = (styling: TSurveyStyling | TProductStyling | null): styling is TSurveyStyling => {
-  return (styling as TSurveyStyling)?.overwriteUnifiedStyling !== undefined;
+  return (styling as TSurveyStyling)?.overwriteThemeStyling !== undefined;
 };
 
 const CardStylingSettings = ({

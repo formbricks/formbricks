@@ -89,9 +89,9 @@ async function main() {
                       },
                     }),
 
-                    // if the previous survey had the hideProgressBar set to true, we need to update the styling object with overwriteUnifiedStyling set to true
+                    // if the previous survey had the hideProgressBar set to true, we need to update the styling object with overwriteThemeStyling set to true
                     ...(hideProgressBar && {
-                      overwriteUnifiedStyling: true,
+                      overwriteThemeStyling: true,
                     }),
                   },
                 },
@@ -113,7 +113,7 @@ async function main() {
                       ...((brandColor ||
                         highlightBorderColor ||
                         Object.keys(survey.styling ?? {}).length > 0) && {
-                        overwriteUnifiedStyling: true,
+                        overwriteThemeStyling: true,
                       }),
                     },
                     productOverwrites: {

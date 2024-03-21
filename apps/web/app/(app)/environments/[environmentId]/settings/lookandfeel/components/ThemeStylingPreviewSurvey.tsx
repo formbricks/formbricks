@@ -11,7 +11,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
-interface UnifiedStylingPreviewSurveyProps {
+interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
   setActiveQuestionId: (id: string | null) => void;
   activeQuestionId?: string | null;
@@ -47,14 +47,14 @@ const previewParentContainerVariant: Variants = {
   },
 };
 
-export const UnifiedStylingPreviewSurvey = ({
+export const ThemeStylingPreviewSurvey = ({
   setActiveQuestionId,
   activeQuestionId,
   survey,
   product,
   previewType,
   setPreviewType,
-}: UnifiedStylingPreviewSurveyProps) => {
+}: ThemeStylingPreviewSurveyProps) => {
   const [isFullScreenPreview] = useState(false);
   const [previewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);

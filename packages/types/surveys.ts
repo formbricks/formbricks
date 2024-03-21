@@ -64,7 +64,7 @@ export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
 export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
 
 export const ZSurveyStyling = ZBaseStyling.extend({
-  overwriteUnifiedStyling: z.boolean().nullish(),
+  overwriteThemeStyling: z.boolean().nullish(),
 });
 
 export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;
