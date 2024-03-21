@@ -603,9 +603,6 @@ importers:
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../lib
-      '@formbricks/surveys':
-        specifier: workspace:*
-        version: link:../surveys
       '@formbricks/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
