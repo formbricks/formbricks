@@ -1,6 +1,4 @@
-import { RefObject, useEffect } from "react";
-
-import { TI18nString, TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey, TSurveyQuestion, TSurveyQuestionsObject } from "@formbricks/types/surveys";
 
 import { getLocalizedValue } from "../i18n/utils";
 
@@ -52,9 +50,9 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
 };
 
 // Converts recall information in a headline to a corresponding recall question headline, with or without a slash.
-export const recallToHeadline = (
+export const recallToHeadline = <T extends TSurveyQuestionsObject>(
   headline: TI18nString,
-  survey: TSurvey,
+  survey: T,
   withSlash: boolean,
   language: string
 ): TI18nString => {
@@ -120,8 +118,11 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, langauge: string): T
 };
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
-export const checkForRecallInHeadline = (survey: TSurvey, langauge: string): TSurvey => {
-  const modifiedSurvey: TSurvey = structuredClone(survey);
+export const checkForRecallInHeadline = <T extends TSurveyQuestionsObject>(
+  survey: T,
+  langauge: string
+): T => {
+  const modifiedSurvey: T = structuredClone(survey);
   modifiedSurvey.questions.forEach((question) => {
     question.headline = recallToHeadline(question.headline, modifiedSurvey, false, langauge);
   });
@@ -172,30 +173,4 @@ export const headlineToRecall = (
     text = text.replace(`@${recallQuestion.headline[langauge]}`, recallInfo);
   });
   return text;
-};
-
-// Custom hook to synchronize the horizontal scroll position of two elements.
-export const useSyncScroll = (
-  highlightContainerRef: RefObject<HTMLElement>,
-  inputRef: RefObject<HTMLElement>,
-  text: string
-) => {
-  useEffect(() => {
-    const syncScrollPosition = () => {
-      if (highlightContainerRef.current && inputRef.current) {
-        highlightContainerRef.current.scrollLeft = inputRef.current.scrollLeft;
-      }
-    };
-
-    const sourceElement = inputRef.current;
-    if (sourceElement) {
-      sourceElement.addEventListener("scroll", syncScrollPosition);
-    }
-
-    return () => {
-      if (sourceElement) {
-        sourceElement.removeEventListener("scroll", syncScrollPosition);
-      }
-    };
-  }, [inputRef, highlightContainerRef, text]);
 };

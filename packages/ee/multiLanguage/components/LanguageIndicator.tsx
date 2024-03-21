@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { useRef, useState } from "react";
 
-import useClickOutside from "@formbricks/lib/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyLanguage } from "@formbricks/types/surveys";
 
 import { getLanguageLabel } from "../lib/isoLanguages";
