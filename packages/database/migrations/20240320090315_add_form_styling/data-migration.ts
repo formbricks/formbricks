@@ -118,40 +118,6 @@ async function main() {
             }
           }
         }
-
-        // find all surveys with product overwrites
-        // const surveysWithProductOverwrites = await tx.survey.findMany({
-        //   where: {
-        //     productOverwrites: { not: Prisma.JsonNull },
-        //   },
-        // });
-
-        // if (!surveysWithProductOverwrites || !surveysWithProductOverwrites.length) {
-        //   // no surveys with product overwrites found, return early
-        //   return;
-        // }
-
-        // for (const survey of surveysWithProductOverwrites) {
-        //   const { brandColor, highlightBorderColor, ...rest } = survey.productOverwrites ?? {};
-
-        //   // single query to update the survey with the product overwrites
-        //   await tx.survey.update({
-        //     where: { id: survey.id },
-        //     data: {
-        //       styling: {
-        //         ...(survey.styling ?? {}),
-        //         ...(brandColor && { brandColor: { light: brandColor } }),
-        //         ...(highlightBorderColor && { highlightBorderColor: { light: highlightBorderColor } }),
-        //         ...((brandColor || highlightBorderColor || Object.keys(survey.styling ?? {}).length > 0) && {
-        //           overwriteUnifiedStyling: true,
-        //         }),
-        //       },
-        //       productOverwrites: {
-        //         ...rest,
-        //       },
-        //     },
-        //   });
-        // }
       }
     },
     {
