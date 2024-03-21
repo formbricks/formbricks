@@ -326,7 +326,6 @@ export const testTemplate: TTemplate = {
         headline: { default: "This is a Consent question" },
         required: true,
         label: { default: "I agree to the terms and conditions" },
-        dismissButtonLabel: "Skip",
       },
       {
         id: createId(),
@@ -334,7 +333,6 @@ export const testTemplate: TTemplate = {
         headline: { default: "This is a Consent question" },
         required: false,
         label: { default: "I agree to the terms and conditions" },
-        dismissButtonLabel: "Skip",
       },
     ],
     thankYouCard: thankYouCardDefault,

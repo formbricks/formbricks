@@ -1,0 +1,62 @@
+import AuthorBox from "@/components/shared/AuthorBox";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import Image from "next/image";
+import Header from "./remove-branding.gif";
+
+export const meta = {
+  title: "Remove branding for free on all survey types on self-hosted Formbricks 🎁",
+  description:
+    "While it was always possible to remove the Formbricks branding from link surveys, you can now remove it from all survey types incl. in-app and website surveys.",
+  date: "2024-03-21",
+  publishedTime: "2024-03-21T12:11:23",
+  authors: ["Johannes Dancker"],
+  section: "Feedback Apps",
+  tags: ["Open Source Community", "Formbricks", "Typeform", "Branding Removal"],
+};
+
+<Image src={Header} alt="Remove branding from all survey types of self-hosted" className="w-full rounded-lg" />
+
+<AuthorBox
+  name="Johannes Dancker"
+  title="Co-Founder"
+  date="March 21st, 2024"
+  duration="3"
+  author={"Johannes"}
+/>
+
+_While it was always possible to remove the Formbricks branding from link surveys, you can now remove it from all survey types incl. in-app and website surveys for free._
+
+## Why are we doing this?
+
+To be fair, the branding removal was always possible and legal under the AGPLv3 license. 
+
+BUT it was cumbersome, unnecessarily cumbersome: You needed to take it out of the codez, build a new image and host it. And every time we released a new version, you had to do the same 😮‍💨
+
+**We didn't like that. It's an arbitrary limitation** which only adds work to your already busy day.  If it is really important for you to remove the branding and self-host, this was your only option. Until now.
+
+### Remove all branding on self-hosted ✅
+
+This is why you can now just toggle the branding off, if you like - for free.
+
+If you want to support our project, you're obviously more than welcome to keep the beautiful branding on (and enjoy your life filled with good karma 😛).
+
+### What about Formbricks Cloud?
+On the cloud, branding removal is handled differently. Here is an overview:
+
+| **Branding Removal** | Link surveys | Website surveys | In-app surveys |
+| --- | --- | --- | --- |
+| Self-hosted | ✅ | ✅ | ✅ |
+| Formbricks Cloud | Part of Pro plan ($30) | Add credit card (free) | Add credit card (free) |
+
+## So how does Formbricks make money than?
+
+With our Enterprise Edition. If you use our Cloud, you get to use the Formbricks Enterprise Edition for free once you added a credit card. After the free monthly responses are used up, you pay a fee per submission and identified user. For a more detailed overview, please [have a look at our pricing page.](/pricing) 
+
+If you want to self-host the Formbricks Enterprise Edition, you need to [buy an Enterprise license from us](/docs/self-hosting/enterprise). These licenses are designed for larger companies who have complex data privacy and security requirements. Self-hosting Formbricks makes the compliance process a loooot easier. These licenses come on a yearly basis. If you're interested, [let's just have a chat.](https://cal.com/johannes/30) 
+
+
+### That's it for now, thanks 🚀
+
+[Try Formbricks](https://app.formbricks.com/auth/signup) today - it's free! Measure your user or customer experience without limits.
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
