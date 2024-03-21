@@ -1,6 +1,6 @@
 "use client";
 
-import { isLabelValidForAllLanguages } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Validation";
+import { isLabelValidForAllLanguages } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { createId } from "@paralleldrive/cuid2";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
