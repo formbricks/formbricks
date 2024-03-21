@@ -18,7 +18,7 @@ const navigation = {
     { name: "Community", href: "/community", status: true },
     { name: "Pricing", href: "/pricing", status: true },
     { name: "Blog", href: "/blog", status: true },
-    { name: "Docs", href: "/blog", status: true },
+    { name: "Docs", href: "/docs", status: true },
   ],
   legal: [
     { name: "Imprint", href: "/imprint", status: true },
