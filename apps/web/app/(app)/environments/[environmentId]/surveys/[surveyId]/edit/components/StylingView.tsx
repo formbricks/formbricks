@@ -76,7 +76,6 @@ const StylingView = ({
     // if its set and the toggle is turned off, we set the local styling to the server styling
 
     if (value) {
-      console.log({ value, surveyStyling });
       if (surveyStyling) {
         setOverwriteUnifiedStyling(value);
 
