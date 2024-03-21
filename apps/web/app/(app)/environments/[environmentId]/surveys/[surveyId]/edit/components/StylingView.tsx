@@ -16,25 +16,17 @@ type StylingViewProps = {
   environment: TEnvironment;
   product: TProduct;
   localSurvey: TSurvey;
-  surveyStyling: TSurveyStyling | null;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
 };
 
-const StylingView = ({
-  colors,
-  environment,
-  product,
-  localSurvey,
-  setLocalSurvey,
-  surveyStyling,
-}: StylingViewProps) => {
+const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey }: StylingViewProps) => {
   const [overwriteUnifiedStyling, setOverwriteUnifiedStyling] = useState(
     localSurvey?.styling?.overwriteUnifiedStyling ?? false
   );
 
   const [styling, setStyling] = useState(localSurvey.styling);
-  const [localStylingChanges, setLocalStylingChanges] = useState(localSurvey.styling);
+  const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const [productOverwrites, setProductOverwrites] = useState(localSurvey.productOverwrites);
 
@@ -85,6 +77,7 @@ const StylingView = ({
 
     setOverwriteUnifiedStyling(value);
 
+    // if the toggle is turned on, we set the local styling to the product styling
     if (value) {
       if (!styling) {
         // copy the product styling to the survey styling
@@ -95,16 +88,21 @@ const StylingView = ({
         return;
       }
 
-      // if the local styling changes are not equal to the survey styling, we set the local styling to the survey styling
-      if (surveyStyling && JSON.stringify(localStylingChanges) !== JSON.stringify(surveyStyling)) {
+      // if there are local styling changes, we set the styling to the local styling changes that were previously stored
+      if (localStylingChanges) {
         setStyling(localStylingChanges);
-      } else {
+      }
+      // if there are no local styling changes, we set the styling to the product styling
+      else {
         setStyling({
           ...defaultProductStyling,
           overwriteUnifiedStyling: true,
         });
       }
-    } else {
+    }
+
+    // if the toggle is turned off, we store the local styling changes and set the styling to the product styling
+    else {
       // copy the styling to localStylingChanges
       setLocalStylingChanges(styling);
 
