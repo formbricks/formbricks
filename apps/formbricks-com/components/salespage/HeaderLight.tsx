@@ -41,7 +41,7 @@ export default function HeaderLight() {
         className="hidden whitespace-nowrap md:px-6 lg:block"
         onClick={() => {
           router.push("https://app.formbricks.com/auth/signup");
-          plausible("Demo_CTA_TryForFree");
+          plausible("Header_CTA_GetStarted");
         }}>
         Get started - it&apos;s free!
       </Button>
