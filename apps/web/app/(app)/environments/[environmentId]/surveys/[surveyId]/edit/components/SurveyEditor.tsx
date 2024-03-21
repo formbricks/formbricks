@@ -141,6 +141,8 @@ export default function SurveyEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type]);
 
+  console.log({ survey });
+
   useEffect(() => {
     if (!localSurvey?.languages) return;
     const enabledLanguageCodes = extractLanguageCodes(getEnabledLanguages(localSurvey.languages ?? []));

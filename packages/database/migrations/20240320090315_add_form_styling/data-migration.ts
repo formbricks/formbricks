@@ -66,7 +66,6 @@ async function main() {
               const { brandColor, highlightBorderColor } = styling;
 
               if (!survey.styling) {
-                console.log("no styling found");
                 continue;
               }
 
@@ -78,7 +77,7 @@ async function main() {
                   styling: {
                     ...(survey.styling ?? {}),
                     ...(brandColor &&
-                      brandColor.light !== DEFAULT_BRAND_COLOR && {
+                      brandColor.light && {
                         brandColor: { light: brandColor.light },
                       }),
                     ...(highlightBorderColor?.light && {
