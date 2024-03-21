@@ -6,13 +6,13 @@
     "downlevelIteration": true,
     "baseUrl": ".",
     "paths": {
-      "@prisma/client/*": ["@formbricks/database/client/*"],
+      "@prisma/client/*": ["@formbricks/database/client/*"]
     },
     "plugins": [
       {
-        "name": "next",
-      },
+        "name": "next"
+      }
     ],
-    "strictNullChecks": true,
-  },
+    "strictNullChecks": true
+  }
 }
