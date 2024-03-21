@@ -75,7 +75,9 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <Label htmlFor="hidden-fields-toggle">Enabled</Label>
+              <Label htmlFor="hidden-fields-toggle">
+                {localSurvey?.hiddenFields?.enabled ? "On" : "Off"}
+              </Label>
 
               <Switch
                 id="hidden-fields-toggle"
@@ -107,7 +109,9 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
                 );
               })
             ) : (
-              <p className="text-sm italic text-slate-500">No hidden fields yet. Add the first one below.</p>
+              <p className="mt-2 text-sm italic text-slate-500">
+                No hidden fields yet. Add the first one below.
+              </p>
             )}
           </div>
           <form

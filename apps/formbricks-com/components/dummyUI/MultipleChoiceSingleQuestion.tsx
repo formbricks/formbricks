@@ -1,10 +1,10 @@
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
 
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { TSurveyMultipleChoiceSingleQuestion } from "./types";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
@@ -20,6 +20,7 @@ export default function MultipleChoiceSingleQuestion({
   brandColor,
 }: MultipleChoiceSingleProps) {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+
   return (
     <form
       onSubmit={(e) => {

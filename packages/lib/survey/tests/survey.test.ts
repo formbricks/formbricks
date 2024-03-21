@@ -23,7 +23,7 @@ import {
   mockAttributeClass,
   mockDisplay,
   mockId,
-  mockPerson,
+  mockPrismaPerson,
   mockProduct,
   mockSurveyOutput,
   mockTeamOutput,
@@ -286,15 +286,19 @@ describe("Tests for getSyncedSurveys", () => {
 
     it("Returns synced surveys", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([mockSurveyOutput]);
-      prisma.person.findUnique.mockResolvedValueOnce(mockPerson);
-      const surveys = await getSyncSurveys(mockId, mockPerson.id);
+      prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
+      const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", {
+        version: "1.7.0",
+      });
       expect(surveys).toEqual([mockTransformedSurveyOutput]);
     });
 
     it("Returns an empty array if no surveys are found", async () => {
       prisma.survey.findMany.mockResolvedValueOnce([]);
-      prisma.person.findUnique.mockResolvedValueOnce(mockPerson);
-      const surveys = await getSyncSurveys(mockId, mockPerson.id);
+      prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
+      const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", {
+        version: "1.7.0",
+      });
       expect(surveys).toEqual([]);
     });
   });
@@ -305,14 +309,18 @@ describe("Tests for getSyncedSurveys", () => {
     it("does not find a Product", async () => {
       prisma.product.findFirst.mockResolvedValueOnce(null);
 
-      await expect(getSyncSurveys(mockId, mockPerson.id)).rejects.toThrow(Error);
+      await expect(
+        getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", { version: "1.7.0" })
+      ).rejects.toThrow(Error);
     });
 
     it("should throw an error if there is an unknown error", async () => {
       const mockErrorMessage = "Unknown error occurred";
       prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
       prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(getSyncSurveys(mockId, mockPerson.id)).rejects.toThrow(Error);
+      await expect(
+        getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", { version: "1.7.0" })
+      ).rejects.toThrow(Error);
     });
   });
 });

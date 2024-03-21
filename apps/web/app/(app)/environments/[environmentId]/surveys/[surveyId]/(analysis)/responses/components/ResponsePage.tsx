@@ -65,7 +65,7 @@ const ResponsePage = ({
   const searchParams = useSearchParams();
 
   survey = useMemo(() => {
-    return checkForRecallInHeadline(survey);
+    return checkForRecallInHeadline(survey, "default");
   }, [survey]);
 
   const fetchNextPage = useCallback(async () => {
@@ -133,7 +133,7 @@ const ResponsePage = ({
       />
       <div className="flex gap-1.5">
         <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
-        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />
       </div>
       <SurveyResultsTabs
         activeId="responses"

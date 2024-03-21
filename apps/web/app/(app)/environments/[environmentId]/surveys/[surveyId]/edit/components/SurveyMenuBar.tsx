@@ -2,7 +2,7 @@
 
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import {
-  isValidUrl,
+  isCardValid,
   validateQuestion,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { isEqual } from "lodash";
@@ -35,9 +35,11 @@ interface SurveyMenuBarProps {
   environment: TEnvironment;
   activeId: "questions" | "settings";
   setActiveId: (id: "questions" | "settings") => void;
-  setInvalidQuestions: (invalidQuestions: String[]) => void;
+  setInvalidQuestions: (invalidQuestions: string[]) => void;
   product: TProduct;
   responseCount: number;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (selectedLanguage: string) => void;
 }
 
 export default function SurveyMenuBar({
@@ -50,6 +52,8 @@ export default function SurveyMenuBar({
   setInvalidQuestions,
   product,
   responseCount,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -58,7 +62,7 @@ export default function SurveyMenuBar({
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
 
-  let faultyQuestions: String[] = [];
+  let faultyQuestions: string[] = [];
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -119,10 +123,22 @@ export default function SurveyMenuBar({
 
   const validateSurvey = (survey: TSurvey) => {
     const existingQuestionIds = new Set();
-
+    faultyQuestions = [];
     if (survey.questions.length === 0) {
       toast.error("Please add at least one question");
       return;
+    }
+
+    if (survey.welcomeCard.enabled) {
+      if (!isCardValid(survey.welcomeCard, "start", survey.languages)) {
+        faultyQuestions.push("start");
+      }
+    }
+
+    if (survey.thankYouCard.enabled) {
+      if (!isCardValid(survey.thankYouCard, "end", survey.languages)) {
+        faultyQuestions.push("end");
+      }
     }
 
     let pin = survey?.pin;
@@ -131,30 +147,9 @@ export default function SurveyMenuBar({
       return;
     }
 
-    const { thankYouCard } = localSurvey;
-    if (thankYouCard.enabled) {
-      const { buttonLabel, buttonLink } = thankYouCard;
-
-      if (buttonLabel && !buttonLink) {
-        toast.error("Button Link missing on Thank you card.");
-        return;
-      }
-
-      if (!buttonLabel && buttonLink) {
-        toast.error("Button Label missing on Thank you card.");
-        return;
-      }
-
-      if (buttonLink && !isValidUrl(buttonLink)) {
-        toast.error("Invalid URL on Thank You card.");
-        return;
-      }
-    }
-
-    faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
-      const isValid = validateQuestion(question);
+      const isValid = validateQuestion(question, survey.languages);
 
       if (!isValid) {
         faultyQuestions.push(question.id);
@@ -164,6 +159,7 @@ export default function SurveyMenuBar({
     // if there are any faulty questions, the user won't be allowed to save the survey
     if (faultyQuestions.length > 0) {
       setInvalidQuestions(faultyQuestions);
+      setSelectedLanguageCode("default");
       toast.error("Please fill all required fields.");
       return false;
     }
@@ -182,11 +178,15 @@ export default function SurveyMenuBar({
         question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
-          question.choices.some((element) => element.label.trim() === "") ||
+          question.choices.some((element) => element.label[selectedLanguageCode]?.trim() === "") ||
           question.choices.some((element, index) =>
             question.choices
               .slice(index + 1)
-              .some((nextElement) => nextElement.label.trim() === element.label.trim())
+              .some(
+                (nextElement) =>
+                  nextElement.label[selectedLanguageCode]?.trim() ===
+                  element.label[selectedLanguageCode].trim()
+              )
           );
 
         if (haveSameChoices) {
@@ -240,7 +240,7 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
-    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
     if (questionWithEmptyFallback) {
       toast.error("Fallback missing");
       return;

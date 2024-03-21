@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ZLegacySurveyQuestions, ZLegacySurveyThankYouCard, ZLegacySurveyWelcomeCard } from "./LegacySurvey";
 import { ZSurveyHiddenFields, ZSurveyQuestions, ZSurveyThankYouCard, ZSurveyWelcomeCard } from "./surveys";
 import { ZUserObjective } from "./user";
 
@@ -21,3 +22,15 @@ export const ZTemplate = z.object({
 });
 
 export type TTemplate = z.infer<typeof ZTemplate>;
+
+export const ZLegacyTemplate = ZTemplate.extend({
+  preset: z.object({
+    name: z.string(),
+    welcomeCard: ZLegacySurveyWelcomeCard,
+    questions: ZLegacySurveyQuestions,
+    thankYouCard: ZLegacySurveyThankYouCard,
+    hiddenFields: ZSurveyHiddenFields,
+  }),
+});
+
+export type TLegacyTemplate = z.infer<typeof ZLegacyTemplate>;
