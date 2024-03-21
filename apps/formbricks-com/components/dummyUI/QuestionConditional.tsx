@@ -1,11 +1,10 @@
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
-
 import CTAQuestion from "./CTAQuestion";
 import MultipleChoiceMultiQuestion from "./MultipleChoiceMultiQuestion";
 import MultipleChoiceSingleQuestion from "./MultipleChoiceSingleQuestion";
 import NPSQuestion from "./NPSQuestion";
 import OpenTextQuestion from "./OpenTextQuestion";
 import RatingQuestion from "./RatingQuestion";
+import { TSurveyQuestion, TSurveyQuestionType } from "./types";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownIcon, ArrowUpIcon, DocumentDuplicateIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { ArrowDownIcon, ArrowUpIcon, CopyIcon, TrashIcon } from "lucide-react";
 
 interface QuestionDropdownProps {
   questionIdx: number;
@@ -18,7 +18,7 @@ export default function QuestionActions({
   moveQuestion,
 }: QuestionDropdownProps) {
   return (
-    <div className="flex space-x-4">
+    <div className="flex space-x-2">
       <ArrowUpIcon
         className={`h-4 cursor-pointer text-slate-500 hover:text-slate-600 ${
           questionIdx === 0 ? "opacity-50" : ""
@@ -41,7 +41,7 @@ export default function QuestionActions({
           }
         }}
       />
-      <DocumentDuplicateIcon
+      <CopyIcon
         className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
         onClick={(e) => {
           e.stopPropagation();

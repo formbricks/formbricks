@@ -1,4 +1,4 @@
-import { Cog8ToothIcon, QueueListIcon } from "@heroicons/react/24/solid";
+import { Rows3Icon, SettingsIcon } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 
@@ -12,12 +12,12 @@ const tabs: Tab[] = [
   {
     id: "questions",
     label: "Questions",
-    icon: <QueueListIcon />,
+    icon: <Rows3Icon className="h-5 w-5" />,
   },
   {
     id: "settings",
     label: "Settings",
-    icon: <Cog8ToothIcon />,
+    icon: <SettingsIcon className="h-5 w-5" />,
   },
 ];
 
@@ -28,7 +28,7 @@ interface QuestionsAudienceTabsProps {
 
 export default function QuestionsAudienceTabs({ activeId, setActiveId }: QuestionsAudienceTabsProps) {
   return (
-    <div className="fixed z-10 flex h-14 w-full items-center justify-center border bg-white md:w-1/2">
+    <div className="fixed z-20 flex h-14 w-full items-center justify-center border bg-white md:w-1/2">
       <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
         {tabs.map((tab) => (
           <button

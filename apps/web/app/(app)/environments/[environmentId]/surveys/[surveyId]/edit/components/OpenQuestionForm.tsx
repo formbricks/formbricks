@@ -1,32 +1,33 @@
 "use client";
 
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
 import {
-  ChatBubbleBottomCenterTextIcon,
-  EnvelopeIcon,
-  HashtagIcon,
+  HashIcon,
   LinkIcon,
+  MailIcon,
+  MessageSquareTextIcon,
   PhoneIcon,
-} from "@heroicons/react/24/solid";
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useState } from "react";
 
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
 } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
 
 const questionTypes = [
-  { value: "text", label: "Text", icon: <ChatBubbleBottomCenterTextIcon /> },
-  { value: "email", label: "Email", icon: <EnvelopeIcon /> },
-  { value: "url", label: "URL", icon: <LinkIcon /> },
-  { value: "number", label: "Number", icon: <HashtagIcon /> },
-  { value: "phone", label: "Phone", icon: <PhoneIcon /> },
+  { value: "text", label: "Text", icon: <MessageSquareTextIcon className="h-4 w-4" /> },
+  { value: "email", label: "Email", icon: <MailIcon className="h-4 w-4" /> },
+  { value: "url", label: "URL", icon: <LinkIcon className="h-4 w-4" /> },
+  { value: "number", label: "Number", icon: <HashIcon className="h-4 w-4" /> },
+  { value: "phone", label: "Phone", icon: <PhoneIcon className="h-4 w-4" /> },
 ];
 
 interface OpenQuestionFormProps {
@@ -35,6 +36,8 @@ interface OpenQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
 }
 
@@ -44,55 +47,58 @@ export default function OpenQuestionForm({
   updateQuestion,
   isInvalid,
   localSurvey,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: OpenQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
-
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
       inputType: inputType,
-      placeholder: getPlaceholderByInputType(inputType),
+      placeholder: createI18nString(getPlaceholderByInputType(inputType), surveyLanguageCodes),
       longAnswer: inputType === "text" ? question.longAnswer : false,
     };
     updateQuestion(questionIdx, updatedAttributes);
   };
 
-  const environmentId = localSurvey.environmentId;
-
   return (
     <form>
       <QuestionFormInput
+        id="headline"
+        value={question.headline}
         localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
         questionIdx={questionIdx}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        type="headline"
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
 
       <div>
         {showSubheader && (
-          <>
-            <div className="flex w-full items-center">
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
               <QuestionFormInput
+                id="subheader"
+                value={question.subheader}
                 localSurvey={localSurvey}
-                environmentId={environmentId}
-                isInvalid={isInvalid}
-                questionId={question.id}
                 questionIdx={questionIdx}
+                isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                type="subheader"
-              />
-              <TrashIcon
-                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
-                }}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: undefined });
+              }}
+            />
+          </div>
         )}
         {!showSubheader && (
           <Button
@@ -100,23 +106,32 @@ export default function OpenQuestionForm({
             variant="minimal"
             className="mt-3"
             type="button"
-            onClick={() => setShowSubheader(true)}>
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                subheader: createI18nString("", surveyLanguageCodes),
+              });
+              setShowSubheader(true);
+            }}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
         )}
       </div>
-
-      <div className="mt-3">
-        <Label htmlFor="placeholder">Placeholder</Label>
-        <div className="mt-2">
-          <Input
-            id="placeholder"
-            name="placeholder"
-            value={question.placeholder ?? defaultPlaceholder}
-            onChange={(e) => updateQuestion(questionIdx, { placeholder: e.target.value })}
-          />
-        </div>
+      <div className="mt-2">
+        <QuestionFormInput
+          id="placeholder"
+          value={
+            question.placeholder
+              ? question.placeholder
+              : createI18nString(defaultPlaceholder, surveyLanguageCodes)
+          }
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          isInvalid={isInvalid}
+          updateQuestion={updateQuestion}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+        />
       </div>
 
       {/* Add a dropdown to select the question type */}

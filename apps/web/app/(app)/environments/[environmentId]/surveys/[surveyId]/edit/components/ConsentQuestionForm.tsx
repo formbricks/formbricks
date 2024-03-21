@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 
-import { md } from "@formbricks/lib/markdownIt";
+import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys";
-import { Editor } from "@formbricks/ui/Editor";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyConsentQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
 }
 
@@ -23,65 +23,54 @@ export default function ConsentQuestionForm({
   updateQuestion,
   isInvalid,
   localSurvey,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: ConsentQuestionFormProps): JSX.Element {
   const [firstRender, setFirstRender] = useState(true);
-  const environmentId = localSurvey.environmentId;
 
   return (
     <form>
       <QuestionFormInput
+        id="headline"
+        value={question.headline}
         localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
         questionIdx={questionIdx}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
-        type="headline"
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
 
       <div className="mt-3">
         <Label htmlFor="subheader">Description</Label>
         <div className="mt-2">
-          <Editor
-            getText={() =>
-              md.render(
-                question.html || "We would love to talk to you and learn more about how you use our product."
-              )
-            }
-            setText={(value: string) => {
-              updateQuestion(questionIdx, { html: value });
-            }}
-            excludedToolbarItems={["blockType"]}
-            disableLists
+          <LocalizedEditor
+            id="subheader"
+            value={question.html}
+            localSurvey={localSurvey}
+            isInvalid={isInvalid}
+            updateQuestion={updateQuestion}
+            selectedLanguageCode={selectedLanguageCode}
+            setSelectedLanguageCode={setSelectedLanguageCode}
             firstRender={firstRender}
             setFirstRender={setFirstRender}
+            questionIdx={questionIdx}
           />
         </div>
       </div>
 
-      <div className="mt-3">
-        <Label htmlFor="label">Checkbox Label</Label>
-        <Input
-          id="label"
-          name="label"
-          className="mt-2"
-          value={question.label}
-          placeholder="I agree to the terms and conditions"
-          onChange={(e) => updateQuestion(questionIdx, { label: e.target.value })}
-          isInvalid={isInvalid && question.label.trim() === ""}
-        />
-      </div>
-      {/* <div className="mt-3">
-        <Label htmlFor="buttonLabel">Button Label</Label>
-        <Input
-          id="buttonLabel"
-          name="buttonLabel"
-          className="mt-2"
-          value={question.buttonLabel}
-          placeholder={lastQuestion ? "Finish" : "Next"}
-          onChange={(e) => updateQuestion(questionIdx, { buttonLabel: e.target.value })}
-        />
-      </div> */}
+      <QuestionFormInput
+        id="label"
+        label="Checkbox Label"
+        placeholder="I agree to the terms and conditions"
+        value={question.label}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+        isInvalid={isInvalid}
+        updateQuestion={updateQuestion}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
+      />
     </form>
   );
 }

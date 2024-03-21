@@ -1,40 +1,17 @@
 import UrlShortenerForm from "@/app/(app)/environments/[environmentId]/components/UrlShortenerForm";
-import { DocumentDuplicateIcon } from "@heroicons/react/24/solid";
-import { RefreshCcw } from "lucide-react";
 import Link from "next/link";
-import { useRef } from "react";
-import toast from "react-hot-toast";
 
-import { Button } from "@formbricks/ui/Button";
+import { TSurvey } from "@formbricks/types/surveys";
+import { ShareSurveyLink } from "@formbricks/ui/ShareSurveyLink";
 
 interface LinkTabProps {
-  surveyUrl: string;
+  survey: TSurvey;
   webAppUrl: string;
-  generateNewSingleUseLink: () => void;
-  isSingleUseLinkSurvey: boolean;
+  surveyUrl: string;
+  setSurveyUrl: (url: string) => void;
 }
 
-export default function LinkTab({
-  surveyUrl,
-  webAppUrl,
-  generateNewSingleUseLink,
-  isSingleUseLinkSurvey,
-}: LinkTabProps) {
-  const linkTextRef = useRef(null);
-
-  const handleTextSelection = () => {
-    if (linkTextRef.current) {
-      const range = document.createRange();
-      range.selectNodeContents(linkTextRef.current);
-
-      const selection = window.getSelection();
-      if (selection) {
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-    }
-  };
-
+export default function LinkTab({ survey, webAppUrl, surveyUrl, setSurveyUrl }: LinkTabProps) {
   const docsLinks = [
     {
       title: "Identify users",
@@ -62,39 +39,12 @@ export default function LinkTab({
     <div className="flex h-full grow flex-col gap-6">
       <div>
         <p className="text-lg font-semibold text-slate-800">Share the link to get responses</p>
-        <div className="mt-2 flex max-w-full flex-col items-center space-x-2 lg:flex-row">
-          <div
-            ref={linkTextRef}
-            className="mt-2 max-w-[65%] overflow-hidden rounded-lg border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800"
-            style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-            onClick={() => handleTextSelection()}>
-            {surveyUrl}
-          </div>
-          <div className="mt-2 flex items-center justify-center space-x-2">
-            <Button
-              variant="darkCTA"
-              className="inline"
-              title="Copy survey link to clipboard"
-              aria-label="Copy survey link to clipboard"
-              onClick={() => {
-                navigator.clipboard.writeText(surveyUrl);
-                toast.success("URL copied to clipboard!");
-              }}
-              EndIcon={DocumentDuplicateIcon}>
-              Copy Link
-            </Button>
-            {isSingleUseLinkSurvey && (
-              <Button
-                variant="darkCTA"
-                className="inline"
-                title="Regenerate single use survey link"
-                aria-label="Regenerate single use survey link"
-                onClick={() => generateNewSingleUseLink()}>
-                <RefreshCcw className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
-        </div>
+        <ShareSurveyLink
+          survey={survey}
+          webAppUrl={webAppUrl}
+          surveyUrl={surveyUrl}
+          setSurveyUrl={setSurveyUrl}
+        />
       </div>
       <div className="flex flex-wrap justify-between gap-2">
         <p className="pt-2 font-semibold text-slate-700">You can do a lot more with links surveys 💡</p>

@@ -1,7 +1,4 @@
-interface UploadFileConfig {
-  allowedFileExtensions?: string[];
-  surveyId?: string;
-}
+import { TUploadFileConfig } from "@formbricks/types/storage";
 
 export class StorageAPI {
   private apiHost: string;
@@ -14,7 +11,7 @@ export class StorageAPI {
 
   async uploadFile(
     file: File,
-    { allowedFileExtensions, surveyId }: UploadFileConfig | undefined = {}
+    { allowedFileExtensions, surveyId }: TUploadFileConfig | undefined = {}
   ): Promise<string> {
     if (!(file instanceof Blob) || !(file instanceof File)) {
       throw new Error(`Invalid file type. Expected Blob or File, but received ${typeof file}`);

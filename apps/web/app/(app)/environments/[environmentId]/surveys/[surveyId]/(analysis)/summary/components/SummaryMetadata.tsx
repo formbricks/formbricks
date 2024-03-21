@@ -1,4 +1,4 @@
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TSurveySummary } from "@formbricks/types/responses";
@@ -103,7 +103,7 @@ export default function SummaryMetadata({
         </div>
         <div className="flex flex-col justify-between gap-2 lg:col-span-1">
           <div className="text-right text-xs text-slate-400">
-            Last updated: {timeSinceConditionally(survey.updatedAt.toISOString())}
+            Last updated: {timeSinceConditionally(survey.updatedAt.toString())}
           </div>
           <Button
             variant="minimal"

@@ -23,6 +23,7 @@ interface QuestionConditionalProps {
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   autoFocus?: boolean;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -37,6 +38,7 @@ export default function QuestionConditional({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   autoFocus = true,
   ttc,
   setTtc,
@@ -53,6 +55,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       autoFocus={autoFocus}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -65,6 +68,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -77,6 +81,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -89,6 +94,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -101,6 +107,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -113,6 +120,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -125,6 +133,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -137,6 +146,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -149,6 +159,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -163,6 +174,7 @@ export default function QuestionConditional({
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
       onFileUpload={onFileUpload}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />
@@ -175,6 +187,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />

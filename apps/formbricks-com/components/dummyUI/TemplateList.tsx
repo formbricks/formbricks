@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { TTemplate } from "@formbricks/types/templates";
 
 import { templates } from "./templates";
+import { TTemplate } from "./types";
 
 type TemplateList = {
   onTemplateClick: (template: TTemplate) => void;
