@@ -15,7 +15,7 @@ const formbricksProxyHandler: ProxyHandler<any> = {
       }
       if (!window.formbricks) {
         const { apiHost } = args[0];
-        fetch(`${apiHost}/api/js`)
+        fetch(`${apiHost}/api/packages/js`)
           .then((res) => (res.ok ? res.text() : Promise.reject("Failed to load Formbricks SDK")))
           .then((sdkScript) => {
             const scriptTag = document.createElement("script");
