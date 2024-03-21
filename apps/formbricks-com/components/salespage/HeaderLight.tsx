@@ -13,6 +13,7 @@ const mainNav = [
   { name: "Link Surveys", href: "/open-source-form-builder", status: true },
   { name: "Website Surveys", href: "/website-survey", status: true },
   { name: "In-app Surveys", href: "/in-app-survey", status: true },
+  { name: "Pricing", href: "/pricing", status: true },
 ];
 
 export default function HeaderLight() {
@@ -25,19 +26,19 @@ export default function HeaderLight() {
         <FooterLogo className="h-8 w-auto sm:h-10" />
       </Link>
 
-      <div className="hidden lg:block">
+      <div className="hidden w-auto justify-around lg:block">
         {mainNav.map((item) => (
           <Link
             key={item.name}
             href={item.href}
-            className="px-8 text-sm font-medium text-slate-400 hover:text-slate-700 lg:text-base  dark:hover:text-slate-300">
+            className="px-4 text-sm font-medium text-slate-400 hover:text-slate-700 lg:px-6 lg:text-base xl:px-8  dark:hover:text-slate-300">
             {item.name}
           </Link>
         ))}
       </div>
       <Button
         variant="highlight"
-        className="hidden md:px-6 lg:block"
+        className="hidden whitespace-nowrap md:px-6 lg:block"
         onClick={() => {
           router.push("https://app.formbricks.com/auth/signup");
           plausible("Demo_CTA_TryForFree");
