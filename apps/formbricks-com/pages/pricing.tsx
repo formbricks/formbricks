@@ -1,3 +1,4 @@
+import { EnterpriseEditionInfo } from "@/components/shared/EnterpriseEditionInfo";
 import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import { OpenSourceInfo } from "@/components/shared/OpenSourceInfo";
@@ -8,10 +9,10 @@ import { PricingTable } from "../components/shared/PricingTable";
 const inProductSurveys = {
   leadRow: {
     title: "Website and In-App Surveys",
-    comparison: "like HotJar",
+    comparison: "like HotJar Ask",
     free: (
       <div>
-        <span>250 Submissions</span> <span className="text-slate-400">/ Month</span>{" "}
+        <span>250 Responses</span> <span className="text-slate-400">/ Month</span>{" "}
       </div>
     ),
     paid: "Unlimited",
@@ -21,9 +22,9 @@ const inProductSurveys = {
     { name: "Unlimited Team Members", free: true, paid: true },
     { name: "API Access", free: true, paid: true },
     { name: "30+ Templates", free: true, paid: true },
-    { name: "Unlimited Responses per Survey", free: false, paid: true },
+    { name: "Unlimited Responses", free: false, paid: true },
     { name: "Team Role Management", free: false, paid: true },
-    { name: "Multi Language Surveys", free: false, paid: true, comingSoon: true },
+    { name: "Multi Language Surveys", free: false, paid: true },
   ],
   endRow: {
     title: "Website and In-App Surveys",
@@ -32,7 +33,7 @@ const inProductSurveys = {
       <div>
         <span>Free</span>{" "}
         <span className="text-slate-400">
-          up to 250 submissions / month <br />
+          up to 250 responses / month <br />
           then{" "}
         </span>
         <span>$0.15</span>
@@ -58,6 +59,7 @@ const userSegmentation = {
     { name: "Collect Events", free: true, paid: true },
     { name: "Collect Attributes", free: true, paid: true },
     { name: "Reusable Segments", free: true, paid: true },
+    { name: "Basic Targeting", free: true, paid: true },
     { name: "Advanced Targeting", free: false, paid: true },
   ],
   endRow: {
@@ -94,10 +96,11 @@ const linkSurveys = {
     { name: "Hidden Fields", free: true, paid: true },
     { name: "Single Use Survey Links", free: true, paid: true },
     { name: "Pin-protected Surveys", free: true, paid: true },
-    { name: "Custom Styling", free: true, paid: true, comingSoon: true },
+    { name: "Custom Styling", free: true, paid: true },
     { name: "Recall Information", free: true, paid: true },
-    { name: "Book appointments (powered by cal.com)", free: true, paid: true },
-    { name: "Collect Payments and Signatures", free: true, paid: true, comingSoon: true },
+    { name: "Book appointments", free: true, paid: true },
+    { name: "Collect Payments", free: true, paid: true, comingSoon: true },
+    { name: "Collect Signatures", free: true, paid: true, comingSoon: true },
     { name: "Custom URL", free: false, paid: true, comingSoon: true },
     { name: "Remove Formbricks Branding", free: false, paid: true },
   ],
@@ -213,6 +216,7 @@ const PricingPage = () => {
         <div>
           {/* <PricingCalculator /> */}
           <OpenSourceInfo />
+          <EnterpriseEditionInfo />
         </div>
       </div>
     </Layout>

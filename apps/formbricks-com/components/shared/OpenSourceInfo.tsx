@@ -2,7 +2,7 @@ import { Button } from "@formbricks/ui/Button";
 
 export const OpenSourceInfo = () => {
   return (
-    <div className="my-8 md:my-20">
+    <div className="my-8 md:my-6">
       <div className="px-8 md:px-16">
         <div className=" rounded-xl bg-slate-100 px-4 py-8 md:px-12 dark:bg-slate-800">
           <h2 className="text-lg font-semibold leading-7 tracking-tight text-slate-800 md:text-2xl dark:text-slate-200">
@@ -23,7 +23,7 @@ export const OpenSourceInfo = () => {
             <Button
               onClick={() => window.open("/docs/self-hosting/deployment", "_blank")}
               variant="secondary">
-              Read our Docs on Self Hosting
+              Read self-hosting docs
             </Button>
           </div>
         </div>
