@@ -327,7 +327,7 @@ export default function Navigation({
                           src={session.user.imageUrl}
                           width="40"
                           height="40"
-                          className="ph-no-capture h-10 w-10 rounded-full"
+                          className="ph-no-capture h-10 w-10 rounded-full bg-transparent object-cover"
                           alt="Profile picture"
                         />
                       ) : (
