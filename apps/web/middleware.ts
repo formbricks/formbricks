@@ -81,5 +81,6 @@ export const config = {
     "/environments/:path*",
     "/api/auth/signout",
     "/auth/login",
+    "/api/packages/:path*",
   ],
 };
