@@ -24,7 +24,7 @@ import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 import { updateSurveyAction } from "../actions";
-import { isCardValid, validateQuestion } from "./Validation";
+import { isCardValid, validateQuestion } from "../lib/validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;

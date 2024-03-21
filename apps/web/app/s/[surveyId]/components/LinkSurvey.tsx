@@ -152,10 +152,10 @@ export default function LinkSurvey({
   }
   if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
-      return <VerifyEmail survey={survey} isErrorComponent={true} />;
+      return <VerifyEmail survey={survey} isErrorComponent={true} languageCode={languageCode} />;
     }
     //emailVerificationStatus === "not-verified"
-    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} />;
+    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
   }
 
   const getStyling = () => {

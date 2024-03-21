@@ -46,7 +46,7 @@ export const checkValidity = (question: TSurveyQuestion, answer: any, language: 
       case TSurveyQuestionType.MultipleChoiceSingle: {
         const hasOther = question.choices[question.choices.length - 1].id === "other";
         if (!hasOther) {
-          if (!question.choices.find((choice) => choice.label === answer)) return false;
+          if (!question.choices.find((choice) => choice.label[language] === answer)) return false;
           return true;
         }
         return true;
