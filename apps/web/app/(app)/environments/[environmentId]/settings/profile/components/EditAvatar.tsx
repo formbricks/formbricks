@@ -1,12 +1,16 @@
 "use client";
 
-import { updateAvatarAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
+import {
+  removeAvatarAction,
+  updateAvatarAction,
+} from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
 import { Session } from "next-auth";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
+import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 
@@ -20,6 +24,10 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
   const handleUpload = async (file: File, environmentId: string) => {
     setIsLoading(true);
     try {
+      if (session?.user.imageUrl) {
+        // If avatar image already exist, then remove it before update action
+        await removeAvatarAction(environmentId);
+      }
       const { url, error } = await handleFileUpload(file, environmentId);
 
       if (error) {
@@ -36,6 +44,28 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
     }
 
     setIsLoading(false);
+  };
+
+  const handleRemove = async () => {
+    const imageUrl = session?.user?.imageUrl;
+    if (!imageUrl) {
+      return;
+    }
+
+    setIsLoading(true);
+    const fileName = getFileNameWithIdFromUrl(imageUrl);
+    if (!fileName) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await removeAvatarAction(environmentId);
+    } catch (err) {
+      toast.error("Avatar update failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -70,27 +100,34 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
         )}
       </div>
 
-      <Button
-        className="mt-4"
-        variant="darkCTA"
-        onClick={() => {
-          inputRef.current?.click();
-        }}>
-        Upload Image
-        <input
-          type="file"
-          id="hiddenFileInput"
-          ref={inputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              await handleUpload(file, environmentId);
-            }
-          }}
-        />
-      </Button>
+      <div className="mt-4">
+        <Button
+          className="mr-2"
+          variant="darkCTA"
+          onClick={() => {
+            inputRef.current?.click();
+          }}>
+          {session?.user.imageUrl ? "Edit Image" : "Upload Image"}
+          <input
+            type="file"
+            id="hiddenFileInput"
+            ref={inputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                await handleUpload(file, environmentId);
+              }
+            }}
+          />
+        </Button>
+        {session?.user?.imageUrl && (
+          <Button className="mr-2" variant="warn" onClick={handleRemove}>
+            Remove Image
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
