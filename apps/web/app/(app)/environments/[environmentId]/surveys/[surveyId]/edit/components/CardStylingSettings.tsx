@@ -26,6 +26,7 @@ type CardStylingSettingsProps = {
   disabled?: boolean;
   productOverwrites?: TSurveyProductOverwrites | null;
   setProductOverwrites?: React.Dispatch<React.SetStateAction<TSurveyProductOverwrites>>;
+  isLinkSurvey?: boolean;
 };
 
 const isSurveyStyling = (styling: TSurveyStyling | TProductStyling | null): styling is TSurveyStyling => {
@@ -41,6 +42,7 @@ const CardStylingSettings = ({
   disabled,
   open,
   setOpen,
+  isLinkSurvey = false,
 }: CardStylingSettingsProps) => {
   const { placement, clickOutsideClose, darkOverlay } = productOverwrites ?? {};
 
@@ -234,45 +236,49 @@ const CardStylingSettings = ({
             description="Change the shadow color of the card."
           />
 
-          <div className="flex items-center space-x-1">
-            <Switch
-              id="hideProgressBar"
-              checked={!!hideProgressBar}
-              onCheckedChange={(checked) => toggleProgressBarVisibility(checked)}
-            />
-            <Label htmlFor="hideProgressBar" className="cursor-pointer">
-              <div className="ml-2">
-                <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
-                <p className="text-xs font-normal text-slate-500">
-                  Disable the visibility of survey progress.
-                </p>
+          {!isLinkSurvey && (
+            <>
+              <div className="flex items-center space-x-1">
+                <Switch
+                  id="hideProgressBar"
+                  checked={!!hideProgressBar}
+                  onCheckedChange={(checked) => toggleProgressBarVisibility(checked)}
+                />
+                <Label htmlFor="hideProgressBar" className="cursor-pointer">
+                  <div className="ml-2">
+                    <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
+                    <p className="text-xs font-normal text-slate-500">
+                      Disable the visibility of survey progress.
+                    </p>
+                  </div>
+                </Label>
               </div>
-            </Label>
-          </div>
 
-          <div className="flex max-w-xs flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
-              <div className="flex flex-col">
+              <div className="flex max-w-xs flex-col gap-4">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
-                  <Badge text="In-App Surveys" type="gray" size="normal" />
+                  <Switch checked={isHighlightBorderAllowed} onCheckedChange={setIsHighlightBorderAllowed} />
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-slate-700">Add highlight border</h3>
+                      <Badge text="In-App Surveys" type="gray" size="normal" />
+                    </div>
+                    <p className="text-xs text-slate-500">Add an outer border to your survey card.</p>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500">Add an outer border to your survey card.</p>
-              </div>
-            </div>
 
-            {isHighlightBorderAllowed && (
-              <ColorPicker
-                color={highlightBorderColor}
-                onChange={setHighlightBorderColor}
-                containerClass="my-0"
-              />
-            )}
-          </div>
+                {isHighlightBorderAllowed && (
+                  <ColorPicker
+                    color={highlightBorderColor}
+                    onChange={setHighlightBorderColor}
+                    containerClass="my-0"
+                  />
+                )}
+              </div>
+            </>
+          )}
 
           {/* Positioning */}
-          {isSurveyStyling(styling) && (
+          {isSurveyStyling(styling) && !isLinkSurvey && (
             <div className="flex flex-col gap-4">
               <div className="flex items-center space-x-1">
                 <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />

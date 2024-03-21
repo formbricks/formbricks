@@ -2,12 +2,12 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
-import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyBackgroundBgType, TSurveyStyling } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
+import { Slider } from "@formbricks/ui/Slider";
 
 import SurveyBgSelectorTab from "./SurveyBgSelectorTab";
 
@@ -32,17 +32,10 @@ export default function BackgroundStylingCard({
   disabled,
   environmentId,
 }: BackgroundStylingCardProps) {
-  const { bgType } = styling?.background ?? {};
-
-  const [inputValue, setInputValue] = useState(100);
-
-  const handleInputChange = (e) => {
-    setInputValue(e.target.value);
-    handleBrightnessChange(parseInt(e.target.value));
-  };
+  const { bgType, brightness } = styling?.background ?? {};
 
   const handleBgChange = (color: string, type: TSurveyBackgroundBgType) => {
-    setInputValue(100);
+    handleBrightnessChange(100);
 
     const { background } = styling ?? {};
     const { brightness, ...rest } = background ?? {};
@@ -126,25 +119,27 @@ export default function BackgroundStylingCard({
           </div>
 
           {/* Overlay */}
-          <div className="p-3">
+          <div className="flex flex-col gap-4 p-3">
             <div className="ml-2">
               <h3 className="text-sm font-semibold text-slate-700">Background Overlay</h3>
               <p className="text-xs font-normal text-slate-500">
                 Darken or lighten background of your choice.
               </p>
             </div>
+
             <div>
-              <div className="mt-4 flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
-                <h3 className="mb-4 text-sm font-semibold text-slate-700">Brightness</h3>
-                <input
-                  id="small-range"
-                  type="range"
-                  min="1"
-                  max="200"
-                  value={inputValue}
-                  onChange={handleInputChange}
-                  className="range-sm mb-6 h-1 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 dark:bg-slate-700"
-                />
+              <div className="ml-2 flex flex-col justify-center">
+                <div className="flex max-w-xs flex-col gap-4">
+                  <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
+                    <Slider
+                      value={[brightness ?? 100]}
+                      max={200}
+                      onValueChange={(value) => {
+                        handleBrightnessChange(value[0]);
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
