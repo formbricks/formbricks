@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       const format = ["umd", "iife"].includes(req.nextUrl.searchParams.get("format")!)
         ? req.nextUrl.searchParams.get("format")!
         : "umd";
-      path = `../../packages/browser/dist/index.${format}.js`;
+      path = `../../packages/js-core/dist/index.${format}.js`;
       try {
         append = await handleInit(req);
       } catch (error) {
