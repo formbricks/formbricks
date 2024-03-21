@@ -220,7 +220,7 @@ export const UnifiedStyling = ({ product, environmentId, colors }: UnifiedStylin
             variant="minimal"
             className="flex items-center gap-2"
             onClick={() => setConfirmResetStylingModalOpen(true)}>
-            Reset
+            Reset to default
             <RotateCcwIcon className="h-4 w-4" />
           </Button>
         </div>
