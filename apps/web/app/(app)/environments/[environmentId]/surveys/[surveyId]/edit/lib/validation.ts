@@ -60,15 +60,17 @@ const validationRules = {
   },
   // Assuming headline is of type TI18nString
   defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[]) => {
+    // headline and subheader are default for every question
     const isHeadlineValid = isLabelValidForAllLanguages(question.headline, languages);
-    const isValidSubheader =
+    const isSubheaderValid =
       question.subheader &&
       getLocalizedValue(question.subheader, "default").trim() !== "" &&
       languages.length > 1
         ? isLabelValidForAllLanguages(question.subheader, languages)
         : true;
-    let isValid = isHeadlineValid && isValidSubheader;
+    let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
+    //question specific fields
     const fieldsToValidate = ["html", "buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
 
     for (const field of fieldsToValidate) {
