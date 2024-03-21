@@ -342,6 +342,13 @@ export default function SurveyMenuBar({
         setIsSurveyPublishing(false);
         return;
       }
+      if (isImageAddedFromAddLogoButton) {
+        let inputProduct: Partial<TProductUpdateInput> = {
+          brand: { logoUrl: product.brand?.logoUrl, bgColor: product.brand?.bgColor },
+        };
+        await updateProductAction(product.id, inputProduct);
+        setIsImageAddedFromAddLogoButton(false);
+      }
       await updateSurveyAction({ ...localSurvey, status: "inProgress" });
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
