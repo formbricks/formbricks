@@ -28,6 +28,8 @@ interface LogoSettingProps {
   imageUploadFromRegularFileUpload?: boolean;
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
   setImageUrlFromLogoButton?: React.Dispatch<React.SetStateAction<string>>;
+  setIsImageAddedInAddLogoButton?: React.Dispatch<React.SetStateAction<boolean>>;
+  fromEditLogo?: boolean;
 }
 export const LogoSetting: React.FC<LogoSettingProps> = ({
   imageUrl,
@@ -39,6 +41,8 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   imageUploadFromRegularFileUpload,
   setLocalProduct,
   setImageUrlFromLogoButton,
+  setIsImageAddedInAddLogoButton,
+  fromEditLogo = false,
 }) => {
   const [backgroundColor, setBackgroundColor] = useState(product?.brand?.bgColor || "#ffffff");
   const [isLoading, setIsLoading] = useState(false);
@@ -77,13 +81,17 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
 
   const handleSave = async () => {
     try {
-      let inputProduct: Partial<TProductUpdateInput> = {
-        brand: { logoUrl: replacedLogo, bgColor: backgroundColor },
-      };
-      const updatedProductData = await updateProductAction(product.id, inputProduct);
-      setLocalProduct && setLocalProduct(updatedProductData);
+      if (fromEditLogo) {
+        let inputProduct: Partial<TProductUpdateInput> = {
+          brand: { logoUrl: replacedLogo, bgColor: backgroundColor },
+        };
+        await updateProductAction(product.id, inputProduct);
+      }
+      setLocalProduct &&
+        setLocalProduct({ ...product, brand: { logoUrl: replacedLogo, bgColor: backgroundColor } });
       setImage && setImage(replacedLogo);
       setImageUrlFromLogoButton && setImageUrlFromLogoButton(replacedLogo);
+      setIsImageAddedInAddLogoButton && setIsImageAddedInAddLogoButton(true);
       toast.success("Logo uploaded successfully.");
     } catch (error) {
       if (error instanceof Error) {

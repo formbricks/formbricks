@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
+import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
@@ -22,7 +22,7 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
-import { updateSurveyAction } from "../actions";
+import { updateProductAction, updateSurveyAction } from "../actions";
 import { isCardValid, validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
@@ -37,6 +37,8 @@ interface SurveyMenuBarProps {
   responseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
+  isImageAddedInAddLogoButton: boolean;
+  setIsImageAddedInAddLogoButton: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function SurveyMenuBar({
@@ -51,6 +53,8 @@ export default function SurveyMenuBar({
   responseCount,
   selectedLanguageCode,
   setSelectedLanguageCode,
+  isImageAddedInAddLogoButton,
+  setIsImageAddedInAddLogoButton,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -310,6 +314,14 @@ export default function SurveyMenuBar({
 
     try {
       await updateSurveyAction({ ...strippedSurvey });
+
+      if (isImageAddedInAddLogoButton) {
+        let inputProduct: Partial<TProductUpdateInput> = {
+          brand: { logoUrl: product.brand?.logoUrl, bgColor: product.brand?.bgColor },
+        };
+        await updateProductAction(product.id, inputProduct);
+        setIsImageAddedInAddLogoButton(false);
+      }
       setIsSurveySaving(false);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
@@ -318,6 +330,7 @@ export default function SurveyMenuBar({
     } catch (e) {
       console.error(e);
       setIsSurveySaving(false);
+
       toast.error(`Error saving changes`);
       return;
     }

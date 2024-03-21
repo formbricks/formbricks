@@ -57,6 +57,7 @@ export default function SurveyEditor({
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
+  const [isImageAddedInAddLogoButton, setIsImageAddedInAddLogoButton] = useState(false);
 
   const fetchLatestProduct = useCallback(async () => {
     const latestProduct = await refetchProduct(localProduct.id);
@@ -167,6 +168,8 @@ export default function SurveyEditor({
           responseCount={responseCount}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
+          isImageAddedInAddLogoButton={isImageAddedInAddLogoButton}
+          setIsImageAddedInAddLogoButton={setIsImageAddedInAddLogoButton}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
@@ -216,6 +219,7 @@ export default function SurveyEditor({
               languageCode={selectedLanguageCode}
               onFileUpload={async (file) => file.name}
               membershipRole={membershipRole}
+              setIsImageAddedInAddLogoButton={setIsImageAddedInAddLogoButton}
             />
           </aside>
         </div>

@@ -16,6 +16,7 @@ interface EditBrandColorProps {
 export function EditLogo({ product, environmentId, isLogoEditDisabled }: EditBrandColorProps) {
   const [image, setImage] = useState<string>(product.brand?.logoUrl);
   const [imageUploadFromRegularFileUpload, setImageUploadFromRegularFileUpload] = useState(false);
+
   return (
     <>
       {!isLogoEditDisabled ? (
@@ -48,6 +49,7 @@ export function EditLogo({ product, environmentId, isLogoEditDisabled }: EditBra
                 fromLookAndFeelSetting={true}
                 setImage={setImage}
                 imageUploadFromRegularFileUpload={imageUploadFromRegularFileUpload}
+                fromEditLogo={true}
               />
             </div>
           )}
