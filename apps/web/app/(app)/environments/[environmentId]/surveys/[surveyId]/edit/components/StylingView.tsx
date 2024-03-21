@@ -139,6 +139,7 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
         setStyling={setStyling}
         productOverwrites={productOverwrites}
         setProductOverwrites={setProductOverwrites}
+        surveyType={localSurvey.type}
         disabled={!overwriteUnifiedStyling}
       />
 

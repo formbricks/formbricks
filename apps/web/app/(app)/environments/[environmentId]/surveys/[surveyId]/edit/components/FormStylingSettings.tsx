@@ -24,9 +24,9 @@ type FormStylingSettingsProps = {
 const FormStylingSettings = ({
   styling,
   setStyling,
+  open,
   hideCheckmark = false,
   disabled = false,
-  open,
   setOpen,
 }: FormStylingSettingsProps) => {
   const brandColor = styling?.brandColor?.light || COLOR_DEFAULTS.brandColor;
