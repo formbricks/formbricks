@@ -8,7 +8,7 @@ const config = ({ mode }) => {
   const isDevelopment = mode === "dev";
   const formbricksSurveysScriptSrc = isDevelopment
     ? "http://localhost:3003/index.umd.js"
-    : `hhttps://app.formbricks.com/api/packages/surveys`;
+    : "https://app.formbricks.com/api/packages/surveys";
 
   return defineConfig({
     define: {
