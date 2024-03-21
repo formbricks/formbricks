@@ -81,7 +81,7 @@ export const TEXT_RESPONSES_PER_PAGE = 5;
 
 export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
 export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE;
-export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
+export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED === "1";
 
 // Storage constants
 export const AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID;

@@ -51,7 +51,7 @@ export const env = createEnv({
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
     OPENTELEMETRY_LISTENER_URL: z.string().optional(),
-    ONBOARDING_DISABLED: z.string().optional(),
+    ONBOARDING_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     PRIVACY_URL: z
       .string()

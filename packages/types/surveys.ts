@@ -384,6 +384,10 @@ export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 
+export const ZSurveyQuestionsObject = z.object({ questions: ZSurveyQuestions });
+
+export type TSurveyQuestionsObject = z.infer<typeof ZSurveyQuestionsObject>;
+
 export const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
 
 export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
