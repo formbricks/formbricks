@@ -41,6 +41,7 @@ next-env.d.ts
 # Google Sheets Token File
 token.json
 
+certificates
+
 # Local Uploads
 uploads/
-certificates

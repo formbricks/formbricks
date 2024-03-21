@@ -2,11 +2,13 @@ import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
+import { writeDataToSlack } from "@formbricks/lib/slack/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { TIntegration } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
+import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
@@ -19,6 +21,9 @@ export async function handleIntegrations(
     switch (integration.type) {
       case "googleSheets":
         await handleGoogleSheetsIntegration(integration as TIntegrationGoogleSheets, data);
+        break;
+      case "slack":
+        await handleSlackIntegration(integration as TIntegrationSlack, data);
         break;
       case "airtable":
         await handleAirtableIntegration(integration as TIntegrationAirtable, data);
@@ -53,22 +58,49 @@ async function handleGoogleSheetsIntegration(integration: TIntegrationGoogleShee
   }
 }
 
+async function handleSlackIntegration(integration: TIntegrationSlack, data: TPipelineInput) {
+  if (integration.config.data.length > 0) {
+    for (const element of integration.config.data) {
+      if (element.surveyId === data.surveyId) {
+        const values = await extractResponses(data, element.questionIds);
+        const survey = await getSurvey(element.surveyId);
+        await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
+      }
+    }
+  }
+}
+
 async function extractResponses(data: TPipelineInput, questionIds: string[]): Promise<string[][]> {
   const responses: string[] = [];
   const questions: string[] = [];
   const survey = await getSurvey(data.surveyId);
 
   for (const questionId of questionIds) {
+    const question = survey?.questions.find((q) => q.id === questionId);
+    if (!question) {
+      continue;
+    }
+
+    questions.push(getLocalizedValue(question?.headline, "default") || "");
+
     const responseValue = data.response.data[questionId];
 
     if (responseValue !== undefined) {
-      responses.push(Array.isArray(responseValue) ? responseValue.join("\n") : String(responseValue));
+      let answer = "";
+      if (question.type === TSurveyQuestionType.PictureSelection) {
+        const selectedChoiceIds = responseValue as string[];
+        answer = question?.choices
+          .filter((choice) => selectedChoiceIds.includes(choice.id))
+          .map((choice) => choice.imageUrl)
+          .join("\n");
+      } else {
+        answer = Array.isArray(responseValue) ? responseValue.join("\n") : String(responseValue);
+      }
+
+      responses.push(answer);
     } else {
       responses.push("");
     }
-
-    const question = survey?.questions.find((q) => q.id === questionId);
-    questions.push(getLocalizedValue(question?.headline, "default") || "");
   }
 
   return [responses, questions];

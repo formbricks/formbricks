@@ -3,10 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "~/*": ["/*"],
+      "~/*": ["/*"]
     },
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   },
   "include": [".", "../ui/Targeting/TargetingIndicator.tsx"],
-  "exclude": ["dist", "build", "node_modules"],
+  "exclude": ["dist", "build", "node_modules"]
 }
