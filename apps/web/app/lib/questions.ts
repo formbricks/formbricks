@@ -138,7 +138,6 @@ export const questionTypes: TSurveyQuestionType[] = [
       headline: { default: "Terms and Conditions" },
       html: { default: "" },
       label: { default: "I agree to the terms and conditions" },
-      dismissButtonLabel: "Skip",
     },
   },
   {

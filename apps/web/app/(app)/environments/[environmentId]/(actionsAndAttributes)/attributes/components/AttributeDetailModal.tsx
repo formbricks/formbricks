@@ -12,7 +12,7 @@ interface AttributeDetailModalProps {
   attributeClass: TAttributeClass;
 }
 
-export default function AttributeDetailModal({ open, setOpen, attributeClass }: AttributeDetailModalProps) {
+export const AttributeDetailModal = ({ open, setOpen, attributeClass }: AttributeDetailModalProps) => {
   const tabs = [
     {
       title: "Activity",
@@ -36,4 +36,4 @@ export default function AttributeDetailModal({ open, setOpen, attributeClass }: 
       />
     </>
   );
-}
+};
