@@ -140,9 +140,11 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
                   id="Companylogo-input"
                   allowedFileExtensions={["png", "jpeg"]}
                   environmentId={environmentId}
-                  onFileUpload={(url: any) => {
-                    setReplacedLogo(url[0]);
-                    setIsStandardFileUploadOpen(false);
+                  onFileUpload={(url: string[] | undefined) => {
+                    if (url && url.length > 0) {
+                      setReplacedLogo(url[0]);
+                      setIsStandardFileUploadOpen(false);
+                    }
                   }}
                 />
               )}
