@@ -26,6 +26,8 @@ import {
   OIDC_DISPLAY_NAME,
   OIDC_ISSUER,
   OIDC_SIGNING_ALGORITHM,
+  SLACK_CLIENT_ID,
+  SLACK_CLIENT_SECRET,
 } from "./constants";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
@@ -148,8 +150,8 @@ export const authOptions: NextAuthOptions = {
       tenantId: AZUREAD_TENANT_ID || "",
     }),
     SlackProvider({
-      clientId: env.SLACK_CLIENT_ID as string,
-      clientSecret: env.SLACK_CLIENT_SECRET as string,
+      clientId: SLACK_CLIENT_ID as string,
+      clientSecret: SLACK_CLIENT_SECRET as string,
       allowDangerousEmailAccountLinking: true,
       wellKnown: "",
       token: {

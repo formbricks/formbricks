@@ -7,7 +7,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-export async function refreshChannelAction(environmentId: string) {
+export async function refreshChannelsAction(environmentId: string) {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 

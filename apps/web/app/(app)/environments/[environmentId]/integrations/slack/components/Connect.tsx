@@ -1,11 +1,8 @@
 "use client";
 
 import { SlackButton } from "@/app/(auth)/auth/components/SlackButton";
-// import { SlackButton } from "@/components/auth/SlackButton";
 import FormbricksLogo from "@/images/logo.svg";
 import SlackLogo from "@/images/slacklogo.png";
-// import { authorize } from "@formbricks/lib/client/google";
-// import { Button } from "@formbricks/ui";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -43,7 +40,6 @@ export default function Connect({ enabled, environmentId }: ConnectProps) {
             to configure it.
           </p>
         )}
-        {/*   Connect with Google */}
         <SlackButton inviteUrl={callbackUrl} environmentId={environmentId} />
       </div>
     </div>

@@ -76,16 +76,31 @@ async function extractResponses(data: TPipelineInput, questionIds: string[]): Pr
   const survey = await getSurvey(data.surveyId);
 
   for (const questionId of questionIds) {
+    const question = survey?.questions.find((q) => q.id === questionId);
+    if (!question) {
+      continue;
+    }
+
+    questions.push(getLocalizedValue(question?.headline, "default") || "");
+
     const responseValue = data.response.data[questionId];
 
     if (responseValue !== undefined) {
-      responses.push(Array.isArray(responseValue) ? responseValue.join("\n") : String(responseValue));
+      let answer = "";
+      if (question.type === TSurveyQuestionType.PictureSelection) {
+        const selectedChoiceIds = responseValue as string[];
+        answer = question?.choices
+          .filter((choice) => selectedChoiceIds.includes(choice.id))
+          .map((choice) => choice.imageUrl)
+          .join("\n");
+      } else {
+        answer = Array.isArray(responseValue) ? responseValue.join("\n") : String(responseValue);
+      }
+
+      responses.push(answer);
     } else {
       responses.push("");
     }
-
-    const question = survey?.questions.find((q) => q.id === questionId);
-    questions.push(getLocalizedValue(question?.headline, "default") || "");
   }
 
   return [responses, questions];

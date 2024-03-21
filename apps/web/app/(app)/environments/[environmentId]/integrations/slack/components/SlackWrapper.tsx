@@ -1,8 +1,8 @@
 "use client";
 
-import AddSlackConnectionModal from "@/app/(app)/environments/[environmentId]/integrations/slack/AddIntegrationModal";
-import Connect from "@/app/(app)/environments/[environmentId]/integrations/slack/Connect";
-import Home from "@/app/(app)/environments/[environmentId]/integrations/slack/Home";
+import AddSlackConnectionModal from "@/app/(app)/environments/[environmentId]/integrations/slack/components/AddIntegrationModal";
+import Connect from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Connect";
+import Home from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Home";
 import { useState } from "react";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -10,7 +10,7 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
 
-import { refreshChannelAction } from "./actions";
+import { refreshChannelsAction } from "../actions";
 
 interface SlackWrapperProps {
   enabled: boolean;
@@ -36,8 +36,8 @@ export default function SlackWrapper({
     (TIntegrationSlackConfigData & { index: number }) | null
   >(null);
 
-  const refreshSheet = async () => {
-    const latestSlackChannels = await refreshChannelAction(environment.id);
+  const refreshChannels = async () => {
+    const latestSlackChannels = await refreshChannelsAction(environment.id);
     setSlackChannels(latestSlackChannels);
   };
 
@@ -58,7 +58,7 @@ export default function SlackWrapper({
         setOpenAddIntegrationModal={setModalOpen}
         setIsConnected={setIsConnected}
         setSelectedIntegration={setSelectedIntegration}
-        refreshSheet={refreshSheet}
+        refreshChannels={refreshChannels}
       />
     </>
   ) : (

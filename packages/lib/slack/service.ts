@@ -1,7 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { cache } from "react";
 
-import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
@@ -53,33 +51,6 @@ export const getSlackChannels = async (environmentId: string): Promise<TIntegrat
     throw error;
   }
 };
-
-export const getSlackIntegration = cache(async (environmentId: string): Promise<TIntegrationSlack | null> => {
-  try {
-    const result = await prisma.integration.findUnique({
-      where: {
-        type_environmentId: {
-          environmentId,
-          type: "slack",
-        },
-      },
-    });
-    // Type Guard
-    if (result && isSlackIntegration(result)) {
-      return result as TIntegrationSlack; // Explicit casting
-    }
-    return null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError("Database operation failed");
-    }
-    throw error;
-  }
-});
-
-function isSlackIntegration(integration: any): integration is TIntegrationSlack {
-  return integration.type === "slack";
-}
 
 export async function writeDataToSlack(
   credentials: TIntegrationSlackCredential,

@@ -1,8 +1,8 @@
-import SlackWrapper from "@/app/(app)/environments/[environmentId]/integrations/slack/SlackWrapper";
+import SlackWrapper from "@/app/(app)/environments/[environmentId]/integrations/slack/components/SlackWrapper";
 
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getSlackChannels } from "@formbricks/lib/slack/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { TIntegrationItem } from "@formbricks/types/integration";
@@ -12,23 +12,19 @@ import GoBackButton from "@formbricks/ui/GoBackButton";
 export default async function Slack({ params }) {
   const enabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
 
-  const [surveys, integrations, environment] = await Promise.all([
+  const [surveys, slackIntegration, environment] = await Promise.all([
     getSurveys(params.environmentId),
-    getIntegrations(params.environmentId),
+    getIntegrationByType(params.environmentId, "slack"),
     getEnvironment(params.environmentId),
   ]);
 
-  const slackIntegration: TIntegrationSlack | undefined = integrations?.find(
-    (integration): integration is TIntegrationSlack => integration.type === "slack"
-  );
+  if (!environment) {
+    throw new Error("Environment not found");
+  }
 
   let channelsArray: TIntegrationItem[] = [];
   if (slackIntegration && slackIntegration.config.key) {
     channelsArray = await getSlackChannels(params.environmentId);
-  }
-
-  if (!environment) {
-    throw new Error("Environment not found");
   }
 
   return (
@@ -40,7 +36,7 @@ export default async function Slack({ params }) {
           environment={environment}
           channelsArray={channelsArray}
           surveys={surveys}
-          slackIntegration={slackIntegration}
+          slackIntegration={slackIntegration as TIntegrationSlack}
           webAppUrl={WEBAPP_URL}
         />
       </div>

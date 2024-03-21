@@ -1,24 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { Trash2Icon } from "lucide-react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
 
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TIntegrationSlack, TIntegrationSlackConfig } from "@formbricks/types/integration/slack";
+import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 
-import { deleteIntegrationAction } from "../actions";
+import { deleteIntegrationAction } from "../../actions";
 
 interface HomeProps {
   environment: TEnvironment;
   slackIntegration: TIntegrationSlack;
-  setOpenAddIntegrationModal: (v: boolean) => void;
-  setIsConnected: (v: boolean) => void;
-  setSelectedIntegration: (v: (TIntegrationSlackConfig & { index: number }) | null) => void;
-  refreshSheet: () => void;
+  setOpenAddIntegrationModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedIntegration: React.Dispatch<
+    React.SetStateAction<(TIntegrationSlackConfigData & { index: number }) | null>
+  >;
+  refreshChannels: () => void;
 }
 
 export default function Home({
@@ -27,15 +30,15 @@ export default function Home({
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
-  refreshSheet,
+  refreshChannels,
 }: HomeProps) {
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
+  const [isDeleting, setisDeleting] = useState(false);
   const integrationArray = slackIntegration
     ? slackIntegration.config.data
       ? slackIntegration.config.data
       : []
     : [];
-  const [isDeleting, setisDeleting] = useState(false);
 
   const handleDeleteIntegration = async () => {
     try {
@@ -51,12 +54,8 @@ export default function Home({
     }
   };
 
-  // TODO
   const editIntegration = (index: number) => {
-    setSelectedIntegration({
-      ...slackIntegration.config.data[index],
-      index: index,
-    });
+    setSelectedIntegration({ ...slackIntegration.config.data[index], index });
     setOpenAddIntegrationModal(true);
   };
 
@@ -65,18 +64,12 @@ export default function Home({
       <div className="flex w-full justify-end">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
-          <span
-            className="cursor-pointer text-slate-500"
-            onClick={() => {
-              setIsDeleteIntegrationModalOpen(true);
-            }}>
-            Connected with {slackIntegration.config.user.name}
-          </span>
+          <span className="text-slate-500">Connected with {slackIntegration.config.user.name}</span>
         </div>
         <Button
           variant="darkCTA"
           onClick={() => {
-            refreshSheet();
+            refreshChannels();
             setSelectedIntegration(null);
             setOpenAddIntegrationModal(true);
           }}>
@@ -106,7 +99,7 @@ export default function Home({
                 return (
                   <div
                     key={index}
-                    className="m-2 grid h-16  grid-cols-8 content-center rounded-lg hover:bg-slate-100"
+                    className="m-2 grid h-16 grid-cols-8 content-center rounded-lg hover:bg-slate-100"
                     onClick={() => {
                       editIntegration(index);
                     }}>
@@ -120,6 +113,14 @@ export default function Home({
           </div>
         </div>
       )}
+      <Button
+        variant="minimal"
+        onClick={() => setIsDeleteIntegrationModalOpen(true)}
+        className="mt-4"
+        StartIcon={Trash2Icon}
+        startIconClassName="h-5 w-5 mr-2">
+        Delete Integration
+      </Button>
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}

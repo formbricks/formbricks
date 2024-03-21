@@ -5,14 +5,13 @@ import { FaSlack } from "react-icons/fa";
 
 import { Button } from "@formbricks/ui/Button";
 
-export const SlackButton = ({
-  environmentId,
-  text = "Continue with Slack",
-}: {
+interface SlackButtonProps {
   environmentId: string;
   text?: string;
   inviteUrl?: string | null;
-}) => {
+}
+
+export const SlackButton = ({ environmentId, text = "Continue with Slack" }: SlackButtonProps) => {
   const handleLogin = async () => {
     await signIn("slack", {
       redirect: true,
