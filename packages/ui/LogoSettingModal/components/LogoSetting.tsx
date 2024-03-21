@@ -90,6 +90,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
       setLocalProduct &&
         setLocalProduct({ ...product, brand: { logoUrl: replacedLogo, bgColor: backgroundColor } });
       setImage && setImage(replacedLogo);
+
       setImageUrlFromLogoButton && setImageUrlFromLogoButton(replacedLogo);
       setIsImageAddedInAddLogoButton && setIsImageAddedInAddLogoButton(true);
       toast.success("Logo uploaded successfully.");
