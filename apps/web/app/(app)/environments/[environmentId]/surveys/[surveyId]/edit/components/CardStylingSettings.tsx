@@ -226,7 +226,6 @@ const CardStylingSettings = ({
             color={cardBorderColor}
             setColor={setCardBorderColor}
             description="Change the border color of the card."
-            disabled={isHighlightBorderAllowed}
           />
 
           <ColorSelectorWithLabel
