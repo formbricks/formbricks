@@ -35,15 +35,12 @@ export default function BackgroundStylingCard({
   const { bgType, brightness } = styling?.background ?? {};
 
   const handleBgChange = (color: string, type: TSurveyBackgroundBgType) => {
-    handleBrightnessChange(100);
-
     const { background } = styling ?? {};
-    const { brightness, ...rest } = background ?? {};
 
     setStyling({
       ...styling,
       background: {
-        ...rest,
+        ...background,
         bg: color,
         bgType: type,
       },
