@@ -48,6 +48,7 @@ export function EditLogo({ product, environmentId, isLogoEditDisabled }: EditBra
                 fromLookAndFeelSetting={true}
                 setImage={setImage}
                 imageUploadFromRegularFileUpload={imageUploadFromRegularFileUpload}
+                fromEditLogo={true}
               />
             </div>
           )}

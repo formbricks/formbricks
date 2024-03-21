@@ -28,6 +28,8 @@ interface LogoSettingProps {
   imageUploadFromRegularFileUpload?: boolean;
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
   setImageUrlFromLogoButton?: React.Dispatch<React.SetStateAction<string>>;
+  setIsImageAddedFromAddLogoButton?: React.Dispatch<React.SetStateAction<boolean>>;
+  fromEditLogo?: boolean;
 }
 export const LogoSetting: React.FC<LogoSettingProps> = ({
   imageUrl,
@@ -39,6 +41,8 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   imageUploadFromRegularFileUpload,
   setLocalProduct,
   setImageUrlFromLogoButton,
+  setIsImageAddedFromAddLogoButton,
+  fromEditLogo,
 }) => {
   const [backgroundColor, setBackgroundColor] = useState(product?.brand?.bgColor || "#ffffff");
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +71,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
       }
 
       setReplacedLogo(url);
+
       setIsStandardFileUploadOpen(false);
     } catch (err) {
       toast.error("Logo upload failed. Please try again.");
@@ -77,11 +82,19 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
 
   const handleSave = async () => {
     try {
-      let inputProduct: Partial<TProductUpdateInput> = {
-        brand: { logoUrl: replacedLogo, bgColor: backgroundColor },
-      };
-      const updatedProductData = await updateProductAction(product.id, inputProduct);
-      setLocalProduct && setLocalProduct(updatedProductData);
+      if (fromEditLogo) {
+        let inputProduct: Partial<TProductUpdateInput> = {
+          brand: { logoUrl: replacedLogo, bgColor: backgroundColor },
+        };
+        await updateProductAction(product.id, inputProduct);
+        console.log("122");
+      }
+      setLocalProduct &&
+        setLocalProduct({
+          ...product,
+          brand: { logoUrl: replacedLogo, bgColor: backgroundColor },
+        });
+      setIsImageAddedFromAddLogoButton && setIsImageAddedFromAddLogoButton(true);
       setImage && setImage(replacedLogo);
 
       setImageUrlFromLogoButton && setImageUrlFromLogoButton(replacedLogo);

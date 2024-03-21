@@ -21,6 +21,7 @@ interface AddLogoButtonProps {
   membershipRole?: TMembershipRole;
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
   survey: TSurvey;
+  setIsImageAddedFromAddLogoButton?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 interface LogoChangeEvent extends React.ChangeEvent<HTMLInputElement> {
   target: HTMLInputElement & EventTarget;
@@ -33,6 +34,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
   membershipRole,
   setLocalProduct,
   survey,
+  setIsImageAddedFromAddLogoButton,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(product?.brand?.logoUrl);
@@ -123,6 +125,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
             environmentId={environmentId}
             product={product}
             setLocalProduct={setLocalProduct}
+            setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
           />
         </>
       )}

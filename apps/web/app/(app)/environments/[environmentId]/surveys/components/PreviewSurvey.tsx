@@ -30,6 +30,7 @@ interface PreviewSurveyProps {
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   membershipRole?: TMembershipRole;
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
+  setIsImageAddedFromAddLogoButton?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 let surveyNameTemp;
@@ -71,6 +72,7 @@ export default function PreviewSurvey({
   onFileUpload,
   membershipRole,
   setLocalProduct,
+  setIsImageAddedFromAddLogoButton,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -236,6 +238,7 @@ export default function PreviewSurvey({
                       membershipRole={membershipRole}
                       setLocalProduct={setLocalProduct}
                       survey={survey}
+                      setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
                     />
                   </div>
                   <div className="no-scrollbar z-10 mt-[7rem] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
@@ -318,6 +321,7 @@ export default function PreviewSurvey({
                     membershipRole={membershipRole}
                     setLocalProduct={setLocalProduct}
                     survey={survey}
+                    setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
                   />
                 </div>
 
