@@ -59,6 +59,8 @@ export default function SurveyEditor({
   const surveyEditorRef = useRef(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
 
+  const createdSegmentRef = useRef(false);
+
   const fetchLatestProduct = useCallback(async () => {
     const latestProduct = await refetchProduct(localProduct.id);
     if (latestProduct) {
@@ -70,12 +72,17 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
+      if (localSurvey) return;
+
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
+
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
   useEffect(() => {
@@ -104,17 +111,10 @@ export default function SurveyEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type, survey?.questions]);
 
-  useEffect(() => {
-    // if the localSurvey object has not been populated yet, do nothing
-    if (!localSurvey) {
-      return;
-    }
-    // do nothing if its not an in-app survey
-    if (localSurvey.type !== "web") {
-      return;
-    }
+  const handleCreateSegment = async () => {
+    if (!localSurvey) return;
 
-    const createSegment = async () => {
+    try {
       const createdSegment = await createSegmentAction({
         title: localSurvey.id,
         description: "",
@@ -124,22 +124,25 @@ export default function SurveyEditor({
         isPrivate: true,
       });
 
-      setLocalSurvey({
-        ...localSurvey,
-        segment: createdSegment,
-      });
-    };
+      const localSurveyClone = structuredClone(localSurvey);
+      localSurveyClone.segment = createdSegment;
+      setLocalSurvey(localSurveyClone);
+    } catch (err) {
+      // set the ref to false to retry during the next render
+      createdSegmentRef.current = false;
+    }
+  };
 
-    if (!localSurvey.segment?.id) {
-      try {
-        createSegment();
-      } catch (err) {
-        throw new Error("Error creating segment");
-      }
+  useEffect(() => {
+    if (!localSurvey || localSurvey.type !== "web" || !!localSurvey.segment || createdSegmentRef.current) {
+      return;
     }
 
+    createdSegmentRef.current = true;
+    handleCreateSegment();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey?.type]);
+  }, [localSurvey]);
 
   useEffect(() => {
     if (!localSurvey?.languages) return;
