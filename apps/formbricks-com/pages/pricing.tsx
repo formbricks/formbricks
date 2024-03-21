@@ -10,36 +10,22 @@ const inProductSurveys = {
   leadRow: {
     title: "Website and In-App Surveys",
     comparison: "like HotJar Ask",
-    free: (
-      <div>
-        <span>250 Responses</span> <span className="text-slate-400">/ Month</span>{" "}
-      </div>
-    ),
-    paid: "Unlimited",
+    free: "Community Edition",
+    paid: "Enterprise Edition",
   },
   features: [
-    { name: "Unlimited Surveys", free: true, paid: true },
-    { name: "Unlimited Team Members", free: true, paid: true },
-    { name: "API Access", free: true, paid: true },
-    { name: "30+ Templates", free: true, paid: true },
-    { name: "Unlimited Responses", free: false, paid: true },
-    { name: "Team Role Management", free: false, paid: true },
-    { name: "Multi Language Surveys", free: false, paid: true },
+    { name: "Unlimited surveys", free: true, paid: true },
+    { name: "Unlimited team members", free: true, paid: true },
+    { name: "API access", free: true, paid: true },
+    { name: "35+ templates", free: true, paid: true },
+    { name: "Unlimited responses", free: "250 responses / month", paid: "Unlimited" },
+    { name: "Team role management", free: false, paid: true },
+    { name: "Multi-language surveys", free: false, paid: true },
   ],
   endRow: {
     title: "Website and In-App Surveys",
     free: "Free",
-    paid: (
-      <div>
-        <span>Free</span>{" "}
-        <span className="text-slate-400">
-          up to 250 responses / month <br />
-          then{" "}
-        </span>
-        <span>$0.15</span>
-        <span className="text-slate-400"> / submission</span>
-      </div>
-    ),
+    paid: "$0.15 / response",
   },
 };
 
@@ -47,35 +33,21 @@ const userSegmentation = {
   leadRow: {
     title: "User Segmentation",
     comparison: "like Segment",
-    free: (
-      <div>
-        <span>2500 Users</span> <span className="text-slate-400">/ Month</span>{" "}
-      </div>
-    ),
-    paid: "Unlimited",
+    free: "Community Edition",
+    paid: "Enterprise Edition",
   },
   features: [
-    { name: "Identify Users", free: true, paid: true },
-    { name: "Collect Events", free: true, paid: true },
-    { name: "Collect Attributes", free: true, paid: true },
-    { name: "Reusable Segments", free: true, paid: true },
-    { name: "Basic Targeting", free: true, paid: true },
-    { name: "Advanced Targeting", free: false, paid: true },
+    { name: "Collect events", free: true, paid: true },
+    { name: "Collect attributes", free: true, paid: true },
+    { name: "Reusable segments", free: true, paid: true },
+    { name: "Basic targeting", free: true, paid: true },
+    { name: "Identify users", free: "2,500 users / month", paid: "Unlimited" },
+    { name: "Advanced targeting", free: false, paid: true },
   ],
   endRow: {
     title: "User Segmentation",
     free: "Free",
-    paid: (
-      <div>
-        <span>Free</span>{" "}
-        <span className="text-slate-400">
-          up to 2500 users / month <br />
-          then{" "}
-        </span>
-        <span>$0.01</span>
-        <span className="text-slate-400"> / user</span>
-      </div>
-    ),
+    paid: "$0.01 / identified user",
   },
 };
 
@@ -83,26 +55,26 @@ const linkSurveys = {
   leadRow: {
     title: "Link Surveys",
     comparison: "like Typeform",
-    free: <span>Unlimited</span>,
-    paid: "Unlimited",
+    free: "Community Edition",
+    paid: "Enterprise Edition",
   },
 
   features: [
-    { name: "Unlimited Surveys", free: true, paid: true },
-    { name: "Unlimited Responses", free: true, paid: true },
-    { name: "Partial Responses", free: true, paid: true },
-    { name: "Multi-media Backgrounds", free: true, paid: true },
-    { name: "File Upload", free: true, paid: true },
-    { name: "Hidden Fields", free: true, paid: true },
-    { name: "Single Use Survey Links", free: true, paid: true },
-    { name: "Pin-protected Surveys", free: true, paid: true },
-    { name: "Custom Styling", free: true, paid: true },
-    { name: "Recall Information", free: true, paid: true },
+    { name: "Unlimited surveys", free: true, paid: true },
+    { name: "Unlimited responses", free: true, paid: true },
+    { name: "Partial responses", free: true, paid: true },
+    { name: "Multi-media backgrounds", free: true, paid: true },
+    { name: "File upload", free: true, paid: true },
+    { name: "Hidden fields", free: true, paid: true },
+    { name: "Single-use links", free: true, paid: true },
+    { name: "Pin-protected surveys", free: true, paid: true },
+    { name: "Custom styling", free: true, paid: true },
+    { name: "Recall information", free: true, paid: true },
     { name: "Book appointments", free: true, paid: true },
-    { name: "Collect Payments", free: true, paid: true, comingSoon: true },
-    { name: "Collect Signatures", free: true, paid: true, comingSoon: true },
+    { name: "Collect payments", free: true, paid: true, comingSoon: true },
+    { name: "Collect signatures", free: true, paid: true, comingSoon: true },
     { name: "Custom URL", free: false, paid: true, comingSoon: true },
-    { name: "Remove Formbricks Branding", free: false, paid: true },
+    { name: "Remove Formbricks branding", free: false, paid: true },
   ],
 
   endRow: {
@@ -213,6 +185,7 @@ const PricingPage = () => {
           pricing={integrations.features}
           endRow={integrations.endRow}
         />
+
         <div>
           {/* <PricingCalculator /> */}
           <OpenSourceInfo />
