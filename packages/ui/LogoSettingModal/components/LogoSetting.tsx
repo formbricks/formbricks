@@ -87,7 +87,6 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
           brand: { logoUrl: replacedLogo, bgColor: backgroundColor },
         };
         await updateProductAction(product.id, inputProduct);
-        console.log("122");
       }
       setLocalProduct &&
         setLocalProduct({
