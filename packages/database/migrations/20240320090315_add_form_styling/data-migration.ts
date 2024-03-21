@@ -69,6 +69,9 @@ async function main() {
                 continue;
               }
 
+              const { styling: surveyStyling } = survey;
+              const { hideProgressBar } = surveyStyling;
+
               await tx.survey.update({
                 where: {
                   id: survey.id,
@@ -84,6 +87,11 @@ async function main() {
                       highlightBorderColor: {
                         light: highlightBorderColor.light,
                       },
+                    }),
+
+                    // if the previous survey had the hideProgressBar set to true, we need to update the styling object with overwriteUnifiedStyling set to true
+                    ...(hideProgressBar && {
+                      overwriteUnifiedStyling: true,
                     }),
                   },
                 },
