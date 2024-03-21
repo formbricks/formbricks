@@ -1,7 +1,6 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { FaSlack } from "react-icons/fa";
 
 import { Button } from "@formbricks/ui/Button";
 
@@ -9,9 +8,10 @@ interface SlackButtonProps {
   environmentId: string;
   text?: string;
   inviteUrl?: string | null;
+  disabled?: boolean;
 }
 
-export const SlackButton = ({ environmentId, text = "Continue with Slack" }: SlackButtonProps) => {
+export const SlackButton = ({ environmentId, text = "Continue with Slack", disabled }: SlackButtonProps) => {
   const handleLogin = async () => {
     await signIn("slack", {
       redirect: true,
@@ -20,13 +20,7 @@ export const SlackButton = ({ environmentId, text = "Continue with Slack" }: Sla
   };
 
   return (
-    <Button
-      type="button"
-      EndIcon={FaSlack}
-      startIconClassName="ml-3"
-      onClick={handleLogin}
-      variant="secondary"
-      className="w-full justify-center">
+    <Button type="button" onClick={handleLogin} variant="darkCTA" disabled={disabled}>
       {text}
     </Button>
   );

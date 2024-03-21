@@ -40,7 +40,7 @@ export default function Connect({ enabled, environmentId }: ConnectProps) {
             to configure it.
           </p>
         )}
-        <SlackButton inviteUrl={callbackUrl} environmentId={environmentId} />
+        <SlackButton inviteUrl={callbackUrl} environmentId={environmentId} disabled={!enabled} />
       </div>
     </div>
   );
