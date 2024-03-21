@@ -1,9 +1,9 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
-import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
+import { CircleSlash2, InboxIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveySummaryRating } from "@formbricks/types/responses";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { RatingResponse } from "@formbricks/ui/RatingResponse";
@@ -25,7 +25,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} />
+        <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
@@ -33,7 +33,7 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
             {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxStackIcon className="mr-2 h-4 w-4 " />
+            <InboxIcon className="mr-2 h-4 w-4 " />
             {questionSummary.responseCount} responses
           </div>
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">

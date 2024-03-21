@@ -1,4 +1,4 @@
-import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -10,11 +10,11 @@ export default function ActionClassDataRow({ actionClass }: { actionClass: TActi
         <div className="flex items-center">
           <div className="h-5 w-5 flex-shrink-0 text-slate-500">
             {actionClass.type === "code" ? (
-              <CodeBracketIcon />
+              <Code2Icon className="h-5 w-5" />
             ) : actionClass.type === "noCode" ? (
-              <CursorArrowRaysIcon />
+              <MousePointerClickIcon className="h-5 w-5" />
             ) : actionClass.type === "automatic" ? (
-              <SparklesIcon />
+              <SparklesIcon className="h-5 w-5" />
             ) : null}
           </div>
           <div className="ml-4 text-left">

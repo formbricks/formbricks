@@ -1,9 +1,8 @@
 import { useState } from "react";
 
-import { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
-
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { TSurveyOpenTextQuestion } from "./types";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;

@@ -1,8 +1,9 @@
 import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
+import { fileURLToPath } from "node:url";
 
-const jiti = createJiti(new URL(import.meta.url).pathname);
+const jiti = createJiti(fileURLToPath(import.meta.url));
 
 jiti("@formbricks/lib/env");
 
@@ -18,6 +19,10 @@ const nextConfig = {
   output: "standalone",
   experimental: {
     serverComponentsExternalPackages: ["@aws-sdk"],
+    instrumentationHook: true,
+    outputFileTracingIncludes: {
+      "app/api/js": ["../../packages/**/*"],
+    },
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {

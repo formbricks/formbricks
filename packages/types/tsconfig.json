@@ -5,6 +5,6 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./"
-  }
+    "rootDir": "./",
+  },
 }

@@ -1,7 +1,8 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
-import { InboxStackIcon } from "@heroicons/react/24/solid";
+import { InboxIcon } from "lucide-react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveySummaryCal } from "@formbricks/types/responses";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
@@ -16,7 +17,7 @@ export default function CalSummary({ questionSummary }: CalSummaryProps) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} />
+        <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
@@ -24,7 +25,7 @@ export default function CalSummary({ questionSummary }: CalSummaryProps) {
             {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxStackIcon className="mr-2 h-4 w-4" />
+            <InboxIcon className="mr-2 h-4 w-4" />
             {questionSummary.responseCount} Responses
           </div>
           {!questionSummary.question.required && (

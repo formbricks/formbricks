@@ -1,6 +1,6 @@
 "use client";
 
-import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { capitalizeFirstLetter } from "@formbricks/lib/strings";
@@ -125,11 +125,11 @@ export default function EventActivityTab({ actionClass, environmentId }: Activit
           <div className="mt-1 flex items-center">
             <div className="mr-1.5  h-4 w-4 text-slate-600">
               {actionClass.type === "code" ? (
-                <CodeBracketIcon />
+                <Code2Icon className="h-5 w-5" />
               ) : actionClass.type === "noCode" ? (
-                <CursorArrowRaysIcon />
+                <MousePointerClickIcon className="h-5 w-5" />
               ) : actionClass.type === "automatic" ? (
-                <SparklesIcon />
+                <SparklesIcon className="h-5 w-5" />
               ) : null}
             </div>
             <p className="text-sm text-slate-700 ">{capitalizeFirstLetter(actionClass.type)}</p>

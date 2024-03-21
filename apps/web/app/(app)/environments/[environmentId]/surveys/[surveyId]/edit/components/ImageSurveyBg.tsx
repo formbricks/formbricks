@@ -1,23 +1,12 @@
 import FileInput from "@formbricks/ui/FileInput";
 
-interface ImageSurveyBgBgProps {
+interface ImageSurveyBgProps {
   environmentId: string;
   handleBgChange: (url: string, bgType: string) => void;
   background: string;
 }
 
-export default function ImageSurveyBg({ environmentId, handleBgChange, background }: ImageSurveyBgBgProps) {
-  const isUrl = (str: string) => {
-    try {
-      new URL(str);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const fileUrl = isUrl(background ?? "") ? background ?? "" : "";
-
+export const ImageSurveyBg = ({ environmentId, handleBgChange, background }: ImageSurveyBgProps) => {
   return (
     <div className="mt-2 w-full">
       <div className="flex w-full items-center justify-center">
@@ -32,9 +21,10 @@ export default function ImageSurveyBg({ environmentId, handleBgChange, backgroun
               handleBgChange("", "image");
             }
           }}
-          fileUrl={fileUrl}
+          fileUrl={background}
+          maxSizeInMB={2}
         />
       </div>
     </div>
   );
-}
+};

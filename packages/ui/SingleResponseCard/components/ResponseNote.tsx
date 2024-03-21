@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import clsx from "clsx";
+import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";

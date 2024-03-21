@@ -2,6 +2,7 @@ import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/
 import CalSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
 import ConsentSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
 import HiddenFieldsSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/HiddenFieldsSummary";
+import PictureChoiceSummary from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveySummary } from "@formbricks/types/responses";
@@ -15,12 +16,11 @@ import FileUploadSummary from "./FileUploadSummary";
 import MultipleChoiceSummary from "./MultipleChoiceSummary";
 import NPSSummary from "./NPSSummary";
 import OpenTextSummary from "./OpenTextSummary";
-import PictureChoiceSummary from "./PictureChoiceSummary";
 import RatingSummary from "./RatingSummary";
 
 interface SummaryListProps {
   summary: TSurveySummary["summary"];
-  responseCount: number;
+  responseCount: number | null;
   environment: TEnvironment;
   survey: TSurvey;
 }
@@ -30,12 +30,14 @@ export default function SummaryList({ summary, environment, responseCount, surve
     <div className="mt-10 space-y-8">
       {survey.type === "web" && responseCount === 0 && !environment.widgetSetupCompleted ? (
         <EmptyInAppSurveys environment={environment} />
-      ) : responseCount === 0 ? (
+      ) : !responseCount ? (
         <EmptySpaceFiller
           type="response"
           environment={environment}
           noWidgetRequired={survey.type === "link"}
         />
+      ) : !summary.length ? (
+        <EmptySpaceFiller type="summary" environment={environment} />
       ) : (
         summary.map((questionSummary) => {
           if (questionSummary.type === TSurveyQuestionType.OpenText) {
