@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
       }
       return res;
     } catch (_e) {
-      logger.info("Rate Limiting IP: ", ip);
+      logger.info(`Rate Limiting IP: ${ip}`);
 
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
