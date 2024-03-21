@@ -24,6 +24,10 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
   const handleUpload = async (file: File, environmentId: string) => {
     setIsLoading(true);
     try {
+      if (session?.user.imageUrl) {
+        // If avatar image already exist, then remove it before update action
+        await removeAvatarAction(environmentId);
+      }
       const { url, error } = await handleFileUpload(file, environmentId);
 
       if (error) {
@@ -56,7 +60,7 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
     }
 
     try {
-      await removeAvatarAction(environmentId, fileName);
+      await removeAvatarAction(environmentId);
     } catch (err) {
       toast.error("Avatar update failed. Please try again.");
     } finally {
@@ -103,7 +107,7 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
           onClick={() => {
             inputRef.current?.click();
           }}>
-          Upload Image
+          {session?.user.imageUrl ? "Edit Image" : "Upload Image"}
           <input
             type="file"
             id="hiddenFileInput"

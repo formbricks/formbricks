@@ -6,6 +6,7 @@ import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@
 import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { deleteFile } from "@formbricks/lib/storage/service";
+import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
 import { deleteUser, updateUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { TUserUpdateInput } from "@formbricks/types/user";
@@ -85,7 +86,7 @@ export async function updateAvatarAction(avatarUrl: string) {
   return await updateUser(session.user.id, { imageUrl: avatarUrl });
 }
 
-export async function removeAvatarAction(environmentId: string, fileName: string) {
+export async function removeAvatarAction(environmentId: string) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -100,12 +101,24 @@ export async function removeAvatarAction(environmentId: string, fileName: string
   if (!isUserAuthorized) {
     throw new Error("Not Authorized");
   }
-  //Delete image from the storage
-  const deletionResult = await deleteFile(environmentId, "public", fileName);
 
-  if (deletionResult.success) {
+  try {
+    const imageUrl = session.user.imageUrl;
+    if (!imageUrl) {
+      throw new Error("Image not found");
+    }
+
+    const fileName = getFileNameWithIdFromUrl(imageUrl);
+    if (!fileName) {
+      throw new Error("Invalid filename");
+    }
+
+    const deletionResult = await deleteFile(environmentId, "public", fileName);
+    if (!deletionResult.success) {
+      throw new Error("Deletion failed");
+    }
     return await updateUser(session.user.id, { imageUrl: null });
-  } else {
-    throw new Error("Deletion failed");
+  } catch (error) {
+    throw new Error(`${"Deletion failed"}: ${error.message}`);
   }
 }
