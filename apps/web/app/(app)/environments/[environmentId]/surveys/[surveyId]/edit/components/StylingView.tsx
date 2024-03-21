@@ -3,7 +3,7 @@ import CardStylingSettings from "@/app/(app)/environments/[environmentId]/survey
 import FormStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
 import { RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { TEnvironment } from "@formbricks/types/environment";
@@ -30,10 +30,11 @@ const StylingView = ({
   surveyStyling,
 }: StylingViewProps) => {
   const [overwriteUnifiedStyling, setOverwriteUnifiedStyling] = useState(
-    !!surveyStyling?.overwriteUnifiedStyling
+    localSurvey?.styling?.overwriteUnifiedStyling ?? false
   );
 
-  const [styling, setStyling] = useState(surveyStyling);
+  const [styling, setStyling] = useState(localSurvey.styling);
+  const [localStylingChanges, setLocalStylingChanges] = useState(localSurvey.styling);
 
   const [productOverwrites, setProductOverwrites] = useState(localSurvey.productOverwrites);
 
@@ -71,39 +72,46 @@ const StylingView = ({
     }
   }, [productOverwrites, setLocalSurvey, styling]);
 
+  const defaultProductStyling = useMemo(() => {
+    const { styling: productStyling } = product;
+    const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
+
+    return baseStyling;
+  }, [product]);
+
   const handleOverwriteToggle = (value: boolean) => {
     // survey styling from the server is surveyStyling, it could either be set or not
     // if its set and the toggle is turned off, we set the local styling to the server styling
 
+    setOverwriteUnifiedStyling(value);
+
     if (value) {
-      if (surveyStyling) {
-        setOverwriteUnifiedStyling(value);
-
-        setStyling({
-          ...surveyStyling,
-          overwriteUnifiedStyling: value,
-        });
-      } else {
+      if (!styling) {
         // copy the product styling to the survey styling
-        const { styling: productStyling } = product;
-        const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
-
-        setOverwriteUnifiedStyling(value);
         setStyling({
-          ...baseStyling,
-          overwriteUnifiedStyling: value,
+          ...defaultProductStyling,
+          overwriteUnifiedStyling: true,
+        });
+        return;
+      }
+
+      // if the local styling changes are not equal to the survey styling, we set the local styling to the survey styling
+      if (surveyStyling && JSON.stringify(localStylingChanges) !== JSON.stringify(surveyStyling)) {
+        setStyling(localStylingChanges);
+      } else {
+        setStyling({
+          ...defaultProductStyling,
+          overwriteUnifiedStyling: true,
         });
       }
-    }
+    } else {
+      // copy the styling to localStylingChanges
+      setLocalStylingChanges(styling);
 
-    if (!value) {
-      const { styling: productStyling } = product;
-      const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
-
-      setOverwriteUnifiedStyling(value);
+      // copy the product styling to the survey styling
       setStyling({
-        ...baseStyling,
-        overwriteUnifiedStyling: value,
+        ...defaultProductStyling,
+        overwriteUnifiedStyling: false,
       });
     }
   };
