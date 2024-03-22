@@ -28,8 +28,6 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
   const [styling, setStyling] = useState(localSurvey.styling);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
-  const [productOverwrites, setProductOverwrites] = useState(localSurvey.productOverwrites);
-
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [stylingOpen, setStylingOpen] = useState(false);
@@ -58,11 +56,7 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
         styling,
       }));
     }
-
-    if (productOverwrites) {
-      setLocalSurvey((prev) => ({ ...prev, productOverwrites }));
-    }
-  }, [productOverwrites, setLocalSurvey, styling]);
+  }, [setLocalSurvey, styling]);
 
   const defaultProductStyling = useMemo(() => {
     const { styling: productStyling } = product;
@@ -137,8 +131,6 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
         setOpen={setCardStylingOpen}
         styling={styling}
         setStyling={setStyling}
-        productOverwrites={productOverwrites}
-        setProductOverwrites={setProductOverwrites}
         surveyType={localSurvey.type}
         disabled={!overwriteThemeStyling}
       />

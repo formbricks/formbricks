@@ -7,7 +7,7 @@ import React, { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TProductStyling } from "@formbricks/types/product";
-import { TSurveyProductOverwrites, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
+import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import { Label } from "@formbricks/ui/Label";
@@ -23,8 +23,6 @@ type CardStylingSettingsProps = {
   hideCheckmark?: boolean;
   surveyType?: TSurveyType;
   disabled?: boolean;
-  productOverwrites?: TSurveyProductOverwrites | null;
-  setProductOverwrites?: React.Dispatch<React.SetStateAction<TSurveyProductOverwrites>>;
 };
 
 const CardStylingSettings = ({
