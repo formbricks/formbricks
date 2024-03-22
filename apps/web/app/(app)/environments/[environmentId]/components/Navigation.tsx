@@ -113,6 +113,14 @@ export default function Navigation({
     }
   }, [team]);
 
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
+  const sortedTeams = useMemo(() => {
+    return [...teams].sort((a, b) => a.name.localeCompare(b.name));
+  }, [teams]);
+
   const navigation = useMemo(
     () => [
       {
@@ -392,7 +400,7 @@ export default function Navigation({
                           <DropdownMenuRadioGroup
                             value={product!.id}
                             onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
-                            {products.map((product) => (
+                            {sortedProducts.map((product) => (
                               <DropdownMenuRadioItem
                                 value={product.id}
                                 className="cursor-pointer break-all"
@@ -427,7 +435,7 @@ export default function Navigation({
                           <DropdownMenuRadioGroup
                             value={currentTeamId}
                             onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                            {teams?.map((team) => (
+                            {sortedTeams.map((team) => (
                               <DropdownMenuRadioItem value={team.id} className="cursor-pointer" key={team.id}>
                                 {team.name}
                               </DropdownMenuRadioItem>
