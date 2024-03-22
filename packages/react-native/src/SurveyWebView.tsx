@@ -4,6 +4,7 @@ import {
   Dimensions,
   Keyboard,
   Modal,
+  ModalProps,
   PanResponder,
   PanResponderInstance,
   Pressable,
@@ -39,9 +40,9 @@ const minSwipeThreshold = 10;
 
 type SurveyWebViewProps = {
   survey: TSurvey;
-};
+} & ModalProps;
 
-export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
+export const SurveyWebView = ({ survey, ...restProps }: SurveyWebViewProps) => {
   const [showSurvey, setShowSurvey] = useState(false);
   const product = config.get().state.product;
   const productOverwrites = survey.productOverwrites ?? {};
@@ -217,7 +218,8 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
       visible={showSurvey}
       onRequestClose={() => {
         setShowSurvey(false);
-      }}>
+      }}
+      {...restProps}>
       <Pressable
         style={{
           height: "100%",
@@ -227,7 +229,9 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
           if (!clickOutside) {
             return;
           }
-          event.target == event.currentTarget && onCloseSurvey();
+          if (event.target == event.currentTarget) {
+            onCloseSurvey();
+          }
         }}>
         <Animated.View
           style={{
