@@ -85,8 +85,8 @@ export const generateQuestionAndFilterOptions = (
       } else if (q.type === TSurveyQuestionType.Matrix) {
         questionFilterOptions.push({
           type: q.type,
-          filterOptions: q.rows,
-          filterComboBoxOptions: q.columns,
+          filterOptions: q.rows.flatMap((row) => Object.values(row)),
+          filterComboBoxOptions: q.columns.flatMap((column) => Object.values(column)),
           id: q.id,
         });
       } else {
