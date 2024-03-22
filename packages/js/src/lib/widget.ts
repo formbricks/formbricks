@@ -70,24 +70,41 @@ export const renderWidget = async (survey: TSurvey) => {
     surveyState
   );
   const productOverwrites = survey.productOverwrites ?? {};
-  const brandColor = productOverwrites.brandColor ?? product.brandColor;
-  const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
   const clickOutside = productOverwrites.clickOutsideClose ?? product.clickOutsideClose;
   const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
   const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
+  const getStyling = () => {
+    // allow style overwrite is disabled from the product
+    if (!product.styling.allowStyleOverwrite) {
+      return product.styling;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteThemeStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    return product.styling;
+  };
+
   setTimeout(() => {
     formbricksSurveys.renderSurveyModal({
       survey: survey,
-      brandColor,
       isBrandingEnabled: isBrandingEnabled,
       clickOutside,
       darkOverlay,
       languageCode,
-      highlightBorderColor,
       placement,
+      styling: getStyling(),
       getSetIsError: (f: (value: boolean) => void) => {
         setIsError = f;
       },

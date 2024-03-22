@@ -75,7 +75,7 @@ export default function Modal({
       };
 
     return {
-      borderRadius: "8px",
+      borderRadius: "var(--fb-border-radius)",
       border: "2px solid",
       borderColor: highlightBorderColor,
     };
@@ -104,7 +104,7 @@ export default function Modal({
           className={cn(
             getPlacementStyle(placement),
             show ? "opacity-100" : "opacity-0",
-            "border-border pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible rounded-lg border bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
+            "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
           )}>
           {!isCenter && (
             <div class="absolute right-0 top-0 block pr-2 pt-2">

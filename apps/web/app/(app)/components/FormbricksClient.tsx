@@ -27,7 +27,9 @@ export default function FormbricksClient({ session }) {
   }, [session]);
 
   useEffect(() => {
-    formbricks?.registerRouteChange();
+    if (formbricksEnabled && formbricks) {
+      formbricks?.registerRouteChange();
+    }
   }, [pathname, searchParams]);
   return null;
 }

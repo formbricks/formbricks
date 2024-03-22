@@ -62,7 +62,7 @@ export default function ConsentQuestion({
               onChange({ [question.id]: "accepted" });
             }
           }}
-          className="border-border bg-survey-bg text-heading hover:bg-accent-bg focus:bg-accent-bg focus:ring-border-highlight relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
+          className="border-border bg-input-bg text-heading hover:bg-input-bg-selected focus:bg-input-bg-selected focus:ring-brand rounded-custom relative z-10 mt-4 flex w-full cursor-pointer items-center border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
           <input
             type="checkbox"
             id={question.id}
