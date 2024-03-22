@@ -23,7 +23,6 @@ interface SetupInstructionsOnboardingProps {
 export default function SetupInstructionsOnboarding({
   environmentId,
   webAppUrl,
-  jsPackageVersion,
 }: SetupInstructionsOnboardingProps) {
   const [activeTab, setActiveId] = useState(tabs[0].id);
   const htmlSnippet = `<!-- START Formbricks Surveys -->
