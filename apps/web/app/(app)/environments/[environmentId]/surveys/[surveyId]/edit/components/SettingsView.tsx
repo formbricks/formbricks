@@ -1,3 +1,5 @@
+import SurveyPlacementCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyPlacementCard";
+
 import { AdvancedTargetingCard } from "@formbricks/ee/advancedTargeting/components/AdvancedTargetingCard";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -86,6 +88,14 @@ export default function SettingsView({
         setLocalSurvey={setLocalSurvey}
         environmentId={environment.id}
       />
+
+      {localSurvey.type === "web" && (
+        <SurveyPlacementCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          environmentId={environment.id}
+        />
+      )}
     </div>
   );
 }

@@ -126,7 +126,7 @@ export default function BackgroundStylingCard({
 
             <div>
               <div className="ml-2 flex flex-col justify-center">
-                <div className="flex max-w-xs flex-col gap-4">
+                <div className="flex flex-col gap-4">
                   <div className="flex flex-col justify-center rounded-lg border bg-slate-50 p-6">
                     <Slider
                       value={[brightness ?? 100]}

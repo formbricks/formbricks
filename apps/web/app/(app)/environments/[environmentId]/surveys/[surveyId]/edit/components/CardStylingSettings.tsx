@@ -1,13 +1,11 @@
 "use client";
 
-import Placement from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/Placement";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import React, { useMemo } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { TPlacement } from "@formbricks/types/common";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyProductOverwrites, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
@@ -29,23 +27,15 @@ type CardStylingSettingsProps = {
   setProductOverwrites?: React.Dispatch<React.SetStateAction<TSurveyProductOverwrites>>;
 };
 
-const isSurveyStyling = (styling: TSurveyStyling | TProductStyling | null): styling is TSurveyStyling => {
-  return (styling as TSurveyStyling)?.overwriteThemeStyling !== undefined;
-};
-
 const CardStylingSettings = ({
   setStyling,
   styling,
-  productOverwrites,
-  setProductOverwrites,
   hideCheckmark,
   surveyType,
   disabled,
   open,
   setOpen,
 }: CardStylingSettingsProps) => {
-  const { placement, clickOutsideClose, darkOverlay } = productOverwrites ?? {};
-
   const cardBgColor = styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
   const setCardBgColor = (color: string) => {
     setStyling((prev) => ({
@@ -115,46 +105,6 @@ const CardStylingSettings = ({
       ...prev,
       roundness: value,
     }));
-  };
-
-  const togglePlacement = () => {
-    if (setProductOverwrites) {
-      setProductOverwrites({
-        ...productOverwrites,
-        placement: !!placement ? null : "bottomRight",
-        clickOutsideClose: false,
-        darkOverlay: false,
-      });
-    }
-  };
-
-  const handlePlacementChange = (placement: TPlacement) => {
-    if (setProductOverwrites) {
-      setProductOverwrites({
-        ...productOverwrites,
-        placement,
-      });
-    }
-  };
-
-  const handleOverlay = (overlayType: string) => {
-    const darkOverlay = overlayType === "dark";
-
-    if (setProductOverwrites) {
-      setProductOverwrites({
-        ...productOverwrites,
-        darkOverlay,
-      });
-    }
-  };
-
-  const handleClickOutsideClose = (clickOutsideClose: boolean) => {
-    if (setProductOverwrites) {
-      setProductOverwrites({
-        ...productOverwrites,
-        clickOutsideClose,
-      });
-    }
   };
 
   const toggleProgressBarVisibility = (hideProgressBar: boolean) => {
@@ -275,40 +225,6 @@ const CardStylingSettings = ({
               </div>
             )}
           </>
-
-          {/* Positioning */}
-          {isSurveyStyling(styling) && (!surveyType || surveyType === "web") && (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center space-x-1">
-                <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />
-                <Label htmlFor="surveyDeadline" className="cursor-pointer">
-                  <div className="ml-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-slate-700">Overwrite Placement</h3>
-                      <Badge text="In-App Surveys" type="gray" size="normal" />
-                    </div>
-                    <p className="text-xs font-normal text-slate-500">Change the placement of this survey.</p>
-                  </div>
-                </Label>
-              </div>
-              {placement && (
-                <div className="flex items-center space-x-1 pb-4">
-                  <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
-                    <div className="w-full items-center">
-                      <Placement
-                        currentPlacement={placement}
-                        setCurrentPlacement={handlePlacementChange}
-                        setOverlay={handleOverlay}
-                        overlay={darkOverlay ? "dark" : "light"}
-                        setClickOutsideClose={handleClickOutsideClose}
-                        clickOutsideClose={!!clickOutsideClose}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>
