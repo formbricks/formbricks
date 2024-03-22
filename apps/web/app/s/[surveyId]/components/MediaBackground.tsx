@@ -70,7 +70,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   const loadedClass = backgroundLoaded ? "opacity-100" : "opacity-0";
 
   const getFilterStyle = () => {
-    return background?.brightness ? `brightness(${background?.brightness}%)` : "brightness(100%)";
+    return `brightness(${background?.brightness ?? 100}%)`;
   };
 
   const renderBackground = () => {
