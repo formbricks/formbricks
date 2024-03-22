@@ -50,7 +50,7 @@ export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummary
       </div>
       <div className="overflow-x-auto rounded-b-lg bg-white p-6">
         {/* Summary Table  */}
-        <table className="mx-auto border-collapse text-left">
+        <table className="mx-auto border-collapse cursor-default text-left">
           <thead>
             <tr>
               <th className="p-4 pb-3 pt-0 font-medium text-slate-400 dark:border-slate-600 dark:text-slate-200"></th>
@@ -84,7 +84,7 @@ export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummary
                       )}>
                       <div
                         style={{ backgroundColor: `rgba(0,196,184,${getOpacityLevel(percentage)})` }}
-                        className=" hover:outline-brand-dark m-1 flex h-full w-40 items-center justify-center rounded p-4 text-sm hover:outline">
+                        className=" hover:outline-brand-dark m-1 flex h-full w-40 cursor-default items-center justify-center rounded p-4 text-sm hover:outline">
                         {percentage}
                       </div>
                     </TooltipRenderer>
