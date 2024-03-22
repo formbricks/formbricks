@@ -10,10 +10,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     case "surveys":
       path = `../../packages/surveys/dist/index.umd.js`;
       break;
-    case "question-date":
-      path = `../../packages/surveys/dist/question-date.umd.js`;
-      break;
-    case "js":
+    case "js-core":
       const format = ["umd", "iife"].includes(req.nextUrl.searchParams.get("format")!)
         ? req.nextUrl.searchParams.get("format")!
         : "umd";
@@ -21,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       break;
     default:
       return responses.badRequestResponse(
-        "unknown module requested. module must be of type 'js', 'surveys' or 'question-date'"
+        "unknown module requested. module must be of type 'js-core' or 'surveys'"
       );
   }
 
