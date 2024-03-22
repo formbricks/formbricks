@@ -10,6 +10,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
+import { logger } from "@formbricks/lib/utils/logger";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
   const inputValidation = ZPipelineInput.safeParse(jsonInput);
 
   if (!inputValidation.success) {
-    console.error(inputValidation.error);
+    logger.error(inputValidation.error);
     return responses.badRequestResponse(
       "Fields are missing or incorrectly formatted",
       transformErrorToDetails(inputValidation.error),
@@ -125,7 +126,7 @@ export async function POST(request: Request) {
 
     if (usersWithNotifications.length > 0) {
       if (!survey) {
-        console.error(`Pipeline: Survey with id ${surveyId} not found`);
+        logger.error(`Pipeline: Survey with id ${surveyId} not found`);
         return new Response("Survey not found", {
           status: 404,
         });

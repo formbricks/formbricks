@@ -7,6 +7,7 @@ import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { updateUser } from "@formbricks/lib/user/service";
+import { logger } from "@formbricks/lib/utils/logger";
 
 import {
   ExpiredContent,
@@ -49,7 +50,7 @@ export default async function InvitePage({ searchParams }) {
       return <RightAccountContent />;
     }
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     return <InvitationNotFound />;
   }
 }

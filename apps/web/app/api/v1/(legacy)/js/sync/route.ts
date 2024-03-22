@@ -2,6 +2,7 @@ import { getUpdatedState } from "@/app/api/v1/(legacy)/js/sync/lib/sync";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
+import { logger } from "@formbricks/lib/utils/logger";
 import { ZJsSyncLegacyInput } from "@formbricks/types/js";
 import { TPersonClient } from "@formbricks/types/people";
 
@@ -38,7 +39,7 @@ export async function POST(req: Request): Promise<Response> {
 
     return responses.successResponse({ ...state, person }, true);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 }

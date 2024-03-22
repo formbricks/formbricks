@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 
 import { env } from "@formbricks/lib/env";
+import { logger } from "@formbricks/lib/utils/logger";
 
 import { handleCheckoutSessionCompleted } from "../handlers/checkoutSessionCompleted";
 import { handleSubscriptionUpdatedOrCreated } from "../handlers/subscriptionCreatedOrUpdated";
@@ -19,7 +20,7 @@ const webhookHandler = async (requestBody: string, stripeSignature: string) => {
     event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    if (err! instanceof Error) console.log(err);
+    if (err! instanceof Error) logger.error(err);
     return { status: 400, message: `Webhook Error: ${errorMessage}` };
   }
 

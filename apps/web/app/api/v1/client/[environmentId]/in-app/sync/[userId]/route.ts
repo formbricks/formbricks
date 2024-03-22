@@ -19,6 +19,7 @@ import {
   getMonthlyTeamResponseCount,
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
+import { logger } from "@formbricks/lib/utils/logger";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -197,7 +198,7 @@ export async function GET(
       "public, s-maxage=100, max-age=110, stale-while-revalidate=100, stale-if-error=100"
     );
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 }
