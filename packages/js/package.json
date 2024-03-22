@@ -19,13 +19,13 @@
   ],
   "type": "module",
   "source": "src/index.ts",
-  "main": "dist/index.mjs",
-  "module": "dist/index.mjs",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "unpkg": "./dist/index.umd.js",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "require": "./dist/index.umd.js",
       "types": "./dist/index.d.ts"
     }
