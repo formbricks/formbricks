@@ -21,17 +21,17 @@ export const users = {
   survey: [
     {
       name: "Survey User 1",
-      email: "survey1@formbricks.com",
+      email: "survey28@formbricks.com",
       password: "Y1I*EpURUSb32j5XijP",
     },
     {
       name: "Survey User 2",
-      email: "survey2@formbricks.com",
+      email: "survey29@formbricks.com",
       password: "G73*Gjif22F4JKM1pA",
     },
     {
       name: "Survey User 3",
-      email: "survey3@formbricks.com",
+      email: "survey43@formbricks.com",
       password: "Gj2DGji27D&M8u53V",
     },
   ],
@@ -140,6 +140,12 @@ export const surveys = {
     fileUploadQuestion: {
       question: "This is my File Upload Question",
     },
+    matrix: {
+      question: "How much would you rate these flowers ?",
+      description: "0: Not at all, 3: Love it",
+      rows: ["Rose 🌹", "Sunflower 🌻", "Hibiscus 🌺"],
+      columns: ["0", "1", "2", "3"],
+    },
     thankYouCard: {
       headline: "This is my Thank You Card Headline!",
       description: "This is my Thank you Card Description!",
@@ -196,6 +202,12 @@ export const surveys = {
     },
     calQuestion: {
       question: "Dies ist cal question", // German translation
+    },
+    matrix: {
+      question: "Wie hoch würden Sie diese Blumen bewerten?",
+      description: "0: Überhaupt nicht, 3: Ich liebe es",
+      rows: ["Rose", "Sunflower", "Hibiscus"],
+      columns: ["0", "1", "2", "3"],
     },
     thankYouCard: {
       headline: "Dies ist meine Dankeskarte Überschrift!", // German translation

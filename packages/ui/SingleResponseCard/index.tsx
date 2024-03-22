@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getLanguageCode } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
@@ -16,6 +17,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import {
   TSurvey,
+  TSurveyMatrixQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
   TSurveyQuestionType,
@@ -114,13 +116,13 @@ export default function SingleResponseCard({
       (typeof value === "string" && value.trim() !== "") ||
       (Array.isArray(value) && value.length > 0) ||
       typeof value === "number" ||
-      typeof value === "object"
+      (typeof value === "object" && Object.entries(value).length > 0)
     );
   };
 
   if (response.finished) {
     survey.questions.forEach((question) => {
-      if (!response.data[question.id]) {
+      if (!isValidValue(response.data[question.id])) {
         temp.push(question.id);
       } else {
         if (temp.length > 0) {
@@ -261,13 +263,19 @@ export default function SingleResponseCard({
       case TSurveyQuestionType.FileUpload:
         if (Array.isArray(responseData)) return <FileUploadResponse selected={responseData} />;
       case TSurveyQuestionType.Matrix:
-        return Object.entries(responseData as Record<string, string>).map((responseValue) => {
-          return (
-            <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
-              {responseValue[0]} : {responseValue[1]}
-            </p>
-          );
-        });
+        if (typeof responseData === "object" && !Array.isArray(responseData)) {
+          return (question as TSurveyMatrixQuestion).rows.map((row) => {
+            const languagCode = getLanguageCode(survey.languages, response.language);
+            const rowValueInSelectedLanguage = getLocalizedValue(row, languagCode);
+            if (!responseData[rowValueInSelectedLanguage]) return;
+            return (
+              <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
+                {rowValueInSelectedLanguage} : {responseData[rowValueInSelectedLanguage]}
+              </p>
+            );
+          });
+        }
+
       default:
         if (
           typeof responseData === "string" ||

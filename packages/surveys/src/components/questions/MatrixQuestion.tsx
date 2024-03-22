@@ -7,9 +7,10 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMatrixQuestion } from "@formbricks/types/surveys";
+import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
@@ -19,40 +20,10 @@ interface MatrixQuestionProps {
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
-interface MatrixQuestionRowProps {
-  row: string;
-  rowIndex: number;
-  columns: string[];
-  value: Record<string, string>;
-  handleOnChange: (column: string, row: string) => void;
-}
-
-const MatrixQuestionRow = ({ row, rowIndex, columns, value, handleOnChange }: MatrixQuestionRowProps) => {
-  return (
-    <tr className={`${rowIndex % 2 === 0 ? "bg-gray-100" : ""}`}>
-      <td className="max-w-40 break-words px-4 py-2">{row}</td>
-      {columns.map((column, columnIndex) => (
-        <td key={columnIndex} className="px-4 py-2 text-gray-800">
-          <div className="flex items-center justify-center p-2">
-            <input
-              type="radio"
-              id={`${row}-${column}`}
-              name={row}
-              value={column}
-              required={true} // Adjust based on your requirements
-              checked={typeof value === "object" && !Array.isArray(value) ? value[row] === column : false}
-              className="h-4 w-4 cursor-pointer border border-black"
-              onChange={() => handleOnChange(column, row)}
-            />
-          </div>
-        </td>
-      ))}
-    </tr>
-  );
-};
 
 export const MatrixQuestion = ({
   question,
@@ -62,26 +33,34 @@ export const MatrixQuestion = ({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   ttc,
   setTtc,
 }: MatrixQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
+  const isSubmitButtonVisible = question.required ? Object.entries(value).length !== 0 : true;
 
-  const handleOnChange = useCallback(
+  const handleSelect = useCallback(
     (column: string, row: string) => {
-      const responseValue = value
-        ? { ...value }
-        : // mapping each row in `question.rows` to an empty string.
-          question.rows.reduce((obj: Record<string, string>, key: string) => {
-            obj[key] = ""; // Initialize each row key with an empty string
-            return obj;
-          }, {});
+      let responseValue =
+        Object.entries(value).length !== 0
+          ? { ...value }
+          : question.rows.reduce((obj: Record<string, string>, key: TI18nString) => {
+              obj[getLocalizedValue(key, languageCode)] = ""; // Initialize each row key with an empty string
+              return obj;
+            }, {});
 
-      responseValue[row] = column;
+      responseValue[row] = responseValue[row] === column ? "" : column;
+
+      // Check if all values in responseValue are empty and if so, make it an empty object
+      if (Object.values(responseValue).every((val) => val === "")) {
+        responseValue = {};
+      }
+
       onChange({ [question.id]: responseValue });
     },
-    [value, question.rows, question.id, onChange]
+    [value, question.rows, question.id, onChange, languageCode]
   );
 
   const handleSubmit = useCallback(
@@ -104,17 +83,21 @@ export const MatrixQuestion = ({
     () =>
       question.columns.map((column, index) => (
         <th key={index} className="max-w-40 break-words px-4 py-2 text-gray-800">
-          {column}
+          {getLocalizedValue(column, languageCode)}
         </th>
       )),
-    [question.columns]
+    [question.columns, languageCode]
   );
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader subheader={getLocalizedValue(question.subheader, languageCode)} questionId={question.id} />
       <div className="mt-4 max-h-[33vh] overflow-auto">
         <table className="min-w-full table-auto border-collapse border border-gray-200">
           <thead>
@@ -125,24 +108,55 @@ export const MatrixQuestion = ({
           </thead>
           <tbody>
             {question.rows.map((row, rowIndex) => (
-              <MatrixQuestionRow
-                key={rowIndex}
-                row={row}
-                rowIndex={rowIndex}
-                columns={question.columns}
-                value={value}
-                handleOnChange={handleOnChange}
-              />
+              // Table rows
+              <tr className={`${rowIndex % 2 === 0 ? "bg-gray-100" : ""}`}>
+                <td className="max-w-40 break-words px-4 py-2">{getLocalizedValue(row, languageCode)}</td>
+                {question.columns.map((column, columnIndex) => (
+                  <td key={columnIndex} className="px-4 py-2 text-gray-800">
+                    <div className="flex items-center justify-center p-2">
+                      {/* radio input  */}
+                      <input
+                        type="radio"
+                        id={`${row}-${column}`}
+                        name={getLocalizedValue(row, languageCode)}
+                        value={getLocalizedValue(column, languageCode)}
+                        checked={
+                          typeof value === "object" && !Array.isArray(value)
+                            ? value[getLocalizedValue(row, languageCode)] ===
+                              getLocalizedValue(column, languageCode)
+                            : false
+                        }
+                        onClick={() =>
+                          handleSelect(
+                            getLocalizedValue(column, languageCode),
+                            getLocalizedValue(row, languageCode)
+                          )
+                        }
+                        className="h-4 w-4 cursor-pointer border border-black"
+                      />
+                    </div>
+                  </td>
+                ))}
+              </tr>
             ))}
           </tbody>
         </table>
       </div>
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
-          <BackButton backButtonLabel={question.backButtonLabel} onClick={handleBackButtonClick} />
+          <BackButton
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
+            onClick={handleBackButtonClick}
+          />
         )}
         <div></div>
-        <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
+        {isSubmitButtonVisible && (
+          <SubmitButton
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+            isLastQuestion={isLastQuestion}
+            onClick={() => {}}
+          />
+        )}
       </div>
     </form>
   );

@@ -176,10 +176,10 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "This is a matrix question",
     icon: Grid3X3Icon,
     preset: {
-      headline: "How much would you rate these flowers ?",
-      subheader: "0: Not at all, 3: Love it",
-      rows: ["Rose 🌹", "Sunflower 🌻", "Hibiscus 🌺"],
-      columns: ["0", "1", "2", "3"],
+      headline: { default: "How much would you rate these flowers ?" },
+      subheader: { default: "0: Not at all, 3: Love it" },
+      rows: [{ default: "Rose 🌹" }, { default: "Sunflower 🌻" }, { default: "Hibiscus 🌺" }],
+      columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
     },
   },
 ];

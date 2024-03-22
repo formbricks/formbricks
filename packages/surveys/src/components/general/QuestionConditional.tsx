@@ -188,6 +188,7 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
     />

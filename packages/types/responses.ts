@@ -471,6 +471,7 @@ export const ZSurveySummaryMatrix = z.object({
     z.object({
       rowLabel: z.string(),
       columnPercentages: z.record(z.string(), z.number()),
+      totalResponsesForRow: z.number(),
     })
   ),
 });

@@ -342,26 +342,30 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {firstQuestion.headline}
+            {getLocalizedValue(firstQuestion.headline, "default")}
           </Text>
           <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {firstQuestion.subheader}
+            {getLocalizedValue(firstQuestion.subheader, "default")}
           </Text>
           <Container className="mx-0">
             <table className="w-full table-auto border-collapse border border-gray-200">
               <thead>
                 <tr>
                   <th className="px-4 py-2 text-gray-800"></th>
-                  {firstQuestion.columns.map((column) => {
-                    return <th className="max-w-40 break-words px-4 py-2 text-gray-800">{column}</th>;
+                  {firstQuestion.columns.map((column, columnIndex) => {
+                    return (
+                      <th key={columnIndex} className="max-w-40 break-words px-4 py-2 text-gray-800">
+                        {getLocalizedValue(column, "default")}
+                      </th>
+                    );
                   })}
                 </tr>
               </thead>
               <tbody className="overflow-auto">
                 {firstQuestion.rows.map((row, rowIndex) => {
                   return (
-                    <tr className={`${rowIndex % 2 === 0 ? "bg-gray-100" : ""}`}>
-                      <td className="max-w-40 break-words px-4 py-2">{row}</td>
+                    <tr key={rowIndex} className={`${rowIndex % 2 === 0 ? "bg-gray-100" : ""}`}>
+                      <td className="max-w-40 break-words px-4 py-2">{getLocalizedValue(row, "default")}</td>
                       {firstQuestion.columns.map(() => {
                         return (
                           <th className="px-4 py-2 text-gray-800">
