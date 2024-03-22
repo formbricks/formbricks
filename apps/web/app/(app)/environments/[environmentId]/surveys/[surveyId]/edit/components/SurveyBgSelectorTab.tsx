@@ -54,11 +54,6 @@ export default function SurveyBgSelectorTab({
 
   const [tab, setTab] = useState(bgType || "color");
 
-  useEffect(() => {
-    handleBgChange(backgrounds[tab], tab);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
-
   const renderContent = () => {
     switch (tab) {
       case "image":

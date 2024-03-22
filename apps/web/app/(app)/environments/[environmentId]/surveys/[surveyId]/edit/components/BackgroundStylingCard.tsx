@@ -43,6 +43,7 @@ export default function BackgroundStylingCard({
         ...background,
         bg: color,
         bgType: type,
+        brightness: 100,
       },
     });
   };
