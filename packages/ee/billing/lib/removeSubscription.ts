@@ -113,7 +113,7 @@ export const removeSubscription = async (
       url: "",
     };
   } catch (err) {
-    logger.error("Error in removing subscription:", err);
+    logger.error(`Error in removing subscription: ${err}`);
 
     return {
       status: 500,

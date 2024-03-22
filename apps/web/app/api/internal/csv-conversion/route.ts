@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   try {
     csv = await parser.parse(json).promise();
   } catch (err) {
-    logger.error({ err });
+    logger.error(err);
     throw new Error("Failed to convert to CSV");
   }
 

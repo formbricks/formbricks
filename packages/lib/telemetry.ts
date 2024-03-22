@@ -22,7 +22,7 @@ export const captureTelemetry = async (eventName: string, properties = {}) => {
         }),
       });
     } catch (error) {
-      logger.error("error sending telemetry:", error);
+      logger.error(`error sending telemetry: ${error}`);
     }
   }
 };
