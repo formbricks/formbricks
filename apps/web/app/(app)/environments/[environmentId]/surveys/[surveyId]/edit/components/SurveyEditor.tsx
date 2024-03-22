@@ -14,7 +14,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey, TSurveyEditorTabs } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys";
 
 import PreviewSurvey from "../../../components/PreviewSurvey";
 import QuestionsAudienceTabs from "./QuestionsStylingSettingsTabs";
@@ -58,6 +58,9 @@ export default function SurveyEditor({
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
+
+  const [styling, setStyling] = useState(localSurvey?.styling);
+  const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const createdSegmentRef = useRef(false);
 
@@ -203,6 +206,10 @@ export default function SurveyEditor({
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
                 product={localProduct}
+                styling={styling ?? null}
+                setStyling={setStyling}
+                localStylingChanges={localStylingChanges}
+                setLocalStylingChanges={setLocalStylingChanges}
               />
             )}
 

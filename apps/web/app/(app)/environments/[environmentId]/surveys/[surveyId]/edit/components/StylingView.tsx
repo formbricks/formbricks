@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
+import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Switch } from "@formbricks/ui/Switch";
 
@@ -18,25 +19,41 @@ type StylingViewProps = {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
+  styling: TSurveyStyling | null;
+  setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
+  localStylingChanges: TSurveyStyling | null;
+  setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
 };
 
-const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey }: StylingViewProps) => {
+const StylingView = ({
+  colors,
+  environment,
+  product,
+  localSurvey,
+  setLocalSurvey,
+  setStyling,
+  styling,
+  localStylingChanges,
+  setLocalStylingChanges,
+}: StylingViewProps) => {
   const [overwriteThemeStyling, setOverwriteThemeStyling] = useState(
     localSurvey?.styling?.overwriteThemeStyling ?? false
   );
 
-  const [styling, setStyling] = useState(localSurvey.styling);
-  const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
-
   const [formStylingOpen, setFormStylingOpen] = useState(false);
   const [cardStylingOpen, setCardStylingOpen] = useState(false);
   const [stylingOpen, setStylingOpen] = useState(false);
+  const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
 
   const onResetThemeStyling = () => {
     const { styling: productStyling } = product;
     const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
 
-    setStyling(baseStyling);
+    setStyling({
+      ...baseStyling,
+      overwriteThemeStyling: true,
+    });
+    setConfirmResetStylingModalOpen(false);
 
     toast.success("Styling set to theme styles");
   };
@@ -150,7 +167,10 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
       <div className="mt-4 flex h-8 items-center justify-between">
         <div>
           {overwriteThemeStyling && (
-            <Button variant="minimal" className="flex items-center gap-2" onClick={onResetThemeStyling}>
+            <Button
+              variant="minimal"
+              className="flex items-center gap-2"
+              onClick={() => setConfirmResetStylingModalOpen(true)}>
               Reset to theme styles
               <RotateCcwIcon className="h-4 w-4" />
             </Button>
@@ -167,6 +187,16 @@ const StylingView = ({ colors, environment, product, localSurvey, setLocalSurvey
           settings
         </p>
       </div>
+
+      <AlertDialog
+        open={confirmResetStylingModalOpen}
+        setOpen={setConfirmResetStylingModalOpen}
+        headerText="Reset to theme styles"
+        mainText="Are you sure you want to reset the styling to the theme styles? This will remove all custom styling."
+        confirmBtnLabel="Confirm"
+        onDecline={() => setConfirmResetStylingModalOpen(false)}
+        onConfirm={onResetThemeStyling}
+      />
     </div>
   );
 };
