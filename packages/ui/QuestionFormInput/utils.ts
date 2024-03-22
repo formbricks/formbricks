@@ -35,11 +35,8 @@ export const getMatrixLabel = (
   type: "row" | "column"
 ): TI18nString => {
   const matrixQuestion = question as TSurveyMatrixQuestion;
-  if (type === "row") {
-    return matrixQuestion.rows[idx] || createI18nString("", surveyLanguageCodes);
-  } else {
-    return matrixQuestion.columns[idx] || createI18nString("", surveyLanguageCodes);
-  }
+  const labels = type === "row" ? matrixQuestion.rows : matrixQuestion.columns;
+  return labels[idx] || createI18nString("", surveyLanguageCodes);
 };
 
 export const getCardText = (
