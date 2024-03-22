@@ -2,8 +2,8 @@
   "name": "@formbricks/js-core",
   "private": true,
   "license": "MIT",
-  "version": "1.7.1",
-  "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
+  "version": "1.0.0",
+  "description": "Js core for Formbricks that contains the logic for executing the @formbricks/js library and is loaded asynchronously over the Formbricks API.",
   "homepage": "https://formbricks.com",
   "repository": {
     "type": "git",
