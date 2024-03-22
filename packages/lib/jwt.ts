@@ -3,6 +3,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { prisma } from "@formbricks/database";
 
 import { env } from "./env";
+import { logger } from "./utils/logger";
 
 export function createToken(userId: string, userEmail: string, options = {}): string {
   return jwt.sign({ id: userId }, env.NEXTAUTH_SECRET + userEmail, options);
@@ -59,7 +60,7 @@ export const verifyInviteToken = (token: string): { inviteId: string; email: str
       email,
     };
   } catch (error) {
-    console.error("Error verifying invite token:", error);
+    logger.error(`Error verifying invite token: ${error}`);
     throw new Error("Invalid or expired invite token");
   }
 };

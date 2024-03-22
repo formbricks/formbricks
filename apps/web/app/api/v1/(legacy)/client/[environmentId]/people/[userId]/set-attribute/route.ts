@@ -9,6 +9,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
+import { logger } from "@formbricks/lib/utils/logger";
 import { TJsStateSync, ZJsPeopleAttributeInput } from "@formbricks/types/js";
 
 interface Context {
@@ -96,7 +97,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);
   }
 }

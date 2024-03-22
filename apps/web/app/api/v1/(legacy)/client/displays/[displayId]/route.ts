@@ -2,6 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { updateDisplayLegacy } from "@formbricks/lib/display/service";
+import { logger } from "@formbricks/lib/utils/logger";
 import { ZDisplayLegacyUpdateInput } from "@formbricks/types/displays";
 
 export async function OPTIONS(): Promise<Response> {
@@ -30,7 +31,7 @@ export async function PUT(
     const display = await updateDisplayLegacy(displayId, inputValidation.data);
     return responses.successResponse(display, true);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return responses.internalServerErrorResponse(error.message, true);
   }
 }

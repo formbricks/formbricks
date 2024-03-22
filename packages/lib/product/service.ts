@@ -16,6 +16,7 @@ import { environmentCache } from "../environment/cache";
 import { createEnvironment } from "../environment/service";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
 import { formatDateFields } from "../utils/datetime";
+import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 import { productCache } from "./cache";
 
@@ -90,7 +91,7 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
         return productPrisma;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          console.error(error);
+          logger.error(error);
           throw new DatabaseError(error.message);
         }
         throw error;
@@ -149,7 +150,7 @@ export const updateProduct = async (
     return product;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2));
+      logger.error(JSON.stringify(error.errors, null, 2));
     }
     throw new ValidationError("Data validation of product failed");
   }
@@ -204,7 +205,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
         await Promise.all(s3FilesPromises);
       } catch (err) {
         // fail silently because we don't want to throw an error if the files are not deleted
-        console.error(err);
+        logger.error(err);
       }
     } else {
       const localFilesPromises = product.environments.map(async (environment) => {
@@ -215,7 +216,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
         await Promise.all(localFilesPromises);
       } catch (err) {
         // fail silently because we don't want to throw an error if the files are not deleted
-        console.error(err);
+        logger.error(err);
       }
     }
 

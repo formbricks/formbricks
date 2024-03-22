@@ -1,3 +1,4 @@
+import { logger } from "@formbricks/lib/utils/logger";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
@@ -31,7 +32,7 @@ export function getPrefillResponseData(
       return answerObj;
     }
   } catch (error) {
-    console.log(error);
+    logger.error(error);
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }
