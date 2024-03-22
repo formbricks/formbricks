@@ -72,14 +72,14 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
   );
 
   useEffect(() => {
-    // if (survey.delay) {
-    //   setTimeout(() => {
-    //     setShowSurvey(true);
-    //   }, survey.delay * 1000);
-    //   return;
-    // }
+    if (survey.delay) {
+      setTimeout(() => {
+        setShowSurvey(true);
+      }, survey.delay * 1000);
+      return;
+    }
     setShowSurvey(true);
-  }, []);
+  }, [survey.delay]);
 
   const addResponseToQueue = (responseUpdate: TResponseUpdate) => {
     const { userId } = config.get();
