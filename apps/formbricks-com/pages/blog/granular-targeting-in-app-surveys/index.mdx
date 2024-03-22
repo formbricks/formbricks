@@ -1,0 +1,100 @@
+import AuthorBox from "@/components/shared/AuthorBox";
+import LayoutMdx from "@/components/shared/LayoutMdx";
+import Image from "next/image";
+import ResponsiveEmbed from "react-responsive-embed";
+import Filtering from "./filter-settings-in-product-feedback-tool-targeting.webp";
+import Formbricks from "./formbricks-in-app-survey-with-targeting-cohort-power-users-embedded-survey.webp";
+import Lyft from "./lyft-post-experience-in-app-survey-for-better-retention.webp";
+import Miro from "./miro-sales-support-with-product-survey-tool-targeting-company-employees.webp";
+import OpenAI from "./openai-granular-targeting-event-based-attribute-based.webp";
+import RH from "./robin-hood-embedded-survey-to-target-high-net-worth-users-in-app-survey-tool.webp";
+
+export const meta = {
+  title: "BIG upgrade for Advanced Targeting in in-app surveys: Target any segment for juicy user insights 🍐",
+  description:
+    "We gave the in-app targeting capabilities at Formbricks a HUGE upgrade. Survey segments in your product based on attribute content, event occurrence, device and more.",
+  date: "2024-03-17",
+  publishedTime: "2024-03-17T12:00:00",
+  authors: ["Johannes Dancker"],
+  section: "In-App Surveys",
+  tags: ["In app surveys", "Micro surveys", "Embedded surveys", "Targeting", "Segmentation", "Embed Surveys"],
+};
+
+<div  className=" mb-4">
+<ResponsiveEmbed
+  src="https://www.youtube-nocookie.com/embed/0BQp6N4cXzU?si=lYi37T7s199Ci4LY"
+  allowFullScreen
+  className="rounded-lg w-full"
+/>
+</div>
+
+<AuthorBox
+  name="Johannes Dancker"
+  title="Co-founder and CEO"
+  date="March 17th, 2024"
+  duration="4"
+  author={"Johannes"}
+/>
+
+_We gave the targeting capabilities at Formbricks a HUGE upgrade. Create segments to survey based on attribute content, event occurrence, device and more._
+
+## Why we built Advanced Targeting for in-app surveys
+Users get bored and tired of generic surveys. If you ask unspecific questions (or dare to ask the same info twice over several surveys) you will degrade the overall experience of your customers. 
+
+Advanced Targeting for [in-app surveys](/in-app-survey) helps you avoid that. Due to the fine-grained targeting possibilities, you know two things in detail: 
+
+- Who am I talking to (you have complete user and usage context), and
+- When do they see the survey?
+
+This allows you to ask much more pointed questions in embedded surveys. You  get richer insights from a smaller subgroup of your user base. So well-timed and contextualized in-app surveys get you:
+
+- A higher conversion rate ✅
+- A higher completion rate ✅
+- Deeper insights due to more pointed questions ✅
+- Less survey fatigue ✅
+- **So overall much higher return of insights for the cost of asking users ✅**
+
+## How it works
+<Image src={Filtering} alt="filtering settings for in app survey tool used for targeting users" className="w-full rounded-lg" />
+Formbricks allows creating Segments of your user base to target with app surveys. These segments can be created based on the following criteria
+
+- **Custom attributes and their content:** For example, the user has a payment method added or its email contains “amazon.com”. [Here's how to set attributes.](/docs/in-app-surveys/attributes)
+- **Custom event occurrence:** You can send [Code Actions](/docs/in-app-surveys/actions#code-actions) and [No-Code Actions](/docs/in-app-surveys/actions#no-code-actions) to Formbricks to use to both trigger surveys and narrow down your target group. For example, you can target users who have downloaded a report 5 or more times in the last quarter.
+- **Generic event occurrence:** Formbricks captures generic events such as Sessions or Exit-Intents. This allows you to survey users in your product who logged in 3 times in the last 3 days, for example.
+- **Generic metadata:** For example country or device (phone vs. computer)
+
+Using these attributes, you can create a combination of filters and filter groups to target Segments. You can also nest your targeting by including or excluding specific Segments in other Segments. 
+
+If you need it, you can narrow it down to individual users - it’s that powerful!
+
+
+### Example 1: Engaging power users in-app
+<Image src={Formbricks} alt="Formbricks in-app survey tool used for targeting of power users with embedded survey functionality" className="w-full rounded-lg" />
+Imagine automating invitations for power users to share their thoughts directly within your app. Advanced Targeting makes this seamless, enhancing user engagement and providing deep insights into your most active users' needs and preferences.
+
+### Example 2: Targeted in-product feedback from specific user demographics
+<Image src={OpenAI} alt="OpenAI granular targeting with event-based and attribute-based segmentation for precise user feedback" className="w-full rounded-lg" />
+
+For more tailored insights, Advanced Targeting allows businesses to reach out to specific demographics, such as German mobile users who frequently interact with a specific feature of your app. This targeted approach can unveil unique insights that would otherwise remain hidden.
+
+### Example 3: Identifying high-value users
+<Image src={RH} alt="Robin Hood embedded survey to target high-net-worth users with an in-app survey tool for financial insights" className="w-full rounded-lg" />
+In some cases, you have specific high-value users you want to reach. With Advanced Targeting, businesses can easily reach users who meet specific financial criteria, ensuring feedback is gathered from the most relevant segments.
+
+### Example 4: Post-experience surveys in your app
+<Image src={Lyft} alt="Lyft post-experience in-app survey for enhancing customer retention and feedback collection" className="w-full rounded-lg" />
+
+For services where the initial user experience is critical, such as ride-hailing apps, Advanced Targeting facilitates post-experience surveys. This approach helps businesses understand the factors influencing customer retention from their first interaction.
+
+### Example 5: Uncovering upsell opportunities
+<Image src={Miro} alt="Miro sales support with product survey tool targeting company employees for better engagement" className="w-full rounded-lg" />
+Advanced Targeting is not just for gathering feedback—it's also a potent tool for identifying upsell opportunities. By segmenting users based on their engagement with specific tools or services, businesses can tailor their sales approaches with high precision.
+
+### Conclusion
+With Advanced Targeting and Segments, we open up a world of possibilities for businesses looking to understand their users on a deeper level. Gathering feedback from a large and diverse audience is now possible for Product Managers, Sales Reps and Operators - no need to involve the engineering department. 
+
+Want to run targeted in-app surveys while keeping full control over your data? Formbricks can be [self-hosted with one click.](/docs/self-hosting/production) Questions around Pricing?  
+
+[Try Formbricks](https://app.formbricks.com/auth/signup) today - it's free to get started! Measure your user or customer experience without limits.
+
+export default ({ children }) => <LayoutMdx meta={meta}>{children}</LayoutMdx>;
