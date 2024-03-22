@@ -4,7 +4,7 @@ import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
 
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
@@ -40,11 +40,13 @@ export default function SettingsView({
   isUserTargetingAllowed = false,
   isFormbricksCloud,
 }: SettingsViewProps) {
+  const allowedTargetingSurveyTypes: TSurveyType[] = ["web", "mobile"];
+
   return (
     <div className="mt-12 space-y-3 p-5">
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
-      {localSurvey.type === "web" ? (
+      {allowedTargetingSurveyTypes.includes(localSurvey.type) ? (
         !isUserTargetingAllowed ? (
           <TargetingCard
             key={localSurvey.segment?.id}

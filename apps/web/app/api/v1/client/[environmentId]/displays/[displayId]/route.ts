@@ -23,6 +23,8 @@ export async function PUT(request: Request, context: Context): Promise<Response>
     environmentId,
   });
 
+  console.log({ inputValidation });
+
   if (!inputValidation.success) {
     return responses.badRequestResponse(
       "Fields are missing or incorrectly formatted",

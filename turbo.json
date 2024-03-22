@@ -54,6 +54,11 @@
       "outputs": ["dist/**"],
       "dependsOn": ["^build"]
     },
+    "@formbricks/react-native#go": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**"],

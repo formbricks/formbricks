@@ -13,7 +13,12 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Take pictures for certain activities.",
+        "NSPhotoLibraryUsageDescription": "Select pictures for certain activities.",
+        "NSMicrophoneUsageDescription": "Need microphone access for recording videos."
+      }
     },
     "android": {
       "adaptiveIcon": {

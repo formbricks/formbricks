@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsup",
     "build:dev": "tsup --watch",
+    "go": "tsup --watch",
     "clean": "rimraf .turbo node_modules dist .turbo"
   },
   "devDependencies": {

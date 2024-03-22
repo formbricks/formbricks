@@ -6,24 +6,24 @@ import {
   Modal,
   PanResponder,
   PanResponderInstance,
+  Pressable,
   View,
 } from "react-native";
 import { WebView } from "react-native-webview";
 
+import { Logger } from "@formbricks/lib/logger";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import SurveyState from "@formbricks/lib/surveyState";
+import { ZRNWebViewOnMessageData } from "@formbricks/types/react-native";
 import { TResponseUpdate } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyProductOverwrites } from "@formbricks/types/surveys";
 
 import { createDisplay } from "./lib/api";
 import { Config } from "./lib/config";
 import { SurveyStore } from "./lib/surveyStore";
 import { sync } from "./lib/sync";
 
-type SurveyWebViewProps = {
-  survey: TSurvey;
-};
-
+const logger = Logger.getInstance();
 const config = Config.getInstance();
 const surveyStore = SurveyStore.getInstance();
 
@@ -37,14 +37,23 @@ const minY = 0;
 const swipeThreshold = 60;
 const minSwipeThreshold = 10;
 
+type SurveyWebViewProps = {
+  survey: TSurvey;
+};
+
 export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
   const [showSurvey, setShowSurvey] = useState(false);
   const product = config.get().state.product;
   const productOverwrites = survey.productOverwrites ?? {};
   const brandColor = productOverwrites.brandColor ?? product.brandColor;
+  const highlightBorderColor = productOverwrites.highlightBorderColor ?? product.highlightBorderColor;
+  const clickOutside = productOverwrites.clickOutsideClose ?? product.clickOutsideClose;
+  const darkOverlay = productOverwrites.darkOverlay ?? product.darkOverlay;
+  const placement = productOverwrites.placement ?? product.placement;
   const isBrandingEnabled = product.inAppSurveyBranding;
 
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, null, null, config.get().userId));
+
   const responseQueue = useMemo(
     () =>
       new ResponseQueue(
@@ -71,6 +80,35 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
     // }
     setShowSurvey(true);
   }, []);
+
+  const addResponseToQueue = (responseUpdate: TResponseUpdate) => {
+    const { userId } = config.get();
+    surveyState.updateUserId(userId);
+    responseQueue.updateSurveyState(surveyState);
+    responseQueue.add({
+      data: responseUpdate.data,
+      ttc: responseUpdate.ttc,
+      finished: responseUpdate.finished,
+    });
+  };
+
+  const onCloseSurvey = async () => {
+    await sync(
+      {
+        apiHost: config.get().apiHost,
+        environmentId: config.get().environmentId,
+        userId: config.get().userId,
+      },
+      true
+    );
+    surveyStore.resetSurvey();
+    setShowSurvey(false);
+  };
+
+  // animations
+  const modalHeightRef = useRef<Animated.Value>(new Animated.Value(defaultModalHeight)).current;
+  const previousHeightRef = useRef<number>(defaultModalHeight);
+  const gestureDirection = useRef<"up" | "down" | null>(null);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener("keyboardWillShow", (event) => {
@@ -99,27 +137,7 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
       keyboardDidShowListener.remove();
       keyboardDidHideListener.remove();
     };
-  }, []);
-
-  const addResponseToQueue = (responseUpdate: TResponseUpdate) => {
-    const { userId } = config.get();
-    surveyState.updateUserId(userId);
-    responseQueue.updateSurveyState(surveyState);
-    responseQueue.add({
-      data: responseUpdate.data,
-      ttc: responseUpdate.ttc,
-      finished: responseUpdate.finished,
-    });
-  };
-
-  const onCloseSurvey = async () => {
-    surveyStore.resetSurvey();
-    setShowSurvey(false);
-  };
-
-  const modalHeightRef = useRef<Animated.Value>(new Animated.Value(defaultModalHeight)).current;
-  const previousHeightRef = useRef<number>(defaultModalHeight);
-  const gestureDirection = useRef<"up" | "down" | null>(null);
+  }, [modalHeightRef]);
 
   const panResponder = useRef<PanResponderInstance>(
     PanResponder.create({
@@ -162,6 +180,7 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
             return;
           } else if (previousHeightRef.current === defaultModalHeight) {
             animateSprintTo(minY);
+            onCloseSurvey();
             return;
           } else if (previousHeightRef.current === maxY) {
             animateSprintTo(defaultModalHeight);
@@ -199,128 +218,130 @@ export const SurveyWebView = ({ survey }: SurveyWebViewProps) => {
       onRequestClose={() => {
         setShowSurvey(false);
       }}>
-      <Animated.View
+      <Pressable
         style={{
-          backgroundColor: "white",
-          marginTop: "auto",
-          shadowColor: "#000",
-          shadowOffset: {
-            width: 0,
-            height: 2,
-          },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 5,
-          ...animatedStyles,
+          height: "100%",
+          backgroundColor: "transparent",
+        }}
+        onPress={(event) => {
+          if (!clickOutside) {
+            return;
+          }
+          event.target == event.currentTarget && onCloseSurvey();
         }}>
-        <View
+        <Animated.View
           style={{
-            position: "relative",
-            top: 0,
-            width: "100%",
-            height: 20,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-          {...panResponder.panHandlers}>
+            backgroundColor: "white",
+            marginTop: "auto",
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.33,
+            shadowRadius: 4,
+            elevation: 6,
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+            ...animatedStyles,
+          }}>
           <View
-            style={{ width: 80, height: 6, bottom: 4, backgroundColor: "black", borderStartEndRadius: 2 }}
-          />
-        </View>
-        <WebView
-          originWhitelist={["*"]}
-          source={{ html: renderHtml(survey, isBrandingEnabled, brandColor) }}
-          style={{ flex: 1 }}
-          contentMode="mobile"
-          onShouldStartLoadWithRequest={(event) => {
-            if (event.url.startsWith("https://formbricks")) {
-              return false;
-            } else {
-              return true;
-            }
-          }}
-          onMessage={async (event) => {
-            const { data } = event.nativeEvent;
-            const parsedData = JSON.parse(data);
-
-            // debug
-            if (parsedData) {
-              if (parsedData.type === "Console") {
-                console.info(`[Console] ${JSON.stringify(parsedData.data)}`);
+            style={{
+              position: "relative",
+              top: 0,
+              width: "100%",
+              height: 20,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            {...panResponder.panHandlers}>
+            <View
+              style={{
+                width: 80,
+                height: 6,
+                bottom: 4,
+                marginTop: 4,
+                backgroundColor: highlightBorderColor ?? brandColor ?? "black",
+                borderRadius: 2,
+              }}
+            />
+          </View>
+          <WebView
+            originWhitelist={["*"]}
+            source={{
+              html: renderHtml({
+                survey,
+                isBrandingEnabled,
+                brandColor,
+                darkOverlay,
+                highlightBorderColor,
+              }),
+            }}
+            style={{ flex: 1 }}
+            contentMode="mobile"
+            onShouldStartLoadWithRequest={(event) => {
+              // prevent webview from redirecting if users taps on formbricks link.
+              if (event.url.startsWith("https://formbricks")) {
+                return false;
               } else {
-                console.log(parsedData);
+                return true;
               }
-            }
+            }}
+            onMessage={async (event) => {
+              const { data } = event.nativeEvent;
+              const unvalidatedMessage = JSON.parse(data);
 
-            // display
-            try {
-              const { onDisplay } = parsedData;
+              // debugger
+              if (unvalidatedMessage) {
+                if (unvalidatedMessage.type === "Console") {
+                  console.info(`[Console] ${JSON.stringify(unvalidatedMessage.data)}`);
+                } else {
+                  console.log(unvalidatedMessage);
+                }
+              }
+
+              const validatedMessage = ZRNWebViewOnMessageData.safeParse(unvalidatedMessage);
+              if (!validatedMessage.success) {
+                logger.error("Error parsing message from WebView.");
+                return;
+              }
+              // display
+              const { onDisplay, onResponse, responseUpdate, onClose, onRetry, onFinished } =
+                validatedMessage.data;
+              console.log(validatedMessage.data);
               if (onDisplay) {
                 const { id } = await createDisplay(survey);
                 surveyState.updateDisplayId(id);
               }
-            } catch (error) {
-              // handle error
-            }
-
-            // response
-            try {
-              const { responseUpdate } = parsedData;
-              if (responseUpdate) {
+              if (onResponse && responseUpdate) {
                 addResponseToQueue(responseUpdate);
               }
-            } catch (error) {
-              // handle error
-            }
-
-            // closed
-            try {
-              const { onClose } = parsedData;
               if (onClose) {
                 onCloseSurvey();
               }
-            } catch (error) {
-              // handle error
-            }
-
-            // retry
-            try {
-              const { onRetry } = parsedData;
               if (onRetry) {
                 responseQueue.processQueue();
               }
-            } catch (error) {
-              // handle error
-            }
-
-            // finished
-            try {
-              const { onFinished } = parsedData;
               if (onFinished) {
                 setTimeout(async () => {
-                  await sync(
-                    {
-                      apiHost: config.get().apiHost,
-                      environmentId: config.get().environmentId,
-                      userId: config.get().userId,
-                    },
-                    true
-                  );
                   onCloseSurvey();
                 }, 2500);
               }
-            } catch (error) {
-              // handle error
-            }
-          }}
-        />
-      </Animated.View>
+            }}
+          />
+        </Animated.View>
+      </Pressable>
     </Modal>
   );
 };
 
+type TRenderHTMLOptions = {
+  survey: TSurvey;
+  isBrandingEnabled: boolean;
+} & Omit<TSurveyProductOverwrites, "clickOutsideClose" | "placement">;
+
 // todo: update ip to use from env.
-const renderHtml = (survey: TSurvey, isBrandingEnabled: boolean, brandColor: string) => {
+const renderHtml = (options: TRenderHTMLOptions) => {
   return `
   <!doctype html>
   <html>
@@ -357,7 +378,7 @@ const renderHtml = (survey: TSurvey, isBrandingEnabled: boolean, brandColor: str
       };
 
       function onResponse(responseUpdate) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ responseUpdate }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({ onResponse: true, responseUpdate }));
       };
 
       function onRetry(responseUpdate) {
@@ -365,14 +386,10 @@ const renderHtml = (survey: TSurvey, isBrandingEnabled: boolean, brandColor: str
       };
 
       function loadSurvey() {
-        const survey = ${JSON.stringify(survey)};
-        const isBrandingEnabled = "${isBrandingEnabled}";
-        const brandColor = "${brandColor}";
+        const options = ${JSON.stringify(options)};
         const containerId = "formbricks-react-native";
         const surveyProps = {
-          survey,
-          isBrandingEnabled,
-          brandColor,
+          ...options,
           containerId,
           onFinished,
           onDisplay,
