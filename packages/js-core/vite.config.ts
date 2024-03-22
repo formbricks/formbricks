@@ -4,15 +4,9 @@ import dts from "vite-plugin-dts";
 
 import packageJson from "./package.json";
 
-const config = ({ mode }) => {
-  const isDevelopment = mode === "dev";
-  const formbricksSurveysScriptSrc = isDevelopment
-    ? "http://localhost:3003/index.umd.js"
-    : "https://app.formbricks.com/api/packages/surveys";
-
+const config = () => {
   return defineConfig({
     define: {
-      "import.meta.env.FORMBRICKS_SURVEYS_SCRIPT_SRC": JSON.stringify(formbricksSurveysScriptSrc),
       "import.meta.env.VERSION": JSON.stringify(packageJson.version),
     },
     build: {
