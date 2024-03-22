@@ -13,6 +13,7 @@ import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@form
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ZId } from "@formbricks/types/environment";
@@ -50,15 +51,16 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
     throw new Error("Product not found");
   }
 
-  function getNameForURL(string) {
-    return string.replace(/ /g, "%20");
+  function getNameForURL(url: string) {
+    return url.replace(/ /g, "%20");
   }
 
-  function getBrandColorForURL(string) {
-    return string.replace(/#/g, "%23");
+  function getBrandColorForURL(url: string) {
+    return url.replace(/#/g, "%23");
   }
 
-  const brandColor = getBrandColorForURL(product.brandColor);
+  // const brandColor = getBrandColorForURL(product.brandColor);
+  const brandColor = getBrandColorForURL(survey.styling?.brandColor?.light || COLOR_DEFAULTS.brandColor);
   const surveyName = getNameForURL(survey.name);
 
   const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;
@@ -223,7 +225,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   return survey ? (
     <div className="relative">
-      <MediaBackground survey={survey}>
+      <MediaBackground survey={survey} product={product}>
         <LinkSurvey
           survey={survey}
           product={product}
@@ -239,7 +241,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         />
       </MediaBackground>
       <LegalFooter
-        bgColor={survey.styling?.background?.bg || "#ffff"}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
