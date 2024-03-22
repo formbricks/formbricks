@@ -70,10 +70,10 @@ export default async function WidgetStatusIndicator({ environmentId, type }: Wid
             <div
               className={clsx(
                 "h-5 w-5 rounded-full",
-                status === "notImplemented" && "border border-white bg-white text-amber-600",
+                status === "notImplemented" && "text-amber-600",
                 status === "running" && "bg-green-100 text-green-700"
               )}>
-              <currentStatus.icon />
+              <currentStatus.icon className="h-5 w-5" />
             </div>
           </div>
         </div>

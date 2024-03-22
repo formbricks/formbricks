@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { TSurveyLanguage } from "@formbricks/types/surveys";
-
 import {
   mockLegacySurvey,
   mockSurvey,
@@ -64,31 +62,8 @@ describe("translateThankYouCard", () => {
 
 describe("translateSurvey", () => {
   it("should translate all questions of a Survey", () => {
-    const languages: TSurveyLanguage[] = [
-      {
-        default: true,
-        enabled: true,
-        language: {
-          id: "rp2di001zicbm3mk8je1ue9u",
-          code: "en",
-          alias: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      },
-      {
-        default: false,
-        enabled: true,
-        language: {
-          id: "cuuxfzls09sjkueg6lm6n7i0",
-          code: "de",
-          alias: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      },
-    ];
-    const translatedSurvey = translateSurvey(mockSurvey, languages);
+    const languageCodes = ["default", "de"];
+    const translatedSurvey = translateSurvey(mockSurvey, languageCodes);
     expect(translatedSurvey).toEqual(mockTranslatedSurvey);
   });
 });

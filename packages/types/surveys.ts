@@ -272,7 +272,6 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Consent),
   html: ZI18nString.optional(),
   label: ZI18nString,
-  dismissButtonLabel: z.string().optional(),
   placeholder: z.string().optional(),
   logic: z.array(ZSurveyConsentLogic).optional(),
 });
@@ -392,6 +391,10 @@ export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
 export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
+
+export const ZSurveyQuestionsObject = z.object({ questions: ZSurveyQuestions });
+
+export type TSurveyQuestionsObject = z.infer<typeof ZSurveyQuestionsObject>;
 
 export const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
 
