@@ -3,6 +3,7 @@
   "license": "MIT",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Formbricks-surveys is a helper library to embed surveys into your application.",
   "homepage": "https://formbricks.com",
   "repository": {
@@ -26,13 +27,9 @@
   "scripts": {
     "dev": "vite build --watch --mode dev",
     "serve": "serve dist -p 3003",
-    "build": "pnpm run build:surveys && pnpm run build:question-date",
-    "build:dev": "pnpm run build:surveys:dev && pnpm run build:question-date:dev",
-    "build:surveys": "tsc && SURVEYS_PACKAGE_BUILD=surveys vite build",
-    "build:surveys:dev": "tsc && SURVEYS_PACKAGE_BUILD=surveys vite build --mode dev",
-    "build:question-date": "tsc && SURVEYS_PACKAGE_BUILD=question-date vite build",
-    "build:question-date:dev": "tsc && SURVEYS_PACKAGE_BUILD=question-date vite build --mode dev",
-    "go": "concurrently \"pnpm dev\" \"pnpm serve\"",
+    "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --mode dev",
+    "go": "vite build --watch --mode dev",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
     "clean": "rimraf .turbo node_modules dist"

@@ -83,8 +83,18 @@ const methodNotAllowedResponse = (
     }
   );
 
-const notFoundResponse = (resourceType: string, resourceId: string, cors: boolean = false) =>
-  Response.json(
+const notFoundResponse = (
+  resourceType: string,
+  resourceId: string,
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
     {
       code: "not_found",
       message: `${resourceType} not found`,
@@ -95,9 +105,10 @@ const notFoundResponse = (resourceType: string, resourceId: string, cors: boolea
     } as ApiErrorResponse,
     {
       status: 404,
-      ...(cors && { headers: corsHeaders }),
+      headers,
     }
   );
+};
 
 const notAuthenticatedResponse = (cors: boolean = false) =>
   Response.json(
