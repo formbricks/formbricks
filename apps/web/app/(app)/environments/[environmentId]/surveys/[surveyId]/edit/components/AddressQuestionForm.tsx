@@ -6,7 +6,7 @@ import { useState } from "react";
 import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
-import QuestionFormInput from "@formbricks/ui/QuestionFormInput";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 interface AddressQuestionFormProps {
   localSurvey: TSurvey;
@@ -15,6 +15,8 @@ interface AddressQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
   isInvalid: boolean;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
 }
 
 export default function AddressQuestionForm({
@@ -23,36 +25,28 @@ export default function AddressQuestionForm({
   updateQuestion,
   isInvalid,
   localSurvey,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: AddressQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
 
-  const environmentId = localSurvey.environmentId;
-
   return (
     <form>
-      <QuestionFormInput
-        localSurvey={localSurvey}
-        environmentId={environmentId}
-        isInvalid={isInvalid}
-        questionId={question.id}
-        questionIdx={questionIdx}
-        updateQuestion={updateQuestion}
-        type="headline"
-      />
-
       <div>
         {showSubheader && (
           <>
             <div className="flex w-full items-center">
               <QuestionFormInput
+                id="headline"
+                value={question.headline}
                 localSurvey={localSurvey}
-                environmentId={environmentId}
-                isInvalid={isInvalid}
-                questionId={question.id}
                 questionIdx={questionIdx}
+                isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
-                type="subheader"
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
+
               <TrashIcon
                 className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                 onClick={() => {
@@ -79,7 +73,7 @@ export default function AddressQuestionForm({
           isChecked={question.addressRequired}
           onToggle={() => updateQuestion(questionIdx, { addressRequired: !question.addressRequired })}
           htmlId="addressRequired"
-          title="Required: Address"
+          title="Required: Address Line 1"
           description=""
           childBorder
           customContainerClass="p-0 mt-2"></AdvancedOptionToggle>

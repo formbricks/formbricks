@@ -176,7 +176,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Allow respondents to provide their address",
     icon: HomeIcon,
     preset: {
-      headline: "Where do you live?",
+      headline: { default: "Where do you live?" },
     },
   },
 ];
