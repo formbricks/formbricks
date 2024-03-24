@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getTeam } from "@formbricks/lib/team/service";
+import { logger } from "@formbricks/lib/utils/logger";
 
 import { StripePriceLookupKeys } from "./constants";
 
@@ -177,7 +178,7 @@ export const createSubscription = async (
       url: "",
     };
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return {
       status: 500,
       data: "Something went wrong!",

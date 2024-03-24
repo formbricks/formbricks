@@ -13,6 +13,7 @@ import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
+  TSurveyEditorTabs,
   TSurveyQuestionType,
   ZSurveyInlineTriggers,
   surveyHasBothTriggers,
@@ -30,8 +31,8 @@ interface SurveyMenuBarProps {
   survey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   environment: TEnvironment;
-  activeId: "questions" | "settings";
-  setActiveId: (id: "questions" | "settings") => void;
+  activeId: TSurveyEditorTabs;
+  setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidQuestions: (invalidQuestions: string[]) => void;
   product: TProduct;
   responseCount: number;
@@ -111,7 +112,10 @@ export default function SurveyMenuBar({
   };
 
   const handleBack = () => {
-    if (!isEqual(localSurvey, survey)) {
+    const { updatedAt, ...localSurveyRest } = localSurvey;
+    const { updatedAt: _, ...surveyRest } = survey;
+
+    if (!isEqual(localSurveyRest, surveyRest)) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
@@ -393,7 +397,6 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            // disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
             disabled={disableSave}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"

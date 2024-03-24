@@ -44,8 +44,6 @@ export default function OpenTextQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const handleInputChange = (inputValue: string) => {
-    // const isValidInput = validateInput(inputValue, question.inputType, question.required);
-    // setIsValid(isValidInput);
     onChange({ [question.id]: inputValue });
   };
 
@@ -72,11 +70,9 @@ export default function OpenTextQuestion({
       key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
-        //  if ( validateInput(value as string, question.inputType, question.required)) {
         const updatedttc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedttc);
         onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
-        // }
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
@@ -103,7 +99,7 @@ export default function OpenTextQuestion({
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={autoFocus}
-            className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
+            className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
           />
@@ -123,7 +119,7 @@ export default function OpenTextQuestion({
               handleInputResize(e);
             }}
             autoFocus={autoFocus}
-            className="border-border bg-survey-bg text-subheading focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:ring-0 sm:text-sm"
+            className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-border-highlight rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
           />

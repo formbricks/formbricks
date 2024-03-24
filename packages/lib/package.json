@@ -30,6 +30,8 @@
     "nanoid": "^5.0.6",
     "next-auth": "^4.24.7",
     "nodemailer": "^6.9.12",
+    "pino": "^8.19.0",
+    "pino-pretty": "^10.3.1",
     "posthog-node": "^3.6.3",
     "server-only": "^0.0.1",
     "tailwind-merge": "^2.2.1"

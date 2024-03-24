@@ -98,7 +98,7 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
+            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto py-0.5 pr-2"
             role="radiogroup"
             ref={choicesContainerRef}>
             {questionChoices.map((choice, idx) => (
@@ -116,10 +116,8 @@ export default function MultipleChoiceSingleQuestion({
                   }
                 }}
                 className={cn(
-                  value === choice.label
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
-                    : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
+                  value === choice.label ? "border-brand z-10" : "border-border",
+                  "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}>
                 <span className="flex items-center text-sm">
                   <input
@@ -148,9 +146,9 @@ export default function MultipleChoiceSingleQuestion({
                 tabIndex={questionChoices.length + 1}
                 className={cn(
                   value === getLocalizedValue(otherOption.label, languageCode)
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
+                    ? "border-border bg-input-bg-selected z-10"
                     : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
+                  "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
                   if (e.key == "Enter") {
@@ -196,10 +194,10 @@ export default function MultipleChoiceSingleQuestion({
                         }, 100);
                       }
                     }}
+                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder={
                       getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
                     }
-                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus mt-3 flex h-10 w-full rounded-md border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />

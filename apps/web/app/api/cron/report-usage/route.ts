@@ -9,6 +9,7 @@ import {
   getMonthlyTeamResponseCount,
   getTeamsWithPaidPlan,
 } from "@formbricks/lib/team/service";
+import { logger } from "@formbricks/lib/utils/logger";
 import { TTeam } from "@formbricks/types/teams";
 
 async function reportTeamUsage(team: TTeam) {
@@ -65,7 +66,7 @@ export async function POST(): Promise<Response> {
 
     return responses.successResponse({}, true);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 }

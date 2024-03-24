@@ -1,5 +1,7 @@
 import z from "zod";
 
+export { ZProductStyling } from "@formbricks/types/styling";
+
 export const ZActionProperties = z.record(z.string());
 export { ZActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 export { ZIntegrationConfig } from "@formbricks/types/integration";

@@ -12,16 +12,19 @@ import {
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import {
   getMonthlyActiveTeamPeopleCount,
   getMonthlyTeamResponseCount,
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
+import { logger } from "@formbricks/lib/utils/logger";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export async function OPTIONS(): Promise<Response> {
@@ -173,11 +176,20 @@ export async function GET(
       );
     }
 
+    const updatedProduct: TProduct = {
+      ...product,
+      brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
+      ...(product.styling.highlightBorderColor?.light && {
+        highlightBorderColor: product.styling.highlightBorderColor.light,
+      }),
+    };
+
+    // return state
     const state: TJsStateSync = {
       person: personData,
       surveys: !isInAppSurveyLimitReached ? transformedSurveys : [],
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
-      product,
+      product: updatedProduct,
     };
 
     return responses.successResponse(
@@ -186,7 +198,7 @@ export async function GET(
       "public, s-maxage=100, max-age=110, stale-while-revalidate=100, stale-if-error=100"
     );
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 }

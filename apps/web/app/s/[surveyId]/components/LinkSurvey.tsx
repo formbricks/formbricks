@@ -83,8 +83,6 @@ export default function LinkSurvey({
     ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
     : undefined;
 
-  const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
-
   const responseQueue = useMemo(
     () =>
       new ResponseQueue(
@@ -160,6 +158,26 @@ export default function LinkSurvey({
     return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
   }
 
+  const getStyling = () => {
+    // allow style overwrite is disabled from the product
+    if (!product.styling.allowStyleOverwrite) {
+      return product.styling;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteThemeStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    return product.styling;
+  };
+
   return (
     <>
       <ContentWrapper className="my-12 h-full w-full p-0 md:max-w-md">
@@ -179,7 +197,7 @@ export default function LinkSurvey({
         )}
         <SurveyInline
           survey={survey}
-          brandColor={brandColor}
+          styling={getStyling()}
           languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
