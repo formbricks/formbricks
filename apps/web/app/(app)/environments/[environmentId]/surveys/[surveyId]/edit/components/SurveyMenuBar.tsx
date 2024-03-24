@@ -22,7 +22,8 @@ import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
-import { updateProductAction, updateSurveyAction } from "../actions";
+import {  updateSurveyAction } from "../actions";
+import { updateProductAction } from "@formbricks/ui/LogoSettingModal/actions";
 import { isCardValid, validateQuestion } from "../lib/validation";
 
 interface SurveyMenuBarProps {
