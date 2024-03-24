@@ -3,6 +3,7 @@
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
@@ -29,16 +30,28 @@ export default function AddressQuestionForm({
   setSelectedLanguageCode,
 }: AddressQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
   return (
     <form>
+      <QuestionFormInput
+        id="headline"
+        value={question.headline}
+        localSurvey={localSurvey}
+        questionIdx={questionIdx}
+        isInvalid={isInvalid}
+        updateQuestion={updateQuestion}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
+      />
+
       <div>
         {showSubheader && (
-          <>
-            <div className="flex w-full items-center">
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
               <QuestionFormInput
-                id="headline"
-                value={question.headline}
+                id="subheader"
+                value={question.subheader}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -46,16 +59,16 @@ export default function AddressQuestionForm({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
               />
-
-              <TrashIcon
-                className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
-                }}
-              />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: undefined });
+              }}
+            />
+          </div>
         )}
         {!showSubheader && (
           <Button
@@ -63,7 +76,12 @@ export default function AddressQuestionForm({
             variant="minimal"
             className="mt-3"
             type="button"
-            onClick={() => setShowSubheader(true)}>
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                subheader: createI18nString("", surveyLanguageCodes),
+              });
+              setShowSubheader(true);
+            }}>
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

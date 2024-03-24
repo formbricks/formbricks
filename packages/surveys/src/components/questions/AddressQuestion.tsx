@@ -4,7 +4,7 @@ import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
@@ -38,6 +38,7 @@ export default function AddressQuestion({
   setTtc,
 }: AddressQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
+  const [hasFilled, setHasFilled] = useState(false);
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -56,24 +57,19 @@ export default function AddressQuestion({
     onSubmit({ [question.id]: value }, updatedTtc);
   };
 
-  const hasFilledSomeValue = () => {
-    if (value === undefined) return false;
-    for (let i = 0; i < value.length; i++) {
-      if (value[i].length > 0) {
-        return true;
-      }
-    }
-    return false;
-  };
+  useEffect(() => {
+    const filled = safeValue.some((val) => val.trim().length > 0);
+    setHasFilled(filled);
+  }, [value]);
 
   const inputPlaceholders = [
     {
       placeholder: "Address e.g. Bay Street 69",
       required: question.required
-        ? hasFilledSomeValue()
+        ? hasFilled
           ? question.addressRequired
           : true
-        : hasFilledSomeValue()
+        : hasFilled
           ? question.addressRequired
           : false,
     },
@@ -81,48 +77,36 @@ export default function AddressQuestion({
       placeholder: "Address line 2",
       required: question.required
         ? question.addressLine2Required
-        : hasFilledSomeValue()
+        : hasFilled
           ? question.addressLine2Required
           : false,
     },
     {
       placeholder: "City / Town",
-      required: question.required
-        ? question.cityRequired
-        : hasFilledSomeValue()
-          ? question.cityRequired
-          : false,
+      required: question.required ? question.cityRequired : hasFilled ? question.cityRequired : false,
     },
     {
       placeholder: "State / Region",
-      required: question.required
-        ? question.stateRequired
-        : hasFilledSomeValue()
-          ? question.stateRequired
-          : false,
+      required: question.required ? question.stateRequired : hasFilled ? question.stateRequired : false,
     },
     {
       placeholder: "ZIP / Post Code",
-      required: question.required
-        ? question.zipRequired
-        : hasFilledSomeValue()
-          ? question.zipRequired
-          : false,
+      required: question.required ? question.zipRequired : hasFilled ? question.zipRequired : false,
     },
     {
       placeholder: "Country",
-      required: question.required
-        ? question.countryRequired
-        : hasFilledSomeValue()
-          ? question.countryRequired
-          : false,
+      required: question.required ? question.countryRequired : hasFilled ? question.countryRequired : false,
     },
   ];
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
       <Subheader
         subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
         questionId={question.id}
