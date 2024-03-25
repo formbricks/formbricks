@@ -1,11 +1,12 @@
 "use client";
 
+import { validateId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FC, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey, TSurveyHiddenFields, TSurveyQuestions } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyHiddenFields } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
@@ -74,7 +75,9 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <Label htmlFor="hidden-fields-toggle">Enabled</Label>
+              <Label htmlFor="hidden-fields-toggle">
+                {localSurvey?.hiddenFields?.enabled ? "On" : "Off"}
+              </Label>
 
               <Switch
                 id="hidden-fields-toggle"
@@ -106,35 +109,25 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
                 );
               })
             ) : (
-              <p className="text-sm italic text-slate-500">No hidden fields yet. Add the first one below.</p>
+              <p className="mt-2 text-sm italic text-slate-500">
+                No hidden fields yet. Add the first one below.
+              </p>
             )}
           </div>
           <form
             className="mt-5"
             onSubmit={(e) => {
               e.preventDefault();
-
-              // Check if the hiddenField is empty or just whitespace
-              if (!hiddenField.trim()) {
-                return toast.error("The field cannot be empty.");
+              const existingQuestionIds = localSurvey.questions.map((question) => question.id);
+              const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
+              if (validateId("Hidden field", hiddenField, existingQuestionIds, existingHiddenFieldIds)) {
+                updateSurvey({
+                  fieldIds: [...(localSurvey.hiddenFields?.fieldIds || []), hiddenField],
+                  enabled: true,
+                });
+                toast.success("Hidden field added successfully");
+                setHiddenField("");
               }
-
-              const errorMessage = validateHiddenField(
-                // current field
-                hiddenField,
-                // existing fields
-                localSurvey.hiddenFields?.fieldIds || [],
-                // existing questions
-                localSurvey.questions
-              );
-
-              if (errorMessage !== "") return toast.error(errorMessage);
-
-              updateSurvey({
-                fieldIds: [...(localSurvey.hiddenFields?.fieldIds || []), hiddenField],
-                enabled: true,
-              });
-              setHiddenField("");
             }}>
             <Label htmlFor="headline">Hidden Field</Label>
             <div className="mt-2 flex gap-2">
@@ -158,34 +151,3 @@ const HiddenFieldsCard: FC<HiddenFieldsCardProps> = ({
 };
 
 export default HiddenFieldsCard;
-
-const validateHiddenField = (
-  field: string,
-  existingFields: string[],
-  existingQuestions: TSurveyQuestions
-): string => {
-  if (field.trim() === "") {
-    return "Please enter a question";
-  }
-  // no duplicate questions
-  if (existingFields.findIndex((q) => q.toLowerCase() === field.toLowerCase()) !== -1) {
-    return "Question already exists";
-  }
-  // no key words -- userId & suid & existing question ids
-  if (
-    ["userId", "source", "suid", "end", "start", "welcomeCard", "hidden", "verifiedEmail"].includes(field) ||
-    existingQuestions.findIndex((q) => q.id === field) !== -1
-  ) {
-    return "Question not allowed";
-  }
-  // no spaced words --> should be valid query param on url
-  if (field.includes(" ")) {
-    return "Question not allowed, avoid using spaces";
-  }
-  // Check if the parameter contains only alphanumeric characters
-  if (!/^[a-zA-Z0-9]+$/.test(field)) {
-    return "Question not allowed, avoid using special characters";
-  }
-
-  return "";
-};

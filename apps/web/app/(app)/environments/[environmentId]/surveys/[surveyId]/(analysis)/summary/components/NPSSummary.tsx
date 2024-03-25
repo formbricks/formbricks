@@ -1,7 +1,9 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveySummaryNps } from "@formbricks/types/responses";
 import { HalfCircle, ProgressBar } from "@formbricks/ui/ProgressBar";
 
@@ -15,7 +17,7 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={questionSummary.question.headline} />
+        <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
 
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
@@ -39,7 +41,7 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
                 <p className="font-semibold capitalize text-slate-700">{group}</p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {Math.round(questionSummary[group].percentage)}%
+                    {convertFloatToNDecimal(questionSummary[group].percentage, 1)}%
                   </p>
                 </div>
               </div>
@@ -59,7 +61,7 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
                 <p className="font-semibold text-slate-700">dismissed</p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {Math.round(questionSummary.dismissed.percentage)}%
+                    {convertFloatToNDecimal(questionSummary.dismissed.percentage, 1)}%
                   </p>
                 </div>
               </div>

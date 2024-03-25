@@ -10,16 +10,17 @@ import {
   CreditCardIcon,
   FileCheckIcon,
   HeartIcon,
+  LanguagesIcon,
   LinkIcon,
   LogOutIcon,
   MailIcon,
+  MenuIcon,
   MessageSquareTextIcon,
   PlusIcon,
   SlidersIcon,
   UserCircleIcon,
   UsersIcon,
 } from "lucide-react";
-import { MenuIcon } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -69,6 +70,7 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   webAppUrl: string;
   membershipRole?: TMembershipRole;
+  isMultiLanguageAllowed: boolean;
 }
 
 export default function Navigation({
@@ -81,6 +83,7 @@ export default function Navigation({
   isFormbricksCloud,
   webAppUrl,
   membershipRole,
+  isMultiLanguageAllowed,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -109,6 +112,14 @@ export default function Navigation({
       setCurrentTeamId(team.id);
     }
   }, [team]);
+
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
+  const sortedTeams = useMemo(() => {
+    return [...teams].sort((a, b) => a.name.localeCompare(b.name));
+  }, [teams]);
 
   const navigation = useMemo(
     () => [
@@ -165,6 +176,12 @@ export default function Navigation({
           label: "Look & Feel",
           href: `/environments/${environment.id}/settings/lookandfeel`,
           hidden: isViewer,
+        },
+        {
+          icon: LanguagesIcon,
+          label: "Survey Languages",
+          href: `/environments/${environment.id}/settings/language`,
+          hidden: !isMultiLanguageAllowed,
         },
       ],
     },
@@ -313,17 +330,7 @@ export default function Navigation({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild id="userDropdownTrigger">
                     <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
-                      {session.user.imageUrl ? (
-                        <Image
-                          src={session.user.imageUrl}
-                          width="40"
-                          height="40"
-                          className="ph-no-capture h-10 w-10 rounded-full"
-                          alt="Profile picture"
-                        />
-                      ) : (
-                        <ProfileAvatar userId={session.user.id} />
-                      )}
+                      <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
 
                       <div>
                         <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
@@ -383,7 +390,7 @@ export default function Navigation({
                           <DropdownMenuRadioGroup
                             value={product!.id}
                             onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
-                            {products.map((product) => (
+                            {sortedProducts.map((product) => (
                               <DropdownMenuRadioItem
                                 value={product.id}
                                 className="cursor-pointer break-all"
@@ -418,7 +425,7 @@ export default function Navigation({
                           <DropdownMenuRadioGroup
                             value={currentTeamId}
                             onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                            {teams?.map((team) => (
+                            {sortedTeams.map((team) => (
                               <DropdownMenuRadioItem value={team.id} className="cursor-pointer" key={team.id}>
                                 {team.name}
                               </DropdownMenuRadioItem>

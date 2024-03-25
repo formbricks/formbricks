@@ -2,7 +2,6 @@
 
 import { updateAvatarAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
 import { Session } from "next-auth";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -12,7 +11,7 @@ import { Button } from "@formbricks/ui/Button";
 
 import { handleFileUpload } from "../lib";
 
-export function EditAvatar({ session, environmentId }: { session: Session | null; environmentId: string }) {
+export function EditAvatar({ session, environmentId }: { session: Session; environmentId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -54,20 +53,7 @@ export function EditAvatar({ session, environmentId }: { session: Session | null
           </div>
         )}
 
-        {session?.user?.imageUrl ? (
-          <Image
-            src={session.user.imageUrl}
-            width="40"
-            height="40"
-            style={{
-              objectFit: "cover",
-            }}
-            className="h-10 w-10 rounded-full"
-            alt="Avatar placeholder"
-          />
-        ) : (
-          <ProfileAvatar userId={session!.user.id} />
-        )}
+        <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
       </div>
 
       <Button

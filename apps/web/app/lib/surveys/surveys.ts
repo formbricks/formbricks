@@ -5,6 +5,7 @@ import {
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import {
   OptionsType,
+  QuestionOption,
   QuestionOptions,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
@@ -22,6 +23,7 @@ const conditionOptions = {
   rating: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
   cta: ["is"],
   tags: ["is"],
+  languages: ["Equals", "Not equals"],
   pictureSelection: ["Includes all", "Includes either"],
   userAttributes: ["Equals", "Not equals"],
   consent: ["is"],
@@ -35,7 +37,7 @@ const filterOptions = {
   consent: ["Accepted", "Dismissed"],
 };
 
-// creating the options for the filtering to be selected there are three types questions, attributes and tags
+// creating the options for the filtering to be selected there are 4 types questions, attributes, tags and metadata
 export const generateQuestionAndFilterOptions = (
   survey: TSurvey,
   environmentTags: TTag[] | undefined,
@@ -44,7 +46,7 @@ export const generateQuestionAndFilterOptions = (
   questionOptions: QuestionOptions[];
   questionFilterOptions: QuestionFilterOptions[];
 } => {
-  let questionOptions: any = [];
+  let questionOptions: QuestionOptions[] = [];
   let questionFilterOptions: any = [];
 
   let questionsOptions: any = [];
@@ -125,6 +127,20 @@ export const generateQuestionAndFilterOptions = (
     });
   }
 
+  let metadataOptions: QuestionOption[] = [];
+  //can be extended to include more properties
+  if (survey.languages?.length > 0) {
+    metadataOptions.push({ label: "Language", type: OptionsType.METADATA, id: "language" });
+    const languageOptions = survey.languages.map((sl) => sl.language.code);
+    questionFilterOptions.push({
+      type: "Metadata",
+      filterOptions: conditionOptions.languages,
+      filterComboBoxOptions: languageOptions,
+      id: "language",
+    });
+  }
+  questionOptions = [...questionOptions, { header: OptionsType.METADATA, option: metadataOptions }];
+
   return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
 };
 
@@ -135,19 +151,20 @@ export const getFormattedFilters = (
   dateRange: DateRange
 ): TResponseFilterCriteria => {
   const filters: TResponseFilterCriteria = {};
-
-  const [questions, tags, attributes] = selectedFilter.filter.reduce(
-    (result: [FilterValue[], FilterValue[], FilterValue[]], filter) => {
+  const [questions, tags, attributes, metadata] = selectedFilter.filter.reduce(
+    (result: [FilterValue[], FilterValue[], FilterValue[], FilterValue[]], filter) => {
       if (filter.questionType?.type === "Questions") {
         result[0].push(filter);
       } else if (filter.questionType?.type === "Tags") {
         result[1].push(filter);
       } else if (filter.questionType?.type === "Attributes") {
         result[2].push(filter);
+      } else if (filter.questionType?.type === "Metadata") {
+        result[3].push(filter);
       }
       return result;
     },
-    [[], [], []]
+    [[], [], [], []]
   );
 
   // for completed responses
@@ -306,6 +323,24 @@ export const getFormattedFilters = (
     });
   }
 
+  // for metadata
+  if (metadata.length) {
+    metadata.forEach(({ filterType, questionType }) => {
+      if (!filters.metadata) filters.metadata = {};
+
+      if (filterType.filterValue === "Equals") {
+        filters.metadata[questionType.label ?? ""] = {
+          op: "equals",
+          value: filterType.filterComboBoxValue as string,
+        };
+      } else if (filterType.filterValue === "Not equals") {
+        filters.metadata[questionType.label ?? ""] = {
+          op: "notEquals",
+          value: filterType.filterComboBoxValue as string,
+        };
+      }
+    });
+  }
   return filters;
 };
 

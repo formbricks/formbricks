@@ -23,7 +23,22 @@ export const updatePersonAttribute = async (
   value: string
 ): Promise<Result<void, NetworkError | MissingPersonError>> => {
   const { apiHost, environmentId, userId } = config.get();
+
   if (!userId) {
+    const previousConfig = config.get();
+    if (key === "language") {
+      config.update({
+        ...previousConfig,
+        state: {
+          ...previousConfig.state,
+          attributes: {
+            ...previousConfig.state.attributes,
+            language: value,
+          },
+        },
+      });
+      return okVoid();
+    }
     return err({
       code: "missing_person",
       message: "Unable to update attribute. User identification deactivated. No userId set.",
@@ -66,15 +81,9 @@ export const updatePersonAttributes = async (
   userId: string,
   attributes: TPersonAttributes
 ): Promise<Result<TPersonAttributes, NetworkError | MissingPersonError>> => {
-  if (!userId) {
-    return err({
-      code: "missing_person",
-      message: "Unable to update attribute. User identification deactivated. No userId set.",
-    });
-  }
-
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
+
   try {
     const existingAttributes = config.get()?.state?.attributes;
     if (existingAttributes) {
@@ -130,7 +139,7 @@ export const isExistingAttribute = (key: string, value: string): boolean => {
 export const setPersonUserId = async (): Promise<
   Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>
 > => {
-  logger.error("'setUserId' is no longer supported. Please set the userId in the init call instead.");
+  console.error("'setUserId' is no longer supported. Please set the userId in the init call instead.");
   return okVoid();
 };
 
@@ -160,6 +169,7 @@ export const setPersonAttribute = async (
           [key]: value.toString(),
         },
       },
+      expiresAt: config.get().expiresAt,
     });
     return okVoid();
   }
@@ -179,6 +189,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
     environmentId: config.get().environmentId,
     apiHost: config.get().apiHost,
     userId: config.get().userId,
+    attributes: config.get().state.attributes,
   };
   await logoutPerson();
   try {

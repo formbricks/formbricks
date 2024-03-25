@@ -59,7 +59,7 @@ export const verifyInviteToken = (token: string): { inviteId: string; email: str
       email,
     };
   } catch (error) {
-    console.error("Error verifying invite token:", error);
+    console.error(`Error verifying invite token: ${error}`);
     throw new Error("Invalid or expired invite token");
   }
 };
