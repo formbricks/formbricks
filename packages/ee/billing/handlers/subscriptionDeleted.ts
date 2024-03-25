@@ -2,7 +2,6 @@ import Stripe from "stripe";
 
 import { env } from "@formbricks/lib/env";
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
-import { logger } from "@formbricks/lib/utils/logger";
 
 import { ProductFeatureKeys, StripeProductNames } from "../lib/constants";
 import { unsubscribeCoreAndAppSurveyFeatures, unsubscribeLinkSurveyProFeatures } from "../lib/downgradePlan";
@@ -16,7 +15,7 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
   const teamId = stripeSubscriptionObject.metadata.teamId;
   if (!teamId) {
-    logger.error("No teamId found in subscription");
+    console.error("No teamId found in subscription");
     return { status: 400, message: "skipping, no teamId found" };
   }
 

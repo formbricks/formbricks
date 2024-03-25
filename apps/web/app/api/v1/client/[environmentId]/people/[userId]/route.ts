@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { createPerson, getPersonByUserId, updatePerson } from "@formbricks/lib/person/service";
-import { logger } from "@formbricks/lib/utils/logger";
 import { ZPersonUpdateInput } from "@formbricks/types/people";
 
 interface Context {
@@ -70,7 +69,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       true
     );
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);
   }
 }

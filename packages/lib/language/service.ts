@@ -13,7 +13,6 @@ import {
 
 import { productCache } from "../product/cache";
 import { surveyCache } from "../survey/cache";
-import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 
 const languageSelect = {
@@ -54,7 +53,7 @@ export const createLanguage = async (
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error);
+      console.error(error);
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -82,7 +81,7 @@ export const getSurveysUsingGivenLanguage = async (languageId: string): Promise<
     return surveyNames;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error);
+      console.error(error);
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -117,7 +116,7 @@ export const deleteLanguage = async (environmentId: string, languageId: string):
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error);
+      console.error(error);
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -157,7 +156,7 @@ export const updateLanguage = async (
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error);
+      console.error(error);
       throw new DatabaseError(error.message);
     }
     throw error;

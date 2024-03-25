@@ -31,7 +31,6 @@ import {
 } from "../constants";
 import { generateLocalSignedUrl } from "../crypto";
 import { env } from "../env";
-import { logger } from "../utils/logger";
 import { storageCache } from "./cache";
 
 // S3Client Singleton
@@ -67,7 +66,7 @@ export const testS3BucketAccess = async () => {
 
     return true;
   } catch (error) {
-    logger.error(`Failed to access S3 bucket: ${error}`);
+    console.error(`Failed to access S3 bucket: ${error}`);
     throw new Error(`S3 Bucket Access Test Failed: ${error}`);
   }
 };

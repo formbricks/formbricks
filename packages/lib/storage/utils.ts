@@ -1,5 +1,3 @@
-import { logger } from "../utils/logger";
-
 export const getOriginalFileNameFromUrl = (fileURL: string) => {
   try {
     const fileNameFromURL = fileURL.startsWith("/storage/")
@@ -18,6 +16,6 @@ export const getOriginalFileNameFromUrl = (fileURL: string) => {
     const fileName = originalFileName ? decodeURIComponent(`${originalFileName}.${fileExt}` || "") : "";
     return fileName;
   } catch (error) {
-    logger.error(`Error parsing file URL: ${error}`);
+    console.error(`Error parsing file URL: ${error}`);
   }
 };

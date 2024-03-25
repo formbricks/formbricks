@@ -7,7 +7,6 @@ import {
   getTeam,
   updateTeam,
 } from "@formbricks/lib/team/service";
-import { logger } from "@formbricks/lib/utils/logger";
 
 import { ProductFeatureKeys, StripePriceLookupKeys, StripeProductNames } from "../lib/constants";
 import { reportUsage } from "../lib/reportUsage";
@@ -46,7 +45,7 @@ export const handleSubscriptionUpdatedOrCreated = async (event: Stripe.Event) =>
   }
 
   if (!teamId) {
-    logger.error("No teamId found in subscription");
+    console.error("No teamId found in subscription");
     return { status: 400, message: "skipping, no teamId found" };
   }
 

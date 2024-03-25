@@ -120,7 +120,7 @@ export const sync = async (params: TJsSyncParams, noCache = false): Promise<void
       expiresAt: new Date(new Date().getTime() + 2 * 60000), // 2 minutes in the future
     });
   } catch (error) {
-    logger.error(`Error during sync: ${error}`);
+    console.error(`Error during sync: ${error}`);
     throw error;
   }
 };
@@ -189,7 +189,7 @@ export const addExpiryCheckListener = (): void => {
           userId: config.get().userId,
         });
       } catch (e) {
-        logger.error(`Error during expiry check: ${e}`);
+        console.error(`Error during expiry check: ${e}`);
         logger.debug("Extending config and try again later.");
         const existingConfig = config.get();
         config.update(existingConfig);
