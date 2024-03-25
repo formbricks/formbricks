@@ -17,7 +17,6 @@ import {
 
 import { AIRTABLE_CLIENT_ID } from "../constants";
 import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
-import { logger } from "../utils/logger";
 
 interface ConnectAirtableOptions {
   environmentId: string;
@@ -96,7 +95,7 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
   const parsedToken = ZIntegrationAirtableTokenSchema.safeParse(tokenRes);
 
   if (!parsedToken.success) {
-    logger.error(parsedToken.error);
+    console.error(parsedToken.error);
     throw new Error(parsedToken.error.message);
   }
   const { access_token, refresh_token, expires_in } = parsedToken.data;
@@ -256,6 +255,6 @@ export const writeData = async (
     }
     await addRecords(key, configData.baseId, configData.tableId, data);
   } catch (error: any) {
-    logger.error(error?.message);
+    console.error(error?.message);
   }
 };

@@ -139,7 +139,7 @@ export const isExistingAttribute = (key: string, value: string): boolean => {
 export const setPersonUserId = async (): Promise<
   Result<void, NetworkError | MissingPersonError | AttributeAlreadyExistsError>
 > => {
-  logger.error("'setUserId' is no longer supported. Please set the userId in the init call instead.");
+  console.error("'setUserId' is no longer supported. Please set the userId in the init call instead.");
   return okVoid();
 };
 

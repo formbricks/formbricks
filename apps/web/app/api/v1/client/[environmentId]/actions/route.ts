@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { createAction } from "@formbricks/lib/action/service";
-import { logger } from "@formbricks/lib/utils/logger";
 import { ZActionInput } from "@formbricks/types/actions";
 
 interface Context {
@@ -37,7 +36,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
 
     return responses.successResponse({}, true);
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 }
