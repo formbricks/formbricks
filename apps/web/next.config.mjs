@@ -18,7 +18,7 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   experimental: {
-    serverComponentsExternalPackages: ["@aws-sdk","pino"],
+    serverComponentsExternalPackages: ["@aws-sdk"],
     instrumentationHook: true,
     outputFileTracingIncludes: {
       "app/api/js": ["../../packages/**/*"],
