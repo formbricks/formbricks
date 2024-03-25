@@ -18,10 +18,14 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   experimental: {
-    serverComponentsExternalPackages: ["@aws-sdk","pino"],
+    serverComponentsExternalPackages: ["@aws-sdk", "pino"],
     instrumentationHook: true,
     outputFileTracingIncludes: {
-      "app/api/packages/": ["../../packages/**/*"],
+      "app/api/packages/": [
+        "../../packages/js/dist/*",
+        "../../packages/js-core/dist/*",
+        "../../packages/surveys/dist/*",
+      ],
     },
   },
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
