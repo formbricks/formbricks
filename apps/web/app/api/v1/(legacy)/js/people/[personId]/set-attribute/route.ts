@@ -6,7 +6,6 @@ import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/a
 import { personCache } from "@formbricks/lib/person/cache";
 import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { logger } from "@formbricks/lib/utils/logger";
 import { ZJsPeopleLegacyAttributeInput } from "@formbricks/types/js";
 import { TPersonClient } from "@formbricks/types/people";
 
@@ -78,7 +77,7 @@ export async function POST(req: Request, { params }): Promise<Response> {
 
     return responses.successResponse({ ...state, person }, true);
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     return responses.internalServerErrorResponse(`Unable to complete request: ${error.message}`, true);
   }
 }

@@ -31,7 +31,6 @@ import { createMembership } from "./membership/service";
 import { createProduct } from "./product/service";
 import { createTeam, getTeam } from "./team/service";
 import { createUser, getUserByEmail, updateUser } from "./user/service";
-import { logger } from "./utils/logger";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -64,7 +63,7 @@ export const authOptions: NextAuthOptions = {
             },
           });
         } catch (e) {
-          logger.error(e);
+          console.error(e);
           throw Error("Internal server error. Please try again later");
         }
 
@@ -116,7 +115,7 @@ export const authOptions: NextAuthOptions = {
             },
           });
         } catch (e) {
-          logger.error(e);
+          console.error(e);
           throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 

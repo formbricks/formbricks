@@ -22,7 +22,6 @@ import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
 import { getUsersWithTeam, updateUser } from "../user/service";
 import { formatDateFields } from "../utils/datetime";
-import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 import { teamCache } from "./cache";
 
@@ -101,7 +100,7 @@ export const getTeamByEnvironmentId = async (environmentId: string): Promise<TTe
         return team;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          logger.error(error);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 

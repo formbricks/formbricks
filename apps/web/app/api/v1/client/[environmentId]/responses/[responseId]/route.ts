@@ -5,7 +5,6 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { getPerson } from "@formbricks/lib/person/service";
 import { updateResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { logger } from "@formbricks/lib/utils/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
 
@@ -54,7 +53,7 @@ export async function PUT(
       return responses.badRequestResponse(error.message);
     }
     if (error instanceof DatabaseError) {
-      logger.error(error);
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }
@@ -68,7 +67,7 @@ export async function PUT(
       return responses.badRequestResponse(error.message);
     }
     if (error instanceof DatabaseError) {
-      logger.error(error);
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }

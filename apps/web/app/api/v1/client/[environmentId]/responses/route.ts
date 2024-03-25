@@ -8,7 +8,6 @@ import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { logger } from "@formbricks/lib/utils/logger";
 import { ZId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
@@ -97,7 +96,7 @@ export async function POST(request: Request, context: Context): Promise<Response
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      logger.error(error);
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }

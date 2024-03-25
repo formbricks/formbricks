@@ -1,7 +1,5 @@
 import z from "zod";
 
-import { logger } from "./logger";
-
 // Helper function to calculate difference in days between two dates
 export const diffInDays = (date1: Date, date2: Date) => {
   const diffTime = Math.abs(date2.getTime() - date1.getTime());
@@ -37,7 +35,7 @@ export function formatDateFields<T extends z.ZodRawShape>(
           (formattedObject as any)[key] = new Date(dateStr);
         }
       } catch (error) {
-        logger.error(`Error parsing date for key ${key}:`, error);
+        console.error(`Error parsing date for key ${key}:`, error);
       }
     }
   }

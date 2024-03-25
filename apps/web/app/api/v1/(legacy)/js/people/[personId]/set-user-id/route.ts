@@ -3,7 +3,6 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
-import { logger } from "@formbricks/lib/utils/logger";
 import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
 
 export async function OPTIONS(): Promise<Response> {
@@ -40,7 +39,7 @@ export async function POST(req: Request): Promise<Response> {
     const state = await getUpdatedState(environmentId, person.id);
     return responses.successResponse({ ...state, person: personClient }, true);
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 }
