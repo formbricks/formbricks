@@ -81,7 +81,7 @@ export const TEXT_RESPONSES_PER_PAGE = 5;
 
 export const DEFAULT_TEAM_ID = env.DEFAULT_TEAM_ID;
 export const DEFAULT_TEAM_ROLE = env.DEFAULT_TEAM_ROLE;
-export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED;
+export const ONBOARDING_DISABLED = env.ONBOARDING_DISABLED === "1";
 
 // Storage constants
 export const AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID;
@@ -117,7 +117,7 @@ export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
 
 // Colors for Survey Bg
-export const colours = [
+export const SURVEY_BG_COLORS = [
   "#FFF2D8",
   "#EAD7BB",
   "#BCA37F",

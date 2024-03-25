@@ -1,4 +1,5 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 
@@ -39,7 +40,7 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
               <p className="font-semibold text-slate-700">Accepted</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {Math.round(questionSummary.accepted.percentage)}%
+                  {convertFloatToNDecimal(questionSummary.accepted.percentage, 1)}%
                 </p>
               </div>
             </div>
@@ -56,7 +57,7 @@ export default function ConsentSummary({ questionSummary }: ConsentSummaryProps)
               <p className="font-semibold text-slate-700">Dismissed</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {Math.round(questionSummary.dismissed.percentage)}%
+                  {convertFloatToNDecimal(questionSummary.dismissed.percentage, 1)}%
                 </p>
               </div>
             </div>

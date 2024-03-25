@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import CorsHandling from "./cors-handling-in-api.webp";
 
@@ -65,7 +65,7 @@ Please keep the following in mind:
 - When dealing with Management APIs always make sure to require authentication via API keys and a sufficient authorization check.
 - Make sure to handle CORS requests in any new Client API endpoint you create as these are called from the browser in link surveys or `formbricks-js`. Example below:
 
-<Image
+<MdxImage
   src={CorsHandling}
   alt="Cors handling within an API"
   quality="100"

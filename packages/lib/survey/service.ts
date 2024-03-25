@@ -190,7 +190,6 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
           console.error(error);
           throw new DatabaseError(error.message);
         }
-
         throw error;
       }
 

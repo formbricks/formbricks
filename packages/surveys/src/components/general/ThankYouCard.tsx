@@ -67,7 +67,7 @@ export default function ThankYouCard({
               />
             </svg>
           </div>
-          <span className="bg-shadow mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
+          <span className="bg-brand mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
         </div>
       )}
 
