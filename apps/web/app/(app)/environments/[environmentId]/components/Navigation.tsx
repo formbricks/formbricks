@@ -14,13 +14,13 @@ import {
   LinkIcon,
   LogOutIcon,
   MailIcon,
+  MenuIcon,
   MessageSquareTextIcon,
   PlusIcon,
   SlidersIcon,
   UserCircleIcon,
   UsersIcon,
 } from "lucide-react";
-import { MenuIcon } from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -330,17 +330,7 @@ export default function Navigation({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild id="userDropdownTrigger">
                     <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
-                      {session.user.imageUrl ? (
-                        <Image
-                          src={session.user.imageUrl}
-                          width="40"
-                          height="40"
-                          className="ph-no-capture h-10 w-10 rounded-full"
-                          alt="Profile picture"
-                        />
-                      ) : (
-                        <ProfileAvatar userId={session.user.id} />
-                      )}
+                      <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
 
                       <div>
                         <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
