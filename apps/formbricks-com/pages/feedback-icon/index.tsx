@@ -2,9 +2,14 @@ import HeroTitle from "@/components/shared/HeroTitle";
 import Layout from "@/components/shared/Layout";
 import Image from "next/image";
 
+import ColoredCommentsIcon from "./colored-comments-feedback-icon.svg";
 import CommentsIcon2 from "./comments-icon-2.svg";
 import CommentsIcon from "./comments-icon.svg";
+import FeedbackEnvelope from "./feedback-envelope.svg";
 import FeedbackIcon from "./feedback-icon.svg";
+import FeedbackTooltipIcon from "./feedback-tooltip-icon.svg";
+import GuiFeedback from "./gui-feedback.svg";
+import EmailFeedbackIcon from "./send-email-feedback-icon.svg";
 
 const icons = [
   {
@@ -12,15 +17,47 @@ const icons = [
     iconName: "feedback-icon.svg",
     altText: "download feedback icon",
   },
+
+  {
+    iconPath: FeedbackTooltipIcon,
+    iconName: "feedback-tooltip.svg",
+    altText: "download feedback tooltip icon",
+  },
+
   {
     iconPath: CommentsIcon,
     iconName: "comments-icon.svg",
     altText: "download feedback icon for comments",
   },
+
+  {
+    iconPath: ColoredCommentsIcon,
+    iconName: "colored-comments-icon.svg",
+    altText: "download colored feedback icon",
+  },
+
   {
     iconPath: CommentsIcon2,
     iconName: "comments-icon-2.svg",
     altText: "download feedback icon for comments",
+  },
+
+  {
+    iconPath: FeedbackEnvelope,
+    iconName: "feedback-envelope.svg",
+    altText: "download envelope feedback icon",
+  },
+
+  {
+    iconPath: EmailFeedbackIcon,
+    iconName: "send-email-feedback-icon.svg",
+    altText: "download send email feedback icon",
+  },
+
+  {
+    iconPath: GuiFeedback,
+    iconName: "gui-feedback.svg",
+    altText: "download gui feedback icon",
   },
 ];
 
@@ -41,7 +78,7 @@ export default function FeedbackBoxPage() {
       <HeroTitle
         headingPt1=""
         headingTeal="Feedback Icons"
-        subheading="Click on each card to directly download high-quality SVG feedbackicons"
+        subheading="Click on each card to directly download high-quality SVG feedback icons"
       />
       <div className="grid grid-cols-2 items-center gap-8 md:grid-cols-2 md:gap-10 lg:grid-cols-6">
         {icons.map((icon) => {
