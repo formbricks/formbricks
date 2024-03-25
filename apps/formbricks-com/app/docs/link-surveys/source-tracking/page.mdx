@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import ShareLink from "./share-link.webp";
 import ViewResponse from "./view-response.webp";
@@ -17,7 +17,14 @@ Understand the source a survey respondent comes from when responding to your sur
 Check out this video to learn more about source tracking in link surveys:
 
 {/* Replace link below with our new link on Source Tracking */}
-<iframe width="700" height="450" src="https://www.youtube.com/embed/CytWhuyEMVI?si=t-SFB2A1l1RZDdAC" title="YouTube video player: Formbricks" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
+
+<iframe
+  width="700"
+  height="450"
+  src="https://www.youtube.com/embed/CytWhuyEMVI?si=t-SFB2A1l1RZDdAC"
+  title="YouTube video player: Formbricks"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
 
 ## Purpose
 
@@ -27,6 +34,7 @@ Source tracking for link surveys is essential when you:
 - Aim to ensure compliance with tracking and data collection regulations.
 
 ## Code Example
+
 <Col>
 <CodeGroup title="Example Source as Google">
 
@@ -57,14 +65,13 @@ https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?source=Google
 
 3. **View Responses**: Use the collected source data to analyze where your survey respondents are coming from. You can hover over the user icon in the responses tab to see the source of the user.
 
-<Image
-    src={ViewResponse}
-    alt="View Source in Response"
-    quality="100"
-    className="max-w-full rounded-lg sm:max-w-3xl"
+<MdxImage
+  src={ViewResponse}
+  alt="View Source in Response"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 4. **Analyse Data**: Download all the responses as a CSV/Excel and get access to the source information. This can provide valuable insights into your audience.
 
 Source tracking allows you to make informed decisions based on the origin of your survey participants, helping you tailor your surveys and marketing strategies accordingly.
-

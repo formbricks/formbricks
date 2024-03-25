@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import AddApiKey from "./add-api-key.webp";
 import ApiKeySecret from "./api-key-secret.webp";
@@ -21,25 +21,24 @@ The API requests are authorized with a personal API key. This API key gives you 
 
 1. Go to your settings on [app.formbricks.com](https://app.formbricks.com).
 2. Go to page “API keys”
-   <Image src={AddApiKey} alt="Add API Key" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+   <MdxImage src={AddApiKey} alt="Add API Key" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 3. Create a key for the development or production environment.
 4. Copy the key immediately. You won’t be able to see it again.
-   <Image
+   <MdxImage
      src={ApiKeySecret}
      alt="API Key Secret"
      quality="100"
-     className="rounded-lg max-w-full sm:max-w-3xl"
+     className="max-w-full rounded-lg sm:max-w-3xl"
    />
 
 <Note>
-  ### Store API key safely
-  Anyone who has your API key has full control over your account.
-  For security reasons, you cannot view the API key again.
+  ### Store API key safely Anyone who has your API key has full control over your account. For security
+  reasons, you cannot view the API key again.
 </Note>
 
 ### Test your API Key
 
-Hit the below request to verify that you are authenticated with your API Key and the server is responding. 
+Hit the below request to verify that you are authenticated with your API Key and the server is responding.
 
 ## Get My Profile {{ tag: 'GET', label: '/api/v1/me' }}
 
