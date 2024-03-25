@@ -22,7 +22,7 @@ const config = ({ mode }) => {
       },
       lib: {
         entry: resolve(__dirname, "src/index.ts"),
-        name: "formbricks-surveys",
+        name: "formbricksSurveys",
         formats: ["es", "umd"],
         fileName: "index",
       },
