@@ -1,4 +1,5 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
+
 import UnstableCache from "./unstable-cache-documentation.webp";
 
 export const metadata = {
@@ -209,6 +210,7 @@ We will rewrite the function `getApiKey` we created in the `service.ts` file to 
 
 ```ts
 import { unstable_cache } from "next/cache";
+
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { apiKeyCache } from "./cache";
 
@@ -252,7 +254,7 @@ _Breakdown of the above code._
 
 In the above code we only introduce something new called `unstable_cache`, read more about it [here](https://nextjs.org/docs/app/api-reference/functions/unstable_cache#parameters). In a nutshell these are its parameters:
 
-<Image
+<MdxImage
   src={UnstableCache}
   alt="Unstable Cache Parameters"
   quality="100"

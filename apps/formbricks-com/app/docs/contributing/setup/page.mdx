@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import GitpodAuth from "./gitpod/auth.webp";
 import GitpodNewWorkspace from "./gitpod/new-workspace.webp";
@@ -93,13 +93,18 @@ After clicking the one-click setup button, Gitpod will open a new tab or window.
 
 ### 2. Authorizing in Gitpod
 
-<Image src={GitpodAuth} alt="Gitpod Auth Page" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+<MdxImage
+  src={GitpodAuth}
+  alt="Gitpod Auth Page"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
 - This is the Gitpod Authentication Page. It appears when you click the "Open in GitPod" button and Gitpod needs
 to authenticate your access to the workspace. Click on 'Continue With Github' to authorize your GitPod session.
 
 ### 3. Creating a New Workspace
 
-<Image
+<MdxImage
   src={GitpodNewWorkspace}
   alt="Gitpod New workspace Page"
   quality="100"
@@ -113,7 +118,7 @@ and follow the prompts to authorize the integration. 2. Change the `WEBAPP_URL` 
 
 ### 4. Gitpod preparing the created Workspace
 
-<Image
+<MdxImage
   src={GitpodPreparing}
   alt="Gitpod Preparing workspace Page"
   quality="100"
@@ -124,7 +129,7 @@ page while Gitpod sets up your development environment.
 
 ### 5. Gitpod running the Workspace
 
-<Image
+<MdxImage
   src={GitpodRunning}
   alt="Gitpod Running Workspace Page"
   quality="100"
@@ -189,7 +194,7 @@ Here are the ports and corresponding URLs for the services within your Gitpod en
 
 {" "}
 
-<Image
+<MdxImage
   src={GitpodPorts}
   alt="Gitpod Ports tab"
   quality="100"
@@ -204,7 +209,7 @@ These URLs and port numbers represent various services and endpoints within your
 
 1. After clicking the one-click setup button, you will be redirected to the Github Codespaces page. Review the configuration and click on the 'Create Codespace' button to create a new Codespace.
 
-<Image
+<MdxImage
   src={GithubCodespaceNew}
   alt="New Github Codespace"
   quality="100"
@@ -213,7 +218,7 @@ These URLs and port numbers represent various services and endpoints within your
 
 2. This will start loading the Codespace. Keep in mind this might take a few minutes to complete depending on your internet connection and the instance availability.
 
-<Image
+<MdxImage
   src={GithubCodespaceLoading}
   alt="Loading Github Codespace"
   quality="100"
@@ -242,7 +247,7 @@ These URLs and port numbers represent various services and endpoints within your
 
 5. Right next to the Terminal, you will see a **Ports** tab, click on it to see the ports and their respective URLs. Now access the Forwarded Address for port 3000 and you should be able to visit your Formbricks App!
 
-<Image
+<MdxImage
   src={GithubCodespacePorts}
   alt="Github Codespace Ports"
   quality="100"

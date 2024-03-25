@@ -197,6 +197,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Identify Users", href: "/docs/in-app-surveys/user-identification" },
       { title: "Actions", href: "/docs/in-app-surveys/actions" },
       { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
+      { title: "Advanced Targeting", href: "/docs/in-app-surveys/advanced-targeting" },
     ],
   },
   {
