@@ -339,6 +339,7 @@ model ActionClass {
   actions       Action[]
 
   @@unique([name, environmentId])
+  @@index([environmentId, createdAt])
 }
 
 model Action {
