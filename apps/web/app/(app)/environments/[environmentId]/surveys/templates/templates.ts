@@ -2635,7 +2635,7 @@ export const minimalSurvey: TSurvey = {
   languages: [],
 };
 
-export const getFirstSurvey = (webAppUrl: string) => ({
+export const getExampleSurveyTemplate = (webAppUrl: string) => ({
   ...customSurvey.preset,
   questions: customSurvey.preset.questions.map(
     (question) =>

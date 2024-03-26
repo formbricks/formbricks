@@ -200,7 +200,7 @@ model Display {
   status     DisplayStatus?
 
   @@index([surveyId])
-  @@index([personId])
+  @@index([personId, createdAt])
 }
 
 model SurveyTrigger {
@@ -313,7 +313,7 @@ model Survey {
   displayPercentage Int?
   languages         SurveyLanguage[]
 
-  @@index([environmentId])
+  @@index([environmentId, updatedAt])
   @@index([segmentId])
 }
 
@@ -339,6 +339,7 @@ model ActionClass {
   actions       Action[]
 
   @@unique([name, environmentId])
+  @@index([environmentId, createdAt])
 }
 
 model Action {
@@ -356,6 +357,7 @@ model Action {
   @@index([personId, actionClassId, createdAt])
   @@index([actionClassId, createdAt])
   @@index([personId])
+  @@index([createdAt])
 }
 
 enum EnvironmentType {
