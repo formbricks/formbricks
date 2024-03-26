@@ -59,7 +59,7 @@ export const ZSurveyProductOverwrites = z.object({
 
 export type TSurveyProductOverwrites = z.infer<typeof ZSurveyProductOverwrites>;
 
-export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
+export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "upload", "image"]);
 
 export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
 
