@@ -182,6 +182,9 @@ export const renderWidget = async (survey: TSurvey) => {
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
           language: languageCode === "default" ? getDefaultLanguageCode(survey) : languageCode,
+          meta: {
+            url: window.location.href,
+          },
         });
       },
       onClose: closeSurvey,
