@@ -1,4 +1,6 @@
 // extend this object in order to add more validation rules
+import { toast } from "react-hot-toast";
+
 import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import {
   TI18nString,
@@ -15,7 +17,10 @@ import {
 } from "@formbricks/types/surveys";
 
 // Utility function to check if label is valid for all required languages
-const isLabelValidForAllLanguages = (label: TI18nString, surveyLanguages: TSurveyLanguage[]): boolean => {
+export const isLabelValidForAllLanguages = (
+  label: TI18nString,
+  surveyLanguages: TSurveyLanguage[]
+): boolean => {
   const filteredLanguages = surveyLanguages.filter((surveyLanguages) => {
     return surveyLanguages.enabled;
   });
@@ -33,7 +38,7 @@ const handleI18nCheckForMultipleChoice = (
 };
 
 // Validation rules
-const validationRules = {
+export const validationRules = {
   openText: (question: TSurveyOpenTextQuestion, languages: TSurveyLanguage[]) => {
     return question.placeholder &&
       getLocalizedValue(question.placeholder, "default").trim() !== "" &&
@@ -84,7 +89,7 @@ const validationRules = {
 };
 
 // Main validation function
-const validateQuestion = (question: TSurveyQuestion, surveyLanguages: TSurveyLanguage[]): boolean => {
+export const validateQuestion = (question: TSurveyQuestion, surveyLanguages: TSurveyLanguage[]): boolean => {
   const specificValidation = validationRules[question.type];
   const defaultValidation = validationRules.defaultValidation;
 
@@ -134,8 +139,6 @@ export const isCardValid = (
   );
 };
 
-export { validateQuestion, isLabelValidForAllLanguages };
-
 export const isValidUrl = (string: string): boolean => {
   try {
     new URL(string);
@@ -143,4 +146,52 @@ export const isValidUrl = (string: string): boolean => {
   } catch (e) {
     return false;
   }
+};
+
+// Function to validate question ID and Hidden field Id
+export const validateId = (
+  type: "Hidden field" | "Question",
+  field: string,
+  existingQuestionIds: string[],
+  existingHiddenFieldIds: string[]
+): boolean => {
+  if (field.trim() === "") {
+    toast.error(`Please enter a ${type} Id.`);
+    return false;
+  }
+
+  const combinedIds = [...existingQuestionIds, ...existingHiddenFieldIds];
+
+  if (combinedIds.findIndex((id) => id.toLowerCase() === field.toLowerCase()) !== -1) {
+    toast.error(`${type} Id already exists in questions or hidden fields.`);
+    return false;
+  }
+
+  const forbiddenIds = [
+    "userId",
+    "source",
+    "suid",
+    "end",
+    "start",
+    "welcomeCard",
+    "hidden",
+    "verifiedEmail",
+    "multiLanguage",
+  ];
+  if (forbiddenIds.includes(field)) {
+    toast.error(`${type} Id not allowed.`);
+    return false;
+  }
+
+  if (field.includes(" ")) {
+    toast.error(`${type} Id not allowed, avoid using spaces.`);
+    return false;
+  }
+
+  if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
+    toast.error(`${type} Id not allowed, use only alphanumeric characters, hyphens, or underscores.`);
+    return false;
+  }
+
+  return true;
 };

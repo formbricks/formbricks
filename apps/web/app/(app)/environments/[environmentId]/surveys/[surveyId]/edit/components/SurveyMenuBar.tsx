@@ -1,6 +1,10 @@
 "use client";
 
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import {
+  isCardValid,
+  validateQuestion,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { isEqual } from "lodash";
 import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -24,7 +28,6 @@ import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 import { updateSurveyAction } from "../actions";
-import { isCardValid, validateQuestion } from "../lib/validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
