@@ -136,50 +136,41 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     });
   }
 
-  try {
-    const action = await prisma.action.create({
-      data: {
-        person: {
-          connect: {
-            environmentId_userId: {
-              environmentId,
-              userId,
-            },
-          },
-        },
-        actionClass: {
-          connect: {
-            id: actionClass.id,
+  const action = await prisma.action.create({
+    data: {
+      person: {
+        connect: {
+          environmentId_userId: {
+            environmentId,
+            userId,
           },
         },
       },
-    });
+      actionClass: {
+        connect: {
+          id: actionClass.id,
+        },
+      },
+    },
+  });
 
-    const isPersonMonthlyActive = await getIsPersonMonthlyActive(action.personId);
-    if (!isPersonMonthlyActive) {
-      activePersonCache.revalidate({ id: action.personId });
-    }
-
-    actionCache.revalidate({
-      environmentId,
-      personId: action.personId,
-    });
-
-    return {
-      id: action.id,
-      createdAt: action.createdAt,
-      personId: action.personId,
-      properties: action.properties,
-      actionClass,
-    };
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2003") {
-        throw new ResourceNotFoundError("Person", userId);
-      }
-    }
-    throw error; // Re-throw the error if it's not a PrismaClientKnownRequestError
+  const isPersonMonthlyActive = await getIsPersonMonthlyActive(action.personId);
+  if (!isPersonMonthlyActive) {
+    activePersonCache.revalidate({ id: action.personId });
   }
+
+  actionCache.revalidate({
+    environmentId,
+    personId: action.personId,
+  });
+
+  return {
+    id: action.id,
+    createdAt: action.createdAt,
+    personId: action.personId,
+    properties: action.properties,
+    actionClass,
+  };
 };
 
 export const getActionCountInLastHour = async (actionClassId: string): Promise<number> =>
