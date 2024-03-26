@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { env } from "@formbricks/lib/env";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling } from "@formbricks/types/surveys";
 
@@ -112,9 +113,13 @@ export default function SurveyBgSelectorTab({
         <TabButton isActive={tab === "image"} onClick={() => setTab("image")}>
           Upload
         </TabButton>
-        <TabButton isActive={tab === "upload"} onClick={() => setTab("upload")}>
-          Image
-        </TabButton>
+        {env.NEXT_PUBLIC_UNSPLASH_API_KEY ? (
+          <TabButton isActive={tab === "upload"} onClick={() => setTab("upload")}>
+            Image
+          </TabButton>
+        ) : (
+          <></>
+        )}
       </div>
       {renderContent()}
     </div>
