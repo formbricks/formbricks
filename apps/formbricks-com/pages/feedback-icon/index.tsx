@@ -73,12 +73,17 @@ export default function FeedbackBoxPage() {
 
   return (
     <Layout
-      title="Download Free Feedback Icons"
-      description="Feedback Icon Collection: Directly Download High-Quality Feedback Icons">
+      title="Download MIT-licensed Feedback Icons"
+      description="Explore our Feedback Icon gallery today and transform how users interact with your platform. 
+
+      Our feedback icon gallery offers a diverse collection of high-quality feedback icons that cater to various design preferences. 
+      Whether you need a simple message, send, envelope, or more elaborate feedback symbols, it has you covered. 
+      These icons are not only visually appealing but also serve as effective tools for conveying user sentiments and opinions.
+      ">
       <HeroTitle
         headingPt1=""
         headingTeal="Feedback Icons"
-        subheading="Click on each card to directly download high-quality SVG feedback icons"
+        subheading="Directly download high-quality SVG feedback icons by cicking on each icon card"
       />
       <div className="grid grid-cols-2 items-center gap-8 md:grid-cols-2 md:gap-10 lg:grid-cols-6">
         {icons.map((icon) => {
