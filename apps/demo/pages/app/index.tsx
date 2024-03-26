@@ -40,7 +40,7 @@ export default function AppPage({}) {
       const userInitAttributes = { "Init Attribute 1": "eight", "Init Attribute 2": "two" };
 
       const attributes = isUserId ? { ...defaultAttributes, ...userInitAttributes } : defaultAttributes;
-      const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
+      const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING11" : undefined;
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
         apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,

@@ -9,14 +9,13 @@ import { TActionClassType } from "@formbricks/types/actionClasses";
 import { TAction, TActionInput, ZAction, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { actionClassCache } from "../actionClass/cache";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { activePersonCache } from "../person/cache";
-import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "../person/service";
-import { surveyCache } from "../survey/cache";
+import { getIsPersonMonthlyActive } from "../person/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
@@ -127,13 +126,6 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     actionType = "automatic";
   }
 
-  let person = await getPersonByUserId(environmentId, userId);
-
-  if (!person) {
-    // create person if it does not exist
-    person = await createPerson(environmentId, userId);
-  }
-
   let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
 
   if (!actionClass) {
@@ -144,42 +136,50 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     });
   }
 
-  const action = await prisma.action.create({
-    data: {
-      person: {
-        connect: {
-          id: person.id,
+  try {
+    const action = await prisma.action.create({
+      data: {
+        person: {
+          connect: {
+            environmentId_userId: {
+              environmentId,
+              userId,
+            },
+          },
+        },
+        actionClass: {
+          connect: {
+            id: actionClass.id,
+          },
         },
       },
-      actionClass: {
-        connect: {
-          id: actionClass.id,
-        },
-      },
-    },
-  });
+    });
 
-  const isPersonMonthlyActive = await getIsPersonMonthlyActive(person.id);
-  if (!isPersonMonthlyActive) {
-    activePersonCache.revalidate({ id: person.id });
+    const isPersonMonthlyActive = await getIsPersonMonthlyActive(action.personId);
+    if (!isPersonMonthlyActive) {
+      activePersonCache.revalidate({ id: action.personId });
+    }
+
+    actionCache.revalidate({
+      environmentId,
+      personId: action.personId,
+    });
+
+    return {
+      id: action.id,
+      createdAt: action.createdAt,
+      personId: action.personId,
+      properties: action.properties,
+      actionClass,
+    };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2003") {
+        throw new ResourceNotFoundError("Person", userId);
+      }
+    }
+    throw error; // Re-throw the error if it's not a PrismaClientKnownRequestError
   }
-
-  actionCache.revalidate({
-    environmentId,
-    personId: person.id,
-  });
-
-  surveyCache.revalidate({
-    environmentId,
-  });
-
-  return {
-    id: action.id,
-    createdAt: action.createdAt,
-    personId: action.personId,
-    properties: action.properties,
-    actionClass,
-  };
 };
 
 export const getActionCountInLastHour = async (actionClassId: string): Promise<number> =>
