@@ -9,7 +9,7 @@ import { TActionClassType } from "@formbricks/types/actionClasses";
 import { TAction, TActionInput, ZAction, ZActionInput } from "@formbricks/types/actions";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/environment";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 
 import { actionClassCache } from "../actionClass/cache";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
