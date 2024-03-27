@@ -13,7 +13,7 @@ import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surve
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
-  value: string | number | string[];
+  value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -24,7 +24,7 @@ interface MultipleChoiceMultiProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function MultipleChoiceMultiQuestion({
+export const MultipleChoiceMultiQuestion = ({
   question,
   value,
   onChange,
@@ -35,7 +35,7 @@ export default function MultipleChoiceMultiQuestion({
   languageCode,
   ttc,
   setTtc,
-}: MultipleChoiceMultiProps) {
+}: MultipleChoiceMultiProps) => {
   const [startTime, setStartTime] = useState(performance.now());
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
@@ -286,4 +286,4 @@ export default function MultipleChoiceMultiQuestion({
       </div>
     </form>
   );
-}
+};

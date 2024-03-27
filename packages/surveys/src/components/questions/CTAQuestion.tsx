@@ -13,7 +13,7 @@ import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -24,7 +24,7 @@ interface CTAQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function CTAQuestion({
+export const CTAQuestion = ({
   question,
   onSubmit,
   onChange,
@@ -34,7 +34,7 @@ export default function CTAQuestion({
   languageCode,
   ttc,
   setTtc,
-}: CTAQuestionProps) {
+}: CTAQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
@@ -94,4 +94,4 @@ export default function CTAQuestion({
       </div>
     </div>
   );
-}
+};

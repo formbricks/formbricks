@@ -16,6 +16,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
+  TI18nString,
   TSurvey,
   TSurveyEditorTabs,
   TSurveyQuestionType,
@@ -194,7 +195,38 @@ export default function SurveyMenuBar({
           );
 
         if (haveSameChoices) {
-          toast.error("You have two identical choices.");
+          toast.error("You have empty or duplicate choices.");
+          return false;
+        }
+      }
+
+      if (question.type === TSurveyQuestionType.Matrix) {
+        const hasDuplicates = (labels: TI18nString[]) => {
+          const flattenedLabels = labels
+            .map((label) => Object.keys(label).map((lang) => `${lang}:${label[lang].trim().toLowerCase()}`))
+            .flat();
+
+          return new Set(flattenedLabels).size !== flattenedLabels.length;
+        };
+
+        // Function to check for empty labels in each language
+        const hasEmptyLabels = (labels: TI18nString[]) => {
+          return labels.some((label) => Object.values(label).some((value) => value.trim() === ""));
+        };
+
+        if (hasEmptyLabels(question.rows) || hasEmptyLabels(question.columns)) {
+          toast.error("Empty row or column labels in one or more languages");
+          setInvalidQuestions([question.id]);
+          return false;
+        }
+
+        if (hasDuplicates(question.rows)) {
+          toast.error("You have duplicate row labels.");
+          return false;
+        }
+
+        if (hasDuplicates(question.columns)) {
+          toast.error("You have duplicate column labels.");
           return false;
         }
       }

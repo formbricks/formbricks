@@ -4,11 +4,11 @@ import Link from "next/link";
 import { TEnvironment } from "@formbricks/types/environment";
 import { Button } from "@formbricks/ui/Button";
 
-type TEmptyInAppSurveysProps = {
+interface TEmptyInAppSurveysProps {
   environment: TEnvironment;
-};
+}
 
-export default async function EmptyInAppSurveys({ environment }: TEmptyInAppSurveysProps) {
+export const EmptyInAppSurveys = ({ environment }: TEmptyInAppSurveysProps) => {
   return (
     <div className="flex w-full items-center justify-center gap-8 bg-slate-100 py-12">
       <div className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-200 bg-white">
@@ -28,4 +28,4 @@ export default async function EmptyInAppSurveys({ environment }: TEmptyInAppSurv
       </div>
     </div>
   );
-}
+};

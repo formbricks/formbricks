@@ -2,12 +2,14 @@ import { createI18nString } from "@formbricks/lib/i18n/utils";
 import {
   TI18nString,
   TSurvey,
+  TSurveyMatrixQuestion,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyQuestion,
 } from "@formbricks/types/surveys";
 
-export const getChoiceIndex = (id: string, isChoice: boolean) => {
+// Function to get index for choice /rowLabel /columnLabel
+export const getIndex = (id: string, isChoice: boolean) => {
   if (!isChoice) return null;
 
   const parts = id.split("-");
@@ -24,6 +26,17 @@ export const getChoiceLabel = (
 ): TI18nString => {
   const choiceQuestion = question as TSurveyMultipleChoiceMultiQuestion | TSurveyMultipleChoiceSingleQuestion;
   return choiceQuestion.choices[choiceIdx]?.label || createI18nString("", surveyLanguageCodes);
+};
+
+export const getMatrixLabel = (
+  question: TSurveyQuestion,
+  idx: number,
+  surveyLanguageCodes: string[],
+  type: "row" | "column"
+): TI18nString => {
+  const matrixQuestion = question as TSurveyMatrixQuestion;
+  const labels = type === "row" ? matrixQuestion.rows : matrixQuestion.columns;
+  return labels[idx] || createI18nString("", surveyLanguageCodes);
 };
 
 export const getCardText = (

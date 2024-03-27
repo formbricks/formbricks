@@ -13,7 +13,7 @@ interface HiddenFieldsSummaryProps {
   questionSummary: TSurveySummaryHiddenField;
 }
 
-const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment, questionSummary }) => {
+export const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment, questionSummary }) => {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
       <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
@@ -73,5 +73,3 @@ const HiddenFieldsSummary: FC<HiddenFieldsSummaryProps> = ({ environment, questi
     </div>
   );
 };
-
-export default HiddenFieldsSummary;

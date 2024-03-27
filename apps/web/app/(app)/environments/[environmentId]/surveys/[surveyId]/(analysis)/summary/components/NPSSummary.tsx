@@ -11,7 +11,7 @@ interface NPSSummaryProps {
   questionSummary: TSurveySummaryNps;
 }
 
-export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
+export const NPSSummary = ({ questionSummary }: NPSSummaryProps) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   return (
@@ -79,4 +79,4 @@ export default function NPSSummary({ questionSummary }: NPSSummaryProps) {
       </div>
     </div>
   );
-}
+};

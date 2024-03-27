@@ -13,7 +13,7 @@ import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys"
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
-  value: string | number | string[];
+  value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -24,7 +24,7 @@ interface PictureSelectionProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function PictureSelectionQuestion({
+export const PictureSelectionQuestion = ({
   question,
   value,
   onChange,
@@ -35,7 +35,7 @@ export default function PictureSelectionQuestion({
   languageCode,
   ttc,
   setTtc,
-}: PictureSelectionProps) {
+}: PictureSelectionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
@@ -44,11 +44,7 @@ export default function PictureSelectionQuestion({
     let values: string[] = [];
 
     if (question.allowMulti) {
-      if (Array.isArray(value)) {
-        values = [...value, item];
-      } else {
-        values = [item];
-      }
+      values = [...value, item];
     } else {
       values = [item];
     }
@@ -60,11 +56,7 @@ export default function PictureSelectionQuestion({
     let values: string[] = [];
 
     if (question.allowMulti) {
-      if (Array.isArray(value)) {
-        values = value.filter((i) => i !== item);
-      } else {
-        values = [];
-      }
+      values = value.filter((i) => i !== item);
     } else {
       values = [];
     }
@@ -73,7 +65,7 @@ export default function PictureSelectionQuestion({
   };
 
   const handleChange = (id: string) => {
-    if (Array.isArray(value) && value.includes(id)) {
+    if (value.includes(id)) {
       removeItem(id);
     } else {
       addItem(id);
@@ -81,7 +73,7 @@ export default function PictureSelectionQuestion({
   };
 
   useEffect(() => {
-    if (!question.allowMulti && Array.isArray(value) && value.length > 1) {
+    if (!question.allowMulti && value.length > 1) {
       onChange({ [question.id]: [] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -167,14 +159,12 @@ export default function PictureSelectionQuestion({
                     name={`${choice.id}-checkbox`}
                     type="checkbox"
                     tabIndex={-1}
-                    checked={Array.isArray(value) && value.includes(choice.id)}
+                    checked={value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded border",
-                      Array.isArray(value) && value.includes(choice.id) ? "border-brand text-brand" : ""
+                      value.includes(choice.id) ? "border-brand text-brand" : ""
                     )}
-                    required={
-                      question.required && Array.isArray(value) && value.length ? false : question.required
-                    }
+                    required={question.required && value.length ? false : question.required}
                   />
                 ) : (
                   <input
@@ -182,14 +172,12 @@ export default function PictureSelectionQuestion({
                     name={`${choice.id}-radio`}
                     type="radio"
                     tabIndex={-1}
-                    checked={Array.isArray(value) && value.includes(choice.id)}
+                    checked={value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded-full border",
-                      Array.isArray(value) && value.includes(choice.id) ? "border-brand text-brand" : ""
+                      value.includes(choice.id) ? "border-brand text-brand" : ""
                     )}
-                    required={
-                      question.required && Array.isArray(value) && value.length ? false : question.required
-                    }
+                    required={question.required && value.length ? false : question.required}
                   />
                 )}
               </label>
@@ -219,4 +207,4 @@ export default function PictureSelectionQuestion({
       </div>
     </form>
   );
-}
+};

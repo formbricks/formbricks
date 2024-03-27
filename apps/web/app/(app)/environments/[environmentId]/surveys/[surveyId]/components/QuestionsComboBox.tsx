@@ -5,6 +5,7 @@ import {
   CheckIcon,
   ChevronDown,
   ChevronUp,
+  GridIcon,
   HashIcon,
   HelpCircleIcon,
   ImageIcon,
@@ -75,6 +76,8 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <CheckIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.PictureSelection:
             return <ImageIcon width={18} className="text-white" />;
+          case TSurveyQuestionType.Matrix:
+            return <GridIcon width={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
         return <HashIcon width={18} className="text-white" />;

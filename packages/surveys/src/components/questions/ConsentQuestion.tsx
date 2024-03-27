@@ -12,7 +12,7 @@ import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -23,7 +23,7 @@ interface ConsentQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function ConsentQuestion({
+export const ConsentQuestion = ({
   question,
   value,
   onChange,
@@ -34,7 +34,7 @@ export default function ConsentQuestion({
   languageCode,
   ttc,
   setTtc,
-}: ConsentQuestionProps) {
+}: ConsentQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
@@ -109,4 +109,4 @@ export default function ConsentQuestion({
       </form>
     </div>
   );
-}
+};

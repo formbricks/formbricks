@@ -13,7 +13,7 @@ import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surv
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -24,7 +24,7 @@ interface MultipleChoiceSingleProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function MultipleChoiceSingleQuestion({
+export const MultipleChoiceSingleQuestion = ({
   question,
   value,
   onChange,
@@ -35,7 +35,7 @@ export default function MultipleChoiceSingleQuestion({
   languageCode,
   ttc,
   setTtc,
-}: MultipleChoiceSingleProps) {
+}: MultipleChoiceSingleProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
   const otherSpecify = useRef<HTMLInputElement | null>(null);
@@ -229,4 +229,4 @@ export default function MultipleChoiceSingleQuestion({
       </div>
     </form>
   );
-}
+};

@@ -13,7 +13,7 @@ interface RatingSummaryProps {
   questionSummary: TSurveySummaryRating;
 }
 
-export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
+export const RatingSummary = ({ questionSummary }: RatingSummaryProps) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   const getIconBasedOnScale = useMemo(() => {
@@ -95,4 +95,4 @@ export default function RatingSummary({ questionSummary }: RatingSummaryProps) {
       )}
     </div>
   );
-}
+};

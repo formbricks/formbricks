@@ -15,7 +15,7 @@ interface FileUploadSummaryProps {
   environmentId: string;
 }
 
-export default function FileUploadSummary({ questionSummary, environmentId }: FileUploadSummaryProps) {
+export const FileUploadSummary = ({ questionSummary, environmentId }: FileUploadSummaryProps) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   return (
@@ -112,4 +112,4 @@ export default function FileUploadSummary({ questionSummary, environmentId }: Fi
       </div>
     </div>
   );
-}
+};

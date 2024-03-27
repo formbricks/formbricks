@@ -13,7 +13,7 @@ import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
 
 interface DateQuestionProps {
   question: TSurveyDateQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -25,7 +25,7 @@ interface DateQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function DateQuestion({
+export const DateQuestion = ({
   question,
   value,
   onSubmit,
@@ -36,7 +36,7 @@ export default function DateQuestion({
   languageCode,
   setTtc,
   ttc,
-}: DateQuestionProps) {
+}: DateQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -170,4 +170,4 @@ export default function DateQuestion({
       </div>
     </form>
   );
-}
+};

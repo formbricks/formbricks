@@ -14,7 +14,7 @@ import { TSurveyCalQuestion } from "@formbricks/types/surveys";
 
 interface CalQuestionProps {
   question: TSurveyCalQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -25,7 +25,7 @@ interface CalQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
 }
 
-export default function CalQuestion({
+export const CalQuestion = ({
   question,
   value,
   onChange,
@@ -36,7 +36,7 @@ export default function CalQuestion({
   languageCode,
   ttc,
   setTtc,
-}: CalQuestionProps) {
+}: CalQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -101,4 +101,4 @@ export default function CalQuestion({
       </div>
     </form>
   );
-}
+};

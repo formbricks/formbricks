@@ -1,6 +1,6 @@
 "use client";
 
-import EmptyInAppSurveys from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
+import { EmptyInAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
 import React, { useEffect, useRef } from "react";
 
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";

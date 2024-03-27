@@ -8,7 +8,13 @@ import { toast } from "react-hot-toast";
 
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TI18nString, TSurvey, TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surveys";
+import {
+  TI18nString,
+  TShuffleOption,
+  TSurvey,
+  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyQuestionType,
+} from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
@@ -18,7 +24,10 @@ interface OpenQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyMultipleChoiceSingleQuestion;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateQuestion: (
+    questionIdx: number,
+    updatedAttributes: Partial<TSurveyMultipleChoiceSingleQuestion>
+  ) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
@@ -129,7 +138,7 @@ export default function MultipleChoiceSingleForm({
       updateQuestion(questionIdx, {
         choices: newChoices,
         ...(question.shuffleOption === shuffleOptionsTypes.all.id && {
-          shuffleOption: shuffleOptionsTypes.exceptLast.id,
+          shuffleOption: shuffleOptionsTypes.exceptLast.id as TShuffleOption,
         }),
       });
     }
@@ -306,7 +315,7 @@ export default function MultipleChoiceSingleForm({
               variant="minimal"
               type="button"
               onClick={() => {
-                updateQuestion(questionIdx, { type: "multipleChoiceMulti" });
+                updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceSingle });
               }}>
               Convert to Multi Select
             </Button>
@@ -315,7 +324,7 @@ export default function MultipleChoiceSingleForm({
               <Select
                 defaultValue={question.shuffleOption}
                 value={question.shuffleOption}
-                onValueChange={(e) => {
+                onValueChange={(e: TShuffleOption) => {
                   updateQuestion(questionIdx, { shuffleOption: e });
                 }}>
                 <SelectTrigger className="w-fit space-x-2 overflow-hidden border-0 font-semibold text-slate-600">

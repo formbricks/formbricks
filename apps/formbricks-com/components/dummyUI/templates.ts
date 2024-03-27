@@ -1,6 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
 
-import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import {
   AppPieChartIcon,
   ArrowRightCircleIcon,
@@ -26,7 +25,7 @@ import {
   VideoTabletAdjustIcon,
 } from "@formbricks/ui/icons";
 
-import { TTemplate } from "./types";
+import { TSurveyQuestionType, TTemplate } from "./types";
 
 const thankYouCardDefault = {
   enabled: true,
