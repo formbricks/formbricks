@@ -243,16 +243,16 @@ function RatingSmiley({ active, idx, range }: RatingSmileyProps): JSX.Element {
   const activeColor = "fill-rating-fill";
   const inactiveColor = "fill-none";
   let icons = [
-    <TiredFace className={active ? activeColor : inactiveColor} tabIndex={-1} />,
-    <WearyFace className={active ? activeColor : inactiveColor} tabIndex={-1} />,
-    <PerseveringFace className={active ? activeColor : inactiveColor} tabIndex={-1} />,
-    <FrowningFace className={active ? activeColor : inactiveColor} tabIndex={-1} />,
-    <ConfusedFace className={active ? activeColor : inactiveColor} tabIndex={-1} />,
-    <NeutralFace className={active ? activeColor : inactiveColor} tabIndex={-1} />,
-    <SlightlySmilingFace className={active ? activeColor : inactiveColor} tabIndex={-1} />,
-    <SmilingFaceWithSmilingEyes className={active ? activeColor : inactiveColor} tabIndex={-1} />,
-    <GrinningFaceWithSmilingEyes className={active ? activeColor : inactiveColor} tabIndex={-1} />,
-    <GrinningSquintingFace className={active ? activeColor : inactiveColor} tabIndex={-1} />,
+    <TiredFace className={active ? activeColor : inactiveColor} />,
+    <WearyFace className={active ? activeColor : inactiveColor} />,
+    <PerseveringFace className={active ? activeColor : inactiveColor} />,
+    <FrowningFace className={active ? activeColor : inactiveColor} />,
+    <ConfusedFace className={active ? activeColor : inactiveColor} />,
+    <NeutralFace className={active ? activeColor : inactiveColor} />,
+    <SlightlySmilingFace className={active ? activeColor : inactiveColor} />,
+    <SmilingFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
+    <GrinningFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
+    <GrinningSquintingFace className={active ? activeColor : inactiveColor} />,
   ];
 
   if (range == 7) icons = [icons[1], icons[3], icons[4], icons[5], icons[6], icons[8], icons[9]];
