@@ -24,10 +24,10 @@ interface QuestionConditionalProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   languageCode: string;
-  autoFocus?: boolean;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
   surveyId: string;
+  isInIframe: boolean;
 }
 
 export default function QuestionConditional({
@@ -39,11 +39,11 @@ export default function QuestionConditional({
   isFirstQuestion,
   isLastQuestion,
   languageCode,
-  autoFocus = true,
   ttc,
   setTtc,
   surveyId,
   onFileUpload,
+  isInIframe,
 }: QuestionConditionalProps) {
   return question.type === TSurveyQuestionType.OpenText ? (
     <OpenTextQuestion
@@ -54,10 +54,10 @@ export default function QuestionConditional({
       onBack={onBack}
       isFirstQuestion={isFirstQuestion}
       isLastQuestion={isLastQuestion}
-      autoFocus={autoFocus}
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceSingle ? (
     <MultipleChoiceSingleQuestion
@@ -71,6 +71,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.MultipleChoiceMulti ? (
     <MultipleChoiceMultiQuestion
@@ -84,6 +85,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.NPS ? (
     <NPSQuestion
@@ -97,6 +99,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.CTA ? (
     <CTAQuestion
@@ -110,6 +113,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.Rating ? (
     <RatingQuestion
@@ -123,6 +127,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.Consent ? (
     <ConsentQuestion
@@ -136,6 +141,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.Date ? (
     <DateQuestion
@@ -149,6 +155,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.PictureSelection ? (
     <PictureSelectionQuestion
@@ -162,6 +169,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.FileUpload ? (
     <FileUploadQuestion
@@ -177,6 +185,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : question.type === TSurveyQuestionType.Cal ? (
     <CalQuestion
@@ -190,6 +199,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : null;
 }
