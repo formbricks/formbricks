@@ -25,7 +25,24 @@ export const setIsSurveyRunning = (value: boolean) => {
   isSurveyRunning = value;
 };
 
-export const renderWidget = async (survey: TSurvey) => {
+const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
+  const randomNum = Math.floor(Math.random() * 100) + 1;
+  return randomNum <= displayPercentage;
+};
+
+export const triggerSurvey = async (survey: TSurvey): Promise<void> => {
+  // Check if the survey should be displayed based on displayPercentage
+  if (survey.displayPercentage) {
+    const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
+    if (!shouldDisplaySurvey) {
+      logger.debug("Survey display skipped based on displayPercentage.");
+      return; // skip displaying the survey
+    }
+    await renderWidget(survey);
+  }
+};
+
+const renderWidget = async (survey: TSurvey) => {
   if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -182,6 +199,9 @@ export const renderWidget = async (survey: TSurvey) => {
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
           language: languageCode === "default" ? getDefaultLanguageCode(survey) : languageCode,
+          meta: {
+            url: window.location.href,
+          },
         });
       },
       onClose: closeSurvey,
