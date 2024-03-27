@@ -1,7 +1,7 @@
 import { render } from "@react-email/render";
 
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
+import { TSurvey } from "@formbricks/types/surveys";
 
 import {
   DEBUG,
@@ -179,12 +179,13 @@ export const sendInviteAcceptedEmail = async (inviterName: string, inviteeName: 
 export const sendResponseFinishedEmail = async (
   email: string,
   environmentId: string,
-  survey: { id: string; name: string; questions: TSurveyQuestion[] },
+  survey: TSurvey,
   response: TResponse,
   responseCount: number
 ) => {
   const personEmail = response.person?.attributes["email"];
   const team = await getTeamByEnvironmentId(environmentId);
+
   await sendEmail({
     to: email,
     subject: personEmail
