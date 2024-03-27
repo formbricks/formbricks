@@ -243,6 +243,13 @@ export const inviteUser = async ({
     teamId: invite.teamId,
   });
 
-  await sendInviteMemberEmail(invite.id, email, currentUserName, name, isOnboardingInvite, inviteMessage);
+  await sendInviteMemberEmail(
+    invite.id,
+    email,
+    currentUserName ?? "",
+    name ?? "",
+    isOnboardingInvite,
+    inviteMessage
+  );
   return invite;
 };
