@@ -38,8 +38,8 @@ export const triggerSurvey = async (survey: TSurvey): Promise<void> => {
       logger.debug("Survey display skipped based on displayPercentage.");
       return; // skip displaying the survey
     }
-    await renderWidget(survey);
   }
+  await renderWidget(survey);
 };
 
 const renderWidget = async (survey: TSurvey) => {

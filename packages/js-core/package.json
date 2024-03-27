@@ -23,11 +23,10 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "unpkg": "./dist/index.umd.js",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.umd.js",
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs",
       "types": "./dist/index.d.ts"
     }
   },

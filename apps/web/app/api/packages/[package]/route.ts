@@ -8,13 +8,13 @@ export async function GET(_: NextRequest, { params }: { params: { slug: string }
 
   switch (packageRequested) {
     case "js":
-      path = `../../packages/js/dist/index.umd.js`;
+      path = `../../packages/js/dist/index.umd.cjs`;
       break;
     case "js-core":
-      path = `../../packages/js-core/dist/index.umd.js`;
+      path = `../../packages/js-core/dist/index.umd.cjs`;
       break;
     case "surveys":
-      path = `../../packages/surveys/dist/index.umd.js`;
+      path = `../../packages/surveys/dist/index.umd.cjs`;
       break;
     default:
       return responses.notFoundResponse(
@@ -35,6 +35,11 @@ export async function GET(_: NextRequest, { params }: { params: { slug: string }
       },
     });
   } catch (error) {
-    return responses.internalServerErrorResponse("file not found");
+    console.error("Error reading file:", error);
+    return responses.internalServerErrorResponse(
+      "file not found:",
+      true,
+      "public, s-maxage=600, max-age=1800, stale-while-revalidate=600, stale-if-error=600"
+    );
   }
 }
