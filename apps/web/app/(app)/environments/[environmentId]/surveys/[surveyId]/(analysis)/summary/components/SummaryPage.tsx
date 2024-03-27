@@ -52,6 +52,7 @@ interface SummaryPageProps {
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
   membershipRole?: TMembershipRole;
+  totalResponseCount: number;
 }
 
 const SummaryPage = ({
@@ -64,11 +65,13 @@ const SummaryPage = ({
   environmentTags,
   attributes,
   membershipRole,
+  totalResponseCount,
 }: SummaryPageProps) => {
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(initialSurveySummary);
   const [showDropOffs, setShowDropOffs] = useState<boolean>(false);
+  const [isFetchingSummary, setFetchingSummary] = useState<boolean>(true);
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
@@ -77,14 +80,19 @@ const SummaryPage = ({
 
   useEffect(() => {
     const handleInitialData = async () => {
-      const responseCount = await getResponseCountAction(surveyId, filters);
-      setResponseCount(responseCount);
-      if (responseCount === 0) {
-        setSurveySummary(initialSurveySummary);
-        return;
+      try {
+        setFetchingSummary(true);
+        const responseCount = await getResponseCountAction(surveyId, filters);
+        setResponseCount(responseCount);
+        if (responseCount === 0) {
+          setSurveySummary(initialSurveySummary);
+          return;
+        }
+        const response = await getSurveySummaryAction(surveyId, filters);
+        setSurveySummary(response);
+      } finally {
+        setFetchingSummary(false);
       }
-      const response = await getSurveySummaryAction(surveyId, filters);
-      setSurveySummary(response);
     };
 
     handleInitialData();
@@ -135,6 +143,8 @@ const SummaryPage = ({
         responseCount={responseCount}
         survey={survey}
         environment={environment}
+        fetchingSummary={isFetchingSummary}
+        totalResponseCount={totalResponseCount}
       />
     </ContentWrapper>
   );

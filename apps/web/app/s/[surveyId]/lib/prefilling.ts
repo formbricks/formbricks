@@ -1,4 +1,3 @@
-import { logger } from "@formbricks/lib/utils/logger";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
@@ -32,7 +31,7 @@ export function getPrefillResponseData(
       return answerObj;
     }
   } catch (error) {
-    logger.error(error);
+    console.error(error);
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }
@@ -50,6 +49,11 @@ export const checkValidity = (question: TSurveyQuestion, answer: any, language: 
           if (!question.choices.find((choice) => choice.label[language] === answer)) return false;
           return true;
         }
+
+        if (question.choices[question.choices.length - 1].label[language] === answer) {
+          return false;
+        }
+
         return true;
       }
       case TSurveyQuestionType.MultipleChoiceMulti: {

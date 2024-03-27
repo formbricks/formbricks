@@ -3,7 +3,6 @@ import Stripe from "stripe";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getTeam, updateTeam } from "@formbricks/lib/team/service";
-import { logger } from "@formbricks/lib/utils/logger";
 
 import { StripePriceLookupKeys } from "./constants";
 import { getFirstOfNextMonthTimestamp } from "./createSubscription";
@@ -113,7 +112,7 @@ export const removeSubscription = async (
       url: "",
     };
   } catch (err) {
-    logger.error(`Error in removing subscription: ${err}`);
+    console.error(`Error in removing subscription: ${err}`);
 
     return {
       status: 500,

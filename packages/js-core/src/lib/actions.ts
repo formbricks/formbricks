@@ -1,23 +1,17 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TJsActionInput } from "@formbricks/types/js";
-import { TSurvey } from "@formbricks/types/surveys";
 
 import { Config } from "./config";
 import { NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { sync } from "./sync";
 import { getIsDebug } from "./utils";
-import { renderWidget } from "./widget";
+import { triggerSurvey } from "./widget";
 
 const logger = Logger.getInstance();
 const config = Config.getInstance();
 
 const intentsToNotCreateOnApp = ["Exit Intent (Desktop)", "50% Scroll"];
-
-const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
-  const randomNum = Math.floor(Math.random() * 100) + 1;
-  return randomNum <= displayPercentage;
-};
 
 export const trackAction = async (name: string): Promise<Result<void, NetworkError>> => {
   const {
@@ -31,7 +25,7 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
     const { codeConfig } = inlineTriggers ?? {};
 
     if (name === codeConfig?.identifier) {
-      await renderWidget(survey);
+      await triggerSurvey(survey);
       return;
     }
   });
@@ -86,30 +80,16 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
   const activeSurveys = config.get().state?.surveys;
 
   if (!!activeSurveys && activeSurveys.length > 0) {
-    await triggerSurvey(name, activeSurveys);
+    for (const survey of activeSurveys) {
+      for (const trigger of survey.triggers) {
+        if (trigger === name) {
+          await triggerSurvey(survey);
+        }
+      }
+    }
   } else {
     logger.debug("No active surveys to display");
   }
 
   return okVoid();
-};
-
-export const triggerSurvey = async (actionName: string, activeSurveys: TSurvey[]): Promise<void> => {
-  for (const survey of activeSurveys) {
-    // Check if the survey should be displayed based on displayPercentage
-    if (survey.displayPercentage) {
-      const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
-      if (!shouldDisplaySurvey) {
-        logger.debug("Survey display skipped based on displayPercentage.");
-        continue;
-      }
-    }
-    for (const trigger of survey.triggers) {
-      if (trigger === actionName) {
-        logger.debug(`Formbricks: survey ${survey.id} triggered by action "${actionName}"`);
-        await renderWidget(survey);
-        return;
-      }
-    }
-  }
 };

@@ -3,7 +3,6 @@ import { TResponseUpdate } from "@formbricks/types/responses";
 
 import SurveyState from "./surveyState";
 import { delay } from "./utils";
-import { logger } from "./utils/logger";
 
 interface QueueConfig {
   apiHost: string;
@@ -56,14 +55,14 @@ export class ResponseQueue {
         this.queue.shift(); // remove the successfully sent response from the queue
         break; // exit the retry loop
       }
-      logger.error(`Formbricks: Failed to send response. Retrying... ${attempts}`);
+      console.error(`Formbricks: Failed to send response. Retrying... ${attempts}`);
       await delay(1000); // wait for 1 second before retrying
       attempts++;
     }
 
     if (attempts >= this.config.retryAttempts) {
       // Inform the user after 2 failed attempts
-      logger.error("Failed to send response after 2 attempts.");
+      console.error("Failed to send response after 2 attempts.");
       // If the response fails finally, inform the user
       if (this.config.onResponseSendingFailed) {
         this.config.onResponseSendingFailed(responseUpdate);
@@ -98,7 +97,7 @@ export class ResponseQueue {
               responseId: response.data.id,
             });
           } catch (error) {
-            logger.error(`Failed to update display, proceeding with the response. ${error}`);
+            console.error(`Failed to update display, proceeding with the response. ${error}`);
           }
         }
         this.surveyState.updateResponseId(response.data.id);
@@ -108,7 +107,7 @@ export class ResponseQueue {
       }
       return true;
     } catch (error) {
-      logger.error(error);
+      console.error(error);
       return false;
     }
   }

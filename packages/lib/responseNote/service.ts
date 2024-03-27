@@ -12,7 +12,6 @@ import { TResponseNote, ZResponseNote } from "@formbricks/types/responses";
 import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { responseCache } from "../response/cache";
 import { formatDateFields } from "../utils/datetime";
-import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 import { responseNoteCache } from "./cache";
 
@@ -65,7 +64,7 @@ export const createResponseNote = async (
     });
     return responseNote;
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
@@ -86,7 +85,7 @@ export const getResponseNote = async (responseNoteId: string): Promise<TResponse
         });
         return responseNote;
       } catch (error) {
-        logger.error(error);
+        console.error(error);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
         }
@@ -117,7 +116,7 @@ export const getResponseNotes = async (responseId: string): Promise<TResponseNot
         }
         return responseNotes;
       } catch (error) {
-        logger.error(error);
+        console.error(error);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           throw new DatabaseError(error.message);
         }
@@ -159,7 +158,7 @@ export const updateResponseNote = async (responseNoteId: string, text: string): 
 
     return updatedResponseNote;
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
@@ -195,7 +194,7 @@ export const resolveResponseNote = async (responseNoteId: string): Promise<TResp
 
     return responseNote;
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
