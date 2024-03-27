@@ -71,7 +71,7 @@ docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
   -e UPGRADE_TO_VERSION="v1.6" \
-  ghcr.io/formbricks/data-migrations:v1.6
+  ghcr.io/formbricks/data-migrations:v1.6.1
 ```
 
 </CodeGroup>
@@ -228,3 +228,4 @@ x-environment: &environment
 </CodeGroup>
 </Col>
 Did we miss something? Are you still facing issues migrating your app? [Join our Discord!](https://formbricks.com/discord) We'd be happy to help!
+```
