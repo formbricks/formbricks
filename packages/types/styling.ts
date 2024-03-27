@@ -18,7 +18,7 @@ export const ZCardArrangement = z.object({
 
 export const ZSurveyStylingBackground = z.object({
   bg: z.string().nullish(),
-  bgType: z.enum(["animation", "color", "image"]).nullish(),
+  bgType: z.enum(["animation", "color", "image", "upload"]).nullish(),
   brightness: z.number().nullish(),
 });
 
