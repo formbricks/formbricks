@@ -113,7 +113,7 @@ export default function PricingTableComponent({
     },
     {
       title: "Multi-Language Surveys",
-      comingSoon: true,
+      comingSoon: false,
     },
     {
       title: "Unlimited Responses",
@@ -162,7 +162,7 @@ export default function PricingTableComponent({
     },
     {
       title: "Multi-Language Surveys",
-      comingSoon: true,
+      comingSoon: false,
     },
   ];
 

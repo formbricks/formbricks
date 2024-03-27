@@ -6,7 +6,7 @@ import { trackAction } from "./actions";
 import { Config } from "./config";
 import { ErrorHandler, InvalidMatchTypeError, NetworkError, Result, err, match, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
-import { renderWidget } from "./widget";
+import { triggerSurvey } from "./widget";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
@@ -60,7 +60,7 @@ export const checkPageUrl = async (): Promise<Result<void, InvalidMatchTypeError
         if (match.ok !== true) return err(match.error);
         if (match.value === false) return;
 
-        renderWidget(survey);
+        triggerSurvey(survey);
       }
     });
   }
@@ -161,8 +161,8 @@ export const checkClickMatch = (event: MouseEvent) => {
   const targetElement = event.target as HTMLElement;
 
   noCodeActionClasses.forEach((action: TActionClass) => {
-    const shouldTrack = evaluateNoCodeConfig(targetElement, action);
-    if (shouldTrack) {
+    const isMatch = evaluateNoCodeConfig(targetElement, action);
+    if (isMatch) {
       trackAction(action.name).then((res) => {
         match(
           res,
@@ -184,9 +184,9 @@ export const checkClickMatch = (event: MouseEvent) => {
   activeSurveys.forEach((survey) => {
     const { inlineTriggers } = survey;
     if (inlineTriggers) {
-      const shouldTrack = evaluateNoCodeConfig(targetElement, inlineTriggers);
-      if (shouldTrack) {
-        renderWidget(survey);
+      const isMatch = evaluateNoCodeConfig(targetElement, inlineTriggers);
+      if (isMatch) {
+        triggerSurvey(survey);
       }
     }
   });

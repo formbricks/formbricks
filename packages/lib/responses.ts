@@ -1,8 +1,10 @@
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
+
+import { getLocalizedValue } from "./i18n/utils";
 
 export const getQuestionResponseMapping = (
-  survey: { questions: TSurveyQuestion[] },
+  survey: TSurvey,
   response: TResponse
 ): { question: string; answer: string | string[]; type: TSurveyQuestionType }[] => {
   const questionResponseMapping: {
@@ -31,7 +33,7 @@ export const getQuestionResponseMapping = (
     };
 
     questionResponseMapping.push({
-      question: question.headline,
+      question: getLocalizedValue(question.headline, "default"),
       answer: getAnswer(),
       type: question.type,
     });

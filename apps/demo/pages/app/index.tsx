@@ -34,7 +34,12 @@ export default function AppPage({}) {
 
     if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
       const isUserId = window.location.href.includes("userId=true");
-      const attributes = isUserId ? { "Init Attribute 1": "eight", "Init Attribute 2": "two" } : undefined;
+      const defaultAttributes = {
+        language: "gu",
+      };
+      const userInitAttributes = { "Init Attribute 1": "eight", "Init Attribute 2": "two" };
+
+      const attributes = isUserId ? { ...defaultAttributes, ...userInitAttributes } : defaultAttributes;
       const userId = isUserId ? "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING" : undefined;
       formbricks.init({
         environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
@@ -91,7 +96,7 @@ export default function AppPage({}) {
                   {process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID}
                 </strong>
                 <span className="relative ml-2 flex h-3 w-3">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"></span>
                   <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
                 </span>
               </div>

@@ -1,5 +1,5 @@
 import { Libraries } from "@/components/docs/Libraries";
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import SetupChecklist from "./env-id.webp";
 import ReactApp from "./react-in-app-survey-app-popup-form.webp";
@@ -28,7 +28,7 @@ Before getting started, make sure you have:
 1. A web application in your desired framework is set up and running.
 2. A Formbricks account with access to your environment ID and API host. You can find these in the **Setup Checklist** in the Settings:
 
-<Image
+<MdxImage
   src={SetupChecklist}
   alt="Step 2 - Setup Checklist"
   quality="100"
@@ -128,7 +128,7 @@ export default App;
 
 The app initializes 'formbricks' when it's loaded in a browser environment (due to the typeof window !== "undefined" check) and then renders your components or content.
 
-<Image
+<MdxImage
   src={ReactApp}
   alt="In-app survey in React app for micro surveys"
   quality="100"
@@ -353,7 +353,7 @@ Refer to our [Example VueJs project](https://github.com/formbricks/examples/tree
 
 Once you have completed the steps above, you can validate your setup by checking the **Setup Checklist** in the Settings. Your widget status indicator should go from this:
 
-<Image
+<MdxImage
   src={WidgetNotConnected}
   alt="Widget isnt connected"
   quality="100"
@@ -362,7 +362,7 @@ Once you have completed the steps above, you can validate your setup by checking
 
 To this:
 
-<Image
+<MdxImage
   src={WidgetConnected}
   alt="Widget is connected"
   quality="100"

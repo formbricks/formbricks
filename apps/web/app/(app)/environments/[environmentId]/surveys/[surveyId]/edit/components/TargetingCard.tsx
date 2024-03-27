@@ -1,8 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -160,7 +159,7 @@ export default function TargetingCard({
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border bg-green-400 p-1.5 text-white"
+              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />
           </div>
           <div>

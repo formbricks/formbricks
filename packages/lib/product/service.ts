@@ -25,8 +25,7 @@ const selectProduct = {
   updatedAt: true,
   name: true,
   teamId: true,
-  brandColor: true,
-  highlightBorderColor: true,
+  languages: true,
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,
@@ -34,6 +33,7 @@ const selectProduct = {
   clickOutsideClose: true,
   darkOverlay: true,
   environments: true,
+  styling: true,
 };
 
 export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> => {
@@ -110,7 +110,6 @@ export const updateProduct = async (
   inputProduct: TProductUpdateInput
 ): Promise<TProduct> => {
   validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput]);
-
   const { environments, ...data } = inputProduct;
   let updatedProduct;
   try {

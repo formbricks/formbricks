@@ -7,6 +7,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
 
@@ -19,6 +20,7 @@ interface DateQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   autoFocus?: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
 }
@@ -31,6 +33,7 @@ export default function DateQuestion({
   isFirstQuestion,
   isLastQuestion,
   onChange,
+  languageCode,
   setTtc,
   ttc,
 }: DateQuestionProps) {
@@ -121,8 +124,15 @@ export default function DateQuestion({
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />
 
       <div className={"text-red-600"}>
         <span>{errorMessage}</span>
@@ -130,7 +140,7 @@ export default function DateQuestion({
 
       <div className={cn("my-4", errorMessage && "rounded-lg border-2 border-red-500")} id="date-picker-root">
         {loading && (
-          <div className="relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          <div className="bg-survey-bg border-border text-placeholder relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
             <span
               className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
               style={{ borderTopColor: "transparent" }}></span>
@@ -142,7 +152,7 @@ export default function DateQuestion({
         <div>
           {!isFirstQuestion && (
             <BackButton
-              backButtonLabel={question.backButtonLabel}
+              backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
               onClick={() => {
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);
@@ -152,7 +162,11 @@ export default function DateQuestion({
           )}
         </div>
 
-        <SubmitButton isLastQuestion={isLastQuestion} onClick={() => {}} buttonLabel={question.buttonLabel} />
+        <SubmitButton
+          isLastQuestion={isLastQuestion}
+          onClick={() => {}}
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+        />
       </div>
     </form>
   );

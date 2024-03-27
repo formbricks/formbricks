@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -92,7 +93,7 @@ const ResponseSurveyCard = ({
       {survey && (
         <SingleResponseCard
           response={response}
-          survey={survey}
+          survey={checkForRecallInHeadline(survey, "default")}
           user={user}
           pageType="people"
           environmentTags={environmentTags}

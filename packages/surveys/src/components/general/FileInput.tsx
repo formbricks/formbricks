@@ -202,7 +202,7 @@ export default function FileInput({
   }, [allowMultipleFiles, fileUrls, isUploading]);
 
   return (
-    <div className="items-left relative mt-3 flex w-full cursor-pointer flex-col justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:cursor-pointer hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
+    <div className="items-left bg-input-bg hover:bg-input-bg-selected border-border relative mt-3 flex w-full flex-col justify-center rounded-lg border-2 border-dashed dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
       <div className="max-h-[30vh] overflow-auto">
         {fileUrls &&
           fileUrls?.map((file, index) => {
@@ -252,7 +252,7 @@ export default function FileInput({
 
       <div>
         {isUploading && (
-          <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg bg-slate-100 py-4">
+          <div className="inset-0 flex animate-pulse items-center justify-center rounded-lg py-4">
             <label htmlFor="selectedFile" className="text-sm font-medium text-slate-500">
               Uploading...
             </label>
@@ -261,14 +261,14 @@ export default function FileInput({
 
         <label htmlFor="selectedFile" onDragOver={(e) => handleDragOver(e)} onDrop={(e) => handleDrop(e)}>
           {showUploader && (
-            <div className="flex flex-col items-center justify-center py-6">
+            <div className="flex flex-col items-center justify-center py-6 hover:cursor-pointer">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="h-6 text-slate-500">
+                className="text-placeholder h-6">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -276,7 +276,7 @@ export default function FileInput({
                 />
               </svg>
 
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-placeholder mt-2 text-sm dark:text-slate-400">
                 <span className="font-medium">Click or drag to upload files.</span>
               </p>
               <input

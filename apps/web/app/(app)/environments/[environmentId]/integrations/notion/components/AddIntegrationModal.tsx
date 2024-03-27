@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
@@ -107,9 +108,9 @@ export default function AddIntegrationModal({
 
   const questionItems = useMemo(() => {
     const questions = selectedSurvey
-      ? checkForRecallInHeadline(selectedSurvey)?.questions.map((q) => ({
+      ? checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((q) => ({
           id: q.id,
-          name: q.headline,
+          name: getLocalizedValue(q.headline, "default"),
           type: q.type,
         }))
       : [];
@@ -226,7 +227,7 @@ export default function AddIntegrationModal({
     return questionItems.filter((q) => !selectedQuestionIds.includes(q.id));
   };
 
-  const createCopy = (item) => JSON.parse(JSON.stringify(item));
+  const createCopy = (item) => structuredClone(item);
 
   const MappingRow = ({ idx }: { idx: number }) => {
     const filteredQuestionItems = getFilteredQuestionItems(idx);
