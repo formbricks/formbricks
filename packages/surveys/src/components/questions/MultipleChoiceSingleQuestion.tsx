@@ -22,6 +22,7 @@ interface MultipleChoiceSingleProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function MultipleChoiceSingleQuestion({
@@ -35,6 +36,7 @@ export default function MultipleChoiceSingleQuestion({
   languageCode,
   ttc,
   setTtc,
+  isInIframe,
 }: MultipleChoiceSingleProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
@@ -103,22 +105,21 @@ export default function MultipleChoiceSingleQuestion({
             ref={choicesContainerRef}>
             {questionChoices.map((choice, idx) => (
               <label
-                key={choice.id}
                 tabIndex={idx + 1}
-                onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    onChange({ [question.id]: choice.label });
-                    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                    setTtc(updatedTtcObj);
-                    setTimeout(() => {
-                      onSubmit({ [question.id]: choice.label }, updatedTtcObj);
-                    }, 350);
-                  }
-                }}
+                key={choice.id}
                 className={cn(
                   value === choice.label ? "border-brand z-10" : "border-border",
                   "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
-                )}>
+                )}
+                onKeyDown={(e) => {
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById(choice.id)?.click();
+                    document.getElementById(choice.id)?.focus();
+                  }
+                }}
+                autoFocus={idx === 0 && !isInIframe}>
                 <span className="flex items-center text-sm">
                   <input
                     tabIndex={-1}
@@ -151,9 +152,11 @@ export default function MultipleChoiceSingleQuestion({
                   "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    setOtherSelected(!otherSelected);
-                    if (!otherSelected) onChange({ [question.id]: "" });
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById(otherOption.id)?.click();
+                    document.getElementById(otherOption.id)?.focus();
                   }
                 }}>
                 <span className="flex items-center text-sm">
@@ -185,15 +188,6 @@ export default function MultipleChoiceSingleQuestion({
                     onChange={(e) => {
                       onChange({ [question.id]: e.currentTarget.value });
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key == "Enter") {
-                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                        setTtc(updatedTtcObj);
-                        setTimeout(() => {
-                          onSubmit({ [question.id]: value }, updatedTtcObj);
-                        }, 100);
-                      }
-                    }}
                     className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder={
                       getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
@@ -224,7 +218,6 @@ export default function MultipleChoiceSingleQuestion({
           tabIndex={questionChoices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
         />
       </div>
     </form>
