@@ -1,6 +1,6 @@
 import Button from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import RedirectCountDown from "@/components/general/RedirectCountdown";
 import Subheader from "@/components/general/Subheader";
 import { useEffect } from "preact/hooks";
@@ -17,6 +17,7 @@ interface ThankYouCardProps {
   buttonLabel?: TI18nString;
   buttonLink?: string;
   imageUrl?: string;
+  videoUrl?: string;
   replaceRecallInfo: (text: string) => string;
   isResponseSendingFinished: boolean;
 }
@@ -30,6 +31,7 @@ export default function ThankYouCard({
   buttonLabel,
   buttonLink,
   imageUrl,
+  videoUrl,
   replaceRecallInfo,
   isResponseSendingFinished,
 }: ThankYouCardProps) {
@@ -48,8 +50,8 @@ export default function ThankYouCard({
 
   return (
     <div className="text-center">
-      {imageUrl ? (
-        <QuestionImage imgUrl={imageUrl} />
+      {imageUrl || videoUrl ? (
+        <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} />
       ) : (
         <div>
           <div className="text-brand flex items-center justify-center">

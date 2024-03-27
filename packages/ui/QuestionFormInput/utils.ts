@@ -39,13 +39,13 @@ export const getCardText = (
 export const determineImageUploaderVisibility = (questionId: string, localSurvey: TSurvey) => {
   switch (questionId) {
     case "end": // Thank You Card
-      return !!localSurvey.thankYouCard.imageUrl;
+      return !!localSurvey.thankYouCard.imageUrl || !!localSurvey.thankYouCard.videoUrl;
     case "start": // Welcome Card
-      return !!localSurvey.welcomeCard.fileUrl;
+      return !!localSurvey.welcomeCard.fileUrl || !!localSurvey.welcomeCard.videoUrl;
     default:
       // Regular Survey Question
       const question = localSurvey.questions.find((q) => q.id === questionId);
-      return !!question && !!question.imageUrl;
+      return (!!question && !!question.imageUrl) || (!!question && !!question.videoUrl);
   }
 };
 

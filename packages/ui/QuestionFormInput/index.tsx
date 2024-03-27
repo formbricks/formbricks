@@ -21,7 +21,7 @@ import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbrick
 
 import { LanguageIndicator } from "../../ee/multiLanguage/components/LanguageIndicator";
 import { createI18nString } from "../../lib/i18n/utils";
-import FileInput from "../FileInput";
+import { FileInput } from "../FileInput";
 import { Input } from "../Input";
 import { Label } from "../Label";
 import { FallbackInput } from "./components/FallbackInput";
@@ -349,26 +349,42 @@ export const QuestionFormInput = ({
     else return question.imageUrl;
   };
 
+  const getVideoUrl = () => {
+    if (isThankYouCard) return localSurvey.thankYouCard.videoUrl;
+    else if (isWelcomeCard) return localSurvey.welcomeCard.videoUrl;
+    else return question.videoUrl;
+  };
+
   return (
     <div className="w-full">
       <div className="w-full">
         <div className="mb-2 mt-3">
           <Label htmlFor={id}>{label ?? getLabelById(id)}</Label>
         </div>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           {showImageUploader && id === "headline" && (
             <FileInput
               id="question-image"
               allowedFileExtensions={["png", "jpeg", "jpg"]}
               environmentId={localSurvey.environmentId}
-              onFileUpload={(url: string[] | undefined) => {
+              onFileUpload={(url: string[] | undefined, isVideo: boolean) => {
                 if (isThankYouCard && updateSurvey && url) {
-                  updateSurvey({ imageUrl: url[0] });
+                  if (isVideo) {
+                    updateSurvey({ videoUrl: url[0] });
+                  } else {
+                    updateSurvey({ imageUrl: url[0] });
+                  }
                 } else if (updateQuestion && url) {
-                  updateQuestion(questionIdx, { imageUrl: url[0] });
+                  if (isVideo) {
+                    updateQuestion(questionIdx, { videoUrl: url[0] });
+                  } else {
+                    updateQuestion(questionIdx, { imageUrl: url[0] });
+                  }
                 }
               }}
               fileUrl={getFileUrl()}
+              videoUrl={getVideoUrl()}
+              isVideoAllowed={true}
             />
           )}
           <div className="flex items-center space-x-2">

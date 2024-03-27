@@ -1,13 +1,24 @@
 interface QuestionImageProps {
-  imgUrl: string;
+  imgUrl?: string;
+  videoUrl?: string;
   altText?: string;
 }
 
-export default function QuestionImage({ imgUrl, altText = "Image" }: QuestionImageProps) {
+export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionImageProps) => {
   return (
     <div className="group/image relative mb-4 block rounded-md">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={imgUrl} alt={altText} className="rounded-md" />
+      {imgUrl && <img src={imgUrl} alt={altText} className="rounded-md" />}
+      {videoUrl && (
+        <iframe
+          className="h-full w-full"
+          src={videoUrl}
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Embedded youtube"
+        />
+      )}
       <a
         href={imgUrl}
         target="_blank"
@@ -32,4 +43,4 @@ export default function QuestionImage({ imgUrl, altText = "Image" }: QuestionIma
       </a>
     </div>
   );
-}
+};

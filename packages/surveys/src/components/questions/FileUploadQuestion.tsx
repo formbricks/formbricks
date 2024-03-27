@@ -1,4 +1,4 @@
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
@@ -68,7 +68,9 @@ export default function FileUploadQuestion({
         }
       }}
       className="w-full ">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {(question.imageUrl || question.videoUrl) && (
+        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+      )}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
@@ -95,7 +97,6 @@ export default function FileUploadQuestion({
           : {})}
         {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
       />
-
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton

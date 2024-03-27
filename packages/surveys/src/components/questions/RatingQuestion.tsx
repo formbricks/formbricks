@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
@@ -94,7 +94,9 @@ export default function RatingQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {(question.imageUrl || question.videoUrl) && (
+        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+      )}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
@@ -194,7 +196,6 @@ export default function RatingQuestion({
           </div>
         </fieldset>
       </div>
-
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton

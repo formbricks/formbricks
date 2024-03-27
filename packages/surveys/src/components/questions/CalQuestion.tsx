@@ -2,7 +2,7 @@ import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import CalEmbed from "@/components/general/CalEmbed";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
@@ -66,7 +66,9 @@ export default function CalQuestion({
         onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {(question.imageUrl || question.videoUrl) && (
+        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+      )}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}

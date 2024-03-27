@@ -2,7 +2,7 @@ import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "react";
 
@@ -41,7 +41,9 @@ export default function CTAQuestion({
 
   return (
     <div key={question.id}>
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {(question.imageUrl || question.videoUrl) && (
+        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+      )}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
