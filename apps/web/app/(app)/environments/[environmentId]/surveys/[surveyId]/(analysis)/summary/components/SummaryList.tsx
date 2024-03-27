@@ -10,6 +10,7 @@ import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 
+import AddressSummary from "./AddressSummary";
 import CTASummary from "./CTASummary";
 import DateQuestionSummary from "./DateQuestionSummary";
 import FileUploadSummary from "./FileUploadSummary";
@@ -100,6 +101,15 @@ export default function SummaryList({ summary, environment, responseCount, surve
           if (questionSummary.type === TSurveyQuestionType.Cal) {
             return (
               <CalSummary
+                key={questionSummary.question.id}
+                questionSummary={questionSummary}
+                environmentId={environment.id}
+              />
+            );
+          }
+          if (questionSummary.type === TSurveyQuestionType.address) {
+            return (
+              <AddressSummary
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 environmentId={environment.id}

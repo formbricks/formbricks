@@ -32,6 +32,7 @@ export enum TSurveyQuestionType {
   PictureSelection = "pictureSelection",
   Cal = "cal",
   Date = "date",
+  address = "address",
 }
 
 export const ZSurveyWelcomeCard = z.object({
@@ -154,6 +155,11 @@ export const ZSurveyOpenTextLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+export const ZSurveyAddressLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["submitted", "skipped"]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyConsentLogic = ZSurveyLogicBase.extend({
   condition: z.enum(["skipped", "accepted"]).optional(),
   value: z.undefined(),
@@ -228,6 +234,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyPictureSelectionLogic,
   ZSurveyFileUploadLogic,
   ZSurveyCalLogic,
+  ZSurveyAddressLogic,
 ]);
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
@@ -356,6 +363,17 @@ export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
 
+export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.address),
+  addressRequired: z.boolean().default(false),
+  addressLine2Required: z.boolean().default(false),
+  cityRequired: z.boolean().default(false),
+  stateRequired: z.boolean().default(false),
+  zipRequired: z.boolean().default(false),
+  countryRequired: z.boolean().default(false),
+});
+export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
+
 export const ZSurveyQuestion = z.union([
   ZSurveyOpenTextQuestion,
   ZSurveyConsentQuestion,
@@ -368,6 +386,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyDateQuestion,
   ZSurveyFileUploadQuestion,
   ZSurveyCalQuestion,
+  ZSurveyAddressQuestion,
 ]);
 
 export const ZSurveyLanguage = z.object({
@@ -531,6 +550,7 @@ export const ZSurveyTSurveyQuestionType = z.union([
   z.literal("pictureSelection"),
   z.literal("cal"),
   z.literal("date"),
+  z.literal("address"),
 ]);
 
 export type TSurveyTSurveyQuestionType = z.infer<typeof ZSurveyTSurveyQuestionType>;

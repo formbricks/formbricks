@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ZPerson, ZPersonAttributes } from "./people";
 import {
   ZSurvey,
+  ZSurveyAddressQuestion,
   ZSurveyCTAQuestion,
   ZSurveyCalQuestion,
   ZSurveyConsentQuestion,
@@ -469,6 +470,22 @@ export const ZSurveySummaryHiddenField = z.object({
 
 export type TSurveySummaryHiddenField = z.infer<typeof ZSurveySummaryHiddenField>;
 
+export const ZSurveySummaryAddress = z.object({
+  type: z.literal("address"),
+  question: ZSurveyAddressQuestion,
+  responseCount: z.number(),
+  samples: z.array(
+    z.object({
+      id: z.string(),
+
+      updatedAt: z.date(),
+      value: z.array(z.string()),
+      person: ZPerson.nullable(),
+    })
+  ),
+});
+
+export type TSurveySummaryAddress = z.infer<typeof ZSurveySummaryAddress>;
 export const ZSurveySummary = z.object({
   meta: z.object({
     displayCount: z.number(),
@@ -503,6 +520,7 @@ export const ZSurveySummary = z.object({
       ZSurveySummaryFileUpload,
       ZSurveySummaryCal,
       ZSurveySummaryHiddenField,
+      ZSurveySummaryAddress,
     ])
   ),
 });

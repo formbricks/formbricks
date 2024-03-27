@@ -19,6 +19,7 @@ import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 
 import { getLanguageLabel } from "../../ee/multiLanguage/lib/isoLanguages";
+import { AddressResponse } from "../AddressResponse";
 import { PersonAvatar } from "../Avatars";
 import { DeleteDialog } from "../DeleteDialog";
 import { FileUploadResponse } from "../FileUploadResponse";
@@ -404,6 +405,8 @@ export default function SingleResponseCard({
                     />
                   ) : question.type === TSurveyQuestionType.FileUpload ? (
                     <FileUploadResponse selected={response.data[question.id]} />
+                  ) : question.type === TSurveyQuestionType.address ? (
+                    <AddressResponse value={response.data[question.id] as string[]} />
                   ) : (
                     <p className="ph-no-capture my-1 font-semibold text-slate-700">
                       {handleArray(response.data[question.id])}

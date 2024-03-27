@@ -1,3 +1,4 @@
+import AddressQuestion from "@/components/questions/AddressQuestion";
 import CTAQuestion from "@/components/questions/CTAQuestion";
 import CalQuestion from "@/components/questions/CalQuestion";
 import ConsentQuestion from "@/components/questions/ConsentQuestion";
@@ -182,6 +183,19 @@ export default function QuestionConditional({
     <CalQuestion
       question={question}
       value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+    />
+  ) : question.type === TSurveyQuestionType.address ? (
+    <AddressQuestion
+      question={question}
+      value={value as string[]}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}

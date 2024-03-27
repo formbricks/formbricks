@@ -3,6 +3,7 @@ import {
   ArrowUpFromLine,
   CalendarDaysIcon,
   CheckIcon,
+  HomeIcon,
   ImageIcon,
   ListIcon,
   MessageSquareTextIcon,
@@ -167,6 +168,15 @@ export const questionTypes: TSurveyQuestionType[] = [
     preset: {
       headline: { default: "Schedule a call with me" },
       calUserName: "rick/get-rick-rolled",
+    },
+  },
+  {
+    id: QuestionId.address,
+    label: "Address",
+    description: "Allow respondents to provide their address",
+    icon: HomeIcon,
+    preset: {
+      headline: { default: "Where do you live?" },
     },
   },
 ];
