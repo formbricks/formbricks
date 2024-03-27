@@ -5,10 +5,10 @@ import Image from "next/image";
 import ColoredCommentsIcon from "./colored-comments-feedback-icon.svg";
 import CommentsIcon2 from "./comments-icon-2.svg";
 import CommentsIcon from "./comments-icon.svg";
-import FeedbackEnvelope from "./feedback-envelope.svg";
+import FeedbackEnvelopeIcon from "./feedback-envelope-icon.svg";
 import FeedbackIcon from "./feedback-icon.svg";
+import FeedbackMessageIcon from "./feedback-message-icon.svg";
 import FeedbackTooltipIcon from "./feedback-tooltip-icon.svg";
-import GuiFeedback from "./gui-feedback.svg";
 import EmailFeedbackIcon from "./send-email-feedback-icon.svg";
 
 const icons = [
@@ -43,7 +43,7 @@ const icons = [
   },
 
   {
-    iconPath: FeedbackEnvelope,
+    iconPath: FeedbackMessageIcon,
     iconName: "feedback-envelope.svg",
     altText: "download envelope feedback icon",
   },
@@ -55,9 +55,9 @@ const icons = [
   },
 
   {
-    iconPath: GuiFeedback,
+    iconPath: FeedbackEnvelopeIcon,
     iconName: "gui-feedback.svg",
-    altText: "download gui feedback icon",
+    altText: "download message icon for feedback",
   },
 ];
 
@@ -73,17 +73,14 @@ export default function FeedbackBoxPage() {
 
   return (
     <Layout
-      title="Download MIT-licensed Feedback Icons"
-      description="Explore our Feedback Icon gallery today and transform how users interact with your platform. 
-
-      Our feedback icon gallery offers a diverse collection of high-quality feedback icons that cater to various design preferences. 
+      title="Download Free Feedback Icons and Symbols"
+      description="Our feedback icon gallery offers a diverse collection of high-quality feedback icons that cater to various design preferences. 
       Whether you need a simple message, send, envelope, or more elaborate feedback symbols, it has you covered. 
-      These icons are not only visually appealing but also serve as effective tools for conveying user sentiments and opinions.
       ">
       <HeroTitle
         headingPt1=""
         headingTeal="Feedback Icons"
-        subheading="Directly download high-quality SVG feedback icons by cicking on each icon card"
+        subheading="Explore our feedback icon gallery today and transform how users interact with your platform. Directly download high-quality SVG feedback icons by cicking on each icon card."
       />
       <div className="grid grid-cols-2 items-center gap-8 md:grid-cols-2 md:gap-10 lg:grid-cols-6">
         {icons.map((icon) => {
