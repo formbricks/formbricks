@@ -7,15 +7,15 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
-import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
+import { EnvironmentData, NotificationResponse, ProductData, Survey, TSurveyResponse } from "./types";
 
 const BATCH_SIZE = 500;
 
 export async function POST(): Promise<Response> {
   // Check authentication
-  // if (headers().get("x-api-key") !== CRON_SECRET) {
-  //   return responses.notAuthenticatedResponse();
-  // }
+  if (headers().get("x-api-key") !== CRON_SECRET) {
+    return responses.notAuthenticatedResponse();
+  }
 
   const emailSendingPromises: Promise<void>[] = [];
 
@@ -190,7 +190,7 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
       if (surveyData.responses.length >= 1) {
         break;
       }
-      const surveyResponse: SurveyResponse = {};
+      const surveyResponse: TSurveyResponse = {};
       for (const question of parsedSurvey.questions) {
         const headline = question.headline;
         const answer = response.data[question.id]?.toString() || null;

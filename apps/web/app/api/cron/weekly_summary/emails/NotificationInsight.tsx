@@ -8,24 +8,24 @@ export const NotificationInsight = ({ insights }) => {
         <Row>
           <Column className="text-center">
             <Text className="text-sm">Surveys</Text>
-            <Text className="font-bold">{insights.numLiveSurvey}</Text>
+            <Text className="text-lg font-bold">{insights.numLiveSurvey}</Text>
           </Column>
           <Column className="text-center">
             <Text className="text-sm">Displays</Text>
-            <Text className="font-bold">{insights.totalDisplays}</Text>
+            <Text className="text-lg font-bold">{insights.totalDisplays}</Text>
           </Column>
           <Column className="text-center">
             <Text className="text-sm">Responses</Text>
-            <Text className="font-bold">{insights.totalResponses}</Text>
+            <Text className="text-lg font-bold">{insights.totalResponses}</Text>
           </Column>
           <Column className="text-center">
             <Text className="text-sm">Completed</Text>
-            <Text className="font-bold">{insights.totalCompletedResponses}</Text>
+            <Text className="text-lg font-bold">{insights.totalCompletedResponses}</Text>
           </Column>
           {insights.totalDisplays !== 0 ? (
             <Column className="text-center">
               <Text className="text-sm">Completion %</Text>
-              <Text className="font-bold">{Math.round(insights.completionRate)}%</Text>
+              <Text className="text-lg font-bold">{Math.round(insights.completionRate)}%</Text>
             </Column>
           ) : (
             ""

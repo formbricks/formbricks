@@ -10,14 +10,14 @@ export interface Insights {
   numLiveSurvey: number;
 }
 
-export interface SurveyResponse {
+export interface TSurveyResponse {
   [headline: string]: string | number | boolean | Date | string[];
 }
 
 export interface Survey {
   id: string;
   name: string;
-  responses: SurveyResponse[];
+  responses: TSurveyResponse[];
   responseCount: number;
   status: string;
 }

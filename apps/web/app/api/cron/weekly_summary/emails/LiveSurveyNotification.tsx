@@ -1,4 +1,4 @@
-import { SurveyResponse } from "@/app/api/cron/weekly_summary/types";
+import { TSurveyResponse } from "@/app/api/cron/weekly_summary/types";
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
 
 import { EmailButton } from "@formbricks/lib/emails/EmailButton";
@@ -21,14 +21,15 @@ const convertSurveyStatus = (status) => {
 };
 
 export const LiveSurveyNotification = ({ WEBAPP_URL, environmentId, surveys }) => {
-  const createSurveyFields = (surveyResponses: SurveyResponse[]) => {
-    if (surveyResponses.length === 0)
+  const createSurveyFields = (surveyResponses: TSurveyResponse[]) => {
+    if (surveyResponses.length === 0) {
       return (
         <Container className="mt-4">
           <Text className="m-0 font-bold">No Responses yet!</Text>
         </Container>
       );
-    let surveyFields = "";
+    }
+    let surveyFields: JSX.Element[] = [];
     const responseCount = surveyResponses.length;
 
     surveyResponses.forEach((response, index) => {
@@ -37,8 +38,8 @@ export const LiveSurveyNotification = ({ WEBAPP_URL, environmentId, surveys }) =
       }
 
       for (const [headline, answer] of Object.entries(response)) {
-        surveyFields += (
-          <Container className="mt-4">
+        surveyFields.push(
+          <Container className="mt-4" key={`${index}-${headline}`}>
             <Text className="m-0">{headline}</Text>
             <Text className="m-0 font-bold">{answer.toString()}</Text>
           </Container>
@@ -47,7 +48,7 @@ export const LiveSurveyNotification = ({ WEBAPP_URL, environmentId, surveys }) =
 
       // Add <hr/> only when there are 2 or more responses to display, and it's not the last response
       if (responseCount >= 2 && index < responseCount - 1) {
-        surveyFields += <Hr />;
+        surveyFields.push(<Hr key={`hr-${index}`} />);
       }
     });
 
@@ -61,12 +62,12 @@ export const LiveSurveyNotification = ({ WEBAPP_URL, environmentId, surveys }) =
     const isLive = displayStatus === "Live";
     const noResponseLastWeek = isLive && survey.responses.length === 0;
     return (
-      <Container className="mt-12">
-        <Tailwind>
-          <Text className="mb-0 inline underline">
+      <Tailwind>
+        <Container className="mt-12">
+          <Text className="mb-0 inline">
             <Link
               href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
-              className="underline">
+              className="text-xl text-black underline">
               {survey.name}
             </Link>
           </Text>
@@ -81,13 +82,15 @@ export const LiveSurveyNotification = ({ WEBAPP_URL, environmentId, surveys }) =
             createSurveyFields(survey.responses)
           )}
           {survey.responseCount > 0 && (
-            <EmailButton
-              label={noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
-              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
-            />
+            <Container className="mt-4 block">
+              <EmailButton
+                label={noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
+                href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
+              />
+            </Container>
           )}
-        </Tailwind>
-      </Container>
+        </Container>
+      </Tailwind>
     );
   });
 };
