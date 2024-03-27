@@ -23,12 +23,12 @@ export const personCache = {
       revalidateTag(this.tag.byId(id));
     }
 
-    if (environmentId && userId) {
-      revalidateTag(this.tag.byEnvironmentIdAndUserId(environmentId, userId));
-    }
-
     if (environmentId) {
       revalidateTag(this.tag.byEnvironmentId(environmentId));
+    }
+
+    if (environmentId && userId) {
+      revalidateTag(this.tag.byEnvironmentIdAndUserId(environmentId, userId));
     }
   },
 };

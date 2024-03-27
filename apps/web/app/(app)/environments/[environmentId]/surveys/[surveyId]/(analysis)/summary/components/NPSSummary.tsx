@@ -1,4 +1,5 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 
@@ -40,7 +41,7 @@ export const NPSSummary = ({ questionSummary }: NPSSummaryProps) => {
                 <p className="font-semibold capitalize text-slate-700">{group}</p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {Math.round(questionSummary[group].percentage)}%
+                    {convertFloatToNDecimal(questionSummary[group].percentage, 1)}%
                   </p>
                 </div>
               </div>
@@ -60,7 +61,7 @@ export const NPSSummary = ({ questionSummary }: NPSSummaryProps) => {
                 <p className="font-semibold text-slate-700">dismissed</p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {Math.round(questionSummary.dismissed.percentage)}%
+                    {convertFloatToNDecimal(questionSummary.dismissed.percentage, 1)}%
                   </p>
                 </div>
               </div>

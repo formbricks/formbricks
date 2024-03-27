@@ -1,4 +1,3 @@
-import { isLight } from "@/app/lib/utils";
 import {
   Column,
   Container,
@@ -17,7 +16,9 @@ import { cn } from "@formbricks/lib/cn";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { isLight } from "@formbricks/lib/utils";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
 
@@ -36,7 +37,7 @@ export const getEmailTemplateHtml = async (surveyId) => {
   if (!product) {
     throw new Error("Product not found");
   }
-  const brandColor = product.brandColor;
+  const brandColor = product.styling.brandColor?.light || COLOR_DEFAULTS.brandColor;
   const surveyUrl = WEBAPP_URL + "/s/" + survey.id;
   const html = render(<EmailTemplate survey={survey} surveyUrl={surveyUrl} brandColor={brandColor} />, {
     pretty: true,

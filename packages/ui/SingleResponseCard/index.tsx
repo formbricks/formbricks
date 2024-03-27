@@ -220,6 +220,7 @@ export default function SingleResponseCard({
               {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}
             </p>
           )}
+          {response.meta.url && <p>URL: {response.meta.url}</p>}
           {response.meta.source && <p>Source: {response.meta.source}</p>}
           {response.meta.country && <p>Country: {response.meta.country}</p>}
         </div>

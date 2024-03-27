@@ -5,6 +5,7 @@ import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 import { ZLanguage } from "./product";
 import { ZSegment } from "./segment";
+import { ZBaseStyling } from "./styling";
 
 export const ZI18nString = z.record(z.string(), z.string());
 
@@ -36,7 +37,7 @@ export enum TSurveyQuestionType {
 
 export const ZSurveyWelcomeCard = z.object({
   enabled: z.boolean(),
-  headline: ZI18nString.optional(),
+  headline: ZI18nString,
   html: ZI18nString.optional(),
   fileUrl: z.string().optional(),
   buttonLabel: ZI18nString.optional(),
@@ -63,17 +64,8 @@ export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
 
 export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
 
-export const ZSurveyStylingBackground = z.object({
-  bg: z.string().nullish(),
-  bgType: z.enum(["animation", "color", "image"]).nullish(),
-  brightness: z.number().nullish(),
-});
-
-export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
-
-export const ZSurveyStyling = z.object({
-  background: ZSurveyStylingBackground.nullish(),
-  hideProgressBar: z.boolean().nullish(),
+export const ZSurveyStyling = ZBaseStyling.extend({
+  overwriteThemeStyling: z.boolean().nullish(),
 });
 
 export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;
@@ -575,3 +567,5 @@ export interface TSurveyQuestionSummary<T> {
     person: TPerson | null;
   }[];
 }
+
+export type TSurveyEditorTabs = "questions" | "settings" | "styling";

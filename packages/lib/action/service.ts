@@ -15,8 +15,7 @@ import { actionClassCache } from "../actionClass/cache";
 import { createActionClass, getActionClassByEnvironmentIdAndName } from "../actionClass/service";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { activePersonCache } from "../person/cache";
-import { createPerson, getIsPersonMonthlyActive, getPersonByUserId } from "../person/service";
-import { surveyCache } from "../survey/cache";
+import { getIsPersonMonthlyActive } from "../person/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { actionCache } from "./cache";
@@ -127,13 +126,6 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     actionType = "automatic";
   }
 
-  let person = await getPersonByUserId(environmentId, userId);
-
-  if (!person) {
-    // create person if it does not exist
-    person = await createPerson(environmentId, userId);
-  }
-
   let actionClass = await getActionClassByEnvironmentIdAndName(environmentId, name);
 
   if (!actionClass) {
@@ -148,7 +140,10 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     data: {
       person: {
         connect: {
-          id: person.id,
+          environmentId_userId: {
+            environmentId,
+            userId,
+          },
         },
       },
       actionClass: {
@@ -159,18 +154,14 @@ export const createAction = async (data: TActionInput): Promise<TAction> => {
     },
   });
 
-  const isPersonMonthlyActive = await getIsPersonMonthlyActive(person.id);
+  const isPersonMonthlyActive = await getIsPersonMonthlyActive(action.personId);
   if (!isPersonMonthlyActive) {
-    activePersonCache.revalidate({ id: person.id });
+    activePersonCache.revalidate({ id: action.personId });
   }
 
   actionCache.revalidate({
     environmentId,
-    personId: person.id,
-  });
-
-  surveyCache.revalidate({
-    environmentId,
+    personId: action.personId,
   });
 
   return {
