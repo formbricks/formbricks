@@ -17,9 +17,9 @@ export default async function OnboardingPage() {
   }
 
   // Redirect to home if onboarding is completed
-  // if (session.user.onboardingCompleted) {
-  //   return redirect("/");
-  // }
+  if (session.user.onboardingCompleted) {
+    return redirect("/");
+  }
 
   const userId = session.user.id;
   const environment = await getFirstEnvironmentByUserId(userId);
