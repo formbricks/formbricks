@@ -12,7 +12,7 @@ import { TabBar } from "../TabBar";
 import { Loader } from "./components/Loader";
 import { Uploader } from "./components/Uploader";
 import { VideoSettings } from "./components/VideoSettings";
-import { getAllowedFiles, uploadFile } from "./lib/fileUpload";
+import { getAllowedFiles, uploadFile } from "./lib/utils";
 
 const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
 const isImage = (name: string) => {
@@ -200,9 +200,6 @@ export const FileInput: React.FC<FileInputProps> = ({
 
       // Clear any image file that was previously uploaded.
       onFileUpload([], "image");
-
-      // Logging the temporary video URL for debugging purposes.
-      console.log(videoUrlTemp);
 
       // Re-upload the video using the temporary video URL.
       onFileUpload([videoUrlTemp], "video");

@@ -138,7 +138,7 @@ export const getAllowedFiles = (
   return allowedFiles;
 };
 
-export const extractYoutubeId = (url: string) => {
+export const extractYoutubeId = (url: string): string | null => {
   let id = "";
 
   // Regular expressions for various YouTube URL formats
@@ -161,7 +161,7 @@ export const extractYoutubeId = (url: string) => {
   return id;
 };
 
-const extractVimeoId = (url: string) => {
+const extractVimeoId = (url: string): string | null => {
   const regExp = /vimeo\.com\/(\d+)/;
   const match = url.match(regExp);
 
@@ -171,7 +171,7 @@ const extractVimeoId = (url: string) => {
   return null;
 };
 
-const extractLoomId = (url: string) => {
+const extractLoomId = (url: string): string | null => {
   const regExp = /loom\.com\/share\/([a-zA-Z0-9]+)/;
   const match = url.match(regExp);
 
@@ -181,7 +181,7 @@ const extractLoomId = (url: string) => {
   return null;
 };
 
-export const parseVideoUrl = (url: string) => {
+export const parseVideoUrl = (url: string): string | undefined => {
   if (url.includes("youtube.com") || url.includes("youtu.be") || url.includes("youtube-nocookie.com")) {
     const videoId = extractYoutubeId(url);
     if (videoId) {
@@ -201,13 +201,13 @@ export const parseVideoUrl = (url: string) => {
   }
 };
 
-export const checkForYoutubeUrl = (url: string) => {
+export const checkForYoutubeUrl = (url: string): boolean => {
   const isYoutubeLink = ["youtube.com", "youtu.be", "youtube-nocookie.com"].some((domain) =>
     url.includes(domain)
   );
   return isYoutubeLink;
 };
 
-export const checkForYoutubePrivacyMode = (url: string) => {
+export const checkForYoutubePrivacyMode = (url: string): boolean => {
   return url.includes("youtube-nocookie.com");
 };

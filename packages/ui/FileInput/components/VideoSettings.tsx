@@ -11,7 +11,7 @@ import {
   checkForYoutubeUrl,
   extractYoutubeId,
   parseVideoUrl,
-} from "../lib/fileUpload";
+} from "../lib/utils";
 
 interface VideoSettingsProps {
   uploadedVideoUrl: string;
