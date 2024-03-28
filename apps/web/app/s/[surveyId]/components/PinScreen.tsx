@@ -114,7 +114,7 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
 
   return (
     <div>
-      <MediaBackground survey={survey}>
+      <MediaBackground survey={survey} product={product}>
         <LinkSurvey
           survey={survey}
           product={product}
@@ -129,7 +129,6 @@ const LinkSurveyPinScreen: NextPage<LinkSurveyPinScreenProps> = (props) => {
         />
       </MediaBackground>
       <LegalFooter
-        bgColor={survey.styling?.background?.bg || "#ffff"}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}

@@ -1,4 +1,5 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 import Image from "next/image";
@@ -55,7 +56,7 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
                 </div>
                 <div className="self-end">
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {Math.round(result.percentage)}%
+                    {convertFloatToNDecimal(result.percentage, 1)}%
                   </p>
                 </div>
               </div>

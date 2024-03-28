@@ -1,4 +1,5 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
@@ -64,7 +65,7 @@ export default function MultipleChoiceSummary({
                 </p>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {Math.round(result.percentage)}%
+                    {convertFloatToNDecimal(result.percentage, 1)}%
                   </p>
                 </div>
               </div>

@@ -8,8 +8,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 
 interface NPSQuestionProps {
@@ -23,6 +22,7 @@ interface NPSQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function NPSQuestion({
@@ -60,53 +60,57 @@ export default function NPSQuestion({
       <Subheader
         subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
         questionId={question.id}
-      />{" "}
+      />
       <div className="my-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
           <div className="flex">
-            {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => (
-              <label
-                key={number}
-                tabIndex={idx + 1}
-                onMouseOver={() => setHoveredNumber(number)}
-                onMouseLeave={() => setHoveredNumber(-1)}
-                onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                    setTtc(updatedTtcObj);
-                    onSubmit({ [question.id]: number }, updatedTtcObj);
-                  }
-                }}
-                className={cn(
-                  value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
-                  "bg-survey-bg text-heading relative h-10 flex-1 cursor-pointer border text-center text-sm leading-10 first:rounded-l-md last:rounded-r-md focus:outline-none",
-                  hoveredNumber === number ? "bg-accent-bg" : ""
-                )}>
-                <input
-                  type="radio"
-                  name="nps"
-                  value={number}
-                  checked={value === number}
-                  className="absolute h-full w-full cursor-pointer opacity-0"
-                  onClick={() => {
-                    if (question.required) {
-                      const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                      setTtc(updatedTtcObj);
-                      onSubmit(
-                        {
-                          [question.id]: number,
-                        },
-                        updatedTtcObj
-                      );
+            {Array.from({ length: 11 }, (_, i) => i).map((number, idx) => {
+              return (
+                <label
+                  key={number}
+                  tabIndex={idx + 1}
+                  onMouseOver={() => setHoveredNumber(number)}
+                  onMouseLeave={() => setHoveredNumber(-1)}
+                  onKeyDown={(e) => {
+                    // Accessibility: if spacebar was pressed pass this down to the input
+                    if (e.key === " ") {
+                      e.preventDefault();
+                      document.getElementById(number.toString())?.click();
+                      document.getElementById(number.toString())?.focus();
                     }
-                    onChange({ [question.id]: number });
                   }}
-                  required={question.required}
-                />
-                {number}
-              </label>
-            ))}
+                  className={cn(
+                    value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
+                    "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
+                    hoveredNumber === number ? "bg-accent-bg" : ""
+                  )}>
+                  <input
+                    type="radio"
+                    id={number.toString()}
+                    name="nps"
+                    value={number}
+                    checked={value === number}
+                    className="absolute h-full w-full cursor-pointer opacity-0"
+                    onClick={() => {
+                      if (question.required) {
+                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                        setTtc(updatedTtcObj);
+                        onSubmit(
+                          {
+                            [question.id]: number,
+                          },
+                          updatedTtcObj
+                        );
+                      }
+                      onChange({ [question.id]: number });
+                    }}
+                    required={question.required}
+                  />
+                  {number}
+                </label>
+              );
+            })}
           </div>
           <div className="text-info-text flex justify-between px-1.5 text-xs leading-6">
             <p>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
@@ -132,7 +136,6 @@ export default function NPSQuestion({
             tabIndex={12}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         )}
       </div>
