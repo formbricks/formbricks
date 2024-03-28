@@ -41,6 +41,7 @@ export default function DateQuestion({
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -124,9 +125,7 @@ export default function DateQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {(question.imageUrl || question.videoUrl) && (
-        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-      )}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}

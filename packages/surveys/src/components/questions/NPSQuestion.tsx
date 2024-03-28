@@ -39,6 +39,7 @@ export default function NPSQuestion({
 }: NPSQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -51,9 +52,7 @@ export default function NPSQuestion({
         setTtc(updatedTtcObj);
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}>
-      {(question.imageUrl || question.videoUrl) && (
-        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-      )}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}

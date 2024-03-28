@@ -41,6 +41,7 @@ export default function OpenTextQuestion({
   isInIframe,
 }: OpenTextQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -76,9 +77,7 @@ export default function OpenTextQuestion({
         onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
       }}
       className="w-full">
-      {(question.imageUrl || question.videoUrl) && (
-        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-      )}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}

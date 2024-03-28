@@ -39,6 +39,7 @@ export default function MultipleChoiceMultiQuestion({
   isInIframe,
 }: MultipleChoiceMultiProps) {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -133,9 +134,7 @@ export default function MultipleChoiceMultiQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {(question.imageUrl || question.videoUrl) && (
-        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-      )}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}

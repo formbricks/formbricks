@@ -42,6 +42,7 @@ export default function MultipleChoiceSingleQuestion({
   const [otherSelected, setOtherSelected] = useState(false);
   const otherSpecify = useRef<HTMLInputElement | null>(null);
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -95,9 +96,7 @@ export default function MultipleChoiceSingleQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {(question.imageUrl || question.videoUrl) && (
-        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-      )}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}

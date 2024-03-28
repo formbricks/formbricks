@@ -40,7 +40,7 @@ export default function CalQuestion({
 }: CalQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
-
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
   const [errorMessage, setErrorMessage] = useState("");
 
   const onSuccessfulBooking = useCallback(() => {
@@ -67,9 +67,7 @@ export default function CalQuestion({
         onSubmit({ [question.id]: value }, updatedttc);
       }}
       className="w-full">
-      {(question.imageUrl || question.videoUrl) && (
-        <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
-      )}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
