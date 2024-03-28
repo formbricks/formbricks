@@ -1,3 +1,6 @@
+import { LoadingSpinner } from "@/components/general/LoadingSpinner";
+import { useState } from "preact/hooks";
+
 interface QuestionMediaProps {
   imgUrl?: string;
   videoUrl?: string;
@@ -5,19 +8,28 @@ interface QuestionMediaProps {
 }
 
 export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionMediaProps) => {
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
   return (
     <div className="group/image relative mb-4 block rounded-md">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {imgUrl && <img src={imgUrl} alt={altText} className="rounded-md" />}
       {videoUrl && (
-        <iframe
-          className="h-full w-full"
-          src={videoUrl}
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          title="Embedded youtube"
-        />
+        <div className="relative">
+          {isVideoLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <LoadingSpinner />
+            </div>
+          )}
+          <iframe
+            className="h-full w-full"
+            src={videoUrl}
+            frameBorder="0"
+            onLoad={() => setIsVideoLoading(false)}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="Embedded youtube"
+          />
+        </div>
       )}
       <a
         href={imgUrl}
