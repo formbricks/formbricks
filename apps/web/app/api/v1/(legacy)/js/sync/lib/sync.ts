@@ -9,6 +9,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { reverseTranslateSurvey } from "@formbricks/lib/i18n/reverseTranslation";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurveys, getSyncSurveys } from "@formbricks/lib/survey/service";
 import {
   getMonthlyActiveTeamPeopleCount,
@@ -18,6 +19,7 @@ import {
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsLegacyState, TSurveyWithTriggers } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const transformLegacySurveys = (surveys: TSurvey[]): TSurveyWithTriggers[] => {
@@ -114,13 +116,21 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
     throw new Error("Product not found");
   }
 
+  const updatedProduct: TProduct = {
+    ...product,
+    brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
+    ...(product.styling.highlightBorderColor?.light && {
+      highlightBorderColor: product.styling.highlightBorderColor.light,
+    }),
+  };
+
   // return state
   const state: TJsLegacyState = {
     person,
     session,
     surveys,
     noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
-    product,
+    product: updatedProduct,
   };
 
   return state;

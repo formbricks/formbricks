@@ -36,7 +36,7 @@ export const getSegmentsByAttributeClassAction = async (
 
     return { activeSurveys, inactiveSurveys };
   } catch (err) {
-    console.log(err);
+    console.error(`Error getting segments by attribute class: ${err}`);
     throw err;
   }
 };

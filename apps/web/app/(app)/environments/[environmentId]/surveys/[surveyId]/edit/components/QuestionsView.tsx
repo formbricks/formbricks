@@ -1,6 +1,11 @@
 "use client";
 
 import HiddenFieldsCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/HiddenFieldsCard";
+import {
+  isCardValid,
+  validateQuestion,
+  validateSurveyQuestionsInBatch,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
@@ -12,7 +17,6 @@ import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/u
 import { TProduct } from "@formbricks/types/product";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys";
 
-import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "../lib/validation";
 import AddQuestionButton from "./AddQuestionButton";
 import EditThankYouCard from "./EditThankYouCard";
 import EditWelcomeCard from "./EditWelcomeCard";

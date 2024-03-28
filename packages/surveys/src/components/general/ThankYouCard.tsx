@@ -3,7 +3,6 @@ import Headline from "@/components/general/Headline";
 import QuestionImage from "@/components/general/QuestionImage";
 import RedirectCountDown from "@/components/general/RedirectCountdown";
 import Subheader from "@/components/general/Subheader";
-import { useEffect } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TI18nString } from "@formbricks/types/surveys";
@@ -19,6 +18,7 @@ interface ThankYouCardProps {
   imageUrl?: string;
   replaceRecallInfo: (text: string) => string;
   isResponseSendingFinished: boolean;
+  isInIframe: boolean;
 }
 
 export default function ThankYouCard({
@@ -32,20 +32,8 @@ export default function ThankYouCard({
   imageUrl,
   replaceRecallInfo,
   isResponseSendingFinished,
+  isInIframe,
 }: ThankYouCardProps) {
-  useEffect(() => {
-    if (!buttonLink || !isResponseSendingFinished) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Enter") {
-        window.top?.location.replace(buttonLink);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [buttonLink, isResponseSendingFinished]);
-
   return (
     <div className="text-center">
       {imageUrl ? (
@@ -67,7 +55,7 @@ export default function ThankYouCard({
               />
             </svg>
           </div>
-          <span className="bg-shadow mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
+          <span className="bg-brand mb-[10px] inline-block h-1 w-16 rounded-[100%]"></span>
         </div>
       )}
 
@@ -87,6 +75,7 @@ export default function ThankYouCard({
             <Button
               buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
               isLastQuestion={false}
+              focus={!isInIframe}
               onClick={() => {
                 if (!buttonLink) return;
                 window.location.replace(buttonLink);

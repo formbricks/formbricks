@@ -1,6 +1,6 @@
-import Link from "next/link";
-import Image from "next/image";
 import DemoPreview from "@/components/dummyUI/DemoPreview";
+import { MdxImage } from "@/components/shared/MdxImage";
+import Link from "next/link";
 
 import AddAction from "./add-action.webp";
 import AddCSSAction from "./add-css-action.webp";
@@ -13,7 +13,8 @@ import RecontactOptions from "./set-recontact-options.webp";
 
 export const metadata = {
   title: "Implementing the Feedback Box with Formbricks: A Step-by-Step Tutorial",
-  description: "Unlock user insights effortlessly! Discover how to set up the Feedback Box in your app using Formbricks, allowing your users to provide real-time feedback. Follow our comprehensive guide to enhance user experience and respond rapidly to feedback",
+  description:
+    "Unlock user insights effortlessly! Discover how to set up the Feedback Box in your app using Formbricks, allowing your users to provide real-time feedback. Follow our comprehensive guide to enhance user experience and respond rapidly to feedback",
 };
 
 #### Best Practices
@@ -49,34 +50,34 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Then, create a new survey and look for the "Feedback Box" template:
 
-<Image
+<MdxImage
   src={CreateFeedbackBox}
   alt="Create feedback box by template"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 2. Update question content
 
 Change the questions and answer options according to your preference:
 
-<Image
+<MdxImage
   src={ChangeTextContent}
   alt="Change text content"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 3. Create user action to trigger Feedback Box:
 
 Go to the “Audience” tab, find the “When to send” card and choose “Add Action”. We will now use our super cool No-Code User Action Tracker:
 
-<Image src={AddAction} alt="Add action" quality="100" className="rounded-lg max-w-full sm:max-w-3xl" />
+<MdxImage src={AddAction} alt="Add action" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
-  ## You can also add actions in your code 
-  You can also create [Code Actions](/docs/actions/code) using `formbricks.track("Eventname")` - they will automatically
-  appear in your Actions overview as long as the SDK is embedded.
+  ## You can also add actions in your code You can also create [Code Actions](/docs/actions/code) using
+  `formbricks.track("Eventname")` - they will automatically appear in your Actions overview as long as the SDK
+  is embedded.
 </Note>
 
 We have two options to track the Feedback Button in your application: innerText and CSS-Selector:
@@ -84,46 +85,46 @@ We have two options to track the Feedback Button in your application: innerText 
 1. **innerText:** This means that whenever a user clicks any HTML item in your app which has an `innerText` of `Feedback` the Feedback Box will be displayed.
 2. **CSS-Selector:** This means that when an element with a specific CSS-Selector like `#feedback-button` is clicked, your Feedback Box is triggered.
 
-<div className="grid grid-cols-2 space-x-2 max-w-full sm:max-w-3xl">
-  <Image src={AddHTMLAction} alt="Add HTML action" quality="100" className="rounded-lg" />
-  <Image src={AddCSSAction} alt="Add CSS action" quality="100" className="rounded-lg" />
+<div className="grid max-w-full grid-cols-2 space-x-2 sm:max-w-3xl">
+  <MdxImage src={AddHTMLAction} alt="Add HTML action" quality="100" className="rounded-lg" />
+  <MdxImage src={AddCSSAction} alt="Add CSS action" quality="100" className="rounded-lg" />
 </div>
 
 ### 4. Select action in the “When to ask” card
 
-<Image
+<MdxImage
   src={SelectAction}
   alt="Select feedback button action"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 5. Set Recontact Options correctly
 
 Scroll down to “Recontact Options”. Here you have to choose the right settings so that the Feedback Box pops up every time the user action is performed. (Our default is that every user sees every survey only once):
 
-<Image
+<MdxImage
   src={RecontactOptions}
   alt="Set recontact options"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### 6. You’re ready publish your survey!
 
-<Image
+<MdxImage
   src={PublishSurvey}
   alt="Publish survey"
   quality="100"
-  className="rounded-lg max-w-full sm:max-w-3xl"
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ## Setting up the Widget
 
 <Note>
-  ## Formbricks Widget running?
-  You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow [this
-  tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey) to install the widget.
+  ## Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box
+  in your app. Please follow [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey)
+  to install the widget.
 </Note>
 
 ### &nbsp;
