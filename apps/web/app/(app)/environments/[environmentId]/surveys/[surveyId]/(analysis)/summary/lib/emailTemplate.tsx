@@ -1,4 +1,3 @@
-import { isLight } from "@/app/lib/utils";
 import {
   Column,
   Container,
@@ -11,13 +10,15 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
-import { CalendarDaysIcon } from "lucide-react";
+import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { isLight } from "@formbricks/lib/utils";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 import { RatingSmiley } from "@formbricks/ui/RatingSmiley";
 
@@ -36,7 +37,7 @@ export const getEmailTemplateHtml = async (surveyId) => {
   if (!product) {
     throw new Error("Product not found");
   }
-  const brandColor = product.brandColor;
+  const brandColor = product.styling.brandColor?.light || COLOR_DEFAULTS.brandColor;
   const surveyUrl = WEBAPP_URL + "/s/" + survey.id;
   const html = render(<EmailTemplate survey={survey} surveyUrl={surveyUrl} brandColor={brandColor} />, {
     pretty: true,
@@ -267,16 +268,14 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
             {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
           <Container className="mx-0 max-w-none">
-            {firstQuestion.choices
-              .filter((choice) => choice.id !== "other")
-              .map((choice) => (
-                <Link
-                  key={choice.id}
-                  className="mt-2 block rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 text-slate-800 hover:bg-slate-100"
-                  href={`${urlWithPrefilling}${firstQuestion.id}=${choice.label}`}>
-                  {getLocalizedValue(choice.label, defaultLanguageCode)}
-                </Link>
-              ))}
+            {firstQuestion.choices.map((choice) => (
+              <Link
+                key={choice.id}
+                className="mt-2 block rounded-lg border border-solid border-slate-200 bg-slate-50 p-4 text-slate-800 hover:bg-slate-100"
+                href={`${urlWithPrefilling}${firstQuestion.id}=${getLocalizedValue(choice.label, defaultLanguageCode)}`}>
+                {getLocalizedValue(choice.label, defaultLanguageCode)}
+              </Link>
+            ))}
           </Container>
           <EmailFooter />
         </EmailTemplateWrapper>
@@ -313,12 +312,21 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
     case TSurveyQuestionType.Cal:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
-          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
-          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            You have been invited to schedule a meet via cal.com Open Survey to continue{" "}
-          </Text>
+          <Container>
+            <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+            </Text>
+            <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
+              You have been invited to schedule a meet via cal.com.
+            </Text>
+            <EmailButton
+              className={cn(
+                "bg-brand-color mx-auto block w-max cursor-pointer appearance-none rounded-md px-6 py-3 text-sm font-medium ",
+                isLight(brandColor) ? "text-black" : "text-white"
+              )}>
+              Schedule your meeting
+            </EmailButton>
+          </Container>
           <EmailFooter />
         </EmailTemplateWrapper>
       );
@@ -334,6 +342,24 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <Section className="mt-4 flex h-12 w-full items-center justify-center rounded-lg border border-solid border-slate-200 bg-white">
             <CalendarDaysIcon className="mb-1 inline h-4 w-4" />
             <Text className="inline text-sm font-medium">Select a date</Text>
+          </Section>
+          <EmailFooter />
+        </EmailTemplateWrapper>
+      );
+    case TSurveyQuestionType.FileUpload:
+      return (
+        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
+          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
+            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+          </Text>
+          <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
+            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+          </Text>
+          <Section className="mt-4 flex w-full items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-5">
+            <UploadIcon className="mx-auto mb-1 block h-5 w-5" />
+            <Section>
+              <Text className="inline text-sm font-medium text-slate-500 ">Click to upload files</Text>
+            </Section>
           </Section>
           <EmailFooter />
         </EmailTemplateWrapper>

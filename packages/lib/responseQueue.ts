@@ -55,7 +55,7 @@ export class ResponseQueue {
         this.queue.shift(); // remove the successfully sent response from the queue
         break; // exit the retry loop
       }
-      console.error("Formbricks: Failed to send response. Retrying...", attempts);
+      console.error(`Formbricks: Failed to send response. Retrying... ${attempts}`);
       await delay(1000); // wait for 1 second before retrying
       attempts++;
     }
@@ -97,7 +97,7 @@ export class ResponseQueue {
               responseId: response.data.id,
             });
           } catch (error) {
-            console.error("Failed to update display, proceeding with the response.", error);
+            console.error(`Failed to update display, proceeding with the response. ${error}`);
           }
         }
         this.surveyState.updateResponseId(response.data.id);

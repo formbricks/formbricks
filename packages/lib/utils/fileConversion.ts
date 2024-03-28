@@ -11,7 +11,7 @@ export const convertToCsv = async (fields: string[], jsonData: Record<string, st
   try {
     csv = await parser.parse(jsonData).promise();
   } catch (err) {
-    console.log({ err });
+    console.error({ err });
     throw new Error("Failed to convert to CSV");
   }
   return csv;

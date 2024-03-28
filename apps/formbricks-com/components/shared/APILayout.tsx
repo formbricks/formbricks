@@ -54,7 +54,7 @@ export function APILayout({ method, url, description, headers, bodies, responses
         className={clsx(
           "mr-3 inline rounded-full p-1 px-3 font-semibold text-white",
           method === "POST" && "bg-red-400 dark:bg-red-800",
-          method === "GET" && "bg-green-400 dark:bg-green-800"
+          method === "GET" && "bg-green-500 dark:bg-green-800"
         )}>
         {method}
       </div>
@@ -174,7 +174,7 @@ function Response({ color, statusCode, description, example }: RespProps) {
         <div
           className={clsx(
             "mr-3 inline h-3 w-3 rounded-full",
-            color === "green" && "bg-green-400",
+            color === "green" && "bg-green-500",
             color === "brown" && "bg-amber-800"
           )}>
           &nbsp;

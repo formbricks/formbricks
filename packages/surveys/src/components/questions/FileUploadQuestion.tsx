@@ -26,6 +26,7 @@ interface FileUploadQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function FileUploadQuestion({
@@ -110,7 +111,6 @@ export default function FileUploadQuestion({
         <SubmitButton
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
         />
       </div>
     </form>
