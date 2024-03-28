@@ -70,65 +70,74 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
 
   return (
     <>
-      {membershipRole !== "viewer" && !survey.styling?.hideLogo && (
-        <>
-          {isLoading && (
-            <div className="absolute inset-0 flex  items-center justify-center ">
-              <svg className="h-7 w-7 animate-spin text-slate-800" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      {membershipRole !== "viewer" &&
+        !survey.styling?.hideLogo &&
+        (survey.styling?.hideLogo === false || !product.styling.hideLogo) && (
+          <>
+            {isLoading && (
+              <div className="absolute inset-0 flex  items-center justify-center ">
+                <svg className="h-7 w-7 animate-spin text-slate-800" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+              </div>
+            )}
+            {!product?.brand?.logoUrl ? (
+              <Label
+                htmlFor="addCompanyLogo"
+                className={`${type === "mobile" ? "px-6 py-2" : "px-8 py-3"} rounded-lg border-[3px] border-dashed border-slate-300 bg-slate-100  hover:cursor-pointer hover:bg-slate-200`}>
+                Add logo here
+                <Input
+                  id="addCompanyLogo"
+                  className="hidden"
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={(e) => onchangeImageHandler(e)}
                 />
-              </svg>
-            </div>
-          )}
-          {!product?.brand?.logoUrl ? (
-            <Label
-              htmlFor="addCompanyLogo"
-              className={`${type === "mobile" ? "px-6 py-2" : "px-8 py-3"} rounded-lg border-[3px] border-dashed border-slate-300 bg-slate-100  hover:cursor-pointer hover:bg-slate-200`}>
-              Add logo here
-              <Input
-                id="addCompanyLogo"
-                className="hidden"
-                type="file"
-                accept="image/jpeg,image/png"
-                onChange={(e) => onchangeImageHandler(e)}
-              />
-            </Label>
-          ) : (
-            <div className="relative -ml-[0.2rem] -mt-[0.85rem]">
-              <div
-                style={{ backgroundColor: product?.brand?.bgColor }}
-                className=" absolute rounded-lg border border-transparent hover:border-slate-300"
-                onClick={() => setIsLogoAddEditorOpen(true)}>
-                <Image
-                  src={product?.brand?.logoUrl}
-                  alt="Company Logo"
-                  className={`${type === "mobile" ? "h-12" : "h-[4rem]"} peer w-auto max-w-64 cursor-pointer rounded-lg object-contain p-1`}
-                  width={256}
-                  height={56}
-                />
-                <div className="absolute  right-0 top-0 hidden hover:block  hover:cursor-pointer peer-hover:block">
-                  <Pencil className="m-1 h-4 w-4 rounded-[0.3rem] bg-slate-200" />
+              </Label>
+            ) : (
+              <div className="relative -ml-[0.2rem] -mt-[0.85rem]">
+                <div
+                  style={{ backgroundColor: product?.brand?.bgColor }}
+                  className=" absolute rounded-lg border border-transparent hover:border-slate-300"
+                  onClick={() => setIsLogoAddEditorOpen(true)}>
+                  <Image
+                    src={product?.brand?.logoUrl}
+                    alt="Company Logo"
+                    className={`${type === "mobile" ? "h-12" : "h-[4rem]"} peer w-auto max-w-64 cursor-pointer rounded-lg object-contain p-1`}
+                    width={256}
+                    height={56}
+                  />
+                  <div className="absolute  right-0 top-0 hidden hover:block  hover:cursor-pointer peer-hover:block">
+                    <Pencil className="m-1 h-4 w-4 rounded-[0.3rem] bg-slate-200" />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <LogoSettingModal
-            open={isLogoAddEditorOpen}
-            setOpen={setIsLogoAddEditorOpen}
-            imageUrl={imageUrl}
-            setImageUrlFromLogoButton={setImageUrl}
-            environmentId={environmentId}
-            product={product}
-            setLocalProduct={setLocalProduct}
-            setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
-          />
-        </>
-      )}
+            <LogoSettingModal
+              open={isLogoAddEditorOpen}
+              setOpen={setIsLogoAddEditorOpen}
+              imageUrl={imageUrl}
+              setImageUrlFromLogoButton={setImageUrl}
+              environmentId={environmentId}
+              product={product}
+              setLocalProduct={setLocalProduct}
+              setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
+            />
+          </>
+        )}
     </>
   );
 };
