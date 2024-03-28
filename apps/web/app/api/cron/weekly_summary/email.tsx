@@ -1,23 +1,23 @@
-import { CreateReminderNotificationBody } from "@/app/api/cron/weekly_summary/emails/CreateReminderNotificationBody";
-import { LiveSurveyNotification } from "@/app/api/cron/weekly_summary/emails/LiveSurveyNotification";
-import { NotificationFooter } from "@/app/api/cron/weekly_summary/emails/NotificationFooter";
-import { NotificationHeader } from "@/app/api/cron/weekly_summary/emails/NotificationHeader";
-import { NotificationInsight } from "@/app/api/cron/weekly_summary/emails/NotificationInsight";
+import { CreateReminderNotificationBody } from "@/app/api/cron/weekly_summary/components/CreateReminderNotificationBody";
+import { LiveSurveyNotification } from "@/app/api/cron/weekly_summary/components/LiveSurveyNotification";
+import { NotificationFooter } from "@/app/api/cron/weekly_summary/components/NotificationFooter";
+import { NotificationHeader } from "@/app/api/cron/weekly_summary/components/NotificationHeader";
+import { NotificationInsight } from "@/app/api/cron/weekly_summary/components/NotificationInsight";
 import { render } from "@react-email/render";
 
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { EmailTemplate } from "@formbricks/lib/emails/EmailTemplate";
 import { sendEmail } from "@formbricks/lib/emails/emails";
 
-import { NotificationResponse } from "./types";
+import { TNotificationResponse } from "./types";
 
-const getEmailSubject = (productName: string) => {
+const getEmailSubject = (productName: string): string => {
   return `${productName} User Insights - Last Week by Formbricks`;
 };
 
 export const sendWeeklySummaryNotificationEmail = async (
   email: string,
-  notificationData: NotificationResponse
+  notificationData: TNotificationResponse
 ) => {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -59,7 +59,7 @@ export const sendWeeklySummaryNotificationEmail = async (
 
 export const sendNoLiveSurveyNotificationEmail = async (
   email: string,
-  notificationData: NotificationResponse
+  notificationData: TNotificationResponse
 ) => {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 

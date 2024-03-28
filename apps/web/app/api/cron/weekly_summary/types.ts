@@ -2,7 +2,7 @@ import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyQuestion, TSurveyStatus } from "@formbricks/types/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
-export interface Insights {
+export interface TInsights {
   totalCompletedResponses: number;
   totalDisplays: number;
   totalResponses: number;
@@ -14,7 +14,7 @@ export interface TSurveyResponse {
   [headline: string]: string | number | boolean | Date | string[];
 }
 
-export interface Survey {
+export interface TNotificationDataSurvey {
   id: string;
   name: string;
   responses: TSurveyResponse[];
@@ -22,13 +22,13 @@ export interface Survey {
   status: string;
 }
 
-export interface NotificationResponse {
+export interface TNotificationResponse {
   environmentId: string;
   currentDate: Date;
   lastWeekDate: Date;
   productName: string;
-  surveys: Survey[];
-  insights: Insights;
+  surveys: TNotificationDataSurvey[];
+  insights: TInsights;
 }
 
 // Prisma Types

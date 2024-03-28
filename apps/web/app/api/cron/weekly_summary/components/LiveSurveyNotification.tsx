@@ -1,16 +1,16 @@
-import { TSurveyResponse } from "@/app/api/cron/weekly_summary/types";
+import { TNotificationDataSurvey, TSurveyResponse } from "@/app/api/cron/weekly_summary/types";
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
 
 import { EmailButton } from "@formbricks/lib/emails/EmailButton";
 
-const getButtonLabel = (count) => {
+const getButtonLabel = (count: number): string => {
   if (count === 1) {
     return "View Response";
   }
   return `View ${count > 2 ? count - 1 : "1"} more Response${count > 2 ? "s" : ""}`;
 };
 
-const convertSurveyStatus = (status) => {
+const convertSurveyStatus = (status: string): string => {
   const statusMap = {
     inProgress: "Live",
     paused: "Paused",
@@ -20,7 +20,17 @@ const convertSurveyStatus = (status) => {
   return statusMap[status] || status;
 };
 
-export const LiveSurveyNotification = ({ WEBAPP_URL, environmentId, surveys }) => {
+interface LiveSurveyNotificationProps {
+  WEBAPP_URL: string;
+  environmentId: string;
+  surveys: TNotificationDataSurvey[];
+}
+
+export const LiveSurveyNotification = ({
+  WEBAPP_URL,
+  environmentId,
+  surveys,
+}: LiveSurveyNotificationProps) => {
   const createSurveyFields = (surveyResponses: TSurveyResponse[]) => {
     if (surveyResponses.length === 0) {
       return (

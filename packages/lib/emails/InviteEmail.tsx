@@ -3,13 +3,13 @@ import { Container, Text } from "@react-email/components";
 import { EmailButton } from "./EmailButton";
 import { EmailFooter } from "./EmailFooter";
 
-interface InviteEmail {
+interface InviteEmailProps {
   inviteeName: string;
   inviterName: string;
   verifyLink: string;
 }
 
-export const InviteEmail = ({ inviteeName, inviterName, verifyLink }: InviteEmail) => {
+export const InviteEmail = ({ inviteeName, inviterName, verifyLink }: InviteEmailProps) => {
   return (
     <Container>
       <Text>Hey {inviteeName},</Text>

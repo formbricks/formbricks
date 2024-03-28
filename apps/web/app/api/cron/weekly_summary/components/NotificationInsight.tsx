@@ -1,7 +1,12 @@
+import { TInsights } from "@/app/api/cron/weekly_summary/types";
 import { Column, Container, Row, Section, Text } from "@react-email/components";
 import React from "react";
 
-export const NotificationInsight = ({ insights }) => {
+interface NotificationInsightProps {
+  insights: TInsights;
+}
+
+export const NotificationInsight = ({ insights }: NotificationInsightProps) => {
   return (
     <Container>
       <Section className="my-4 rounded-md bg-slate-100">

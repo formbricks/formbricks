@@ -2,19 +2,17 @@ import { Body, Column, Container, Html, Img, Link, Row, Section } from "@react-e
 import { Tailwind } from "@react-email/components";
 import React from "react";
 
-export const EmailTemplate = ({ content }) => (
+interface EmailTemplateProps {
+  content: JSX.Element;
+}
+
+export const EmailTemplate = ({ content }: EmailTemplateProps) => (
   <Html>
     <Tailwind>
       <Body
-        className="h-full w-full justify-center bg-slate-50 p-6 text-center"
+        className="m-0 h-full w-full justify-center bg-slate-100 bg-slate-50 p-6 text-center text-base font-medium text-slate-800"
         style={{
-          backgroundColor: "#f1f5f9",
           fontFamily: "'Poppins', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
-          fontSize: "15px",
-          fontWeight: "500",
-          lineHeight: "26px",
-          margin: "0",
-          color: "#1e293b",
         }}>
         <Section className="flex items-center justify-center">
           <Link href="https://formbricks.com?utm_source=email_header&utm_medium=email" target="_blank">
