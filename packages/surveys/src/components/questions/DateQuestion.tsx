@@ -11,6 +11,8 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
 
+import { initDatePicker } from "../../sideload/question-date/index";
+
 interface DateQuestionProps {
   question: TSurveyDateQuestion;
   value: string | number | string[];
@@ -45,43 +47,11 @@ export default function DateQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const defaultDate = value ? new Date(value as string) : undefined;
-  const datePickerScriptSrc = import.meta.env.DATE_PICKER_SCRIPT_SRC;
-
   useEffect(() => {
-    // Check if the DatePicker has already been loaded
-
-    if (!window.initDatePicker) {
-      const script = document.createElement("script");
-
-      script.src = datePickerScriptSrc;
-
-      script.async = true;
-
-      document.body.appendChild(script);
-
-      script.onload = () => {
-        // Initialize the DatePicker once the script is loaded
-        window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
-        setLoading(false);
-      };
-
-      return () => {
-        document.body.removeChild(script);
-      };
-    } else {
-      // If already loaded, remove the date picker and re-initialize it
-      setLoading(false);
-
-      const datePickerContainer = document.getElementById("datePickerContainer");
-      if (datePickerContainer) {
-        datePickerContainer.remove();
-      }
-
-      window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
-    }
+    initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
+    setLoading(false);
 
     return () => {};
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.format, question.id]);
 

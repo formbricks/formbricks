@@ -38,8 +38,8 @@ export const triggerSurvey = async (survey: TSurvey): Promise<void> => {
       logger.debug("Survey display skipped based on displayPercentage.");
       return; // skip displaying the survey
     }
-    await renderWidget(survey);
   }
+  await renderWidget(survey);
 };
 
 const renderWidget = async (survey: TSurvey) => {
@@ -266,14 +266,12 @@ export const removeWidgetContainer = (): void => {
 };
 
 const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {
-  const formbricksSurveysScriptSrc = import.meta.env.FORMBRICKS_SURVEYS_SCRIPT_SRC;
-
   return new Promise((resolve, reject) => {
     if (window.formbricksSurveys) {
       resolve(window.formbricksSurveys);
     } else {
       const script = document.createElement("script");
-      script.src = formbricksSurveysScriptSrc;
+      script.src = `${config.get().apiHost}/api/packages/surveys`;
       script.async = true;
       script.onload = () => resolve(window.formbricksSurveys);
       script.onerror = (error) => {

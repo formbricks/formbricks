@@ -1,4 +1,3 @@
-import jsPackageJson from "@/../../packages/js/package.json";
 import clsx from "clsx";
 import { useState } from "react";
 import { IoLogoHtml5, IoLogoNpm } from "react-icons/io5";
@@ -68,7 +67,7 @@ if (typeof window !== "undefined") {
     var t = document.createElement("script");
     t.type = "text/javascript";
     t.async = true;
-    t.src = "https://unpkg.com/@formbricks/js@^${jsPackageJson.version}/dist/index.umd.js";
+    t.src = "https://unpkg.com/@formbricks/js@^1.6.5/dist/index.umd.js";
     var e = document.getElementsByTagName("script")[0];
     e.parentNode.insertBefore(t, e);
     setTimeout(function(){
