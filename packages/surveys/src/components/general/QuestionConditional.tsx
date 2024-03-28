@@ -210,6 +210,7 @@ export default function QuestionConditional({
       isLastQuestion={isLastQuestion}
       languageCode={languageCode}
       ttc={ttc}
+      isInIframe={isInIframe}
       setTtc={setTtc}
     />
   ) : question.type === TSurveyQuestionType.Matrix ? (
@@ -224,7 +225,6 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
     />
   ) : null;
 }
