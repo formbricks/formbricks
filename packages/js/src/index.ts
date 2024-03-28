@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    formbricksJsCore: any;
+    formbricks: any;
   }
 }
 
@@ -8,7 +8,7 @@ let sdkLoadingPromise: Promise<void> | null = null;
 let isErrorLoadingSdk = false;
 
 async function loadSDK(apiHost: string) {
-  if (!window.formbricksJsCore) {
+  if (!window.formbricks) {
     const res = await fetch(`${apiHost}/api/packages/js-core`);
     if (!res.ok) throw new Error("Failed to load Formbricks SDK");
     const sdkScript = await res.text();
@@ -18,7 +18,7 @@ async function loadSDK(apiHost: string) {
 
     return new Promise<void>((resolve, reject) => {
       const checkInterval = setInterval(() => {
-        if (window.formbricksJsCore) {
+        if (window.formbricks) {
           clearInterval(checkInterval);
           resolve();
         }
@@ -34,7 +34,7 @@ async function loadSDK(apiHost: string) {
 const formbricksProxyHandler: ProxyHandler<any> = {
   get(_target, prop, _receiver) {
     return async (...args: any[]) => {
-      if (!window.formbricksJsCore && !sdkLoadingPromise && !isErrorLoadingSdk) {
+      if (!window.formbricks && !sdkLoadingPromise && !isErrorLoadingSdk) {
         const { apiHost } = args[0];
         sdkLoadingPromise = loadSDK(apiHost).catch((error) => {
           console.error(`🧱 Formbricks - Error loading SDK: ${error}`);
@@ -52,17 +52,17 @@ const formbricksProxyHandler: ProxyHandler<any> = {
         await sdkLoadingPromise;
       }
 
-      if (!window.formbricksJsCore) {
+      if (!window.formbricks) {
         throw new Error("Formbricks SDK is not available");
       }
 
-      if (typeof window.formbricksJsCore[prop] !== "function") {
+      if (typeof window.formbricks[prop] !== "function") {
         console.error(`🧱 Formbricks - SDK does not support method ${String(prop)}`);
         return;
       }
 
       try {
-        return window.formbricksJsCore[prop](...args);
+        return window.formbricks[prop](...args);
         return;
       } catch (error) {
         console.error(error);
