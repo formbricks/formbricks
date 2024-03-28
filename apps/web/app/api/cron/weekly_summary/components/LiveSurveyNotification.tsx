@@ -67,12 +67,12 @@ export const LiveSurveyNotification = ({
 
   if (!surveys.length) return ` `;
 
-  return surveys.map((survey) => {
+  return surveys.map((survey, index) => {
     const displayStatus = convertSurveyStatus(survey.status);
     const isLive = displayStatus === "Live";
     const noResponseLastWeek = isLive && survey.responses.length === 0;
     return (
-      <Tailwind>
+      <Tailwind key={index}>
         <Container className="mt-12">
           <Text className="mb-0 inline">
             <Link
