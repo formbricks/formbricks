@@ -29,11 +29,10 @@ Multi-Language Surveys enable you to create surveys that support multiple langua
 ## How to setup Multi Language Surveys
 
 <Note>
-  Multi-Language is available on the Pro plan. Start with the freemium plan by just entering your credit card details.
+  Multi-Language is feature of the Enterprise Edition. Use it for free by adding your credit card details on the Formbricks Cloud.
 </Note>
 
-1. When you initialise the formbricks SDK for your user, you can pass an attribute `language` with the language code. This will only show the user the surveys that are available in the language present in their attributes.
-
+1. When you initialise the formbricks SDK for your user, you can pass an attribute `language` with the language code. This can be either the ISO identifier or the Alias you set when creating the language. The `language` attribute makes sure that this user only sees surveys with a translation in this specific language available. 
 <Col>
   <CodeGroup title="Configuring Formbricks SDK with Multi Language">
 
@@ -43,7 +42,7 @@ formbricks.init({
   apiHost: "<api-host>",
   userId: "<user_id>",
   attributes: {
-    language: "de",
+    language: "de", // ISO identifier or Alias set when creating language
   },
 });
 ```
@@ -51,13 +50,13 @@ formbricks.init({
   </CodeGroup>
 </Col>
 
-2. On the Formbricks dashboard, from the top-right drop-down, open the **Survey Languages** page.
+2. Open the **Survey Languages** page on the Formbricks dashboard via the top-right menu:
 
 <MdxImage src={HomePage} alt="Formbricks Home" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 3. Click on the **Edit Languages** button, to add a new language to your survey
 
-4. Select the language you want to add from the dropdown & optionally give ut an Alias to it (a custom identifier for this language) and click on the **Add Language** button.
+4. Select the preferred language from the dropdown and assign an identifier Alias. Click the **Add Language** button to add a language to your product.
 
 <MdxImage
   src={AddLanguages}
