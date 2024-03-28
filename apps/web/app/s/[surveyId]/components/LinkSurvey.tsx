@@ -181,7 +181,7 @@ export default function LinkSurvey({
 
   return (
     <div className="flex h-screen items-center justify-center">
-      {survey.styling?.showLogo && product.brand?.logoUrl && (
+      {!survey.styling?.hideLogo && product.brand?.logoUrl && (
         <div
           className={`absolute left-3 top-3 h-auto rounded-md  p-2 `}
           style={{ backgroundColor: product.brand?.bgColor }}>
