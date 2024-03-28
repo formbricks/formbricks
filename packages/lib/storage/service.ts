@@ -10,10 +10,8 @@ import {
 import { PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
-import { add, isAfter, parseISO } from "date-fns";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
-import { unstable_cache } from "next/cache";
 import path, { join } from "path";
 
 import { TAccessType } from "@formbricks/types/storage";
@@ -31,7 +29,6 @@ import {
 } from "../constants";
 import { generateLocalSignedUrl } from "../crypto";
 import { env } from "../env";
-import { storageCache } from "./cache";
 
 // S3Client Singleton
 let s3ClientInstance: S3Client | null = null;
