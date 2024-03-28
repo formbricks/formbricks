@@ -754,11 +754,12 @@ export const getSyncSurveys = async (
   const surveys = await unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
-      const person = personId === "legacy" ? ({ id: "legacy" } as TPerson) : await getPerson(personId);
 
       if (!product) {
         throw new Error("Product not found");
       }
+
+      const person = personId === "legacy" ? ({ id: "legacy" } as TPerson) : await getPerson(personId);
 
       if (!person) {
         throw new Error("Person not found");
@@ -768,6 +769,11 @@ export const getSyncSurveys = async (
 
       // filtered surveys for running and web
       surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
+
+      // if no surveys are left, return an empty array
+      if (surveys.length === 0) {
+        return [];
+      }
 
       const displays = await getDisplaysByPersonId(person.id);
 
@@ -805,6 +811,11 @@ export const getSyncSurveys = async (
           return true;
         }
       });
+
+      // if no surveys are left, return an empty array
+      if (surveys.length === 0) {
+        return [];
+      }
 
       // if no surveys have segment filters, return the surveys
       if (!anySurveyHasFilters(surveys)) {
