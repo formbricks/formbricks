@@ -21,7 +21,7 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@aws-sdk"],
     instrumentationHook: true,
     outputFileTracingIncludes: {
-      "app/api/packages/": [
+      "app/api/packages": [
         "../../packages/js/dist/*",
         "../../packages/js-core/dist/*",
         "../../packages/surveys/dist/*",
