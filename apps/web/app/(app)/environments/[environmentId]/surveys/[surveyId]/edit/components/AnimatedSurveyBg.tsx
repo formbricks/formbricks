@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 interface AnimatedSurveyBgProps {
   handleBgChange: (bg: string, bgType: string) => void;
