@@ -7,7 +7,13 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
-import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
+import {
+  EnvironmentData,
+  ProductData,
+  TNotificationDataSurvey,
+  TNotificationResponse,
+  TSurveyResponse,
+} from "./types";
 
 const BATCH_SIZE = 500;
 
@@ -164,7 +170,10 @@ const getProductsByTeamId = async (teamId: string): Promise<ProductData[]> => {
   });
 };
 
-const getNotificationResponse = (environment: EnvironmentData, productName: string): NotificationResponse => {
+const getNotificationResponse = (
+  environment: EnvironmentData,
+  productName: string
+): TNotificationResponse => {
   const insights = {
     totalCompletedResponses: 0,
     totalDisplays: 0,
@@ -173,11 +182,11 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
     numLiveSurvey: 0,
   };
 
-  const surveys: Survey[] = [];
+  const surveys: TNotificationDataSurvey[] = [];
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
     const parsedSurvey = checkForRecallInHeadline(survey, "default");
-    const surveyData: Survey = {
+    const surveyData: TNotificationDataSurvey = {
       id: parsedSurvey.id,
       name: parsedSurvey.name,
       status: parsedSurvey.status,
@@ -190,7 +199,7 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
       if (surveyData.responses.length >= 1) {
         break;
       }
-      const surveyResponse: SurveyResponse = {};
+      const surveyResponse: TSurveyResponse = {};
       for (const question of parsedSurvey.questions) {
         const headline = question.headline;
         const answer = response.data[question.id]?.toString() || null;
