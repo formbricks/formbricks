@@ -1,8 +1,10 @@
 {
-  "name": "@formbricks/js",
+  "name": "@formbricks/js-core",
+  "private": true,
+  "type": "module",
   "license": "MIT",
-  "version": "1.7.3",
-  "description": "Formbricks-js allows you to connect your app to Formbricks, display surveys and trigger events.",
+  "version": "1.0.0",
+  "description": "Js core for Formbricks that contains the logic for executing the @formbricks/js library and is loaded asynchronously over the Formbricks API.",
   "homepage": "https://formbricks.com",
   "repository": {
     "type": "git",
@@ -17,7 +19,6 @@
   "files": [
     "dist"
   ],
-  "type": "module",
   "source": "src/index.ts",
   "main": "dist/index.umd.cjs",
   "module": "dist/index.js",
@@ -39,7 +40,16 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
+    "@babel/preset-env": "^7.24.0",
+    "@babel/preset-typescript": "^7.23.3",
+    "@formbricks/api": "workspace:*",
+    "@formbricks/lib": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
+    "@formbricks/types": "workspace:*",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-turbo": "1.10.12",
     "terser": "^5.29.1",
     "vite": "^5.1.6",
     "vite-plugin-dts": "^3.7.3"

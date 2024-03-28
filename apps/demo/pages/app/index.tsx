@@ -47,7 +47,6 @@ export default function AppPage({}) {
         userId,
         attributes,
       });
-      window.formbricks = formbricks;
     }
 
     // Connect next.js router to Formbricks
