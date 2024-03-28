@@ -21,6 +21,7 @@ interface ConsentQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function ConsentQuestion({
@@ -57,9 +58,13 @@ export default function ConsentQuestion({
         }}>
         <label
           tabIndex={1}
+          id={`${question.id}-label`}
           onKeyDown={(e) => {
-            if (e.key == "Enter") {
-              onChange({ [question.id]: "accepted" });
+            // Accessibility: if spacebar was pressed pass this down to the input
+            if (e.key === " ") {
+              e.preventDefault();
+              document.getElementById(question.id)?.click();
+              document.getElementById(`${question.id}-label`)?.focus();
             }
           }}
           className="border-border bg-input-bg text-heading hover:bg-input-bg-selected focus:bg-input-bg-selected focus:ring-brand rounded-custom relative z-10 mt-4 flex w-full cursor-pointer items-center border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
@@ -103,7 +108,6 @@ export default function ConsentQuestion({
             tabIndex={2}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         </div>
       </form>

@@ -24,6 +24,7 @@ interface OpenTextQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function OpenTextQuestion({
@@ -35,9 +36,9 @@ export default function OpenTextQuestion({
   isFirstQuestion,
   isLastQuestion,
   languageCode,
-  autoFocus = true,
   ttc,
   setTtc,
+  isInIframe,
 }: OpenTextQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
 
@@ -58,11 +59,11 @@ export default function OpenTextQuestion({
 
   const openTextRef = useCallback(
     (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-      if (question.id && currentElement && autoFocus) {
+      if (question.id && currentElement && !isInIframe) {
         currentElement.focus();
       }
     },
-    [question.id, autoFocus]
+    [question.id, isInIframe]
   );
 
   return (
@@ -98,7 +99,7 @@ export default function OpenTextQuestion({
             value={value ? (value as string) : ""}
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
-            autoFocus={autoFocus}
+            autoFocus={!isInIframe}
             className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
@@ -118,7 +119,7 @@ export default function OpenTextQuestion({
               handleInputChange(e.currentTarget.value);
               handleInputResize(e);
             }}
-            autoFocus={autoFocus}
+            autoFocus={!isInIframe}
             className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-border-highlight rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}

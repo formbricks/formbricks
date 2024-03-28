@@ -37,6 +37,7 @@ export function Survey({
   responseCount,
   isCardBorderVisible = true,
 }: SurveyBaseProps) {
+  const isInIframe = window.self !== window.top;
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
@@ -272,6 +273,7 @@ export function Survey({
           survey={survey}
           languageCode={languageCode}
           responseCount={responseCount}
+          isInIframe={isInIframe}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
@@ -287,6 +289,7 @@ export function Survey({
           isRedirectDisabled={isRedirectDisabled}
           languageCode={languageCode}
           replaceRecallInfo={replaceRecallInfo}
+          isInIframe={isInIframe}
         />
       );
     } else {
@@ -309,6 +312,7 @@ export function Survey({
             }
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
             languageCode={languageCode}
+            isInIframe={isInIframe}
           />
         )
       );

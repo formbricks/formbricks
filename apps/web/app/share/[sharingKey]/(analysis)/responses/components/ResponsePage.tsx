@@ -31,6 +31,7 @@ interface ResponsePageProps {
   environmentTags: TTag[];
   attributes: TSurveyPersonAttributes;
   responsesPerPage: number;
+  totalResponseCount: number;
 }
 
 const ResponsePage = ({
@@ -42,11 +43,13 @@ const ResponsePage = ({
   environmentTags,
   attributes,
   responsesPerPage,
+  totalResponseCount,
 }: ResponsePageProps) => {
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [responseCount, setResponseCount] = useState<number | null>(null);
+  const [isFetchingFirstPage, setFetchingFirstPage] = useState<boolean>(true);
 
   const { selectedFilter, dateRange, resetState } = useResponseFilter();
 
@@ -83,23 +86,33 @@ const ResponsePage = ({
   }, [searchParams, resetState]);
 
   useEffect(() => {
-    const fetchInitialResponses = async () => {
-      const responses = await getResponsesBySurveySharingKeyAction(sharingKey, 1, responsesPerPage, filters);
-      if (responses.length < responsesPerPage) {
-        setHasMore(false);
-      }
-      setResponses(responses);
-    };
-    fetchInitialResponses();
-  }, [filters, responsesPerPage, sharingKey]);
-
-  useEffect(() => {
     const handleResponsesCount = async () => {
       const responseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
       setResponseCount(responseCount);
     };
     handleResponsesCount();
   }, [filters, sharingKey]);
+
+  useEffect(() => {
+    const fetchInitialResponses = async () => {
+      try {
+        setFetchingFirstPage(true);
+        const responses = await getResponsesBySurveySharingKeyAction(
+          sharingKey,
+          1,
+          responsesPerPage,
+          filters
+        );
+        if (responses.length < responsesPerPage) {
+          setHasMore(false);
+        }
+        setResponses(responses);
+      } finally {
+        setFetchingFirstPage(false);
+      }
+    };
+    fetchInitialResponses();
+  }, [filters, responsesPerPage, sharingKey]);
 
   return (
     <ContentWrapper>
@@ -120,6 +133,9 @@ const ResponsePage = ({
         environmentTags={environmentTags}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
+        isFetchingFirstPage={isFetchingFirstPage}
+        responseCount={responseCount}
+        totalResponseCount={totalResponseCount}
       />
     </ContentWrapper>
   );
