@@ -227,7 +227,7 @@ export default function LinkSurveyPage() {
           author="Bailey Pumfleet, Co-CEO @ Cal.com"
           imgSrc={Bailey}
           imgAlt="Cal.com co-founder Bailey Pumfleet speaks about how Formbricks in-app surveys feel like a native part of the UI of their product."
-          textSize="large"
+          textSize="base"
         />
       </div>
       <SalesPageFeature
