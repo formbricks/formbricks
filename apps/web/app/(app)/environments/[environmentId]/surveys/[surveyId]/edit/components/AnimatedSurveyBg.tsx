@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 interface AnimatedSurveyBgProps {
   handleBgChange: (bg: string, bgType: string) => void;
@@ -6,7 +6,7 @@ interface AnimatedSurveyBgProps {
 }
 
 export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
-  const [animation, setAnimation] = useState(background || "/animated-bgs/4K/1_4k.mp4");
+  const [animation, setAnimation] = useState(background);
   const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
   const animationFiles = {
@@ -72,6 +72,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
     setAnimation(x);
     handleBgChange(x, "animation");
   };
+
   return (
     <div>
       <div className="mt-4 grid grid-cols-6 gap-4">
