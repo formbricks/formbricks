@@ -1,0 +1,98 @@
+import { MdxImage } from "@/components/shared/MdxImage";
+
+import AddLanguages from "./add-languages.webp";
+import EditMultiLang from "./edit-multi-lang.webp";
+import EnableMultiLang from "./enable-multi-lang.webp";
+import HomePage from "./home-page.webp";
+import SurveySharing from "./survey-sharing.webp";
+
+export const metadata = {
+  title: "Multi Language Surveys | Formbricks",
+  description:
+    "Create multi-language surveys with Formbricks. Get feedback from your users in their preferred language without writing a single line of code.",
+};
+
+#### In-App Surveys
+
+# Multi-Language Surveys
+
+Multi-Language Surveys enable you to create surveys that support multiple languages, simplifying the creation, delivery, and analysis of surveys for users with multilingual audiences.
+
+<iframe
+  width="700"
+  height="450"
+  src="https://www.youtube.com/embed/Vol5zjYIoos?si=FOeDSqcy_OgtaUyM"
+  title="YouTube video player: Formbricks"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
+
+## How to setup Multi Language Surveys
+
+<Note>
+  Multi-Language is available on the Pro plan. Start with the freemium plan by just entering your credit card details.
+</Note>
+
+1. When you initialise the formbricks SDK for your user, you can pass an attribute `language` with the language code. This will only show the user the surveys that are available in the language present in their attributes.
+
+<Col>
+  <CodeGroup title="Configuring Formbricks SDK with Multi Language">
+
+```js
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user_id>",
+  attributes: {
+    language: "de",
+  },
+});
+```
+
+  </CodeGroup>
+</Col>
+
+2. On the Formbricks dashboard, from the top-right drop-down, open the **Survey Languages** page.
+
+<MdxImage src={HomePage} alt="Formbricks Home" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+
+3. Click on the **Edit Languages** button, to add a new language to your survey
+
+4. Select the language you want to add from the dropdown & optionally give ut an Alias to it (a custom identifier for this language) and click on the **Add Language** button.
+
+<MdxImage
+  src={AddLanguages}
+  alt="Add Multiple Languages to your Product"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+5. You can come back to this page anytime to add more languages or remove existing ones.
+
+6. Now, return to the dashboard to create a new survey or edit an existing one.
+
+7. In the survey editor, scroll down to the **Multiple Languages** section at the bottom & enable the toggle next to it.
+
+<MdxImage
+  src={EnableMultiLang}
+  alt="Enable Multi Language for a survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+8. Now choose a **Default Language** for your survey. This is the language that will be shown to users who have not selected a preferred language.
+
+<Note>Changing the default language will reset all the translations you have made for the survey.</Note>
+
+9. Now, add the languages from the dropdown that you want to support in your survey.
+
+10. You can now see the survey in the selected language by clicking on the language dropdown in any of the questions.
+
+11. You can now translate all survey content, including questions, options, and button placeholders, into the selected language.
+
+12. Once you are done, click on the **Publish** button to save the survey.
+
+13. Now, users with the language attribute set will see the survey in their preferred language. You can start collecting responses in multiple languages and filter them by language on the summary page.
+
+---
+
+Can’t figure it out? Join our [Discord](https://discord.com/invite/3YFcABF2Ts)!

@@ -198,6 +198,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Actions", href: "/docs/in-app-surveys/actions" },
       { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
       { title: "Advanced Targeting", href: "/docs/in-app-surveys/advanced-targeting" },
+      { title: "Multi Language", href: "/docs/in-app-surveys/multi-language" },
     ],
   },
   {
@@ -210,6 +211,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Source Tracking", href: "/docs/link-surveys/source-tracking" },
       { title: "Hidden Fields", href: "/docs/link-surveys/hidden-fields" },
       { title: "Start At Question", href: "/docs/link-surveys/start-at-question" },
+      { title: "Multi Language", href: "/docs/link-surveys/multi-language" },
     ],
   },
   {
