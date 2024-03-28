@@ -1,10 +1,10 @@
-interface QuestionImageProps {
+interface QuestionMediaProps {
   imgUrl?: string;
   videoUrl?: string;
   altText?: string;
 }
 
-export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionImageProps) => {
+export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionMediaProps) => {
   return (
     <div className="group/image relative mb-4 block rounded-md">
       {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -367,18 +367,13 @@ export const QuestionFormInput = ({
               id="question-image"
               allowedFileExtensions={["png", "jpeg", "jpg"]}
               environmentId={localSurvey.environmentId}
-              onFileUpload={(url: string[] | undefined, isVideo: boolean) => {
-                if (isThankYouCard && updateSurvey && url) {
-                  if (isVideo) {
-                    updateSurvey({ videoUrl: url[0] });
-                  } else {
-                    updateSurvey({ imageUrl: url[0] });
-                  }
-                } else if (updateQuestion && url) {
-                  if (isVideo) {
-                    updateQuestion(questionIdx, { videoUrl: url[0] });
-                  } else {
-                    updateQuestion(questionIdx, { imageUrl: url[0] });
+              onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
+                if (url) {
+                  const update = fileType === "video" ? { videoUrl: url[0] } : { imageUrl: url[0] };
+                  if (isThankYouCard && updateSurvey) {
+                    updateSurvey(update);
+                  } else if (updateQuestion) {
+                    updateQuestion(questionIdx, update);
                   }
                 }
               }}

@@ -1,5 +1,4 @@
 import { AlertTriangle } from "lucide-react";
-import React from "react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -17,8 +16,9 @@ import {
 interface VideoSettingsProps {
   uploadedVideoUrl: string;
   setUploadedVideoUrl: (videoUrl: string) => void;
-  onFileUpload: (uploadedUrl: string[] | undefined, isVideo: boolean) => void;
+  onFileUpload: (uploadedUrl: string[] | undefined, fileType: "image" | "video") => void;
   videoUrl: string;
+  setVideoUrlTemp: (videoUrl: string) => void;
 }
 
 export const VideoSettings = ({
@@ -26,6 +26,7 @@ export const VideoSettings = ({
   setUploadedVideoUrl,
   onFileUpload,
   videoUrl,
+  setVideoUrlTemp,
 }: VideoSettingsProps) => {
   const [isYoutubeLink, setIsYoutubeLink] = useState(checkForYoutubeUrl(uploadedVideoUrl));
   const [isYoutubePrivacyModeEnabled, setIsYoutubePrivacyModeEnabled] = useState(
@@ -33,6 +34,8 @@ export const VideoSettings = ({
   );
   const [showPlatformWarning, setShowPlatformWarning] = useState(false);
   const toggleYoutubePrivacyMode = () => {
+    setIsYoutubePrivacyModeEnabled(!isYoutubePrivacyModeEnabled);
+
     const videoId = extractYoutubeId(uploadedVideoUrl);
     if (!videoId) {
       toast.error("Invalid YouTube URL");
@@ -50,7 +53,7 @@ export const VideoSettings = ({
     const parsedUrl = parseVideoUrl(uploadedVideoUrl);
     if (parsedUrl) {
       setUploadedVideoUrl(parsedUrl);
-      onFileUpload([parsedUrl], true);
+      onFileUpload([parsedUrl], "video");
     } else {
       toast.error("Url not supported");
     }
@@ -58,7 +61,8 @@ export const VideoSettings = ({
 
   const handleRemoveVideo = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
     e.preventDefault();
-    onFileUpload([], true);
+    setVideoUrlTemp("");
+    onFileUpload([], "video");
   };
 
   const handleVideoUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +88,7 @@ export const VideoSettings = ({
 
   return (
     <form className="flex flex-col space-y-4">
-      <Label>Video URL(Youtube, Vimeo etc)</Label>
+      <Label>Video URL(Youtube, Vimeo or Loom)</Label>
       <div className="flex h-10 items-center space-x-2">
         <Input
           className="w-full"
@@ -106,7 +110,7 @@ export const VideoSettings = ({
       {showPlatformWarning && (
         <div className="flex items-center space-x-2 rounded-md border bg-slate-100 p-2 text-sm">
           <AlertTriangle className="h-4 w-4" />
-          <p> Youtube, Vimeo and loom are well supported. Please test any other hosting provider properly.</p>
+          <p>Please enter a valid Youtube, Vimeo or loom Url</p>
         </div>
       )}
       {isYoutubeLink && (

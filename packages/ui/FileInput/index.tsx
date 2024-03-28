@@ -27,7 +27,7 @@ interface FileInputProps {
   id: string;
   allowedFileExtensions: TAllowedFileExtension[];
   environmentId: string | undefined;
-  onFileUpload: (uploadedUrl: string[] | undefined, isVideo: boolean) => void;
+  onFileUpload: (uploadedUrl: string[] | undefined, fileType: "image" | "video") => void;
   fileUrl?: string | string[];
   videoUrl?: string;
   multiple?: boolean;
@@ -57,7 +57,6 @@ export const FileInput: React.FC<FileInputProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState(videoUrl ?? "");
   const [activeTab, setActiveTab] = useState(videoUrl ? "video" : "image");
-  const isVideoUpload = activeTab === "video";
   const [imageUrlTemp, setImageUrlTemp] = useState(fileUrl ?? "");
   const [videoUrlTemp, setVideoUrlTemp] = useState(videoUrl ?? "");
 
@@ -103,7 +102,7 @@ export const FileInput: React.FC<FileInputProps> = ({
       return;
     }
 
-    onFileUpload(uploadedUrls, isVideoUpload);
+    onFileUpload(uploadedUrls, activeTab === "video" ? "video" : "image");
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -122,7 +121,8 @@ export const FileInput: React.FC<FileInputProps> = ({
 
   const handleRemove = async (idx: number) => {
     const newFileUrl = selectedFiles.filter((_, i) => i !== idx).map((file) => file.url);
-    onFileUpload(newFileUrl, isVideoUpload);
+    onFileUpload(newFileUrl, activeTab === "video" ? "video" : "image");
+    setImageUrlTemp("");
   };
 
   const handleUploadMoreDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
@@ -167,7 +167,7 @@ export const FileInput: React.FC<FileInputProps> = ({
     });
 
     const prevUrls = Array.isArray(fileUrl) ? fileUrl : fileUrl ? [fileUrl] : [];
-    onFileUpload([...prevUrls, ...uploadedUrls], isVideoUpload);
+    onFileUpload([...prevUrls, ...uploadedUrls], activeTab === "video" ? "video" : "image");
   };
 
   useEffect(() => {
@@ -183,16 +183,29 @@ export const FileInput: React.FC<FileInputProps> = ({
     setSelectedFiles(getSelectedFiles());
   }, [fileUrl]);
 
-  // useEffect to preserve values of imageUrl and videoUrl when toggling between image and video
+  // useEffect to handle the state when switching between 'image' and 'video' tabs.
   useEffect(() => {
     if (activeTab === "image" && typeof imageUrlTemp === "string") {
-      setVideoUrlTemp(uploadedVideoUrl);
-      onFileUpload([], true);
-      onFileUpload([imageUrlTemp], false);
-    } else if (activeTab === "video" && fileUrl) {
-      setImageUrlTemp(fileUrl);
-      onFileUpload([], false);
-      onFileUpload([videoUrlTemp], true);
+      // Temporarily store the current video URL before switching tabs.
+      setVideoUrlTemp(videoUrl ?? "");
+
+      // Clear any video file that was previously uploaded.
+      onFileUpload([], "video");
+
+      // Re-upload the image using the temporary image URL.
+      onFileUpload([imageUrlTemp], "image");
+    } else if (activeTab === "video") {
+      // Temporarily store the current image URL before switching tabs.
+      setImageUrlTemp(fileUrl ?? "");
+
+      // Clear any image file that was previously uploaded.
+      onFileUpload([], "image");
+
+      // Logging the temporary video URL for debugging purposes.
+      console.log(videoUrlTemp);
+
+      // Re-upload the video using the temporary video URL.
+      onFileUpload([videoUrlTemp], "video");
     }
   }, [activeTab]);
 
@@ -208,6 +221,7 @@ export const FileInput: React.FC<FileInputProps> = ({
             setUploadedVideoUrl={setUploadedVideoUrl}
             onFileUpload={onFileUpload}
             videoUrl={videoUrl ?? ""}
+            setVideoUrlTemp={setVideoUrlTemp}
           />
         )}
       </div>
