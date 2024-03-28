@@ -472,7 +472,7 @@ const members = [
     imgUrl: "https://avatars.githubusercontent.com/u/17407010?v=4",
   },
   {
-    name: "Olasunkanmi Balogun",
+    name: "Johannes Dancker",
     githubId: "SiR-PENt",
     points: "100",
     level: "rookie",

@@ -63,7 +63,7 @@ export const Hero: React.FC = ({}) => {
 
         <div className="hidden pt-14 md:block">
           <Button
-            variant="highlight"
+            variant="darkCTA"
             className="mr-3 px-6"
             onClick={() => {
               router.push("https://app.formbricks.com/auth/signup");
