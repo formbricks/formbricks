@@ -23,6 +23,7 @@ interface DateQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export const DateQuestion = ({
@@ -164,7 +165,6 @@ export const DateQuestion = ({
 
         <SubmitButton
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
         />
       </div>

@@ -23,6 +23,7 @@ interface CalQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export const CalQuestion = ({
@@ -95,7 +96,6 @@ export const CalQuestion = ({
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         )}
       </div>

@@ -3,7 +3,7 @@ import { useCallback } from "preact/hooks";
 interface SubmitButtonProps {
   buttonLabel: string | undefined;
   isLastQuestion: boolean;
-  onClick: () => void;
+  onClick?: () => void;
   focus?: boolean;
   tabIndex?: number;
   type?: "submit" | "button";
@@ -12,7 +12,7 @@ interface SubmitButtonProps {
 function SubmitButton({
   buttonLabel,
   isLastQuestion,
-  onClick,
+  onClick = () => {},
   tabIndex = 1,
   focus = false,
   type = "submit",
