@@ -5,10 +5,13 @@ import { EmailButton } from "./EmailButton";
 import { EmailFooter } from "./EmailFooter";
 
 interface LinkSurveyEmailProps {
-  surveyData?: {
-    name?: string;
-    subheading?: string;
-  };
+  surveyData?:
+    | {
+        name?: string;
+        subheading?: string;
+      }
+    | null
+    | undefined;
   getSurveyLink: () => string;
 }
 

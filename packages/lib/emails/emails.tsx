@@ -48,10 +48,13 @@ export interface LinkSurveyEmailData {
   surveyId: string;
   email: string;
   suId: string;
-  surveyData?: {
-    name?: string;
-    subheading?: string;
-  };
+  surveyData?:
+    | {
+        name?: string;
+        subheading?: string;
+      }
+    | null
+    | undefined;
 }
 
 export const sendEmail = async (emailData: sendEmailData) => {
