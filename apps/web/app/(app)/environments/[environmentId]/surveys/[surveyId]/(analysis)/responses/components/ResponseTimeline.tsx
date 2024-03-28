@@ -19,7 +19,7 @@ interface ResponseTimelineProps {
   surveyId: string;
   responses: TResponse[];
   survey: TSurvey;
-  user: TUser;
+  user?: TUser;
   environmentTags: TTag[];
   fetchNextPage: () => void;
   hasMore: boolean;
