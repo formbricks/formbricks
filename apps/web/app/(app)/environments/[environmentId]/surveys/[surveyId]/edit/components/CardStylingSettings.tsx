@@ -215,12 +215,15 @@ const CardStylingSettings = ({
               </Label>
             </div>
 
-            {shouldDisplayLogo && (
+            {shouldDisplayLogo && (!surveyType || surveyType === "link") && (
               <div className="flex items-center space-x-1">
                 <Switch id="hideLogo" checked={hideLogo} onCheckedChange={toggleShowLogo} />
                 <Label htmlFor="hideLogo" className="cursor-pointer">
-                  <div className="ml-2">
-                    <h3 className="text-sm font-semibold text-slate-700">Hide Logo</h3>
+                  <div className="ml-2 flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-slate-700">Hide Logo</h3>
+                      {hideCheckmark && <Badge text="Link Surveys" type="gray" size="normal" />}
+                    </div>
                     <p className="text-xs font-normal text-slate-500">
                       Hides the logo in this specific survey
                     </p>
