@@ -36,7 +36,7 @@ export default async function Home() {
       throw new Error("No environment found");
     }
   } catch (error) {
-    console.error("error getting environment", error);
+    console.error(`error getting environment: ${error}`);
   }
 
   if (!environment) {

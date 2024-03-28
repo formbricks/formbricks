@@ -1,3 +1,5 @@
+import SurveyPlacementCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyPlacementCard";
+
 import { AdvancedTargetingCard } from "@formbricks/ee/advancedTargeting/components/AdvancedTargetingCard";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
@@ -10,7 +12,6 @@ import { TSurvey } from "@formbricks/types/surveys";
 import HowToSendCard from "./HowToSendCard";
 import RecontactOptionsCard from "./RecontactOptionsCard";
 import ResponseOptionsCard from "./ResponseOptionsCard";
-import StylingCard from "./StylingCard";
 import TargetingCard from "./TargetingCard";
 import WhenToSendCard from "./WhenToSendCard";
 
@@ -23,7 +24,6 @@ interface SettingsViewProps {
   segments: TSegment[];
   responseCount: number;
   membershipRole?: TMembershipRole;
-  colours: string[];
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
   localProduct: TProduct;
@@ -38,7 +38,6 @@ export default function SettingsView({
   segments,
   responseCount,
   membershipRole,
-  colours,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
   localProduct,
@@ -93,13 +92,13 @@ export default function SettingsView({
         environmentId={environment.id}
       />
 
-      <StylingCard
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-        colours={colours}
-        environmentId={environment.id}
-        localProduct={localProduct}
-      />
+      {localSurvey.type === "web" && (
+        <SurveyPlacementCard
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          environmentId={environment.id}
+        />
+      )}
     </div>
   );
 }

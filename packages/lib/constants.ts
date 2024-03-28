@@ -117,7 +117,7 @@ export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
 
 // Colors for Survey Bg
-export const colours = [
+export const SURVEY_BG_COLORS = [
   "#FFF2D8",
   "#EAD7BB",
   "#BCA37F",

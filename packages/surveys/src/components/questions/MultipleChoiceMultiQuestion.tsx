@@ -22,6 +22,7 @@ interface MultipleChoiceMultiProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function MultipleChoiceMultiQuestion({
@@ -35,6 +36,7 @@ export default function MultipleChoiceMultiQuestion({
   languageCode,
   ttc,
   setTtc,
+  isInIframe,
 }: MultipleChoiceMultiProps) {
   const [startTime, setStartTime] = useState(performance.now());
 
@@ -145,27 +147,25 @@ export default function MultipleChoiceMultiQuestion({
         <fieldset>
           <legend className="sr-only">Options</legend>
           <div
-            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
+            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto py-0.5 pr-2"
             ref={choicesContainerRef}>
             {questionChoices.map((choice, idx) => (
               <label
                 key={choice.id}
                 tabIndex={idx + 1}
+                className={cn(
+                  value === choice.label ? "border-border bg-input-selected-bg z-10" : "border-border",
+                  "text-heading bg-input-bg focus-within:border-brand hover:bg-input-bg-selected focus:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                )}
                 onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    if (Array.isArray(value) && value.includes(choice.label)) {
-                      removeItem(choice.label);
-                    } else {
-                      addItem(choice.label);
-                    }
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById(choice.id)?.click();
+                    document.getElementById(choice.id)?.focus();
                   }
                 }}
-                className={cn(
-                  value === choice.label
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
-                    : "border-border",
-                  "text-heading focus-within:border-border-highlight hover:bg-accent-bg focus:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
-                )}>
+                autoFocus={idx === 0 && !isInIframe}>
                 <span className="flex items-center text-sm">
                   <input
                     type="checkbox"
@@ -200,13 +200,16 @@ export default function MultipleChoiceMultiQuestion({
                 tabIndex={questionChoices.length + 1}
                 className={cn(
                   value === getLocalizedValue(otherOption.label, languageCode)
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
+                    ? "border-border bg-input-selected-bg z-10"
                     : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
+                  "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    setOtherSelected(!otherSelected);
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById(otherOption.id)?.click();
+                    document.getElementById(otherOption.id)?.focus();
                   }
                 }}>
                 <span className="flex items-center text-sm">
@@ -244,19 +247,10 @@ export default function MultipleChoiceMultiQuestion({
                       setOtherValue(e.currentTarget.value);
                       addItem(e.currentTarget.value);
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key == "Enter") {
-                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                        setTtc(updatedTtcObj);
-                        setTimeout(() => {
-                          onSubmit({ [question.id]: value }, updatedTtcObj);
-                        }, 100);
-                      }
-                    }}
+                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder={
                       getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
                     }
-                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus mt-3 flex h-10 w-full rounded-md border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />
@@ -283,7 +277,6 @@ export default function MultipleChoiceMultiQuestion({
           tabIndex={questionChoices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
         />
       </div>
     </form>

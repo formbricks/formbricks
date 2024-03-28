@@ -54,3 +54,6 @@ Zone.Identifier
 
 # uploads
 packages/lib/uploads
+
+# Pino Logs
+formbricks.log

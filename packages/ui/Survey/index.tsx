@@ -5,7 +5,7 @@ import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbrick
 
 const createContainerId = () => `formbricks-survey-container`;
 
-export const SurveyInline = (props: Omit<SurveyInlineProps & { brandColor: string }, "containerId">) => {
+export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
     renderSurveyInline({
@@ -16,7 +16,7 @@ export const SurveyInline = (props: Omit<SurveyInlineProps & { brandColor: strin
   return <div id={containerId} className="h-full w-full" />;
 };
 
-export const SurveyModal = (props: SurveyModalProps & { brandColor: string }) => {
+export const SurveyModal = (props: SurveyModalProps) => {
   useEffect(() => {
     renderSurveyModal(props);
   }, [props]);

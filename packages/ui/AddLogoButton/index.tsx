@@ -70,7 +70,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
 
   return (
     <>
-      {membershipRole !== "viewer" && survey.styling?.showLogo && (
+      {membershipRole !== "viewer" && !survey.styling?.hideLogo && (
         <>
           {isLoading && (
             <div className="absolute inset-0 flex  items-center justify-center ">

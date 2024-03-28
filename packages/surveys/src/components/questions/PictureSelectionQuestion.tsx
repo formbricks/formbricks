@@ -22,6 +22,7 @@ interface PictureSelectionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function PictureSelectionQuestion({
@@ -119,16 +120,19 @@ export default function PictureSelectionQuestion({
                 tabIndex={idx + 1}
                 htmlFor={choice.id}
                 onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    handleChange(choice.id);
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById(choice.id)?.click();
+                    document.getElementById(choice.id)?.focus();
                   }
                 }}
                 onClick={() => handleChange(choice.id)}
                 className={cn(
                   Array.isArray(value) && value.includes(choice.id)
-                    ? `border-brand text-brand z-10 border-4 shadow-xl focus:border-4`
+                    ? `border-brand text-brand z-10 border-4 shadow-xl`
                     : "",
-                  "border-border focus:border-border-highlight focus:bg-accent-selected-bg group/image relative box-border inline-block h-28 w-full cursor-pointer overflow-hidden rounded-xl border focus:outline-none"
+                  "focus:border-brand relative inline-block h-28 w-full cursor-pointer overflow-hidden rounded-xl border focus:border-4 focus:outline-none"
                 )}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -138,6 +142,7 @@ export default function PictureSelectionQuestion({
                   className="h-full w-full object-cover"
                 />
                 <a
+                  tabIndex={-1}
                   href={choice.imageUrl}
                   target="_blank"
                   title="Open in new tab"
@@ -214,7 +219,6 @@ export default function PictureSelectionQuestion({
           tabIndex={questionChoices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
         />
       </div>
     </form>

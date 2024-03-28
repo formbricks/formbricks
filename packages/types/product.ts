@@ -2,6 +2,13 @@ import { z } from "zod";
 
 import { ZColor, ZPlacement } from "./common";
 import { ZEnvironment } from "./environment";
+import { ZBaseStyling } from "./styling";
+
+export const ZProductStyling = ZBaseStyling.extend({
+  allowStyleOverwrite: z.boolean(),
+});
+
+export type TProductStyling = z.infer<typeof ZProductStyling>;
 
 export const ZLanguage = z.object({
   id: z.string().cuid2(),
@@ -36,8 +43,7 @@ export const ZProduct = z.object({
   updatedAt: z.date(),
   name: z.string(),
   teamId: z.string(),
-  brandColor: ZColor,
-  highlightBorderColor: ZColor.nullable(),
+  styling: ZProductStyling,
   recontactDays: z.number().int(),
   inAppSurveyBranding: z.boolean(),
   linkSurveyBranding: z.boolean(),
@@ -45,6 +51,8 @@ export const ZProduct = z.object({
   clickOutsideClose: z.boolean(),
   darkOverlay: z.boolean(),
   environments: z.array(ZEnvironment),
+  brandColor: ZColor.nullish(),
+  highlightBorderColor: ZColor.nullish(),
   languages: z.array(ZLanguage),
   brand: ZBrand,
 });
@@ -63,6 +71,7 @@ export const ZProductUpdateInput = z.object({
   clickOutsideClose: z.boolean().optional(),
   darkOverlay: z.boolean().optional(),
   environments: z.array(ZEnvironment).optional(),
+  styling: ZProductStyling.optional(),
   brand: ZBrand.optional(),
 });
 

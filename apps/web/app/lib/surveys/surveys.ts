@@ -71,7 +71,9 @@ export const generateQuestionAndFilterOptions = (
         questionFilterOptions.push({
           type: q.type,
           filterOptions: conditionOptions[q.type],
-          filterComboBoxOptions: q?.choices ? q?.choices?.map((c) => c?.label) : [""],
+          filterComboBoxOptions: q?.choices
+            ? q?.choices?.filter((c) => c.id !== "other")?.map((c) => c?.label)
+            : [""],
           id: q.id,
         });
       } else if (q.type === TSurveyQuestionType.PictureSelection) {

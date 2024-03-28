@@ -2,6 +2,7 @@
 
 import { refetchProduct } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { LoadingSkeleton } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/LoadingSkeleton";
+import StylingView from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
@@ -13,10 +14,10 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys";
 
 import PreviewSurvey from "../../../components/PreviewSurvey";
-import QuestionsAudienceTabs from "./QuestionsSettingsTabs";
+import QuestionsAudienceTabs from "./QuestionsStylingSettingsTabs";
 import QuestionsView from "./QuestionsView";
 import SettingsView from "./SettingsView";
 import SurveyMenuBar from "./SurveyMenuBar";
@@ -30,7 +31,7 @@ interface SurveyEditorProps {
   segments: TSegment[];
   responseCount: number;
   membershipRole?: TMembershipRole;
-  colours: string[];
+  colors: string[];
   isUserTargetingAllowed?: boolean;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
@@ -45,12 +46,12 @@ export default function SurveyEditor({
   segments,
   responseCount,
   membershipRole,
+  colors,
   isMultiLanguageAllowed,
-  colours,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
 }: SurveyEditorProps): JSX.Element {
-  const [activeView, setActiveView] = useState<"questions" | "settings">("questions");
+  const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(survey);
   const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
@@ -58,6 +59,11 @@ export default function SurveyEditor({
   const surveyEditorRef = useRef(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
   const [isImageAddedFromAddLogoButton, setIsImageAddedFromAddLogoButton] = useState(false);
+
+  const [styling, setStyling] = useState(localSurvey?.styling);
+  const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
+
+  const createdSegmentRef = useRef(false);
 
   const fetchLatestProduct = useCallback(async () => {
     const latestProduct = await refetchProduct(localProduct.id);
@@ -70,12 +76,17 @@ export default function SurveyEditor({
 
   useEffect(() => {
     if (survey) {
+      if (localSurvey) return;
+
       const surveyClone = structuredClone(survey);
       setLocalSurvey(surveyClone);
+
       if (survey.questions.length > 0) {
         setActiveQuestionId(survey.questions[0].id);
       }
     }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
   useEffect(() => {
@@ -104,19 +115,12 @@ export default function SurveyEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type, survey?.questions]);
 
-  useEffect(() => {
-    // if the localSurvey object has not been populated yet, do nothing
-    if (!localSurvey) {
-      return;
-    }
-    // do nothing if its not an in-app survey
-    if (localSurvey.type !== "web") {
-      return;
-    }
+  const handleCreateSegment = async () => {
+    if (!localSurvey) return;
 
-    const createSegment = async () => {
+    try {
       const createdSegment = await createSegmentAction({
-        title: survey.id,
+        title: localSurvey.id,
         description: "",
         environmentId: environment.id,
         surveyId: localSurvey.id,
@@ -124,22 +128,25 @@ export default function SurveyEditor({
         isPrivate: true,
       });
 
-      setLocalSurvey({
-        ...localSurvey,
-        segment: createdSegment,
-      });
-    };
+      const localSurveyClone = structuredClone(localSurvey);
+      localSurveyClone.segment = createdSegment;
+      setLocalSurvey(localSurveyClone);
+    } catch (err) {
+      // set the ref to false to retry during the next render
+      createdSegmentRef.current = false;
+    }
+  };
 
-    if (!localSurvey.segment?.id) {
-      try {
-        createSegment();
-      } catch (err) {
-        throw new Error("Error creating segment");
-      }
+  useEffect(() => {
+    if (!localSurvey || localSurvey.type !== "web" || !!localSurvey.segment || createdSegmentRef.current) {
+      return;
     }
 
+    createdSegmentRef.current = true;
+    handleCreateSegment();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environment.id, isUserTargetingAllowed, localSurvey?.type, survey.id]);
+  }, [localSurvey]);
 
   useEffect(() => {
     if (!localSurvey?.languages) return;
@@ -173,9 +180,13 @@ export default function SurveyEditor({
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
-            <QuestionsAudienceTabs activeId={activeView} setActiveId={setActiveView} />
+            <QuestionsAudienceTabs
+              activeId={activeView}
+              setActiveId={setActiveView}
+              isStylingTabVisible={!!product.styling.allowStyleOverwrite}
+            />
 
-            {activeView === "questions" ? (
+            {activeView === "questions" && (
               <QuestionsView
                 localSurvey={localSurvey}
                 setLocalSurvey={setLocalSurvey}
@@ -189,7 +200,23 @@ export default function SurveyEditor({
                 isMultiLanguageAllowed={isMultiLanguageAllowed}
                 isFormbricksCloud={isFormbricksCloud}
               />
-            ) : (
+            )}
+
+            {activeView === "styling" && product.styling.allowStyleOverwrite && (
+              <StylingView
+                colors={colors}
+                environment={environment}
+                localSurvey={localSurvey}
+                setLocalSurvey={setLocalSurvey}
+                product={localProduct}
+                styling={styling ?? null}
+                setStyling={setStyling}
+                localStylingChanges={localStylingChanges}
+                setLocalStylingChanges={setLocalStylingChanges}
+              />
+            )}
+
+            {activeView === "settings" && (
               <SettingsView
                 environment={environment}
                 localSurvey={localSurvey}
@@ -199,7 +226,6 @@ export default function SurveyEditor({
                 segments={segments}
                 responseCount={responseCount}
                 membershipRole={membershipRole}
-                colours={colours}
                 isUserTargetingAllowed={isUserTargetingAllowed}
                 isFormbricksCloud={isFormbricksCloud}
                 localProduct={localProduct}

@@ -200,7 +200,7 @@ model Display {
   status     DisplayStatus?
 
   @@index([surveyId])
-  @@index([personId])
+  @@index([personId, createdAt])
 }
 
 model SurveyTrigger {
@@ -299,7 +299,7 @@ model Survey {
 
   /// @zod.custom(imports.ZSurveyStyling)
   /// [SurveyStyling]
-  styling Json? @default("{\"showLogo\": true}")
+  styling Json?
 
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
@@ -313,7 +313,7 @@ model Survey {
   displayPercentage Int?
   languages         SurveyLanguage[]
 
-  @@index([environmentId])
+  @@index([environmentId, updatedAt])
   @@index([segmentId])
 }
 
@@ -339,6 +339,7 @@ model ActionClass {
   actions       Action[]
 
   @@unique([name, environmentId])
+  @@index([environmentId, createdAt])
 }
 
 model Action {
@@ -356,6 +357,7 @@ model Action {
   @@index([personId, actionClassId, createdAt])
   @@index([actionClassId, createdAt])
   @@index([personId])
+  @@index([createdAt])
 }
 
 enum EnvironmentType {
@@ -419,8 +421,11 @@ model Product {
   team                 Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId               String
   environments         Environment[]
-  brandColor           String          @default("#64748b")
+  brandColor           String?
   highlightBorderColor String?
+  /// @zod.custom(imports.ZProductStyling)
+  /// [Styling]
+  styling              Json            @default("{\"allowStyleOverwrite\":true}")
   recontactDays        Int             @default(7)
   linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
   inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
