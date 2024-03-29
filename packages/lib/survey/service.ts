@@ -352,6 +352,7 @@ export const transformToLegacySurvey = async (
 ): Promise<TLegacySurvey> => {
   const targetLanguage = languageCode ?? "default";
   const transformedSurvey = reverseTranslateSurvey(survey, targetLanguage);
+
   return formatDateFields(transformedSurvey, ZLegacySurvey);
 };
 
