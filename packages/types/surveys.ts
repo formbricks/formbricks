@@ -7,7 +7,9 @@ import { ZLanguage } from "./product";
 import { ZSegment } from "./segment";
 import { ZBaseStyling } from "./styling";
 
-export const ZI18nString = z.record(z.string(), z.string());
+export const ZI18nString = z.record(z.string()).refine((obj) => "default" in obj, {
+  message: "Object must have a 'default' key",
+});
 
 export type TI18nString = z.infer<typeof ZI18nString>;
 

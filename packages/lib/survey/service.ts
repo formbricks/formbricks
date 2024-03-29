@@ -31,7 +31,7 @@ import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters } from "./util";
+import { anySurveyHasFilters, formatSurveyDateFields } from "./util";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -343,24 +343,16 @@ export const getSurveys = async (
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+  return surveys.map((survey) => formatSurveyDateFields(survey));
 };
 
 export const transformToLegacySurvey = async (
   survey: TSurvey,
   languageCode?: string
 ): Promise<TLegacySurvey> => {
-  const transformedSurvey = await unstable_cache(
-    async () => {
-      const targetLanguage = languageCode ?? "default";
-      return reverseTranslateSurvey(survey, targetLanguage);
-    },
-    [`transformToLegacySurvey-${survey.id}-${languageCode}`],
-    {
-      tags: [surveyCache.tag.byId(survey.id)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
+  const targetLanguage = languageCode ?? "default";
+  const transformedSurvey = reverseTranslateSurvey(survey, targetLanguage);
+
   return formatDateFields(transformedSurvey, ZLegacySurvey);
 };
 
