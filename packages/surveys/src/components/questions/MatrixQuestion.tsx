@@ -8,8 +8,7 @@ import { JSX } from "preact";
 import { useCallback, useMemo, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
+import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TI18nString, TSurveyMatrixQuestion } from "@formbricks/types/surveys";
 
 interface MatrixQuestionProps {
@@ -99,25 +98,25 @@ export const MatrixQuestion = ({
       />
       <Subheader subheader={getLocalizedValue(question.subheader, languageCode)} questionId={question.id} />
       <div className="mt-4 max-h-[33vh] overflow-auto">
-        <div className="rounded-custom border-brand min-w-full table-auto border-collapse overflow-auto border">
-          <table className="min-w-full table-auto border-collapse">
+        <div className="min-w-full table-auto overflow-auto">
+          <table className="min-w-full table-auto border-collapse text-sm !font-normal">
             <thead>
               <tr>
-                <th className="px-4 py-2"></th>
+                <th className="px-4 py-2 !font-normal"></th>
                 {columnsHeaders}
               </tr>
             </thead>
             <tbody>
               {question.rows.map((row, rowIndex) => (
                 // Table rows
-                <tr className={`${rowIndex % 2 === 0 ? "bg-accent-bg" : ""}`}>
-                  <td className="text-heading max-w-40 break-words px-4 py-2">
+                <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
+                  <td className="text-heading rounded-l-custom max-w-40 break-words px-4 py-2">
                     {getLocalizedValue(row, languageCode)}
                   </td>
                   {question.columns.map((column, columnIndex) => (
                     <td
                       key={columnIndex}
-                      className="px-4 py-2 text-gray-800"
+                      className={`px-4 py-2 text-gray-800 ${columnIndex === question.columns.length - 1 ? "rounded-r-custom" : ""}`}
                       onClick={() =>
                         handleSelect(
                           getLocalizedValue(column, languageCode),
@@ -137,7 +136,7 @@ export const MatrixQuestion = ({
                                 getLocalizedValue(column, languageCode)
                               : false
                           }
-                          className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                          className="border-brand text-brand h-5 w-5 border focus:ring-0 focus:ring-offset-0"
                         />
                       </div>
                     </td>
