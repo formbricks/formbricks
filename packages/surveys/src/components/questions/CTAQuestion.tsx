@@ -22,6 +22,7 @@ interface CTAQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function CTAQuestion({
@@ -34,6 +35,7 @@ export default function CTAQuestion({
   languageCode,
   ttc,
   setTtc,
+  isInIframe,
 }: CTAQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
 
@@ -78,7 +80,7 @@ export default function CTAQuestion({
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            focus={true}
+            focus={!isInIframe}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();

@@ -6,7 +6,7 @@ import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponsePersonAttributes } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId, getResponsePersonAttributes } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
@@ -47,6 +47,8 @@ export default async function Page({ params }) {
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
 
+  const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
+
   return (
     <>
       <ResponsePage
@@ -60,6 +62,7 @@ export default async function Page({ params }) {
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
         membershipRole={currentUserMembership?.role}
+        totalResponseCount={totalResponseCount}
       />
     </>
   );

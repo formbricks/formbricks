@@ -6,8 +6,9 @@ export default function InsightOppos() {
   return (
     <div id="best-practices">
       <HeadingCentered
-        heading="Get started with Best Practices"
-        subheading="Run battle-tested approaches for qualitative user research in minutes."
+        teaser="Do what works"
+        heading="Get started with best practices"
+        subheading="Run battle-tested approaches for user research in minutes."
       />
       <BestPracticeNavigation />
     </div>

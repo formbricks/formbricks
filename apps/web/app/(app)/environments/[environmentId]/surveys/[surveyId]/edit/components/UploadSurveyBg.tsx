@@ -8,10 +8,7 @@ import { Input } from "@formbricks/ui/Input";
 
 interface UploadSurveyBgProps {
   handleBgChange: (url: string, bgType: string) => void;
-  query: string;
-  images: Image[];
-  setQuery: React.Dispatch<React.SetStateAction<string>>;
-  setImages: React.Dispatch<React.SetStateAction<Image[]>>;
+  background: string;
 }
 
 interface Image {
@@ -22,15 +19,11 @@ interface Image {
   };
 }
 
-export const UploadSurveyBg = ({
-  handleBgChange,
-  query,
-  setQuery,
-  images,
-  setImages,
-}: UploadSurveyBgProps) => {
+export const UploadSurveyBg = ({ handleBgChange, background }: UploadSurveyBgProps) => {
   const inputFocus = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState("");
+  const [images, setImages] = useState<Image[]>([]);
 
   useEffect(() => {
     const fetchData = async (searchQuery: string) => {
@@ -89,7 +82,7 @@ export const UploadSurveyBg = ({
               key={image.id}
               width={300}
               height={200}
-              src={image.urls.regular}
+              src={images.length > 0 ? image.urls.regular : background}
               alt={image.alt_description}
               onClick={() => handleBgChange(image.urls?.regular, "upload")}
               className="rounded-lg"

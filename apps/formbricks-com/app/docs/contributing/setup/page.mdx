@@ -340,6 +340,12 @@ pnpm go
 - Demo App at [http://localhost:3002](http://localhost:3002)
 - Landing Page at [http://localhost:3001](http://localhost:3001)
 
+<Note>
+  **WSL2 users**: If you encounter connection issues with Prisma, ensure your WSL2 instance's PostgreSQL
+  service is stopped before running `pnpm go`. Use the command `sudo systemctl stop postgresql` to stop the
+  service.
+</Note>
+
 **You can now access the Formbricks app on [http://localhost:3000](http://localhost:3000)**. You will be automatically redirected to the login. To use your local installation of formbricks, create a new account.
 
 {" "}

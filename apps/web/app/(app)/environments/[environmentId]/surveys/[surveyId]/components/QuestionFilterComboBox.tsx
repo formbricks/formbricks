@@ -53,7 +53,12 @@ const QuestionFilterComboBox = ({
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
-    ? filterComboBoxOptions?.filter((o) => !filterComboBoxValue?.includes(o))
+    ? filterComboBoxOptions?.filter(
+        (o) =>
+          !filterComboBoxValue?.includes(
+            typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
+          )
+      )
     : filterComboBoxOptions;
 
   // disable the combo box for selection of value when question type is nps or rating and selected value is submitted or skipped
