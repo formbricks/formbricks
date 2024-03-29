@@ -2,9 +2,11 @@
 
 import clsx from "clsx";
 import {
+  AirplayIcon,
   CheckIcon,
   ChevronDown,
   ChevronUp,
+  GlobeIcon,
   HashIcon,
   HelpCircleIcon,
   ImageIcon,
@@ -34,7 +36,8 @@ export enum OptionsType {
   QUESTIONS = "Questions",
   TAGS = "Tags",
   ATTRIBUTES = "Attributes",
-  METADATA = "Metadata",
+  LANGUAGE = "Language",
+  META = "Meta",
 }
 
 export type QuestionOption = {
@@ -78,12 +81,21 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
         }
       case OptionsType.ATTRIBUTES:
         return <HashIcon width={18} className="text-white" />;
-      case OptionsType.METADATA:
+      case OptionsType.META:
+        switch (label) {
+          case "device":
+            return <SmartphoneIcon width={18} height={18} className="text-white" />;
+          case "os":
+            return <AirplayIcon width={18} height={18} className="text-white" />;
+          case "browser":
+            return <GlobeIcon width={18} height={18} className="text-white" />;
+          case "source":
+            return <GlobeIcon width={18} height={18} className="text-white" />;
+        }
+      case OptionsType.LANGUAGE:
         switch (label) {
           case "Language":
             return <LanguagesIcon width={18} height={18} className="text-white" />;
-          case "Device Type":
-            return <SmartphoneIcon width={18} height={18} className="text-white" />;
         }
       case OptionsType.TAGS:
         return <HashIcon width={18} className="text-white" />;
