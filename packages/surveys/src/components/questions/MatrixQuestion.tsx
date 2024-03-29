@@ -82,7 +82,7 @@ export const MatrixQuestion = ({
   const columnsHeaders = useMemo(
     () =>
       question.columns.map((column, index) => (
-        <th key={index} className="max-w-40 break-words px-4 py-2 text-gray-800">
+        <th key={index} className="text-heading max-w-40 break-words px-4 py-2">
           {getLocalizedValue(column, languageCode)}
         </th>
       )),
@@ -99,48 +99,54 @@ export const MatrixQuestion = ({
       />
       <Subheader subheader={getLocalizedValue(question.subheader, languageCode)} questionId={question.id} />
       <div className="mt-4 max-h-[33vh] overflow-auto">
-        <table className="min-w-full table-auto border-collapse border border-gray-200">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 text-gray-800"></th>
-              {columnsHeaders}
-            </tr>
-          </thead>
-          <tbody>
-            {question.rows.map((row, rowIndex) => (
-              // Table rows
-              <tr className={`${rowIndex % 2 === 0 ? "bg-gray-100" : ""}`}>
-                <td className="max-w-40 break-words px-4 py-2">{getLocalizedValue(row, languageCode)}</td>
-                {question.columns.map((column, columnIndex) => (
-                  <td key={columnIndex} className="px-4 py-2 text-gray-800">
-                    <div className="flex items-center justify-center p-2">
-                      {/* radio input  */}
-                      <input
-                        type="radio"
-                        id={`${row}-${column}`}
-                        name={getLocalizedValue(row, languageCode)}
-                        value={getLocalizedValue(column, languageCode)}
-                        checked={
-                          typeof value === "object" && !Array.isArray(value)
-                            ? value[getLocalizedValue(row, languageCode)] ===
-                              getLocalizedValue(column, languageCode)
-                            : false
-                        }
-                        onClick={() =>
-                          handleSelect(
-                            getLocalizedValue(column, languageCode),
-                            getLocalizedValue(row, languageCode)
-                          )
-                        }
-                        className="h-4 w-4 cursor-pointer border border-black"
-                      />
-                    </div>
-                  </td>
-                ))}
+        <div className="rounded-custom border-brand min-w-full table-auto border-collapse overflow-auto border">
+          <table className="min-w-full table-auto border-collapse">
+            <thead>
+              <tr>
+                <th className="px-4 py-2"></th>
+                {columnsHeaders}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {question.rows.map((row, rowIndex) => (
+                // Table rows
+                <tr className={`${rowIndex % 2 === 0 ? "bg-accent-bg" : ""}`}>
+                  <td className="text-heading max-w-40 break-words px-4 py-2">
+                    {getLocalizedValue(row, languageCode)}
+                  </td>
+                  {question.columns.map((column, columnIndex) => (
+                    <td
+                      key={columnIndex}
+                      className="px-4 py-2 text-gray-800"
+                      onClick={() =>
+                        handleSelect(
+                          getLocalizedValue(column, languageCode),
+                          getLocalizedValue(row, languageCode)
+                        )
+                      }>
+                      <div className="flex items-center justify-center p-2">
+                        {/* radio input  */}
+                        <input
+                          type="radio"
+                          id={`${row}-${column}`}
+                          name={getLocalizedValue(row, languageCode)}
+                          value={getLocalizedValue(column, languageCode)}
+                          checked={
+                            typeof value === "object" && !Array.isArray(value)
+                              ? value[getLocalizedValue(row, languageCode)] ===
+                                getLocalizedValue(column, languageCode)
+                              : false
+                          }
+                          className="border-brand text-brand h-4 w-4 border focus:ring-0 focus:ring-offset-0"
+                        />
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
