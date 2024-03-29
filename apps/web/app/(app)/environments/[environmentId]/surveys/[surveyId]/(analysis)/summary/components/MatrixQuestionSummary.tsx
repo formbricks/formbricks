@@ -15,7 +15,7 @@ export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummary
 
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
-    const opacity = parsedPercentage * 0.75 + 25;
+    const opacity = parsedPercentage * 0.75 + 15;
     return (opacity / 100).toFixed(2);
   };
 
@@ -84,7 +84,7 @@ export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummary
                       )}>
                       <div
                         style={{ backgroundColor: `rgba(0,196,184,${getOpacityLevel(percentage)})` }}
-                        className=" hover:outline-brand-dark m-1 flex h-full w-40 cursor-default items-center justify-center rounded p-4 text-sm hover:outline">
+                        className=" hover:outline-brand-dark m-1 flex h-full w-40 cursor-default items-center justify-center rounded p-4 text-sm text-slate-950 hover:outline">
                         {percentage}
                       </div>
                     </TooltipRenderer>

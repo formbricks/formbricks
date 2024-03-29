@@ -131,7 +131,7 @@ export default function MatrixQuestionForm({
         <div>
           {/* Rows section */}
           <Label htmlFor="rows">Rows</Label>
-          <div className="mt-3">
+          <div>
             {question.rows.map((_, index) => (
               <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "row")}>
                 <QuestionFormInput
@@ -149,7 +149,7 @@ export default function MatrixQuestionForm({
                 />
                 {question.rows.length > 2 && (
                   <TrashIcon
-                    className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                    className="ml-2 mt-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                     onClick={() => handleDeleteLabel("row", index)}
                   />
                 )}
@@ -170,7 +170,7 @@ export default function MatrixQuestionForm({
         <div>
           {/* Columns section */}
           <Label htmlFor="columns">Columns</Label>
-          <div className="mt-3 ">
+          <div>
             {question.columns.map((_, index) => (
               <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "column")}>
                 <QuestionFormInput
@@ -188,7 +188,7 @@ export default function MatrixQuestionForm({
                 />
                 {question.columns.length > 2 && (
                   <TrashIcon
-                    className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+                    className="ml-2 mt-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
                     onClick={() => handleDeleteLabel("column", index)}
                   />
                 )}

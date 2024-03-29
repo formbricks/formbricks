@@ -271,7 +271,7 @@ export default function SingleResponseCard({
             if (!responseData[rowValueInSelectedLanguage]) return;
             return (
               <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
-                {rowValueInSelectedLanguage} : {responseData[rowValueInSelectedLanguage]}
+                {rowValueInSelectedLanguage}: {responseData[rowValueInSelectedLanguage]}
               </p>
             );
           });
