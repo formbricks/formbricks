@@ -141,7 +141,7 @@ export const surveys = {
       question: "This is my File Upload Question",
     },
     matrix: {
-      question: "How much would you rate these flowers ?",
+      question: "How much do you love these flowers?",
       description: "0: Not at all, 3: Love it",
       rows: ["Rose 🌹", "Sunflower 🌻", "Hibiscus 🌺"],
       columns: ["0", "1", "2", "3"],
