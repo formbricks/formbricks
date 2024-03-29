@@ -350,17 +350,8 @@ export const transformToLegacySurvey = async (
   survey: TSurvey,
   languageCode?: string
 ): Promise<TLegacySurvey> => {
-  const transformedSurvey = await unstable_cache(
-    async () => {
-      const targetLanguage = languageCode ?? "default";
-      return reverseTranslateSurvey(survey, targetLanguage);
-    },
-    [`transformToLegacySurvey-${survey.id}-${languageCode}`],
-    {
-      tags: [surveyCache.tag.byId(survey.id)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
+  const targetLanguage = languageCode ?? "default";
+  const transformedSurvey = reverseTranslateSurvey(survey, targetLanguage);
   return formatDateFields(transformedSurvey, ZLegacySurvey);
 };
 
