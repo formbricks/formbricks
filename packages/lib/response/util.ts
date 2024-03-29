@@ -771,14 +771,13 @@ export const getQuestionWiseSummary = (
           });
         });
 
-        if (isOthersEnabled) {
-          values.push({
-            value: getLocalizedValue(lastChoice.label, "default") || "Other",
-            count: otherValues.length,
-            percentage: convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100),
-            others: otherValues.slice(0, VALUES_LIMIT),
-          });
-        }
+        // Push all other values
+        values.push({
+          value: "Other",
+          count: otherValues.length,
+          percentage: convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100),
+          others: otherValues.slice(0, VALUES_LIMIT),
+        });
 
         summary.push({
           type: question.type,

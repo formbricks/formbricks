@@ -16,6 +16,7 @@
     "@formbricks/database": "workspace:*",
     "@formbricks/ee": "workspace:*",
     "@formbricks/js": "workspace:*",
+    "@formbricks/js-core": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/surveys": "workspace:*",
     "@formbricks/tailwind-config": "workspace:*",
