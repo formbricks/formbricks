@@ -81,7 +81,7 @@ export const MatrixQuestion = ({
   const columnsHeaders = useMemo(
     () =>
       question.columns.map((column, index) => (
-        <th key={index} className="text-heading max-w-40 break-words px-4 py-2">
+        <th key={index} className="text-heading max-w-40 break-words px-4 py-2 font-normal">
           {getLocalizedValue(column, languageCode)}
         </th>
       )),
@@ -99,10 +99,10 @@ export const MatrixQuestion = ({
       <Subheader subheader={getLocalizedValue(question.subheader, languageCode)} questionId={question.id} />
       <div className="mt-4 max-h-[33vh] overflow-auto">
         <div className="min-w-full table-auto overflow-auto">
-          <table className="min-w-full table-auto border-collapse text-sm !font-normal">
+          <table className="min-w-full table-auto border-collapse text-sm">
             <thead>
               <tr>
-                <th className="px-4 py-2 !font-normal"></th>
+                <th className="px-4 py-2"></th>
                 {columnsHeaders}
               </tr>
             </thead>
