@@ -11,7 +11,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyInput, ZSurvey, ZSurveyWithRefinements } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyInput, ZSurveyWithRefinements } from "@formbricks/types/surveys";
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
