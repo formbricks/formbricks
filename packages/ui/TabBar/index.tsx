@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@formbricks/lib/cn";
-import { env } from "@formbricks/lib/env";
 
 interface TabBarProps {
   tabs: { id: string; label: string; icon?: React.ReactNode }[];
@@ -44,27 +43,21 @@ export const TabBar: React.FC<TabBarProps> = ({
     if (tabStyle === "button") {
       return (
         <nav className="flex h-full w-full flex-1 items-center space-x-4" aria-label="Tabs">
-          {tabs.map((tab) => {
-            if (tab.id === "upload" && !env.NEXT_PUBLIC_UNSPLASH_API_KEY) {
-              return null;
-            }
-            return (
-              <div className="flex h-full flex-1 justify-center px-3 py-2">
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveId(tab.id)}
-                  className={cn(
-                    tab.id === activeId
-                      ? "bg-white font-semibold text-slate-900"
-                      : "text-slate-500 hover:text-slate-700",
-                    "h-full w-full items-center rounded-lg text-center text-sm font-medium"
-                  )}
-                  aria-current={tab.id === activeId ? "page" : undefined}>
-                  {tab.label}
-                </button>
-              </div>
-            );
-          })}
+          {tabs.map((tab) => (
+            <div className="flex h-full flex-1 justify-center px-3 py-2" key={tab.id}>
+              <button
+                onClick={() => setActiveId(tab.id)}
+                className={cn(
+                  tab.id === activeId
+                    ? "bg-white font-semibold text-slate-900"
+                    : "text-slate-500 hover:text-slate-700",
+                  "h-full w-full items-center rounded-lg text-center text-sm font-medium"
+                )}
+                aria-current={tab.id === activeId ? "page" : undefined}>
+                {tab.label}
+              </button>
+            </div>
+          ))}
         </nav>
       );
     }

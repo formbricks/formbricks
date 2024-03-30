@@ -55,13 +55,8 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
 
       // Cleanup
       return () => video.removeEventListener("canplaythrough", onCanPlayThrough);
-    } else if (background?.bgType === "image" && background?.bg) {
+    } else if ((background?.bgType === "image" || background?.bgType === "upload") && background?.bg) {
       // For images, we create a new Image object to listen for the 'load' event
-      const img = new Image();
-      img.onload = () => setBackgroundLoaded(true);
-      img.src = background?.bg;
-    } else if (background?.bgType === "upload" && background?.bg) {
-      // For upload, we create a new Image object to listen for the 'load' event
       const img = new Image();
       img.onload = () => setBackgroundLoaded(true);
       img.src = background?.bg;

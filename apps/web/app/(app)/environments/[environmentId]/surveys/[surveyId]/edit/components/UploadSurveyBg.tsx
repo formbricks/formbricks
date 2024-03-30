@@ -1,9 +1,10 @@
+import { getImageBackground } from "@/app/s/[surveyId]/actions";
 import { debounce } from "lodash";
 import { Loader, SearchIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
-import { env } from "@formbricks/lib/env";
 import { Input } from "@formbricks/ui/Input";
 
 interface UploadSurveyBgProps {
@@ -27,15 +28,13 @@ export const UploadSurveyBg = ({ handleBgChange, background }: UploadSurveyBgPro
 
   useEffect(() => {
     const fetchData = async (searchQuery: string) => {
-      setLoading(true);
       try {
-        const response = await fetch(
-          `https://api.unsplash.com/search/photos?query=${searchQuery}&client_id=${env.NEXT_PUBLIC_UNSPLASH_API_KEY}&orientation=landscape&w=1920&h=1080`
-        );
-        const data = await response.json();
+        setLoading(true);
+        const data = await getImageBackground(searchQuery);
         setImages(data.results);
-        setLoading(false);
       } catch (error) {
+        toast.error(error.message);
+      } finally {
         setLoading(false);
       }
     };
@@ -71,7 +70,7 @@ export const UploadSurveyBg = ({ handleBgChange, background }: UploadSurveyBgPro
           ref={inputFocus}
         />
       </div>
-      <div className="relative mt-4 grid cursor-pointer  grid-cols-3 gap-1">
+      <div className="relative mt-4 grid grid-cols-3 gap-1">
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader />
@@ -85,7 +84,7 @@ export const UploadSurveyBg = ({ handleBgChange, background }: UploadSurveyBgPro
               src={images.length > 0 ? image.urls.regular : background}
               alt={image.alt_description}
               onClick={() => handleBgChange(image.urls?.regular, "upload")}
-              className="rounded-lg"
+              className="cursor-pointer rounded-lg"
             />
           ))
         )}

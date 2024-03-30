@@ -1,3 +1,4 @@
+import { checkIsUnsplashApiPresent } from "@/app/s/[surveyId]/actions";
 import { useEffect, useState } from "react";
 
 import { TProductStyling } from "@formbricks/types/product";
@@ -20,8 +21,8 @@ interface SurveyBgSelectorTabProps {
 const tabs = [
   { id: "color", label: "Color" },
   { id: "animation", label: "Animation" },
-  { id: "image", label: "Image" },
-  { id: "upload", label: "Upload" },
+  { id: "image", label: "Upload" },
+  { id: "upload", label: "Image" },
 ];
 
 export default function SurveyBgSelectorTab({
@@ -38,6 +39,7 @@ export default function SurveyBgSelectorTab({
   const [animationBackground, setAnimationBackground] = useState(background?.bg);
   const [imageBackground, setImageBackground] = useState(background?.bg);
   const [uploadBackground, setUploadBackground] = useState(background?.bg);
+  const [isUnsplashApiPresent, setIsUnsplashApiPresent] = useState(false);
 
   useEffect(() => {
     const bgType = background?.bgType;
@@ -69,6 +71,10 @@ export default function SurveyBgSelectorTab({
       setAnimationBackground("");
       setImageBackground("");
     }
+
+    checkIsUnsplashApiPresent().then((present) => {
+      setIsUnsplashApiPresent(present);
+    });
   }, [background?.bg, background?.bgType]);
 
   const renderContent = () => {
@@ -98,7 +104,7 @@ export default function SurveyBgSelectorTab({
     <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4">
       <div className="flex w-full items-center justify-between overflow-hidden rounded-lg border border-slate-300">
         <TabBar
-          tabs={tabs}
+          tabs={tabs.filter((tab) => tab.id !== "upload" || isUnsplashApiPresent)}
           activeId={activeTab}
           setActiveId={setActiveTab}
           tabStyle="button"
