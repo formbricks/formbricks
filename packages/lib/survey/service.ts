@@ -225,7 +225,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return survey ? formatDateFields(survey, ZSurvey) : null;
+  return survey ? formatSurveyDateFields(survey) : null;
 };
 
 export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
@@ -276,7 +276,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+  return surveys.map((survey) => formatSurveyDateFields(survey));
 };
 
 export const getSurveys = async (
@@ -900,7 +900,7 @@ export const getSyncSurveys = async (
     }
   )();
 
-  return surveys.map((survey) => formatDateFields(survey as TSurvey, ZSurvey));
+  return surveys.map((survey) => formatSurveyDateFields(survey));
 };
 
 export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promise<string | null> => {
