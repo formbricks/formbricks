@@ -228,7 +228,6 @@ export default function SurveyEditor({
                 membershipRole={membershipRole}
                 isUserTargetingAllowed={isUserTargetingAllowed}
                 isFormbricksCloud={isFormbricksCloud}
-                localProduct={localProduct}
               />
             )}
           </main>
