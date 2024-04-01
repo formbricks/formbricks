@@ -472,7 +472,6 @@ export const getResponses = async (
         [filterCriteria, ZResponseFilterCriteria.optional()]
       );
       batchSize = batchSize ?? RESPONSES_PER_PAGE;
-
       try {
         const responses = await prisma.response.findMany({
           where: {
