@@ -41,11 +41,6 @@ export default async function EnterpriseLicensePage({ params }) {
 
   const paidFeatures = [
     {
-      title: "Remove Formbricks Branding on In-app and Website Surveys",
-      comingSoon: false,
-      onRequest: false,
-    },
-    {
       title: "Team Roles (Admin, Editor, Developer, etc.)",
       comingSoon: false,
       onRequest: false,
@@ -57,7 +52,7 @@ export default async function EnterpriseLicensePage({ params }) {
     },
     {
       title: "Multi-Language Surveys",
-      comingSoon: true,
+      comingSoon: false,
       onRequest: false,
     },
     {
@@ -176,13 +171,13 @@ export default async function EnterpriseLicensePage({ params }) {
                     ))}
                   </ul>
                   <p className="my-6 text-sm text-slate-500">
-                    You can request all Enterprise License info incl. Pricing via this form:
+                    Please request all Enterprise License info incl. pricing here:
                   </p>
                   <Button
                     variant="darkCTA"
                     href="https://app.formbricks.com/s/clrf4z8zg1u3912250j7shqb5"
                     target="_blank">
-                    Request Enterprise License Info
+                    Request enterprise license info
                   </Button>
                 </div>
               </div>
