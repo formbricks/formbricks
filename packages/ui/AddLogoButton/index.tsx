@@ -101,7 +101,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
                 <Image
                   src={product?.brand?.logoUrl}
                   alt="Company Logo"
-                  className={`${type === "mobile" ? "h-12" : "h-16"} peer w-auto max-w-64 cursor-pointer rounded-lg object-contain p-1`}
+                  className={`${type === "mobile" ? "h-12" : "h-16"} peer max-h-16 w-auto max-w-40 cursor-pointer rounded-lg object-contain p-1`}
                   width={256}
                   height={56}
                 />
