@@ -11,6 +11,8 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion } from "@formbricks/types/surveys";
 
+import { initDatePicker } from "../../sideload/question-date/index";
+
 interface DateQuestionProps {
   question: TSurveyDateQuestion;
   value: string | number | string[];
@@ -23,6 +25,7 @@ interface DateQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function DateQuestion({
@@ -44,43 +47,11 @@ export default function DateQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const defaultDate = value ? new Date(value as string) : undefined;
-  const datePickerScriptSrc = import.meta.env.DATE_PICKER_SCRIPT_SRC;
-
   useEffect(() => {
-    // Check if the DatePicker has already been loaded
-
-    if (!window.initDatePicker) {
-      const script = document.createElement("script");
-
-      script.src = datePickerScriptSrc;
-
-      script.async = true;
-
-      document.body.appendChild(script);
-
-      script.onload = () => {
-        // Initialize the DatePicker once the script is loaded
-        window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
-        setLoading(false);
-      };
-
-      return () => {
-        document.body.removeChild(script);
-      };
-    } else {
-      // If already loaded, remove the date picker and re-initialize it
-      setLoading(false);
-
-      const datePickerContainer = document.getElementById("datePickerContainer");
-      if (datePickerContainer) {
-        datePickerContainer.remove();
-      }
-
-      window.initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
-    }
+    initDatePicker(document.getElementById("date-picker-root")!, defaultDate, question.format);
+    setLoading(false);
 
     return () => {};
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.format, question.id]);
 
@@ -140,7 +111,7 @@ export default function DateQuestion({
 
       <div className={cn("my-4", errorMessage && "rounded-lg border-2 border-red-500")} id="date-picker-root">
         {loading && (
-          <div className="relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-white text-left text-base font-normal text-slate-900 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          <div className="bg-survey-bg border-border text-placeholder relative flex h-12 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
             <span
               className="h-6 w-6 animate-spin rounded-full border-b-2 border-neutral-900"
               style={{ borderTopColor: "transparent" }}></span>
@@ -164,7 +135,6 @@ export default function DateQuestion({
 
         <SubmitButton
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
         />
       </div>

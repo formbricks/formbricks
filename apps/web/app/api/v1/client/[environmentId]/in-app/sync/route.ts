@@ -1,4 +1,4 @@
-import { getFirstSurvey } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
+import { getExampleSurveyTemplate } from "@/app/(app)/environments/[environmentId]/surveys/templates/templates";
 import { sendFreeLimitReachedEventToPosthogBiWeekly } from "@/app/api/v1/client/[environmentId]/in-app/sync/lib/posthog";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -12,11 +12,13 @@ import {
 } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { createSurvey, getSurveys, transformToLegacySurvey } from "@formbricks/lib/survey/service";
 import { getMonthlyTeamResponseCount, getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TJsStateSync, ZJsPublicSyncInput } from "@formbricks/types/js";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export async function OPTIONS(): Promise<Response> {
@@ -75,7 +77,7 @@ export async function GET(
     }
 
     if (!environment?.widgetSetupCompleted) {
-      const firstSurvey = getFirstSurvey(WEBAPP_URL);
+      const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL);
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
     }
@@ -117,11 +119,19 @@ export async function GET(
       );
     }
 
+    const updatedProduct: TProduct = {
+      ...product,
+      brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
+      ...(product.styling.highlightBorderColor?.light && {
+        highlightBorderColor: product.styling.highlightBorderColor.light,
+      }),
+    };
+
     // Create the 'state' object with surveys, noCodeActionClasses, product, and person.
     const state: TJsStateSync = {
       surveys: isInAppSurveyLimitReached ? [] : transformedSurveys,
       noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
-      product,
+      product: updatedProduct,
       person: null,
     };
 

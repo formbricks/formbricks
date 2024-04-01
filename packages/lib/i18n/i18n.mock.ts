@@ -195,7 +195,6 @@ export const mockConsentQuestion: TSurveyConsentQuestion = {
   label: {
     default: "I agree to the terms and conditions",
   },
-  dismissButtonLabel: "Skip",
   id: "av561aoif3i2hjlsl6krnsfm",
   type: TSurveyQuestionType.Consent,
   isDraft: true,
@@ -449,14 +448,12 @@ export const mockTranslatedConsentQuestion = {
   ...mockConsentQuestion,
   headline: { default: "Terms and Conditions", de: "" },
   label: { default: "I agree to the terms and conditions", de: "" },
-  dismissButtonLabel: "Skip",
 };
 
 export const mockLegacyConsentQuestion = {
   ...mockConsentQuestion,
   headline: "Terms and Conditions",
   label: "I agree to the terms and conditions",
-  dismissButtonLabel: "Skip",
 };
 
 export const mockTranslatedDateQuestion = {

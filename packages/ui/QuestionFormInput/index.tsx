@@ -6,6 +6,7 @@ import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
 import {
   extractId,
   extractRecallInfo,
@@ -15,7 +16,6 @@ import {
   headlineToRecall,
   recallToHeadline,
   replaceRecallInfoWithUnderline,
-  useSyncScroll,
 } from "@formbricks/lib/utils/recall";
 import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -135,7 +135,7 @@ export const QuestionFormInput = ({
   });
 
   // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
-  useSyncScroll(highlightContainerRef, inputRef, getLocalizedValue(text, selectedLanguageCode));
+  useSyncScroll(highlightContainerRef, inputRef);
 
   useEffect(() => {
     if (!isWelcomeCard && (id === "headline" || id === "subheader")) {

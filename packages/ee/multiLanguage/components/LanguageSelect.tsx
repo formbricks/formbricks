@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import useClickOutside from "@formbricks/lib/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TLanguage } from "@formbricks/types/product";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";

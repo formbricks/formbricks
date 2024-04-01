@@ -1,6 +1,11 @@
 "use client";
 
 import HiddenFieldsCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/HiddenFieldsCard";
+import {
+  isCardValid,
+  validateQuestion,
+  validateSurveyQuestionsInBatch,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { createId } from "@paralleldrive/cuid2";
 import { useEffect, useMemo, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
@@ -17,7 +22,6 @@ import EditThankYouCard from "./EditThankYouCard";
 import EditWelcomeCard from "./EditWelcomeCard";
 import QuestionCard from "./QuestionCard";
 import { StrictModeDroppable } from "./StrictModeDroppable";
-import { isCardValid, validateQuestion, validateSurveyQuestionsInBatch } from "./Validation";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;

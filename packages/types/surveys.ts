@@ -5,8 +5,11 @@ import { ZAllowedFileExtension, ZColor, ZPlacement } from "./common";
 import { TPerson } from "./people";
 import { ZLanguage } from "./product";
 import { ZSegment } from "./segment";
+import { ZBaseStyling } from "./styling";
 
-export const ZI18nString = z.record(z.string(), z.string());
+export const ZI18nString = z.record(z.string()).refine((obj) => "default" in obj, {
+  message: "Object must have a 'default' key",
+});
 
 export type TI18nString = z.infer<typeof ZI18nString>;
 
@@ -62,17 +65,8 @@ export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "image"]);
 
 export type TSurveyBackgroundBgType = z.infer<typeof ZSurveyBackgroundBgType>;
 
-export const ZSurveyStylingBackground = z.object({
-  bg: z.string().nullish(),
-  bgType: z.enum(["animation", "color", "image"]).nullish(),
-  brightness: z.number().nullish(),
-});
-
-export type TSurveyStylingBackground = z.infer<typeof ZSurveyStylingBackground>;
-
-export const ZSurveyStyling = z.object({
-  background: ZSurveyStylingBackground.nullish(),
-  hideProgressBar: z.boolean().nullish(),
+export const ZSurveyStyling = ZBaseStyling.extend({
+  overwriteThemeStyling: z.boolean().nullish(),
 });
 
 export type TSurveyStyling = z.infer<typeof ZSurveyStyling>;
@@ -272,7 +266,6 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Consent),
   html: ZI18nString.optional(),
   label: ZI18nString,
-  dismissButtonLabel: z.string().optional(),
   placeholder: z.string().optional(),
   logic: z.array(ZSurveyConsentLogic).optional(),
 });
@@ -393,6 +386,10 @@ export const ZSurveyQuestions = z.array(ZSurveyQuestion);
 
 export type TSurveyQuestions = z.infer<typeof ZSurveyQuestions>;
 
+export const ZSurveyQuestionsObject = z.object({ questions: ZSurveyQuestions });
+
+export type TSurveyQuestionsObject = z.infer<typeof ZSurveyQuestionsObject>;
+
 export const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "respondMultiple"]);
 
 export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
@@ -457,7 +454,7 @@ export const ZSurvey = z.object({
   segment: ZSegment.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
   verifyEmail: ZSurveyVerifyEmail.nullable(),
-  pin: z.string().nullable().optional(),
+  pin: z.string().nullish(),
   resultShareKey: z.string().nullable(),
   displayPercentage: z.number().min(1).max(100).nullable(),
   languages: z.array(ZSurveyLanguage),
@@ -471,21 +468,26 @@ export const ZSurveyInput = z
   .object({
     name: z.string(),
     type: ZSurveyType.optional(),
-    createdBy: z.string().cuid().optional(),
+    createdBy: z.string().cuid().nullish(),
     status: ZSurveyStatus.optional(),
     displayOption: ZSurveyDisplayOption.optional(),
-    autoClose: z.number().optional(),
-    redirectUrl: z.string().url().optional(),
-    recontactDays: z.number().optional(),
+    autoClose: z.number().nullish(),
+    redirectUrl: z.string().url().nullish(),
+    recontactDays: z.number().nullish(),
     welcomeCard: ZSurveyWelcomeCard.optional(),
     questions: ZSurveyQuestions.optional(),
     thankYouCard: ZSurveyThankYouCard.optional(),
     hiddenFields: ZSurveyHiddenFields.optional(),
     delay: z.number().optional(),
-    autoComplete: z.number().optional(),
-    closeOnDate: z.date().optional(),
-    surveyClosedMessage: ZSurveyClosedMessage.optional(),
+    autoComplete: z.number().nullish(),
+    closeOnDate: z.date().nullish(),
+    styling: ZSurveyStyling.optional(),
+    surveyClosedMessage: ZSurveyClosedMessage.nullish(),
+    singleUse: ZSurveySingleUse.nullish(),
     verifyEmail: ZSurveyVerifyEmail.optional(),
+    pin: z.string().nullish(),
+    resultShareKey: z.string().nullish(),
+    displayPercentage: z.number().min(1).max(100).nullish(),
     triggers: z.array(z.string()).optional(),
     inlineTriggers: ZSurveyInlineTriggers.optional(),
   })
@@ -567,3 +569,5 @@ export type TSurveyFilters = {
   type: TSurveyType[];
   sortBy: "createdAt" | "updatedAt" | "name";
 };
+
+export type TSurveyEditorTabs = "questions" | "settings" | "styling";

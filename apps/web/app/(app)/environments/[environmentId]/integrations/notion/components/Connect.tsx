@@ -54,7 +54,7 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
             Notion Integration is not configured in your instance of Formbricks.
             <br />
             Please follow the{" "}
-            <Link href="https://formbricks.com/docs/integrations/google-sheets" className="underline">
+            <Link href="https://formbricks.com/docs/integrations/notion" className="underline">
               docs
             </Link>{" "}
             to configure it.

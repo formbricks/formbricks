@@ -53,7 +53,7 @@ export type TUserObjective = z.infer<typeof ZUserObjective>;
 
 export const ZSurveyWelcomeCard = z.object({
   enabled: z.boolean(),
-  headline: z.optional(z.string()),
+  headline: z.string().optional(),
   html: z.string().optional(),
   fileUrl: z.string().optional(),
   buttonLabel: z.string().optional(),
@@ -241,7 +241,6 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Consent),
   html: z.string().optional(),
   label: z.string(),
-  dismissButtonLabel: z.string().optional(),
   placeholder: z.string().optional(),
   logic: z.array(ZSurveyConsentLogic).optional(),
 });

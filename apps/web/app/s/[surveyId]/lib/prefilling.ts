@@ -31,7 +31,7 @@ export function getPrefillResponseData(
       return answerObj;
     }
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }
@@ -46,9 +46,14 @@ export const checkValidity = (question: TSurveyQuestion, answer: any, language: 
       case TSurveyQuestionType.MultipleChoiceSingle: {
         const hasOther = question.choices[question.choices.length - 1].id === "other";
         if (!hasOther) {
-          if (!question.choices.find((choice) => choice.label === answer)) return false;
+          if (!question.choices.find((choice) => choice.label[language] === answer)) return false;
           return true;
         }
+
+        if (question.choices[question.choices.length - 1].label[language] === answer) {
+          return false;
+        }
+
         return true;
       }
       case TSurveyQuestionType.MultipleChoiceMulti: {

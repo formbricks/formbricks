@@ -1,4 +1,5 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 
@@ -40,7 +41,7 @@ export default function CalSummary({ questionSummary }: CalSummaryProps) {
               <p className="font-semibold text-slate-700">Booked</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {Math.round(questionSummary.booked.percentage)}%
+                  {convertFloatToNDecimal(questionSummary.booked.percentage, 1)}%
                 </p>
               </div>
             </div>
@@ -56,7 +57,7 @@ export default function CalSummary({ questionSummary }: CalSummaryProps) {
               <p className="font-semibold text-slate-700">Dismissed</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                  {Math.round(questionSummary.skipped.percentage)}%
+                  {convertFloatToNDecimal(questionSummary.skipped.percentage, 1)}%
                 </p>
               </div>
             </div>
