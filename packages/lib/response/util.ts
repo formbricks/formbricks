@@ -18,13 +18,13 @@ import {
 } from "@formbricks/types/responses";
 import {
   TSurvey,
-  TSurveyLanguage,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyQuestionType,
 } from "@formbricks/types/surveys";
 
-import { getLocalizedValue } from "../i18n/utils";
+import { getLanguageCode, getLocalizedValue } from "../i18n/utils";
+import { processResponseData } from "../responses";
 import { sanitizeString } from "../strings";
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
@@ -327,6 +327,15 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
             },
           });
           break;
+        case "matrix":
+          const rowLabel = Object.keys(val.value)[0];
+          data.push({
+            data: {
+              path: [key, rowLabel],
+              equals: val.value[rowLabel],
+            },
+          });
+          break;
       }
     });
 
@@ -411,7 +420,7 @@ export const getResponsesJson = (
     questions.forEach((question, i) => {
       const questionId = survey?.questions[i].id || "";
       const answer = response.data[questionId];
-      jsonData[idx][question] = Array.isArray(answer) ? answer.join("; ") : answer;
+      jsonData[idx][question] = processResponseData(answer);
     });
 
     // user attributes
@@ -425,7 +434,7 @@ export const getResponsesJson = (
       if (Array.isArray(value)) {
         jsonData[idx][field] = value.join("; ");
       } else {
-        jsonData[idx][field] = value;
+        jsonData[idx][field] = processResponseData(value);
       }
     });
   });
@@ -601,12 +610,6 @@ export const getSurveySummaryDropOff = (
   });
 
   return dropOff;
-};
-
-const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {
-  if (!surveyLanguages?.length || !languageCode) return "default";
-  const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
-  return language?.default ? "default" : language?.language.code || "default";
 };
 
 const checkForI18n = (response: TResponse, id: string, survey: TSurvey, languageCode: string) => {
@@ -1042,6 +1045,63 @@ export const getQuestionWiseSummary = (
           },
         });
 
+        break;
+      }
+      case TSurveyQuestionType.Matrix: {
+        const rows = question.rows.map((row) => getLocalizedValue(row, "default"));
+        const columns = question.columns.map((column) => getLocalizedValue(column, "default"));
+        let totalResponseCount = 0;
+
+        // Initialize count object
+        const countMap: Record<string, string> = rows.reduce((acc, row) => {
+          acc[row] = columns.reduce((colAcc, col) => {
+            colAcc[col] = 0;
+            return colAcc;
+          }, {});
+          return acc;
+        }, {});
+
+        responses.forEach((response) => {
+          const selectedResponses = response.data[question.id] as Record<string, string>;
+          const responseLanguageCode = getLanguageCode(survey.languages, response.language);
+          if (selectedResponses) {
+            totalResponseCount++;
+            question.rows.forEach((row) => {
+              const localizedRow = getLocalizedValue(row, responseLanguageCode);
+              const colValue = question.columns.find((column) => {
+                return getLocalizedValue(column, responseLanguageCode) === selectedResponses[localizedRow];
+              });
+              const colValueInDefaultLanguage = getLocalizedValue(colValue, "default");
+              if (colValueInDefaultLanguage && columns.includes(colValueInDefaultLanguage)) {
+                countMap[getLocalizedValue(row, "default")][colValueInDefaultLanguage] += 1;
+              }
+            });
+          }
+        });
+
+        const matrixSummary = rows.map((row) => {
+          let totalResponsesForRow = 0;
+          columns.forEach((col) => {
+            totalResponsesForRow += countMap[row][col];
+          });
+
+          const columnPercentages = columns.reduce((acc, col) => {
+            const count = countMap[row][col];
+            const percentage =
+              totalResponsesForRow > 0 ? ((count / totalResponsesForRow) * 100).toFixed(2) : "0.00";
+            acc[col] = percentage;
+            return acc;
+          }, {});
+
+          return { rowLabel: row, columnPercentages, totalResponsesForRow };
+        });
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: totalResponseCount,
+          data: matrixSummary,
+        });
         break;
       }
     }
