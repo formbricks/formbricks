@@ -121,10 +121,6 @@ if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
     allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
   };
-  // nextConfig.images.remotePatterns.push({
-  //   protocol: "https",
-  //   hostname: getHostname(process.env.WEBAPP_URL),
-  // });
 }
 
 // Allow all origins for next/image
