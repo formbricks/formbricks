@@ -10,8 +10,10 @@ import { handleFileUpload } from "../../../../apps/web/app/(app)/environments/[e
 import { Button } from "../../Button";
 import FileInput from "../../FileInput";
 import { Input } from "../../Input";
+import { Label } from "../../Label";
 import LoadingSpinner from "../../LoadingSpinner";
 import { ColorSelectorWithLabel } from "../../Styling";
+import { Switch } from "../../Switch";
 import { updateProductAction } from "../actions";
 
 interface LogoChangeEvent extends React.ChangeEvent<HTMLInputElement> {
@@ -49,6 +51,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   const [replacedLogo, setReplacedLogo] = useState<string>(imageUrl);
   const [isEdit, setIsEdit] = useState(imageUploadFromRegularFileUpload);
   const replaceLogoRef = useRef<HTMLInputElement>(null);
+  const [addBackgroundColor, setAddBackgroundColor] = useState(product?.brand?.bgColor ? true : false);
 
   const onchangeImageHandler = async (e: LogoChangeEvent) => {
     const file = e.target.files?.[0];
@@ -102,6 +105,17 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
       }
     }
   };
+
+  const toggleaddBackgroundColor = (checked: boolean) => {
+    if (!checked) {
+      setBackgroundColor("");
+    } else {
+      setBackgroundColor(product?.brand?.bgColor);
+    }
+
+    setAddBackgroundColor(checked);
+  };
+
   return (
     <>
       <div className="relative">
@@ -172,12 +186,31 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
               )}
             </div>
           </div>
-          <ColorSelectorWithLabel
-            label="Background color"
-            color={backgroundColor}
-            setColor={setBackgroundColor}
-            description="Change the background color of the logo container."
-          />
+
+          <div className="flex items-center space-x-1">
+            <Switch
+              id="addBackgroundColor"
+              checked={addBackgroundColor}
+              onCheckedChange={(checked) => toggleaddBackgroundColor(checked)}
+            />
+            <Label htmlFor="hideProgressBar" className="cursor-pointer">
+              <div className="ml-2">
+                <h3 className="text-sm font-semibold text-slate-700">Add background color</h3>
+                <p className="text-xs font-normal text-slate-500">
+                  Add a background color to the logo container.
+                </p>
+              </div>
+            </Label>
+          </div>
+
+          {addBackgroundColor && (
+            <ColorSelectorWithLabel
+              label="Background color"
+              color={backgroundColor}
+              setColor={setBackgroundColor}
+              description="Change the background color of the logo container."
+            />
+          )}
         </div>
       </div>
       <div className={`mt-3 flex gap-3 ${!fromLookAndFeelSetting && "justify-end"}`}>
