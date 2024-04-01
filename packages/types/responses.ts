@@ -9,6 +9,7 @@ import {
   ZSurveyDateQuestion,
   ZSurveyFileUploadQuestion,
   ZSurveyLogicCondition,
+  ZSurveyMatrixQuestion,
   ZSurveyMultipleChoiceMultiQuestion,
   ZSurveyMultipleChoiceSingleQuestion,
   ZSurveyNPSQuestion,
@@ -18,7 +19,9 @@ import {
 } from "./surveys";
 import { ZTag } from "./tags";
 
-export const ZResponseData = z.record(z.union([z.string(), z.number(), z.array(z.string())]));
+export const ZResponseData = z.record(
+  z.union([z.string(), z.number(), z.array(z.string()), z.record(z.string())])
+);
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
@@ -106,6 +109,11 @@ const ZResponseFilterCriteriaDataBooked = z.object({
   op: z.literal(ZSurveyLogicCondition.Values.booked),
 });
 
+const ZResponseFilterCriteriaMatrix = z.object({
+  op: z.literal("matrix"),
+  value: z.record(z.string(), z.string()),
+});
+
 export const ZResponseFilterCriteria = z.object({
   finished: z.boolean().optional(),
   createdAt: z
@@ -142,6 +150,7 @@ export const ZResponseFilterCriteria = z.object({
         ZResponseFilterCriteriaDataUploaded,
         ZResponseFilterCriteriaDataNotUploaded,
         ZResponseFilterCriteriaDataBooked,
+        ZResponseFilterCriteriaMatrix,
       ])
     )
     .optional(),
@@ -465,6 +474,21 @@ export const ZSurveySummaryCal = z.object({
   }),
 });
 
+export type TSurveySummaryMatrix = z.infer<typeof ZSurveySummaryMatrix>;
+
+export const ZSurveySummaryMatrix = z.object({
+  type: z.literal("matrix"),
+  question: ZSurveyMatrixQuestion,
+  responseCount: z.number(),
+  data: z.array(
+    z.object({
+      rowLabel: z.string(),
+      columnPercentages: z.record(z.string(), z.number()),
+      totalResponsesForRow: z.number(),
+    })
+  ),
+});
+
 export type TSurveySummaryCal = z.infer<typeof ZSurveySummaryCal>;
 
 export const ZSurveySummaryHiddenField = z.object({
@@ -515,6 +539,7 @@ export const ZSurveySummary = z.object({
       ZSurveySummaryDate,
       ZSurveySummaryFileUpload,
       ZSurveySummaryCal,
+      ZSurveySummaryMatrix,
       ZSurveySummaryHiddenField,
     ])
   ),
