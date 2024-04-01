@@ -80,12 +80,7 @@ export const createI18nString = (
 
 // Type guard to check if an object is an I18nString
 export function isI18nObject(obj: any): obj is TI18nString {
-  return (
-    obj !== null &&
-    typeof obj === "object" &&
-    Object.values(obj).every((value) => typeof value !== "undefined") &&
-    Object.keys(obj).includes("default")
-  );
+  return typeof obj === "object" && obj !== null && Object.keys(obj).includes("default");
 }
 
 export const isLabelValidForAllLanguages = (label: TI18nString, languages: string[]): boolean => {
