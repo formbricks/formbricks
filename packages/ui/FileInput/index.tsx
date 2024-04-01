@@ -67,6 +67,7 @@ export const FileInput: React.FC<FileInputProps> = ({
     }
 
     const allowedFiles = getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
+
     if (allowedFiles.length === 0) {
       return;
     }
