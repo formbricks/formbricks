@@ -29,20 +29,17 @@ export const LogoSettingModal: React.FC<LogoSettingModalProps> = ({
   setIsImageAddedFromAddLogoButton,
 }) => {
   return (
-    <Modal
-      open={open}
-      setOpen={setOpen}
-      hideCloseButton={true}
-      closeOnOutsideClick={false}
-      size={"md"}
-      noPadding={true}>
-      <div className="flex items-center gap-2 rounded-lg bg-slate-100 p-4">
-        <Palette className="mx-4 h-10 w-10" />
+    <Modal open={open} setOpen={setOpen} closeOnOutsideClick={false} size={"md"} noPadding={true}>
+      <div className="flex w-full items-center space-x-2 rounded-t-lg bg-slate-100 p-6">
+        <div className="mr-1.5 h-6 w-6 text-slate-500">
+          <Palette className="h-5 w-5" />
+        </div>
         <div>
-          <div className="text-[1.4rem] font-[450]">Logo Settings ( for all surveys )</div>
-          <div className="text-slate-700">Change logo settings for all surveys.</div>
+          <div className="text-xl font-medium text-slate-700">Logo Settings</div>
+          <div className="text-sm text-slate-500">Change logo settings for all surveys.</div>
         </div>
       </div>
+
       <div className="px-4 pb-4 pt-5 sm:p-6">
         <LogoSetting
           imageUrl={imageUrl}

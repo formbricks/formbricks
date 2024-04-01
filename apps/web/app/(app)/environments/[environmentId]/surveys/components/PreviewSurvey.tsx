@@ -4,8 +4,7 @@ import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/M
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
-import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
-import { RefreshCcwIcon } from "lucide-react";
+import { ExpandIcon, MonitorIcon, RefreshCcwIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -249,7 +248,7 @@ export default function PreviewSurvey({
                 </Modal>
               ) : (
                 <div className="w-full px-3">
-                  <div className="absolute left-5 top-[2.3rem]  ">
+                  <div className="absolute left-5 top-5">
                     <AddLogoButton
                       environmentId={environment.id}
                       product={product}
@@ -260,7 +259,7 @@ export default function PreviewSurvey({
                       setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
                     />
                   </div>
-                  <div className="no-scrollbar z-10 mt-[7rem] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
                       activeQuestionId={activeQuestionId || undefined}
@@ -336,7 +335,7 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
-                <div className="absolute left-6 top-[1.9rem]">
+                <div className="absolute left-5 top-5">
                   <AddLogoButton
                     environmentId={environment.id}
                     product={product}
@@ -347,7 +346,7 @@ export default function PreviewSurvey({
                   />
                 </div>
 
-                <div className="z-0 mt-[3rem] w-full max-w-md rounded-lg  p-4">
+                <div className="z-0 w-full max-w-md rounded-lg">
                   <SurveyInline
                     survey={survey}
                     activeQuestionId={activeQuestionId || undefined}

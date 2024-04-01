@@ -183,18 +183,17 @@ export default function LinkSurvey({
     <div className="flex h-screen items-center justify-center">
       {!survey.styling?.hideLogo && product.brand?.logoUrl && (
         <div
-          className={`absolute left-3 top-3 h-auto rounded-md  p-2 `}
+          className="absolute left-3 top-3 h-20 w-auto min-w-20 max-w-56 rounded-lg lg:left-6 lg:top-6 "
           style={{ backgroundColor: product.brand?.bgColor }}>
           <Image
             src={product.brand.logoUrl}
-            className="h-24 w-auto max-w-64 rounded-md  object-contain"
+            className="rounded-lg object-contain"
             alt="Company Logo"
-            width={256}
-            height={256}
+            fill={true}
           />
         </div>
       )}
-      <ContentWrapper className="w-full  p-0 md:max-w-md">
+      <ContentWrapper className="w-11/12 p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
@@ -209,6 +208,7 @@ export default function LinkSurvey({
             </button>
           </div>
         )}
+
         <SurveyInline
           survey={survey}
           styling={getStyling()}

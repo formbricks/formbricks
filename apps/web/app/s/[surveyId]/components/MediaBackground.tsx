@@ -137,7 +137,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   } else {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-2">
+      <div className="flex min-h-screen flex-col items-center justify-center">
         {renderBackground()}
         <div className="relative w-full">{children}</div>
       </div>

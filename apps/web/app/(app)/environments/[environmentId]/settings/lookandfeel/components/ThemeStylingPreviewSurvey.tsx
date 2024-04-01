@@ -167,12 +167,12 @@ export const ThemeStylingPreviewSurvey = ({
           ) : (
             <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
               {!product.styling?.hideLogo && product.brand.logoUrl && (
-                <div className={`absolute left-5 top-0`}>
+                <div className="absolute left-3 top-3">
                   <Image
                     src={product.brand.logoUrl}
                     alt="logo"
                     style={{ backgroundColor: product.brand.bgColor }}
-                    className="m-2 h-20 w-auto  max-w-64 rounded-lg border-2 object-contain p-1 "
+                    className="max-h-16 w-auto max-w-40 rounded-lg object-contain p-1"
                     width={256}
                     height={56}
                   />
