@@ -1,0 +1,167 @@
+import { MdxImage } from "@/components/shared/MdxImage";
+
+import AddLanguageInSurvey from "./add-language-in-survey.webp";
+import AddLanguages from "./add-languages.webp";
+import EditMultiLang from "./edit-multi-lang.webp";
+import EnableMultiLang from "./enable-multi-lang.webp";
+import SeeSurveyInLanguage from "./see-survey-in-language.webp";
+import SurveyLanguagesFromHome from "./survey-languages-from-home.webp";
+import SurveyLanguageSettings from "./survey-languague-settings.webp";
+import SurveySharing from "./survey-sharing.webp";
+import SurveysHome from "./surveys-home.webp";
+import TranslateAsPerLanguage from "./translate-as-per-language.webp";
+
+export const metadata = {
+  title: "Multi Language Surveys | Formbricks",
+  description:
+    "Create multi-language link & in-app surveys with Formbricks. Get feedback from your users in their preferred language without writing a single line of code.",
+};
+
+#### Additional Features
+
+# Multi Language Surveys
+
+Multi-Language Surveys allows you to create surveys that support multiple languages, making it easier to reach a diverse audience without creating separate surveys for each language. This feature simplifies the creation, delivery, and analysis of surveys for users with multilingual audiences just by setting:
+
+- an attribute for the user. [See the guide below for In-App Surveys](#in-app-surveys-configuration)
+- a query parameter in the survey URL. [See the guide below for Link Surveys](#link-surveys-configuration)
+
+<Note>
+  Multi-Language is feature of the Enterprise Edition. Use it for **free** by adding your credit card details
+  on the Formbricks Cloud.
+</Note>
+
+<iframe
+  width="700"
+  height="450"
+  src="https://www.youtube.com/embed/Vol5zjYIoos?si=FOeDSqcy_OgtaUyM"
+  title="YouTube video player: Formbricks"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
+
+---
+
+## Creating a Survey
+
+1. Open the **Survey Languages** page on the Formbricks dashboard via the top-right menu:
+
+<MdxImage
+  src={SurveyLanguagesFromHome}
+  alt="Formbricks Home"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+2. Click on the **Edit Languages** button, to add a new language to your survey
+
+<MdxImage
+  src={SurveyLanguageSettings}
+  alt="Formbricks Home"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+3. Select the preferred language from the dropdown and assign an identifier Alias. Click the **Add Language** button to add a language to your product.
+
+<MdxImage
+  src={AddLanguages}
+  alt="Add Multiple Languages to your Product"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+4. You can come back to this page anytime to add more languages or remove existing ones.
+
+5. Now, return to the dashboard to create a new survey or edit an existing one.
+
+<MdxImage
+  src={SurveysHome}
+  alt="Add Multiple Languages to your Product"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+6. In the survey editor, scroll down to the **Multiple Languages** section at the bottom & enable the toggle next to it.
+
+<MdxImage
+  src={EnableMultiLang}
+  alt="Enable Multi Language for a survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+7. Now choose a **Default Language** for your survey. This is the language that will be shown to users who have not selected a preferred language.
+
+<Note>Changing the default language will reset all the translations you have made for the survey.</Note>
+
+8. Now, add the languages from the dropdown that you want to support in your survey.
+
+<MdxImage
+  src={AddLanguageInSurvey}
+  alt="Enable Multi Language for a survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+9. You can now see the survey in the selected language by clicking on the language dropdown in any of the questions.
+
+<MdxImage
+  src={SeeSurveyInLanguage}
+  alt="Enable Multi Language for a survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+10. You can now translate all survey content, including questions, options, and button placeholders, into the selected language.
+
+<MdxImage
+  src={TranslateAsPerLanguage}
+  alt="Enable Multi Language for a survey"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+11. Once you are done, click on the **Publish** button to save the survey.
+
+## In-App Surveys Configuration
+
+1. When you initialise the formbricks SDK for your user, you can pass an attribute `language` with the language code. This can be either the ISO identifier or the Alias you set when creating the language. The `language` attribute makes sure that this user only sees surveys with a translation in this specific language available.
+<Col>
+  <CodeGroup title="Configuring Formbricks SDK with Multi Language">
+
+```js
+formbricks.init({
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user_id>",
+  attributes: {
+    language: "de", // ISO identifier or Alias set when creating language
+  },
+});
+```
+
+  </CodeGroup>
+</Col>
+
+2. That's it! Now, users with the language attribute set will see the survey in their preferred language. You can start collecting responses in multiple languages and filter them by language on the summary page.
+
+---
+
+## Link Surveys Configuration
+
+1. After publishing the survey, just copy the survey link, and share it with your users appending the `lang` query parameter with the language alias you have set.
+
+   For example, if you have set the alias for French as `fr`, you can share the survey link as
+
+   `https://your-survey-url.com?lang=fr`
+
+2. Start collecting responses in multiple languages! You can filter responses by language in the summary page.
+
+For example, below is a Link Survey that supports English and German languages:
+
+- English: https://app.formbricks.com/s/clptfos2i1pj516pvhxqyu3bn?lang=en
+- German: https://app.formbricks.com/s/clptfos2i1pj516pvhxqyu3bn?lang=de
+
+---
+
+Can’t figure it out? Join our [Discord](https://discord.com/invite/3YFcABF2Ts)!
