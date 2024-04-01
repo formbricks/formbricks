@@ -300,6 +300,9 @@ importers:
       '@formbricks/js':
         specifier: workspace:*
         version: link:../../packages/js
+      '@formbricks/js-core':
+        specifier: workspace:*
+        version: link:../../packages/js-core
       '@formbricks/lib':
         specifier: workspace:*
         version: link:../../packages/lib
