@@ -33,8 +33,6 @@ export default async function Page({ params }) {
     throw new Error("Product not found");
   }
 
-  const tags = await getTagsByEnvironmentId(environment.id);
-  const attributes = await getResponsePersonAttributes(surveyId);
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
 
   return (
@@ -45,8 +43,6 @@ export default async function Page({ params }) {
         surveyId={survey.id}
         sharingKey={params.sharingKey}
         product={product}
-        environmentTags={tags}
-        attributes={attributes}
         totalResponseCount={totalResponseCount}
       />
     </>

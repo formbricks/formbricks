@@ -49,9 +49,6 @@ interface SummaryPageProps {
   webAppUrl: string;
   product: TProduct;
   user: TUser;
-  environmentTags: TTag[];
-  meta: TSurveyMetaFieldFilter;
-  attributes: TSurveyPersonAttributes;
   membershipRole?: TMembershipRole;
   totalResponseCount: number;
 }
@@ -63,9 +60,6 @@ const SummaryPage = ({
   webAppUrl,
   product,
   user,
-  environmentTags,
-  meta,
-  attributes,
   membershipRole,
   totalResponseCount,
 }: SummaryPageProps) => {
@@ -124,7 +118,7 @@ const SummaryPage = ({
         membershipRole={membershipRole}
       />
       <div className="flex gap-1.5">
-        <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} meta={meta} />
+        <CustomFilter survey={survey} />
         <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />
       </div>
       <SurveyResultsTabs

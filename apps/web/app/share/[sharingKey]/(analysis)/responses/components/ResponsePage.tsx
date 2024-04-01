@@ -29,7 +29,6 @@ interface ResponsePageProps {
   product: TProduct;
   sharingKey: string;
   environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
   responsesPerPage: number;
   totalResponseCount: number;
 }
@@ -41,7 +40,6 @@ const ResponsePage = ({
   product,
   sharingKey,
   environmentTags,
-  attributes,
   responsesPerPage,
   totalResponseCount,
 }: ResponsePageProps) => {
@@ -117,7 +115,7 @@ const ResponsePage = ({
   return (
     <ContentWrapper>
       <SummaryHeader survey={survey} product={product} />
-      <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
+      <CustomFilter survey={survey} />
       <SurveyResultsTabs
         activeId="responses"
         environmentId={environment.id}

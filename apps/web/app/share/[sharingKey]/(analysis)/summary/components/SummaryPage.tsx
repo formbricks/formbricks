@@ -18,9 +18,8 @@ import { useEffect, useMemo, useState } from "react";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyPersonAttributes, TSurveySummary } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 
 const initialSurveySummary: TSurveySummary = {
@@ -44,8 +43,6 @@ interface SummaryPageProps {
   surveyId: string;
   product: TProduct;
   sharingKey: string;
-  environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
   totalResponseCount: number;
 }
 
@@ -55,8 +52,6 @@ const SummaryPage = ({
   surveyId,
   product,
   sharingKey,
-  environmentTags,
-  attributes,
   totalResponseCount,
 }: SummaryPageProps) => {
   const [responseCount, setResponseCount] = useState<number | null>(null);
@@ -107,7 +102,7 @@ const SummaryPage = ({
   return (
     <ContentWrapper>
       <SummaryHeader survey={survey} product={product} />
-      <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
+      <CustomFilter survey={survey} />
       <SurveyResultsTabs
         activeId="summary"
         environmentId={environment.id}

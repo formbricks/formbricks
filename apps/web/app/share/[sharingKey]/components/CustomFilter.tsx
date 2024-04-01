@@ -5,15 +5,13 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import ResponseFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
-import { generateQuestionAndFilterOptions, getTodayDate } from "@/app/lib/surveys/surveys";
+import { getTodayDate } from "@/app/lib/surveys/surveys";
 import { differenceInDays, format, startOfDay, subDays } from "date-fns";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { Calendar } from "@formbricks/ui/Calendar";
 import {
   DropdownMenu,
@@ -35,8 +33,6 @@ enum FilterDropDownLabels {
 }
 
 interface CustomFilterProps {
-  environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
   survey: TSurvey;
 }
 
@@ -51,8 +47,8 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps) => {
-  const { setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
+const CustomFilter = ({ survey }: CustomFilterProps) => {
+  const { dateRange, setDateRange } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
       ? getDifferenceOfDays(dateRange.from, dateRange.to)
@@ -62,16 +58,6 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
-
-  // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
-  useEffect(() => {
-    const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
-      survey,
-      environmentTags,
-      attributes
-    );
-    setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [survey, setSelectedOptions, environmentTags, attributes]);
 
   const datePickerRef = useRef<HTMLDivElement>(null);
 
@@ -157,7 +143,7 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
     <>
       <div className="relative mb-12 flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
-          <ResponseFilter />
+          <ResponseFilter survey={survey} />
           <DropdownMenu
             onOpenChange={(value) => {
               value && handleDatePickerClose();

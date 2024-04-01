@@ -47,10 +47,7 @@ enum FilterDropDownLabels {
 }
 
 interface CustomFilterProps {
-  environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
   survey: TSurvey;
-  meta: TSurveyMetaFieldFilter;
 }
 
 const getDifferenceOfDays = (from, to) => {
@@ -64,8 +61,8 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, attributes, survey, meta }: CustomFilterProps) => {
-  const { selectedFilter, setSelectedOptions, dateRange, setDateRange, resetState } = useResponseFilter();
+const CustomFilter = ({ survey }: CustomFilterProps) => {
+  const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
       ? getDifferenceOfDays(dateRange.from, dateRange.to)
@@ -91,17 +88,6 @@ const CustomFilter = ({ environmentTags, attributes, survey, meta }: CustomFilte
       resetState();
     }
   }, [survey?.id, resetState]);
-
-  // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
-  useEffect(() => {
-    const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
-      survey,
-      environmentTags,
-      attributes,
-      meta
-    );
-    setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [survey, setSelectedOptions, environmentTags, attributes, meta]);
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
@@ -208,7 +194,7 @@ const CustomFilter = ({ environmentTags, attributes, survey, meta }: CustomFilte
     <>
       <div className="relative mb-12 flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
-          <ResponseFilter />
+          <ResponseFilter survey={survey} />
           <DropdownMenu
             onOpenChange={(value) => {
               value && handleDatePickerClose();
