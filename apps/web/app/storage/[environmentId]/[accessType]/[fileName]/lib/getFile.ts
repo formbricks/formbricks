@@ -33,6 +33,8 @@ const getFile = async (environmentId: string, accessType: string, fileName: stri
       status: 302,
       headers: {
         Location: signedUrl,
+        // public file, cache for one hour, private file, cache for 10 minutes
+        "Cache-Control": `public, max-age=${accessType === "public" ? 3600 : 600}, s-maxage=3600, stale-while-revalidate=300`,
       },
     });
   } catch (err) {
