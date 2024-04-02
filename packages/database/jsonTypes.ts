@@ -1,5 +1,6 @@
 import { TActionClassNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TIntegrationConfig } from "@formbricks/types/integration";
+import { TProductStyling } from "@formbricks/types/product";
 import { TResponseData, TResponseMeta, TResponsePersonAttributes } from "@formbricks/types/responses";
 import { TBaseFilters } from "@formbricks/types/segment";
 import {
@@ -38,5 +39,6 @@ declare global {
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
     export type SurveyInlineTriggers = TSurveyInlineTriggers;
+    export type Styling = TProductStyling;
   }
 }

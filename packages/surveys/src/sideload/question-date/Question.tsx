@@ -2,13 +2,47 @@ import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
 
 const CalendarIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-    <path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
-    <path
-      fill-rule="evenodd"
-      d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z"
-      clip-rule="evenodd"
-    />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="lucide lucide-calendar-days">
+    <path d="M8 2v4" />
+    <path d="M16 2v4" />
+    <rect width="18" height="18" x="3" y="4" rx="2" />
+    <path d="M3 10h18" />
+    <path d="M8 14h.01" />
+    <path d="M12 14h.01" />
+    <path d="M16 14h.01" />
+    <path d="M8 18h.01" />
+    <path d="M12 18h.01" />
+    <path d="M16 18h.01" />
+  </svg>
+);
+
+const CalendarCheckIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="lucide lucide-calendar-check">
+    <path d="M8 2v4" />
+    <path d="M16 2v4" />
+    <rect width="18" height="18" x="3" y="4" rx="2" />
+    <path d="M3 10h18" />
+    <path d="m9 16 2 2 4-4" />
   </svg>
 );
 
@@ -54,10 +88,17 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
       {!datePickerOpen && (
         <div
           onClick={() => setDatePickerOpen(true)}
-          className="relative flex h-40 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border border-slate-300 bg-slate-50 text-left text-base font-normal text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
+          className="bg-input-bg hover:bg-input-bg-selected border-border text-placeholder relative flex h-40 w-full cursor-pointer appearance-none items-center justify-center rounded-lg border text-left text-base font-normal focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-1">
           <div className="flex items-center gap-2">
-            <CalendarIcon />
-            <span>{selectedDate ? formattedDate : "Select a date"}</span>
+            {selectedDate ? (
+              <div className="flex items-center gap-2">
+                <CalendarCheckIcon /> <span>{formattedDate}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <CalendarIcon /> <span>Select a date</span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -78,7 +119,7 @@ export default function Question({ defaultDate, format }: { defaultDate?: Date; 
         monthPlaceholder="MM"
         yearPlaceholder="YYYY"
         format={format ?? "M-d-y"}
-        className={`dp-input-root rounded-lg ${!datePickerOpen ? "wrapper-hide" : ""}
+        className={`dp-input-root rounded-custom ${!datePickerOpen ? "wrapper-hide" : ""}
           ${hideInvalid ? "hide-invalid" : ""}
         `}
         calendarClassName="calendar-root w-80 rounded-lg border border-[#e5e7eb] p-3 shadow-md"

@@ -1,4 +1,5 @@
 import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
+import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 import Image from "next/image";
@@ -11,7 +12,7 @@ interface PictureChoiceSummaryProps {
   questionSummary: TSurveySummaryPictureSelection;
 }
 
-export default function PictureChoiceSummary({ questionSummary }: PictureChoiceSummaryProps) {
+export const PictureChoiceSummary = ({ questionSummary }: PictureChoiceSummaryProps) => {
   const isMulti = questionSummary.question.allowMulti;
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
@@ -55,7 +56,7 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
                 </div>
                 <div className="self-end">
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {Math.round(result.percentage)}%
+                    {convertFloatToNDecimal(result.percentage, 1)}%
                   </p>
                 </div>
               </div>
@@ -69,4 +70,4 @@ export default function PictureChoiceSummary({ questionSummary }: PictureChoiceS
       </div>
     </div>
   );
-}
+};

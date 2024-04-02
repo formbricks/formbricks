@@ -26,7 +26,7 @@ import Subheader from "../general/Subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
-  value: string | number | string[];
+  value: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -35,9 +35,10 @@ interface RatingQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function RatingQuestion({
+export const RatingQuestion = ({
   question,
   value,
   onChange,
@@ -48,7 +49,7 @@ export default function RatingQuestion({
   languageCode,
   ttc,
   setTtc,
-}: RatingQuestionProps) {
+}: RatingQuestionProps) => {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
 
@@ -68,9 +69,10 @@ export default function RatingQuestion({
     }
   };
 
-  const HiddenRadioInput = ({ number }: { number: number }) => (
+  const HiddenRadioInput = ({ number, id }: { number: number; id?: string }) => (
     <input
       type="radio"
+      id={id}
       name="rating"
       value={number}
       className="invisible absolute left-0 h-full w-full cursor-pointer opacity-0"
@@ -118,38 +120,46 @@ export default function RatingQuestion({
                   <label
                     tabIndex={i + 1}
                     onKeyDown={(e) => {
-                      if (e.key == "Enter") {
-                        handleSelect(number);
+                      // Accessibility: if spacebar was pressed pass this down to the input
+                      if (e.key === " ") {
+                        e.preventDefault();
+                        document.getElementById(number.toString())?.click();
+                        document.getElementById(number.toString())?.focus();
                       }
                     }}
                     className={cn(
-                      value === number ? "bg-accent-selected-bg border-border-highlight z-10" : "",
-                      a.length === number ? "rounded-r-md" : "",
+                      value === number
+                        ? "bg-accent-selected-bg border-border-highlight z-10"
+                        : "border-border",
+                      a.length === number ? "rounded-r-md border-r" : "",
                       number === 1 ? "rounded-l-md" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
-                      "text-heading focus:bg-accent-bg relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border focus:outline-none"
+                      "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:border-2 focus:outline-none"
                     )}>
-                    <HiddenRadioInput number={number} />
+                    <HiddenRadioInput number={number} id={number.toString()} />
                     {number}
                   </label>
                 ) : question.scale === "star" ? (
                   <label
                     tabIndex={i + 1}
                     onKeyDown={(e) => {
-                      if (e.key == "Enter") {
-                        handleSelect(number);
+                      // Accessibility: if spacebar was pressed pass this down to the input
+                      if (e.key === " ") {
+                        e.preventDefault();
+                        document.getElementById(number.toString())?.click();
+                        document.getElementById(number.toString())?.focus();
                       }
                     }}
                     className={cn(
-                      "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none",
                       number <= hoveredNumber || number <= (value as number)
                         ? "text-amber-400"
-                        : "text-slate-300",
-                      hoveredNumber === number ? "text-amber-400 " : ""
+                        : "text-input-bg-selected",
+                      hoveredNumber === number ? "text-amber-400 " : "",
+                      "relative flex max-h-16 min-h-9 cursor-pointer justify-center focus:outline-none"
                     )}
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
-                    <HiddenRadioInput number={number} />
+                    <HiddenRadioInput number={number} id={number.toString()} />
                     <div className="h-full w-full max-w-[74px] object-contain">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                         <path
@@ -165,17 +175,20 @@ export default function RatingQuestion({
                       "relative flex max-h-16 min-h-9 w-full cursor-pointer justify-center",
                       value === number || hoveredNumber === number
                         ? "stroke-rating-selected text-rating-selected"
-                        : "stroke-heading text-heading"
+                        : "stroke-heading text-heading focus:border-accent-bg focus:border-2 focus:outline-none"
                     )}
                     tabIndex={i + 1}
                     onKeyDown={(e) => {
-                      if (e.key == "Enter") {
-                        handleSelect(number);
+                      // Accessibility: if spacebar was pressed pass this down to the input
+                      if (e.key === " ") {
+                        e.preventDefault();
+                        document.getElementById(number.toString())?.click();
+                        document.getElementById(number.toString())?.focus();
                       }
                     }}
                     onFocus={() => setHoveredNumber(number)}
                     onBlur={() => setHoveredNumber(0)}>
-                    <HiddenRadioInput number={number} />
+                    <HiddenRadioInput number={number} id={number.toString()} />
                     <div className="h-full w-full max-w-[74px] object-contain">
                       <RatingSmiley
                         active={value === number || hoveredNumber === number}
@@ -213,13 +226,12 @@ export default function RatingQuestion({
             tabIndex={question.range + 1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         )}
       </div>
     </form>
   );
-}
+};
 
 interface RatingSmileyProps {
   active: boolean;

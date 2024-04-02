@@ -1,0 +1,57 @@
+{
+  "name": "@formbricks/js-core",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "version": "1.0.0",
+  "description": "Js core for Formbricks that contains the logic for executing the @formbricks/js library and is loaded asynchronously over the Formbricks API.",
+  "homepage": "https://formbricks.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formbricks/formbricks"
+  },
+  "keywords": [
+    "Formbricks",
+    "surveys",
+    "experience management"
+  ],
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "source": "src/index.ts",
+  "main": "dist/index.umd.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "dev": "vite build --watch --mode dev",
+    "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --mode dev",
+    "go": "vite build --watch --mode dev",
+    "lint": "eslint ./src --fix",
+    "clean": "rimraf .turbo node_modules dist coverage"
+  },
+  "author": "Formbricks <hola@formbricks.com>",
+  "devDependencies": {
+    "@babel/preset-env": "^7.24.0",
+    "@babel/preset-typescript": "^7.23.3",
+    "@formbricks/api": "workspace:*",
+    "@formbricks/lib": "workspace:*",
+    "@formbricks/tsconfig": "workspace:*",
+    "@formbricks/types": "workspace:*",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-turbo": "1.10.12",
+    "terser": "^5.29.1",
+    "vite": "^5.1.6",
+    "vite-plugin-dts": "^3.7.3"
+  }
+}

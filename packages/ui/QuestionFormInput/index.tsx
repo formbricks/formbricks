@@ -6,6 +6,7 @@ import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
 import {
   extractId,
   extractRecallInfo,
@@ -15,7 +16,6 @@ import {
   headlineToRecall,
   recallToHeadline,
   replaceRecallInfoWithUnderline,
-  useSyncScroll,
 } from "@formbricks/lib/utils/recall";
 import { TI18nString, TSurvey, TSurveyChoice, TSurveyQuestion } from "@formbricks/types/surveys";
 
@@ -30,9 +30,10 @@ import { isValueIncomplete } from "./lib/utils";
 import {
   determineImageUploaderVisibility,
   getCardText,
-  getChoiceIndex,
   getChoiceLabel,
+  getIndex,
   getLabelById,
+  getMatrixLabel,
   getPlaceHolderById,
 } from "./utils";
 
@@ -44,6 +45,7 @@ interface QuestionFormInputProps {
   updateQuestion?: (questionIdx: number, data: Partial<TSurveyQuestion>) => void;
   updateSurvey?: (data: Partial<TSurveyQuestion>) => void;
   updateChoice?: (choiceIdx: number, data: Partial<TSurveyChoice>) => void;
+  updateMatrixLabel?: (index: number, type: "row" | "column", data: Partial<TSurveyQuestion>) => void;
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -63,6 +65,7 @@ export const QuestionFormInput = ({
   updateQuestion,
   updateSurvey,
   updateChoice,
+  updateMatrixLabel,
   isInvalid,
   label,
   selectedLanguageCode,
@@ -75,9 +78,11 @@ export const QuestionFormInput = ({
   const question: TSurveyQuestion = localSurvey.questions[questionIdx];
   const questionId = question?.id;
   const isChoice = id.includes("choice");
+  const isMatrixLabelRow = id.includes("row");
+  const isMatrixLabelColumn = id.includes("column");
   const isThankYouCard = questionIdx === localSurvey.questions.length;
   const isWelcomeCard = questionIdx === -1;
-  const choiceIdx = getChoiceIndex(id, isChoice);
+  const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
 
   const enabledLanguages = useMemo(
     () => getEnabledLanguages(localSurvey.languages ?? []),
@@ -94,12 +99,16 @@ export const QuestionFormInput = ({
   );
 
   const getElementTextBasedOnType = (): TI18nString => {
-    if (isChoice && typeof choiceIdx === "number") {
-      return getChoiceLabel(question, choiceIdx, surveyLanguageCodes);
+    if (isChoice && typeof index === "number") {
+      return getChoiceLabel(question, index, surveyLanguageCodes);
     }
 
     if (isThankYouCard || isWelcomeCard) {
       return getCardText(localSurvey, id, isThankYouCard, surveyLanguageCodes);
+    }
+
+    if ((isMatrixLabelColumn || isMatrixLabelRow) && typeof index === "number") {
+      return getMatrixLabel(question, index, surveyLanguageCodes, isMatrixLabelRow ? "row" : "column");
     }
 
     return (
@@ -135,7 +144,7 @@ export const QuestionFormInput = ({
   });
 
   // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
-  useSyncScroll(highlightContainerRef, inputRef, getLocalizedValue(text, selectedLanguageCode));
+  useSyncScroll(highlightContainerRef, inputRef);
 
   useEffect(() => {
     if (!isWelcomeCard && (id === "headline" || id === "subheader")) {
@@ -306,6 +315,8 @@ export const QuestionFormInput = ({
   // questions -> updateQuestion
   // thankYouCard, welcomeCard-> updateSurvey
   // choice -> updateChoice
+  // matrixLabel -> updateMatrixLabel
+
   const handleUpdate = (updatedText: string) => {
     const translatedText = createUpdatedText(updatedText);
 
@@ -313,6 +324,8 @@ export const QuestionFormInput = ({
       updateChoiceDetails(translatedText);
     } else if (isThankYouCard || isWelcomeCard) {
       updateSurveyDetails(translatedText);
+    } else if (isMatrixLabelRow || isMatrixLabelColumn) {
+      updateMatrixLabelDetails(translatedText);
     } else {
       updateQuestionDetails(translatedText);
     }
@@ -326,14 +339,20 @@ export const QuestionFormInput = ({
   };
 
   const updateChoiceDetails = (translatedText: TI18nString) => {
-    if (updateChoice && typeof choiceIdx === "number") {
-      updateChoice(choiceIdx, { label: translatedText });
+    if (updateChoice && typeof index === "number") {
+      updateChoice(index, { label: translatedText });
     }
   };
 
   const updateSurveyDetails = (translatedText: TI18nString) => {
     if (updateSurvey) {
       updateSurvey({ [id]: translatedText });
+    }
+  };
+
+  const updateMatrixLabelDetails = (translatedText: TI18nString) => {
+    if (updateMatrixLabel && typeof index === "number") {
+      updateMatrixLabel(index, isMatrixLabelRow ? "row" : "column", translatedText);
     }
   };
 
@@ -459,7 +478,7 @@ export const QuestionFormInput = ({
           />
         )}
       </div>
-      {selectedLanguageCode !== "default" && value && value["default"] && (
+      {selectedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-gray-500">
           <strong>Translate:</strong> {recallToHeadline(value, localSurvey, false, "default")["default"]}
         </div>

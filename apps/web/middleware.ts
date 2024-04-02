@@ -31,7 +31,6 @@ export async function middleware(request: NextRequest) {
   if (token && callbackUrl) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
-
   if (process.env.NODE_ENV !== "production" || RATE_LIMITING_DISABLED) {
     return NextResponse.next();
   }
@@ -61,8 +60,7 @@ export async function middleware(request: NextRequest) {
       }
       return NextResponse.next();
     } catch (e) {
-      console.log("Rate Limiting IP: ", ip);
-
+      console.log(`Rate Limiting IP: ${ip}`);
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
   }
@@ -80,5 +78,6 @@ export const config = {
     "/environments/:path*",
     "/api/auth/signout",
     "/auth/login",
+    "/api/packages/:path*",
   ],
 };

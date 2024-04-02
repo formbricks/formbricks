@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import ReactApp from "../framework-guides/react-in-app-survey-app-popup-form.webp";
 import I1 from "./1-in-app-survey-or-popup-survey-setup.webp";
@@ -26,7 +26,7 @@ In-app surveys have 6-10x better conversion rates than emailed out surveys. This
 
 While you can [self-host](/docs/self-hosting/deployment) Formbricks, the quickest and easiest way to get started is with the free Cloud plan. Just [sign up here](https://app.formbricks.com/auth/signup) and click through the onboarding, until you’re here:
 
-<Image
+<MdxImage
   src={I1}
   alt="Choose in-app survey template"
   quality="100"
@@ -37,7 +37,7 @@ While you can [self-host](/docs/self-hosting/deployment) Formbricks, the quickes
 
 To be able to see a survey in your app, you need to create one. We’ll choose one of the templates and head over to the survey settings:
 
-<Image
+<MdxImage
   src={I2}
   alt="Settings for popup survey inside web app"
   quality="100"
@@ -48,7 +48,7 @@ As you can see in the orange note here, we have not yet connected Formbricks Clo
 
 Select “Web App” in the How to ask settings:
 
-<Image
+<MdxImage
   src={I3}
   alt="Survey settings for popup micro surve"
   quality="100"
@@ -57,7 +57,7 @@ Select “Web App” in the How to ask settings:
 
 Scroll down to Survey Trigger and choose “New Session”. This will cause this survey to appear when the Formbricks Widget tracks a new user session:
 
-<Image
+<MdxImage
   src={I4}
   alt="In-app survey trigger for feedback popup micro survey"
   quality="100"
@@ -66,7 +66,7 @@ Scroll down to Survey Trigger and choose “New Session”. This will cause this
 
 In **Recontact Options** we choose the following settings, so that we can play around with the survey more easily. By default, each survey will be shown only once to each user to prevent survey fatigue:
 
-<Image
+<MdxImage
   src={I5}
   alt="Options for survey popup in-app micro survey"
   quality="100"
@@ -75,7 +75,7 @@ In **Recontact Options** we choose the following settings, so that we can play a
 
 Now hit **Publish** and you’ll be forwarded to the Summary Page. This is where you’ll find the responses to this survey. On the Summary Page click through to the Setup Checklist:
 
-<Image
+<MdxImage
   src={I6}
   alt="pop up survey settings for inapp web survey"
   quality="100"
@@ -86,7 +86,7 @@ Now hit **Publish** and you’ll be forwarded to the Summary Page. This is where
 
 On the Setup Checklist you have two elements. At the top you find the Widget Status Indicator. Once your app is connected to Formbricks Cloud successfully, this will turn green:
 
-<Image
+<MdxImage
   src={I7}
   alt="feedback popup in-app survey"
   quality="100"
@@ -98,7 +98,7 @@ In the manual below, this code snippet contains all the information you need:
 - The **Environment ID** of your current Formbricks workspace
 - The **API Host** which is ‘https://app.formbricks.com’ for Cloud users
 
-<Image
+<MdxImage
   src={I8}
   alt="settings for in-app survey popping up"
   quality="100"
@@ -120,7 +120,7 @@ In a local instance of your app, you'll embed the Formbricks Widget. Dependent o
 
 Now, restart your app in your terminal to make sure the widget is loaded. Once its loaded, open the browser console to see the Formbricks debug logs. If you did everything right, you should now see your survey in the lower right corner:
 
-<Image
+<MdxImage
   src={ReactApp}
   alt="In-app survey in React app for micro surveys"
   quality="100"

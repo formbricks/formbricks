@@ -23,7 +23,7 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@aws-sdk"],
     instrumentationHook: true,
     outputFileTracingIncludes: {
-      "app/api/js": ["../../packages/**/*"],
+      "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     },
   },
   cacheHandler: process.env.VERCEL !== "1" ? require.resolve("./cache-handler.mjs") : undefined,
@@ -124,17 +124,13 @@ if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
     allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
   };
-  nextConfig.images.remotePatterns.push({
-    protocol: "https",
-    hostname: getHostname(process.env.WEBAPP_URL),
-  });
-} else {
-  // The WEBAPP_URL is not set, so we allow all origins
-  nextConfig.images.remotePatterns.push({
-    protocol: "https",
-    hostname: "**",
-  });
 }
+
+// Allow all origins for next/image
+nextConfig.images.remotePatterns.push({
+  protocol: "https",
+  hostname: "**",
+});
 
 const sentryOptions = {
   // For all available options, see:

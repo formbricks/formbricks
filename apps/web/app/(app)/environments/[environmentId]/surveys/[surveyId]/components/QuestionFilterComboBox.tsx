@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp, X } from "lucide-react";
 import * as React from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import useClickOutside from "@formbricks/lib/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@formbricks/ui/Command";
 import {
@@ -53,7 +53,12 @@ const QuestionFilterComboBox = ({
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
-    ? filterComboBoxOptions?.filter((o) => !filterComboBoxValue?.includes(o))
+    ? filterComboBoxOptions?.filter(
+        (o) =>
+          !filterComboBoxValue?.includes(
+            typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
+          )
+      )
     : filterComboBoxOptions;
 
   // disable the combo box for selection of value when question type is nps or rating and selected value is submitted or skipped
