@@ -69,60 +69,78 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
     setIsLogoAddEditorOpen(true);
   };
 
+  const getStyling = () => {
+    // allow style overwrite is disabled from the product
+    if (!product.styling.allowStyleOverwrite) {
+      return product.styling;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteThemeStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    return product.styling;
+  };
+
   return (
     <>
-      {membershipRole !== "viewer" &&
-        !survey.styling?.hideLogo &&
-        (survey.styling?.hideLogo === false || !product.styling.hideLogo) && (
-          <>
-            {isLoading && (
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                <LoadingSpinner />
+      {membershipRole !== "viewer" && !getStyling().hideLogo && (
+        <>
+          {isLoading && (
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <LoadingSpinner />
+            </div>
+          )}
+          {!product?.brand?.logoUrl ? (
+            <Label
+              htmlFor="addCompanyLogo"
+              className={`${type === "mobile" ? "px-6 py-2" : "px-10 py-4"} rounded-md border border-dashed border-slate-300 bg-slate-100 text-xs text-slate-500  hover:cursor-pointer hover:bg-slate-200/25`}>
+              Add logo here
+              <Input
+                id="addCompanyLogo"
+                className="hidden"
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={(e) => onchangeImageHandler(e)}
+              />
+            </Label>
+          ) : (
+            <div
+              style={{ backgroundColor: product?.brand?.bgColor }}
+              className="absolute rounded-lg border border-transparent hover:border-slate-300"
+              onClick={() => setIsLogoAddEditorOpen(true)}>
+              <Image
+                src={product?.brand?.logoUrl}
+                alt="Company Logo"
+                className={`${type === "mobile" ? "h-12" : "h-16"} peer max-h-16 w-auto max-w-40 cursor-pointer rounded-lg object-contain p-1`}
+                width={256}
+                height={56}
+              />
+              <div className="absolute right-2 top-2 hidden h-6 w-6 rounded-md border border-slate-100 bg-slate-50 bg-opacity-90 p-0.5 text-slate-700 transition-all ease-in-out hover:block hover:cursor-pointer peer-hover:block">
+                <Pencil className="h-full w-full" />
               </div>
-            )}
-            {!product?.brand?.logoUrl ? (
-              <Label
-                htmlFor="addCompanyLogo"
-                className={`${type === "mobile" ? "px-6 py-2" : "px-10 py-4"} rounded-md border border-dashed border-slate-300 bg-slate-100 text-xs text-slate-500  hover:cursor-pointer hover:bg-slate-200/25`}>
-                Add logo here
-                <Input
-                  id="addCompanyLogo"
-                  className="hidden"
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={(e) => onchangeImageHandler(e)}
-                />
-              </Label>
-            ) : (
-              <div
-                style={{ backgroundColor: product?.brand?.bgColor }}
-                className="absolute rounded-lg border border-transparent hover:border-slate-300"
-                onClick={() => setIsLogoAddEditorOpen(true)}>
-                <Image
-                  src={product?.brand?.logoUrl}
-                  alt="Company Logo"
-                  className={`${type === "mobile" ? "h-12" : "h-16"} peer max-h-16 w-auto max-w-40 cursor-pointer rounded-lg object-contain p-1`}
-                  width={256}
-                  height={56}
-                />
-                <div className="absolute right-2 top-2 hidden h-6 w-6 rounded-md border border-slate-100 bg-slate-50 bg-opacity-90 p-0.5 text-slate-700 transition-all ease-in-out hover:block hover:cursor-pointer peer-hover:block">
-                  <Pencil className="h-full w-full" />
-                </div>
-              </div>
-            )}
+            </div>
+          )}
 
-            <LogoSettingModal
-              open={isLogoAddEditorOpen}
-              setOpen={setIsLogoAddEditorOpen}
-              imageUrl={imageUrl}
-              setImageUrlFromLogoButton={setImageUrl}
-              environmentId={environmentId}
-              product={product}
-              setLocalProduct={setLocalProduct}
-              setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
-            />
-          </>
-        )}
+          <LogoSettingModal
+            open={isLogoAddEditorOpen}
+            setOpen={setIsLogoAddEditorOpen}
+            imageUrl={imageUrl}
+            setImageUrlFromLogoButton={setImageUrl}
+            environmentId={environmentId}
+            product={product}
+            setLocalProduct={setLocalProduct}
+            setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
+          />
+        </>
+      )}
     </>
   );
 };
