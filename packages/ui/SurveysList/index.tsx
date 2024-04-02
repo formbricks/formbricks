@@ -55,6 +55,13 @@ export default function SurveysList({
     fetchInitialSurveys();
   }, [environment.id, surveysLimit]);
 
+  useEffect(() => {
+    if (typeof localStorage !== undefined) {
+      localStorage.removeItem("onboardingPathway");
+      localStorage.removeItem("onboardingCurrentStep");
+    }
+  }, []);
+
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
     const newSurveys = await getSurveysAction(environment.id, surveysLimit, surveys.length);
