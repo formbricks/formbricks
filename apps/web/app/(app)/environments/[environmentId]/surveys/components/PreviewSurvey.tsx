@@ -259,7 +259,8 @@ export default function PreviewSurvey({
                       setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
                     />
                   </div>
-                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                  <div
+                    className={`${!styling.hideLogo ? "mt-28" : ""} no-scrollbar z-10  w-full max-w-md overflow-y-auto rounded-lg border border-transparent`}>
                     <SurveyInline
                       survey={survey}
                       activeQuestionId={activeQuestionId || undefined}
@@ -346,7 +347,8 @@ export default function PreviewSurvey({
                   />
                 </div>
 
-                <div className="z-0 w-full max-w-md rounded-lg">
+                <div
+                  className={`${!styling.hideLogo ? "mt-16" : ""} rounded-lgborder-transparent  z-0 w-full max-w-md`}>
                   <SurveyInline
                     survey={survey}
                     activeQuestionId={activeQuestionId || undefined}
