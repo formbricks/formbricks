@@ -350,6 +350,7 @@ export default function SurveyMenuBar({
     try {
       await updateSurveyAction({ ...strippedSurvey });
       setIsSurveySaving(false);
+      setLocalSurvey(strippedSurvey);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
         router.back();
