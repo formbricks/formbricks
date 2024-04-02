@@ -22,6 +22,6 @@ export function startInstrumentationForNode(url: string) {
 
     sdk.start();
   } catch (err) {
-    console.error("Unable to setup Telemetry:", err);
+    console.error(`Unable to setup Telemetry: ${err}`);
   }
 }

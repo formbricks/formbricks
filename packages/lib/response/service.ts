@@ -45,6 +45,7 @@ import { getSurvey } from "../survey/service";
 import { captureTelemetry } from "../telemetry";
 import { formatDateFields } from "../utils/datetime";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
+import { checkForRecallInHeadline } from "../utils/recall";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 
@@ -471,7 +472,6 @@ export const getResponses = async (
         [filterCriteria, ZResponseFilterCriteria.optional()]
       );
       batchSize = batchSize ?? RESPONSES_PER_PAGE;
-
       try {
         const responses = await prisma.response.findMany({
           where: {
@@ -550,7 +550,10 @@ export const getSurveySummary = (
 
       const meta = getSurveySummaryMeta(responses, displayCount);
       const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
-      const questionWiseSummary = getQuestionWiseSummary(survey, responses);
+      const questionWiseSummary = getQuestionWiseSummary(
+        checkForRecallInHeadline(survey, "default"),
+        responses
+      );
 
       return { meta, dropOff, summary: questionWiseSummary };
     },

@@ -1,10 +1,10 @@
 import { TResponse } from "@formbricks/types/responses";
-import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
 import { getLocalizedValue } from "./i18n/utils";
 
 export const getQuestionResponseMapping = (
-  survey: { questions: TSurveyQuestion[] },
+  survey: TSurvey,
   response: TResponse
 ): { question: string; answer: string | string[]; type: TSurveyQuestionType }[] => {
   const questionResponseMapping: {
@@ -27,7 +27,7 @@ export const getQuestionResponseMapping = (
             // as array
           }
         } else {
-          return answer.toString();
+          return processResponseData(answer);
         }
       }
     };
@@ -40,4 +40,31 @@ export const getQuestionResponseMapping = (
   }
 
   return questionResponseMapping;
+};
+
+export const processResponseData = (
+  responseData: string | number | string[] | Record<string, string>
+): string => {
+  if (!responseData) return "";
+
+  switch (typeof responseData) {
+    case "string":
+      return responseData;
+
+    case "number":
+      return responseData.toString();
+
+    case "object":
+      if (Array.isArray(responseData)) {
+        return responseData.join("; ");
+      } else {
+        const formattedString = Object.entries(responseData)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join("\n");
+        return formattedString;
+      }
+
+    default:
+      return "";
+  }
 };

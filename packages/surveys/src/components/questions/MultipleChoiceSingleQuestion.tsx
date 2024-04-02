@@ -13,7 +13,7 @@ import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surv
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -22,9 +22,10 @@ interface MultipleChoiceSingleProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function MultipleChoiceSingleQuestion({
+export const MultipleChoiceSingleQuestion = ({
   question,
   value,
   onChange,
@@ -35,7 +36,8 @@ export default function MultipleChoiceSingleQuestion({
   languageCode,
   ttc,
   setTtc,
-}: MultipleChoiceSingleProps) {
+  isInIframe,
+}: MultipleChoiceSingleProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
   const otherSpecify = useRef<HTMLInputElement | null>(null);
@@ -60,10 +62,20 @@ export default function MultipleChoiceSingleQuestion({
   );
 
   useEffect(() => {
+    if (isFirstQuestion && !value) {
+      const prefillAnswer = new URLSearchParams(window.location.search).get(question.id);
+      if (prefillAnswer) {
+        if (otherOption && prefillAnswer === getLocalizedValue(otherOption.label, languageCode)) {
+          setOtherSelected(true);
+          return;
+        }
+      }
+    }
+
     const isOtherSelected =
-      value !== undefined && !question.choices.some((choice) => choice.label[languageCode] === value);
+      value !== undefined && !questionChoices.some((choice) => choice.label[languageCode] === value);
     setOtherSelected(isOtherSelected);
-  }, [question.id, question.choices, value, languageCode]);
+  }, [isFirstQuestion, languageCode, otherOption, question.id, questionChoices, value]);
 
   useEffect(() => {
     // Scroll to the bottom of choices container and focus on 'otherSpecify' input when 'otherSelected' is true
@@ -98,29 +110,26 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto rounded-md py-0.5 pr-2"
+            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto py-0.5 pr-2"
             role="radiogroup"
             ref={choicesContainerRef}>
             {questionChoices.map((choice, idx) => (
               <label
-                key={choice.id}
                 tabIndex={idx + 1}
+                key={choice.id}
+                className={cn(
+                  value === choice.label ? "border-brand z-10" : "border-border",
+                  "text-heading bg-input-bg focus-within:border-brand focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                )}
                 onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    onChange({ [question.id]: choice.label });
-                    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                    setTtc(updatedTtcObj);
-                    setTimeout(() => {
-                      onSubmit({ [question.id]: choice.label }, updatedTtcObj);
-                    }, 350);
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById(choice.id)?.click();
+                    document.getElementById(choice.id)?.focus();
                   }
                 }}
-                className={cn(
-                  value === choice.label
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
-                    : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
-                )}>
+                autoFocus={idx === 0 && !isInIframe}>
                 <span className="flex items-center text-sm">
                   <input
                     tabIndex={-1}
@@ -148,14 +157,16 @@ export default function MultipleChoiceSingleQuestion({
                 tabIndex={questionChoices.length + 1}
                 className={cn(
                   value === getLocalizedValue(otherOption.label, languageCode)
-                    ? "border-border-highlight bg-accent-selected-bg z-10"
+                    ? "border-border bg-input-bg-selected z-10"
                     : "border-border",
-                  "text-heading focus-within:border-border-highlight focus-within:bg-accent-bg hover:bg-accent-bg relative flex cursor-pointer flex-col rounded-md border p-4 focus:outline-none"
+                  "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    setOtherSelected(!otherSelected);
-                    if (!otherSelected) onChange({ [question.id]: "" });
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById(otherOption.id)?.click();
+                    document.getElementById(otherOption.id)?.focus();
                   }
                 }}>
                 <span className="flex items-center text-sm">
@@ -187,19 +198,10 @@ export default function MultipleChoiceSingleQuestion({
                     onChange={(e) => {
                       onChange({ [question.id]: e.currentTarget.value });
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key == "Enter") {
-                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                        setTtc(updatedTtcObj);
-                        setTimeout(() => {
-                          onSubmit({ [question.id]: value }, updatedTtcObj);
-                        }, 100);
-                      }
-                    }}
+                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder={
                       getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
                     }
-                    className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus mt-3 flex h-10 w-full rounded-md border px-3 py-2 text-sm  focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     required={question.required}
                     aria-labelledby={`${otherOption.id}-label`}
                   />
@@ -226,9 +228,8 @@ export default function MultipleChoiceSingleQuestion({
           tabIndex={questionChoices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
         />
       </div>
     </form>
   );
-}
+};

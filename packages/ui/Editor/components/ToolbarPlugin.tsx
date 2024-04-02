@@ -23,6 +23,7 @@ import {
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
+import { COMMAND_PRIORITY_CRITICAL, PASTE_COMMAND } from "lexical";
 import { Bold, ChevronDownIcon, Italic, Link } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -423,6 +424,26 @@ export default function ToolbarPlugin(props: TextEditorProps) {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
     }
   }, [editor, isLink]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      PASTE_COMMAND,
+      (e: ClipboardEvent) => {
+        const text = e.clipboardData?.getData("text/plain");
+
+        editor.update(() => {
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            selection.insertRawText(text ?? "");
+          }
+        });
+
+        e.preventDefault();
+        return true; // Prevent the default paste handler
+      },
+      COMMAND_PRIORITY_CRITICAL
+    );
+  }, [editor]);
 
   if (!props.editable) return <></>;
   return (

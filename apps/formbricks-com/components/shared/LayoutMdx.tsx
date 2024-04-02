@@ -32,6 +32,7 @@ interface Props {
     authors: string[];
     section: string;
     tags: string[];
+    ogImage: string;
   };
   children: JSX.Element;
 }
@@ -47,6 +48,7 @@ export default function LayoutMdx({ meta, children }: Props) {
         authors={meta.authors}
         section={meta.section}
         tags={meta.tags}
+        ogImage={meta.ogImage}
       />
       <HeaderLight />
       <main className="min-w-0 max-w-2xl flex-auto px-4 lg:max-w-none lg:pl-8 lg:pr-0 xl:px-16">

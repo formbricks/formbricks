@@ -19,6 +19,7 @@ import WelcomeCard from "./WelcomeCard";
 
 export function Survey({
   survey,
+  styling,
   isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
@@ -34,7 +35,9 @@ export function Survey({
   getSetIsResponseSendingFinished,
   onFileUpload,
   responseCount,
+  isCardBorderVisible = true,
 }: SurveyBaseProps) {
+  const isInIframe = window.self !== window.top;
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
@@ -60,7 +63,7 @@ export function Survey({
     }
   }, [questionId, survey, history]);
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const showProgressBar = !survey.styling?.hideProgressBar;
+  const showProgressBar = !styling.hideProgressBar;
 
   useEffect(() => {
     if (activeQuestionId === "hidden" || activeQuestionId === "multiLanguage") return;
@@ -270,6 +273,7 @@ export function Survey({
           survey={survey}
           languageCode={languageCode}
           responseCount={responseCount}
+          isInIframe={isInIframe}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
@@ -285,6 +289,7 @@ export function Survey({
           isRedirectDisabled={isRedirectDisabled}
           languageCode={languageCode}
           replaceRecallInfo={replaceRecallInfo}
+          isInIframe={isInIframe}
         />
       );
     } else {
@@ -307,6 +312,7 @@ export function Survey({
             }
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
             languageCode={languageCode}
+            isInIframe={isInIframe}
           />
         )
       );
@@ -316,7 +322,12 @@ export function Survey({
   return (
     <>
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        <div className="no-scrollbar flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
+        <div
+          className={cn(
+            "no-scrollbar rounded-custom bg-survey-bg flex h-full w-full flex-col justify-between px-6 pb-3 pt-6",
+            isCardBorderVisible ? "border-survey-border border" : "",
+            survey.type === "link" ? "fb-survey-shadow" : ""
+          )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled

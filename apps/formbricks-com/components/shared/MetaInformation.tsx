@@ -9,6 +9,7 @@ interface Props {
   authors?: string[];
   section?: string;
   tags?: string[];
+  ogImage?: string;
 }
 
 export default function MetaInformation({
@@ -19,6 +20,7 @@ export default function MetaInformation({
   authors,
   section,
   tags,
+  ogImage,
 }: Props) {
   const router = useRouter();
   const pageTitle = `${title}`;
@@ -31,7 +33,7 @@ export default function MetaInformation({
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta name="image" content={`https://${BASE_URL}/favicon.ico`} />
-      <meta property="og:image" content={`https://${BASE_URL}/social-image.png`} />
+      <meta property="og:image" content={`https://${BASE_URL}${ogImage ? ogImage : `/social-image.png`}`} />
       <link rel="icon" type="image/x-icon" href={`https://${BASE_URL}/favicon.ico`} />
       <link rel="canonical" href={canonicalLink} />
       <meta name="msapplication-TileColor" content="#00C4B8" />

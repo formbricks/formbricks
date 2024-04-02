@@ -1,37 +1,36 @@
 {
   "name": "@formbricks/surveys",
   "license": "MIT",
-  "version": "1.7.1",
-  "description": "Formbricks-surveys is a helper library to embed surveys into your application",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Formbricks-surveys is a helper library to embed surveys into your application.",
   "homepage": "https://formbricks.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
   },
   "sideEffects": false,
-  "source": "./src/index.ts",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "source": "src/index.ts",
+  "main": "dist/index.umd.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.umd.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
     "dev": "vite build --watch --mode dev",
     "serve": "serve dist -p 3003",
-    "build": "pnpm run build:surveys && pnpm run build:question-date",
-    "build:dev": "pnpm run build:surveys:dev && pnpm run build:question-date:dev",
-    "build:surveys": "tsc && SURVEYS_PACKAGE_BUILD=surveys vite build",
-    "build:surveys:dev": "tsc && SURVEYS_PACKAGE_BUILD=surveys vite build --mode dev",
-    "build:question-date": "tsc && SURVEYS_PACKAGE_BUILD=question-date vite build",
-    "build:question-date:dev": "tsc && SURVEYS_PACKAGE_BUILD=question-date vite build --mode dev",
-    "go": "concurrently \"pnpm dev\" \"pnpm serve\"",
+    "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --mode dev",
+    "go": "vite build --watch --mode dev",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
     "clean": "rimraf .turbo node_modules dist"

@@ -5,6 +5,7 @@ import {
   CheckIcon,
   ChevronDown,
   ChevronUp,
+  GridIcon,
   HashIcon,
   HelpCircleIcon,
   ImageIcon,
@@ -18,7 +19,7 @@ import {
 import * as React from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import useClickOutside from "@formbricks/lib/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import {
   Command,
@@ -75,6 +76,8 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <CheckIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.PictureSelection:
             return <ImageIcon width={18} className="text-white" />;
+          case TSurveyQuestionType.Matrix:
+            return <GridIcon width={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
         return <HashIcon width={18} className="text-white" />;

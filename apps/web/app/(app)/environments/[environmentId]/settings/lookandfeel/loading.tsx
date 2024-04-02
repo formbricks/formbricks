@@ -2,6 +2,7 @@ import SettingsCard from "@/app/(app)/environments/[environmentId]/settings/comp
 import SettingsTitle from "@/app/(app)/environments/[environmentId]/settings/components/SettingsTitle";
 
 import { cn } from "@formbricks/lib/cn";
+import { Badge } from "@formbricks/ui/Badge";
 import { Button } from "@formbricks/ui/Button";
 import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
@@ -19,21 +20,83 @@ export default function Loading() {
   return (
     <div>
       <SettingsTitle title="Look & Feel" />
-      <SettingsCard title="Brand Color" description="Match the surveys with your user interface.">
-        <div className="w-full max-w-sm items-center">
-          <Label htmlFor="brandcolor">Color (HEX)</Label>
-          <div className="my-2">
-            <div className="flex w-full items-center justify-between space-x-1 rounded-md border border-slate-300 px-2 text-sm text-slate-400">
-              <div className="ml-2 mr-2 h-10 w-32 border-0 bg-transparent text-slate-500 outline-none focus:border-none"></div>
+
+      <SettingsCard
+        title="Theme"
+        className="max-w-7xl"
+        description="Create a style theme for all surveys. You can enable custom styling for each survey.">
+        <div className="flex animate-pulse">
+          <div className="w-1/2">
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
+                <div className="flex items-center gap-6">
+                  <Switch />
+                  <div className="flex flex-col">
+                    <h3 className="text-sm font-semibold text-slate-700">Enable custom styling</h3>
+                    <p className="text-xs text-slate-500">
+                      Allow users to override this theme in the editor.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 bg-slate-50 p-4">
+                <div className="w-full rounded-lg border border-slate-300 bg-white">
+                  <div className="flex flex-col p-4">
+                    <h2 className="text-base font-semibold text-slate-700">Form Styling</h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Style the question texts, descriptions and input fields.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="w-full rounded-lg border border-slate-300 bg-white">
+                  <div className="flex flex-col p-4">
+                    <h2 className="text-base font-semibold text-slate-700">Card Styling</h2>
+                    <p className="mt-1 text-sm text-slate-500">Style the survey card.</p>
+                  </div>
+                </div>
+
+                <div className="w-full rounded-lg border border-slate-300 bg-white">
+                  <div className="flex flex-col p-4">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-semibold text-slate-700">Background Styling</h2>
+                      <Badge text="Link Surveys" type="gray" size="normal" />
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Change the background to a color, image or animation.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <Button
-            variant="darkCTA"
-            className="pointer-events-none mt-4 animate-pulse cursor-not-allowed select-none bg-slate-200">
-            Loading
-          </Button>
+
+          <div className="w-1/2 bg-slate-100 px-6 pt-4">
+            <div className="relative flex h-[95] max-h-[95%] w-full items-center justify-center rounded-lg border border-slate-300 bg-slate-200">
+              <div className="flex h-full w-5/6 flex-1 flex-col">
+                <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
+                  <div className="ml-6 flex space-x-2">
+                    <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                    <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                    <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+                  </div>
+                  <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+                    <p>Preview</p>
+
+                    <div className="flex items-center pr-6">Restart</div>
+                  </div>
+                </div>
+
+                <div className="grid h-[500px] place-items-center bg-white">
+                  <h1 className="text-xl font-semibold text-slate-700">Loading preview...</h1>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </SettingsCard>
+
       <SettingsCard
         title="In-app Survey Placement"
         description="Change where surveys will be shown in your web app.">
@@ -69,40 +132,7 @@ export default function Loading() {
           </Button>
         </div>
       </SettingsCard>
-      <SettingsCard
-        noPadding
-        title="Highlight Border"
-        description="Make sure your users notice the survey you display">
-        <div className="flex min-h-full w-full">
-          <div className="flex w-1/2 flex-col px-6 py-5">
-            <div className="pointer-events-none mb-6 flex cursor-not-allowed select-none items-center space-x-2">
-              <Switch id="highlightBorder" checked={false} />
-              <h2 className="text-sm font-medium text-slate-800">Show highlight border</h2>
-            </div>
 
-            <Button
-              type="submit"
-              variant="darkCTA"
-              className="pointer-events-none mt-4 flex max-w-[100px] animate-pulse cursor-not-allowed select-none items-center justify-center">
-              Loading
-            </Button>
-          </div>
-
-          <div className="flex w-1/2 flex-col items-center justify-center gap-4 bg-slate-200 px-6 py-5">
-            <h3 className="text-slate-500">Preview</h3>
-            <div className={cn("flex flex-col gap-4 rounded-lg border-2 bg-white p-5")}>
-              <h3 className="text-sm font-semibold text-slate-800">How easy was it for you to do this?</h3>
-              <div className="flex rounded-2xl border border-slate-400">
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <div key={num} className="border-r border-slate-400 px-6 py-5 last:border-r-0">
-                    <span className="text-sm font-medium">{num}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </SettingsCard>
       <SettingsCard
         title="Formbricks Signature"
         description="We love your support but understand if you toggle it off.">

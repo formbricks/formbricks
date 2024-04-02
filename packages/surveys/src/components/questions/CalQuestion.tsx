@@ -14,7 +14,7 @@ import { TSurveyCalQuestion } from "@formbricks/types/surveys";
 
 interface CalQuestionProps {
   question: TSurveyCalQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -23,9 +23,10 @@ interface CalQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function CalQuestion({
+export const CalQuestion = ({
   question,
   value,
   onChange,
@@ -36,7 +37,7 @@ export default function CalQuestion({
   languageCode,
   ttc,
   setTtc,
-}: CalQuestionProps) {
+}: CalQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -95,10 +96,9 @@ export default function CalQuestion({
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         )}
       </div>
     </form>
   );
-}
+};

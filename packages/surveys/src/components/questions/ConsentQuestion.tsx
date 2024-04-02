@@ -12,7 +12,7 @@ import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -21,9 +21,10 @@ interface ConsentQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function ConsentQuestion({
+export const ConsentQuestion = ({
   question,
   value,
   onChange,
@@ -34,7 +35,7 @@ export default function ConsentQuestion({
   languageCode,
   ttc,
   setTtc,
-}: ConsentQuestionProps) {
+}: ConsentQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
@@ -57,12 +58,16 @@ export default function ConsentQuestion({
         }}>
         <label
           tabIndex={1}
+          id={`${question.id}-label`}
           onKeyDown={(e) => {
-            if (e.key == "Enter") {
-              onChange({ [question.id]: "accepted" });
+            // Accessibility: if spacebar was pressed pass this down to the input
+            if (e.key === " ") {
+              e.preventDefault();
+              document.getElementById(question.id)?.click();
+              document.getElementById(`${question.id}-label`)?.focus();
             }
           }}
-          className="border-border bg-survey-bg text-heading hover:bg-accent-bg focus:bg-accent-bg focus:ring-border-highlight relative z-10 mt-4 flex w-full cursor-pointer items-center rounded-md border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
+          className="border-border bg-input-bg text-heading hover:bg-input-bg-selected focus:bg-input-bg-selected focus:ring-brand rounded-custom relative z-10 mt-4 flex w-full cursor-pointer items-center border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
           <input
             type="checkbox"
             id={question.id}
@@ -103,10 +108,9 @@ export default function ConsentQuestion({
             tabIndex={2}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         </div>
       </form>
     </div>
   );
-}
+};
