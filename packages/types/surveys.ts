@@ -39,7 +39,7 @@ export enum TSurveyQuestionType {
 
 export const ZSurveyWelcomeCard = z.object({
   enabled: z.boolean(),
-  headline: ZI18nString,
+  headline: ZI18nString.optional(),
   html: ZI18nString.optional(),
   fileUrl: z.string().optional(),
   buttonLabel: ZI18nString.optional(),

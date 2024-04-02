@@ -52,7 +52,7 @@ test.describe("JS Package Test", async () => {
 
   test("JS Display Survey on Page", async ({ page }) => {
     let currentDir = process.cwd();
-    let htmlFilePath = currentDir + "/packages/js/index.html";
+    let htmlFilePath = currentDir + "/packages/js-core/index.html";
 
     let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
     await page.goto(htmlFile);
@@ -76,7 +76,7 @@ test.describe("JS Package Test", async () => {
 
   test("JS submits Response to Survey", async ({ page }) => {
     let currentDir = process.cwd();
-    let htmlFilePath = currentDir + "/packages/js/index.html";
+    let htmlFilePath = currentDir + "/packages/js-core/index.html";
 
     let htmlFile = "file:///" + htmlFilePath;
 

@@ -195,7 +195,7 @@ test.describe("Survey Create & Submit Response", async () => {
 
 test.describe("Multi Language Survey Create", async () => {
   test.describe.configure({ mode: "serial" });
-  const { name, email, password } = users.survey[2];
+  const { name, email, password } = users.survey[3];
   test("Create Survey", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
     await finishOnboarding(page);
@@ -273,6 +273,8 @@ test.describe("Multi Language Survey Create", async () => {
       .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
       .nth(1)
       .click();
+
+    await page.getByRole("button", { name: "Matrix" }).scrollIntoViewIfNeeded();
     await page.getByRole("button", { name: "Matrix" }).click();
 
     // Enable translation in german
