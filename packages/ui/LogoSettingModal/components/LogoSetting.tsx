@@ -109,18 +109,8 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
 
   const toggleaddBackgroundColor = (checked: boolean) => {
     if (!checked) {
-      setLocalProduct &&
-        setLocalProduct({
-          ...product,
-          brand: { logoUrl: replacedLogo, bgColor: "" },
-        });
       setBackgroundColor("");
     } else {
-      setLocalProduct &&
-        setLocalProduct({
-          ...product,
-          brand: { logoUrl: replacedLogo, bgColor: "#ffffff" },
-        });
       setBackgroundColor("#ffffff");
     }
     setAddBackgroundColor(checked);
