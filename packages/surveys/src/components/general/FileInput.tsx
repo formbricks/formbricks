@@ -202,14 +202,15 @@ export default function FileInput({
   }, [allowMultipleFiles, fileUrls, isUploading]);
 
   return (
-    <div className="items-left bg-input-bg hover:bg-input-bg-selected border-border relative mt-3 flex w-full flex-col justify-center rounded-lg border-2 border-dashed dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800">
+    <div
+      className={`items-left bg-input-bg hover:bg-input-bg-selected border-border relative mt-3 flex w-full flex-col justify-center rounded-lg border-2 border-dashed dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800`}>
       <div className="max-h-[30vh] overflow-auto">
         {fileUrls &&
           fileUrls?.map((file, index) => {
             const fileName = getOriginalFileNameFromUrl(file);
 
             return (
-              <div key={index} className="bg-accent border-border relative m-2 rounded-md border">
+              <div key={index} className="bg-input-bg-selected border-border relative m-2 rounded-md border">
                 <div className="absolute right-0 top-0 m-2">
                   <div className="bg-survey-bg flex h-5 w-5 cursor-pointer items-center justify-center rounded-md">
                     <svg

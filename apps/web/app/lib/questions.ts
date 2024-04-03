@@ -125,7 +125,7 @@ export const questionTypes: TSurveyQuestionType[] = [
       headline: { default: "You are one of our power users!" },
       html: {
         default:
-          '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot!</span></p>',
+          '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
       },
       buttonLabel: { default: "Book interview" },
       buttonExternal: false,
