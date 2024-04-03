@@ -1646,7 +1646,7 @@ export const templates: TTemplate[] = [
             { id: createId(), label: { default: "Social Media" } },
             { id: createId(), label: { default: "Friends" } },
             { id: createId(), label: { default: "Podcast" } },
-            { id: "other", label: { dfault: "Other" } },
+            { id: "other", label: { default: "Other" } },
           ],
           headline: { default: "How did you hear about us?" },
           required: true,
