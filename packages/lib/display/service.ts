@@ -25,7 +25,6 @@ import { TPerson } from "@formbricks/types/people";
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { createPerson, getPersonByUserId } from "../person/service";
 import { formatDateFields } from "../utils/datetime";
-import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 
@@ -112,7 +111,7 @@ export const updateDisplay = async (
 
     return display;
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
@@ -153,7 +152,7 @@ export const updateDisplayLegacy = async (
 
     return display;
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }

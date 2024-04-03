@@ -90,6 +90,7 @@ export default function LogicEditor({
     pictureSelection: ["submitted", "skipped"],
     fileUpload: ["uploaded", "notUploaded"],
     cal: ["skipped", "booked"],
+    matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
     address: ["submitted", "skipped"],
   };
 
@@ -160,6 +161,16 @@ export default function LogicEditor({
     },
     booked: {
       label: "has a call booked",
+      values: null,
+      unique: true,
+    },
+    isCompletelySubmitted: {
+      label: "is completely submitted",
+      values: null,
+      unique: true,
+    },
+    isPartiallySubmitted: {
+      label: "is partially submitted",
       values: null,
       unique: true,
     },

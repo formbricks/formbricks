@@ -13,10 +13,9 @@ import {
 } from "../constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt";
 import { getProductByEnvironmentId } from "../product/service";
-import { getQuestionResponseMapping } from "../responses";
+import { getQuestionResponseMapping, processResponseData } from "../responses";
 import { getOriginalFileNameFromUrl } from "../storage/utils";
 import { getTeamByEnvironmentId } from "../team/service";
-import { logger } from "../utils/logger";
 import { withEmailTemplate } from "./email-template";
 
 const nodemailer = require("nodemailer");
@@ -66,7 +65,7 @@ export const sendEmail = async (emailData: sendEmailData) => {
       };
       await transporter.sendMail({ ...emailDefaults, ...emailData });
     } else {
-      logger.error(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
+      console.error(`Could not Email :: SMTP not configured :: ${emailData.subject}`);
     }
   } catch (error) {
     throw error;
@@ -232,7 +231,7 @@ export const sendResponseFinishedEmail = async (
                `;
                     })
                     .join("")
-                : `<p style="margin:0px; white-space:pre-wrap"><b>${question.answer}</b></p>`
+                : `<p style="margin:0px; white-space:pre-wrap"><b>${processResponseData(question.answer)}</b></p>`
             }
             
           </div>`

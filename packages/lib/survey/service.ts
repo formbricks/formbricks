@@ -11,7 +11,7 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyInput, ZSurvey, ZSurveyWithRefinements } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyInput, ZSurveyWithRefinements } from "@formbricks/types/surveys";
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
@@ -29,10 +29,9 @@ import { createSegment, evaluateSegment, getSegment, updateSegment } from "../se
 import { transformSegmentFiltersToAttributeFilters } from "../segment/utils";
 import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
-import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters } from "./util";
+import { anySurveyHasFilters, formatSurveyDateFields } from "./util";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -188,7 +187,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          logger.error(error);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
         throw error;
@@ -226,7 +225,7 @@ export const getSurvey = async (surveyId: string): Promise<TSurvey | null> => {
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return survey ? formatDateFields(survey, ZSurvey) : null;
+  return survey ? formatSurveyDateFields(survey) : null;
 };
 
 export const getSurveysByActionClassId = async (actionClassId: string, page?: number): Promise<TSurvey[]> => {
@@ -277,7 +276,7 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
-  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+  return surveys.map((survey) => formatSurveyDateFields(survey));
 };
 
 export const getSurveys = async (
@@ -306,7 +305,7 @@ export const getSurveys = async (
         });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          logger.error(error);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -344,24 +343,16 @@ export const getSurveys = async (
 
   // since the unstable_cache function does not support deserialization of dates, we need to manually deserialize them
   // https://github.com/vercel/next.js/issues/51613
-  return surveys.map((survey) => formatDateFields(survey, ZSurvey));
+  return surveys.map((survey) => formatSurveyDateFields(survey));
 };
 
 export const transformToLegacySurvey = async (
   survey: TSurvey,
   languageCode?: string
 ): Promise<TLegacySurvey> => {
-  const transformedSurvey = await unstable_cache(
-    async () => {
-      const targetLanguage = languageCode ?? "default";
-      return reverseTranslateSurvey(survey, targetLanguage);
-    },
-    [`transformToLegacySurvey-${survey.id}-${languageCode}`],
-    {
-      tags: [surveyCache.tag.byId(survey.id)],
-      revalidate: SERVICES_REVALIDATION_INTERVAL,
-    }
-  )();
+  const targetLanguage = languageCode ?? "default";
+  const transformedSurvey = reverseTranslateSurvey(survey, targetLanguage);
+
   return formatDateFields(transformedSurvey, ZLegacySurvey);
 };
 
@@ -379,7 +370,7 @@ export const getSurveyCount = async (environmentId: string): Promise<number> => 
         return surveyCount;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          logger.error(error);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -472,7 +463,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     try {
       await updateSegment(segment.id, segment);
     } catch (error) {
-      logger.error(error);
+      console.error(error);
       throw new Error("Error updating survey");
     }
   }
@@ -512,7 +503,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error);
+      console.error(error);
       throw new DatabaseError(error.message);
     }
 
@@ -755,11 +746,12 @@ export const getSyncSurveys = async (
   const surveys = await unstable_cache(
     async () => {
       const product = await getProductByEnvironmentId(environmentId);
-      const person = personId === "legacy" ? ({ id: "legacy" } as TPerson) : await getPerson(personId);
 
       if (!product) {
         throw new Error("Product not found");
       }
+
+      const person = personId === "legacy" ? ({ id: "legacy" } as TPerson) : await getPerson(personId);
 
       if (!person) {
         throw new Error("Person not found");
@@ -769,6 +761,11 @@ export const getSyncSurveys = async (
 
       // filtered surveys for running and web
       surveys = surveys.filter((survey) => survey.status === "inProgress" && survey.type === "web");
+
+      // if no surveys are left, return an empty array
+      if (surveys.length === 0) {
+        return [];
+      }
 
       const displays = await getDisplaysByPersonId(person.id);
 
@@ -806,6 +803,11 @@ export const getSyncSurveys = async (
           return true;
         }
       });
+
+      // if no surveys are left, return an empty array
+      if (surveys.length === 0) {
+        return [];
+      }
 
       // if no surveys have segment filters, return the surveys
       if (!anySurveyHasFilters(surveys)) {
@@ -898,7 +900,7 @@ export const getSyncSurveys = async (
     }
   )();
 
-  return surveys.map((survey) => formatDateFields(survey as TSurvey, ZSurvey));
+  return surveys.map((survey) => formatSurveyDateFields(survey));
 };
 
 export const getSurveyIdByResultShareKey = async (resultShareKey: string): Promise<string | null> => {

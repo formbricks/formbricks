@@ -7,7 +7,9 @@ import { ZLanguage } from "./product";
 import { ZSegment } from "./segment";
 import { ZBaseStyling } from "./styling";
 
-export const ZI18nString = z.record(z.string(), z.string());
+export const ZI18nString = z.record(z.string()).refine((obj) => "default" in obj, {
+  message: "Object must have a 'default' key",
+});
 
 export type TI18nString = z.infer<typeof ZI18nString>;
 
@@ -32,6 +34,7 @@ export enum TSurveyQuestionType {
   PictureSelection = "pictureSelection",
   Cal = "cal",
   Date = "date",
+  Matrix = "matrix",
   address = "address",
 }
 
@@ -135,6 +138,8 @@ export const ZSurveyLogicCondition = z.enum([
   "uploaded",
   "notUploaded",
   "booked",
+  "isCompletelySubmitted",
+  "isPartiallySubmitted",
 ]);
 
 export type TSurveyLogicCondition = z.infer<typeof ZSurveyLogicCondition>;
@@ -223,6 +228,11 @@ export const ZSurveyCalLogic = ZSurveyLogicBase.extend({
   value: z.undefined(),
 });
 
+const ZSurveyMatrixLogic = ZSurveyLogicBase.extend({
+  condition: z.enum(["isCompletelySubmitted", "isPartiallySubmitted", "skipped"]).optional(),
+  value: z.undefined(),
+});
+
 export const ZSurveyLogic = z.union([
   ZSurveyOpenTextLogic,
   ZSurveyConsentLogic,
@@ -234,6 +244,7 @@ export const ZSurveyLogic = z.union([
   ZSurveyPictureSelectionLogic,
   ZSurveyFileUploadLogic,
   ZSurveyCalLogic,
+  ZSurveyMatrixLogic,
   ZSurveyAddressLogic,
 ]);
 
@@ -287,11 +298,15 @@ export const ZSurveyMultipleChoiceSingleQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyMultipleChoiceSingleQuestion = z.infer<typeof ZSurveyMultipleChoiceSingleQuestion>;
 
+export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
+
+export type TShuffleOption = z.infer<typeof ZShuffleOption>;
+
 export const ZSurveyMultipleChoiceMultiQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.MultipleChoiceMulti),
   choices: z.array(ZSurveyChoice),
   logic: z.array(ZSurveyMultipleChoiceMultiLogic).optional(),
-  shuffleOption: z.enum(["none", "all", "exceptLast"]).optional(),
+  shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
 });
 
@@ -363,6 +378,15 @@ export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
 
+export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionType.Matrix),
+  rows: z.array(ZI18nString),
+  columns: z.array(ZI18nString),
+  logic: z.array(ZSurveyMatrixLogic).optional(),
+});
+
+export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
+
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.address),
   addressRequired: z.boolean().default(false),
@@ -386,6 +410,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyDateQuestion,
   ZSurveyFileUploadQuestion,
   ZSurveyCalQuestion,
+  ZSurveyMatrixQuestion,
   ZSurveyAddressQuestion,
 ]);
 

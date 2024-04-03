@@ -1044,6 +1044,63 @@ export const getQuestionWiseSummary = (
 
         break;
       }
+      case TSurveyQuestionType.Matrix: {
+        const rows = question.rows.map((row) => getLocalizedValue(row, "default"));
+        const columns = question.columns.map((column) => getLocalizedValue(column, "default"));
+        let totalResponseCount = 0;
+
+        // Initialize count object
+        const countMap: Record<string, string> = rows.reduce((acc, row) => {
+          acc[row] = columns.reduce((colAcc, col) => {
+            colAcc[col] = 0;
+            return colAcc;
+          }, {});
+          return acc;
+        }, {});
+
+        responses.forEach((response) => {
+          const selectedResponses = response.data[question.id] as Record<string, string>;
+          const responseLanguageCode = getLanguageCode(survey.languages, response.language);
+          if (selectedResponses) {
+            totalResponseCount++;
+            question.rows.forEach((row) => {
+              const localizedRow = getLocalizedValue(row, responseLanguageCode);
+              const colValue = question.columns.find((column) => {
+                return getLocalizedValue(column, responseLanguageCode) === selectedResponses[localizedRow];
+              });
+              const colValueInDefaultLanguage = getLocalizedValue(colValue, "default");
+              if (colValueInDefaultLanguage && columns.includes(colValueInDefaultLanguage)) {
+                countMap[getLocalizedValue(row, "default")][colValueInDefaultLanguage] += 1;
+              }
+            });
+          }
+        });
+
+        const matrixSummary = rows.map((row) => {
+          let totalResponsesForRow = 0;
+          columns.forEach((col) => {
+            totalResponsesForRow += countMap[row][col];
+          });
+
+          const columnPercentages = columns.reduce((acc, col) => {
+            const count = countMap[row][col];
+            const percentage =
+              totalResponsesForRow > 0 ? ((count / totalResponsesForRow) * 100).toFixed(2) : "0.00";
+            acc[col] = percentage;
+            return acc;
+          }, {});
+
+          return { rowLabel: row, columnPercentages, totalResponsesForRow };
+        });
+
+        summary.push({
+          type: question.type,
+          question,
+          responseCount: totalResponseCount,
+          data: matrixSummary,
+        });
+        break;
+      }
       case TSurveyQuestionType.address: {
         let values: TSurveySummaryAddress["samples"] = [];
         console.log(responses);

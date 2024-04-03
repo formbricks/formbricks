@@ -1,10 +1,10 @@
-import Image from "next/image";
+import AuthorBox from "@/components/shared/AuthorBox";
 import LayoutMdx from "@/components/shared/LayoutMdx";
+import Image from "next/image";
+import ResponsiveEmbed from "react-responsive-embed";
+import EverythinEverywhereAllAtOnce from "./everything_everywhere_all_at_once.png";
 import RobinHoodMeme from "./robin-hood-meme.png";
 import WhyWeDoIt from "./why-we-do-it.png";
-import EverythinEverywhereAllAtOnce from "./everything_everywhere_all_at_once.png";
-import ResponsiveEmbed from "react-responsive-embed";
-import AuthorBox from "@/components/shared/AuthorBox";
 
 
 export const meta = {
@@ -15,6 +15,7 @@ export const meta = {
   authors: ["Johannes"],
   section: "Open Source Survey Tool",
   tags: ["Open Source", "Survey Tool", "Forms"],
+    ogImage: "/blog/robin-hood-meme.png"
 };
 
 <AuthorBox name="Johannes" title="Co-Founder" date="April 7th, 2023" duration="4" author={"Johannes"} />

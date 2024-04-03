@@ -18,7 +18,6 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { formatDateFields } from "../utils/datetime";
-import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 import { actionClassCache } from "./cache";
 
@@ -177,7 +176,7 @@ export const createActionClass = async (
 
     return actionClassPrisma;
   } catch (error) {
-    logger.error(error);
+    console.error(error);
     throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
   }
 };

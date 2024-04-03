@@ -22,7 +22,6 @@ import { SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { getProducts } from "../product/service";
 import { getTeamsByUserId } from "../team/service";
 import { formatDateFields } from "../utils/datetime";
-import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
@@ -40,7 +39,7 @@ export const getEnvironment = async (environmentId: string): Promise<TEnvironmen
         return environment;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          logger.error(error);
+          console.error(error);
           throw new DatabaseError(error.message);
         }
 
@@ -91,7 +90,7 @@ export const getEnvironments = async (productId: string): Promise<TEnvironment[]
         return environments;
       } catch (error) {
         if (error instanceof z.ZodError) {
-          logger.error(JSON.stringify(error.errors, null, 2));
+          console.error(JSON.stringify(error.errors, null, 2));
         }
         throw new ValidationError("Data validation of environments array failed");
       }

@@ -3,7 +3,6 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 
 import { createDisplay } from "@formbricks/lib/display/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { logger } from "@formbricks/lib/utils/logger";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";
 
@@ -42,7 +41,7 @@ export async function POST(request: Request, context: Context): Promise<Response
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      logger.error(error);
+      console.error(error);
       return responses.internalServerErrorResponse(error.message);
     }
   }

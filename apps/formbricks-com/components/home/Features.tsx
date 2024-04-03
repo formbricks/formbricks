@@ -5,20 +5,20 @@ import HeadingCentered from "../shared/HeadingCentered";
 const features = [
   {
     id: "compliance",
-    name: "Smoothly Compliant",
+    name: "Smoothly compliant",
     description: "Use our GDPR-compliant Cloud or self-host the entire solution.",
     icon: EyeIcon,
   },
   {
     id: "customizable",
-    name: "Fully Customizable",
+    name: "Fully customizable",
     description: "Full customizability and extendability. Integrate with your stack easily.",
     icon: HandPuzzleIcon,
   },
   {
     id: "independent",
     name: "Stay independent",
-    description: "The code is open-source. Do with it what your organization needs.",
+    description: "The code is open source. Do with it what your organization needs.",
     icon: CodeFileIcon,
   },
 ];
@@ -26,8 +26,8 @@ export const Features: React.FC = () => {
   return (
     <div className="relative">
       <HeadingCentered
-        teaser="Data Privacy at heart"
-        heading="The only open-source solution"
+        teaser="Data privacy at heart"
+        heading="Open Source Experience Management"
         subheading="Comply with all data privacy regulation with ease. Self-host if you want."
       />
 

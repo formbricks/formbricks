@@ -13,7 +13,7 @@ import type { TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys"
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
-  value: string | number | string[];
+  value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -22,9 +22,10 @@ interface PictureSelectionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function PictureSelectionQuestion({
+export const PictureSelectionQuestion = ({
   question,
   value,
   onChange,
@@ -35,7 +36,7 @@ export default function PictureSelectionQuestion({
   languageCode,
   ttc,
   setTtc,
-}: PictureSelectionProps) {
+}: PictureSelectionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
@@ -44,11 +45,7 @@ export default function PictureSelectionQuestion({
     let values: string[] = [];
 
     if (question.allowMulti) {
-      if (Array.isArray(value)) {
-        values = [...value, item];
-      } else {
-        values = [item];
-      }
+      values = [...value, item];
     } else {
       values = [item];
     }
@@ -60,11 +57,7 @@ export default function PictureSelectionQuestion({
     let values: string[] = [];
 
     if (question.allowMulti) {
-      if (Array.isArray(value)) {
-        values = value.filter((i) => i !== item);
-      } else {
-        values = [];
-      }
+      values = value.filter((i) => i !== item);
     } else {
       values = [];
     }
@@ -73,7 +66,7 @@ export default function PictureSelectionQuestion({
   };
 
   const handleChange = (id: string) => {
-    if (Array.isArray(value) && value.includes(id)) {
+    if (value.includes(id)) {
       removeItem(id);
     } else {
       addItem(id);
@@ -81,7 +74,7 @@ export default function PictureSelectionQuestion({
   };
 
   useEffect(() => {
-    if (!question.allowMulti && Array.isArray(value) && value.length > 1) {
+    if (!question.allowMulti && value.length > 1) {
       onChange({ [question.id]: [] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -119,16 +112,19 @@ export default function PictureSelectionQuestion({
                 tabIndex={idx + 1}
                 htmlFor={choice.id}
                 onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    handleChange(choice.id);
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById(choice.id)?.click();
+                    document.getElementById(choice.id)?.focus();
                   }
                 }}
                 onClick={() => handleChange(choice.id)}
                 className={cn(
                   Array.isArray(value) && value.includes(choice.id)
-                    ? `border-brand text-brand z-10 border-4 shadow-xl focus:border-4`
+                    ? `border-brand text-brand z-10 border-4 shadow-xl`
                     : "",
-                  "border-border focus:bg-accent-selected-bg relative box-border inline-block h-28 w-full overflow-hidden rounded-xl border focus:outline-none"
+                  "focus:border-brand relative inline-block h-28 w-full cursor-pointer overflow-hidden rounded-xl border focus:border-4 focus:outline-none"
                 )}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -138,6 +134,7 @@ export default function PictureSelectionQuestion({
                   className="h-full w-full object-cover"
                 />
                 <a
+                  tabIndex={-1}
                   href={choice.imageUrl}
                   target="_blank"
                   title="Open in new tab"
@@ -167,14 +164,12 @@ export default function PictureSelectionQuestion({
                     name={`${choice.id}-checkbox`}
                     type="checkbox"
                     tabIndex={-1}
-                    checked={Array.isArray(value) && value.includes(choice.id)}
+                    checked={value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded border",
-                      Array.isArray(value) && value.includes(choice.id) ? "border-brand text-brand" : ""
+                      value.includes(choice.id) ? "border-brand text-brand" : ""
                     )}
-                    required={
-                      question.required && Array.isArray(value) && value.length ? false : question.required
-                    }
+                    required={question.required && value.length ? false : question.required}
                   />
                 ) : (
                   <input
@@ -182,14 +177,12 @@ export default function PictureSelectionQuestion({
                     name={`${choice.id}-radio`}
                     type="radio"
                     tabIndex={-1}
-                    checked={Array.isArray(value) && value.includes(choice.id)}
+                    checked={value.includes(choice.id)}
                     className={cn(
                       "border-border pointer-events-none absolute right-2 top-2 z-20 h-5 w-5 rounded-full border",
-                      Array.isArray(value) && value.includes(choice.id) ? "border-brand text-brand" : ""
+                      value.includes(choice.id) ? "border-brand text-brand" : ""
                     )}
-                    required={
-                      question.required && Array.isArray(value) && value.length ? false : question.required
-                    }
+                    required={question.required && value.length ? false : question.required}
                   />
                 )}
               </label>
@@ -214,9 +207,8 @@ export default function PictureSelectionQuestion({
           tabIndex={questionChoices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
         />
       </div>
     </form>
   );
-}
+};

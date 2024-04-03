@@ -12,7 +12,7 @@ interface NPSQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyNPSQuestion;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyNPSQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;

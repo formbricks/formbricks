@@ -13,7 +13,7 @@ import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
-  value: string | number | string[];
+  value: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -22,9 +22,10 @@ interface NPSQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function NPSQuestion({
+export const NPSQuestion = ({
   question,
   value,
   onChange,
@@ -35,7 +36,7 @@ export default function NPSQuestion({
   languageCode,
   ttc,
   setTtc,
-}: NPSQuestionProps) {
+}: NPSQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
 
@@ -59,7 +60,7 @@ export default function NPSQuestion({
       <Subheader
         subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
         questionId={question.id}
-      />{" "}
+      />
       <div className="my-4">
         <fieldset>
           <legend className="sr-only">Options</legend>
@@ -72,19 +73,21 @@ export default function NPSQuestion({
                   onMouseOver={() => setHoveredNumber(number)}
                   onMouseLeave={() => setHoveredNumber(-1)}
                   onKeyDown={(e) => {
-                    if (e.key == "Enter") {
-                      const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                      setTtc(updatedTtcObj);
-                      onSubmit({ [question.id]: number }, updatedTtcObj);
+                    // Accessibility: if spacebar was pressed pass this down to the input
+                    if (e.key === " ") {
+                      e.preventDefault();
+                      document.getElementById(number.toString())?.click();
+                      document.getElementById(number.toString())?.focus();
                     }
                   }}
                   className={cn(
                     value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
-                    "text-heading first:rounded-l-custom last:rounded-r-custom relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:outline-none",
+                    "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
                     hoveredNumber === number ? "bg-accent-bg" : ""
                   )}>
                   <input
                     type="radio"
+                    id={number.toString()}
                     name="nps"
                     value={number}
                     checked={value === number}
@@ -133,10 +136,9 @@ export default function NPSQuestion({
             tabIndex={12}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         )}
       </div>
     </form>
   );
-}
+};

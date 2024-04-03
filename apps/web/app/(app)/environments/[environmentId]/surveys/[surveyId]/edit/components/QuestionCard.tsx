@@ -2,6 +2,7 @@
 
 import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
 import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
+import MatrixQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MatrixQuestionForm";
 import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -11,6 +12,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  Grid3X3Icon,
   HomeIcon,
   ImageIcon,
   ListIcon,
@@ -164,6 +166,8 @@ export default function QuestionCard({
                       <CalendarDaysIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Cal ? (
                       <PhoneIcon className="h-5 w-5" />
+                    ) : question.type === TSurveyQuestionType.Matrix ? (
+                      <Grid3X3Icon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.address ? (
                       <HomeIcon />
                     ) : null}
@@ -312,6 +316,17 @@ export default function QuestionCard({
                 />
               ) : question.type === TSurveyQuestionType.Cal ? (
                 <CalQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
+                  isInvalid={isInvalid}
+                />
+              ) : question.type === TSurveyQuestionType.Matrix ? (
+                <MatrixQuestionForm
                   localSurvey={localSurvey}
                   question={question}
                   questionIdx={questionIdx}

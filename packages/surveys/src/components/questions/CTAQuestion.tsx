@@ -13,7 +13,7 @@ import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -22,9 +22,10 @@ interface CTAQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function CTAQuestion({
+export const CTAQuestion = ({
   question,
   onSubmit,
   onChange,
@@ -34,7 +35,8 @@ export default function CTAQuestion({
   languageCode,
   ttc,
   setTtc,
-}: CTAQuestionProps) {
+  isInIframe,
+}: CTAQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
@@ -78,7 +80,7 @@ export default function CTAQuestion({
           <SubmitButton
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            focus={true}
+            focus={!isInIframe}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();
@@ -94,4 +96,4 @@ export default function CTAQuestion({
       </div>
     </div>
   );
-}
+};

@@ -2,7 +2,6 @@ import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
 
 import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
-import { logger } from "@formbricks/lib/utils/logger";
 import { deleteWebhook, getWebhook } from "@formbricks/lib/webhook/service";
 
 export async function GET(_: Request, { params }: { params: { webhookId: string } }) {
@@ -50,7 +49,7 @@ export async function DELETE(_: Request, { params }: { params: { webhookId: stri
     const webhook = await deleteWebhook(params.webhookId);
     return responses.successResponse(webhook);
   } catch (e) {
-    logger.error(e.message);
+    console.error(e.message);
     return responses.notFoundResponse("Webhook", params.webhookId);
   }
 }

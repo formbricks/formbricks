@@ -25,7 +25,24 @@ export const setIsSurveyRunning = (value: boolean) => {
   isSurveyRunning = value;
 };
 
-export const renderWidget = async (survey: TSurvey) => {
+const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
+  const randomNum = Math.floor(Math.random() * 100) + 1;
+  return randomNum <= displayPercentage;
+};
+
+export const triggerSurvey = async (survey: TSurvey, action?: string): Promise<void> => {
+  // Check if the survey should be displayed based on displayPercentage
+  if (survey.displayPercentage) {
+    const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
+    if (!shouldDisplaySurvey) {
+      logger.debug("Survey display skipped based on displayPercentage.");
+      return; // skip displaying the survey
+    }
+  }
+  await renderWidget(survey, action);
+};
+
+const renderWidget = async (survey: TSurvey, action?: string) => {
   if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -182,6 +199,10 @@ export const renderWidget = async (survey: TSurvey) => {
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
           language: languageCode === "default" ? getDefaultLanguageCode(survey) : languageCode,
+          meta: {
+            url: window.location.href,
+            action,
+          },
         });
       },
       onClose: closeSurvey,
@@ -246,14 +267,12 @@ export const removeWidgetContainer = (): void => {
 };
 
 const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {
-  const formbricksSurveysScriptSrc = import.meta.env.FORMBRICKS_SURVEYS_SCRIPT_SRC;
-
   return new Promise((resolve, reject) => {
     if (window.formbricksSurveys) {
       resolve(window.formbricksSurveys);
     } else {
       const script = document.createElement("script");
-      script.src = formbricksSurveysScriptSrc;
+      script.src = `${config.get().apiHost}/api/packages/surveys`;
       script.async = true;
       script.onload = () => resolve(window.formbricksSurveys);
       script.onerror = (error) => {

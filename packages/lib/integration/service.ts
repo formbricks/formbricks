@@ -16,7 +16,6 @@ import {
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { formatDateFields } from "../utils/datetime";
-import { logger } from "../utils/logger";
 import { validateInputs } from "../utils/validate";
 import { integrationCache } from "./cache";
 
@@ -51,7 +50,7 @@ export async function createOrUpdateIntegration(
     return integration;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error);
+      console.error(error);
       throw new DatabaseError(error.message);
     }
     throw error;
