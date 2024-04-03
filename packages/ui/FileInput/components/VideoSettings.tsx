@@ -91,7 +91,7 @@ export const VideoSettings = ({
 
   return (
     <form className="flex flex-col space-y-4">
-      <Label>Video URL(Youtube, Vimeo or Loom)</Label>
+      <Label>Video URL(Youtube, Vimeo or Loom):</Label>
       <div className="flex h-10 items-center space-x-2">
         <Input
           className="w-full"
@@ -100,7 +100,7 @@ export const VideoSettings = ({
           onChange={(e) => handleVideoUrlChange(e)}
         />
         {uploadedVideoUrl && videoUrl === uploadedVideoUrl ? (
-          <Button variant="darkCTA" onClick={(e) => handleRemoveVideo(e)}>
+          <Button variant="secondary" onClick={(e) => handleRemoveVideo(e)}>
             Remove
           </Button>
         ) : (
@@ -111,9 +111,12 @@ export const VideoSettings = ({
       </div>
 
       {showPlatformWarning && (
-        <div className="flex items-center space-x-2 rounded-md border bg-slate-100 p-2 text-sm">
-          <AlertTriangle className="h-4 w-4" />
-          <p>Please enter a valid Youtube, Vimeo or loom Url</p>
+        <div className="flex items-center space-x-2 rounded-md border bg-slate-100 p-2 text-xs text-slate-600">
+          <AlertTriangle className="h-6 w-6" />
+          <p>
+            Please enter a valid Youtube, Vimeo or Loom Url. We currently do not support other video hosting
+            providers.
+          </p>
         </div>
       )}
       {isYoutubeLink && (
