@@ -11,7 +11,7 @@ servers:
       - 34.247.22.186
     labels:
       traefik.http.routers.formbricks-kamal.entrypoints: websecure
-      traefik.http.routers.formbricks-kamal.rule: Host(`shubham.formbricks.com`)
+      traefik.http.routers.formbricks-kamal.rule: Host(`kamal.shubham.formbricks.com`)
       traefik.http.routers.formbricks-kamal.tls.certresolver: letsencrypt
 
 # Credentials for your image host.
@@ -133,15 +133,15 @@ traefik:
     entryPoints.web.http.redirections.entryPoint.scheme: https
     entryPoints.web.http.redirections.entrypoint.permanent: true
     entrypoints.websecure.http.tls: true
-    entrypoints.websecure.http.tls.domains[0].main: "app.formbricks.com"
+    entrypoints.websecure.http.tls.domains[0].main: "shubham.formbricks.com"
     entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
     certificatesResolvers.letsencrypt.acme.email: "hola@formbricks.com"
     certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
-    certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
-  env:
-    secret:
-      - CLOUDFLARE_DNS_API_TOKEN
-      - CLOUDFLARE_EMAIL
+    # certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
+  # env:
+  #   secret:
+  #     - CLOUDFLARE_DNS_API_TOKEN
+  #     - CLOUDFLARE_EMAIL
 
 # Use accessory services (secrets come from .env).
 accessories:
