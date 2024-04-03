@@ -1,12 +1,10 @@
-name: Kamal Deploy
+name: Kamal Setup
 concurrency:
-  group: deploy-to-kamal
+  group: setup-kamal
   cancel-in-progress: false
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch: # Only to be triggered when accessories are updated
 
 jobs:
   Deploy:
@@ -109,7 +107,7 @@ jobs:
         run: |
           kamal() { command kamal "$@" -c kamal/deploy.yml; }
           set +e
-          DEPLOY_OUTPUT=$(kamal deploy 2>&1)
+          DEPLOY_OUTPUT=$(kamal setup 2>&1)
           DEPLOY_EXIT_CODE=$?
           echo "$DEPLOY_OUTPUT"
           if [[ "$DEPLOY_OUTPUT" == *"container not unhealthy (healthy)"* ]]; then

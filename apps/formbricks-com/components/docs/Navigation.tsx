@@ -213,6 +213,10 @@ export const navigation: Array<NavGroup> = [
     ],
   },
   {
+    title: "Additional Features",
+    links: [{ title: "Multi Language Surveys", href: "/docs/additional-features/multi-language-surveys" }],
+  },
+  {
     title: "Best Practices",
     links: [
       { title: "Learn from Churn", href: "/docs/best-practices/cancel-subscription" },
