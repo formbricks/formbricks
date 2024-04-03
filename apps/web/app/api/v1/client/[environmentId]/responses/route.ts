@@ -10,7 +10,7 @@ import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/environment";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponse, ZResponseInput } from "@formbricks/types/responses";
+import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 
 interface Context {
   params: {
@@ -77,7 +77,7 @@ export async function POST(request: Request, context: Context): Promise<Response
 
   let response: TResponse;
   try {
-    const meta = {
+    const meta: TResponseInput["meta"] = {
       source: responseInput?.meta?.source,
       url: responseInput?.meta?.url,
       userAgent: {
@@ -86,6 +86,7 @@ export async function POST(request: Request, context: Context): Promise<Response
         os: agent?.os.name,
       },
       country: country,
+      action: responseInput?.meta?.action,
     };
 
     response = await createResponse({
