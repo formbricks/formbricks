@@ -73,7 +73,7 @@ const SummaryHeader = ({
         {!isViewer &&
         (environment?.widgetSetupCompleted || survey.type === "link") &&
         survey?.status !== "draft" ? (
-          <SurveyStatusDropdown environment={environment} survey={survey} disabled={true} />
+          <SurveyStatusDropdown environment={environment} survey={survey} />
         ) : null}
         {survey.type === "link" && (
           <Button

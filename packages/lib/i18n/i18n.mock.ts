@@ -289,7 +289,7 @@ export const mockSurvey: TSurvey = {
   displayOption: "displayOnce",
   recontactDays: null,
   autoClose: null,
-  runOnClose: null,
+  runOnDate: null,
   closeOnDate: null,
   delay: 0,
   displayPercentage: null,
