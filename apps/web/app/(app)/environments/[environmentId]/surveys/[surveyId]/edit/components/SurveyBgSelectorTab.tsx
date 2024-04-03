@@ -94,7 +94,13 @@ export default function SurveyBgSelectorTab({
           />
         );
       case "upload":
-        return <UploadSurveyBg handleBgChange={handleBgChange} background={uploadBackground ?? ""} />;
+        return (
+          <UploadSurveyBg
+            environmentId={environmentId}
+            handleBgChange={handleBgChange}
+            background={uploadBackground ?? ""}
+          />
+        );
       default:
         return null;
     }

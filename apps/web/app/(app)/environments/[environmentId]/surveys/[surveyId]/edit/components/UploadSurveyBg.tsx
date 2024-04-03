@@ -5,11 +5,13 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
+import { getAllowedFiles, uploadFile } from "@formbricks/ui/FileInput/lib/fileUpload";
 import { Input } from "@formbricks/ui/Input";
 
 interface UploadSurveyBgProps {
   handleBgChange: (url: string, bgType: string) => void;
   background: string;
+  environmentId: string;
 }
 
 interface Image {
@@ -20,7 +22,7 @@ interface Image {
   };
 }
 
-export const UploadSurveyBg = ({ handleBgChange, background }: UploadSurveyBgProps) => {
+export const UploadSurveyBg = ({ environmentId, handleBgChange, background }: UploadSurveyBgProps) => {
   const inputFocus = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -58,6 +60,61 @@ export const UploadSurveyBg = ({ handleBgChange, background }: UploadSurveyBgPro
     setQuery(event.target.value);
   };
 
+  const uploadSelectedImage = async (files: File[]) => {
+    if (files.length > 1) {
+      files = [files[0]];
+      toast.error("Only one file is allowed");
+    }
+    const allowedFileExtensions = ["png", "jpeg", "jpg"];
+
+    const allowedFiles = getAllowedFiles(files, allowedFileExtensions, 2);
+
+    if (allowedFiles.length === 0) {
+      return;
+    }
+
+    const uploadedFiles = await Promise.allSettled(
+      allowedFiles.map((file) => uploadFile(file, allowedFileExtensions, environmentId))
+    );
+
+    if (
+      uploadedFiles.length < allowedFiles.length ||
+      uploadedFiles.some((file) => file.status === "rejected")
+    ) {
+      if (uploadedFiles.length === 0) {
+        toast.error("No files were uploaded");
+      } else {
+        toast.error("Some files failed to upload");
+      }
+    }
+
+    const uploadedUrls: string[] = [];
+
+    uploadedFiles.forEach((file) => {
+      if (file.status === "fulfilled") {
+        uploadedUrls.push(encodeURI(file.value.url));
+      }
+    });
+
+    if (uploadedUrls.length > 0) {
+      handleBgChange(uploadedUrls[0], "upload");
+    } else {
+      handleBgChange("", "upload");
+    }
+  };
+
+  const handleImageSelected = async (imageUrl: string, imageName: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+
+      const file = [new File([blob], `${imageName}.jpg`, { type: blob.type })];
+      uploadSelectedImage(file);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   return (
     <div className="relative mt-2 w-full">
       <div className="relative">
@@ -83,7 +140,7 @@ export const UploadSurveyBg = ({ handleBgChange, background }: UploadSurveyBgPro
               height={200}
               src={images.length > 0 ? image.urls.regular : background}
               alt={image.alt_description}
-              onClick={() => handleBgChange(image.urls?.regular, "upload")}
+              onClick={() => handleImageSelected(image.urls?.regular, image.alt_description)}
               className="cursor-pointer rounded-lg"
             />
           ))
