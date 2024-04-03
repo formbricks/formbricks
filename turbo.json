@@ -64,6 +64,7 @@
         "AZUREAD_TENANT_ID",
         "DEFAULT_TEAM_ID",
         "DEFAULT_TEAM_ROLE",
+        "DIRECT_DATABASE_URL",
         "ONBOARDING_DISABLED",
         "CRON_SECRET",
         "CUSTOMER_IO_API_KEY",
