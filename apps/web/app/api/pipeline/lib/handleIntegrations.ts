@@ -2,6 +2,7 @@ import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
+import { processResponseData } from "@formbricks/lib/responses";
 import { TIntegration } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
@@ -72,7 +73,7 @@ async function extractResponses(
     const responseValue = data.response.data[questionId];
 
     if (responseValue !== undefined) {
-      responses.push(Array.isArray(responseValue) ? responseValue.join("\n") : String(responseValue));
+      responses.push(processResponseData(responseValue));
     } else {
       responses.push("");
     }
@@ -134,7 +135,7 @@ function buildNotionPayloadProperties(
 
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
-function getValue(colType: string, value: string | string[] | number) {
+function getValue(colType: string, value: string | string[] | number | Record<string, string>) {
   try {
     switch (colType) {
       case "select":
