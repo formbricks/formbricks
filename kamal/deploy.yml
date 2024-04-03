@@ -13,8 +13,6 @@ servers:
       traefik.http.routers.formbricks-kamal.entrypoints: websecure
       traefik.http.routers.formbricks-kamal.rule: Host(`kamal.shubham.formbricks.com`)
       traefik.http.routers.formbricks-kamal.tls.certresolver: letsencrypt
-    options:
-      "network": "test-network"
 
 # Credentials for your image host.
 registry:
@@ -32,7 +30,7 @@ env:
   # clear:
   #   DB_HOST: 192.168.0.2
   clear:
-    REDIS_CLIENT_URL: redis://default:password@formbricks-kamal-redis:6379
+    REDIS_CLIENT_URL: redis://default:password@172.31.35.53:6379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -161,7 +159,7 @@ accessories:
   redis:
     image: redis:7.0
     host: 34.247.22.186
-    port: 6379
+    port: "172.31.35.53:6379:6379"
     directories:
       - data:/data
     options:
@@ -169,7 +167,7 @@ accessories:
   pgbouncer:
     image: edoburu/pgbouncer:latest
     host: 34.247.22.186
-    port: 5432
+    port: "172.31.35.53:5432:5432"
     options:
       network: "test-network"
     env:
