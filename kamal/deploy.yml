@@ -169,7 +169,7 @@ accessories:
     env:
       clear:
         LISTEN_PORT: "5432"
-        POOL_MODE: "session"
+        POOL_MODE: "transaction"
         MAX_CLIENT_CONN: "200"
         DEFAULT_POOL_SIZE: "50"
         AUTH_TYPE: "scram-sha-256"
