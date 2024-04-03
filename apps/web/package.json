@@ -59,6 +59,7 @@
     "react-hook-form": "^7.51.0",
     "react-hot-toast": "^2.4.1",
     "react-icons": "^5.0.1",
+    "redis": "^4.6.13",
     "sharp": "^0.33.2",
     "ua-parser-js": "^1.0.37",
     "webpack": "^5.90.3",
@@ -66,6 +67,7 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
+    "@neshca/cache-handler": "^1.0.7",
     "@types/bcryptjs": "^2.4.6",
     "@types/lodash": "^4.17.0",
     "@types/markdown-it": "^13.0.7",
