@@ -91,8 +91,6 @@ async function extractResponses(
       continue;
     }
 
-    questions.push(getLocalizedValue(question?.headline, "default") || "");
-
     const responseValue = data.response.data[questionId];
 
     if (responseValue !== undefined) {
