@@ -178,6 +178,7 @@ model TagsOnResponses {
 
 enum SurveyStatus {
   draft
+  scheduled
   inProgress
   paused
   completed
@@ -284,8 +285,9 @@ model Survey {
   attributeFilters    SurveyAttributeFilter[]
   displays            Display[]
   autoClose           Int?
-  delay               Int                     @default(0)
   autoComplete        Int?
+  delay               Int                     @default(0)
+  runOnDate           DateTime?
   closeOnDate         DateTime?
   /// @zod.custom(imports.ZSurveyClosedMessage)
   /// [SurveyClosedMessage]

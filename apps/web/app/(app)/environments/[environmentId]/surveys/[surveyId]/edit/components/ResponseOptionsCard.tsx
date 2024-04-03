@@ -27,7 +27,8 @@ export default function ResponseOptionsCard({
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
-  const [surveyCloseOnDateToggle, setSurveyCloseOnDateToggle] = useState(false);
+  const [runOnDateToggle, setRunOnDateToggle] = useState(false);
+  const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);
   useState;
   const [redirectUrl, setRedirectUrl] = useState<string | null>("");
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
@@ -48,7 +49,8 @@ export default function ResponseOptionsCard({
     name: "",
     subheading: "",
   });
-  const [closeOnDate, setCloseOnDate] = useState<Date>();
+  const [runOnDate, setRunOnDate] = useState<Date | null>(null);
+  const [closeOnDate, setCloseOnDate] = useState<Date | null>(null);
 
   const isPinProtectionEnabled = localSurvey.pin !== null;
 
@@ -63,19 +65,28 @@ export default function ResponseOptionsCard({
     }
   };
 
-  const handleSurveyCloseOnDateToggle = () => {
-    if (surveyCloseOnDateToggle && localSurvey.closeOnDate) {
-      setSurveyCloseOnDateToggle(false);
-      setCloseOnDate(undefined);
-      setLocalSurvey({ ...localSurvey, closeOnDate: null });
-      return;
+  const handleRunOnDateToggle = () => {
+    if (runOnDateToggle) {
+      setRunOnDateToggle(false);
+      if (localSurvey.runOnDate) {
+        setRunOnDate(null);
+        setLocalSurvey({ ...localSurvey, runOnDate: null });
+      }
+    } else {
+      setRunOnDateToggle(true);
     }
+  };
 
-    if (surveyCloseOnDateToggle) {
-      setSurveyCloseOnDateToggle(false);
-      return;
+  const handleCloseOnDateToggle = () => {
+    if (closeOnDateToggle) {
+      setCloseOnDateToggle(false);
+      if (localSurvey.closeOnDate) {
+        setCloseOnDate(null);
+        setLocalSurvey({ ...localSurvey, closeOnDate: null });
+      }
+    } else {
+      setCloseOnDateToggle(true);
     }
-    setSurveyCloseOnDateToggle(true);
   };
 
   const handleProtectSurveyWithPinToggle = () => {
@@ -126,6 +137,15 @@ export default function ResponseOptionsCard({
     }
   };
 
+  const handleRunOnDateChange = (date: Date) => {
+    const equivalentDate = date?.getDate();
+    date?.setUTCHours(0, 0, 0, 0);
+    date?.setDate(equivalentDate);
+
+    setRunOnDate(date);
+    setLocalSurvey({ ...localSurvey, runOnDate: date ?? null });
+  };
+
   const handleCloseOnDateChange = (date: Date) => {
     const equivalentDate = date?.getDate();
     date?.setUTCHours(0, 0, 0, 0);
@@ -143,7 +163,7 @@ export default function ResponseOptionsCard({
     subheading?: string;
   }) => {
     const message = {
-      enabled: surveyCloseOnDateToggle,
+      enabled: closeOnDateToggle,
       heading: heading ?? surveyClosedMessage.heading,
       subheading: subheading ?? surveyClosedMessage.subheading,
     };
@@ -245,9 +265,14 @@ export default function ResponseOptionsCard({
       setVerifyEmailToggle(true);
     }
 
+    if (localSurvey.runOnDate) {
+      setRunOnDate(localSurvey.runOnDate);
+      setRunOnDateToggle(true);
+    }
+
     if (localSurvey.closeOnDate) {
       setCloseOnDate(localSurvey.closeOnDate);
-      setSurveyCloseOnDateToggle(true);
+      setCloseOnDateToggle(true);
     }
   }, [
     localSurvey,
@@ -334,11 +359,24 @@ export default function ResponseOptionsCard({
               </p>
             </label>
           </AdvancedOptionToggle>
+          {/* Run Survey on Date */}
+          <AdvancedOptionToggle
+            htmlId="runOnDate"
+            isChecked={runOnDateToggle}
+            onToggle={handleRunOnDateToggle}
+            title="Schedule Survey"
+            description="Automatically starts the survey at the beginning of the day (UTC)."
+            childBorder={true}>
+            <div className="flex cursor-pointer p-4">
+              <p className="mr-2 mt-3 text-sm font-semibold text-slate-700">Automatically start survey on:</p>
+              <DatePicker date={runOnDate} handleDateChange={handleRunOnDateChange} />
+            </div>
+          </AdvancedOptionToggle>
           {/* Close Survey on Date */}
           <AdvancedOptionToggle
             htmlId="closeOnDate"
-            isChecked={surveyCloseOnDateToggle}
-            onToggle={handleSurveyCloseOnDateToggle}
+            isChecked={closeOnDateToggle}
+            onToggle={handleCloseOnDateToggle}
             title="Close survey on date"
             description="Automatically closes the survey at the beginning of the day (UTC)."
             childBorder={true}>

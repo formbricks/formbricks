@@ -73,7 +73,7 @@ const SummaryHeader = ({
         {!isViewer &&
         (environment?.widgetSetupCompleted || survey.type === "link") &&
         survey?.status !== "draft" ? (
-          <SurveyStatusDropdown environment={environment} survey={survey} />
+          <SurveyStatusDropdown environment={environment} survey={survey} disabled={true} />
         ) : null}
         {survey.type === "link" && (
           <Button
@@ -119,6 +119,7 @@ const SummaryHeader = ({
                         <SurveyStatusIndicator status={survey.status} />
                       )}
                       <span className="ml-1 text-sm text-slate-700">
+                        {survey.status === "scheduled" && "Scheduled"}
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
                         {survey.status === "completed" && "Completed"}

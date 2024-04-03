@@ -2623,6 +2623,7 @@ export const minimalSurvey: TSurvey = {
   delay: 0, // No delay
   displayPercentage: null,
   autoComplete: null,
+  runOnDate: null,
   closeOnDate: null,
   surveyClosedMessage: {
     enabled: false,
