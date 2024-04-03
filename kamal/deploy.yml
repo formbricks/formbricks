@@ -133,16 +133,26 @@ traefik:
     entryPoints.web.http.redirections.entryPoint.to: websecure
     entryPoints.web.http.redirections.entryPoint.scheme: https
     entryPoints.web.http.redirections.entrypoint.permanent: true
-    # entrypoints.websecure.http.tls: true
-    # entrypoints.websecure.http.tls.domains[0].main: "shubham.formbricks.com"
-    # entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
-    certificatesResolvers.letsencrypt.acme.email: "hola@formbricks.com"
-    certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
-    # certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
-  # env:
-  #   secret:
-  #     - CLOUDFLARE_DNS_API_TOKEN
-  #     - CLOUDFLARE_EMAIL
+    certificatesResolvers.letsencrypt.acme.email: "shubham@formbricks.com"
+    certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json" # Must match the path in `volume`
+    certificatesResolvers.letsencrypt.acme.httpchallenge: true
+    certificatesResolvers.letsencrypt.acme.httpchallenge.entrypoint: web
+
+  #   entryPoints.web.address: ":80"
+  #   entryPoints.websecure.address: ":443"
+  #   entryPoints.web.http.redirections.entryPoint.to: websecure
+  #   entryPoints.web.http.redirections.entryPoint.scheme: https
+  #   entryPoints.web.http.redirections.entrypoint.permanent: true
+  #   # entrypoints.websecure.http.tls: true
+  #   # entrypoints.websecure.http.tls.domains[0].main: "shubham.formbricks.com"
+  #   # entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
+  #   certificatesResolvers.letsencrypt.acme.email: "hola@formbricks.com"
+  #   certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
+  #   # certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
+  # # env:
+  # #   secret:
+  # #     - CLOUDFLARE_DNS_API_TOKEN
+  # #     - CLOUDFLARE_EMAIL
 
 # Use accessory services (secrets come from .env).
 accessories:

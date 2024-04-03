@@ -3,10 +3,10 @@ name: Kamal Deploy
 #   group: deploy-to-kamal
   # cancel-in-progress: false
 
-on:
-  push:
-    branches:
-      - feature/pg-bouncer
+# on:
+  # push:
+    # branches:
+    #   - feature/pg-bouncer
 
 jobs:
   Deploy:

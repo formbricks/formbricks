@@ -5,6 +5,10 @@ concurrency:
 
 on:
   workflow_dispatch: # Only to be triggered when accessories are updated
+  push:
+    branches:
+      - feature/pg-bouncer
+
 
 jobs:
   Setup:
