@@ -1,7 +1,7 @@
 name: Kamal Deploy
-concurrency:
-  group: deploy-to-kamal
-  cancel-in-progress: false
+# concurrency:
+#   group: deploy-to-kamal
+  # cancel-in-progress: false
 
 on:
   push:
