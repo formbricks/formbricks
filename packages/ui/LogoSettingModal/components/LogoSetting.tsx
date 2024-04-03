@@ -51,7 +51,9 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   const [replacedLogo, setReplacedLogo] = useState<string>(imageUrl);
   const [isEdit, setIsEdit] = useState(imageUploadFromRegularFileUpload);
   const replaceLogoRef = useRef<HTMLInputElement>(null);
-  const addBackgroundColor = product?.brand?.bgColor.length > 1 ? true : false;
+  const [addBackgroundColor, setAddBackgroundColor] = useState(
+    product?.brand?.bgColor.length > 1 ? true : false
+  );
   const onchangeImageHandler = async (e: LogoChangeEvent) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -121,6 +123,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
         });
       setBackgroundColor("#ffffff");
     }
+    setAddBackgroundColor(checked);
   };
 
   return (
