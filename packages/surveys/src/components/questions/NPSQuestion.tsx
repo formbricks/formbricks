@@ -112,7 +112,7 @@ export const NPSQuestion = ({
               );
             })}
           </div>
-          <div className="text-info-text flex justify-between px-1.5 text-xs leading-6">
+          <div className="text-subheading mt-2 flex justify-between px-1.5 text-xs leading-6">
             <p>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
             <p>{getLocalizedValue(question.upperLabel, languageCode)}</p>
           </div>
