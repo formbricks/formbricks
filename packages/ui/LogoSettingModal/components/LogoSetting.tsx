@@ -7,13 +7,11 @@ import toast from "react-hot-toast";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 
 import { handleFileUpload } from "../../../../apps/web/app/(app)/environments/[environmentId]/settings/profile/lib";
+import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
 import { Button } from "../../Button";
+import { ColorPicker } from "../../ColorPicker";
 import FileInput from "../../FileInput";
 import { Input } from "../../Input";
-import { Label } from "../../Label";
-import LoadingSpinner from "../../LoadingSpinner";
-import { ColorSelectorWithLabel } from "../../Styling";
-import { Switch } from "../../Switch";
 import { updateProductAction } from "../actions";
 
 interface LogoChangeEvent extends React.ChangeEvent<HTMLInputElement> {
@@ -117,105 +115,80 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   };
 
   return (
-    <>
-      <div className="relative">
-        {!isEdit && fromLookAndFeelSetting && <div className="absolute z-30 h-full w-full"></div>}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <LoadingSpinner />
+    <div className="space-y-8">
+      <div className="space-y-3">
+        <div className="text-sm font-semibold text-slate-700">Preview</div>
+        {!isStandardFileUploadOpen ? (
+          <div>
+            <Image
+              src={`${replacedLogo ? replacedLogo : imageUrl}`}
+              alt="logo"
+              style={{ backgroundColor: backgroundColor }}
+              className="h-20 w-auto max-w-64 rounded-lg border object-contain p-1 "
+              width={256}
+              height={56}
+            />
+          </div>
+        ) : (
+          <FileInput
+            id="Companylogo-input"
+            allowedFileExtensions={["png", "jpeg", "jpg"]}
+            environmentId={environmentId}
+            onFileUpload={(url: string[] | undefined) => {
+              if (url && url.length > 0) {
+                setReplacedLogo(url[0]);
+                setIsStandardFileUploadOpen(false);
+              }
+            }}
+          />
+        )}
+        {!isStandardFileUploadOpen && (
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (replaceLogoRef.current) {
+                  replaceLogoRef.current.click();
+                }
+              }}
+              disabled={isLoading || !isEdit}>
+              Replace logo
+            </Button>
+            <Input
+              ref={replaceLogoRef}
+              className="hidden"
+              type="file"
+              accept="image/*"
+              onChange={(e) => onchangeImageHandler(e)}
+            />
+            <Button
+              variant="minimal"
+              onClick={() => {
+                setIsStandardFileUploadOpen(true);
+                setReplacedLogo("");
+              }}
+              disabled={!isEdit}>
+              Remove logo
+            </Button>
           </div>
         )}
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col gap-3">
-            <div className="text-sm font-semibold text-slate-700">Preview</div>
-            {!isStandardFileUploadOpen ? (
-              <div>
-                <Image
-                  src={`${replacedLogo ? replacedLogo : imageUrl}`}
-                  alt="logo"
-                  style={{ backgroundColor: backgroundColor }}
-                  className="h-20 w-auto max-w-64 rounded-lg border object-contain p-1 "
-                  width={256}
-                  height={56}
-                />
-              </div>
-            ) : (
-              <FileInput
-                id="Companylogo-input"
-                allowedFileExtensions={["png", "jpeg", "jpg"]}
-                environmentId={environmentId}
-                onFileUpload={(url: string[] | undefined) => {
-                  if (url && url.length > 0) {
-                    setReplacedLogo(url[0]);
-                    setIsStandardFileUploadOpen(false);
-                  }
-                }}
-              />
-            )}
-
-            <div className="flex gap-4">
-              {(isEdit || !fromLookAndFeelSetting) && (
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      if (replaceLogoRef.current) {
-                        replaceLogoRef.current.click();
-                      }
-                    }}
-                    disabled={isLoading}>
-                    Replace logo
-                  </Button>
-                  <Input
-                    ref={replaceLogoRef}
-                    className="hidden"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => onchangeImageHandler(e)}
-                  />
-                </>
-              )}
-
-              {(isEdit || !fromLookAndFeelSetting) && (
-                <Button
-                  variant="minimal"
-                  onClick={() => {
-                    setIsStandardFileUploadOpen(true);
-                    setReplacedLogo("");
-                  }}>
-                  Remove logo
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-1">
-            <Switch
-              id="addBackgroundColor"
-              checked={addBackgroundColor}
-              onCheckedChange={(checked) => toggleaddBackgroundColor(checked)}
-            />
-            <Label htmlFor="addBackgroundColor" className="cursor-pointer">
-              <div className="ml-2">
-                <h3 className="text-sm font-semibold text-slate-700">Add background color</h3>
-                <p className="text-xs font-normal text-slate-500">
-                  Add a background color to the logo container.
-                </p>
-              </div>
-            </Label>
-          </div>
-
-          {addBackgroundColor && (
-            <ColorSelectorWithLabel
-              label="Background color"
-              color={backgroundColor}
-              setColor={setBackgroundColor}
-              description="Change the background color of the logo container."
-            />
-          )}
-        </div>
       </div>
-      <div className={`mt-3 flex gap-3 ${!fromLookAndFeelSetting && "justify-end"}`}>
+
+      <AdvancedOptionToggle
+        isChecked={addBackgroundColor}
+        onToggle={(checked) => toggleaddBackgroundColor(checked)}
+        htmlId="addBackgroundColor"
+        title="Add background color"
+        description="Add a background color to the logo container."
+        childBorder
+        customContainerClass="p-0"
+        disabled={!isEdit}>
+        <div className="px-2">
+          <ColorPicker color={backgroundColor} onChange={setBackgroundColor} disabled={!isEdit} />
+        </div>
+      </AdvancedOptionToggle>
+
+      <div className="flex gap-2">
         {(isEdit || !fromLookAndFeelSetting) && (
           <Button
             variant="minimal"
@@ -241,6 +214,6 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
           {!fromLookAndFeelSetting || isEdit ? "Save" : "Edit"}
         </Button>
       </div>
-    </>
+    </div>
   );
 };
