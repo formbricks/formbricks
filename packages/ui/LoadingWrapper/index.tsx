@@ -4,7 +4,7 @@ import { ErrorComponent } from "../ErrorComponent";
 import LoadingSpinner from "../LoadingSpinner";
 
 type AccessWrapperProps = {
-  isLoading: boolean;
+  isLoading?: boolean;
   children: ReactNode;
   error: string;
 };

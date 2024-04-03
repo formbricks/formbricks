@@ -46,7 +46,7 @@ export default function ActionClassesTable({
 
   return (
     <>
-      <LoadingWrapper isLoading={false} error={error}>
+      <LoadingWrapper error={error}>
         {!isViewer && (
           <div className="mb-6 text-right">
             <Button
