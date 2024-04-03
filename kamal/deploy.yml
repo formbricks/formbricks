@@ -30,7 +30,6 @@ env:
   # clear:
   #   DB_HOST: 192.168.0.2
   clear:
-    DATABASE_URL: postgres://default:password@formbricks-kamal-db:5432/default
     REDIS_CLIENT_URL: redis://default:password@formbricks-kamal-redis:6379
   secret:
     - IS_FORMBRICKS_CLOUD
