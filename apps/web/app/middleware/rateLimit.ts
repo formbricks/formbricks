@@ -31,6 +31,8 @@ const redisRateLimiter = (options: Options) => {
       data: { rateLimitExceeded },
     } = await tokenCountResponse.json();
     if (!tokenCountResponse.ok || rateLimitExceeded) {
+      console.log("inside redis limiter", await tokenCountResponse.json());
+
       throw new Error("Rate limit exceeded for IP: " + token);
     }
   };
