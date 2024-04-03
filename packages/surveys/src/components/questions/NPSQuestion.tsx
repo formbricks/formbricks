@@ -13,7 +13,7 @@ import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
-  value: number;
+  value?: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -49,7 +49,7 @@ export const NPSQuestion = ({
         e.preventDefault();
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value }, updatedTtcObj);
+        onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}>
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline

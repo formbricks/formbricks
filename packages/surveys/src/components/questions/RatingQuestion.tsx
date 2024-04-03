@@ -26,7 +26,7 @@ import Subheader from "../general/Subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
-  value: number;
+  value?: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -93,7 +93,7 @@ export const RatingQuestion = ({
         e.preventDefault();
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value }, updatedTtcObj);
+        onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
