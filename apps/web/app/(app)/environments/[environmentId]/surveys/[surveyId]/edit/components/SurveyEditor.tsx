@@ -58,7 +58,7 @@ export default function SurveyEditor({
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProduct, setLocalProduct] = useState<TProduct>(product);
-  const [isImageAddedFromAddLogoButton, setIsImageAddedFromAddLogoButton] = useState(false);
+  const [isImageAddedFromLogoPreview, setIsImageAddedFromLogoPreview] = useState(false);
 
   const [styling, setStyling] = useState(localSurvey?.styling);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
@@ -175,8 +175,8 @@ export default function SurveyEditor({
           responseCount={responseCount}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
-          isImageAddedFromAddLogoButton={isImageAddedFromAddLogoButton}
-          setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
+          isImageAddedFromLogoPreview={isImageAddedFromLogoPreview}
+          setIsImageAddedFromLogoPreview={setIsImageAddedFromLogoPreview}
         />
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none" ref={surveyEditorRef}>
@@ -244,7 +244,7 @@ export default function SurveyEditor({
               languageCode={selectedLanguageCode}
               onFileUpload={async (file) => file.name}
               membershipRole={membershipRole}
-              setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
+              setIsImageAddedFromLogoPreview={setIsImageAddedFromLogoPreview}
             />
           </aside>
         </div>

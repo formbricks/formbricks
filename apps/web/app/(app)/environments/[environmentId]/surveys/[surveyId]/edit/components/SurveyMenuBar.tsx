@@ -43,8 +43,8 @@ interface SurveyMenuBarProps {
   responseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
-  isImageAddedFromAddLogoButton: boolean;
-  setIsImageAddedFromAddLogoButton: React.Dispatch<React.SetStateAction<boolean>>;
+  isImageAddedFromLogoPreview: boolean;
+  setIsImageAddedFromLogoPreview: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function SurveyMenuBar({
@@ -59,8 +59,8 @@ export default function SurveyMenuBar({
   responseCount,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  isImageAddedFromAddLogoButton,
-  setIsImageAddedFromAddLogoButton,
+  isImageAddedFromLogoPreview,
+  setIsImageAddedFromLogoPreview,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -355,12 +355,12 @@ export default function SurveyMenuBar({
     try {
       await updateSurveyAction({ ...strippedSurvey });
 
-      if (isImageAddedFromAddLogoButton) {
+      if (isImageAddedFromLogoPreview) {
         let inputProduct: Partial<TProductUpdateInput> = {
           brand: { logoUrl: product.brand?.logoUrl, bgColor: product.brand?.bgColor },
         };
         await updateProductAction(product.id, inputProduct);
-        setIsImageAddedFromAddLogoButton(false);
+        setIsImageAddedFromLogoPreview(false);
       }
       setIsSurveySaving(false);
       toast.success("Changes saved.");
@@ -382,12 +382,12 @@ export default function SurveyMenuBar({
         setIsSurveyPublishing(false);
         return;
       }
-      if (isImageAddedFromAddLogoButton) {
+      if (isImageAddedFromLogoPreview) {
         let inputProduct: Partial<TProductUpdateInput> = {
           brand: { logoUrl: product.brand?.logoUrl, bgColor: product.brand?.bgColor },
         };
         await updateProductAction(product.id, inputProduct);
-        setIsImageAddedFromAddLogoButton(false);
+        setIsImageAddedFromLogoPreview(false);
       }
       await updateSurveyAction({ ...localSurvey, status: "inProgress" });
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);

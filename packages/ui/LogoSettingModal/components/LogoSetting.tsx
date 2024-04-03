@@ -27,7 +27,7 @@ interface LogoSettingProps {
   imageUploadFromRegularFileUpload?: boolean;
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
   setImageUrlFromLogoButton?: React.Dispatch<React.SetStateAction<string>>;
-  setIsImageAddedFromAddLogoButton?: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsImageAddedFromLogoPreview?: React.Dispatch<React.SetStateAction<boolean>>;
   fromEditLogo?: boolean;
 }
 export const LogoSetting: React.FC<LogoSettingProps> = ({
@@ -40,7 +40,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   imageUploadFromRegularFileUpload,
   setLocalProduct,
   setImageUrlFromLogoButton,
-  setIsImageAddedFromAddLogoButton,
+  setIsImageAddedFromLogoPreview,
   fromEditLogo,
 }) => {
   const [backgroundColor, setBackgroundColor] = useState(product?.brand?.bgColor);
@@ -91,7 +91,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
           ...product,
           brand: { logoUrl: replacedLogo, bgColor: backgroundColor },
         });
-      setIsImageAddedFromAddLogoButton && setIsImageAddedFromAddLogoButton(true);
+      setIsImageAddedFromLogoPreview && setIsImageAddedFromLogoPreview(true);
       setImage && setImage(replacedLogo);
 
       setImageUrlFromLogoButton && setImageUrlFromLogoButton(replacedLogo);

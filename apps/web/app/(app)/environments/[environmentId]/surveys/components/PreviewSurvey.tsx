@@ -13,8 +13,8 @@ import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
-import { AddLogoButton } from "@formbricks/ui/AddLogoButton";
 import { Button } from "@formbricks/ui/Button";
+import { LogoPreview } from "@formbricks/ui/LogoPreview";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -30,7 +30,7 @@ interface PreviewSurveyProps {
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
   membershipRole?: TMembershipRole;
   setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
-  setIsImageAddedFromAddLogoButton?: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsImageAddedFromLogoPreview?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 let surveyNameTemp;
@@ -73,7 +73,7 @@ export default function PreviewSurvey({
   onFileUpload,
   membershipRole,
   setLocalProduct,
-  setIsImageAddedFromAddLogoButton,
+  setIsImageAddedFromLogoPreview,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -249,18 +249,9 @@ export default function PreviewSurvey({
               ) : (
                 <div className="w-full px-3">
                   <div className="absolute left-5 top-5">
-                    <AddLogoButton
-                      environmentId={environment.id}
-                      product={product}
-                      type="mobile"
-                      membershipRole={membershipRole}
-                      setLocalProduct={setLocalProduct}
-                      survey={survey}
-                      setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
-                    />
+                    <LogoPreview environmentId={environment.id} product={product} survey={survey} />
                   </div>
-                  <div
-                    className={`${!styling.hideLogo ? "mt-28" : ""} no-scrollbar z-10  w-full max-w-md overflow-y-auto rounded-lg border border-transparent`}>
+                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
                       activeQuestionId={activeQuestionId || undefined}
@@ -337,18 +328,9 @@ export default function PreviewSurvey({
             ) : (
               <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
                 <div className="absolute left-5 top-5">
-                  <AddLogoButton
-                    environmentId={environment.id}
-                    product={product}
-                    membershipRole={membershipRole}
-                    setLocalProduct={setLocalProduct}
-                    survey={survey}
-                    setIsImageAddedFromAddLogoButton={setIsImageAddedFromAddLogoButton}
-                  />
+                  <LogoPreview environmentId={environment.id} product={product} survey={survey} />
                 </div>
-
-                <div
-                  className={`${!styling.hideLogo ? "mt-16" : ""} rounded-lgborder-transparent  z-0 w-full max-w-md`}>
+                <div className="z-0 w-full max-w-md rounded-lg border-transparent">
                   <SurveyInline
                     survey={survey}
                     activeQuestionId={activeQuestionId || undefined}
