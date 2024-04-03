@@ -77,6 +77,7 @@ jobs:
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_NAME: ${{ secrets.DB_NAME }}
 
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
