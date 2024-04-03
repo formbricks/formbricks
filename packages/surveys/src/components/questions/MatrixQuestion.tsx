@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { JSX } from "preact";
@@ -37,6 +37,7 @@ export const MatrixQuestion = ({
   setTtc,
 }: MatrixQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
   const isSubmitButtonVisible = question.required ? Object.entries(value).length !== 0 : true;
 
@@ -90,7 +91,7 @@ export const MatrixQuestion = ({
 
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
