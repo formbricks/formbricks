@@ -190,17 +190,11 @@ export const FileInput: React.FC<FileInputProps> = ({
       // Temporarily store the current video URL before switching tabs.
       setVideoUrlTemp(videoUrl ?? "");
 
-      // Clear any video file that was previously uploaded.
-      onFileUpload([], "video");
-
       // Re-upload the image using the temporary image URL.
       onFileUpload([imageUrlTemp], "image");
     } else if (activeTab === "video") {
       // Temporarily store the current image URL before switching tabs.
       setImageUrlTemp(fileUrl ?? "");
-
-      // Clear any image file that was previously uploaded.
-      onFileUpload([], "image");
 
       // Re-upload the video using the temporary video URL.
       onFileUpload([videoUrlTemp], "video");

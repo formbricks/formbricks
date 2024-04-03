@@ -111,7 +111,7 @@ export const QuestionFormInput = ({
   const [text, setText] = useState(getElementTextBasedOnType());
   const [renderedText, setRenderedText] = useState<JSX.Element[]>();
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
-    determineImageUploaderVisibility(questionId, localSurvey)
+    determineImageUploaderVisibility(questionIdx, localSurvey)
   );
   const [showQuestionSelect, setShowQuestionSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
@@ -369,7 +369,10 @@ export const QuestionFormInput = ({
               environmentId={localSurvey.environmentId}
               onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
                 if (url) {
-                  const update = fileType === "video" ? { videoUrl: url[0] } : { imageUrl: url[0] };
+                  const update =
+                    fileType === "video"
+                      ? { videoUrl: url[0], imageUrl: "" }
+                      : { imageUrl: url[0], videoUrl: "" };
                   if (isThankYouCard && updateSurvey) {
                     updateSurvey(update);
                   } else if (updateQuestion) {
@@ -448,7 +451,7 @@ export const QuestionFormInput = ({
                 />
               )}
             </div>
-            {id === "headline" && (
+            {id === "headline" && !isWelcomeCard && (
               <ImagePlusIcon
                 aria-label="Toggle image uploader"
                 className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"

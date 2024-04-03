@@ -36,15 +36,16 @@ export const getCardText = (
   return (card[id as keyof typeof card] as TI18nString) || createI18nString("", surveyLanguageCodes);
 };
 
-export const determineImageUploaderVisibility = (questionId: string, localSurvey: TSurvey) => {
-  switch (questionId) {
-    case "end": // Thank You Card
+export const determineImageUploaderVisibility = (questionIdx: number, localSurvey: TSurvey) => {
+  switch (questionIdx) {
+    case localSurvey.questions.length: // Thank You Card
+      console.log(!!localSurvey.thankYouCard.imageUrl || !!localSurvey.thankYouCard.videoUrl);
       return !!localSurvey.thankYouCard.imageUrl || !!localSurvey.thankYouCard.videoUrl;
-    case "start": // Welcome Card
+    case -1: // Welcome Card
       return !!localSurvey.welcomeCard.fileUrl || !!localSurvey.welcomeCard.videoUrl;
     default:
       // Regular Survey Question
-      const question = localSurvey.questions.find((q) => q.id === questionId);
+      const question = localSurvey.questions[questionIdx];
       return (!!question && !!question.imageUrl) || (!!question && !!question.videoUrl);
   }
 };

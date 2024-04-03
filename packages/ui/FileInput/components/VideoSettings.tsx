@@ -46,6 +46,9 @@ export const VideoSettings = ({
       : `https://www.youtube-nocookie.com/embed/${videoId}`;
 
     setUploadedVideoUrl(newUrl);
+    if (videoUrl) {
+      onFileUpload([newUrl], "video");
+    }
   };
 
   const handleAddVideo = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
