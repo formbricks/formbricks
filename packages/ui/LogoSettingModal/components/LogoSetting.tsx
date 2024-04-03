@@ -45,14 +45,13 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
   setIsImageAddedFromAddLogoButton,
   fromEditLogo,
 }) => {
-  const [backgroundColor, setBackgroundColor] = useState(product?.brand?.bgColor || "#ffffff");
+  const [backgroundColor, setBackgroundColor] = useState(product?.brand?.bgColor);
   const [isLoading, setIsLoading] = useState(false);
   const [isStandardFileUploadOpen, setIsStandardFileUploadOpen] = useState(false);
   const [replacedLogo, setReplacedLogo] = useState<string>(imageUrl);
   const [isEdit, setIsEdit] = useState(imageUploadFromRegularFileUpload);
   const replaceLogoRef = useRef<HTMLInputElement>(null);
-  const [addBackgroundColor, setAddBackgroundColor] = useState(product?.brand?.bgColor ? true : false);
-
+  const addBackgroundColor = product?.brand?.bgColor.length > 1 ? true : false;
   const onchangeImageHandler = async (e: LogoChangeEvent) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -108,12 +107,20 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
 
   const toggleaddBackgroundColor = (checked: boolean) => {
     if (!checked) {
+      setLocalProduct &&
+        setLocalProduct({
+          ...product,
+          brand: { logoUrl: replacedLogo, bgColor: "" },
+        });
       setBackgroundColor("");
     } else {
-      setBackgroundColor(product?.brand?.bgColor);
+      setLocalProduct &&
+        setLocalProduct({
+          ...product,
+          brand: { logoUrl: replacedLogo, bgColor: "#ffffff" },
+        });
+      setBackgroundColor("#ffffff");
     }
-
-    setAddBackgroundColor(checked);
   };
 
   return (
@@ -129,18 +136,20 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
           <div className="flex flex-col gap-3">
             <div className="text-sm font-semibold text-slate-700">Preview</div>
             {!isStandardFileUploadOpen ? (
-              <Image
-                src={`${replacedLogo ? replacedLogo : imageUrl}`}
-                alt="logo"
-                style={{ backgroundColor: backgroundColor }}
-                className="h-20 w-auto max-w-64 rounded-lg border object-contain p-1 "
-                width={256}
-                height={56}
-              />
+              <div>
+                <Image
+                  src={`${replacedLogo ? replacedLogo : imageUrl}`}
+                  alt="logo"
+                  style={{ backgroundColor: backgroundColor }}
+                  className="h-20 w-auto max-w-64 rounded-lg border object-contain p-1 "
+                  width={256}
+                  height={56}
+                />
+              </div>
             ) : (
               <FileInput
                 id="Companylogo-input"
-                allowedFileExtensions={["png", "jpeg"]}
+                allowedFileExtensions={["png", "jpeg", "jpg"]}
                 environmentId={environmentId}
                 onFileUpload={(url: string[] | undefined) => {
                   if (url && url.length > 0) {
@@ -168,7 +177,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
                     ref={replaceLogoRef}
                     className="hidden"
                     type="file"
-                    accept="image/jpeg,image/png"
+                    accept="image/*"
                     onChange={(e) => onchangeImageHandler(e)}
                   />
                 </>
@@ -193,7 +202,7 @@ export const LogoSetting: React.FC<LogoSettingProps> = ({
               checked={addBackgroundColor}
               onCheckedChange={(checked) => toggleaddBackgroundColor(checked)}
             />
-            <Label htmlFor="hideProgressBar" className="cursor-pointer">
+            <Label htmlFor="addBackgroundColor" className="cursor-pointer">
               <div className="ml-2">
                 <h3 className="text-sm font-semibold text-slate-700">Add background color</h3>
                 <p className="text-xs font-normal text-slate-500">

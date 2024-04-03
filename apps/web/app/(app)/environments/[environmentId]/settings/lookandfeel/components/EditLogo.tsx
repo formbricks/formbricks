@@ -29,7 +29,7 @@ export function EditLogo({ product, environmentId, isLogoEditDisabled }: EditBra
             <div className="mt-3 w-full ">
               <FileInput
                 id="Companylogo-input"
-                allowedFileExtensions={["png", "jpeg"]}
+                allowedFileExtensions={["png", "jpeg", "jpg"]}
                 environmentId={environmentId}
                 onFileUpload={(url: string[]) => {
                   setImage(url[0]);

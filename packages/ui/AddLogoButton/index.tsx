@@ -107,7 +107,7 @@ export const AddLogoButton: React.FC<AddLogoButtonProps> = ({
                 id="addCompanyLogo"
                 className="hidden"
                 type="file"
-                accept="image/jpeg,image/png"
+                accept="image/*"
                 onChange={(e) => onchangeImageHandler(e)}
               />
             </Label>
