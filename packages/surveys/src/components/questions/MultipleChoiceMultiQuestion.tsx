@@ -13,7 +13,7 @@ import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surve
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
-  value: string | number | string[];
+  value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -25,7 +25,7 @@ interface MultipleChoiceMultiProps {
   isInIframe: boolean;
 }
 
-export default function MultipleChoiceMultiQuestion({
+export const MultipleChoiceMultiQuestion = ({
   question,
   value,
   onChange,
@@ -37,7 +37,7 @@ export default function MultipleChoiceMultiQuestion({
   ttc,
   setTtc,
   isInIframe,
-}: MultipleChoiceMultiProps) {
+}: MultipleChoiceMultiProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
@@ -200,7 +200,7 @@ export default function MultipleChoiceMultiQuestion({
               <label
                 tabIndex={questionChoices.length + 1}
                 className={cn(
-                  value === getLocalizedValue(otherOption.label, languageCode)
+                  value.includes(getLocalizedValue(otherOption.label, languageCode))
                     ? "border-border bg-input-selected-bg z-10"
                     : "border-border",
                   "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
@@ -282,4 +282,4 @@ export default function MultipleChoiceMultiQuestion({
       </div>
     </form>
   );
-}
+};

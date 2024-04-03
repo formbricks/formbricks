@@ -311,3 +311,9 @@ export const translateSurvey = (
     thankYouCard: translatedThankYouCard,
   };
 };
+
+export const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: string | null) => {
+  if (!surveyLanguages?.length || !languageCode) return "default";
+  const language = surveyLanguages.find((surveyLanguage) => surveyLanguage.language.code === languageCode);
+  return language?.default ? "default" : language?.language.code || "default";
+};

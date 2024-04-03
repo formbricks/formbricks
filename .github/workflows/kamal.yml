@@ -71,6 +71,7 @@ jobs:
       S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
       OPENTELEMETRY_LISTENER_URL: ${{ vars.OPENTELEMETRY_LISTENER_URL }}
       RATE_LIMITING_DISABLED: ${{ vars.RATE_LIMITING_DISABLED }}
+      REDIS_CLIENT_URL: ${{ vars.REDIS_CLIENT_URL }}
       KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
 
     steps:
@@ -108,7 +109,7 @@ jobs:
         run: |
           kamal() { command kamal "$@" -c kamal/deploy.yml; }
           set +e
-          DEPLOY_OUTPUT=$(kamal setup 2>&1)
+          DEPLOY_OUTPUT=$(kamal deploy 2>&1)
           DEPLOY_EXIT_CODE=$?
           echo "$DEPLOY_OUTPUT"
           if [[ "$DEPLOY_OUTPUT" == *"container not unhealthy (healthy)"* ]]; then

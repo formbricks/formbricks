@@ -15,7 +15,7 @@ import Subheader from "../general/Subheader";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;
-  value: string | number | string[];
+  value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -29,7 +29,7 @@ interface FileUploadQuestionProps {
   isInIframe: boolean;
 }
 
-export default function FileUploadQuestion({
+export const FileUploadQuestion = ({
   question,
   value,
   onChange,
@@ -42,7 +42,7 @@ export default function FileUploadQuestion({
   languageCode,
   ttc,
   setTtc,
-}: FileUploadQuestionProps) {
+}: FileUploadQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
@@ -56,14 +56,14 @@ export default function FileUploadQuestion({
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
         if (question.required) {
-          if (value && (typeof value === "string" || Array.isArray(value)) && value.length > 0) {
-            onSubmit({ [question.id]: typeof value === "string" ? [value] : value }, updatedTtcObj);
+          if (value && value.length > 0) {
+            onSubmit({ [question.id]: value }, updatedTtcObj);
           } else {
             alert("Please upload a file");
           }
         } else {
           if (value) {
-            onSubmit({ [question.id]: typeof value === "string" ? [value] : value }, updatedTtcObj);
+            onSubmit({ [question.id]: value }, updatedTtcObj);
           } else {
             onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
           }
@@ -114,4 +114,4 @@ export default function FileUploadQuestion({
       </div>
     </form>
   );
-}
+};
