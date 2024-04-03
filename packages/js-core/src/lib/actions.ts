@@ -83,7 +83,7 @@ export const trackAction = async (name: string): Promise<Result<void, NetworkErr
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
         if (trigger === name) {
-          await triggerSurvey(survey);
+          await triggerSurvey(survey, name);
         }
       }
     }
