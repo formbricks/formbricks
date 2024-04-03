@@ -29,11 +29,13 @@ registry:
 env:
   # clear:
   #   DB_HOST: 192.168.0.2
+  clear:
+    DATABASE_URL: postgres://default:password@formbricks-kamal-db:5432/default
+    REDIS_URL: redis://default:password@formbricks-kamal-redis:6379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
     - NEXTAUTH_URL
-    - DATABASE_URL
     - NEXTAUTH_SECRET
     - ENCRYPTION_KEY
     - SHORT_URL_BASE
@@ -172,7 +174,10 @@ accessories:
         MAX_CLIENT_CONN: "200"
         DEFAULT_POOL_SIZE: "50"
       secret:
-        - DATABASE_URL
+        - DB_USER
+        - DB_PASSWORD
+        - DB_HOST
+        - DB_NAME
 
 # Configure custom arguments for Traefik
 # traefik:
