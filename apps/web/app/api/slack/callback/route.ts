@@ -1,67 +1,67 @@
-import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+import { responses } from "@/app/lib/api/response";
+import { NextRequest } from "next/server";
 
-import { authOptions } from "@formbricks/lib/authOptions";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
 import { TIntegrationSlackConfig, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 
 export async function GET(req: NextRequest) {
   const url = req.url;
   const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-  const environmentId = queryParams.get("environment"); // Get the value of the 'state' parameter
+  const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
+  const code = queryParams.get("code");
+  const error = queryParams.get("error");
 
-  const session = await getServerSession(authOptions);
-
-  if (!session || !environmentId) {
-    console.log("there is either no session or environementid");
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
+  if (!environmentId) {
+    return responses.badRequestResponse("Invalid environmentId");
   }
 
-  // @ts-expect-error
-  const { slack } = session;
-
-  if (!slack) {
-    console.log("slack session is not defined");
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
+  if (code && typeof code !== "string") {
+    return responses.badRequestResponse("`code` must be a string");
   }
 
-  const slackCredentials: TIntegrationSlackCredential = {
-    token_type: "Bearer",
-    access_token: slack.accessToken,
-    refresh_token: slack.refreshToken,
-    expiry_date: slack.expiresAt,
-  };
+  const client_id = SLACK_CLIENT_ID;
+  const client_secret = SLACK_CLIENT_SECRET;
 
-  const slackConfiguration: TIntegrationSlackConfig = {
-    data: [],
-    key: slackCredentials,
-    user: {
-      id: slack.id,
-      name: slack.name as string,
-      email: slack.email as string,
-    },
-  };
+  if (!client_id) return responses.internalServerErrorResponse("Slack client id is missing");
+  if (!client_secret) return responses.internalServerErrorResponse("Slack client secret is missing");
 
-  const slackIntegrationObject = {
-    type: "slack" as "slack",
-    environment: environmentId,
-    config: slackConfiguration,
-  };
+  const formData = new FormData();
+  formData.append("code", code ?? "");
+  formData.append("client_id", client_id ?? "");
+  formData.append("client_secret", client_secret ?? "");
 
-  const result = await createOrUpdateIntegration(environmentId, slackIntegrationObject);
+  if (code) {
+    const response = await fetch("https://slack.com/api/oauth.v2.access", {
+      method: "POST",
+      body: formData,
+    });
 
-  if (result) {
-    return NextResponse.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack`);
+    const data = await response.json();
+
+    const slackCredentials: TIntegrationSlackCredential = {
+      token_type: "Bearer",
+      access_token: data.access_token,
+    };
+
+    const slackConfiguration: TIntegrationSlackConfig = {
+      data: [],
+      key: slackCredentials,
+      user: data.team,
+    };
+
+    const slackIntegration = {
+      type: "slack" as "slack",
+      environment: environmentId,
+      config: slackConfiguration,
+    };
+
+    const result = await createOrUpdateIntegration(environmentId, slackIntegration);
+
+    if (result) {
+      return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack`);
+    }
+  } else if (error) {
+    return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack?error=${error}`);
   }
 }

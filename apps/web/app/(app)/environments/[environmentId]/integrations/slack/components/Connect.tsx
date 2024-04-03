@@ -1,11 +1,16 @@
 "use client";
 
-import { SlackButton } from "@/app/(auth)/auth/components/SlackButton";
 import FormbricksLogo from "@/images/logo.svg";
 import SlackLogo from "@/images/slacklogo.png";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
+import { Button } from "@formbricks/ui/Button";
+
+import { authorize } from "../lib/slack";
 
 interface ConnectProps {
   enabled: boolean;
@@ -13,9 +18,27 @@ interface ConnectProps {
   webAppUrl: string;
 }
 
-export default function Connect({ enabled, environmentId }: ConnectProps) {
+export default function Connect({ enabled, environmentId, webAppUrl }: ConnectProps) {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get("callbackUrl");
+
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  useEffect(() => {
+    const error = searchParams?.get("error");
+    if (error) {
+      toast.error("Connecting integration failed. Please try again!");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAuthorizeSlack = async () => {
+    setIsConnecting(true);
+    authorize(environmentId, webAppUrl).then((url: string) => {
+      if (url) {
+        window.location.replace(url);
+      }
+    });
+  };
 
   return (
     <div className="flex h-full w-full items-center justify-center">
@@ -40,7 +63,9 @@ export default function Connect({ enabled, environmentId }: ConnectProps) {
             to configure it.
           </p>
         )}
-        <SlackButton inviteUrl={callbackUrl} environmentId={environmentId} disabled={!enabled} />
+        <Button variant="darkCTA" loading={isConnecting} onClick={handleAuthorizeSlack} disabled={!enabled}>
+          Connect with Slack
+        </Button>
       </div>
     </div>
   );

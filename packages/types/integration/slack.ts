@@ -14,9 +14,7 @@ export type TIntegrationSlackConfigData = z.infer<typeof ZIntegrationSlackConfig
 
 export const ZIntegrationSlackCredential = z.object({
   token_type: z.literal("Bearer"),
-  expiry_date: z.number(),
   access_token: z.string(),
-  refresh_token: z.string(),
 });
 
 export type TIntegrationSlackCredential = z.infer<typeof ZIntegrationSlackCredential>;
@@ -24,7 +22,6 @@ export type TIntegrationSlackCredential = z.infer<typeof ZIntegrationSlackCreden
 export const ZSlackUser = z.object({
   id: z.string().optional(),
   name: z.string(),
-  email: z.string().email("Not a valid email address"),
 });
 
 export const ZIntegrationSlackConfig = z.object({

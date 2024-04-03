@@ -46,7 +46,7 @@ The slack integration allows you to automatically send responses to a Slack chan
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-3. You will now be taken to the Slack OAuth page where you can select the Slack account you want to use for the integration and click on the "Allow" button.
+1. You will now be taken to the Slack OAuth page where you can select the Slack channel you want to link with Formbricks and click on the "Allow" button.
 
 <MdxImage
   src={SlackAuth}
@@ -121,11 +121,19 @@ Enabling the Slack Integration in a self-hosted environment requires a setup usi
 1. Create a Slack workspace if you don't have one already.
 2. Go to the [Your apps](https://api.slack.com/apps) page and **Create New App**.
 3. Click on **From Scratch** and provide the **App Name** and select your workspace in **Pick a workspace to develop your app in:** dropdown. Click on **Create App**.
-4. Go to the **OAuth & Permissions** tab on the sidebar and add the following **Bot Token Scopes**: `chat:write` and `incoming-webhook`. You can add them by clicking on **Add an OAuth Scope**.
+4. Go to the **OAuth & Permissions** tab on the sidebar and add the following **Bot Token Scopes**:
+
+   - `channels:read`
+   - `chat:write`
+   - `chat:write.public`
+   - `chat:write.customize`
+   - `commands`
+   - `incoming-webhook`
+
 5. Add the **Redirect URLs** under **OAuth & Permissions** tab. You can add the following URLs:
 
-   - If you are running formbricks locally, you can enter `https://localhost:3000/api/auth/callback/slack`.
-   - Or, you can enter `https://<your-public-facing-url>/api/auth/callback/slack`
+   - If you are running formbricks locally, you can enter `https://localhost:3000/api/slack/callback`.
+   - Or, you can enter `https://<your-public-facing-url>/api/slack/callback`
 
 6. Now, click on **Install to Workspace** and **Allow** the permissions.
 7. Go to the **Basic Information** tab on the sidebar and copy the **Client ID** and **Client Secret**. Copy them and set them as the environment variables in your Formbricks instance as:

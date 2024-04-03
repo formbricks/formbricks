@@ -1,10 +1,9 @@
 import type { IdentityProvider } from "@prisma/client";
-import { type NextAuthOptions, getServerSession } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import AzureAD from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import SlackProvider from "next-auth/providers/slack";
 
 import { prisma } from "@formbricks/database";
 
@@ -26,8 +25,6 @@ import {
   OIDC_DISPLAY_NAME,
   OIDC_ISSUER,
   OIDC_SIGNING_ALGORITHM,
-  SLACK_CLIENT_ID,
-  SLACK_CLIENT_SECRET,
 } from "./constants";
 import { verifyToken } from "./jwt";
 import { createMembership } from "./membership/service";
@@ -149,63 +146,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: AZUREAD_CLIENT_SECRET || "",
       tenantId: AZUREAD_TENANT_ID || "",
     }),
-    SlackProvider({
-      clientId: SLACK_CLIENT_ID as string,
-      clientSecret: SLACK_CLIENT_SECRET as string,
-      allowDangerousEmailAccountLinking: true,
-      wellKnown: "",
-      token: {
-        async request(context) {
-          const formData = new URLSearchParams();
-          formData.append("code", context.params.code ?? "");
-          formData.append("client_id", context.provider.clientId ?? "");
-          formData.append("client_secret", context.provider.clientSecret ?? "");
-
-          const session = await getServerSession(authOptions);
-
-          try {
-            const response = await fetch("https://slack.com/api/oauth.v2.access", {
-              method: "POST",
-              body: formData,
-            });
-
-            const data = await response.json();
-            return {
-              tokens: {
-                access_token: data.access_token,
-                refresh_token: data.refresh_token,
-                expires_at: data.expires_in,
-                user_id: data.bot_user_id,
-                id: data.team.id,
-                name: data.team.name,
-                email: session?.user?.email,
-              },
-            };
-          } catch (error) {
-            throw error;
-          }
-        },
-      },
-      userinfo: {
-        // @ts-expect-error
-        async request() {
-          const session = await getServerSession(authOptions);
-
-          return {
-            sub: "bot_user",
-            ...session?.user,
-          };
-        },
-      },
-      authorization: {
-        url: "https://slack.com/oauth/v2/authorize",
-        params: {
-          scope:
-            "channels:read,chat:write,chat:write.public,groups:read,mpim:read,im:read,users:read,users.profile:read,users:read.email",
-        },
-      },
-      idToken: false,
-    }),
     {
       id: "openid",
       name: OIDC_DISPLAY_NAME || "OpenId",
@@ -230,53 +170,25 @@ export const authOptions: NextAuthOptions = {
     },
   ],
   callbacks: {
-    async jwt({ token, account }) {
-      let slackAttributes = {};
-      if (account && account.provider && account.provider === "slack") {
-        slackAttributes = {
-          accessToken: account.access_token,
-          refreshToken: account.refresh_token,
-          email: account?.email,
-          name: account?.name,
-          id: account?.id,
-          expiresAt: account.expires_at,
-          provider: account.provider,
-        };
-      }
-      const existingUser = await getUserByEmail(token?.email as string);
+    async jwt({ token }) {
+      const existingUser = await getUserByEmail(token?.email!);
 
       if (!existingUser) {
         return token;
       }
+
       return {
         ...token,
         profile: existingUser || null,
-        slack: (token && token?.slack) ?? slackAttributes,
       };
     },
     async session({ session, token }) {
       // @ts-expect-error
       session.user.id = token?.id;
       // @ts-expect-error
-      session.user = token?.profile;
+      session.user = token.profile;
 
-      return {
-        ...session,
-        slack: {
-          // @ts-expect-error
-          id: token.slack?.id,
-          // @ts-expect-error
-          accessToken: token.slack?.accessToken,
-          // @ts-expect-error
-          refreshToken: token.slack?.refreshToken,
-          // @ts-expect-error
-          expiresAt: token.slack?.expiresAt,
-          // @ts-expect-error
-          email: token.slack?.email,
-          // @ts-expect-error
-          name: token.slack?.name,
-        },
-      };
+      return session;
     },
     async signIn({ user, account }: any) {
       if (account.provider === "credentials" || account.provider === "token") {
@@ -291,9 +203,6 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (account.provider) {
-        if (account.provider === "slack") {
-          return true;
-        }
         const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
         // check if accounts for this provider / account Id already exists
         const existingUserWithAccount = await prisma.user.findFirst({
