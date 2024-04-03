@@ -155,10 +155,10 @@ accessories:
   pgbouncer:
     image: edoburu/pgbouncer:latest
     host: 34.247.22.186
-    port: 6432
+    port: 5432
     env:
       clear:
-        LISTEN_PORT: "6432"
+        LISTEN_PORT: "5432"
         POOL_MODE: "session"
         MAX_CLIENT_CONN: "200"
         DEFAULT_POOL_SIZE: "50"
