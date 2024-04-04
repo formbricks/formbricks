@@ -159,9 +159,29 @@ export default function LinkSurvey({
     return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
   }
 
+  const determineStyling = () => {
+    // allow style overwrite is disabled from the product
+    if (!product.styling.allowStyleOverwrite) {
+      return product.styling;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteThemeStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    return product.styling;
+  };
+
   return (
     <div className="flex h-screen items-center justify-center">
-      {!product.styling.isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
+      {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
       <ContentWrapper className="w-11/12 p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
@@ -180,7 +200,7 @@ export default function LinkSurvey({
 
         <SurveyInline
           survey={survey}
-          styling={product.styling}
+          styling={determineStyling()}
           languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
