@@ -6,8 +6,8 @@ import { TabBar } from "@formbricks/ui/TabBar";
 
 import { AnimatedSurveyBg } from "./AnimatedSurveyBg";
 import { ColorSurveyBg } from "./ColorSurveyBg";
-import { ImageSurveyBg } from "./ImageSurveyBg";
-import { UploadSurveyBg } from "./UploadSurveyBg";
+import { UploadImageSurveyBg } from "./ImageSurveyBg";
+import { ImageFromThirdPartySurveyBg } from "./UploadSurveyBg";
 
 interface SurveyBgSelectorTabProps {
   handleBgChange: (bg: string, bgType: string) => void;
@@ -21,8 +21,8 @@ interface SurveyBgSelectorTabProps {
 const tabs = [
   { id: "color", label: "Color" },
   { id: "animation", label: "Animation" },
-  { id: "image", label: "Upload" },
-  { id: "upload", label: "Image" },
+  { id: "upload", label: "Upload" },
+  { id: "image", label: "Image" },
 ];
 
 export default function SurveyBgSelectorTab({
@@ -38,44 +38,35 @@ export default function SurveyBgSelectorTab({
 
   const [colorBackground, setColorBackground] = useState(background?.bg);
   const [animationBackground, setAnimationBackground] = useState(background?.bg);
-  const [imageBackground, setImageBackground] = useState(background?.bg);
   const [uploadBackground, setUploadBackground] = useState(background?.bg);
-  // const [unsplashApiKey, setIsUnsplashApiPresent] = useState(false);
 
   useEffect(() => {
     const bgType = background?.bgType;
+    console.log("bgType?", bgType);
 
     if (bgType === "color") {
       setColorBackground(background?.bg);
       setAnimationBackground("");
-      setImageBackground("");
       setUploadBackground("");
     }
 
     if (bgType === "animation") {
       setAnimationBackground(background?.bg);
       setColorBackground("");
-      setImageBackground("");
-      setUploadBackground("");
-    }
-
-    if (bgType === "image") {
-      setImageBackground(background?.bg);
-      setColorBackground("");
-      setAnimationBackground("");
       setUploadBackground("");
     }
 
     if (bgType === "upload") {
+      setColorBackground("");
+      setAnimationBackground("");
+      setUploadBackground("");
+    }
+
+    if (bgType === "image") {
       setUploadBackground(background?.bg);
       setColorBackground("");
       setAnimationBackground("");
-      setImageBackground("");
     }
-
-    // checkIsUnsplashApiPresent().then((present) => {
-    //   setIsUnsplashApiPresent(present);
-    // });
   }, [background?.bg, background?.bgType]);
 
   const renderContent = () => {
@@ -86,22 +77,16 @@ export default function SurveyBgSelectorTab({
         );
       case "animation":
         return <AnimatedSurveyBg handleBgChange={handleBgChange} background={animationBackground ?? ""} />;
-      case "image":
-        return (
-          <ImageSurveyBg
-            environmentId={environmentId}
-            handleBgChange={handleBgChange}
-            background={imageBackground ?? ""}
-          />
-        );
       case "upload":
         return (
-          <UploadSurveyBg
+          <UploadImageSurveyBg
             environmentId={environmentId}
             handleBgChange={handleBgChange}
             background={uploadBackground ?? ""}
           />
         );
+      case "image":
+        return <ImageFromThirdPartySurveyBg environmentId={environmentId} handleBgChange={handleBgChange} />;
       default:
         return null;
     }

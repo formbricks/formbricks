@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { UNSPLASH_API_KEY } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { canUserAccessProduct } from "@formbricks/lib/product/auth";
 import { getProduct } from "@formbricks/lib/product/service";
@@ -199,3 +200,22 @@ export const resetBasicSegmentFiltersAction = async (surveyId: string) => {
 
   return await resetSegmentInSurvey(surveyId);
 };
+
+export async function getImagesFromUnsplashAction(searchQuery: string) {
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${searchQuery}&client_id=${UNSPLASH_API_KEY}&orientation=landscape&w=1920&h=1080`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+    if (res.status !== 200) {
+      const json = await res.json();
+      throw Error(json.error);
+    }
+    return await res.json();
+  } catch (error) {
+    throw new Error("Error getting images from Unsplash");
+  }
+}

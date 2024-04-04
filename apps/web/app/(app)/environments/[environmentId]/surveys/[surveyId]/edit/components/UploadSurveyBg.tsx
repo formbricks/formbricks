@@ -1,16 +1,16 @@
-import { getImageBackground } from "@/app/s/[surveyId]/actions";
+import { getImagesFromUnsplashAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { debounce } from "lodash";
-import { Loader, SearchIcon } from "lucide-react";
+import { SearchIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { getAllowedFiles, uploadFile } from "@formbricks/ui/FileInput/lib/fileUpload";
 import { Input } from "@formbricks/ui/Input";
+import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
-interface UploadSurveyBgProps {
+interface ImageFromThirdPartySurveyBgProps {
   handleBgChange: (url: string, bgType: string) => void;
-  background: string;
   environmentId: string;
 }
 
@@ -22,22 +22,26 @@ interface Image {
   };
 }
 
-export const UploadSurveyBg = ({ environmentId, handleBgChange, background }: UploadSurveyBgProps) => {
+export const ImageFromThirdPartySurveyBg = ({
+  environmentId,
+  handleBgChange,
+}: ImageFromThirdPartySurveyBgProps) => {
   const inputFocus = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState(false);
+  const [downloadingFromThirdParty, setDownloadingFromThirdParty] = useState(false);
   const [query, setQuery] = useState("");
   const [images, setImages] = useState<Image[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetchData = async (searchQuery: string) => {
       try {
-        setLoading(true);
-        const data = await getImageBackground(searchQuery);
+        setDownloadingFromThirdParty(true);
+        const data = await getImagesFromUnsplashAction(searchQuery);
         setImages(data.results);
       } catch (error) {
         toast.error(error.message);
       } finally {
-        setLoading(false);
+        setDownloadingFromThirdParty(false);
       }
     };
 
@@ -105,20 +109,23 @@ export const UploadSurveyBg = ({ environmentId, handleBgChange, background }: Up
 
   const handleImageSelected = async (imageUrl: string, imageName: string) => {
     try {
+      setUploading(true);
       const response = await fetch(imageUrl);
       const blob = await response.blob();
 
       const file = [new File([blob], `${imageName}.jpg`, { type: blob.type })];
-      uploadSelectedImage(file);
+      await uploadSelectedImage(file);
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
     <div className="relative mt-2 w-full">
       <div className="relative">
-        <SearchIcon className="absolute left-2 top-1/2 h-6 w-4 -translate-y-[50%] text-gray-400" />
+        <SearchIcon className="absolute left-2 top-1/2 h-6 w-4 -translate-y-1/2 text-slate-500" />
         <Input
           value={query}
           onChange={handleChange}
@@ -128,22 +135,33 @@ export const UploadSurveyBg = ({ environmentId, handleBgChange, background }: Up
         />
       </div>
       <div className="relative mt-4 grid grid-cols-3 gap-1">
-        {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Loader />
+        {downloadingFromThirdParty && (
+          <div className="absolute inset-0 m-1 flex items-center justify-center">
+            <LoadingSpinner />
           </div>
-        ) : (
-          images.map((image) => (
-            <Image
-              key={image.id}
-              width={300}
-              height={200}
-              src={images.length > 0 ? image.urls.regular : background}
-              alt={image.alt_description}
-              onClick={() => handleImageSelected(image.urls?.regular, image.alt_description)}
-              className="cursor-pointer rounded-lg"
-            />
-          ))
+        )}
+        {images.length > 0
+          ? images.map((image) => (
+              <Image
+                key={image.id}
+                width={300}
+                height={200}
+                src={image.urls.regular}
+                alt={image.alt_description}
+                onClick={() => handleImageSelected(image.urls.regular, image.alt_description)}
+                className="cursor-pointer rounded-lg"
+              />
+            ))
+          : !downloadingFromThirdParty &&
+            query.trim() !== "" && (
+              <div className="col-span-3 flex items-center justify-center text-sm text-slate-500">
+                No images found!
+              </div>
+            )}
+        {uploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-300 bg-opacity-60 p-1">
+            <LoadingSpinner />
+          </div>
         )}
       </div>
     </div>
