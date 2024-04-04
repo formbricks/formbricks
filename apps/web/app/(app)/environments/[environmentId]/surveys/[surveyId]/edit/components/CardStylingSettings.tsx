@@ -40,8 +40,7 @@ const CardStylingSettings = ({
 
   const hideLogo = styling?.hideLogo ?? false;
 
-  const shouldDisplayLogo =
-    localProduct.brand?.logoUrl || (!localProduct.brand?.logoUrl && styling?.hideLogo);
+  const isLogoVisible = !hideLogo && !!localProduct.brand?.logoUrl;
 
   const setCardBgColor = (color: string) => {
     setStyling((prev) => ({
@@ -120,7 +119,7 @@ const CardStylingSettings = ({
     });
   };
 
-  const toggleShowLogo = () => {
+  const toggleLogoVisibility = () => {
     setStyling({
       ...styling,
       hideLogo: !hideLogo,
@@ -207,7 +206,7 @@ const CardStylingSettings = ({
               />
               <Label htmlFor="hideProgressBar" className="cursor-pointer">
                 <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
+                  <h3 className="text-sm font-semibold text-slate-700">Hide progress bar</h3>
                   <p className="text-xs font-normal text-slate-500">
                     Disable the visibility of survey progress.
                   </p>
@@ -215,13 +214,13 @@ const CardStylingSettings = ({
               </Label>
             </div>
 
-            {shouldDisplayLogo && (!surveyType || surveyType === "link") && (
+            {isLogoVisible && (!surveyType || surveyType === "link") && (
               <div className="flex items-center space-x-1">
-                <Switch id="hideLogo" checked={hideLogo} onCheckedChange={toggleShowLogo} />
+                <Switch id="hideLogo" checked={hideLogo} onCheckedChange={toggleLogoVisibility} />
                 <Label htmlFor="hideLogo" className="cursor-pointer">
                   <div className="ml-2 flex flex-col">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-slate-700">Hide Logo</h3>
+                      <h3 className="text-sm font-semibold text-slate-700">Hide logo</h3>
                       {hideCheckmark && <Badge text="Link Surveys" type="gray" size="normal" />}
                     </div>
                     <p className="text-xs font-normal text-slate-500">

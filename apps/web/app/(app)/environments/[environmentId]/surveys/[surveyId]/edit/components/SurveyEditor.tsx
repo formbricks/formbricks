@@ -235,12 +235,10 @@ export default function SurveyEditor({
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}
               product={localProduct}
-              setLocalProduct={setLocalProduct}
               environment={environment}
               previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
               languageCode={selectedLanguageCode}
               onFileUpload={async (file) => file.name}
-              membershipRole={membershipRole}
             />
           </aside>
         </div>

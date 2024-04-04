@@ -8,7 +8,6 @@ import { ExpandIcon, MonitorIcon, RefreshCcwIcon, ShrinkIcon, SmartphoneIcon } f
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
 import type { TProduct } from "@formbricks/types/product";
 import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
@@ -28,9 +27,6 @@ interface PreviewSurveyProps {
   environment: TEnvironment;
   languageCode: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
-  membershipRole?: TMembershipRole;
-  setLocalProduct?: React.Dispatch<React.SetStateAction<TProduct>>;
-  setIsImageAddedFromLogoPreview?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 let surveyNameTemp;
