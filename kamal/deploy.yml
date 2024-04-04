@@ -29,6 +29,8 @@ registry:
 env:
   # clear:
   #   DB_HOST: 192.168.0.2
+  # clear:
+  # REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -86,7 +88,10 @@ env:
     - S3_REGION
     - S3_BUCKET_NAME
     - RATE_LIMITING_DISABLED
-    - REDIS_CLIENT_URL
+    - DB_HOST
+    - DB_USER
+    - DB_PASSWORD
+    - DB_NAME
 
 # Use a different ssh user than root
 ssh:
@@ -157,9 +162,25 @@ accessories:
   redis:
     image: redis:7.0
     host: 18.196.187.144
-    port: 6379
+    port: "172.31.40.79:6379:6379"
     directories:
       - data:/data
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    host: 18.196.187.144
+    port: "172.31.40.79:5432:5432"
+    env:
+      clear:
+        LISTEN_PORT: "5432"
+        POOL_MODE: "transaction"
+        MAX_CLIENT_CONN: "200"
+        DEFAULT_POOL_SIZE: "50"
+        AUTH_TYPE: "scram-sha-256"
+      secret:
+        - DB_USER
+        - DB_PASSWORD
+        - DB_HOST
+        - DB_NAME
 
 # Configure custom arguments for Traefik
 # traefik:
