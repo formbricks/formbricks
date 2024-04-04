@@ -52,7 +52,6 @@ export const getCardText = (
 export const determineImageUploaderVisibility = (questionIdx: number, localSurvey: TSurvey) => {
   switch (questionIdx) {
     case localSurvey.questions.length: // Thank You Card
-      console.log(!!localSurvey.thankYouCard.imageUrl || !!localSurvey.thankYouCard.videoUrl);
       return !!localSurvey.thankYouCard.imageUrl || !!localSurvey.thankYouCard.videoUrl;
     case -1: // Welcome Card
       return !!localSurvey.welcomeCard.fileUrl || !!localSurvey.welcomeCard.videoUrl;

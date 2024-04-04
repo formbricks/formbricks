@@ -1,13 +1,56 @@
 export const checkForYoutubeUrl = (url: string): boolean => {
-  return ["youtube.com", "youtu.be", "youtube-nocookie.com"].some((domain) => url.includes(domain));
+  try {
+    const youtubeUrl = new URL(url);
+
+    if (youtubeUrl.protocol !== "https:") return false;
+
+    const youtubeDomains = [
+      "www.youtube.com",
+      "www.youtu.be",
+      "www.youtube-nocookie.com",
+      "youtube.com",
+      "youtu.be",
+      "youtube-nocookie.com",
+    ];
+    const hostname = youtubeUrl.hostname;
+
+    return youtubeDomains.includes(hostname);
+  } catch (err) {
+    // invalid URL
+    return false;
+  }
 };
 
 export const checkForVimeoUrl = (url: string): boolean => {
-  return ["vimeo.com"].some((domain) => url.includes(domain));
+  try {
+    const vimeoUrl = new URL(url);
+
+    if (vimeoUrl.protocol !== "https:") return false;
+
+    const vimeoDomains = ["www.vimeo.com", "vimeo.com"];
+    const hostname = vimeoUrl.hostname;
+
+    return vimeoDomains.includes(hostname);
+  } catch (err) {
+    // invalid URL
+    return false;
+  }
 };
 
 export const checkForLoomUrl = (url: string): boolean => {
-  return ["loom.com"].some((domain) => url.includes(domain));
+  try {
+    const loomUrl = new URL(url);
+
+    if (loomUrl.protocol !== "https:") return false;
+
+    const loomDomains = ["www.loom.com", "loom.com"];
+    const hostname = loomUrl.hostname;
+
+    return loomDomains.includes(hostname);
+  } catch (err) {
+    // invalid URL
+    return false;
+  }
 };
 
 export const extractYoutubeId = (url: string): string | null => {
