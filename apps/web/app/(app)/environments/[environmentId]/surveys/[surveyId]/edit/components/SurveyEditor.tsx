@@ -155,13 +155,6 @@ export default function SurveyEditor({
     }
   }, [localSurvey?.languages, selectedLanguageCode]);
 
-  useEffect(() => {
-    if (typeof localStorage !== undefined) {
-      localStorage.removeItem("onboardingPathway");
-      localStorage.removeItem("onboardingCurrentStep");
-    }
-  }, []);
-
   if (!localSurvey) {
     return <LoadingSkeleton />;
   }
