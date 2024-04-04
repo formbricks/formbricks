@@ -110,7 +110,7 @@ export const MultipleChoiceSingleQuestion = ({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto py-0.5 pr-2"
+            className="bg-survey-bg relative max-h-[27vh] space-y-2 overflow-y-auto py-0.5 pr-2"
             role="radiogroup"
             ref={choicesContainerRef}>
             {questionChoices.map((choice, idx) => (

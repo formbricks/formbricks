@@ -38,9 +38,9 @@ const CardStylingSettings = ({
 }: CardStylingSettingsProps) => {
   const cardBgColor = styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
 
-  const hideLogo = styling?.hideLogo ?? false;
+  const isLogoHidden = styling?.isLogoHidden ?? false;
 
-  const isLogoVisible = !hideLogo && !!localProduct.brand?.logoUrl;
+  const isLogoVisible = !isLogoHidden && !!localProduct.logo?.url;
 
   const setCardBgColor = (color: string) => {
     setStyling((prev) => ({
@@ -122,7 +122,7 @@ const CardStylingSettings = ({
   const toggleLogoVisibility = () => {
     setStyling({
       ...styling,
-      hideLogo: !hideLogo,
+      isLogoHidden: !isLogoHidden,
     });
   };
 
@@ -216,8 +216,8 @@ const CardStylingSettings = ({
 
             {isLogoVisible && (!surveyType || surveyType === "link") && (
               <div className="flex items-center space-x-1">
-                <Switch id="hideLogo" checked={hideLogo} onCheckedChange={toggleLogoVisibility} />
-                <Label htmlFor="hideLogo" className="cursor-pointer">
+                <Switch id="isLogoHidden" checked={isLogoHidden} onCheckedChange={toggleLogoVisibility} />
+                <Label htmlFor="isLogoHidden" className="cursor-pointer">
                   <div className="ml-2 flex flex-col">
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-semibold text-slate-700">Hide logo</h3>

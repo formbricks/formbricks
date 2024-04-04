@@ -339,7 +339,7 @@ export function Survey({
               getCardContent()
             )}
           </div>
-          <div className="mt-8">
+          <div className="mt-4">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>

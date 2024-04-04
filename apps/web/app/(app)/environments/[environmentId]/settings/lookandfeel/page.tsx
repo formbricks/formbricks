@@ -41,7 +41,6 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
   const { isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isLogoEditDisabled = isViewer ? true : false;
 
   if (isViewer) {
     return <ErrorComponent />;
@@ -57,11 +56,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         <ThemeStyling environmentId={params.environmentId} product={product} colors={SURVEY_BG_COLORS} />
       </SettingsCard>{" "}
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
-        <EditLogo
-          product={product}
-          environmentId={params.environmentId}
-          isLogoEditDisabled={isLogoEditDisabled}
-        />
+        <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
       </SettingsCard>
       <SettingsCard
         title="In-app Survey Placement"

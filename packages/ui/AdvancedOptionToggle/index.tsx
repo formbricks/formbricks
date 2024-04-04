@@ -24,7 +24,7 @@ export function AdvancedOptionToggle({
   children,
   childBorder,
   customContainerClass,
-  disabled,
+  disabled = false,
 }: AdvancedOptionToggleProps) {
   return (
     <div className={cn("px-4 py-2", customContainerClass)}>

@@ -92,7 +92,7 @@ export const ThemeStyling = ({ product, environmentId, colors }: ThemeStylingPro
         cardBorderColor: {
           light: COLOR_DEFAULTS.cardBorderColor,
         },
-        hideLogo: undefined,
+        isLogoHidden: undefined,
         highlightBorderColor: undefined,
         isDarkModeEnabled: false,
         roundness: 8,
@@ -125,7 +125,7 @@ export const ThemeStyling = ({ product, environmentId, colors }: ThemeStylingPro
       cardBorderColor: {
         light: COLOR_DEFAULTS.cardBorderColor,
       },
-      hideLogo: undefined,
+      isLogoHidden: undefined,
       highlightBorderColor: undefined,
       isDarkModeEnabled: false,
       roundness: 8,

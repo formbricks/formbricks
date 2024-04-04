@@ -4,12 +4,12 @@ import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/M
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
 import { Repeat2 } from "lucide-react";
-import Image from "next/image";
 import { useRef, useState } from "react";
 
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
+import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface ThemeStylingPreviewSurveyProps {
@@ -166,20 +166,13 @@ export const ThemeStylingPreviewSurvey = ({
             </Modal>
           ) : (
             <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
-              {!product.styling?.hideLogo && product.brand.logoUrl && (
-                <div className="absolute left-3 top-3">
-                  <Image
-                    src={product.brand.logoUrl}
-                    alt="logo"
-                    style={{ backgroundColor: product.brand.bgColor }}
-                    className="max-h-16 w-auto max-w-40 rounded-lg object-contain p-1"
-                    width={256}
-                    height={56}
-                  />
+              {!product.styling?.isLogoHidden && product.logo?.url && (
+                <div className="absolute left-5 top-5">
+                  <ClientLogo product={product} previewSurvey />
                 </div>
               )}
               <div
-                className={`${product.brand.logoUrl && !product.styling.hideLogo && !isFullScreenPreview ? "mt-12" : ""} z-0  w-full max-w-md rounded-lg p-4`}>
+                className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0  w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
                   survey={survey}
                   activeQuestionId={activeQuestionId || undefined}

@@ -4,7 +4,6 @@ import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
 import { RefreshCcwIcon } from "lucide-react";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -15,6 +14,7 @@ import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
+import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
@@ -159,41 +159,9 @@ export default function LinkSurvey({
     return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
   }
 
-  const getStyling = () => {
-    // allow style overwrite is disabled from the product
-    if (!product.styling.allowStyleOverwrite) {
-      return product.styling;
-    }
-
-    // allow style overwrite is enabled from the product
-    if (product.styling.allowStyleOverwrite) {
-      // survey style overwrite is disabled
-      if (!survey.styling?.overwriteThemeStyling) {
-        return product.styling;
-      }
-
-      // survey style overwrite is enabled
-      return survey.styling;
-    }
-
-    return product.styling;
-  };
-
   return (
     <div className="flex h-screen items-center justify-center">
-      {!getStyling().hideLogo && product.brand?.logoUrl && (
-        <div
-          className="absolute left-3 top-3 rounded-lg lg:left-6 lg:top-6"
-          style={{ backgroundColor: product.brand?.bgColor }}>
-          <Image
-            src={product.brand.logoUrl}
-            className="max-h-20 w-auto max-w-40 rounded-lg object-contain p-1 md:max-w-56"
-            width={256}
-            height={64}
-            alt="Company Logo"
-          />
-        </div>
-      )}
+      {!product.styling.isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
       <ContentWrapper className="w-11/12 p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
@@ -212,7 +180,7 @@ export default function LinkSurvey({
 
         <SurveyInline
           survey={survey}
-          styling={getStyling()}
+          styling={product.styling}
           languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {

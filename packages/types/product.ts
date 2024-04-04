@@ -30,12 +30,12 @@ export const ZLanguageUpdate = z.object({
 });
 export type TLanguageUpdate = z.infer<typeof ZLanguageUpdate>;
 
-export const ZBrand = z.object({
-  logoUrl: z.string(),
-  bgColor: z.string(),
+export const ZLogo = z.object({
+  url: z.string().optional(),
+  bgColor: z.string().optional(),
 });
 
-export type TBrand = z.infer<typeof ZBrand>;
+export type TBrand = z.infer<typeof ZLogo>;
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
@@ -54,7 +54,7 @@ export const ZProduct = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
   languages: z.array(ZLanguage),
-  brand: ZBrand,
+  logo: ZLogo.optional(),
 });
 
 export type TProduct = z.infer<typeof ZProduct>;
@@ -72,7 +72,7 @@ export const ZProductUpdateInput = z.object({
   darkOverlay: z.boolean().optional(),
   environments: z.array(ZEnvironment).optional(),
   styling: ZProductStyling.optional(),
-  brand: ZBrand.optional(),
+  logo: ZLogo.optional(),
 });
 
 export type TProductUpdateInput = z.infer<typeof ZProductUpdateInput>;

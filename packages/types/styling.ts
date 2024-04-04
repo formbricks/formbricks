@@ -38,5 +38,5 @@ export const ZBaseStyling = z.object({
   cardArrangement: ZCardArrangement.nullish(),
   background: ZSurveyStylingBackground.nullish(),
   hideProgressBar: z.boolean().nullish(),
-  hideLogo: z.boolean().nullish(),
+  isLogoHidden: z.boolean().nullish(),
 });

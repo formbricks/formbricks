@@ -433,9 +433,9 @@ model Product {
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
   languages            Language[]
-  /// @zod.custom(imports.ZBrand)
-  /// [Brand]
-  brand                Json?           @default("{\"logoUrl\": \"\", \"bgColor\": \"#ffffff\"}")
+  /// @zod.custom(imports.ZLogo)
+  /// [Logo]
+  logo                 Json?
 
   @@unique([teamId, name])
   @@index([teamId])

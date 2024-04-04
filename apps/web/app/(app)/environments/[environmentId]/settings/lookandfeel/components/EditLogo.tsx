@@ -1,5 +1,6 @@
 "use client";
 
+import { handleFileUpload } from "@/app/lib/fileUpload";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -11,21 +12,18 @@ import { ColorPicker } from "@formbricks/ui/ColorPicker";
 import FileInput from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 
-import { handleFileUpload } from "../..//profile/lib";
 import { updateProductAction } from "../actions";
 
 interface EditLogoProps {
   product: TProduct;
   environmentId: string;
-  isLogoEditDisabled: boolean;
+  isViewer: boolean;
 }
 
-export const EditLogo = ({ product, environmentId, isLogoEditDisabled }: EditLogoProps) => {
-  const [logoUrl, setLogoUrl] = useState(product.brand?.logoUrl || "");
-  const [backgroundColor, setBackgroundColor] = useState(product.brand?.bgColor || "");
-  const [addBackgroundColor, setAddBackgroundColor] = useState(
-    product?.brand?.bgColor.length > 1 ? true : false
-  );
+export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) => {
+  const [logoUrl, setLogoUrl] = useState<string | undefined>(product.logo?.url || undefined);
+  const [logoBgColor, setLogoBgColor] = useState<string | undefined>(product.logo?.bgColor || undefined);
+  const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!product.logo?.bgColor);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,13 +34,16 @@ export const EditLogo = ({ product, environmentId, isLogoEditDisabled }: EditLog
       const uploadResult = await handleFileUpload(file, environmentId);
       if (uploadResult.error) {
         toast.error(uploadResult.error);
-      } else {
-        setLogoUrl(uploadResult.url);
+        return;
       }
+      setLogoUrl(uploadResult.url);
     } catch (error) {
       toast.error("Logo upload failed. Please try again.");
     } finally {
       setIsLoading(false);
+      if (!isEditing) {
+        setIsEditing(true);
+      }
     }
   };
 
@@ -52,13 +53,17 @@ export const EditLogo = ({ product, environmentId, isLogoEditDisabled }: EditLog
   };
 
   const saveChanges = async () => {
-    if (!isEditing) return setIsEditing(true);
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
 
     setIsLoading(true);
     try {
-      await updateProductAction(product.id, {
-        brand: { logoUrl: logoUrl, bgColor: backgroundColor },
-      } as Partial<TProductUpdateInput>);
+      const updatedProduct: Partial<TProductUpdateInput> = {
+        logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
+      };
+      await updateProductAction(product.id, updatedProduct);
       toast.success("Logo updated successfully");
     } catch (error) {
       toast.error("Failed to update the logo");
@@ -68,13 +73,13 @@ export const EditLogo = ({ product, environmentId, isLogoEditDisabled }: EditLog
     }
   };
 
-  const toggleaddBackgroundColor = (checked: boolean) => {
-    if (!checked) {
-      setBackgroundColor("");
-    } else {
-      setBackgroundColor("#ffffff");
+  const toggleBackgroundColor = (enabled: boolean) => {
+    setIsBgColorEnabled(enabled);
+    if (!enabled) {
+      setLogoBgColor(undefined);
+    } else if (!logoBgColor) {
+      setLogoBgColor("#f8f8f8");
     }
-    setAddBackgroundColor(checked);
   };
 
   return (
@@ -85,7 +90,7 @@ export const EditLogo = ({ product, environmentId, isLogoEditDisabled }: EditLog
           alt="Logo"
           width={256}
           height={56}
-          style={{ backgroundColor: backgroundColor }}
+          style={{ backgroundColor: logoBgColor || undefined }}
           className="-mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
         />
       ) : (
@@ -105,38 +110,33 @@ export const EditLogo = ({ product, environmentId, isLogoEditDisabled }: EditLog
             <Button onClick={() => fileInputRef.current?.click()} variant="secondary" size="sm">
               Replace Logo
             </Button>
-            <Button
-              variant="warn"
-              size="sm"
-              onClick={() => {
-                setLogoUrl("");
-              }}
-              disabled={!isEditing}>
-              Remove logo
+            <Button variant="warn" size="sm" onClick={() => setLogoUrl(undefined)} disabled={!isEditing}>
+              Remove Logo
             </Button>
           </div>
           <AdvancedOptionToggle
-            isChecked={addBackgroundColor}
-            onToggle={(checked) => toggleaddBackgroundColor(checked)}
+            isChecked={isBgColorEnabled}
+            onToggle={toggleBackgroundColor}
             htmlId="addBackgroundColor"
             title="Add background color"
             description="Add a background color to the logo container."
             childBorder
             customContainerClass="p-0"
             disabled={!isEditing}>
-            <div className="px-2">
-              <ColorPicker color={backgroundColor} onChange={setBackgroundColor} disabled={!isEditing} />
-            </div>
+            {isBgColorEnabled && (
+              <div className="px-2">
+                <ColorPicker
+                  color={logoBgColor || "#f8f8f8"}
+                  onChange={setLogoBgColor}
+                  disabled={!isEditing}
+                />
+              </div>
+            )}
           </AdvancedOptionToggle>
         </>
       )}
-
       {logoUrl && (
-        <Button
-          onClick={saveChanges}
-          disabled={isLoading || isLogoEditDisabled}
-          variant="darkCTA"
-          className="mt-2">
+        <Button onClick={saveChanges} disabled={isLoading || isViewer} variant="darkCTA">
           {isEditing ? "Save" : "Edit"}
         </Button>
       )}
