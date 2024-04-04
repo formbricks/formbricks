@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 
-import { handleFileUpload } from "../lib";
+import { handleFileUpload } from "../lib/fileUpload";
 
 export function EditAvatar({ session, environmentId }: { session: Session; environmentId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
