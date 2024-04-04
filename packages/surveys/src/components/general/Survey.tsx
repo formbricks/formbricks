@@ -109,12 +109,12 @@ export function Survey({
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
 
-  function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
+  const getNextQuestionId = (data: TResponseData, isFormPrefilling: Boolean = false): string => {
     const questions = survey.questions;
     const responseValue = data[questionId];
 
     if (questionId === "start") {
-      if (!isFromPrefilling) {
+      if (!isFormPrefilling) {
         return questions[0]?.id || "end";
       } else {
         currIdxTemp = 0;
@@ -175,17 +175,20 @@ export function Survey({
       }
     }
     return questions[currIdxTemp + 1]?.id || "end";
-  }
+  };
 
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFromPrefilling: Boolean = false) => {
+  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFormPrefilling: Boolean = false) => {
     const questionId = Object.keys(responseData)[0];
+    if (isFormPrefilling && questionId === survey.questions[0].id) {
+      onChange(responseData);
+    }
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
+    const nextQuestionId = getNextQuestionId(responseData, isFormPrefilling);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
@@ -256,7 +259,7 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
 
-  function getCardContent() {
+  const getCardContent = (): JSX.Element | undefined => {
     if (showError) {
       return (
         <ResponseErrorComponent responseData={responseData} questions={survey.questions} onRetry={onRetry} />
@@ -317,7 +320,7 @@ export function Survey({
         )
       );
     }
-  }
+  };
 
   return (
     <>
