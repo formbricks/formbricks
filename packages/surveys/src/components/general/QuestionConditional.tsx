@@ -95,7 +95,7 @@ export default function QuestionConditional({
     <NPSQuestion
       key={question.id}
       question={question}
-      value={typeof value === "number" ? value : 0}
+      value={typeof value === "number" ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -125,7 +125,7 @@ export default function QuestionConditional({
     <RatingQuestion
       key={question.id}
       question={question}
-      value={typeof value === "number" ? value : 0}
+      value={typeof value === "number" ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}

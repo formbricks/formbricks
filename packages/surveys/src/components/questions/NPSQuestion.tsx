@@ -13,7 +13,7 @@ import type { TSurveyNPSQuestion } from "@formbricks/types/surveys";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
-  value: number;
+  value?: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -49,7 +49,7 @@ export const NPSQuestion = ({
         e.preventDefault();
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value }, updatedTtcObj);
+        onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}>
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
       <Headline
@@ -81,7 +81,9 @@ export const NPSQuestion = ({
                     }
                   }}
                   className={cn(
-                    value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
+                    value === number
+                      ? "border-border-highlight bg-accent-selected-bg z-10 border"
+                      : "border-border",
                     "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
                     hoveredNumber === number ? "bg-accent-bg" : ""
                   )}>
@@ -112,7 +114,7 @@ export const NPSQuestion = ({
               );
             })}
           </div>
-          <div className="text-info-text flex justify-between px-1.5 text-xs leading-6">
+          <div className="text-subheading mt-2 flex justify-between px-1.5 text-xs leading-6">
             <p>{getLocalizedValue(question.lowerLabel, languageCode)}</p>
             <p>{getLocalizedValue(question.upperLabel, languageCode)}</p>
           </div>
