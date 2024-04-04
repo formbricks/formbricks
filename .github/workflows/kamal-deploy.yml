@@ -71,8 +71,11 @@ jobs:
       S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
       OPENTELEMETRY_LISTENER_URL: ${{ vars.OPENTELEMETRY_LISTENER_URL }}
       RATE_LIMITING_DISABLED: ${{ vars.RATE_LIMITING_DISABLED }}
-      REDIS_CLIENT_URL: ${{ vars.REDIS_CLIENT_URL }}
       KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
 
     steps:
       - name: Checkout code
