@@ -221,6 +221,7 @@ export default function SingleResponseCard({
             </p>
           )}
           {response.meta.url && <p>URL: {response.meta.url}</p>}
+          {response.meta.action && <p>Action: {response.meta.action}</p>}
           {response.meta.source && <p>Source: {response.meta.source}</p>}
           {response.meta.country && <p>Country: {response.meta.country}</p>}
         </div>
