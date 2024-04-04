@@ -29,8 +29,8 @@ registry:
 env:
   # clear:
   #   DB_HOST: 192.168.0.2
-  clear:
-    REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
+  # clear:
+  # REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
