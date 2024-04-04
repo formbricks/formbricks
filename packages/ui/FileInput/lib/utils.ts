@@ -201,13 +201,6 @@ export const parseVideoUrl = (url: string): string | undefined => {
   }
 };
 
-export const checkForYoutubeUrl = (url: string): boolean => {
-  const isYoutubeLink = ["youtube.com", "youtu.be", "youtube-nocookie.com"].some((domain) =>
-    url.includes(domain)
-  );
-  return isYoutubeLink;
-};
-
 export const checkForYoutubePrivacyMode = (url: string): boolean => {
   return url.includes("youtube-nocookie.com");
 };

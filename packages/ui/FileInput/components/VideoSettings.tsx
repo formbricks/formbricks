@@ -2,16 +2,13 @@ import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { checkForYoutubeUrl } from "@formbricks/lib/utils/videoUpload";
+
 import { AdvancedOptionToggle } from "../../AdvancedOptionToggle";
 import { Button } from "../../Button";
 import { Input } from "../../Input";
 import { Label } from "../../Label";
-import {
-  checkForYoutubePrivacyMode,
-  checkForYoutubeUrl,
-  extractYoutubeId,
-  parseVideoUrl,
-} from "../lib/utils";
+import { checkForYoutubePrivacyMode, extractYoutubeId, parseVideoUrl } from "../lib/utils";
 
 interface VideoSettingsProps {
   uploadedVideoUrl: string;
