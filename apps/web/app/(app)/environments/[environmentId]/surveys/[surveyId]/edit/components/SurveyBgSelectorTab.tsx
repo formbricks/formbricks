@@ -1,4 +1,3 @@
-import { checkIsUnsplashApiPresent } from "@/app/s/[surveyId]/actions";
 import { useEffect, useState } from "react";
 
 import { TProductStyling } from "@formbricks/types/product";
@@ -16,6 +15,7 @@ interface SurveyBgSelectorTabProps {
   bgType: string | null | undefined;
   environmentId: string;
   styling: TSurveyStyling | TProductStyling | null;
+  unsplashApiKey?: string;
 }
 
 const tabs = [
@@ -31,6 +31,7 @@ export default function SurveyBgSelectorTab({
   colors,
   bgType,
   environmentId,
+  unsplashApiKey,
 }: SurveyBgSelectorTabProps) {
   const [activeTab, setActiveTab] = useState(bgType || "color");
   const { background } = styling ?? {};
@@ -39,7 +40,7 @@ export default function SurveyBgSelectorTab({
   const [animationBackground, setAnimationBackground] = useState(background?.bg);
   const [imageBackground, setImageBackground] = useState(background?.bg);
   const [uploadBackground, setUploadBackground] = useState(background?.bg);
-  const [isUnsplashApiPresent, setIsUnsplashApiPresent] = useState(false);
+  // const [unsplashApiKey, setIsUnsplashApiPresent] = useState(false);
 
   useEffect(() => {
     const bgType = background?.bgType;
@@ -72,9 +73,9 @@ export default function SurveyBgSelectorTab({
       setImageBackground("");
     }
 
-    checkIsUnsplashApiPresent().then((present) => {
-      setIsUnsplashApiPresent(present);
-    });
+    // checkIsUnsplashApiPresent().then((present) => {
+    //   setIsUnsplashApiPresent(present);
+    // });
   }, [background?.bg, background?.bgType]);
 
   const renderContent = () => {
@@ -110,7 +111,7 @@ export default function SurveyBgSelectorTab({
     <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4">
       <div className="flex w-full items-center justify-between overflow-hidden rounded-lg border border-slate-300">
         <TabBar
-          tabs={tabs.filter((tab) => tab.id !== "upload" || isUnsplashApiPresent)}
+          tabs={tabs.filter((tab) => tab.id !== "upload" || unsplashApiKey)}
           activeId={activeTab}
           setActiveId={setActiveTab}
           tabStyle="button"

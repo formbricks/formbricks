@@ -22,9 +22,10 @@ type ThemeStylingProps = {
   product: TProduct;
   environmentId: string;
   colors: string[];
+  unsplashApiKey?: string;
 };
 
-export const ThemeStyling = ({ product, environmentId, colors }: ThemeStylingProps) => {
+export const ThemeStyling = ({ product, environmentId, colors, unsplashApiKey }: ThemeStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
   const [previewSurveyType, setPreviewSurveyType] = useState<"link" | "web">("link");
@@ -208,6 +209,7 @@ export const ThemeStyling = ({ product, environmentId, colors }: ThemeStylingPro
               colors={colors}
               key={styling.background?.bg}
               hideCheckmark
+              unsplashApiKey={unsplashApiKey}
             />
           </div>
         </div>

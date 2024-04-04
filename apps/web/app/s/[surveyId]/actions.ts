@@ -61,8 +61,3 @@ export async function getImageBackground(searchQuery: string) {
     throw Error(`${error.message}`);
   }
 }
-
-export async function checkIsUnsplashApiPresent() {
-  if (env.UNSPLASH_API_KEY) return true;
-  return false;
-}

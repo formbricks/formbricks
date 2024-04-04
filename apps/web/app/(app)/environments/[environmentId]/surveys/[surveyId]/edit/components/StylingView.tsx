@@ -23,6 +23,7 @@ type StylingViewProps = {
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
   localStylingChanges: TSurveyStyling | null;
   setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
+  unsplashApiKey?: string;
 };
 
 const StylingView = ({
@@ -35,6 +36,7 @@ const StylingView = ({
   styling,
   localStylingChanges,
   setLocalStylingChanges,
+  unsplashApiKey,
 }: StylingViewProps) => {
   const [overwriteThemeStyling, setOverwriteThemeStyling] = useState(
     localSurvey?.styling?.overwriteThemeStyling ?? false
@@ -161,6 +163,7 @@ const StylingView = ({
           environmentId={environment.id}
           colors={colors}
           disabled={!overwriteThemeStyling}
+          unsplashApiKey={unsplashApiKey}
         />
       )}
 
