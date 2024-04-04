@@ -5,7 +5,7 @@
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
     "dev": "next dev -p 3000",
-    "go": "next dev -p 3000",
+    "go": "next dev -p 3000 --experimental-https",
     "build": "next build",
     "build:dev": "next build",
     "start": "next start",
