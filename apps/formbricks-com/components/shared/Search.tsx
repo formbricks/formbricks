@@ -1,6 +1,7 @@
+import "@docsearch/css";
 import { DocSearchModal, useDocSearchKeyboardEvents } from "@docsearch/react";
+import { useTheme } from "next-themes";
 import Link from "next/link";
-import Router from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -28,6 +29,9 @@ function SearchIcon(props: any) {
 }
 
 export function Search() {
+  let { resolvedTheme } = useTheme();
+  let isLightMode = resolvedTheme === "light";
+
   let [isOpen, setIsOpen] = useState(false);
   let [modifierKey, setModifierKey] = useState<string>();
 
@@ -47,9 +51,40 @@ export function Search() {
 
   return (
     <>
+      <style>
+        {`
+          :root {
+            --docsearch-primary-color: ${isLightMode ? "#00C4B8" : "#1F7066"};
+            --docsearch-modal-background: ${isLightMode ? "#FFFFFF" : "#121212"};
+            --docsearch-text-color: ${isLightMode ? "#121212" : "#FFFFFF"};
+            --docsearch-hit-background: ${isLightMode ? "#FFFFFF" : "#282828"};
+            --docsearch-footer-background: ${isLightMode ? "#D8F6F4" : "#121212"};
+            --docsearch-searchbox-focus-background: ${isLightMode ? "#D8F6F4" : "#121212"};
+            --docsearch-modal-shadow: ${isLightMode ? "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #D8F6F4" : "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #808080"}';
+          }
+          .DocSearch-Hit-title {
+            color: #000000;
+          }
+          .DocSearch-Modal {
+            margin: 16rem auto auto;
+          }
+          [type='search']:focus {
+            --tw-ring-color: none;
+          }
+          .DocSearch-Button-Container {
+            width: 200px !important;
+          }
+          .DocSearch-Hit-Container {
+            color: var(--color-text-primary);
+          }
+          .DocSearch-Input {
+            outline: none;
+          }
+        `}
+      </style>
       <button
         type="button"
-        className="group flex h-6 w-6 items-center justify-center sm:justify-start md:h-auto md:w-60 md:flex-none md:rounded-lg md:py-2.5 md:pl-4 md:pr-3.5 md:text-sm md:ring-1 md:ring-slate-200 md:hover:ring-slate-300 xl:w-80 dark:md:bg-slate-800/75 dark:md:ring-inset dark:md:ring-white/5 dark:md:hover:bg-slate-700/40 dark:md:hover:ring-slate-500"
+        className="group flex h-6 w-6 items-center justify-center sm:justify-start md:h-auto md:w-60 md:flex-none md:rounded-lg md:py-2.5 md:pl-4 md:pr-3.5 md:text-sm md:ring-1 md:ring-slate-200 md:hover:ring-slate-300 xl:w-80 dark:text-slate-400 dark:ring-inset dark:ring-white/10 dark:hover:ring-white/20"
         onClick={onOpen}>
         <SearchIcon className="h-5 w-5 flex-none fill-slate-400 group-hover:fill-slate-500 md:group-hover:fill-slate-400 dark:fill-slate-500" />
         <span className="sr-only md:not-sr-only md:pl-2 md:text-slate-500 md:dark:text-slate-400">
@@ -71,7 +106,7 @@ export function Search() {
             hitComponent={Hit}
             navigator={{
               navigate({ itemUrl }) {
-                Router.push(itemUrl);
+                window.location.href = itemUrl;
               },
             }}
           />,
