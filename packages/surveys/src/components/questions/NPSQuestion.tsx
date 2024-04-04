@@ -81,7 +81,9 @@ export const NPSQuestion = ({
                     }
                   }}
                   className={cn(
-                    value === number ? "border-border-highlight bg-accent-selected-bg z-10" : "border-border",
+                    value === number
+                      ? "border-border-highlight bg-accent-selected-bg z-10 border"
+                      : "border-border",
                     "text-heading first:rounded-l-custom last:rounded-r-custom focus:border-brand relative h-10 flex-1 cursor-pointer border-b border-l border-t text-center text-sm leading-10 last:border-r focus:border-2 focus:outline-none",
                     hoveredNumber === number ? "bg-accent-bg" : ""
                   )}>

@@ -129,10 +129,10 @@ export const RatingQuestion = ({
                     }}
                     className={cn(
                       value === number
-                        ? "bg-accent-selected-bg border-border-highlight z-10"
+                        ? "bg-accent-selected-bg border-border-highlight z-10 border"
                         : "border-border",
-                      a.length === number ? "rounded-r-md border-r" : "",
-                      number === 1 ? "rounded-l-md" : "",
+                      a.length === number ? "rounded-r-custom border-r" : "",
+                      number === 1 ? "rounded-l-custom" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
                       "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:border-2 focus:outline-none"
                     )}>
