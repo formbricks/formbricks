@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 
 import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
+import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TI18nString,
@@ -26,7 +26,6 @@ import {
 import AlertDialog from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { updateProductAction } from "@formbricks/ui/LogoSettingModal/actions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 import { updateSurveyAction } from "../actions";
@@ -43,8 +42,6 @@ interface SurveyMenuBarProps {
   responseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
-  isImageAddedFromLogoPreview: boolean;
-  setIsImageAddedFromLogoPreview: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function SurveyMenuBar({
@@ -59,8 +56,6 @@ export default function SurveyMenuBar({
   responseCount,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  isImageAddedFromLogoPreview,
-  setIsImageAddedFromLogoPreview,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -355,13 +350,6 @@ export default function SurveyMenuBar({
     try {
       await updateSurveyAction({ ...strippedSurvey });
 
-      if (isImageAddedFromLogoPreview) {
-        let inputProduct: Partial<TProductUpdateInput> = {
-          brand: { logoUrl: product.brand?.logoUrl, bgColor: product.brand?.bgColor },
-        };
-        await updateProductAction(product.id, inputProduct);
-        setIsImageAddedFromLogoPreview(false);
-      }
       setIsSurveySaving(false);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
@@ -381,13 +369,6 @@ export default function SurveyMenuBar({
       if (!validateSurvey(localSurvey)) {
         setIsSurveyPublishing(false);
         return;
-      }
-      if (isImageAddedFromLogoPreview) {
-        let inputProduct: Partial<TProductUpdateInput> = {
-          brand: { logoUrl: product.brand?.logoUrl, bgColor: product.brand?.bgColor },
-        };
-        await updateProductAction(product.id, inputProduct);
-        setIsImageAddedFromLogoPreview(false);
       }
       await updateSurveyAction({ ...localSurvey, status: "inProgress" });
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);

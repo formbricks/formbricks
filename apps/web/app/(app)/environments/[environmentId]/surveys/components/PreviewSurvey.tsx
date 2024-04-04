@@ -71,9 +71,6 @@ export default function PreviewSurvey({
   environment,
   languageCode,
   onFileUpload,
-  membershipRole,
-  setLocalProduct,
-  setIsImageAddedFromLogoPreview,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
