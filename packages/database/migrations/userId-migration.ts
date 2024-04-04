@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.$transaction(async (tx) => {
-    // get all the persons that have a attribute class with the name "userId"
+    // get all the persons that have an attribute class with the name "userId"
     const personsWithUserIdAttribute = await tx.person.findMany({
       where: {
         attributes: {
@@ -39,6 +39,19 @@ async function main() {
         },
         data: {
           userId: userIdAttributeValue.value,
+        },
+      });
+
+      // delete the attribute and the attribute class
+      await tx.attribute.delete({
+        where: {
+          id: userIdAttributeValue.id,
+        },
+      });
+
+      await tx.attributeClass.delete({
+        where: {
+          id: userIdAttributeValue.attributeClass.id,
         },
       });
     }
