@@ -68,10 +68,6 @@ export const EditLogo = ({ product, environmentId, isLogoEditDisabled }: EditLog
     }
   };
 
-  if (isLogoEditDisabled) {
-    return <p className="text-sm text-red-700">You do not have permission to edit this logo.</p>;
-  }
-
   const toggleaddBackgroundColor = (checked: boolean) => {
     if (!checked) {
       setBackgroundColor("");
@@ -136,7 +132,11 @@ export const EditLogo = ({ product, environmentId, isLogoEditDisabled }: EditLog
       )}
 
       {logoUrl && (
-        <Button onClick={saveChanges} disabled={isLoading} variant="darkCTA" className="mt-2">
+        <Button
+          onClick={saveChanges}
+          disabled={isLoading || isLogoEditDisabled}
+          variant="darkCTA"
+          className="mt-2">
           {isEditing ? "Save" : "Edit"}
         </Button>
       )}
