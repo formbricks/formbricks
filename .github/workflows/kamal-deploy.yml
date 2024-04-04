@@ -1,12 +1,12 @@
 name: Kamal Deploy
-# concurrency:
-#   group: deploy-to-kamal
-  # cancel-in-progress: false
+concurrency:
+  group: deploy-to-kamal
+  cancel-in-progress: false
 
-# on:
-  # push:
-    # branches:
-    #   - feature/pg-bouncer
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   Deploy:
@@ -76,7 +76,6 @@ jobs:
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_NAME: ${{ secrets.DB_NAME }}
-
 
     steps:
       - name: Checkout code
