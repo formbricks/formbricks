@@ -29,6 +29,8 @@ registry:
 env:
   # clear:
   #   DB_HOST: 192.168.0.2
+  # clear:
+  # REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -86,6 +88,10 @@ env:
     - S3_REGION
     - S3_BUCKET_NAME
     - RATE_LIMITING_DISABLED
+    - DB_HOST
+    - DB_USER
+    - DB_PASSWORD
+    - DB_NAME
 
 # Use a different ssh user than root
 ssh:
@@ -138,27 +144,43 @@ traefik:
       - CLOUDFLARE_EMAIL
 
 # Use accessory services (secrets come from .env).
-# accessories:
-#   db:
-#     image: mysql:8.0
-#     host: 192.168.0.2
-#     port: 3306
-#     env:
-#       clear:
-#         MYSQL_ROOT_HOST: '%'
-#       secret:
-#         - MYSQL_ROOT_PASSWORD
-#     files:
-#       - config/mysql/production.cnf:/etc/mysql/my.cnf
-#       - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
-#     directories:
-#       - data:/var/lib/mysql
-#   redis:
-#     image: redis:7.0
-#     host: 192.168.0.2
-#     port: 6379
-#     directories:
-#       - data:/data
+accessories:
+  # db:
+  #   image: mysql:8.0
+  #   host: 192.168.0.2
+  #   port: 3306
+  #   env:
+  #     clear:
+  #       MYSQL_ROOT_HOST: '%'
+  #     secret:
+  #       - MYSQL_ROOT_PASSWORD
+  #   files:
+  #     - config/mysql/production.cnf:/etc/mysql/my.cnf
+  #     - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
+  #   directories:
+  #     - data:/var/lib/mysql
+  redis:
+    image: redis:7.0
+    host: 18.196.187.144
+    port: "172.31.40.79:6379:6379"
+    directories:
+      - data:/data
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    host: 18.196.187.144
+    port: "172.31.40.79:5432:5432"
+    env:
+      clear:
+        LISTEN_PORT: "5432"
+        POOL_MODE: "transaction"
+        MAX_CLIENT_CONN: "200"
+        DEFAULT_POOL_SIZE: "50"
+        AUTH_TYPE: "scram-sha-256"
+      secret:
+        - DB_USER
+        - DB_PASSWORD
+        - DB_HOST
+        - DB_NAME
 
 # Configure custom arguments for Traefik
 # traefik:
