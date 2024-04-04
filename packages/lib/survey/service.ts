@@ -469,6 +469,11 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
   }
 
+  // Remove scheduled status when runOnDate is not set
+  if (updatedSurvey.status === "scheduled" && updatedSurvey.runOnDate === null) {
+    data.status = "inProgress";
+  }
+
   surveyData.updatedAt = new Date();
   data = {
     ...surveyData,
