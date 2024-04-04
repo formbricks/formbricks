@@ -1,7 +1,8 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon } from "lucide-react";
+import { ArrowUpRight, CheckIcon } from "lucide-react";
+import Link from "next/link";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -343,7 +344,7 @@ export default function ResponseOptionsCard({
             description="Automatically close the survey after a certain number of responses."
             childBorder={true}>
             <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-700">
+              <p className="text-sm text-slate-700">
                 Automatically mark the survey as complete after
                 <Input
                   autoFocus
@@ -364,11 +365,10 @@ export default function ResponseOptionsCard({
             htmlId="runOnDate"
             isChecked={runOnDateToggle}
             onToggle={handleRunOnDateToggle}
-            title="Schedule Survey"
-            description="Automatically starts the survey at the beginning of the day (UTC)."
+            title="Release survey on date"
+            description="Automatically release the survey at the beginning of the day (UTC)."
             childBorder={true}>
-            <div className="flex cursor-pointer p-4">
-              <p className="mr-2 mt-3 text-sm font-semibold text-slate-700">Automatically start survey on:</p>
+            <div className="p-4">
               <DatePicker date={runOnDate} handleDateChange={handleRunOnDateChange} />
             </div>
           </AdvancedOptionToggle>
@@ -380,10 +380,7 @@ export default function ResponseOptionsCard({
             title="Close survey on date"
             description="Automatically closes the survey at the beginning of the day (UTC)."
             childBorder={true}>
-            <div className="flex cursor-pointer p-4">
-              <p className="mr-2 mt-3 text-sm font-semibold text-slate-700">
-                Automatically mark survey as complete on:
-              </p>
+            <div className="p-4">
               <DatePicker date={closeOnDate} handleDateChange={handleCloseOnDateChange} />
             </div>
           </AdvancedOptionToggle>
@@ -394,22 +391,17 @@ export default function ResponseOptionsCard({
             isChecked={redirectToggle}
             onToggle={handleRedirectCheckMark}
             title="Redirect on completion"
-            description="Redirect user to specified link on survey completion"
+            description="Redirect user to link destination when they completed the survey"
             childBorder={true}>
             <div className="w-full p-4">
-              <div className="flex w-full cursor-pointer items-center">
-                <p className="mr-2 w-[400px] text-sm font-semibold text-slate-700">
-                  Redirect respondents here:
-                </p>
-                <Input
-                  autoFocus
-                  className="w-full bg-white"
-                  type="url"
-                  placeholder="https://www.example.com"
-                  value={redirectUrl ? redirectUrl : ""}
-                  onChange={(e) => handleRedirectUrlChange(e.target.value)}
-                />
-              </div>
+              <Input
+                autoFocus
+                className="w-full bg-white"
+                type="url"
+                placeholder="https://www.example.com"
+                value={redirectUrl ? redirectUrl : ""}
+                onChange={(e) => handleRedirectUrlChange(e.target.value)}
+              />
             </div>
           </AdvancedOptionToggle>
 
@@ -465,7 +457,15 @@ export default function ResponseOptionsCard({
                         Blocks survey if the survey URL has no Single Use Id (suId).
                       </li>
                       <li className="text-sm text-slate-600">
-                        Blocks survey if a submission with the Single Use Id (suId) in the URL exists already.
+                        Blocks survey if a submission with the Single Use Id (suId) exists already.
+                      </li>
+                      <li className="text-sm text-slate-600">
+                        <Link
+                          href="https://formbricks.com/docs/link-surveys/single-use-links"
+                          target="_blank"
+                          className="underline">
+                          Docs <ArrowUpRight className="inline" size={16} />
+                        </Link>
                       </li>
                     </ul>
                     <Label htmlFor="headline">&lsquo;Link Used&rsquo; Message</Label>
@@ -517,7 +517,7 @@ export default function ResponseOptionsCard({
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center  bg-slate-50">
-                    <p className="text-md font-semibold">How it works</p>
+                    <Label htmlFor="howItWorks">How it works</Label>
                     <p className="mb-4 mt-2 text-sm text-slate-500">
                       Respondants will receive the survey link via email.
                     </p>
@@ -551,25 +551,25 @@ export default function ResponseOptionsCard({
                 title="Protect survey with a PIN"
                 description="Only users who have the PIN can access the survey."
                 childBorder={true}>
-                <div className="flex w-full items-center space-x-1 p-4 pb-4">
-                  <div className="w-full cursor-pointer items-center  bg-slate-50">
-                    <Label htmlFor="headline">Add PIN</Label>
-                    <Input
-                      autoFocus
-                      id="pin"
-                      isInvalid={Boolean(verifyProtectWithPinError)}
-                      className="mb-4 mt-2 bg-white"
-                      name="pin"
-                      placeholder="1234"
-                      onBlur={handleProtectSurveyPinBlurEvent}
-                      defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
-                      onKeyDown={handleSurveyPinInputKeyDown}
-                      onChange={(e) => handleProtectSurveyPinChange(e.target.value)}
-                    />
-                    {verifyProtectWithPinError && (
-                      <p className="text-sm text-red-700">{verifyProtectWithPinError}</p>
-                    )}
-                  </div>
+                <div className="p-4">
+                  <Label htmlFor="headline" className="sr-only">
+                    Add PIN:
+                  </Label>
+                  <Input
+                    autoFocus
+                    id="pin"
+                    isInvalid={Boolean(verifyProtectWithPinError)}
+                    className="bg-white"
+                    name="pin"
+                    placeholder="Add a four digit PIN"
+                    onBlur={handleProtectSurveyPinBlurEvent}
+                    defaultValue={localSurvey.pin ? localSurvey.pin : undefined}
+                    onKeyDown={handleSurveyPinInputKeyDown}
+                    onChange={(e) => handleProtectSurveyPinChange(e.target.value)}
+                  />
+                  {verifyProtectWithPinError && (
+                    <p className="pt-1 text-sm text-red-700">{verifyProtectWithPinError}</p>
+                  )}
                 </div>
               </AdvancedOptionToggle>
             </>
