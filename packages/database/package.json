@@ -10,10 +10,9 @@
   ],
   "scripts": {
     "clean": "rimraf .turbo node_modules",
-    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:deploy": "env DATABASE_URL=\"${MIGRATE_DATABASE_URL:-$DATABASE_URL}\" prisma migrate deploy",
     "db:migrate:dev": "dotenv -e ../../.env -- pnpm prisma migrate dev",
     "db:migrate:vercel": "if test \"$NEXT_PUBLIC_VERCEL_ENV\" = \"preview\" ; then env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma db push --accept-data-loss ; else env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma migrate deploy ; fi",
-    "db:migrate:proxy": "env DATABASE_URL=\"${MIGRATE_DATABASE_URL:-$DATABASE_URL}\" prisma migrate deploy",
     "db:push": "prisma db push --accept-data-loss",
     "db:up": "docker-compose up -d",
     "db:setup": "pnpm db:up && pnpm db:migrate:dev",
