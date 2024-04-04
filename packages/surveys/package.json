@@ -52,7 +52,7 @@
     "serve": "14.2.1",
     "tailwindcss": "^3.4.1",
     "terser": "^5.29.1",
-    "vite": "^5.1.6",
+    "vite": "^5.1.7",
     "vite-plugin-dts": "^3.7.3",
     "vite-tsconfig-paths": "^4.3.1"
   }
