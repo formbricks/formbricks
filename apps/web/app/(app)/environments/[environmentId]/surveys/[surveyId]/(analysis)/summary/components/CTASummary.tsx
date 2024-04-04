@@ -11,7 +11,7 @@ interface CTASummaryProps {
   questionSummary: TSurveySummaryCta;
 }
 
-export default function CTASummary({ questionSummary }: CTASummaryProps) {
+export const CTASummary = ({ questionSummary }: CTASummaryProps) => {
   const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
 
   return (
@@ -51,4 +51,4 @@ export default function CTASummary({ questionSummary }: CTASummaryProps) {
       </div>
     </div>
   );
-}
+};

@@ -357,7 +357,7 @@ export const templates: TTemplate[] = [
           id: createId(),
           html: {
             default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot!</span></p>',
+              '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
           },
           type: TSurveyQuestionType.CTA,
           logic: [{ condition: "skipped", destination: "end" }],
@@ -1646,7 +1646,7 @@ export const templates: TTemplate[] = [
             { id: createId(), label: { default: "Social Media" } },
             { id: createId(), label: { default: "Friends" } },
             { id: createId(), label: { default: "Podcast" } },
-            { id: "other", label: { dfault: "Other" } },
+            { id: "other", label: { default: "Other" } },
           ],
           headline: { default: "How did you hear about us?" },
           required: true,

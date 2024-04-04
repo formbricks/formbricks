@@ -39,11 +39,11 @@ export default function Testimonial() {
           <div className="mt-4 flex items-center space-x-6">
             <Image
               src={Peer}
-              alt="Cal.com Co-CEO Peer Richelsen"
+              alt="Cal.com Co-Founder Peer Richelsen"
               className="-mb-12 h-28 w-28 rounded-full border border-slate-200 shadow-sm"
             />
             <div>
-              <p className="mb-1.5 text-sm text-slate-500">Peer Richelsen, Co-CEO Cal.com</p>
+              <p className="mb-1.5 text-sm text-slate-500">Peer Richelsen, Co-Founder Cal.com</p>
               <Image src={CalComLogo} alt="Cal.com Logo" />
             </div>
           </div>

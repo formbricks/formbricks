@@ -20,7 +20,7 @@ interface FileUploadFormProps {
   product?: TProduct;
   question: TSurveyFileUploadQuestion;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyFileUploadQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
@@ -54,11 +54,11 @@ export default function FileUploadQuestionForm({
     event.preventDefault();
     event.stopPropagation();
 
-    let modifiedExtension = extension.trim();
+    let modifiedExtension = extension.trim() as TAllowedFileExtension;
 
     // Remove the dot at the start if it exists
     if (modifiedExtension.startsWith(".")) {
-      modifiedExtension = modifiedExtension.substring(1);
+      modifiedExtension = modifiedExtension.substring(1) as TAllowedFileExtension;
     }
 
     if (!modifiedExtension) {

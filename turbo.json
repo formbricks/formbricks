@@ -118,6 +118,7 @@
         "PLAYWRIGHT_CI",
         "PRIVACY_URL",
         "RATE_LIMITING_DISABLED",
+        "REDIS_CLIENT_URL",
         "S3_ACCESS_KEY",
         "S3_SECRET_KEY",
         "S3_REGION",
@@ -170,6 +171,10 @@
       "outputs": []
     },
     "db:migrate:deploy": {
+      "outputs": []
+    },
+    "db:migrate:proxy": {
+      "env": ["MIGRATE_DATABASE_URL", "DATABASE_URL"],
       "outputs": []
     },
     "db:migrate:vercel": {

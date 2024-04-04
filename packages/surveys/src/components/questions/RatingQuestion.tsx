@@ -26,7 +26,7 @@ import Subheader from "../general/Subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
-  value: string | number | string[];
+  value?: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -38,7 +38,7 @@ interface RatingQuestionProps {
   isInIframe: boolean;
 }
 
-export default function RatingQuestion({
+export const RatingQuestion = ({
   question,
   value,
   onChange,
@@ -49,7 +49,7 @@ export default function RatingQuestion({
   languageCode,
   ttc,
   setTtc,
-}: RatingQuestionProps) {
+}: RatingQuestionProps) => {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
 
@@ -93,7 +93,7 @@ export default function RatingQuestion({
         e.preventDefault();
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value }, updatedTtcObj);
+        onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
@@ -129,10 +129,10 @@ export default function RatingQuestion({
                     }}
                     className={cn(
                       value === number
-                        ? "bg-accent-selected-bg border-border-highlight z-10"
+                        ? "bg-accent-selected-bg border-border-highlight z-10 border"
                         : "border-border",
-                      a.length === number ? "rounded-r-md border-r" : "",
-                      number === 1 ? "rounded-l-md" : "",
+                      a.length === number ? "rounded-r-custom border-r" : "",
+                      number === 1 ? "rounded-l-custom" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
                       "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:border-2 focus:outline-none"
                     )}>
@@ -231,7 +231,7 @@ export default function RatingQuestion({
       </div>
     </form>
   );
-}
+};
 
 interface RatingSmileyProps {
   active: boolean;

@@ -30,6 +30,6 @@
     "@vitejs/plugin-react": "^4.2.1",
     "esbuild": "^0.20.1",
     "tsup": "^8.0.2",
-    "vite": "^5.1.6"
+    "vite": "^5.1.7"
   }
 }

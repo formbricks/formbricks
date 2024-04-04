@@ -72,6 +72,10 @@ jobs:
       OPENTELEMETRY_LISTENER_URL: ${{ vars.OPENTELEMETRY_LISTENER_URL }}
       RATE_LIMITING_DISABLED: ${{ vars.RATE_LIMITING_DISABLED }}
       KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
 
     steps:
       - name: Checkout code
@@ -108,7 +112,7 @@ jobs:
         run: |
           kamal() { command kamal "$@" -c kamal/deploy.yml; }
           set +e
-          DEPLOY_OUTPUT=$(kamal setup 2>&1)
+          DEPLOY_OUTPUT=$(kamal deploy 2>&1)
           DEPLOY_EXIT_CODE=$?
           echo "$DEPLOY_OUTPUT"
           if [[ "$DEPLOY_OUTPUT" == *"container not unhealthy (healthy)"* ]]; then
