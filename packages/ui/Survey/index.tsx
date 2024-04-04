@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 
 import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
 
-import { loadSurveyScript } from "./loadScript";
+import { loadSurveyScript } from "./lib/loadScript";
 
 const createContainerId = () => `formbricks-survey-container`;
 declare global {
@@ -27,18 +27,4 @@ export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
     }
   }, [containerId, props]);
   return <div id={containerId} className="h-full w-full" />;
-};
-
-export const SurveyModal = (props: SurveyModalProps) => {
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const renderModal = () => window.formbricksSurveys.renderSurveyModal(props);
-      if (!window.formbricksSurveys) {
-        loadSurveyScript().then(renderModal);
-      } else {
-        renderModal();
-      }
-    }
-  }, [props]);
-  return <div id="formbricks-survey"></div>;
 };
