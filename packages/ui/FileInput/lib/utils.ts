@@ -138,69 +138,6 @@ export const getAllowedFiles = (
   return allowedFiles;
 };
 
-export const extractYoutubeId = (url: string): string | null => {
-  let id = "";
-
-  // Regular expressions for various YouTube URL formats
-  const regExpList = [
-    /youtu\.be\/([a-zA-Z0-9_-]+)/, // youtu.be/<id>
-    /youtube\.com.*v=([a-zA-Z0-9_-]+)/, // youtube.com/watch?v=<id>
-    /youtube\.com.*embed\/([a-zA-Z0-9_-]+)/, // youtube.com/embed/<id>
-    /youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]+)/, // youtube-nocookie.com/embed/<id>
-  ];
-
-  regExpList.some((regExp) => {
-    const match = url.match(regExp);
-    if (match && match[1]) {
-      id = match[1];
-      return true;
-    }
-    return false;
-  });
-
-  return id;
-};
-
-const extractVimeoId = (url: string): string | null => {
-  const regExp = /vimeo\.com\/(\d+)/;
-  const match = url.match(regExp);
-
-  if (match && match[1]) {
-    return match[1];
-  }
-  return null;
-};
-
-const extractLoomId = (url: string): string | null => {
-  const regExp = /loom\.com\/share\/([a-zA-Z0-9]+)/;
-  const match = url.match(regExp);
-
-  if (match && match[1]) {
-    return match[1];
-  }
-  return null;
-};
-
-export const parseVideoUrl = (url: string): string | undefined => {
-  if (url.includes("youtube.com") || url.includes("youtu.be") || url.includes("youtube-nocookie.com")) {
-    const videoId = extractYoutubeId(url);
-    if (videoId) {
-      if (url.includes("youtube-nocookie.com")) {
-        return `https://www.youtube-nocookie.com/embed/${videoId}`;
-      } else {
-        return `https://www.youtube.com/embed/${videoId}`;
-      }
-    }
-    return `https://www.youtube.com/embed/${videoId}`;
-  } else if (url.includes("vimeo.com")) {
-    const videoId = extractVimeoId(url);
-    return `https://player.vimeo.com/video/${videoId}`;
-  } else if (url.includes("loom.com")) {
-    const videoId = extractLoomId(url);
-    return `https://www.loom.com/embed/${videoId}`;
-  }
-};
-
 export const checkForYoutubePrivacyMode = (url: string): boolean => {
   return url.includes("youtube-nocookie.com");
 };

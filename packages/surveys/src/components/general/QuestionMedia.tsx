@@ -1,7 +1,12 @@
 import { LoadingSpinner } from "@/components/general/LoadingSpinner";
 import { useState } from "preact/hooks";
 
-import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl } from "@formbricks/lib/utils/videoUpload";
+import {
+  checkForLoomUrl,
+  checkForVimeoUrl,
+  checkForYoutubeUrl,
+  parseVideoUrl,
+} from "@formbricks/lib/utils/videoUpload";
 
 //Function to add extra params to videoUrls in order to reduce video controls
 const getVideoUrlWithParams = (videoUrl: string): string => {
@@ -38,18 +43,20 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
               <LoadingSpinner />
             </div>
           )}
-          <iframe
-            src={videoUrlWithParams}
-            title="Question Video"
-            frameborder="0"
-            className="rounded-custom aspect-video w-full"
-            onLoad={() => setIsVideoLoading(false)}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <div className="rounded-custom bg-black">
+            <iframe
+              src={videoUrlWithParams}
+              title="Question Video"
+              frameborder="0"
+              className="rounded-custom aspect-video w-full"
+              onLoad={() => setIsVideoLoading(false)}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          </div>
         </div>
       )}
       <a
-        href={!!imgUrl ? imgUrl : videoUrl}
+        href={!!imgUrl ? imgUrl : parseVideoUrl(videoUrl ?? "")}
         target="_blank"
         rel="noreferrer"
         className="absolute bottom-2 right-2 flex items-center gap-2 rounded-md bg-gray-800 bg-opacity-40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out hover:bg-opacity-65 group-hover/image:opacity-100">
