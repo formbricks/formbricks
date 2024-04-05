@@ -76,21 +76,30 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
 
   const { description, environmentId, filters, isPrivate, surveyId, title } = segmentCreateInput;
+
+  let data: Prisma.SegmentCreateArgs["data"] = {
+    environmentId,
+    title,
+    description,
+    isPrivate,
+    filters,
+  };
+
+  if (surveyId) {
+    data = {
+      ...data,
+      surveys: {
+        connect: {
+          id: surveyId,
+        },
+      },
+    };
+  }
+
   try {
     const segment = await prisma.segment.create({
       data: {
-        environmentId,
-        title,
-        description,
-        isPrivate,
-        filters,
-        ...(surveyId && {
-          surveys: {
-            connect: {
-              id: surveyId,
-            },
-          },
-        }),
+        ...data,
       },
       select: selectSegment,
     });
