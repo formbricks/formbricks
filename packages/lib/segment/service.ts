@@ -98,9 +98,7 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
 
   try {
     const segment = await prisma.segment.create({
-      data: {
-        ...data,
-      },
+      data,
       select: selectSegment,
     });
 
