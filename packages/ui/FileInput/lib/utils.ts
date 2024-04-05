@@ -137,3 +137,7 @@ export const getAllowedFiles = (
   }
   return allowedFiles;
 };
+
+export const checkForYoutubePrivacyMode = (url: string): boolean => {
+  return url.includes("youtube-nocookie.com");
+};
