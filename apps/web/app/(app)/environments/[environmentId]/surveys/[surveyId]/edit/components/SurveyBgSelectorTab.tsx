@@ -6,8 +6,8 @@ import { TabBar } from "@formbricks/ui/TabBar";
 
 import { AnimatedSurveyBg } from "./AnimatedSurveyBg";
 import { ColorSurveyBg } from "./ColorSurveyBg";
+import { ImageFromThirdPartySurveyBg } from "./ImageFromThirdPartySurveyBg";
 import { UploadImageSurveyBg } from "./ImageSurveyBg";
-import { ImageFromThirdPartySurveyBg } from "./UploadSurveyBg";
 
 interface SurveyBgSelectorTabProps {
   handleBgChange: (bg: string, bgType: string) => void;
@@ -39,6 +39,7 @@ export default function SurveyBgSelectorTab({
   const [colorBackground, setColorBackground] = useState(background?.bg);
   const [animationBackground, setAnimationBackground] = useState(background?.bg);
   const [uploadBackground, setUploadBackground] = useState(background?.bg);
+  const [thirdPartyBackground, setThirdPartyBackground] = useState(background?.bg);
 
   useEffect(() => {
     const bgType = background?.bgType;
@@ -48,21 +49,24 @@ export default function SurveyBgSelectorTab({
       setColorBackground(background?.bg);
       setAnimationBackground("");
       setUploadBackground("");
+      setThirdPartyBackground("");
     }
 
     if (bgType === "animation") {
       setAnimationBackground(background?.bg);
       setColorBackground("");
       setUploadBackground("");
+      setThirdPartyBackground("");
     }
 
-    if (bgType === "upload") {
+    if (bgType === "image") {
+      setThirdPartyBackground(background?.bg);
       setColorBackground("");
       setAnimationBackground("");
       setUploadBackground("");
     }
 
-    if (bgType === "image") {
+    if (bgType === "upload") {
       setUploadBackground(background?.bg);
       setColorBackground("");
       setAnimationBackground("");
@@ -86,7 +90,12 @@ export default function SurveyBgSelectorTab({
           />
         );
       case "image":
-        return <ImageFromThirdPartySurveyBg environmentId={environmentId} handleBgChange={handleBgChange} />;
+        return (
+          <ImageFromThirdPartySurveyBg
+            background={thirdPartyBackground ?? ""}
+            handleBgChange={handleBgChange}
+          />
+        );
       default:
         return null;
     }

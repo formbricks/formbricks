@@ -20,9 +20,9 @@ export const UploadImageSurveyBg = ({
           environmentId={environmentId}
           onFileUpload={(url: string[]) => {
             if (url.length > 0) {
-              handleBgChange(url[0], "image");
+              handleBgChange(url[0], "upload");
             } else {
-              handleBgChange("", "image");
+              handleBgChange("", "upload");
             }
           }}
           fileUrl={background}

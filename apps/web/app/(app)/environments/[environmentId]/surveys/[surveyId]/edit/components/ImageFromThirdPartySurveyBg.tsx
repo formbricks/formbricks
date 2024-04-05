@@ -1,17 +1,20 @@
+"use client";
+
 import { getImagesFromUnsplashAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { debounce } from "lodash";
-import { SearchIcon } from "lucide-react";
+import { CheckCheckIcon, SearchIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import { getAllowedFiles, uploadFile } from "@formbricks/ui/FileInput/lib/fileUpload";
+import { TSurveyStyling } from "@formbricks/types/surveys";
+import { uploadFile } from "@formbricks/ui/FileInput/lib/fileUpload";
 import { Input } from "@formbricks/ui/Input";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 
 interface ImageFromThirdPartySurveyBgProps {
+  background: string;
   handleBgChange: (url: string, bgType: string) => void;
-  environmentId: string;
 }
 
 interface Image {
@@ -22,8 +25,28 @@ interface Image {
   };
 }
 
+export const saveUnsplashImageToFormbricks = async (environmentId: string, styling: TSurveyStyling) => {
+  if (styling?.background?.bgType === "image" && styling.background.bg?.includes("images.unsplash.com")) {
+    try {
+      const blob = await fetch(styling.background.bg).then((res) => res.blob());
+      const file = new File(
+        [blob],
+        `${"unsplash-" + new URL(styling.background.bg).pathname.split("/").pop()}.jpg`,
+        {
+          type: blob.type,
+        }
+      );
+      const { uploaded, url } = await uploadFile(file, ["png", "jpeg", "jpg"], environmentId);
+      if (!uploaded) throw new Error();
+      return url;
+    } catch {
+      toast.error("Unable to set background image, please try again");
+    }
+  }
+};
+
 export const ImageFromThirdPartySurveyBg = ({
-  environmentId,
+  background,
   handleBgChange,
 }: ImageFromThirdPartySurveyBgProps) => {
   const inputFocus = useRef<HTMLInputElement>(null);
@@ -64,57 +87,10 @@ export const ImageFromThirdPartySurveyBg = ({
     setQuery(event.target.value);
   };
 
-  const uploadSelectedImage = async (files: File[]) => {
-    if (files.length > 1) {
-      files = [files[0]];
-      toast.error("Only one file is allowed");
-    }
-    const allowedFileExtensions = ["png", "jpeg", "jpg"];
-
-    const allowedFiles = getAllowedFiles(files, allowedFileExtensions, 2);
-
-    if (allowedFiles.length === 0) {
-      return;
-    }
-
-    const uploadedFiles = await Promise.allSettled(
-      allowedFiles.map((file) => uploadFile(file, allowedFileExtensions, environmentId))
-    );
-
-    if (
-      uploadedFiles.length < allowedFiles.length ||
-      uploadedFiles.some((file) => file.status === "rejected")
-    ) {
-      if (uploadedFiles.length === 0) {
-        toast.error("No files were uploaded");
-      } else {
-        toast.error("Some files failed to upload");
-      }
-    }
-
-    const uploadedUrls: string[] = [];
-
-    uploadedFiles.forEach((file) => {
-      if (file.status === "fulfilled") {
-        uploadedUrls.push(encodeURI(file.value.url));
-      }
-    });
-
-    if (uploadedUrls.length > 0) {
-      handleBgChange(uploadedUrls[0], "upload");
-    } else {
-      handleBgChange("", "upload");
-    }
-  };
-
-  const handleImageSelected = async (imageUrl: string, imageName: string) => {
+  const handleImageSelected = async (imageUrl: string, _imageName: string) => {
     try {
       setUploading(true);
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-
-      const file = [new File([blob], `${imageName}.jpg`, { type: blob.type })];
-      await uploadSelectedImage(file);
+      handleBgChange(imageUrl, "image");
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -136,10 +112,27 @@ export const ImageFromThirdPartySurveyBg = ({
       </div>
       <div className="relative mt-4 grid grid-cols-3 gap-1">
         {downloadingFromThirdParty && (
-          <div className="absolute inset-0 m-1 flex items-center justify-center">
+          <div className="col-span-3 flex items-center justify-center p-4">
             <LoadingSpinner />
           </div>
         )}
+        {background && !background.includes("images.unsplash.com") && (
+          <div
+            className="relative cursor-pointer rounded-lg"
+            onClick={() => handleImageSelected(background, "Selected Background")}>
+            <Image
+              width={300}
+              height={200}
+              src={background}
+              alt="Selected Background"
+              className="rounded-lg"
+            />
+            <div className="absolute right-0 top-0 flex h-full w-full items-center justify-center bg-black bg-opacity-40">
+              <CheckCheckIcon className="h-8 w-8 text-white" />
+            </div>
+          </div>
+        )}
+
         {images.length > 0
           ? images.map((image) => (
               <Image

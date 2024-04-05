@@ -1,6 +1,7 @@
 "use client";
 
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { saveUnsplashImageToFormbricks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/ImageFromThirdPartySurveyBg";
 import {
   isCardValid,
   validateQuestion,
@@ -345,6 +346,13 @@ export default function SurveyMenuBar({
       setIsSurveySaving(false);
       toast.error("Survey cannot have both custom and saved actions, please remove one.");
       return;
+    }
+
+    if (strippedSurvey.styling) {
+      const unsplashUrl = await saveUnsplashImageToFormbricks(environment.id, strippedSurvey.styling);
+      if (strippedSurvey.styling.background?.bg) {
+        strippedSurvey.styling.background.bg = unsplashUrl;
+      }
     }
 
     try {
