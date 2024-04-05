@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 
 import LoadingSpinner from "../LoadingSpinner";
@@ -202,23 +203,25 @@ export const FileInput: React.FC<FileInputProps> = ({
 
   return (
     <div className="w-full cursor-default">
-      <div className="mb-4 space-y-4 rounded-lg border border-slate-300">
+      <div className="">
         {isVideoAllowed && (
           <TabBar tabs={tabs} activeId={activeTab} setActiveId={setActiveTab} tabStyle="button" />
         )}
-        <div className="px-4 pb-4">
+        <div className="">
           {activeTab === "video" && (
-            <VideoSettings
-              uploadedVideoUrl={uploadedVideoUrl}
-              setUploadedVideoUrl={setUploadedVideoUrl}
-              onFileUpload={onFileUpload}
-              videoUrl={videoUrl ?? ""}
-              setVideoUrlTemp={setVideoUrlTemp}
-            />
+            <div className={cn(isVideoAllowed && "rounded-b-lg border-x border-b border-slate-200 p-4")}>
+              <VideoSettings
+                uploadedVideoUrl={uploadedVideoUrl}
+                setUploadedVideoUrl={setUploadedVideoUrl}
+                onFileUpload={onFileUpload}
+                videoUrl={videoUrl ?? ""}
+                setVideoUrlTemp={setVideoUrlTemp}
+              />
+            </div>
           )}
 
           {activeTab === "image" && (
-            <div>
+            <div className={cn(isVideoAllowed && "rounded-b-lg border-x border-b border-slate-200 p-4")}>
               {selectedFiles.length > 0 ? (
                 multiple ? (
                   <div className="flex flex-wrap gap-2">

@@ -65,7 +65,7 @@ export default function QuestionConditional({
     <MultipleChoiceSingleQuestion
       key={question.id}
       question={question}
-      value={typeof value === "string" ? value : ""}
+      value={typeof value === "string" ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
