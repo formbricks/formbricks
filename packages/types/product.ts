@@ -35,7 +35,7 @@ export const ZLogo = z.object({
   bgColor: z.string().optional(),
 });
 
-export type TBrand = z.infer<typeof ZLogo>;
+export type TLogo = z.infer<typeof ZLogo>;
 
 export const ZProduct = z.object({
   id: z.string().cuid2(),
