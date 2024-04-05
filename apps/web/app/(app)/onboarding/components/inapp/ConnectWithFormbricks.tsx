@@ -99,7 +99,7 @@ const NotConnectedState = ({ environment, webAppUrl, jsPackageVersion, goToTeamI
           className="mt-8 font-normal text-slate-400"
           variant="minimal"
           onClick={goToTeamInvitePage}>
-          I am not sure how to do this
+          Skip
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>

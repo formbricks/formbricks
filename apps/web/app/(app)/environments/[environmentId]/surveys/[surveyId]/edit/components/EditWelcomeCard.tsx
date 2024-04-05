@@ -7,7 +7,7 @@ import { useState } from "react";
 import { LocalizedEditor } from "@formbricks/ee/multiLanguage/components/LocalizedEditor";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
-import FileInput from "@formbricks/ui/FileInput";
+import { FileInput } from "@formbricks/ui/FileInput";
 import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
