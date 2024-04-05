@@ -173,8 +173,8 @@ accessories:
       clear:
         LISTEN_PORT: "5432"
         POOL_MODE: "transaction"
-        MAX_CLIENT_CONN: "200"
-        DEFAULT_POOL_SIZE: "50"
+        MAX_CLIENT_CONN: "300"
+        DEFAULT_POOL_SIZE: "70"
         AUTH_TYPE: "scram-sha-256"
       secret:
         - DB_USER
