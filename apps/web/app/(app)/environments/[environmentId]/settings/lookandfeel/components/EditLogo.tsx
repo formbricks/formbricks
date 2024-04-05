@@ -9,7 +9,7 @@ import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
-import FileInput from "@formbricks/ui/FileInput";
+import { FileInput } from "@formbricks/ui/FileInput";
 import { Input } from "@formbricks/ui/Input";
 
 import { updateProductAction } from "../actions";
@@ -41,15 +41,13 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
       toast.error("Logo upload failed. Please try again.");
     } finally {
       setIsLoading(false);
-      if (!isEditing) {
-        setIsEditing(true);
-      }
     }
   };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) await handleImageUpload(file);
+    setIsEditing(true);
   };
 
   const saveChanges = async () => {
@@ -70,6 +68,30 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
     } finally {
       setIsEditing(false);
       setIsLoading(false);
+    }
+  };
+
+  const removeLogo = async () => {
+    if (window.confirm("Are you sure you want to remove the logo?")) {
+      setLogoUrl(undefined);
+      if (!isEditing) {
+        setIsEditing(true);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const updatedProduct: Partial<TProductUpdateInput> = {
+          logo: { url: undefined, bgColor: undefined },
+        };
+        await updateProductAction(product.id, updatedProduct);
+        toast.success("Logo removed successfully", { icon: "🗑️" });
+      } catch (error) {
+        toast.error("Failed to remove the logo");
+      } finally {
+        setIsEditing(false);
+        setIsLoading(false);
+      }
     }
   };
 
@@ -98,7 +120,9 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
           id="logo-input"
           allowedFileExtensions={["png", "jpeg", "jpg"]}
           environmentId={environmentId}
-          onFileUpload={(files: string[]) => setLogoUrl(files[0])}
+          onFileUpload={(files: string[]) => {
+            setLogoUrl(files[0]), setIsEditing(true);
+          }}
         />
       )}
 
@@ -110,7 +134,7 @@ export const EditLogo = ({ product, environmentId, isViewer }: EditLogoProps) =>
             <Button onClick={() => fileInputRef.current?.click()} variant="secondary" size="sm">
               Replace Logo
             </Button>
-            <Button variant="warn" size="sm" onClick={() => setLogoUrl(undefined)} disabled={!isEditing}>
+            <Button variant="warn" size="sm" onClick={removeLogo} disabled={!isEditing}>
               Remove Logo
             </Button>
           </div>
