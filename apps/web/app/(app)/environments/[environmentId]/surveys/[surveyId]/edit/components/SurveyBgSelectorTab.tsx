@@ -70,6 +70,7 @@ export default function SurveyBgSelectorTab({
       setUploadBackground(background?.bg);
       setColorBackground("");
       setAnimationBackground("");
+      setThirdPartyBackground("");
     }
   }, [background?.bg, background?.bgType]);
 
@@ -104,7 +105,7 @@ export default function SurveyBgSelectorTab({
   return (
     <div className="mt-4 flex flex-col items-center justify-center rounded-lg ">
       <TabBar
-        tabs={tabs}
+        tabs={tabs.filter((tab) => tab.id !== "upload" || unsplashApiKey)}
         activeId={activeTab}
         setActiveId={setActiveTab}
         tabStyle="button"

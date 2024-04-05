@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { TSurveyStyling } from "@formbricks/types/surveys";
-import { uploadFile } from "@formbricks/ui/FileInput/lib/fileUpload";
+import { uploadFile } from "@formbricks/ui/FileInput/lib/utils";
 import { Input } from "@formbricks/ui/Input";
 import LoadingSpinner from "@formbricks/ui/LoadingSpinner";
 

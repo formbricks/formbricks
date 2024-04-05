@@ -66,7 +66,7 @@ export const ThemeStyling = ({ product, environmentId, colors, unsplashApiKey }:
   const onSave = useCallback(async () => {
     if (localProduct.styling) {
       const unsplashUrl = await saveUnsplashImageToFormbricks(environmentId, localProduct.styling);
-      if (localProduct.styling.background?.bg) {
+      if (localProduct.styling.background?.bg && unsplashUrl) {
         localProduct.styling.background.bg = unsplashUrl;
       }
     }

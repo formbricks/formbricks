@@ -350,7 +350,7 @@ export default function SurveyMenuBar({
 
     if (strippedSurvey.styling) {
       const unsplashUrl = await saveUnsplashImageToFormbricks(environment.id, strippedSurvey.styling);
-      if (strippedSurvey.styling.background?.bg) {
+      if (strippedSurvey.styling.background?.bg && unsplashUrl) {
         strippedSurvey.styling.background.bg = unsplashUrl;
       }
     }
