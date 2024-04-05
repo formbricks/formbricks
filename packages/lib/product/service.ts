@@ -34,6 +34,7 @@ const selectProduct = {
   darkOverlay: true,
   environments: true,
   styling: true,
+  logo: true,
 };
 
 export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> => {

@@ -21,6 +21,7 @@ import {
   getMonthlyTeamResponseCount,
   getTeamByEnvironmentId,
 } from "@formbricks/lib/team/service";
+import { updateUser } from "@formbricks/lib/user/service";
 import { isVersionGreaterThanOrEqualTo } from "@formbricks/lib/utils/version";
 import { TLegacySurvey } from "@formbricks/types/LegacySurvey";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -75,6 +76,7 @@ export async function GET(
       const firstSurvey = getExampleSurveyTemplate(WEBAPP_URL);
       await createSurvey(environmentId, firstSurvey);
       await updateEnvironment(environment.id, { widgetSetupCompleted: true });
+      await updateUser(userId, { onboardingCompleted: true });
     }
     // check team subscriptions
     const team = await getTeamByEnvironmentId(environmentId);

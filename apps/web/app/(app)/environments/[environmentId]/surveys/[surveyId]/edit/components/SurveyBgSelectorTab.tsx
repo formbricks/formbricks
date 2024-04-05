@@ -80,17 +80,17 @@ export default function SurveyBgSelectorTab({
   };
 
   return (
-    <div className="mt-4 flex flex-col items-center justify-center rounded-lg border bg-slate-50 p-4">
-      <div className="flex w-full items-center justify-between overflow-hidden rounded-lg border border-slate-300">
-        <TabBar
-          tabs={tabs}
-          activeId={activeTab}
-          setActiveId={setActiveTab}
-          tabStyle="button"
-          className="bg-slate-100"
-        />
+    <div className="mt-4 flex flex-col items-center justify-center rounded-lg ">
+      <TabBar
+        tabs={tabs}
+        activeId={activeTab}
+        setActiveId={setActiveTab}
+        tabStyle="button"
+        className="bg-slate-100"
+      />
+      <div className="w-full rounded-b-lg border-x border-b border-slate-200 px-4 pb-4 pt-2">
+        {renderContent()}
       </div>
-      {renderContent()}
     </div>
   );
 }
