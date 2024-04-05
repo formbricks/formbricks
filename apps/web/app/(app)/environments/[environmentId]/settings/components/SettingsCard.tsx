@@ -19,7 +19,7 @@ export default function SettingsCard({
   className?: string;
 }) {
   return (
-    <div className={cn("my-4 w-full max-w-4xl bg-white shadow sm:rounded-lg", className)}>
+    <div className={cn("my-4 w-full max-w-4xl bg-white shadow sm:rounded-lg", className)} id={title}>
       <div className="border-b border-slate-200 bg-slate-100 px-6 py-5">
         <div className="flex">
           <h3 className="text-lg font-medium leading-6 text-slate-900">{title}</h3>
