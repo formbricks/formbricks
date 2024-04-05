@@ -13,31 +13,27 @@ export const ZIntegrationSlackConfigData = z
 export type TIntegrationSlackConfigData = z.infer<typeof ZIntegrationSlackConfigData>;
 
 export const ZIntegrationSlackCredential = z.object({
-  token_type: z.literal("Bearer"),
+  app_id: z.string(),
+  authed_user: z.object({
+    id: z.string(),
+  }),
+  token_type: z.literal("bot"),
   access_token: z.string(),
+  bot_user_id: z.string(),
+  team: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
 });
 
 export type TIntegrationSlackCredential = z.infer<typeof ZIntegrationSlackCredential>;
 
-export const ZSlackUser = z.object({
-  id: z.string().optional(),
-  name: z.string(),
-});
-
 export const ZIntegrationSlackConfig = z.object({
   key: ZIntegrationSlackCredential,
   data: z.array(ZIntegrationSlackConfigData),
-  user: ZSlackUser,
 });
 
 export type TIntegrationSlackConfig = z.infer<typeof ZIntegrationSlackConfig>;
-
-export const ZSlackIntegration = z.object({
-  id: z.string(),
-  type: z.literal("slack"),
-  environmentId: z.string(),
-  config: ZIntegrationSlackConfig,
-});
 
 export const ZIntegrationSlack = ZIntegrationBase.extend({
   type: z.literal("slack"),

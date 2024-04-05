@@ -139,7 +139,7 @@ export default async function IntegrationsPage({ params }) {
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/slack`,
-      connectText: `${isSlackIntegrationConnected ? "Manage Channel Stream" : "Connect"}`,
+      connectText: `${isSlackIntegrationConnected ? "Manage" : "Connect"}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/integrations/slack",
       docsText: "Docs",

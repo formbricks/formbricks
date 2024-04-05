@@ -1,8 +1,6 @@
 import SlackLogo from "@/images/slacklogo.png";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -17,12 +15,13 @@ import {
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
+import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
 
 import { createOrUpdateIntegrationAction } from "../../actions";
 
-interface AddIntegrationModalProps {
+interface AddChannelMappingModalProps {
   environmentId: string;
   surveys: TSurvey[];
   open: boolean;
@@ -32,7 +31,7 @@ interface AddIntegrationModalProps {
   selectedIntegration?: (TIntegrationSlackConfigData & { index: number }) | null;
 }
 
-export default function AddIntegrationModal({
+export const AddChannelMappingModal = ({
   environmentId,
   surveys,
   open,
@@ -40,30 +39,19 @@ export default function AddIntegrationModal({
   channels,
   slackIntegration,
   selectedIntegration,
-}: AddIntegrationModalProps) {
+}: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
-
-  const integrationData = {
-    channelId: "",
-    channelName: "",
-    surveyId: "",
-    surveyName: "",
-    questionIds: [""],
-    questions: "",
-    createdAt: new Date(),
-  };
 
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<TIntegrationItem | null>(null);
-  const [isDeleting, setIsDeleting] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const existingIntegrationData = slackIntegration?.config?.data;
   const slackIntegrationData: TIntegrationSlackInput = {
     type: "slack",
     config: {
       key: slackIntegration?.config?.key,
-      user: slackIntegration.config.user,
       data: existingIntegrationData || [],
     },
   };
@@ -97,7 +85,7 @@ export default function AddIntegrationModal({
   const linkChannel = async () => {
     try {
       if (!selectedChannel) {
-        throw new Error("Please select a slack channel");
+        throw new Error("Please select a Slack channel");
       }
       if (!selectedSurvey) {
         throw new Error("Please select a survey");
@@ -107,16 +95,18 @@ export default function AddIntegrationModal({
         throw new Error("Please select at least one question");
       }
       setIsLinkingChannel(true);
-      integrationData.channelId = selectedChannel.id;
-      integrationData.channelName = selectedChannel.name;
-      integrationData.surveyId = selectedSurvey.id;
-      integrationData.surveyName = selectedSurvey.name;
-      integrationData.questionIds = selectedQuestions;
-      integrationData.questions =
-        selectedQuestions.length === selectedSurvey?.questions.length
-          ? "All questions"
-          : "Selected questions";
-      integrationData.createdAt = new Date();
+      const integrationData: TIntegrationSlackConfigData = {
+        channelId: selectedChannel.id,
+        channelName: selectedChannel.name,
+        surveyId: selectedSurvey.id,
+        surveyName: selectedSurvey.name,
+        questionIds: selectedQuestions,
+        questions:
+          selectedQuestions.length === selectedSurvey?.questions.length
+            ? "All questions"
+            : "Selected questions",
+        createdAt: new Date(),
+      };
       if (selectedIntegration) {
         // update action
         slackIntegrationData.config!.data[selectedIntegration.index] = integrationData;
@@ -167,12 +157,16 @@ export default function AddIntegrationModal({
     }
   };
 
-  const hasMatchingId = slackIntegration.config.data.some((configData) => {
-    if (!selectedChannel) {
-      return false;
-    }
-    return configData.channelId === selectedChannel.id && !selectedIntegration;
-  });
+  const hasMatchingId = useMemo(
+    () =>
+      slackIntegration.config.data.some((configData) => {
+        if (!selectedChannel) {
+          return false;
+        }
+        return configData.channelId === selectedChannel.id && !selectedIntegration;
+      }),
+    [selectedChannel, selectedIntegration, slackIntegration.config.data]
+  );
 
   return (
     <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={false}>
@@ -203,8 +197,7 @@ export default function AddIntegrationModal({
                   />
                   {selectedChannel && hasMatchingId && (
                     <p className="text-xs text-amber-700">
-                      <strong>Warning:</strong> You have already connected one survey with this channel. Your
-                      data will be inconsistent
+                      <strong>Note:</strong> You have already connected another survey to this channel.
                     </p>
                   )}
                   <p className="m-1 text-xs text-slate-500">
@@ -257,13 +250,7 @@ export default function AddIntegrationModal({
           <div className="flex justify-end border-t border-slate-200 p-6">
             <div className="flex space-x-2">
               {selectedIntegration ? (
-                <Button
-                  type="button"
-                  variant="warn"
-                  loading={isDeleting}
-                  onClick={() => {
-                    deleteLink();
-                  }}>
+                <Button type="button" variant="warn" loading={isDeleting} onClick={deleteLink}>
                   Delete
                 </Button>
               ) : (
@@ -285,48 +272,5 @@ export default function AddIntegrationModal({
         </form>
       </div>
     </Modal>
-  );
-}
-
-const DropdownSelector = ({ label, items, selectedItem, setSelectedItem, disabled }) => {
-  return (
-    <div className="col-span-1">
-      <Label htmlFor={label}>{label}</Label>
-      <div className="mt-1 flex">
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <button
-              disabled={disabled ? disabled : false}
-              type="button"
-              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-500 dark:text-slate-300">
-              <span className="flex flex-1">
-                <span>{selectedItem ? selectedItem.name : `${label}`}</span>
-              </span>
-              <span className="flex h-full items-center border-l pl-3">
-                <ChevronDownIcon className="h-4 w-4 text-gray-500" />
-              </span>
-            </button>
-          </DropdownMenu.Trigger>
-
-          {!disabled && (
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="z-50 min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md"
-                align="start">
-                {items &&
-                  items.map((item) => (
-                    <DropdownMenu.Item
-                      key={item.id}
-                      className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-                      onSelect={() => setSelectedItem(item)}>
-                      {item.name}
-                    </DropdownMenu.Item>
-                  ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          )}
-        </DropdownMenu.Root>
-      </div>
-    </div>
   );
 };

@@ -23,12 +23,9 @@ export async function GET(req: NextRequest) {
     return responses.unauthorizedResponse();
   }
 
-  const client_id = SLACK_CLIENT_ID;
-  const client_secret = SLACK_CLIENT_SECRET;
-  const auth_url = SLACK_AUTH_URL;
-  if (!client_id) return responses.internalServerErrorResponse("Slack client id is missing");
-  if (!client_secret) return responses.internalServerErrorResponse("Slack client secret is missing");
-  if (!auth_url) return responses.internalServerErrorResponse("Slack auth url is missing");
+  if (!SLACK_CLIENT_ID) return responses.internalServerErrorResponse("Slack client id is missing");
+  if (!SLACK_CLIENT_SECRET) return responses.internalServerErrorResponse("Slack client secret is missing");
+  if (!SLACK_AUTH_URL) return responses.internalServerErrorResponse("Slack auth url is missing");
 
-  return responses.successResponse({ authUrl: `${auth_url}&state=${environmentId}` });
+  return responses.successResponse({ authUrl: `${SLACK_AUTH_URL}&state=${environmentId}` });
 }

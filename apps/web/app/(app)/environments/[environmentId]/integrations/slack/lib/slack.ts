@@ -1,7 +1,7 @@
 export const authorize = async (environmentId: string, apiHost: string): Promise<string> => {
-  const res = await fetch(`${apiHost}/api/slack`, {
+  const res = await fetch(`${apiHost}/api/v1/integrations/slack`, {
     method: "GET",
-    headers: { environmentId: environmentId },
+    headers: { environmentId },
   });
 
   if (!res.ok) {

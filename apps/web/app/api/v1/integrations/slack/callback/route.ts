@@ -20,16 +20,13 @@ export async function GET(req: NextRequest) {
     return responses.badRequestResponse("`code` must be a string");
   }
 
-  const client_id = SLACK_CLIENT_ID;
-  const client_secret = SLACK_CLIENT_SECRET;
-
-  if (!client_id) return responses.internalServerErrorResponse("Slack client id is missing");
-  if (!client_secret) return responses.internalServerErrorResponse("Slack client secret is missing");
+  if (!SLACK_CLIENT_ID) return responses.internalServerErrorResponse("Slack client id is missing");
+  if (!SLACK_CLIENT_SECRET) return responses.internalServerErrorResponse("Slack client secret is missing");
 
   const formData = new FormData();
   formData.append("code", code ?? "");
-  formData.append("client_id", client_id ?? "");
-  formData.append("client_secret", client_secret ?? "");
+  formData.append("client_id", SLACK_CLIENT_ID ?? "");
+  formData.append("client_secret", SLACK_CLIENT_SECRET ?? "");
 
   if (code) {
     const response = await fetch("https://slack.com/api/oauth.v2.access", {
@@ -40,14 +37,17 @@ export async function GET(req: NextRequest) {
     const data = await response.json();
 
     const slackCredentials: TIntegrationSlackCredential = {
-      token_type: "Bearer",
+      app_id: data.app_id,
+      authed_user: data.authed_user,
+      token_type: data.token_type,
       access_token: data.access_token,
+      bot_user_id: data.bot_user_id,
+      team: data.team,
     };
 
     const slackConfiguration: TIntegrationSlackConfig = {
       data: [],
       key: slackCredentials,
-      user: data.team,
     };
 
     const slackIntegration = {

@@ -10,7 +10,7 @@ import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import GoBackButton from "@formbricks/ui/GoBackButton";
 
 export default async function Slack({ params }) {
-  const enabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
+  const isEnabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
 
   const [surveys, slackIntegration, environment] = await Promise.all([
     getSurveys(params.environmentId),
@@ -32,7 +32,7 @@ export default async function Slack({ params }) {
       <GoBackButton url={`"/environments/${params.environmentId}/integrations`} />
       <div className="h-[75vh] w-full">
         <SlackWrapper
-          enabled={enabled}
+          isEnabled={isEnabled}
           environment={environment}
           channelsArray={channelsArray}
           surveys={surveys}

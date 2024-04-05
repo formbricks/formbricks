@@ -13,12 +13,12 @@ import { Button } from "@formbricks/ui/Button";
 import { authorize } from "../lib/slack";
 
 interface ConnectProps {
-  enabled: boolean;
+  isEnabled: boolean;
   environmentId: string;
   webAppUrl: string;
 }
 
-export default function Connect({ enabled, environmentId, webAppUrl }: ConnectProps) {
+export default function Connect({ isEnabled, environmentId, webAppUrl }: ConnectProps) {
   const searchParams = useSearchParams();
 
   const [isConnecting, setIsConnecting] = useState(false);
@@ -28,8 +28,7 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
     if (error) {
       toast.error("Connecting integration failed. Please try again!");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   const handleAuthorizeSlack = async () => {
     setIsConnecting(true);
@@ -52,7 +51,7 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
           </div>
         </div>
         <p className="my-8">Send responses directly to Slack.</p>
-        {!enabled && (
+        {!isEnabled && (
           <p className="mb-8 rounded border-gray-200 bg-gray-100 p-3 text-sm">
             Slack Integration is not configured in your instance of Formbricks.
             <br />
@@ -63,7 +62,7 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
             to configure it.
           </p>
         )}
-        <Button variant="darkCTA" loading={isConnecting} onClick={handleAuthorizeSlack} disabled={!enabled}>
+        <Button variant="darkCTA" loading={isConnecting} onClick={handleAuthorizeSlack} disabled={!isEnabled}>
           Connect with Slack
         </Button>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import AddSlackConnectionModal from "@/app/(app)/environments/[environmentId]/integrations/slack/components/AddIntegrationModal";
+import { AddChannelMappingModal } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/AddChannelMappingModal";
 import Connect from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Connect";
 import Home from "@/app/(app)/environments/[environmentId]/integrations/slack/components/Home";
 import { useState } from "react";
@@ -13,7 +13,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import { refreshChannelsAction } from "../actions";
 
 interface SlackWrapperProps {
-  enabled: boolean;
+  isEnabled: boolean;
   environment: TEnvironment;
   surveys: TSurvey[];
   channelsArray: TIntegrationItem[];
@@ -22,7 +22,7 @@ interface SlackWrapperProps {
 }
 
 export default function SlackWrapper({
-  enabled,
+  isEnabled,
   environment,
   surveys,
   channelsArray,
@@ -43,7 +43,7 @@ export default function SlackWrapper({
 
   return isConnected && slackIntegration ? (
     <>
-      <AddSlackConnectionModal
+      <AddChannelMappingModal
         environmentId={environment.id}
         surveys={surveys}
         open={isModalOpen}
@@ -62,6 +62,6 @@ export default function SlackWrapper({
       />
     </>
   ) : (
-    <Connect enabled={enabled} environmentId={environment.id} webAppUrl={webAppUrl} />
+    <Connect isEnabled={isEnabled} environmentId={environment.id} webAppUrl={webAppUrl} />
   );
 }
