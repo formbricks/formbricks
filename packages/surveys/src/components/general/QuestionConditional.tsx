@@ -227,20 +227,7 @@ export default function QuestionConditional({
       ttc={ttc}
       setTtc={setTtc}
     />
-  ) : question.type === TSurveyQuestionType.address ? (
-    <AddressQuestion
-      question={question}
-      value={typeof value === "object" && !Array.isArray(value) ? value : {}}
-      onChange={onChange}
-      onSubmit={onSubmit}
-      onBack={onBack}
-      isFirstQuestion={isFirstQuestion}
-      isLastQuestion={isLastQuestion}
-      languageCode={languageCode}
-      ttc={ttc}
-      setTtc={setTtc}
-    />
-  ) : question.type === TSurveyQuestionType.address ? (
+  ) : question.type === TSurveyQuestionType.Address ? (
     <AddressQuestion
       question={question}
       value={value as string[]}

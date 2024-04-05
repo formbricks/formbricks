@@ -35,7 +35,7 @@ export enum TSurveyQuestionType {
   Cal = "cal",
   Date = "date",
   Matrix = "matrix",
-  address = "address",
+  Address = "address",
 }
 
 export const ZSurveyWelcomeCard = z.object({
@@ -388,8 +388,8 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
-  type: z.literal(TSurveyQuestionType.address),
-  addressRequired: z.boolean().default(false),
+  type: z.literal(TSurveyQuestionType.Address),
+  addressLine1Required: z.boolean().default(false),
   addressLine2Required: z.boolean().default(false),
   cityRequired: z.boolean().default(false),
   stateRequired: z.boolean().default(false),

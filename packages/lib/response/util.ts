@@ -1101,9 +1101,8 @@ export const getQuestionWiseSummary = (
         });
         break;
       }
-      case TSurveyQuestionType.address: {
+      case TSurveyQuestionType.Address: {
         let values: TSurveySummaryAddress["samples"] = [];
-        console.log(responses);
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (Array.isArray(answer)) {
@@ -1115,7 +1114,6 @@ export const getQuestionWiseSummary = (
             });
           }
         });
-        console.log(values);
 
         summary.push({
           type: question.type,

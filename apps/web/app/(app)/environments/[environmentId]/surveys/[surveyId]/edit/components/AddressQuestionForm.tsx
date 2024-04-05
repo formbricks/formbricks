@@ -74,7 +74,7 @@ export default function AddressQuestionForm({
           <Button
             size="sm"
             variant="minimal"
-            className="mt-3"
+            className="mt-4"
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
@@ -88,13 +88,13 @@ export default function AddressQuestionForm({
         )}
         <div className="mt-2 font-medium">Settings</div>
         <AdvancedOptionToggle
-          isChecked={question.addressRequired}
-          onToggle={() => updateQuestion(questionIdx, { addressRequired: !question.addressRequired })}
+          isChecked={question.addressLine1Required}
+          onToggle={() => updateQuestion(questionIdx, { addressRequired: !question.addressLine1Required })}
           htmlId="addressRequired"
           title="Required: Address Line 1"
           description=""
           childBorder
-          customContainerClass="p-0 mt-2"></AdvancedOptionToggle>
+          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
           isChecked={question.addressLine2Required}
           onToggle={() =>
@@ -104,7 +104,7 @@ export default function AddressQuestionForm({
           title="Required: Address Line 2"
           description=""
           childBorder
-          customContainerClass="p-0 mt-2"></AdvancedOptionToggle>
+          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
           isChecked={question.cityRequired}
           onToggle={() => updateQuestion(questionIdx, { cityRequired: !question.cityRequired })}
@@ -112,7 +112,7 @@ export default function AddressQuestionForm({
           title="Required: City / Town"
           description=""
           childBorder
-          customContainerClass="p-0 mt-2"></AdvancedOptionToggle>
+          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
           isChecked={question.stateRequired}
           onToggle={() => updateQuestion(questionIdx, { stateRequired: !question.stateRequired })}
@@ -120,7 +120,7 @@ export default function AddressQuestionForm({
           title="Required: State / Region"
           description=""
           childBorder
-          customContainerClass="p-0 mt-2"></AdvancedOptionToggle>
+          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
           isChecked={question.zipRequired}
           onToggle={() => updateQuestion(questionIdx, { zipRequired: !question.zipRequired })}
@@ -128,7 +128,7 @@ export default function AddressQuestionForm({
           title="Required: ZIP / Post Code"
           description=""
           childBorder
-          customContainerClass="p-0 mt-2"></AdvancedOptionToggle>
+          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
           isChecked={question.countryRequired}
           onToggle={() => updateQuestion(questionIdx, { countryRequired: !question.countryRequired })}
@@ -136,7 +136,7 @@ export default function AddressQuestionForm({
           title="Required: Country"
           description=""
           childBorder
-          customContainerClass="p-0 mt-2"></AdvancedOptionToggle>
+          customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
       </div>
     </form>
   );

@@ -168,8 +168,8 @@ export default function QuestionCard({
                       <PhoneIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Matrix ? (
                       <Grid3X3Icon className="h-5 w-5" />
-                    ) : question.type === TSurveyQuestionType.address ? (
-                      <HomeIcon />
+                    ) : question.type === TSurveyQuestionType.Address ? (
+                      <HomeIcon className="h-5 w-5" />
                     ) : null}
                   </div>
                   <div>
@@ -336,7 +336,7 @@ export default function QuestionCard({
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
-              ) : question.type === TSurveyQuestionType.address ? (
+              ) : question.type === TSurveyQuestionType.Address ? (
                 <AddressQuestionForm
                   localSurvey={localSurvey}
                   question={question}

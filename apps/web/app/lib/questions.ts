@@ -184,7 +184,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     },
   },
   {
-    id: QuestionId.address,
+    id: QuestionId.Address,
     label: "Address",
     description: "Allow respondents to provide their address",
     icon: HomeIcon,

@@ -46,7 +46,7 @@ export default function AddressQuestion({
 
   const handleInputChange = (inputValue: string, index: number) => {
     const updatedValue = [...safeValue];
-    updatedValue[index] = inputValue.trim();
+    updatedValue[index] = inputValue.trimStart();
     onChange({ [question.id]: updatedValue });
   };
 
@@ -62,15 +62,15 @@ export default function AddressQuestion({
     setHasFilled(filled);
   }, [value]);
 
-  const inputPlaceholders = [
+  const inputConfig = [
     {
-      placeholder: "Address e.g. Bay Street 69",
+      placeholder: "Address Line 1 e.g. Bay Street 69",
       required: question.required
         ? hasFilled
-          ? question.addressRequired
+          ? question.addressLine1Required
           : true
         : hasFilled
-          ? question.addressRequired
+          ? question.addressLine1Required
           : false,
     },
     {
@@ -112,7 +112,7 @@ export default function AddressQuestion({
         questionId={question.id}
       />
       <div className="mt-4 space-y-2">
-        {inputPlaceholders.map(({ placeholder, required }, index) => (
+        {inputConfig.map(({ placeholder, required }, index) => (
           <input
             name={`${question.id}-${index}`}
             id={`${question.id}-${index}`}
