@@ -321,7 +321,8 @@ export default function MultipleChoiceMultiForm({
               variant="minimal"
               type="button"
               onClick={() => {
-                updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceMulti });
+                // @ts-expect-error
+                updateQuestion(questionIdx, { type: TSurveyQuestionType.MultipleChoiceSingle });
               }}>
               Convert to Single Select
             </Button>
