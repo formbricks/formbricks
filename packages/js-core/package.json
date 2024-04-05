@@ -40,16 +40,10 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
-    "@babel/preset-env": "^7.24.4",
-    "@babel/preset-typescript": "^7.24.1",
     "@formbricks/api": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@typescript-eslint/eslint-plugin": "^7.5.0",
-    "@typescript-eslint/parser": "^7.5.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.13.2",
     "terser": "^5.30.3",
     "vite": "^5.2.8",
     "vite-plugin-dts": "^3.8.1"
