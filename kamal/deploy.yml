@@ -29,8 +29,8 @@ registry:
 env:
   # clear:
   #   DB_HOST: 192.168.0.2
-  clear:
-    REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
+  # clear:
+  # REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -191,7 +191,7 @@ accessories:
 healthcheck:
   path: /health
   port: 3000
-  max_attempts: 7
+  max_attempts: 15
   interval: 20s
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old

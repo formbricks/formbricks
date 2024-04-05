@@ -63,7 +63,6 @@ const formbricksProxyHandler: ProxyHandler<any> = {
 
       try {
         return window.formbricks[prop](...args);
-        return;
       } catch (error) {
         console.error(error);
         throw error;
