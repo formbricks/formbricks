@@ -101,6 +101,7 @@ export const ThemeStyling = ({ product, environmentId, colors, unsplashApiKey }:
         cardBorderColor: {
           light: COLOR_DEFAULTS.cardBorderColor,
         },
+        isLogoHidden: undefined,
         highlightBorderColor: undefined,
         isDarkModeEnabled: false,
         roundness: 8,
@@ -133,6 +134,7 @@ export const ThemeStyling = ({ product, environmentId, colors, unsplashApiKey }:
       cardBorderColor: {
         light: COLOR_DEFAULTS.cardBorderColor,
       },
+      isLogoHidden: undefined,
       highlightBorderColor: undefined,
       isDarkModeEnabled: false,
       roundness: 8,
@@ -206,6 +208,7 @@ export const ThemeStyling = ({ product, environmentId, colors, unsplashApiKey }:
               styling={styling}
               setStyling={setStyling}
               hideCheckmark
+              localProduct={localProduct}
             />
 
             <BackgroundStylingCard

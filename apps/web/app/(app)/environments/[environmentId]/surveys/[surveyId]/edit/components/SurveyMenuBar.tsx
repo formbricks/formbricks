@@ -357,6 +357,7 @@ export default function SurveyMenuBar({
 
     try {
       await updateSurveyAction({ ...strippedSurvey });
+
       setIsSurveySaving(false);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {

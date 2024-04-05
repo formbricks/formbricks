@@ -4,8 +4,7 @@ import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/M
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
-import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
-import { RefreshCcwIcon } from "lucide-react";
+import { ExpandIcon, MonitorIcon, RefreshCcwIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -14,6 +13,7 @@ import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
+import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -241,6 +241,9 @@ export default function PreviewSurvey({
                 </Modal>
               ) : (
                 <div className="w-full px-3">
+                  <div className="absolute left-5 top-5">
+                    <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                  </div>
                   <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
@@ -317,7 +320,10 @@ export default function PreviewSurvey({
               </Modal>
             ) : (
               <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
-                <div className="z-0 w-full max-w-md rounded-lg p-4">
+                <div className="absolute left-5 top-5">
+                  <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                </div>
+                <div className="z-0 w-full max-w-md rounded-lg border-transparent">
                   <SurveyInline
                     survey={survey}
                     activeQuestionId={activeQuestionId || undefined}

@@ -104,7 +104,7 @@ export default function BackgroundStylingCard({
           {/* Background */}
           <div className="p-3">
             <div className="ml-2">
-              <h3 className="text-sm font-semibold text-slate-700">Change Background</h3>
+              <h3 className="text-sm font-semibold text-slate-700">Change background</h3>
               <p className="text-xs font-normal text-slate-500">
                 Pick a background from our library or upload your own.
               </p>
@@ -122,7 +122,7 @@ export default function BackgroundStylingCard({
           {/* Overlay */}
           <div className="flex flex-col gap-4 p-3">
             <div className="ml-2">
-              <h3 className="text-sm font-semibold text-slate-700">Background Overlay</h3>
+              <h3 className="text-sm font-semibold text-slate-700">Background overlay</h3>
               <p className="text-xs font-normal text-slate-500">
                 Darken or lighten background of your choice.
               </p>

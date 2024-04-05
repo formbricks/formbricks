@@ -31,7 +31,7 @@
     "data-migration:mls-range-fix": "ts-node ./migrations/20240318050527_add_languages_and_survey_languages/data-migration-range-fix.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.11.0",
+    "@prisma/client": "^5.12.1",
     "@prisma/extension-accelerate": "^1.0.0",
     "dotenv-cli": "^7.4.1"
   },
@@ -40,7 +40,7 @@
     "@formbricks/types": "workspace:*",
     "@paralleldrive/cuid2": "^2.2.2",
     "eslint-config-formbricks": "workspace:*",
-    "prisma": "^5.11.0",
+    "prisma": "^5.12.1",
     "prisma-dbml-generator": "^0.12.0",
     "prisma-json-types-generator": "^3.0.4",
     "ts-node": "^10.9.2",
