@@ -31,11 +31,9 @@ export default function SurveyStarter({
   const newSurveyFromTemplate = async (template: TTemplate) => {
     setIsCreateSurveyLoading(true);
     const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
-    const autoComplete = surveyType === "web" ? 50 : null;
     const augmentedTemplate: TSurveyInput = {
       ...template.preset,
       type: surveyType,
-      autoComplete: autoComplete || undefined,
       createdBy: user.id,
     };
     try {

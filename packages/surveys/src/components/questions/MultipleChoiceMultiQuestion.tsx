@@ -208,7 +208,7 @@ export const MultipleChoiceMultiQuestion = ({
                 onKeyDown={(e) => {
                   // Accessibility: if spacebar was pressed pass this down to the input
                   if (e.key === " ") {
-                    e.preventDefault();
+                    if (otherSelected) return;
                     document.getElementById(otherOption.id)?.click();
                     document.getElementById(otherOption.id)?.focus();
                   }
