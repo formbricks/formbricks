@@ -1,10 +1,11 @@
 "use client";
 
-import QuestionFormInput from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/QuestionFormInput";
-import { PlusIcon, TrashIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon, XCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { useGetBillingInfo } from "@formbricks/lib/team/hooks/useGetBillingInfo";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TProduct } from "@formbricks/types/product";
@@ -12,16 +13,18 @@ import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
-import { Label } from "@formbricks/ui/Label";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
   product?: TProduct;
   question: TSurveyFileUploadQuestion;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyFileUploadQuestion>) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (languageCode: string) => void;
+  isInvalid: boolean;
 }
 
 export default function FileUploadQuestionForm({
@@ -29,8 +32,10 @@ export default function FileUploadQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   product,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: FileUploadFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const [extension, setExtension] = useState("");
@@ -39,6 +44,7 @@ export default function FileUploadQuestionForm({
     error: billingInfoError,
     isLoading: billingInfoLoading,
   } = useGetBillingInfo(product?.teamId ?? "");
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   const handleInputChange = (event) => {
     setExtension(event.target.value);
@@ -48,11 +54,11 @@ export default function FileUploadQuestionForm({
     event.preventDefault();
     event.stopPropagation();
 
-    let modifiedExtension = extension.trim();
+    let modifiedExtension = extension.trim() as TAllowedFileExtension;
 
     // Remove the dot at the start if it exists
     if (modifiedExtension.startsWith(".")) {
-      modifiedExtension = modifiedExtension.substring(1);
+      modifiedExtension = modifiedExtension.substring(1) as TAllowedFileExtension;
     }
 
     if (!modifiedExtension) {
@@ -104,40 +110,56 @@ export default function FileUploadQuestionForm({
     return 10;
   }, [billingInfo, billingInfoError, billingInfoLoading]);
 
-  const environmentId = localSurvey.environmentId;
-
   return (
     <form>
       <QuestionFormInput
-        environmentId={environmentId}
-        isInValid={isInValid}
-        question={question}
+        id="headline"
+        value={question.headline}
+        localSurvey={localSurvey}
         questionIdx={questionIdx}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
-      <div className="mt-3">
+      <div>
         {showSubheader && (
-          <>
-            <Label htmlFor="subheader">Description</Label>
-            <div className="mt-2 inline-flex w-full items-center">
-              <Input
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
+              <QuestionFormInput
                 id="subheader"
-                name="subheader"
                 value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
-              />
-              <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
-                }}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                isInvalid={isInvalid}
+                updateQuestion={updateQuestion}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: undefined });
+              }}
+            />
+          </div>
         )}
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            className="mt-3"
+            variant="minimal"
+            type="button"
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                subheader: createI18nString("", surveyLanguageCodes),
+              });
+              setShowSubheader(true);
+            }}>
+            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>

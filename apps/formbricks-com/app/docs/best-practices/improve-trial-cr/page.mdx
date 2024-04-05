@@ -1,5 +1,5 @@
 import DemoPreview from "@/components/dummyUI/DemoPreview";
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import ActionText from "./action-innertext.webp";
 import ActionPageurl from "./action-pageurl.webp";
@@ -54,7 +54,7 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template “Improve Trial Conversion”:
 
-<Image
+<MdxImage
   src={CreateSurvey}
   alt="Create survey by template"
   quality="100"
@@ -65,7 +65,7 @@ Click on "Create Survey" and choose the template “Improve Trial Conversion”:
 
 You’re free to update the questions and answer options. However, based on our experience, we suggest giving the provided template a go 😊
 
-<Image
+<MdxImage
   src={ChangeText}
   alt="Change text content"
   quality="100"
@@ -91,7 +91,7 @@ How you trigger your survey depends on your product. There are two options:
 
 1. **Trigger by pageURL:** Let’s say you have a page under “/trial-cancelled” where you forward users once they cancelled the trial subscription. You can then create an user Action with the type `pageURL` with the following settings:
 
-<Image
+<MdxImage
   src={ActionPageurl}
   alt="Change text content"
   quality="100"
@@ -102,7 +102,7 @@ Whenever a user visits this page, the survey will be displayed ✅
 
 2. **Trigger by Button Click:** In a different case, you have a “Cancel Trial button in your app. You can setup a user Action with the according `innerText` like so:
 
-<Image
+<MdxImage
   src={ActionText}
   alt="Change text content"
   quality="100"
@@ -113,7 +113,7 @@ Please have a look at our complete [Actions manual](/docs/actions/why) if you ha
 
 ### 5. Select Action in the “When to ask” card
 
-<Image
+<MdxImage
   src={SelectAction}
   alt="Select feedback button action"
   quality="100"
@@ -124,7 +124,7 @@ Please have a look at our complete [Actions manual](/docs/actions/why) if you ha
 
 Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure you gather as many insights as possible. You want to make sure that this survey is always displayed, no matter if the user has already seen a survey in the past days:
 
-<Image
+<MdxImage
   src={RecontactOptions}
   alt="Set recontact options"
   quality="100"
@@ -133,7 +133,7 @@ Lastly, scroll down to “Recontact Options”. Here you have to choose the corr
 
 ### 7. Congrats! You’re ready to publish your survey 💃
 
-<Image src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+<MdxImage src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
   ## Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box

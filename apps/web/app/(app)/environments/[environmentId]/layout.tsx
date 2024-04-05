@@ -4,12 +4,13 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@formbricks/lib/authOptions";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import ToasterClient from "@formbricks/ui/ToasterClient";
 
 import FormbricksClient from "../../components/FormbricksClient";
+import PosthogIdentify from "./components/PosthogIdentify";
 
 export default async function EnvironmentLayout({ children, params }) {
   const session = await getServerSession(authOptions);
@@ -21,16 +22,26 @@ export default async function EnvironmentLayout({ children, params }) {
     throw new AuthorizationError("Not authorized");
   }
 
+  const team = await getTeamByEnvironmentId(params.environmentId);
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
   return (
     <>
       <ResponseFilterProvider>
+        <PosthogIdentify
+          session={session}
+          environmentId={params.environmentId}
+          teamId={team.id}
+          teamName={team.name}
+          inAppSurveyBillingStatus={team.billing.features.inAppSurvey.status}
+          linkSurveyBillingStatus={team.billing.features.linkSurvey.status}
+          userTargetingBillingStatus={team.billing.features.userTargeting.status}
+        />
         <FormbricksClient session={session} />
         <ToasterClient />
-        <EnvironmentsNavbar
-          environmentId={params.environmentId}
-          session={session}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-        />
+        <EnvironmentsNavbar environmentId={params.environmentId} session={session} />
         <main className="h-full flex-1 overflow-y-auto bg-slate-50">
           {children}
           <main />

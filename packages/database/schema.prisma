@@ -63,7 +63,7 @@ model Attribute {
   personId         String
   value            String
 
-  @@unique([attributeClassId, personId])
+  @@unique([personId, attributeClassId])
 }
 
 enum AttributeType {
@@ -86,7 +86,8 @@ model AttributeClass {
   attributeFilters SurveyAttributeFilter[]
 
   @@unique([name, environmentId])
-  @@index([environmentId])
+  @@index([environmentId, createdAt])
+  @@index([environmentId, archived])
 }
 
 model Person {
@@ -130,6 +131,7 @@ model Response {
   personAttributes Json?
   // singleUseId, used to prevent multiple responses
   singleUseId      String?
+  language         String?
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
@@ -198,7 +200,7 @@ model Display {
   status     DisplayStatus?
 
   @@index([surveyId])
-  @@index([personId])
+  @@index([personId, createdAt])
 }
 
 model SurveyTrigger {
@@ -257,6 +259,8 @@ model Survey {
   type                SurveyType              @default(web)
   environment         Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId       String
+  creator             User?                   @relation(fields: [createdBy], references: [id])
+  createdBy           String?
   status              SurveyStatus            @default(draft)
   /// @zod.custom(imports.ZSurveyWelcomeCard)
   /// [SurveyWelcomeCard]
@@ -274,6 +278,9 @@ model Survey {
   displayOption       displayOptions          @default(displayOnce)
   recontactDays       Int?
   triggers            SurveyTrigger[]
+  /// @zod.custom(imports.ZSurveyInlineTriggers)
+  /// [SurveyInlineTriggers]
+  inlineTriggers      Json?
   attributeFilters    SurveyAttributeFilter[]
   displays            Display[]
   autoClose           Int?
@@ -283,25 +290,31 @@ model Survey {
   /// @zod.custom(imports.ZSurveyClosedMessage)
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
-  /// @zod.custom(imports.ZSurveySingleUse)
-  /// [SurveySingleUse]
+  segmentId           String?
+  segment             Segment?                @relation(fields: [segmentId], references: [id])
 
   /// @zod.custom(imports.ZSurveyProductOverwrites)
   /// [SurveyProductOverwrites]
   productOverwrites Json?
+
   /// @zod.custom(imports.ZSurveyStyling)
   /// [SurveyStyling]
-  styling           Json?
+  styling Json?
+
   /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
-  singleUse         Json?   @default("{\"enabled\": false, \"isEncrypted\": true}")
+  singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
+
   /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail       Json?
   pin               String?
-  resultShareKey    String? @unique
+  resultShareKey    String?          @unique
+  displayPercentage Int?
+  languages         SurveyLanguage[]
 
-  @@index([environmentId])
+  @@index([environmentId, updatedAt])
+  @@index([segmentId])
 }
 
 enum ActionType {
@@ -326,6 +339,7 @@ model ActionClass {
   actions       Action[]
 
   @@unique([name, environmentId])
+  @@index([environmentId, createdAt])
 }
 
 model Action {
@@ -340,8 +354,10 @@ model Action {
   /// [ActionProperties]
   properties    Json        @default("{}")
 
+  @@index([personId, actionClassId, createdAt])
+  @@index([actionClassId, createdAt])
   @@index([personId])
-  @@index([actionClassId])
+  @@index([createdAt])
 }
 
 enum EnvironmentType {
@@ -383,6 +399,7 @@ model Environment {
   apiKeys              ApiKey[]
   webhooks             Webhook[]
   tags                 Tag[]
+  segments             Segment[]
   integration          Integration[]
 
   @@index([productId])
@@ -404,14 +421,18 @@ model Product {
   team                 Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId               String
   environments         Environment[]
-  brandColor           String          @default("#64748b")
+  brandColor           String?
   highlightBorderColor String?
+  /// @zod.custom(imports.ZProductStyling)
+  /// [Styling]
+  styling              Json            @default("{\"allowStyleOverwrite\":true}")
   recontactDays        Int             @default(7)
   linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
   inAppSurveyBranding  Boolean         @default(true) // Determines if the survey branding should be displayed in in-app surveys
   placement            WidgetPlacement @default(bottomRight)
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
+  languages            Language[]
 
   @@unique([teamId, name])
   @@index([teamId])
@@ -487,6 +508,7 @@ enum IdentityProvider {
   github
   google
   azuread
+  openid
 }
 
 model Account {
@@ -563,6 +585,7 @@ model User {
   /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
+  surveys                   Survey[]
 
   @@index([email])
 }
@@ -572,4 +595,48 @@ model ShortUrl {
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @updatedAt @map(name: "updated_at")
   url       String   @unique
+}
+
+model Segment {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now()) @map(name: "created_at")
+  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
+  title         String
+  description   String?
+  isPrivate     Boolean     @default(true)
+  /// @zod.custom(imports.ZSegmentFilters)
+  /// [SegmentFilter]
+  filters       Json        @default("[]")
+  environmentId String
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  surveys       Survey[]
+
+  @@unique([environmentId, title])
+  @@index([environmentId])
+}
+
+model Language {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now()) @map(name: "created_at")
+  updatedAt       DateTime         @updatedAt @map(name: "updated_at")
+  code            String
+  alias           String?
+  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId       String
+  surveyLanguages SurveyLanguage[]
+
+  @@unique([productId, code])
+}
+
+model SurveyLanguage {
+  language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  languageId String
+  surveyId   String
+  survey     Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  default    Boolean  @default(false)
+  enabled    Boolean  @default(true)
+
+  @@id([languageId, surveyId])
+  @@index([surveyId])
+  @@index([languageId])
 }

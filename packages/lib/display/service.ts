@@ -8,6 +8,7 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import {
   TDisplay,
   TDisplayCreateInput,
+  TDisplayFilters,
   TDisplayLegacyCreateInput,
   TDisplayLegacyUpdateInput,
   TDisplayUpdateInput,
@@ -27,13 +28,14 @@ import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { displayCache } from "./cache";
 
-const selectDisplay = {
+export const selectDisplay = {
   id: true,
   createdAt: true,
   updatedAt: true,
   surveyId: true,
   responseId: true,
   personId: true,
+  status: true,
 };
 
 export const getDisplay = async (displayId: string): Promise<TDisplay | null> => {
@@ -42,7 +44,7 @@ export const getDisplay = async (displayId: string): Promise<TDisplay | null> =>
       validateInputs([displayId, ZId]);
 
       try {
-        const display = await prisma.response.findUnique({
+        const display = await prisma.display.findUnique({
           where: {
             id: displayId,
           },
@@ -143,7 +145,6 @@ export const updateDisplayLegacy = async (
       data,
       select: selectDisplay,
     });
-
     displayCache.revalidate({
       id: display.id,
       surveyId: display.surveyId,
@@ -164,7 +165,6 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
   validateInputs([displayInput, ZDisplayCreateInput]);
 
   const { environmentId, userId, surveyId } = displayInput;
-
   try {
     let person;
     if (userId) {
@@ -191,13 +191,11 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
       },
       select: selectDisplay,
     });
-
     displayCache.revalidate({
       id: display.id,
       personId: display.personId,
       surveyId: display.surveyId,
     });
-
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -337,7 +335,6 @@ export const deleteDisplayByResponseId = async (
       personId: display.personId,
       surveyId,
     });
-
     return display;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -347,7 +344,10 @@ export const deleteDisplayByResponseId = async (
   }
 };
 
-export const getDisplayCountBySurveyId = async (surveyId: string): Promise<number> =>
+export const getDisplayCountBySurveyId = async (
+  surveyId: string,
+  filters?: TDisplayFilters
+): Promise<number> =>
   unstable_cache(
     async () => {
       validateInputs([surveyId, ZId]);
@@ -356,6 +356,13 @@ export const getDisplayCountBySurveyId = async (surveyId: string): Promise<numbe
         const displayCount = await prisma.display.count({
           where: {
             surveyId: surveyId,
+            ...(filters &&
+              filters.createdAt && {
+                createdAt: {
+                  gte: filters.createdAt.min,
+                  lte: filters.createdAt.max,
+                },
+              }),
           },
         });
         return displayCount;

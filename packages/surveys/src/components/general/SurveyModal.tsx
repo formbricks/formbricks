@@ -1,6 +1,7 @@
 import Modal from "@/components/wrappers/Modal";
-import { SurveyModalProps } from "@/types/props";
 import { useState } from "preact/hooks";
+
+import { SurveyModalProps } from "@formbricks/types/formbricksSurveys";
 
 import { Survey } from "./Survey";
 
@@ -8,27 +9,35 @@ export function SurveyModal({
   survey,
   isBrandingEnabled,
   activeQuestionId,
+  getSetIsError,
   placement,
   clickOutside,
   darkOverlay,
-  highlightBorderColor,
-  onDisplay = () => {},
-  onActiveQuestionChange = () => {},
-  onResponse = () => {},
-  onClose = () => {},
+  onDisplay,
+  getSetIsResponseSendingFinished,
+  onActiveQuestionChange,
+  onResponse,
+  onClose,
   onFinished = () => {},
   onFileUpload,
+  onRetry,
   isRedirectDisabled = false,
+  languageCode,
   responseCount,
+  styling,
 }: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   const close = () => {
     setIsOpen(false);
     setTimeout(() => {
-      onClose();
+      if (onClose) {
+        onClose();
+      }
     }, 1000); // wait for animation to finish}
   };
+
+  const highlightBorderColor = styling?.highlightBorderColor?.light || null;
 
   return (
     <div id="fbjs" className="formbricks-form">
@@ -44,8 +53,10 @@ export function SurveyModal({
           isBrandingEnabled={isBrandingEnabled}
           activeQuestionId={activeQuestionId}
           onDisplay={onDisplay}
+          getSetIsResponseSendingFinished={getSetIsResponseSendingFinished}
           onActiveQuestionChange={onActiveQuestionChange}
           onResponse={onResponse}
+          languageCode={languageCode}
           onClose={close}
           onFinished={() => {
             onFinished();
@@ -53,11 +64,15 @@ export function SurveyModal({
               if (!survey.redirectUrl) {
                 close();
               }
-            }, 4000); // close modal automatically after 4 seconds
+            }, 3000); // close modal automatically after 3 seconds
           }}
+          onRetry={onRetry}
+          getSetIsError={getSetIsError}
           onFileUpload={onFileUpload}
           isRedirectDisabled={isRedirectDisabled}
           responseCount={responseCount}
+          styling={styling}
+          isCardBorderVisible={!highlightBorderColor}
         />
       </Modal>
     </div>

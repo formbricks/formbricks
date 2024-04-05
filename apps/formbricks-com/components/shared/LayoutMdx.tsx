@@ -1,8 +1,8 @@
+import HeaderLight from "@/components/salespage/HeaderLight";
 import SlideInBanner from "@/components/shared/SlideInBanner";
 import { useEffect } from "react";
 
 import Footer from "./Footer";
-import Header from "./Header";
 import MetaInformation from "./MetaInformation";
 import { Prose } from "./Prose";
 
@@ -32,6 +32,7 @@ interface Props {
     authors: string[];
     section: string;
     tags: string[];
+    ogImage: string;
   };
   children: JSX.Element;
 }
@@ -39,7 +40,7 @@ interface Props {
 export default function LayoutMdx({ meta, children }: Props) {
   useExternalLinks(".prose a");
   return (
-    <div className="flex h-screen flex-col justify-between">
+    <div className="mx-auto w-full">
       <MetaInformation
         title={meta.title}
         description={meta.description}
@@ -47,8 +48,9 @@ export default function LayoutMdx({ meta, children }: Props) {
         authors={meta.authors}
         section={meta.section}
         tags={meta.tags}
+        ogImage={meta.ogImage}
       />
-      <Header />
+      <HeaderLight />
       <main className="min-w-0 max-w-2xl flex-auto px-4 lg:max-w-none lg:pl-8 lg:pr-0 xl:px-16">
         <article className="mx-auto my-16 max-w-3xl px-2">
           {meta.title && (
@@ -60,7 +62,7 @@ export default function LayoutMdx({ meta, children }: Props) {
               )}
             </header>
           )}
-          <Prose className="prose-h2:text-2xl prose-li:text-base prose-h2:mt-4 prose-p:text-base  prose-p:mb-4 prose-h3:text-xl prose-a:text-slate-900 prose-a:hover:text-slate-900 prose-a:text-decoration-brand prose-a:not-italic prose-ul:pl-12">
+          <Prose className="prose-h2:text-2xl prose-li:text-base prose-h2:mt-6 prose-p:text-base  prose-p:mb-4 prose-h3:text-xl prose-a:text-slate-900 prose-a:hover:text-slate-900 prose-a:text-decoration-brand prose-a:not-italic prose-ul:pl-12">
             {children}
           </Prose>
         </article>

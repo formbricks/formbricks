@@ -1,9 +1,11 @@
-import { QuestionMarkCircleIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { HelpCircle, TrashIcon } from "lucide-react";
 import { ChevronDown, SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { BsArrowDown, BsArrowReturnRight } from "react-icons/bs";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import {
   TSurvey,
   TSurveyLogic,
@@ -44,9 +46,13 @@ export default function LogicEditor({
   questionIdx,
   updateQuestion,
 }: LogicEditorProps): JSX.Element {
+  localSurvey = useMemo(() => {
+    return checkForRecallInHeadline(localSurvey, "default");
+  }, [localSurvey]);
+
   const questionValues = useMemo(() => {
     if ("choices" in question) {
-      return question.choices.map((choice) => choice.label);
+      return question.choices.map((choice) => getLocalizedValue(choice.label, "default"));
     } else if ("range" in question) {
       return Array.from({ length: question.range ? question.range : 0 }, (_, i) => (i + 1).toString());
     } else if (question.type === TSurveyQuestionType.NPS) {
@@ -57,7 +63,7 @@ export default function LogicEditor({
 
   const conditions = {
     openText: ["submitted", "skipped"],
-    multipleChoiceSingle: ["submitted", "skipped", "equals", "notEquals"],
+    multipleChoiceSingle: ["submitted", "skipped", "equals", "notEquals", "includesOne"],
     multipleChoiceMulti: ["submitted", "skipped", "includesAll", "includesOne", "equals"],
     nps: [
       "equals",
@@ -84,6 +90,7 @@ export default function LogicEditor({
     pictureSelection: ["submitted", "skipped"],
     fileUpload: ["uploaded", "notUploaded"],
     cal: ["skipped", "booked"],
+    matrix: ["isCompletelySubmitted", "isPartiallySubmitted", "skipped"],
   };
 
   const logicConditions: LogicConditions = {
@@ -153,6 +160,16 @@ export default function LogicEditor({
     },
     booked: {
       label: "has a call booked",
+      values: null,
+      unique: true,
+    },
+    isCompletelySubmitted: {
+      label: "is completely submitted",
+      values: null,
+      unique: true,
+    },
+    isPartiallySubmitted: {
+      label: "is partially submitted",
       values: null,
       unique: true,
     },
@@ -233,7 +250,7 @@ export default function LogicEditor({
   };
 
   const deleteLogic = (logicIdx: number) => {
-    const updatedLogic = !question.logic ? [] : JSON.parse(JSON.stringify(question.logic));
+    const updatedLogic = !question.logic ? [] : structuredClone(question.logic);
     updatedLogic.splice(logicIdx, 1);
     updateQuestion(questionIdx, { logic: updatedLogic });
   };
@@ -274,19 +291,21 @@ export default function LogicEditor({
               </Select>
 
               {logic.condition && logicConditions[logic.condition].values != null && (
-                <div className="flex-1 basis-1/4">
+                <div>
                   {!logicConditions[logic.condition].multiSelect ? (
-                    <Select value={logic.value} onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
+                    <Select
+                      value={logic.value?.toString()}
+                      onValueChange={(e) => updateLogic(logicIdx, { value: e })}>
                       <SelectTrigger className="w-full overflow-hidden">
                         <SelectValue placeholder="Select match type" />
                       </SelectTrigger>
-                      <SelectContent className="w-full bg-slate-50 text-slate-700 2xl:w-96">
+                      <SelectContent className=" bg-slate-50 text-slate-700">
                         {logicConditions[logic.condition].values?.map((value) => {
                           if (!value) return;
                           return (
                             <SelectItem key={value} value={value} title={value}>
                               <div className="w-full">
-                                <p className="line-clamp-1 w-40 text-left 2xl:w-80">{value}</p>
+                                <p className="mr-2 line-clamp-1 w-fit text-left">{value}</p>
                               </div>
                             </SelectItem>
                           );
@@ -341,9 +360,14 @@ export default function LogicEditor({
                   {localSurvey.questions.map(
                     (question, idx) =>
                       idx !== questionIdx && (
-                        <SelectItem key={question.id} value={question.id} title={question.headline}>
-                          <div className="max-w-[6rem]">
-                            <p className="truncate text-left">{question.headline}</p>
+                        <SelectItem
+                          key={question.id}
+                          value={question.id}
+                          title={getLocalizedValue(question.headline, "default")}>
+                          <div className="w-40">
+                            <p className="truncate text-left">
+                              {getLocalizedValue(question.headline, "default")}
+                            </p>
                           </div>
                         </SelectItem>
                       )
@@ -380,7 +404,7 @@ export default function LogicEditor({
         <TooltipProvider delayDuration={50}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <QuestionMarkCircleIcon className="ml-2 inline h-4 w-4 cursor-default text-slate-500" />
+              <HelpCircle className="ml-2 inline h-4 w-4 cursor-default text-slate-500" />
             </TooltipTrigger>
             <TooltipContent className="max-w-[300px]" side="top">
               With logic jumps you can skip questions based on the responses users give.

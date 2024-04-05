@@ -87,7 +87,7 @@ export const getActionClassByEnvironmentIdAndName = async (
     },
     [`getActionClass-${environmentId}-${name}`],
     {
-      tags: [actionClassCache.tag.byNameAndEnvironmentId(environmentId, name)],
+      tags: [actionClassCache.tag.byNameAndEnvironmentId(name, environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -128,20 +128,21 @@ export const deleteActionClass = async (
   validateInputs([environmentId, ZId], [actionClassId, ZId]);
 
   try {
-    const result = await prisma.actionClass.delete({
+    const actionClass = await prisma.actionClass.delete({
       where: {
         id: actionClassId,
       },
       select,
     });
-    if (result === null) throw new ResourceNotFoundError("Action", actionClassId);
+    if (actionClass === null) throw new ResourceNotFoundError("Action", actionClassId);
 
     actionClassCache.revalidate({
       environmentId,
       id: actionClassId,
+      name: actionClass.name,
     });
 
-    return result;
+    return actionClass;
   } catch (error) {
     throw new DatabaseError(
       `Database error when deleting an action with id ${actionClassId} for environment ${environmentId}`
@@ -161,9 +162,7 @@ export const createActionClass = async (
         name: actionClass.name,
         description: actionClass.description,
         type: actionClass.type,
-        noCodeConfig: actionClass.noCodeConfig
-          ? JSON.parse(JSON.stringify(actionClass.noCodeConfig))
-          : undefined,
+        noCodeConfig: actionClass.noCodeConfig ? structuredClone(actionClass.noCodeConfig) : undefined,
         environment: { connect: { id: environmentId } },
       },
       select,
@@ -177,6 +176,7 @@ export const createActionClass = async (
 
     return actionClassPrisma;
   } catch (error) {
+    console.error(error);
     throw new DatabaseError(`Database error when creating an action for environment ${environmentId}`);
   }
 };
@@ -198,7 +198,7 @@ export const updateActionClass = async (
         description: inputActionClass.description,
         type: inputActionClass.type,
         noCodeConfig: inputActionClass.noCodeConfig
-          ? JSON.parse(JSON.stringify(inputActionClass.noCodeConfig))
+          ? structuredClone(inputActionClass.noCodeConfig)
           : undefined,
       },
       select,

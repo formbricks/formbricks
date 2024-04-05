@@ -7,6 +7,6 @@
     },
     "resolveJsonModule": true
   },
-  "include": ["."],
+  "include": [".", "../ui/Targeting/TargetingIndicator.tsx"],
   "exclude": ["dist", "build", "node_modules"]
 }

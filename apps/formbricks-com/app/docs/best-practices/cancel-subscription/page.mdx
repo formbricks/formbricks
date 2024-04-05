@@ -1,5 +1,5 @@
 import DemoPreview from "@/components/dummyUI/DemoPreview";
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import ChangeText from "./change-text.webp";
 import CreateChurnFlow from "./create-cancel-flow.webp";
@@ -57,7 +57,7 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template “Churn Survey”:
 
-<Image
+<MdxImage
   src={CreateChurnFlow}
   alt="Create churn survey by template"
   quality="100"
@@ -68,7 +68,7 @@ Click on "Create Survey" and choose the template “Churn Survey”:
 
 You’re free to update the question and answer options. However, based on our experience, we suggest giving the provided template a go 😊
 
-<Image
+<MdxImage
   src={ChangeText}
   alt="Change text content"
   quality="100"
@@ -89,7 +89,7 @@ To create the trigger for your Churn Survey, you have two options to choose from
 
 1. **Trigger by innerText:** You likely have a “Cancel Subscription” button in your app. You can setup a user Action with the according `innerText` to trigger the survey, like so:
 
-<Image
+<MdxImage
   src={TriggerInnerText}
   alt="Set the trigger by inner Text"
   quality="100"
@@ -98,7 +98,7 @@ To create the trigger for your Churn Survey, you have two options to choose from
 
 2. **Trigger by CSS Selector:** In case you have more than one button saying “Cancel Subscription” in your app and only want to display the survey when one of them is clicked, you want to be more specific. The best way to do that is to give this button the HTML `id=“cancel-subscription”` and set your user action up like so:
 
-<Image
+<MdxImage
   src={TriggerCSS}
   alt="Set the trigger by CSS Selector"
   quality="100"
@@ -107,7 +107,7 @@ To create the trigger for your Churn Survey, you have two options to choose from
 
 3. **Trigger by pageURL:** Lastly, you could also display your survey on a subpage “/subscription-cancelled” where you forward users once they cancelled the trial subscription. You can then create a user Action with the type `pageURL` with the following settings:
 
-<Image
+<MdxImage
   src={TriggerPageUrl}
   alt="Set the trigger by page URL"
   quality="100"
@@ -126,7 +126,7 @@ Here is our complete [Actions manual](/docs/actions/why) covering [Code](/docs/a
 
 ### 5. Select Action in the “When to ask” card
 
-<Image
+<MdxImage
   src={SelectAction}
   alt="Select feedback button action"
   quality="100"
@@ -137,7 +137,7 @@ Here is our complete [Actions manual](/docs/actions/why) covering [Code](/docs/a
 
 Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure you milk these super valuable insights. You want to make sure that this survey is always displayed, no matter if the user has already seen a survey in the past days:
 
-<Image
+<MdxImage
   src={RecontactOptions}
   alt="Set recontact options"
   quality="100"
@@ -148,7 +148,7 @@ These settings make sure the survey is always displayed, when a user wants to Ca
 
 ### 7. Congrats! You’re ready to publish your survey 💃
 
-<Image
+<MdxImage
   src={PublishSurvey}
   alt="Publish survey"
   quality="100"

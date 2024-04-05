@@ -1,8 +1,7 @@
 "use client";
 
 import { replacePresetPlaceholders } from "@/app/lib/templates";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
@@ -78,6 +77,7 @@ export default function TemplateContainerWithPreview({
                 product={product}
                 environment={environment}
                 setActiveQuestionId={setActiveQuestionId}
+                languageCode={"default"}
                 onFileUpload={async (file) => file.name}
               />
             </div>

@@ -1,9 +1,9 @@
 "use client";
 
 import { getQuestionDefaults, questionTypes, universalQuestionPresets } from "@/app/lib/questions";
-import { PlusIcon } from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -40,14 +40,15 @@ export default function AddQuestionButton({ addQuestion, product }: AddQuestionB
         {/* <hr className="py-1 text-slate-600" /> */}
         {questionTypes.map((questionType) => (
           <button
+            type="button"
             key={questionType.id}
             className="mx-2 inline-flex items-center rounded p-0.5 px-4 py-2 font-medium text-slate-700 last:mb-2 hover:bg-slate-100 hover:text-slate-800"
             onClick={() => {
               addQuestion({
-                id: createId(),
-                type: questionType.id,
                 ...universalQuestionPresets,
                 ...getQuestionDefaults(questionType.id, product),
+                id: createId(),
+                type: questionType.id,
               });
               setOpen(false);
             }}>

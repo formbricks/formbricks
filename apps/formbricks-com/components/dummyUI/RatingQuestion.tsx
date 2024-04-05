@@ -1,10 +1,10 @@
 import { useState } from "react";
 
 import { cn } from "@formbricks/lib/cn";
-import { TSurveyRatingQuestion } from "@formbricks/types/surveys";
 
 import Headline from "./Headline";
 import Subheader from "./Subheader";
+import { TSurveyRatingQuestion } from "./types";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
@@ -56,7 +56,7 @@ export default function RatingQuestion({
                 className={cn(
                   selectedChoice === number
                     ? "z-10 border-slate-400 bg-slate-50"
-                    : "bg-white hover:bg-gray-100 dark:bg-slate-700 dark:hover:bg-slate-500",
+                    : "bg-white hover:bg-slate-100 dark:bg-slate-700 dark:hover:bg-slate-500",
                   "relative h-10 flex-1 cursor-pointer border border-slate-100 text-center text-sm leading-10 text-slate-800 first:rounded-l-md last:rounded-r-md  focus:outline-none dark:border-slate-500 dark:text-slate-200   "
                 )}>
                 <input

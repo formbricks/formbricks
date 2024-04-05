@@ -6,8 +6,10 @@ import {
   PRICING_USERTARGETING_FREE_MTU,
 } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { reverseTranslateSurvey } from "@formbricks/lib/i18n/reverseTranslation";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurveys, getSyncSurveys } from "@formbricks/lib/survey/service";
 import {
   getMonthlyActiveTeamPeopleCount,
@@ -17,11 +19,12 @@ import {
 import { TEnvironment } from "@formbricks/types/environment";
 import { TJsLegacyState, TSurveyWithTriggers } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 export const transformLegacySurveys = (surveys: TSurvey[]): TSurveyWithTriggers[] => {
   const updatedSurveys = surveys.map((survey) => {
-    const updatedSurvey: any = { ...survey };
+    const updatedSurvey: any = { ...reverseTranslateSurvey(survey) };
     updatedSurvey.triggers = updatedSurvey.triggers.map((trigger) => ({ name: trigger }));
     return updatedSurvey;
   });
@@ -91,10 +94,11 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
   const isPerson = Object.keys(person).length > 0;
 
   let surveys;
+
   if (isAppSurveyLimitReached) {
     surveys = [];
   } else if (isPerson) {
-    surveys = await getSyncSurveys(environmentId, person as TPerson);
+    surveys = await getSyncSurveys(environmentId, (person as TPerson).id);
   } else {
     surveys = await getSurveys(environmentId);
     surveys = surveys.filter((survey) => survey.type === "web" && survey.status === "inProgress");
@@ -112,13 +116,21 @@ export const getUpdatedState = async (environmentId: string, personId?: string):
     throw new Error("Product not found");
   }
 
+  const updatedProduct: TProduct = {
+    ...product,
+    brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
+    ...(product.styling.highlightBorderColor?.light && {
+      highlightBorderColor: product.styling.highlightBorderColor.light,
+    }),
+  };
+
   // return state
   const state: TJsLegacyState = {
     person,
     session,
     surveys,
     noCodeActionClasses: noCodeActionClasses.filter((actionClass) => actionClass.type === "noCode"),
-    product,
+    product: updatedProduct,
   };
 
   return state;

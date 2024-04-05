@@ -1,0 +1,55 @@
+name: Build & Cache Web App
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - uses: ./.github/actions/dangerous-git-checkout
+
+    - name: Cache Build
+      uses: actions/cache@v3
+      id: cache-build
+      env:
+        cache-name: prod-build
+        key-1: ${{ hashFiles('pnpm-lock.yaml') }}
+        key-2: ${{ hashFiles('apps/**/**.[jt]s', 'apps/**/**.[jt]sx', 'packages/**/**.[jt]s', 'packages/**/**.[jt]sx', '!**/node_modules') }}
+        key-3: ${{ github.event.pull_request.number || github.ref }}
+      with:
+        path: |
+          ${{ github.workspace }}/apps/web/.next
+          **/.turbo/**
+          **/dist/**
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.key-1 }}-${{ env.key-2 }}-${{ env.key-3 }}
+
+    - name: Setup Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+      if: steps.cache-build.outputs.cache-hit != 'true'
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      if: steps.cache-build.outputs.cache-hit != 'true'
+
+    - name: Install dependencies
+      run: pnpm install --config.platform=linux --config.architecture=x64
+      if: steps.cache-build.outputs.cache-hit != 'true'
+      shell: bash
+
+    - name: create .env
+      run: cp .env.example .env
+      shell: bash
+
+    - name: Generate Random ENCRYPTION_KEY
+      run: |
+        SECRET=$(openssl rand -hex 32)
+        echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+      shell: bash
+
+    - run: |
+        pnpm build --filter=web...
+
+      if: steps.cache-build.outputs.cache-hit != 'true'
+      shell: bash

@@ -1,14 +1,12 @@
 "use client";
 
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
-import { Badge } from "@formbricks/ui/Badge";
 import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@formbricks/ui/RadioGroup";
@@ -78,9 +76,9 @@ export default function RecontactOptionsCard({
     }
   }, [localSurvey.type]);
 
-  /*   if (localSurvey.type === "link") {
-    return null;
-  } */
+  if (localSurvey.type === "link") {
+    return null; // Hide card completely
+  }
 
   return (
     <Collapsible.Root
@@ -93,25 +91,18 @@ export default function RecontactOptionsCard({
       className="w-full rounded-lg border border-slate-300 bg-white">
       <Collapsible.CollapsibleTrigger
         asChild
-        className={cn(
-          localSurvey.type !== "link" ? "cursor-pointer hover:bg-slate-50" : "cursor-not-allowed bg-slate-50",
-          "h-full w-full rounded-lg "
-        )}>
+        className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon
-              className={cn(localSurvey.type !== "link" ? "text-green-400" : "text-slate-300", "h-8 w-8 ")}
+            <CheckIcon
+              strokeWidth={3}
+              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />
           </div>
           <div>
             <p className="font-semibold text-slate-800">Recontact Options</p>
             <p className="mt-1 text-sm text-slate-500">Decide how often people can answer this survey.</p>
           </div>
-          {localSurvey.type === "link" && (
-            <div className="flex w-full items-center justify-end pr-2">
-              <Badge size="normal" text="In-app survey settings" type="gray" />
-            </div>
-          )}
         </div>
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent className="pb-3">
@@ -206,7 +197,7 @@ export default function RecontactOptionsCard({
                       id="inputDays"
                       value={inputDays === 0 ? 1 : inputDays}
                       onChange={handleRecontactDaysChange}
-                      className="ml-2 mr-2 inline w-16 text-center text-sm"
+                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
                     />
                     days before showing this survey again.
                   </p>

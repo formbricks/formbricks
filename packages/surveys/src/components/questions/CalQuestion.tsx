@@ -7,23 +7,26 @@ import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyCalQuestion } from "@formbricks/types/surveys";
 
 interface CalQuestionProps {
   question: TSurveyCalQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function CalQuestion({
+export const CalQuestion = ({
   question,
   value,
   onChange,
@@ -31,9 +34,10 @@ export default function CalQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   ttc,
   setTtc,
-}: CalQuestionProps) {
+}: CalQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -48,6 +52,7 @@ export default function CalQuestion({
 
   return (
     <form
+      key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
         if (question.required && !value) {
@@ -63,10 +68,15 @@ export default function CalQuestion({
       }}
       className="w-full">
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-
-      <Subheader subheader={question.subheader} questionId={question.id} />
-
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />
       <>
         {errorMessage && <span className="text-red-500">{errorMessage}</span>}
         <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
@@ -75,7 +85,7 @@ export default function CalQuestion({
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               onBack();
             }}
@@ -84,12 +94,11 @@ export default function CalQuestion({
         <div></div>
         {!question.required && (
           <SubmitButton
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         )}
       </div>
     </form>
   );
-}
+};

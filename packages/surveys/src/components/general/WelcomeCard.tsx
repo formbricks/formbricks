@@ -1,20 +1,23 @@
 import SubmitButton from "@/components/buttons/SubmitButton";
 import { calculateElementIdx } from "@/lib/utils";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TI18nString, TSurvey } from "@formbricks/types/surveys";
 
 import Headline from "./Headline";
 import HtmlBody from "./HtmlBody";
 
 interface WelcomeCardProps {
-  headline?: string;
-  html?: string;
+  headline?: TI18nString;
+  html?: TI18nString;
   fileUrl?: string;
-  buttonLabel?: string;
+  buttonLabel?: TI18nString;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   survey: TSurvey;
+  languageCode: string;
   responseCount?: number;
+  isInIframe: boolean;
 }
 
 const TimerIcon = () => {
@@ -60,8 +63,10 @@ export default function WelcomeCard({
   fileUrl,
   buttonLabel,
   onSubmit,
+  languageCode,
   survey,
   responseCount,
+  isInIframe,
 }: WelcomeCardProps) {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
@@ -101,15 +106,15 @@ export default function WelcomeCard({
         <img src={fileUrl} className="mb-8 max-h-96 w-1/3 rounded-lg object-contain" alt="Company Logo" />
       )}
 
-      <Headline headline={headline} questionId="welcomeCard" />
-      <HtmlBody htmlString={html} questionId="welcomeCard" />
+      <Headline headline={getLocalizedValue(headline, languageCode)} questionId="welcomeCard" />
+      <HtmlBody htmlString={getLocalizedValue(html, languageCode)} questionId="welcomeCard" />
 
       <div className="mt-10 flex w-full justify-between">
         <div className="flex w-full justify-start gap-4">
           <SubmitButton
-            buttonLabel={buttonLabel}
+            buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
             isLastQuestion={false}
-            focus={true}
+            focus={!isInIframe}
             onClick={() => {
               onSubmit({ ["welcomeCard"]: "clicked" }, {});
             }}

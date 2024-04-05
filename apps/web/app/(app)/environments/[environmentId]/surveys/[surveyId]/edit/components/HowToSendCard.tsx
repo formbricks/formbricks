@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  CheckCircleIcon,
-  ComputerDesktopIcon,
-  DevicePhoneMobileIcon,
-  ExclamationCircleIcon,
-  LinkIcon,
-} from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon, SmartphoneIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -25,7 +19,7 @@ interface HowToSendCardProps {
 }
 
 export default function HowToSendCard({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) {
-  const [open, setOpen] = useState(localSurvey.type === "web" ? false : true);
+  const [open, setOpen] = useState(false);
   const [widgetSetupCompleted, setWidgetSetupCompleted] = useState(false);
 
   useEffect(() => {
@@ -51,7 +45,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
     {
       id: "web",
       name: "In-App Survey",
-      icon: ComputerDesktopIcon,
+      icon: MonitorIcon,
       description: "Embed a survey in your web app to collect responses.",
       comingSoon: false,
       alert: !widgetSetupCompleted,
@@ -67,7 +61,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
     {
       id: "mobile",
       name: "Mobile App Survey",
-      icon: DevicePhoneMobileIcon,
+      icon: SmartphoneIcon,
       description: "Survey users inside a mobile app (iOS & Android).",
       comingSoon: true,
       alert: false,
@@ -82,14 +76,20 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
         open ? "" : "hover:bg-slate-50",
         "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
       )}>
-      <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
+      <Collapsible.CollapsibleTrigger
+        asChild
+        className="h-full w-full cursor-pointer"
+        id="howToSendCardTrigger">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400" />
+            <CheckIcon
+              strokeWidth={3}
+              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+            />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">How to ask</p>
-            <p className="mt-1 text-sm text-slate-500">In-app survey, link survey or email survey.</p>
+            <p className="font-semibold text-slate-800">Survey Type</p>
+            <p className="mt-1 text-sm text-slate-500">Choose between in-app or link survey.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -112,7 +112,8 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                     : option.id === localSurvey.type
                       ? "border-brand-dark cursor-pointer bg-slate-50"
                       : "cursor-pointer bg-slate-50"
-                )}>
+                )}
+                id={`howToSendCardOption-${option.id}`}>
                 <RadioGroupItem
                   value={option.id}
                   id={option.id}
@@ -137,20 +138,19 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
                     <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                     {option.alert && (
                       <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
-                        <ExclamationCircleIcon className="h-5 w-5 text-amber-500" />
+                        <AlertCircleIcon className="h-5 w-5 text-amber-500" />
                         <div className=" text-amber-800">
                           <p className="text-xs font-semibold">
                             Your app is not yet connected to Formbricks.
                           </p>
                           <p className="text-xs font-normal">
-                            Follow the{" "}
                             <Link
                               href={`/environments/${environment.id}/settings/setup`}
                               className="underline hover:text-amber-900"
                               target="_blank">
-                              set up guide
+                              Connect Formbricks
                             </Link>{" "}
-                            to connect Formbricks and launch surveys in your app.
+                            and launch surveys in your app or website.
                           </p>
                         </div>
                       </div>

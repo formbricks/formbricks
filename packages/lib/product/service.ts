@@ -11,7 +11,7 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 
-import { IS_S3_CONFIGURED, ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
+import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, isS3Configured } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { createEnvironment } from "../environment/service";
 import { deleteLocalFilesByEnvironmentId, deleteS3FilesByEnvironmentId } from "../storage/service";
@@ -25,8 +25,7 @@ const selectProduct = {
   updatedAt: true,
   name: true,
   teamId: true,
-  brandColor: true,
-  highlightBorderColor: true,
+  languages: true,
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,
@@ -34,6 +33,7 @@ const selectProduct = {
   clickOutsideClose: true,
   darkOverlay: true,
   environments: true,
+  styling: true,
 };
 
 export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> => {
@@ -107,10 +107,9 @@ export const getProductByEnvironmentId = async (environmentId: string): Promise<
 
 export const updateProduct = async (
   productId: string,
-  inputProduct: Partial<TProductUpdateInput>
+  inputProduct: TProductUpdateInput
 ): Promise<TProduct> => {
-  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput.partial()]);
-
+  validateInputs([productId, ZId], [inputProduct, ZProductUpdateInput]);
   const { environments, ...data } = inputProduct;
   let updatedProduct;
   try {
@@ -196,7 +195,7 @@ export const deleteProduct = async (productId: string): Promise<TProduct> => {
   if (product) {
     // delete all files from storage related to this product
 
-    if (IS_S3_CONFIGURED) {
+    if (isS3Configured()) {
       const s3FilesPromises = product.environments.map(async (environment) => {
         return deleteS3FilesByEnvironmentId(environment.id);
       });

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { login, replaceEnvironmentIdInHtml, signUpAndLogin, skipOnboarding } from "./utils/helper";
+import { finishOnboarding, login, replaceEnvironmentIdInHtml, signUpAndLogin } from "./utils/helper";
 import { users } from "./utils/mock";
 
 test.describe("JS Package Test", async () => {
@@ -10,24 +10,27 @@ test.describe("JS Package Test", async () => {
 
   test("Admin creates an In-App Survey", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
-    await skipOnboarding(page);
-
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await finishOnboarding(page);
 
     await page
       .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
       .isVisible();
-
     await page
       .getByText("Product ExperienceProduct Market Fit (Superhuman)Measure PMF by assessing how")
       .click();
+
     await page.getByRole("button", { name: "Settings", exact: true }).click();
-    await page.locator("label").filter({ hasText: "In-App SurveyEmbed a survey" }).click();
-    await page
-      .locator("div")
-      .filter({ hasText: /^Survey TriggerChoose the actions which trigger the survey\.$/ })
-      .nth(1)
-      .click();
+
+    await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
+    await page.locator("#howToSendCardTrigger").click();
+
+    await expect(page.locator("#howToSendCardOption-web")).toBeVisible();
+    await page.locator("#howToSendCardOption-web").click();
+    await page.locator("#howToSendCardOption-web").click();
+
+    await expect(page.getByText("Survey Trigger")).toBeVisible();
+    // await page.getByText("Survey Trigger").click();
+
     await page.getByRole("combobox").click();
     await page.getByLabel("New Session").click();
     await page.getByRole("button", { name: "Publish" }).click();
@@ -39,6 +42,12 @@ test.describe("JS Package Test", async () => {
       })();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
+
+    expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
+    await page.getByRole("link", { name: "Surveys" }).click();
+    await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
+
+    await page.screenshot();
   });
 
   test("JS Display Survey on Page", async ({ page }) => {
@@ -55,25 +64,14 @@ test.describe("JS Package Test", async () => {
     // Formbricks Modal exists in the DOM
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
 
-    const displayApi = await page.waitForResponse((response) => response.url().includes("/display"));
-    expect(displayApi.status()).toBe(200);
+    // const displayApi = await page.waitForResponse((response) => response.url().includes("/display"));
+    // expect(displayApi.status()).toBe(200);
 
     // Formbricks Modal is visible
     await expect(page.getByRole("link", { name: "Powered by Formbricks" })).toBeVisible();
-  });
 
-  test("Admin checks Display", async ({ page }) => {
-    await login(page, email, password);
-
-    await page.locator("li").filter({ hasText: "In-Product SurveyProduct" }).getByRole("link").click();
-
-    (await page.waitForSelector("text=Responses")).isVisible();
-
-    // Survey should have 1 Display
-    await expect(page.getByText("Displays1")).toBeVisible();
-
-    // Survey should have 0 Responses
-    await expect(page.getByRole("button", { name: "Responses0% -" })).toBeVisible();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1500);
   });
 
   test("JS submits Response to Survey", async ({ page }) => {
@@ -110,18 +108,22 @@ test.describe("JS Package Test", async () => {
 
     // Formbricks Modal is not visible
     await expect(page.getByText("Powered by Formbricks")).not.toBeVisible({ timeout: 10000 });
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(5000);
   });
 
-  test("Admin validates Response", async ({ page }) => {
+  test("Admin validates Displays & Response", async ({ page }) => {
     await login(page, email, password);
 
-    await page.locator("li").filter({ hasText: "In-Product SurveyProduct" }).getByRole("link").click();
-
+    await page.getByRole("link", { name: "In-app Open options Product" }).click();
     (await page.waitForSelector("text=Responses")).isVisible();
 
     // Survey should have 2 Displays
+    await page.waitForTimeout(1000);
     await expect(page.getByText("Displays2")).toBeVisible();
+
     // Survey should have 1 Response
+    await page.waitForTimeout(1000);
     await expect(page.getByRole("button", { name: "Responses50%" })).toBeVisible();
     await expect(page.getByText("1 responses", { exact: true }).first()).toBeVisible();
     await expect(page.getByText("Clickthrough Rate (CTR)100%")).toBeVisible();

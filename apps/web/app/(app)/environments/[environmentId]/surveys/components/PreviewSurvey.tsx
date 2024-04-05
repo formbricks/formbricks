@@ -3,20 +3,16 @@
 import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/Modal";
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
-import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
-import {
-  ArrowsPointingInIcon,
-  ArrowsPointingOutIcon,
-  ComputerDesktopIcon,
-  DevicePhoneMobileIcon,
-} from "@heroicons/react/24/solid";
 import { Variants, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { RefreshCcwIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
+import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
@@ -29,6 +25,7 @@ interface PreviewSurveyProps {
   previewType?: TPreviewType;
   product: TProduct;
   environment: TEnvironment;
+  languageCode: string;
   onFileUpload: (file: File, config?: TUploadFileConfig) => Promise<string>;
 }
 
@@ -60,6 +57,7 @@ const previewParentContainerVariant: Variants = {
     zIndex: -1,
   },
 };
+
 export default function PreviewSurvey({
   setActiveQuestionId,
   activeQuestionId,
@@ -67,6 +65,7 @@ export default function PreviewSurvey({
   previewType,
   product,
   environment,
+  languageCode,
   onFileUpload,
 }: PreviewSurveyProps) {
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -75,8 +74,7 @@ export default function PreviewSurvey({
   const [previewMode, setPreviewMode] = useState("desktop");
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
-  const [shrink, setshrink] = useState(false);
-
+  const [shrink, setShrink] = useState(false);
   const { productOverwrites } = survey || {};
 
   const previewScreenVariants: Variants = {
@@ -114,15 +112,29 @@ export default function PreviewSurvey({
     },
   };
 
-  const {
-    brandColor: surveyBrandColor,
-    highlightBorderColor: surveyHighlightBorderColor,
-    placement: surveyPlacement,
-  } = productOverwrites || {};
+  const { placement: surveyPlacement } = productOverwrites || {};
 
-  const brandColor = surveyBrandColor || product.brandColor;
   const placement = surveyPlacement || product.placement;
-  const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
+
+  const styling: TSurveyStyling | TProductStyling = useMemo(() => {
+    // allow style overwrite is disabled from the product
+    if (!product.styling.allowStyleOverwrite) {
+      return product.styling;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteThemeStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    return product.styling;
+  }, [product.styling, survey.styling]);
 
   useEffect(() => {
     // close modal if there are no questions left
@@ -146,7 +158,7 @@ export default function PreviewSurvey({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [survey]);
 
-  function resetQuestionProgress() {
+  const resetQuestionProgress = () => {
     let storePreviewMode = previewMode;
     setPreviewMode("null");
     setTimeout(() => {
@@ -154,7 +166,7 @@ export default function PreviewSurvey({
     }, 10);
 
     setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
-  }
+  };
 
   useEffect(() => {
     if (environment && environment.widgetSetupCompleted) {
@@ -163,6 +175,13 @@ export default function PreviewSurvey({
       setWidgetSetupCompleted(false);
     }
   }, [environment]);
+
+  const handlePreviewModalClose = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setIsModalOpen(true);
+    }, 1000);
+  };
 
   if (!previewType) {
     previewType = widgetSetupCompleted ? "modal" : "fullwidth";
@@ -198,34 +217,40 @@ export default function PreviewSurvey({
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
-            <MediaBackground survey={survey} ContentRef={ContentRef} isMobilePreview>
+            <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isMobilePreview>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
                   placement={placement}
-                  highlightBorderColor={highlightBorderColor}
-                  previewMode="mobile">
+                  highlightBorderColor={styling.highlightBorderColor?.light}
+                  previewMode="mobile"
+                  borderRadius={styling?.roundness ?? 8}
+                  background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
                     survey={survey}
-                    brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
-                    isBrandingEnabled={product.linkSurveyBranding}
+                    isBrandingEnabled={product.inAppSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
+                    languageCode={languageCode}
                     onFileUpload={onFileUpload}
+                    styling={styling}
+                    isCardBorderVisible={!styling.highlightBorderColor?.light}
+                    onClose={handlePreviewModalClose}
                   />
                 </Modal>
               ) : (
-                <div className="px-4">
-                  <div className="no-scrollbar z-10 max-h-[500px] w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
+                <div className="w-full px-3">
+                  <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
-                      brandColor={brandColor}
                       activeQuestionId={activeQuestionId || undefined}
                       isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       onFileUpload={onFileUpload}
+                      languageCode={languageCode}
                       responseCount={42}
+                      styling={styling}
                     />
                   </div>
                 </div>
@@ -241,23 +266,24 @@ export default function PreviewSurvey({
                 <div className="h-3 w-3 rounded-full bg-amber-500"></div>
                 <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
               </div>
-              <p className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-                {previewType === "modal" ? "Your web app" : "Preview"}
+              <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
+                <p>{previewType === "modal" ? "Your web app" : "Preview"}</p>
+
                 <div className="flex items-center">
                   {isFullScreenPreview ? (
-                    <ArrowsPointingInIcon
+                    <ShrinkIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setshrink(true);
+                        setShrink(true);
                         setPreviewPosition("relative");
                         setTimeout(() => setIsFullScreenPreview(false), 300);
                       }}
                     />
                   ) : (
-                    <ArrowsPointingOutIcon
+                    <ExpandIcon
                       className="mr-2 h-4 w-4 cursor-pointer"
                       onClick={() => {
-                        setshrink(false);
+                        setShrink(false);
                         setIsFullScreenPreview(true);
                         setTimeout(() => setPreviewPosition("fixed"), 300);
                       }}
@@ -265,37 +291,43 @@ export default function PreviewSurvey({
                   )}
                   <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
                 </div>
-              </p>
+              </div>
             </div>
 
             {previewType === "modal" ? (
               <Modal
                 isOpen={isModalOpen}
                 placement={placement}
-                highlightBorderColor={highlightBorderColor}
-                previewMode="desktop">
+                highlightBorderColor={styling.highlightBorderColor?.light}
+                previewMode="desktop"
+                borderRadius={styling.roundness ?? 8}
+                background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
                   survey={survey}
-                  brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
-                  isBrandingEnabled={product.linkSurveyBranding}
+                  isBrandingEnabled={product.inAppSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
+                  languageCode={languageCode}
                   onFileUpload={onFileUpload}
+                  styling={styling}
+                  isCardBorderVisible={!styling.highlightBorderColor?.light}
+                  onClose={handlePreviewModalClose}
                 />
               </Modal>
             ) : (
-              <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
+              <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
                 <div className="z-0 w-full max-w-md rounded-lg p-4">
                   <SurveyInline
                     survey={survey}
-                    brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
+                    languageCode={languageCode}
                     responseCount={42}
+                    styling={styling}
                   />
                 </div>
               </MediaBackground>
@@ -308,12 +340,12 @@ export default function PreviewSurvey({
       <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
         <TabOption
           active={previewMode === "mobile"}
-          icon={<DevicePhoneMobileIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+          icon={<SmartphoneIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
           onClick={() => setPreviewMode("mobile")}
         />
         <TabOption
           active={previewMode === "desktop"}
-          icon={<ComputerDesktopIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+          icon={<MonitorIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
           onClick={() => setPreviewMode("desktop")}
         />
       </div>
@@ -328,7 +360,7 @@ function ResetProgressButton({ resetQuestionProgress }) {
       className="py-0.2 mr-2 bg-white px-2 font-sans text-sm text-slate-500"
       onClick={resetQuestionProgress}>
       Restart
-      <ArrowPathRoundedSquareIcon className="ml-2 h-4 w-4" />
+      <RefreshCcwIcon className="ml-2 h-4 w-4" />
     </Button>
   );
 }

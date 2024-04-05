@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 import { Confetti } from "@formbricks/ui/Confetti";
@@ -16,18 +15,10 @@ interface SummaryMetadataProps {
   environment: TEnvironment;
   survey: TSurvey;
   webAppUrl: string;
-  product: TProduct;
   user: TUser;
-  singleUseIds?: string[];
 }
 
-export default function SuccessMessage({
-  environment,
-  survey,
-  webAppUrl,
-  product,
-  user,
-}: SummaryMetadataProps) {
+export default function SuccessMessage({ environment, survey, webAppUrl, user }: SummaryMetadataProps) {
   const searchParams = useSearchParams();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [confetti, setConfetti] = useState(false);
@@ -63,7 +54,6 @@ export default function SuccessMessage({
         open={showLinkModal}
         setOpen={setShowLinkModal}
         webAppUrl={webAppUrl}
-        product={product}
         user={user}
       />
       {confetti && <Confetti />}

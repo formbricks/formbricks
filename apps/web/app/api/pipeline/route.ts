@@ -1,16 +1,17 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 
 import { prisma } from "@formbricks/database";
 import { INTERNAL_SECRET } from "@formbricks/lib/constants";
 import { sendResponseFinishedEmail } from "@formbricks/lib/emails/emails";
 import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { ZPipelineInput } from "@formbricks/types/pipelines";
-import { TSurveyQuestion } from "@formbricks/types/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 import { handleIntegrations } from "./lib/handleIntegrations";
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
+  const product = await getProductByEnvironmentId(environmentId);
+  if (!product) return;
 
   // get all webhooks of this environment where event in triggers
   const webhooks = await prisma.webhook.findMany({
@@ -99,22 +102,14 @@ export async function POST(request: Request) {
       },
     });
 
-    let surveyData;
+    const [integrations, surveyData] = await Promise.all([
+      getIntegrations(environmentId),
+      getSurvey(surveyId),
+    ]);
+    const survey = surveyData ? checkForRecallInHeadline(surveyData, "default") : undefined;
 
-    const integrations = await getIntegrations(environmentId);
-
-    if (integrations.length > 0) {
-      surveyData = await prisma.survey.findUnique({
-        where: {
-          id: surveyId,
-        },
-        select: {
-          id: true,
-          name: true,
-          questions: true,
-        },
-      });
-      handleIntegrations(integrations, inputValidation.data, surveyData);
+    if (integrations.length > 0 && survey) {
+      handleIntegrations(integrations, inputValidation.data, survey);
     }
     // filter all users that have email notifications enabled for this survey
     const usersWithNotifications = users.filter((user) => {
@@ -125,37 +120,20 @@ export async function POST(request: Request) {
       return false;
     });
 
-    if (usersWithNotifications.length > 0) {
-      // get survey
-      if (!surveyData) {
-        surveyData = await prisma.survey.findUnique({
-          where: {
-            id: surveyId,
-          },
-          select: {
-            id: true,
-            name: true,
-            questions: true,
-          },
-        });
-      }
+    // Exclude current response
+    const responseCount = await getResponseCountBySurveyId(surveyId);
 
-      if (!surveyData) {
+    if (usersWithNotifications.length > 0) {
+      if (!survey) {
         console.error(`Pipeline: Survey with id ${surveyId} not found`);
         return new Response("Survey not found", {
           status: 404,
         });
       }
-      // create survey object
-      const survey = {
-        id: surveyData.id,
-        name: surveyData.name,
-        questions: JSON.parse(JSON.stringify(surveyData.questions)) as TSurveyQuestion[],
-      };
       // send email to all users
       await Promise.all(
         usersWithNotifications.map(async (user) => {
-          await sendResponseFinishedEmail(user.email, environmentId, survey, response);
+          await sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount);
         })
       );
     }
@@ -181,5 +159,5 @@ export async function POST(request: Request) {
     await updateSurveyStatus(surveyId);
   }
 
-  return NextResponse.json({ data: {} });
+  return Response.json({ data: {} });
 }

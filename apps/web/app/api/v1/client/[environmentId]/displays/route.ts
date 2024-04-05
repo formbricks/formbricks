@@ -1,10 +1,8 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { createDisplay } from "@formbricks/lib/display/service";
-import { capturePosthogEvent } from "@formbricks/lib/posthogServer";
-import { getTeamDetails } from "@formbricks/lib/teamDetail/service";
+import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
 import { InvalidInputError } from "@formbricks/types/errors";
 
@@ -14,11 +12,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(request: Request, context: Context): Promise<NextResponse> {
+export async function POST(request: Request, context: Context): Promise<Response> {
   const jsonInput = await request.json();
   const inputValidation = ZDisplayCreateInput.safeParse({
     ...jsonInput,
@@ -33,8 +31,6 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     );
   }
 
-  // find teamId & teamOwnerId from environmentId
-  const teamDetails = await getTeamDetails(inputValidation.data.environmentId);
   let response = {};
 
   // create display
@@ -50,11 +46,7 @@ export async function POST(request: Request, context: Context): Promise<NextResp
     }
   }
 
-  if (teamDetails?.teamOwnerId) {
-    await capturePosthogEvent(teamDetails.teamOwnerId, "display created", teamDetails.teamId);
-  } else {
-    console.warn("Posthog capture not possible. No team owner found");
-  }
+  await capturePosthogEnvironmentEvent(inputValidation.data.environmentId, "display created");
 
   return responses.successResponse(response, true);
 }

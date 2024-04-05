@@ -42,6 +42,7 @@ export function formatDateFields<T extends z.ZodRawShape>(
 
   return formattedObject as z.infer<typeof zodSchema>;
 }
+
 export const formatDateWithOrdinal = (date: Date): string => {
   const getOrdinalSuffix = (day: number) => {
     const suffixes = ["th", "st", "nd", "rd"];
@@ -72,3 +73,14 @@ export const formatDateWithOrdinal = (date: Date): string => {
 
   return `${dayOfWeek}, ${monthNames[monthIndex]} ${day}${getOrdinalSuffix(day)}, ${year}`;
 };
+
+export function isValidDateString(value: string) {
+  const regex = /^(?:\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4})$/;
+
+  if (!regex.test(value)) {
+    return false;
+  }
+
+  const date = new Date(value);
+  return date;
+}

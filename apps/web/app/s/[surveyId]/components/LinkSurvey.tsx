@@ -3,7 +3,7 @@
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { RefreshCcwIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -17,6 +17,9 @@ import { TSurvey } from "@formbricks/types/surveys";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
+let setIsError = (_: boolean) => {};
+let setIsResponseSendingFinished = (_: boolean) => {};
+
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
@@ -27,6 +30,8 @@ interface LinkSurveyProps {
   singleUseResponse?: TResponse;
   webAppUrl: string;
   responseCount?: number;
+  verifiedEmail?: string;
+  languageCode: string;
 }
 
 export default function LinkSurvey({
@@ -39,21 +44,44 @@ export default function LinkSurvey({
   singleUseResponse,
   webAppUrl,
   responseCount,
+  verifiedEmail,
+  languageCode,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
+  const suId = searchParams?.get("suId");
+  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
+    return surveyLanguage.default === true;
+  })?.language.code;
+
+  const startAt = searchParams?.get("startAt");
+  const isStartAtValid = useMemo(() => {
+    if (!startAt) return false;
+    if (survey?.welcomeCard.enabled && startAt === "start") return true;
+
+    const isValid = survey?.questions.some((question) => question.id === startAt);
+
+    // To remove startAt query param from URL if it is not valid:
+    if (!isValid && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("startAt");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    return isValid;
+  }, [survey, startAt]);
+
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
+    startAt && isStartAtValid ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
-  const prefillResponseData: TResponseData | undefined = prefillAnswer
-    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
-    : undefined;
 
-  const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
+  const prefillResponseData: TResponseData | undefined = prefillAnswer
+    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
+    : undefined;
 
   const responseQueue = useMemo(
     () =>
@@ -62,8 +90,12 @@ export default function LinkSurvey({
           apiHost: webAppUrl,
           environmentId: survey.environmentId,
           retryAttempts: 2,
-          onResponseSendingFailed: (response) => {
-            alert(`Failed to send response: ${JSON.stringify(response, null, 2)}`);
+          onResponseSendingFailed: () => {
+            setIsError(true);
+          },
+          onResponseSendingFinished: () => {
+            // when response of current question is processed successfully
+            setIsResponseSendingFinished(true);
           },
           setSurveyState: setSurveyState,
         },
@@ -103,6 +135,14 @@ export default function LinkSurvey({
     return fieldsSet ? fieldsRecord : null;
   }, [searchParams, survey.hiddenFields?.fieldIds]);
 
+  const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
+    if (survey.verifyEmail && verifiedEmail) {
+      return { verifiedEmail: verifiedEmail };
+    } else {
+      return null;
+    }
+  }, [survey.verifyEmail, verifiedEmail]);
+
   useEffect(() => {
     responseQueue.updateSurveyState(surveyState);
   }, [responseQueue, surveyState]);
@@ -112,32 +152,68 @@ export default function LinkSurvey({
   }
   if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
-      return <VerifyEmail survey={survey} isErrorComponent={true} />;
+      return <VerifyEmail survey={survey} isErrorComponent={true} languageCode={languageCode} />;
     }
     //emailVerificationStatus === "not-verified"
-    return <VerifyEmail survey={survey} />;
+    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
   }
+
+  const getStyling = () => {
+    // allow style overwrite is disabled from the product
+    if (!product.styling.allowStyleOverwrite) {
+      return product.styling;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteThemeStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    return product.styling;
+  };
 
   return (
     <>
-      <ContentWrapper className="h-full w-full p-0 md:max-w-md">
+      <ContentWrapper className="my-12 h-full w-full p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
             Survey Preview 👀
             <button
+              type="button"
               className="flex items-center rounded-full bg-slate-500 px-3 py-1 hover:bg-slate-400"
               onClick={() =>
                 setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
               }>
-              Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
+              Restart <RefreshCcwIcon className="ml-2 h-4 w-4" />
             </button>
           </div>
         )}
         <SurveyInline
           survey={survey}
-          brandColor={brandColor}
+          styling={getStyling()}
+          languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
+          getSetIsError={(f: (value: boolean) => void) => {
+            setIsError = f;
+          }}
+          getSetIsResponseSendingFinished={
+            !isPreview
+              ? (f: (value: boolean) => void) => {
+                  setIsResponseSendingFinished = f;
+                }
+              : undefined
+          }
+          onRetry={() => {
+            setIsError(false);
+            responseQueue.processQueue();
+          }}
           onDisplay={async () => {
             if (!isPreview) {
               const api = new FormbricksAPI({
@@ -163,9 +239,12 @@ export default function LinkSurvey({
                 data: {
                   ...responseUpdate.data,
                   ...hiddenFieldsRecord,
+                  ...getVerifiedEmail,
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
+                language:
+                  languageCode === "default" && defaultLanguageCode ? defaultLanguageCode : languageCode,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",
@@ -178,13 +257,8 @@ export default function LinkSurvey({
               environmentId: survey.environmentId,
             });
 
-            try {
-              const uploadedUrl = await api.client.storage.uploadFile(file, params);
-              return uploadedUrl;
-            } catch (err) {
-              console.error(err);
-              return "";
-            }
+            const uploadedUrl = await api.client.storage.uploadFile(file, params);
+            return uploadedUrl;
           }}
           onActiveQuestionChange={(questionId) => setActiveQuestionId(questionId)}
           activeQuestionId={activeQuestionId}

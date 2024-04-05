@@ -104,7 +104,7 @@ function DeleteTeamModal({ setOpen, open, teamData, deleteTeam, isDeleting }: De
           </li>
           <li>This action cannot be undone. If it&apos;s gone, it&apos;s gone.</li>
         </ul>
-        <form>
+        <form onSubmit={(e) => e.preventDefault()}>
           <label htmlFor="deleteTeamConfirmation">
             Please enter <b>{teamData?.name}</b> in the following field to confirm the definitive deletion of
             this team:

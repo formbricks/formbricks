@@ -5,8 +5,9 @@ import {
   leaveTeamAction,
 } from "@/app/(app)/environments/[environmentId]/settings/members/actions";
 import AddMemberModal from "@/app/(app)/environments/[environmentId]/settings/members/components/AddMemberModal";
+import { XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { TMembershipRole } from "@formbricks/types/memberships";
@@ -70,7 +71,11 @@ export default function TeamActions({
     <>
       <div className="mb-6 text-right">
         {role !== "owner" && (
-          <Button variant="minimal" className="mr-2" onClick={() => setLeaveTeamModalOpen(true)}>
+          <Button
+            EndIcon={XIcon}
+            variant="secondary"
+            className="mr-2"
+            onClick={() => setLeaveTeamModalOpen(true)}>
             Leave Team
           </Button>
         )}

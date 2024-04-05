@@ -1,11 +1,12 @@
 "use client";
 
-import SurveyShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/LinkModalButton";
 import SuccessMessage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
+import ResultsShareButton from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResultsShareButton";
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
-import { EllipsisHorizontalIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
+import { CircleEllipsisIcon, ShareIcon, SquarePenIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -29,6 +30,8 @@ import {
   DropdownMenuTrigger,
 } from "@formbricks/ui/DropdownMenu";
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
+
+import ShareEmbedSurvey from "../(analysis)/summary/components/ShareEmbedSurvey";
 
 interface SummaryHeaderProps {
   surveyId: string;
@@ -54,30 +57,40 @@ const SummaryHeader = ({
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled = (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date()) ?? false;
   const { isViewer } = getAccessFlags(membershipRole);
+  const [showShareSurveyModal, setShowShareSurveyModal] = useState(false);
 
   return (
     <div className="mb-11 mt-6 flex flex-wrap items-center justify-between">
       <div>
         <div className="flex gap-4">
           <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
-          {survey.resultShareKey && <Badge text="Public Results" type="success" size="normal"></Badge>}
+          {survey.resultShareKey && <Badge text="Results are public" type="warning" size="normal"></Badge>}
         </div>
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
       <div className="hidden justify-end gap-x-1.5 sm:flex">
-        <SurveyShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} />
+        {/*  <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} /> */}
         {!isViewer &&
         (environment?.widgetSetupCompleted || survey.type === "link") &&
         survey?.status !== "draft" ? (
           <SurveyStatusDropdown environment={environment} survey={survey} />
         ) : null}
+        {survey.type === "link" && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setShowShareSurveyModal(true);
+            }}>
+            <ShareIcon className="h-5 w-5" />
+          </Button>
+        )}
         {!isViewer && (
           <Button
             variant="darkCTA"
             className="h-full w-full px-3 lg:px-6"
             href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
             Edit
-            <PencilSquareIcon className="ml-1 h-4" />
+            <SquarePenIcon className="ml-1 h-4" />
           </Button>
         )}
       </div>
@@ -85,19 +98,13 @@ const SummaryHeader = ({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm" variant="secondary" className="h-full w-full rounded-md p-2">
-              <EllipsisHorizontalIcon className="h-6" />
+              <CircleEllipsisIcon className="h-6" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="p-2">
             {survey.type === "link" && (
               <>
-                <SurveyShareButton
-                  className="flex w-full justify-center p-1"
-                  survey={survey}
-                  webAppUrl={webAppUrl}
-                  product={product}
-                  user={user}
-                />
+                <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />
                 <DropdownMenuSeparator />
               </>
             )}
@@ -171,18 +178,21 @@ const SummaryHeader = ({
               className="flex h-full w-full justify-center px-3 lg:px-6"
               href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
               Edit
-              <PencilSquareIcon className="ml-1 h-4" />
+              <SquarePenIcon className="ml-1 h-4" />
             </Button>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <SuccessMessage
-        environment={environment}
-        survey={survey}
-        webAppUrl={webAppUrl}
-        product={product}
-        user={user}
-      />
+      <SuccessMessage environment={environment} survey={survey} webAppUrl={webAppUrl} user={user} />
+      {showShareSurveyModal && (
+        <ShareEmbedSurvey
+          survey={survey}
+          open={showShareSurveyModal}
+          setOpen={setShowShareSurveyModal}
+          webAppUrl={webAppUrl}
+          user={user}
+        />
+      )}
     </div>
   );
 };

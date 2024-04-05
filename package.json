@@ -12,10 +12,13 @@
   "scripts": {
     "clean": "turbo run clean && rimraf node_modules .turbo coverage out",
     "build": "turbo run build",
+    "build:dev": "turbo run build:dev",
     "post-install": "turbo run post-install",
     "db:migrate:dev": "turbo run db:migrate:dev",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:vercel": "turbo run db:migrate:vercel",
+    "db:migrate:proxy": "turbo run db:migrate:proxy",
+    "db:start": "turbo run db:start",
     "db:push": "turbo run db:push",
     "go": "turbo run go --concurrency 20",
     "dev": "turbo run dev --parallel",
@@ -30,13 +33,13 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.1",
+    "@playwright/test": "^1.42.1",
     "eslint-config-formbricks": "workspace:*",
-    "husky": "^8.0.3",
-    "lint-staged": "^15.2.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
     "rimraf": "^5.0.5",
-    "tsx": "^4.6.2",
-    "turbo": "^1.11.2"
+    "tsx": "^4.7.1",
+    "turbo": "^1.12.5"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -62,6 +65,6 @@
   },
   "dependencies": {
     "@changesets/cli": "^2.27.1",
-    "playwright": "^1.40.1"
+    "playwright": "^1.42.1"
   }
 }

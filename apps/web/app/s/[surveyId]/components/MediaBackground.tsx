@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
+import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;
   survey: TSurvey;
+  product: TProduct;
   isEditorView?: boolean;
   isMobilePreview?: boolean;
   ContentRef?: React.RefObject<HTMLDivElement>;
@@ -14,38 +16,72 @@ interface MediaBackgroundProps {
 
 export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   children,
+  product,
   survey,
   isEditorView = false,
   isMobilePreview = false,
   ContentRef,
 }) => {
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
+  const [backgroundLoaded, setBackgroundLoaded] = useState(false);
+
+  // get the background from either the survey or the product styling
+  const background = useMemo(() => {
+    // allow style overwrite is disabled from the product
+    if (!product.styling.allowStyleOverwrite) {
+      return product.styling.background;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteThemeStyling) {
+        return product.styling.background;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling.background;
+    }
+
+    return product.styling.background;
+  }, [product.styling.allowStyleOverwrite, product.styling.background, survey.styling]);
 
   useEffect(() => {
-    if (survey.styling?.background?.bgType === "animation") {
-      if (animatedBackgroundRef.current && survey.styling?.background?.bg) {
-        animatedBackgroundRef.current.src = survey.styling?.background?.bg;
-        animatedBackgroundRef.current.play();
-      }
+    if (background?.bgType === "animation" && animatedBackgroundRef.current) {
+      const video = animatedBackgroundRef.current;
+      const onCanPlayThrough = () => setBackgroundLoaded(true);
+      video.addEventListener("canplaythrough", onCanPlayThrough);
+      video.src = background?.bg || "";
+
+      // Cleanup
+      return () => video.removeEventListener("canplaythrough", onCanPlayThrough);
+    } else if (background?.bgType === "image" && background?.bg) {
+      // For images, we create a new Image object to listen for the 'load' event
+      const img = new Image();
+      img.onload = () => setBackgroundLoaded(true);
+      img.src = background?.bg;
+    } else {
+      // For colors or any other types, set to loaded immediately
+      setBackgroundLoaded(true);
     }
-  }, [survey.styling?.background?.bg, survey.styling?.background?.bgType]);
+  }, [background?.bg, background?.bgType]);
+
+  const baseClasses = "absolute inset-0 h-full w-full transition-opacity duration-500";
+  const loadedClass = backgroundLoaded ? "opacity-100" : "opacity-0";
 
   const getFilterStyle = () => {
-    return survey.styling?.background?.brightness
-      ? `brightness(${survey.styling?.background?.brightness}%)`
-      : "brightness(100%)";
+    return `brightness(${background?.brightness ?? 100}%)`;
   };
 
   const renderBackground = () => {
     const filterStyle = getFilterStyle();
-    const baseClasses = "absolute inset-0 h-full w-full";
 
-    switch (survey.styling?.background?.bgType) {
+    switch (background?.bgType) {
       case "color":
         return (
           <div
-            className={`${baseClasses}`}
-            style={{ backgroundColor: survey.styling?.background?.bg || "#ffff", filter: `${filterStyle}` }}
+            className={`${baseClasses} ${loadedClass}`}
+            style={{ backgroundColor: background?.bg || "#ffffff", filter: `${filterStyle}` }}
           />
         );
       case "animation":
@@ -55,20 +91,21 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
             muted
             loop
             autoPlay
-            className={`${baseClasses} object-cover`}
+            playsInline
+            className={`${baseClasses} ${loadedClass} object-cover`}
             style={{ filter: `${filterStyle}` }}>
-            <source src={survey.styling?.background?.bg || ""} type="video/mp4" />
+            <source src={background?.bg || ""} type="video/mp4" />
           </video>
         );
       case "image":
         return (
           <div
-            className={`${baseClasses} bg-cover bg-center`}
-            style={{ backgroundImage: `url(${survey.styling?.background?.bg})`, filter: `${filterStyle}` }}
+            className={`${baseClasses} ${loadedClass} bg-cover bg-center`}
+            style={{ backgroundImage: `url(${background?.bg})`, filter: `${filterStyle}` }}
           />
         );
       default:
-        return <div className={`${baseClasses} bg-white`} />;
+        return <div className={`${baseClasses} ${loadedClass} bg-white`} />;
     }
   };
 

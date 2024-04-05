@@ -1,14 +1,12 @@
 import { useState } from "react";
 
-import { TSurvey } from "@formbricks/types/surveys";
-
 interface AnimatedSurveyBgProps {
-  localSurvey?: TSurvey;
   handleBgChange: (bg: string, bgType: string) => void;
+  background: string;
 }
 
-export default function AnimatedSurveyBg({ localSurvey, handleBgChange }: AnimatedSurveyBgProps) {
-  const [color, setColor] = useState(localSurvey?.styling?.background?.bg || "#ffff");
+export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
+  const [animation, setAnimation] = useState(background);
   const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
   const animationFiles = {
@@ -71,9 +69,10 @@ export default function AnimatedSurveyBg({ localSurvey, handleBgChange }: Animat
   };
 
   const handleBg = (x: string) => {
-    setColor(x);
+    setAnimation(x);
     handleBgChange(x, "animation");
   };
+
   return (
     <div>
       <div className="mt-4 grid grid-cols-6 gap-4">
@@ -94,9 +93,9 @@ export default function AnimatedSurveyBg({ localSurvey, handleBgChange }: Animat
                 <source src={`${key}`} type="video/mp4" />
               </video>
               <input
-                className="absolute right-2 top-2 h-4 w-4 rounded-sm bg-white "
+                className="absolute right-2 top-2 h-4 w-4 rounded-sm bg-white"
                 type="checkbox"
-                checked={color === value}
+                checked={animation === value}
                 onChange={() => handleBg(value)}
               />
             </div>
@@ -105,4 +104,4 @@ export default function AnimatedSurveyBg({ localSurvey, handleBgChange }: Animat
       </div>
     </div>
   );
-}
+};

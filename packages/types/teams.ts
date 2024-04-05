@@ -1,7 +1,11 @@
 import { z } from "zod";
 
+export const ZSubscriptionStatus = z.enum(["active", "cancelled", "inactive"]).default("inactive");
+
+export type TSubscriptionStatus = z.infer<typeof ZSubscriptionStatus>;
+
 export const ZSubscription = z.object({
-  status: z.enum(["active", "cancelled", "inactive"]).default("inactive"),
+  status: ZSubscriptionStatus,
   unlimited: z.boolean().default(false),
 });
 
@@ -13,6 +17,7 @@ export const ZTeamBilling = z.object({
     inAppSurvey: ZSubscription,
     linkSurvey: ZSubscription,
     userTargeting: ZSubscription,
+    multiLanguage: ZSubscription,
   }),
 });
 

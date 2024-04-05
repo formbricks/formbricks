@@ -39,7 +39,7 @@ export default function AirtableConnect({ environmentId, enabled, webAppUrl }: A
         </div>
         <p className="my-8">Sync responses directly with Airtable.</p>
         {!enabled && (
-          <p className="mb-8 rounded border-gray-200 bg-gray-100 p-3 text-sm">
+          <p className="mb-8 rounded border-slate-200 bg-slate-100 p-3 text-sm">
             Airtable Integration is not configured in your instance of Formbricks.
           </p>
         )}

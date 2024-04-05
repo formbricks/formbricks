@@ -1,16 +1,15 @@
 import { useState } from "react";
 
-import { TSurvey } from "@formbricks/types/surveys";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
 
-interface ColorSurveyBgBgProps {
-  localSurvey?: TSurvey;
+interface ColorSurveyBgProps {
   handleBgChange: (bg: string, bgType: string) => void;
-  colours: string[];
+  colors: string[];
+  background: string;
 }
 
-export default function ColorSurveyBg({ localSurvey, handleBgChange, colours }: ColorSurveyBgBgProps) {
-  const [color, setColor] = useState(localSurvey?.styling?.background?.bg || "#ffff");
+export const ColorSurveyBg = ({ handleBgChange, colors, background }: ColorSurveyBgProps) => {
+  const [color, setColor] = useState(background || "#ffff");
 
   const handleBg = (x: string) => {
     setColor(x);
@@ -21,8 +20,8 @@ export default function ColorSurveyBg({ localSurvey, handleBgChange, colours }: 
       <div className="w-full max-w-xs py-2">
         <ColorPicker color={color} onChange={handleBg} />
       </div>
-      <div className="grid grid-cols-4 gap-4 md:grid-cols-5 xl:grid-cols-8 2xl:grid-cols-10">
-        {colours.map((x) => {
+      <div className="flex flex-wrap gap-4">
+        {colors.map((x) => {
           return (
             <div
               className={`h-16 w-16 cursor-pointer rounded-lg ${
@@ -36,4 +35,4 @@ export default function ColorSurveyBg({ localSurvey, handleBgChange, colours }: 
       </div>
     </div>
   );
-}
+};

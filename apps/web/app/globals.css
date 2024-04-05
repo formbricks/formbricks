@@ -77,6 +77,18 @@
   border: 3px solid #cbd5e1;
 }
 
+.filter-scrollbar::-webkit-scrollbar {
+  height: 10px;
+}
+
+.filter-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+}
+
+.filter-scrollbar::-webkit-scrollbar-track {
+  border-radius: 8px;
+}
+
 input:focus {
   --tw-ring-color: none;
   --tw-ring-offset-color: none;
@@ -110,4 +122,21 @@ input[type="search"]::-ms-clear {
 
 input[type="search"]::-ms-reveal {
   display: none;
+}
+
+.surveyFilterDropdown[data-state="open"]{
+  background-color: #0f172a;
+  color: white;
+}
+.surveyFilterDropdown:hover * {
+  background-color: #0f172a;
+  color: white;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  background: #0f172a;
+  height: 20px;
+  width: 20px; 
+  border-radius: 50%;
+  -webkit-appearance: none;
 }

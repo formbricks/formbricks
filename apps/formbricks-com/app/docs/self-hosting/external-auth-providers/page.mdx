@@ -40,12 +40,11 @@ Integrating Google OAuth with your Formbricks instance allows users to log in us
    - Ensure to specify authorized JavaScript origins and authorized redirect URIs.
 
 <Col>
-<CodeGroup title="Configuration URLs">
-``` {{ title: 'Redirect & Origin URLs' }}
-Authorized JavaScript origins: {WEBAPP_URL}
-Authorized redirect URIs: {WEBAPP_URL}/api/auth/callback/google
-```
-</CodeGroup>
+  <CodeGroup title="Configuration URLs">
+    ``` {{ title: "Redirect & Origin URLs" }}
+    Authorized JavaScript origins: {WEBAPP_URL}
+    Authorized redirect URIs: {WEBAPP_URL}/api/auth/callback/google ```
+  </CodeGroup>
 </Col>
 
 5. **Update Environment Variables in Docker**:
@@ -58,14 +57,12 @@ Authorized redirect URIs: {WEBAPP_URL}/api/auth/callback/google
 
 ```sh {{ title: 'Shell commands' }}
 docker exec -it container_id /bin/bash
-export GOOGLE_AUTH_ENABLED=1
 export GOOGLE_CLIENT_ID=your-client-id-here
 export GOOGLE_CLIENT_SECRET=your-client-secret-here
 exit
 ```
 
 ```sh {{ title: 'env file' }}
-GOOGLE_AUTH_ENABLED=1
 GOOGLE_CLIENT_ID=your-client-id-here
 GOOGLE_CLIENT_SECRET=your-client-secret-here
 ```
@@ -78,3 +75,126 @@ GOOGLE_CLIENT_SECRET=your-client-secret-here
    - Once the environment variables have been updated, it's crucial to restart your Docker containers to apply the changes. This ensures that your Formbricks instance can utilize the new Google OAuth configuration for user authentication. Here's how you can do it:
    - Navigate to your Docker setup directory where your `docker-compose.yml` file is located.
    - Run the following command to bring down your current Docker containers and then bring them back up with the updated environment configuration:
+
+## Azure SSO Integration
+
+Have an Azure Active Directory (AAD) instance? Integrate it with your Formbricks instance to allow users to log in using their existing AAD credentials. This guide will walk you through the process of setting up Azure SSO for your Formbricks instance.
+
+### Requirements
+
+- An Azure Active Directory (AAD) instance.
+- A Formbricks instance running and accessible.
+
+### Steps
+
+1. Create a new Tenant in Azure Active Directory as per their [official documentation](https://learn.microsoft.com/en-us/entra/fundamentals/create-new-tenant).
+2. Add Users & Groups to your AAD instance.
+3. Now we need to fill the below environment variables in our Formbricks instance so get them from your AD configuration:
+   - `AZUREAD_CLIENT_ID`
+   - `AZUREAD_CLIENT_SECRET`
+   - `AZUREAD_TENANT_ID`
+4. Update these environment variables in your `docker-compose.yml` or pass it like your other environment variables to the Formbricks container.
+5. Restart your Formbricks instance.
+6. You're all set! Users can now signup & log in using their AAD credentials.
+
+## OpenID Integration
+
+Integrating your own OIDC (OpenID Connect) instance with your Formbricks instance allows users to log in using their OIDC credentials, ensuring a secure and streamlined user experience. Please follow the steps below to set up OIDC for your Formbricks instance.
+
+1. Configure your OIDC provider & get the following variables:
+   - `OIDC_CLIENT_ID`
+   - `OIDC_CLIENT_SECRET`
+   - `OIDC_ISSUER`
+   - `OIDC_SIGNING_ALGORITHM`
+
+<Note>
+Make sure the Redirect URI for your OIDC Client is set to `{WEBAPP_URL}/api/auth/callback/openid`.
+</Note>
+
+2. Update these environment variables in your `docker-compose.yml` or pass it directly to the running container.
+
+An example configuration for a FusionAuth OpenID Connect in Formbricks would look like:
+<Col>
+<CodeGroup title="Formbricks Env for FusionAuth OIDC">
+```yml {{ title: '.env' }}
+OIDC_CLIENT_ID=59cada54-56d4-4aa8-a5e7-5823bbe0e5b7
+OIDC_CLIENT_SECRET=4f4dwP0ZoOAqMW8fM9290A7uIS3E8Xg29xe1umhlB_s
+OIDC_ISSUER=http://localhost:9011
+OIDC_DISPLAY_NAME=FusionAuth
+OIDC_SIGNING_ALGORITHM=HS256
+```
+</CodeGroup>
+</Col>
+
+3. Set an environment variable `OIDC_DISPLAY_NAME` to the display name of your OIDC provider.
+
+4. Restart your Formbricks instance.
+
+5. You're all set! Users can now signup & log in using their OIDC credentials.
+
+## Important Run-time Variables
+
+These variables can be provided at the runtime i.e. in your docker-compose file.
+
+| Variable                    | Description                                                                                  | Required                                                | Default                   |
+|-----------------------------|----------------------------------------------------------------------------------------------|---------------------------------------------------------|---------------------------|
+| WEBAPP_URL                  | Base URL of the site.                                                                        | required                                                | `http://localhost:3000`   |
+| DATABASE_URL                | Database URL with credentials.                                                               | required                                                |                           |
+| NEXTAUTH_SECRET             | Secret for NextAuth, used for session signing and encryption.                                | required                                                | (Generated by the user)   |
+| ENCRYPTION_KEY              | Secret for used by Formbricks for data encryption                                            | required                                                | (Generated by the user)   |
+| NEXTAUTH_URL                | Location of the auth server. By default, this is the Formbricks docker instance itself.      | required                                                | `http://localhost:3000`   |
+| UPLOADS_DIR                 | Local directory for storing uploads.                                                         | optional                                                | `./uploads`               |
+| S3_ACCESS_KEY               | Access key for S3.                                                                           | optional                                                | (resolved by the AWS SDK) |
+| S3_SECRET_KEY               | Secret key for S3.                                                                           | optional                                                | (resolved by the AWS SDK) |
+| S3_REGION                   | Region for S3.                                                                               | optional                                                | (resolved by the AWS SDK) |
+| S3_BUCKET                   | Bucket name for S3.                                                                          | optional (required if S3 is enabled)                    |                           |
+| S3_ENDPOINT                 | Endpoint for S3.                                                                             | optional                                                | (resolved by the AWS SDK) |
+| PRIVACY_URL                 | URL for privacy policy.                                                                      | optional                                                |                           |
+| TERMS_URL                   | URL for terms of service.                                                                    | optional                                                |                           |
+| IMPRINT_URL                 | URL for imprint.                                                                             | optional                                                |                           |
+| SIGNUP_DISABLED             | Disables the ability for new users to create an account if set to `1`.                       | optional                                                |                           |
+| EMAIL_AUTH_DISABLED         | Disables the ability for users to signup or login via email and password if set to `1`.      | optional                                                |                           |
+| PASSWORD_RESET_DISABLED     | Disables password reset functionality if set to `1`.                                         | optional                                                |                           |
+| EMAIL_VERIFICATION_DISABLED | Disables email verification if set to `1`.                                                   | optional                                                |                           |
+| RATE_LIMITING_DISABLED      | Disables rate limiting if set to `1`.                                                        | optional                                                |                           |
+| INVITE_DISABLED             | Disables the ability for invited users to create an account if set to `1`.                   | optional                                                |                           |
+| MAIL_FROM                   | Email address to send emails from.                                                           | optional (required if email services are to be enabled) |                           |
+| SMTP_HOST                   | Host URL of your SMTP server.                                                                | optional (required if email services are to be enabled) |                           |
+| SMTP_PORT                   | Host Port of your SMTP server.                                                               | optional (required if email services are to be enabled) |                           |
+| SMTP_USER                   | Username for your SMTP Server.                                                               | optional (required if email services are to be enabled) |                           |
+| SMTP_PASSWORD               | Password for your SMTP Server.                                                               | optional (required if email services are to be enabled) |                           |
+| SMTP_SECURE_ENABLED         | SMTP secure connection. For using TLS, set to `1` else to `0`.                               | optional (required if email services are to be enabled) |                           |
+| GITHUB_ID                   | Client ID for GitHub.                                                                        | optional (required if GitHub auth is enabled)           |                           |
+| GITHUB_SECRET               | Secret for GitHub.                                                                           | optional (required if GitHub auth is enabled)           |                           |
+| GOOGLE_CLIENT_ID            | Client ID for Google.                                                                        | optional (required if Google auth is enabled)           |                           |
+| GOOGLE_CLIENT_SECRET        | Secret for Google.                                                                           | optional (required if Google auth is enabled)           |                           |
+| CRON_SECRET                 | API Secret for running cron jobs.                                                            | optional                                                |                           |
+| STRIPE_SECRET_KEY           | Secret key for Stripe integration.                                                           | optional                                                |                           |
+| STRIPE_WEBHOOK_SECRET       | Webhook secret for Stripe integration.                                                       | optional                                                |                           |
+| TELEMETRY_DISABLED          | Disables telemetry if set to `1`.                                                            | optional                                                |                           |
+| INSTANCE_ID                 | Instance ID for Formbricks Cloud to be sent to Telemetry.                                    | optional                                                |                           |
+| INTERNAL_SECRET             | Internal Secret (Currently we overwrite the value with a random value).                      | optional                                                |                           |
+| DEFAULT_BRAND_COLOR         | Default brand color for your app (Can be overwritten from the UI as well).                   | optional                                                | `#64748b`                 |
+| DEFAULT_TEAM_ID             | Automatically assign new users to a specific team when joining                               | optional                                                |                           |
+| DEFAULT_TEAM_ROLE           | Role of the user in the default team.                                                        | optional                                                | `admin`                   |
+| ONBOARDING_DISABLED         | Disables onboarding for new users if set to `1`                                              | optional                                                |                           |
+| OIDC_DISPLAY_NAME           | Display name for Custom OpenID Connect Provider                                              | optional                                                |                           |
+| OIDC_CLIENT_ID              | Client ID for Custom OpenID Connect Provider                                                 | optional (required if OIDC auth is enabled)             |                           |
+| OIDC_CLIENT_SECRET          | Secret for Custom OpenID Connect Provider                                                    | optional (required if OIDC auth is enabled)             |                           |
+| OIDC_ISSUER                 | Issuer URL for Custom OpenID Connect Provider (should have `.well-known` configured at this) | optional (required if OIDC auth is enabled)             |                           |
+| OIDC_SIGNING_ALGORITHM      | Signing Algorithm for Custom OpenID Connect Provider                                         | optional                                                | `RS256`                   |
+| OPENTELEMETRY_LISTENER_URL  | URL for OpenTelemetry listener inside Formbricks.                                            | optional |                                              |                           |
+
+## Build-time Variables
+
+These variables must be provided at the time of the docker build and would require rebuilding the image.
+
+| Variable                              | Description                                           | Required | Default |
+| ------------------------------------- | ----------------------------------------------------- | -------- | ------- |
+| NEXT_PUBLIC_FORMBRICKS_API_HOST       | Host for the Formbricks API to use inside Formbricks. | optional |         |
+| NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID | Formbricks environment ID for use inside Formbricks.  | optional |         |
+| NEXT_PUBLIC_POSTHOG_API_KEY           | API key to use PostHog analytics inside Formbricks.   | optional |         |
+| NEXT_PUBLIC_POSTHOG_API_HOST          | Host to use PostHog analytics inside Formbricks.      | optional |         |
+| NEXT_PUBLIC_SENTRY_DSN                | DSN for Sentry error tracking inside Formbricks.      | optional |         |
+
+Still facing issues? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!

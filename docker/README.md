@@ -15,7 +15,7 @@ Before you proceed, make sure you have the following:
 Copy and paste the following command into your terminal:
 
 ```bash
-/bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/production.sh)"
+/bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/formbricks.sh)"
 ```
 
 The script will prompt you for the following information:

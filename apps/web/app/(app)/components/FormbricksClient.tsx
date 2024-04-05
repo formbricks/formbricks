@@ -1,16 +1,20 @@
 "use client";
 
 import { formbricksEnabled } from "@/app/lib/formbricks";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import formbricks from "@formbricks/js";
-import { env } from "@formbricks/lib/env.mjs";
+import { env } from "@formbricks/lib/env";
 
 type UsageAttributesUpdaterProps = {
   numSurveys: number;
 };
 
 export default function FormbricksClient({ session }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     if (formbricksEnabled && session?.user && formbricks) {
       formbricks.init({
@@ -21,6 +25,12 @@ export default function FormbricksClient({ session }) {
       formbricks.setEmail(session.user.email);
     }
   }, [session]);
+
+  useEffect(() => {
+    if (formbricksEnabled && formbricks) {
+      formbricks?.registerRouteChange();
+    }
+  }, [pathname, searchParams]);
   return null;
 }
 

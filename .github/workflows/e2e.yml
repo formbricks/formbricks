@@ -1,0 +1,75 @@
+name: E2E Tests
+on:
+  workflow_call:
+  workflow_dispatch:
+jobs:
+  build:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/dangerous-git-checkout
+
+      - name: Build & Cache Web Binaries
+        uses: ./.github/actions/cache-build-web
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Start PostgreSQL
+        run: |
+          cd packages/database && pnpm db:up &
+          for attempt in {1..20}; do
+            if nc -zv localhost 5432; then
+              echo "Ready"
+              break
+            fi
+            echo "Waiting..."
+            sleep 5
+          done
+          pnpm db:migrate:dev
+      - name: Serve packages for lazy loading
+        run: |
+          cd packages/surveys && pnpm serve &
+
+      - name: Run App
+        run: |
+          NODE_ENV=test pnpm start --filter=web &
+          for attempt in {1..20}; do
+            if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
+              echo "Ready"
+              break
+            fi
+            echo "Waiting..."
+            sleep 10
+          done
+
+      - name: Test Serve endpoints
+        run: |
+          curl -s http://localhost:3003
+
+      - name: Cache Playwright
+        uses: actions/cache@v3
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run E2E Tests
+        run: |
+          pnpm test:e2e
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

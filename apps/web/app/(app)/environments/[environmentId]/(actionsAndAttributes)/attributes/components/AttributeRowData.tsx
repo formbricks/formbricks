@@ -1,9 +1,9 @@
-import { TagIcon } from "@heroicons/react/24/solid";
+import { TagIcon } from "lucide-react";
 
 import { timeSinceConditionally } from "@formbricks/lib/time";
 import { Badge } from "@formbricks/ui/Badge";
 
-export default function AttributeClassDataRow({ attributeClass }) {
+export const AttributeClassDataRow = ({ attributeClass }) => {
   return (
     <div className="m-2 grid h-16  grid-cols-5 content-center rounded-lg hover:bg-slate-100">
       <div className="col-span-5 flex items-center pl-6 text-sm sm:col-span-3">
@@ -31,4 +31,4 @@ export default function AttributeClassDataRow({ attributeClass }) {
       </div>
     </div>
   );
-}
+};

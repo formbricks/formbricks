@@ -15,10 +15,12 @@ import {
   ZTeam,
   ZTeamCreateInput,
 } from "@formbricks/types/teams";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL } from "../constants";
 import { environmentCache } from "../environment/cache";
 import { getProducts } from "../product/service";
+import { getUsersWithTeam, updateUser } from "../user/service";
 import { formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { teamCache } from "./cache";
@@ -337,7 +339,6 @@ export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<n
     },
     [`getMonthlyActiveTeamPeopleCount-${teamId}`],
     {
-      tags: [],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -374,7 +375,6 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
     },
     [`getMonthlyTeamResponseCount-${teamId}`],
     {
-      tags: [],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -396,3 +396,38 @@ export const getTeamBillingInfo = async (teamId: string): Promise<TTeamBilling |
       tags: [teamCache.tag.byId(teamId)],
     }
   )();
+
+export const subscribeTeamMembersToSurveyResponses = async (
+  environmentId: string,
+  surveyId: string
+): Promise<void> => {
+  try {
+    const team = await getTeamByEnvironmentId(environmentId);
+    if (!team) {
+      throw new ResourceNotFoundError("Team", environmentId);
+    }
+
+    const users = await getUsersWithTeam(team.id);
+    await Promise.all(
+      users.map((user) => {
+        if (!user.notificationSettings?.unsubscribedTeamIds?.includes(team?.id as string)) {
+          const defaultSettings = { alert: {}, weeklySummary: {} };
+          const updatedNotificationSettings: TUserNotificationSettings = {
+            ...defaultSettings,
+            ...user.notificationSettings,
+          };
+
+          updatedNotificationSettings.alert[surveyId] = true;
+
+          return updateUser(user.id, {
+            notificationSettings: updatedNotificationSettings,
+          });
+        }
+
+        return Promise.resolve();
+      })
+    );
+  } catch (error) {
+    throw error;
+  }
+};

@@ -1,4 +1,4 @@
-name: Build
+name: Build web
 on:
   workflow_call:
 jobs:
@@ -8,13 +8,13 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/dangerous-git-checkout
 
-      - name: Setup Node.js 18.x
+      - name: Setup Node.js 20.x
         uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 20.x
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2
@@ -25,7 +25,7 @@ jobs:
       - name: create .env
         run: cp .env.example .env
 
-      - name: Generate Random NEXTAUTH_SECRET
+      - name: Generate Random ENCRYPTION_KEY
         run: |
           SECRET=$(openssl rand -hex 32)
           echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV

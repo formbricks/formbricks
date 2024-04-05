@@ -1,8 +1,7 @@
 "use client";
 
 import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import clsx from "clsx";
+import { XIcon } from "lucide-react";
 import { Fragment } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -15,7 +14,9 @@ type Modal = {
   noPadding?: boolean;
   blur?: boolean;
   closeOnOutsideClick?: boolean;
+  className?: string;
   size?: "md" | "lg";
+  hideCloseButton?: boolean;
 };
 
 export const Modal: React.FC<Modal> = ({
@@ -26,7 +27,9 @@ export const Modal: React.FC<Modal> = ({
   noPadding,
   blur = true,
   closeOnOutsideClick = true,
+  className,
   size = "md",
+  hideCloseButton = false,
 }) => {
   const sizeClassName = {
     md: "sm:w-full sm:max-w-xl",
@@ -64,18 +67,23 @@ export const Modal: React.FC<Modal> = ({
                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                 <Dialog.Panel
-                  className={clsx(
-                    "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8",
+                  className={cn(
+                    "relative transform rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl",
                     `${noPadding ? "" : "px-4 pb-4 pt-5 sm:p-6"}`,
-                    sizeClassName[size]
+                    sizeClassName[size],
+                    className
                   )}>
-                  <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
+                  <div
+                    className={cn(
+                      "absolute right-0 top-0 hidden pr-4 pt-4 sm:block",
+                      hideCloseButton && "!hidden"
+                    )}>
                     <button
                       type="button"
                       className="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 focus:ring-offset-2"
                       onClick={() => setOpen(false)}>
                       <span className="sr-only">Close</span>
-                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                      <XIcon className="h-6 w-6" aria-hidden="true" />
                     </button>
                   </div>
                   {title && <h3 className="mb-4 text-xl font-bold text-slate-500">{title}</h3>}

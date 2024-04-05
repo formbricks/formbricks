@@ -1,23 +1,23 @@
-import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, XIcon } from "lucide-react";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
+import { Button } from "@formbricks/ui/Button";
 
 export const PricingTable = ({ leadRow, pricing, endRow }) => {
   return (
-    <div className="grid grid-cols-1 px-4 md:gap-4 md:px-16 ">
-      <div className="rounded-xl px-4 md:px-12">
+    <div className="mx-auto grid max-w-4xl grid-cols-1 md:gap-4">
+      <div className="rounded-xl px-4 pb-4 md:px-12 md:pb-0">
         <div className="flex items-center gap-x-4">
           <div className="w-1/3 text-left font-semibold text-slate-700 md:text-xl dark:text-slate-200">
             {leadRow.title}
-            <span className="pl-2 text-sm font-normal text-slate-600">{leadRow.comparison}</span>
+            {/*             <span className="hidden pl-2 text-sm font-normal text-slate-600 lg:inline-block">
+              {leadRow.comparison}
+            </span> */}
           </div>
-          <div
-            className="flex w-1/3 items-center justify-center text-center text-sm font-semibold
-           text-slate-500 md:text-lg dark:text-slate-200">
+          <div className=" w-1/3 text-center font-medium text-slate-600 dark:text-slate-200">
             {leadRow.free}
           </div>
 
-          <div className="w-1/3 text-center font-semibold text-slate-700 md:text-lg dark:text-slate-200">
+          <div className="w-1/3 text-center  font-medium text-slate-600 dark:text-slate-200">
             {leadRow.paid}
           </div>
         </div>
@@ -39,52 +39,26 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
                 </span>
               )}
             </div>
-            <div className="flex w-1/3 items-center justify-center text-center text-sm text-slate-800 dark:text-slate-100">
-              {feature.addOnText ? (
-                <TooltipProvider delayDuration={50}>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <u>{feature.free}</u>
-                    </TooltipTrigger>
-                    <TooltipContent side={"top"}>
-                      <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
-                        {feature.addOnText}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+            <div className="flex w-1/3 items-center justify-center">
+              {typeof feature.free === "string" ? (
+                <span className="text-center text-sm font-medium leading-4 text-slate-600 md:text-base">
+                  {feature.free}
+                </span>
               ) : feature.free ? (
-                <div className="h-6 w-6 rounded-full border border-green-300 bg-green-100 p-0.5 dark:border-green-600 dark:bg-green-900">
-                  <CheckIcon className=" text-green-500 dark:text-green-300" />
-                </div>
+                <CheckIcon className="rounded-full border border-green-300 bg-green-100 p-0.5 text-green-500 dark:border-green-600 dark:bg-green-900 dark:text-green-300" />
               ) : (
-                <div className="h-6 w-6 rounded-full border border-red-300 bg-red-100 p-0.5 dark:border-red-500 dark:bg-red-300">
-                  <XMarkIcon className="text-red-500 dark:text-red-600" />
-                </div>
+                <XIcon className="rounded-full border border-red-300 bg-red-100 p-0.5 text-red-500 dark:border-red-500 dark:bg-red-300 dark:text-red-600" />
               )}
             </div>
-            <div className="flex w-1/3 items-center justify-center text-center text-sm text-slate-800 dark:text-slate-100">
-              {feature.addOnText ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <u>{feature.paid}</u>
-                    </TooltipTrigger>
-                    <TooltipContent side={"top"}>
-                      <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
-                        {feature.addOnText}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+            <div className="flex w-1/3 items-center justify-center">
+              {typeof feature.free === "string" ? (
+                <span className="text-center text-sm font-medium leading-4 text-slate-600 md:text-base">
+                  {feature.paid}
+                </span>
               ) : feature.paid ? (
-                <div className="h-6 w-6 rounded-full border border-green-300 bg-green-100 p-0.5 dark:border-green-600 dark:bg-green-900">
-                  <CheckIcon className="text-green-500 dark:text-green-300" />
-                </div>
+                <CheckIcon className="rounded-full border border-green-300 bg-green-100 p-0.5 text-green-500 dark:border-green-600 dark:bg-green-900 dark:text-green-300" />
               ) : (
-                <div className="h-6 w-6 rounded-full border border-red-300 bg-red-100 p-0.5 dark:border-red-600 dark:bg-red-900">
-                  <XMarkIcon className="text-red-500 dark:text-red-600" />
-                </div>
+                <XIcon className="rounded-full border border-red-300 bg-red-100 p-0.5 text-red-500 dark:border-red-500 dark:bg-red-300 dark:text-red-600" />
               )}
             </div>
           </div>
@@ -93,15 +67,25 @@ export const PricingTable = ({ leadRow, pricing, endRow }) => {
 
       <div className="rounded-xl px-4 md:px-12">
         <div className="flex items-center gap-x-4">
-          <div className="w-1/3 text-left text-sm font-semibold text-slate-700 md:text-base dark:text-slate-200">
-            {endRow.title}
-          </div>
-          <div className="flex w-1/3 items-center justify-center text-center text-sm font-semibold text-slate-700 md:text-base dark:text-slate-200">
+          <div className="w-1/3"></div>
+          <div className="w-1/3 pt-4 text-center text-sm font-semibold text-slate-700 md:pt-0 md:text-xl dark:text-slate-200">
             <span>{endRow.free}</span>
+            <Button
+              variant="secondary"
+              className="mt-4 hidden w-full py-2 md:block"
+              href="https://app.formbricks.com/auth/signup">
+              Get started
+            </Button>
           </div>
 
-          <div className="w-1/3 text-center text-sm font-semibold text-slate-700 md:text-base dark:text-slate-200">
+          <div className="w-1/3 pt-4 text-center text-sm font-semibold text-slate-700 md:pt-0 md:text-xl dark:text-slate-200">
             {endRow.paid}
+            <Button
+              variant="darkCTA"
+              className="mt-4 hidden w-full py-2 md:block"
+              href="https://app.formbricks.com/auth/signup">
+              Get started
+            </Button>
           </div>
         </div>
       </div>

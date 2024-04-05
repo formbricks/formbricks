@@ -1,7 +1,4 @@
-interface UploadFileConfig {
-  allowedFileExtensions?: string[];
-  surveyId?: string;
-}
+import { TUploadFileConfig } from "@formbricks/types/storage";
 
 export class StorageAPI {
   private apiHost: string;
@@ -14,7 +11,7 @@ export class StorageAPI {
 
   async uploadFile(
     file: File,
-    { allowedFileExtensions, surveyId }: UploadFileConfig | undefined = {}
+    { allowedFileExtensions, surveyId }: TUploadFileConfig | undefined = {}
   ): Promise<string> {
     if (!(file instanceof Blob) || !(file instanceof File)) {
       throw new Error(`Invalid file type. Expected Blob or File, but received ${typeof file}`);
@@ -42,7 +39,7 @@ export class StorageAPI {
     const json = await response.json();
 
     const { data } = json;
-    const { signedUrl, fileUrl, signingData, presignedFields } = data;
+    const { signedUrl, fileUrl, signingData, presignedFields, updatedFileName } = data;
 
     let requestHeaders: Record<string, string> = {};
 
@@ -51,7 +48,7 @@ export class StorageAPI {
 
       requestHeaders = {
         "X-File-Type": file.type,
-        "X-File-Name": encodeURIComponent(file.name),
+        "X-File-Name": encodeURIComponent(updatedFileName),
         "X-Survey-ID": surveyId ?? "",
         "X-Signature": signature,
         "X-Timestamp": String(timestamp),
@@ -77,8 +74,23 @@ export class StorageAPI {
     });
 
     if (!uploadResponse.ok) {
-      const uploadJson = await uploadResponse.json();
-      throw new Error(`${uploadJson.message}`);
+      // if local storage is used, we'll use the json response:
+      if (signingData) {
+        const uploadJson = await uploadResponse.json();
+        const error = new Error(uploadJson.message);
+        error.name = "FileTooLargeError";
+        throw error;
+      }
+
+      // if s3 is used, we'll use the text response:
+      const errorText = await uploadResponse.text();
+      if (presignedFields && errorText && errorText.includes("EntityTooLarge")) {
+        const error = new Error("File size exceeds the size limit for your plan");
+        error.name = "FileTooLargeError";
+        throw error;
+      }
+
+      throw new Error(`Upload failed with status: ${uploadResponse.status}`);
     }
 
     return fileUrl;

@@ -1,5 +1,4 @@
-import { TagIcon } from "@heroicons/react/24/solid";
-import { QuestionMarkCircleIcon } from "@heroicons/react/24/solid";
+import { HelpCircleIcon, TagIcon } from "lucide-react";
 
 import { Button } from "@formbricks/ui/Button";
 
@@ -11,7 +10,7 @@ export default function Loading() {
           <Button
             variant="secondary"
             className="pointer-events-none animate-pulse cursor-not-allowed select-none">
-            <QuestionMarkCircleIcon className="mr-2 h-4 w-4" />
+            <HelpCircleIcon className="mr-2 h-4 w-4" />
             Loading Attributes
           </Button>
         </div>
@@ -34,20 +33,20 @@ export default function Loading() {
               </div>
               <div className="ml-4 text-left">
                 <div className="font-medium text-slate-900">
-                  <div className="mt-0 h-4 w-48 animate-pulse rounded-full bg-gray-200"></div>
+                  <div className="mt-0 h-4 w-48 animate-pulse rounded-full bg-slate-200"></div>
                 </div>
                 <div className="mt-1 text-xs text-slate-400">
-                  <div className="h-2 w-24 animate-pulse rounded-full bg-gray-200"></div>
+                  <div className="h-2 w-24 animate-pulse rounded-full bg-slate-200"></div>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
-            <div className="m-4 h-4 animate-pulse rounded-full bg-gray-200"></div>
+            <div className="m-4 h-4 animate-pulse rounded-full bg-slate-200"></div>
           </div>
           <div className="my-auto whitespace-nowrap text-center text-sm text-slate-500">
-            <div className="m-4 h-4 animate-pulse rounded-full bg-gray-200"></div>
+            <div className="m-4 h-4 animate-pulse rounded-full bg-slate-200"></div>
           </div>
         </div>
       ))}

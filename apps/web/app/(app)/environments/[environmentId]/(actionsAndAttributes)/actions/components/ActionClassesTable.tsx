@@ -1,6 +1,6 @@
 "use client";
 
-import { CursorArrowRaysIcon } from "@heroicons/react/24/solid";
+import { MousePointerClickIcon } from "lucide-react";
 import { useState } from "react";
 
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
@@ -53,7 +53,7 @@ export default function ActionClassesTable({
               onClick={() => {
                 setAddActionModalOpen(true);
               }}>
-              <CursorArrowRaysIcon className="mr-2 h-5 w-5 text-white" />
+              <MousePointerClickIcon className="mr-2 h-5 w-5 text-white" />
               Add Action
             </Button>
           </div>
@@ -61,13 +61,14 @@ export default function ActionClassesTable({
       </LoadingWrapper>
       <div className="rounded-lg border border-slate-200">
         {TableHeading}
-        <div className="grid-cols-7">
+        <div className="grid-cols-7" id="actionClassesWrapper">
           {actionClasses.map((actionClass, index) => (
             <button
               onClick={(e) => {
                 handleOpenActionDetailModalClick(e, actionClass);
               }}
               className="w-full"
+              title={actionClass.name}
               key={actionClass.id}>
               {actionRows[index]}
             </button>
@@ -84,6 +85,7 @@ export default function ActionClassesTable({
       <AddNoCodeActionModal
         environmentId={environmentId}
         open={isAddActionModalOpen}
+        actionClasses={actionClasses}
         setOpen={setAddActionModalOpen}
         isViewer={isViewer}
       />

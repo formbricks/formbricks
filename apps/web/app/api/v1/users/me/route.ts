@@ -1,6 +1,6 @@
 import { getSessionUser } from "@/app/lib/api/apiHelper";
 import { MembershipRole } from "@prisma/client";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { prisma } from "@formbricks/database";
 
@@ -23,7 +23,7 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(user);
+  return Response.json(user);
 }
 
 export async function PUT(request: NextRequest) {
@@ -42,7 +42,7 @@ export async function PUT(request: NextRequest) {
     data: body,
   });
 
-  return NextResponse.json(user);
+  return Response.json(user);
 }
 
 const deleteUser = async (userId: string) => {
@@ -130,8 +130,8 @@ export async function DELETE() {
 
     await deleteUser(currentUser.id);
 
-    return NextResponse.json({ deletedUser: currentUser }, { status: 200 });
+    return Response.json({ deletedUser: currentUser }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return Response.json({ message: error.message }, { status: 500 });
   }
 }

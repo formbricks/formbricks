@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { NextResponse } from "next/server";
 
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { createAttributeClass, getAttributeClassByName } from "@formbricks/lib/attributeClass/service";
@@ -9,6 +8,7 @@ import { getPerson, updatePersonAttribute } from "@formbricks/lib/person/service
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { TJsStateSync, ZJsPeopleAttributeInput } from "@formbricks/types/js";
 
 interface Context {
@@ -18,11 +18,11 @@ interface Context {
   };
 }
 
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(): Promise<Response> {
   return responses.successResponse({}, true);
 }
 
-export async function POST(req: Request, context: Context): Promise<NextResponse> {
+export async function POST(req: Request, context: Context): Promise<Response> {
   try {
     const { userId, environmentId } = context.params;
     const personId = userId; // legacy workaround for formbricks-js 1.2.0 & 1.2.1
@@ -70,8 +70,14 @@ export async function POST(req: Request, context: Context): Promise<NextResponse
       environmentId,
     });
 
+    const team = await getTeamByEnvironmentId(environmentId);
+
+    if (!team) {
+      throw new Error("Team not found");
+    }
+
     const [surveys, noCodeActionClasses, product] = await Promise.all([
-      getSyncSurveys(environmentId, person),
+      getSyncSurveys(environmentId, person.id),
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);

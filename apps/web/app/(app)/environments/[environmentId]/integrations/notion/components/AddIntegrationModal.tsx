@@ -6,13 +6,15 @@ import {
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import { questionTypes } from "@/app/lib/questions";
 import NotionLogo from "@/images/notion.png";
-import { ArrowPathIcon, ChevronDownIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDownIcon, PlusIcon, RefreshCcwIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
@@ -105,12 +107,13 @@ export default function AddIntegrationModal({
   }, [selectedDatabase?.id]);
 
   const questionItems = useMemo(() => {
-    const questions =
-      selectedSurvey?.questions.map((q) => ({
-        id: q.id,
-        name: q.headline,
-        type: q.type,
-      })) || [];
+    const questions = selectedSurvey
+      ? checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((q) => ({
+          id: q.id,
+          name: getLocalizedValue(q.headline, "default"),
+          type: q.type,
+        }))
+      : [];
 
     const hiddenFields = selectedSurvey?.hiddenFields.enabled
       ? selectedSurvey?.hiddenFields.fieldIds?.map((fId) => ({
@@ -224,7 +227,7 @@ export default function AddIntegrationModal({
     return questionItems.filter((q) => !selectedQuestionIds.includes(q.id));
   };
 
-  const createCopy = (item) => JSON.parse(JSON.stringify(item));
+  const createCopy = (item) => structuredClone(item);
 
   const MappingRow = ({ idx }: { idx: number }) => {
     const filteredQuestionItems = getFilteredQuestionItems(idx);
@@ -392,7 +395,7 @@ export default function AddIntegrationModal({
               idx === mapping.length - 1 ? "visible" : "invisible"
             }`}
             onClick={addRow}>
-            <PlusIcon className="h-5 w-5 font-bold text-gray-500" />
+            <PlusIcon className="h-5 w-5 font-bold text-slate-500" />
           </button>
           <button
             type="button"
@@ -400,7 +403,7 @@ export default function AddIntegrationModal({
               mapping.length > 1 ? "visible" : "invisible"
             }`}
             onClick={deleteRow}>
-            <XMarkIcon className="h-5 w-5 text-red-500" />
+            <XIcon className="h-5 w-5 text-red-500" />
           </button>
         </div>
       </div>
@@ -550,7 +553,7 @@ const DropdownSelector = ({
                 </span>
               </span>
               <span className="flex h-full items-center border-l pl-3">
-                <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
               </span>
             </button>
           </DropdownMenu.Trigger>
@@ -564,7 +567,7 @@ const DropdownSelector = ({
                   items.map((item) => (
                     <DropdownMenu.Item
                       key={item.id}
-                      className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                      className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
                       onSelect={() => setSelectedItem(item)}>
                       {item.name}
                     </DropdownMenu.Item>
@@ -580,7 +583,7 @@ const DropdownSelector = ({
             onClick={() => {
               refetch();
             }}>
-            <ArrowPathIcon className="h-5 w-5 font-bold text-gray-500" />
+            <RefreshCcwIcon className="h-5 w-5 font-bold text-slate-500" />
           </button>
         )}
       </div>

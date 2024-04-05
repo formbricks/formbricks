@@ -1,11 +1,13 @@
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDownIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationGoogleSheets,
@@ -187,7 +189,7 @@ export default function AddIntegrationModal({
                   <span>{selectedItem ? selectedItem.name : `${label}`}</span>
                 </span>
                 <span className="flex h-full items-center border-l pl-3">
-                  <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                  <ChevronDownIcon className="h-4 w-4 text-slate-500" />
                 </span>
               </button>
             </DropdownMenu.Trigger>
@@ -195,13 +197,13 @@ export default function AddIntegrationModal({
             {!disabled && (
               <DropdownMenu.Portal>
                 <DropdownMenu.Content
-                  className="z-50 min-w-[220px] rounded-md bg-white text-sm text-slate-800 shadow-md"
+                  className="z-50 max-h-[10rem] min-w-[220px] overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
                   align="start">
                   {items &&
                     items.map((item) => (
                       <DropdownMenu.Item
                         key={item.id}
-                        className="flex cursor-pointer items-center p-3 hover:bg-gray-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                        className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
                         onSelect={() => setSelectedItem(item)}>
                         {item.name}
                       </DropdownMenu.Item>
@@ -273,7 +275,7 @@ export default function AddIntegrationModal({
                   <Label htmlFor="Surveys">Questions</Label>
                   <div className="mt-1 rounded-lg border border-slate-200">
                     <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                      {selectedSurvey?.questions.map((question) => (
+                      {checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((question) => (
                         <div key={question.id} className="my-1 flex items-center space-x-2">
                           <label htmlFor={question.id} className="flex cursor-pointer items-center">
                             <Checkbox
@@ -286,7 +288,7 @@ export default function AddIntegrationModal({
                                 handleCheckboxChange(question.id);
                               }}
                             />
-                            <span className="ml-2">{question.headline}</span>
+                            <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
                           </label>
                         </div>
                       ))}

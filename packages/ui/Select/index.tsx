@@ -12,10 +12,10 @@ const SelectGroup: React.ComponentType<SelectPrimitive.SelectGroupProps> = Selec
 
 const SelectValue: React.ComponentType<SelectPrimitive.SelectValueProps> = SelectPrimitive.Value;
 
-const SelectTrigger: React.ComponentType<SelectPrimitive.SelectTriggerProps> = React.forwardRef<
+const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & { hideArrow?: boolean }
+>(({ className, hideArrow, children, ...props }, ref) => (
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
@@ -24,7 +24,7 @@ const SelectTrigger: React.ComponentType<SelectPrimitive.SelectTriggerProps> = R
     )}
     {...props}>
     {children}
-    <ChevronDown className="h-4 w-4 opacity-50" />
+    {!hideArrow ? <ChevronDown className="h-4 w-4 opacity-50" /> : null}
   </SelectPrimitive.Trigger>
 ));
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
@@ -89,11 +89,11 @@ SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 
 export {
   Select,
-  SelectGroup,
-  SelectValue,
-  SelectTrigger,
   SelectContent,
-  SelectLabel,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 };

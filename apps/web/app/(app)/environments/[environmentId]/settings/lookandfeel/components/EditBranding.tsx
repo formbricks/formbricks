@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
-import { Alert, AlertDescription } from "@formbricks/ui/Alert";
 import { Label } from "@formbricks/ui/Label";
 import { Switch } from "@formbricks/ui/Switch";
+import { UpgradePlanNotice } from "@formbricks/ui/UpgradePlanNotice";
 
 import { updateProductAction } from "../actions";
 
@@ -16,7 +15,6 @@ interface EditFormbricksBrandingProps {
   product: TProduct;
   canRemoveBranding: boolean;
   environmentId: string;
-  isFormbricksCloud?: boolean;
 }
 
 export function EditFormbricksBranding({
@@ -24,17 +22,11 @@ export function EditFormbricksBranding({
   product,
   canRemoveBranding,
   environmentId,
-  isFormbricksCloud,
 }: EditFormbricksBrandingProps) {
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
     type === "linkSurvey" ? product.linkSurveyBranding : product.inAppSurveyBranding
   );
   const [updatingBranding, setUpdatingBranding] = useState(false);
-
-  const getTextFromType = (type) => {
-    if (type === "linkSurvey") return "Link Surveys";
-    if (type === "inAppSurvey") return "In App Surveys";
-  };
 
   const toggleBranding = async () => {
     try {
@@ -45,9 +37,7 @@ export function EditFormbricksBranding({
         [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
       };
       await updateProductAction(product.id, inputProduct);
-      toast.success(
-        newBrandingState ? "Formbricks branding will be shown." : "Formbricks branding will now be hidden."
-      );
+      toast.success(newBrandingState ? "Formbricks branding is shown." : "Formbricks branding is hidden.");
     } catch (error) {
       toast.error(`Error: ${error.message}`);
     } finally {
@@ -56,31 +46,8 @@ export function EditFormbricksBranding({
   };
 
   return (
-    <div className="w-full items-center">
-      {!canRemoveBranding && (
-        <div className="mb-4">
-          <Alert>
-            <AlertDescription>
-              To remove the Formbricks branding from the&nbsp;
-              <span className="font-semibold">{getTextFromType(type)}</span>, please&nbsp;
-              {type === "linkSurvey" ? (
-                <span className="underline">
-                  <Link href={`/environments/${environmentId}/settings/billing`}>upgrade your plan.</Link>
-                </span>
-              ) : (
-                <span className="underline">
-                  {isFormbricksCloud ? (
-                    <Link href={`/environments/${environmentId}/settings/billing`}>add your creditcard.</Link>
-                  ) : (
-                    <a href="mailto:hola@formbricks.com">get a self-hosted license (free to get started).</a>
-                  )}
-                </span>
-              )}
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-      <div className="mb-6 flex items-center space-x-2">
+    <div className="w-full items-center space-y-4">
+      <div className="mb-4 flex items-center space-x-2">
         <Switch
           id={`branding-${type}`}
           checked={isBrandingEnabled}
@@ -91,6 +58,26 @@ export function EditFormbricksBranding({
           Show Formbricks Branding in {type === "linkSurvey" ? "Link" : "In-App"} Surveys
         </Label>
       </div>
+      {!canRemoveBranding && (
+        <div>
+          {type === "linkSurvey" && (
+            <div className="mb-8">
+              <UpgradePlanNotice
+                message="To remove the Formbricks branding from Link Surveys, please"
+                textForUrl="upgrade your plan."
+                url={`/environments/${environmentId}/settings/billing`}
+              />
+            </div>
+          )}
+          {type !== "linkSurvey" && (
+            <UpgradePlanNotice
+              message="To remove the Formbricks branding from In-app Surveys, please"
+              textForUrl="upgrade your plan."
+              url={`/environments/${environmentId}/settings/billing`}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import z from "zod";
 
+import { ZLegacySurvey } from "./LegacySurvey";
 import { ZActionClass } from "./actionClasses";
 import { ZPerson, ZPersonAttributes, ZPersonClient } from "./people";
 import { ZProduct } from "./product";
@@ -21,7 +22,7 @@ export type TJSStateDisplay = z.infer<typeof ZJSStateDisplay>;
 
 export const ZJsStateSync = z.object({
   person: ZPersonClient.nullish(),
-  surveys: z.array(ZSurvey),
+  surveys: z.union([z.array(ZSurvey), z.array(ZLegacySurvey)]),
   noCodeActionClasses: z.array(ZActionClass),
   product: ZProduct,
 });
@@ -51,6 +52,7 @@ export type TJsLegacyState = z.infer<typeof ZJsLegacyState>;
 
 export const ZJsPublicSyncInput = z.object({
   environmentId: z.string().cuid(),
+  version: z.string().optional(),
 });
 
 export type TJsPublicSyncInput = z.infer<typeof ZJsPublicSyncInput>;
@@ -78,6 +80,7 @@ export const ZJsConfig = z.object({
   userId: z.string().optional(),
   state: ZJsState,
   expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
 });
 
 export type TJsConfig = z.infer<typeof ZJsConfig>;
@@ -87,6 +90,8 @@ export const ZJsConfigUpdateInput = z.object({
   apiHost: z.string(),
   userId: z.string().optional(),
   state: ZJsState,
+  expiresAt: z.date(),
+  status: z.enum(["success", "error"]).optional(),
 });
 
 export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
@@ -94,7 +99,6 @@ export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
 export const ZJsConfigInput = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
-  debug: z.boolean().optional(),
   errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
   userId: z.string().optional(),
   attributes: ZPersonAttributes.optional(),
@@ -105,6 +109,7 @@ export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string().min(1).max(255),
+  version: z.string().optional(),
 });
 
 export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
@@ -128,7 +133,6 @@ export const ZJsActionInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string().optional(),
   name: z.string(),
-  properties: z.record(z.string()),
 });
 
 export type TJsActionInput = z.infer<typeof ZJsActionInput>;

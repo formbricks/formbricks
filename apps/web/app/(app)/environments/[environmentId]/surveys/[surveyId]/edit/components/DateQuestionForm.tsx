@@ -1,21 +1,22 @@
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { PlusIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
-import { Input } from "@formbricks/ui/Input";
 import { Label } from "@formbricks/ui/Label";
+import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { OptionsSwitcher } from "@formbricks/ui/QuestionTypeSelector";
-
-import QuestionFormInput from "./QuestionFormInput";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyDateQuestion;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyDateQuestion>) => void;
   lastQuestion: boolean;
-  isInValid: boolean;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (language: string) => void;
+  isInvalid: boolean;
 }
 
 const dateOptions = [
@@ -37,44 +38,65 @@ export default function DateQuestionForm({
   question,
   questionIdx,
   updateQuestion,
-  isInValid,
+  isInvalid,
   localSurvey,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: IDateQuestionFormProps): JSX.Element {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
+  const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
   return (
     <form>
       <QuestionFormInput
-        environmentId={localSurvey.environmentId}
-        isInValid={isInValid}
-        question={question}
+        id="headline"
+        value={question.headline}
+        localSurvey={localSurvey}
         questionIdx={questionIdx}
+        isInvalid={isInvalid}
         updateQuestion={updateQuestion}
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
       />
-      <div className="mt-3">
+      <div>
         {showSubheader && (
-          <>
-            <Label htmlFor="subheader">Description</Label>
-            <div className="mt-2 inline-flex w-full items-center">
-              <Input
+          <div className="mt-2 inline-flex w-full items-center">
+            <div className="w-full">
+              <QuestionFormInput
                 id="subheader"
-                name="subheader"
                 value={question.subheader}
-                onChange={(e) => updateQuestion(questionIdx, { subheader: e.target.value })}
-              />
-              <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  setShowSubheader(false);
-                  updateQuestion(questionIdx, { subheader: "" });
-                }}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                isInvalid={isInvalid}
+                updateQuestion={updateQuestion}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
               />
             </div>
-          </>
+
+            <TrashIcon
+              className="ml-2 mt-10 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
+              onClick={() => {
+                setShowSubheader(false);
+                updateQuestion(questionIdx, { subheader: undefined });
+              }}
+            />
+          </div>
         )}
 
         {!showSubheader && (
-          <Button size="sm" variant="minimal" type="button" onClick={() => setShowSubheader(true)}>
+          <Button
+            size="sm"
+            className="mt-3"
+            variant="minimal"
+            type="button"
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                subheader: createI18nString("", surveyLanguageCodes),
+              });
+              setShowSubheader(true);
+            }}>
+            {" "}
             <PlusIcon className="mr-1 h-4 w-4" />
             Add Description
           </Button>
@@ -87,7 +109,9 @@ export default function DateQuestionForm({
           <OptionsSwitcher
             options={dateOptions}
             currentOption={question.format}
-            handleTypeChange={(value) => updateQuestion(questionIdx, { format: value })}
+            handleTypeChange={(value: "M-d-y" | "d-M-y" | "y-M-d") =>
+              updateQuestion(questionIdx, { format: value })
+            }
           />
         </div>
       </div>

@@ -4,10 +4,7 @@ import {
   deleteActionClassAction,
   updateActionClassAction,
 } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/actions";
-import { CssSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/CssSelector";
-import { InnerHtmlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/InnerHtmlSelector";
-import { PageUrlSelector } from "@/app/(app)/environments/[environmentId]/(actionsAndAttributes)/actions/components/PageUrlSelector";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -16,6 +13,7 @@ import { toast } from "react-hot-toast";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClassInput, TActionClassNoCodeConfig, TNoCodeConfig } from "@formbricks/types/actionClasses";
 import { TMembershipRole } from "@formbricks/types/memberships";
+import { CssSelector, InnerHtmlSelector, PageUrlSelector } from "@formbricks/ui/Actions";
 import { Button } from "@formbricks/ui/Button";
 import { DeleteDialog } from "@formbricks/ui/DeleteDialog";
 import { Input } from "@formbricks/ui/Input";
@@ -130,8 +128,9 @@ export default function ActionSettingsTab({
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="grid w-full grid-cols-2 gap-x-4">
           <div className="col-span-1">
-            <Label>What did your user do?</Label>
+            <Label htmlFor="actionNameSettingsInput">What did your user do?</Label>
             <Input
+              id="actionNameSettingsInput"
               placeholder="E.g. Clicked Download"
               {...register("name", {
                 value: actionClass.name,
@@ -141,8 +140,9 @@ export default function ActionSettingsTab({
           </div>
           {!isViewer && (
             <div className="col-span-1">
-              <Label>Description</Label>
+              <Label htmlFor="actionDescriptionSettingsInput">Description</Label>
               <Input
+                id="actionDescriptionSettingsInput"
                 placeholder="User clicked Download Button "
                 {...register("description", {
                   value: actionClass.description,
@@ -196,7 +196,8 @@ export default function ActionSettingsTab({
                 variant="warn"
                 onClick={() => setOpenDeleteDialog(true)}
                 StartIcon={TrashIcon}
-                className="mr-3">
+                className="mr-3"
+                id="deleteActionModalTrigger">
                 Delete
               </Button>
             )}

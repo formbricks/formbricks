@@ -1,10 +1,11 @@
 "use client";
 
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { CheckIcon } from "lucide-react";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys";
 import { AdvancedOptionToggle } from "@formbricks/ui/AdvancedOptionToggle";
 import { DatePicker } from "@formbricks/ui/DatePicker";
@@ -23,7 +24,7 @@ export default function ResponseOptionsCard({
   setLocalSurvey,
   responseCount,
 }: ResponseOptionsCardProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [redirectToggle, setRedirectToggle] = useState(false);
   const [surveyCloseOnDateToggle, setSurveyCloseOnDateToggle] = useState(false);
@@ -256,12 +257,12 @@ export default function ResponseOptionsCard({
     surveyClosedMessage.subheading,
   ]);
 
-  const handleCheckMark = () => {
+  const toggleAutocomplete = () => {
     if (autoComplete) {
       const updatedSurvey = { ...localSurvey, autoComplete: null };
       setLocalSurvey(updatedSurvey);
     } else {
-      const updatedSurvey = { ...localSurvey, autoComplete: 25 };
+      const updatedSurvey = { ...localSurvey, autoComplete: Math.max(25, responseCount + 5) };
       setLocalSurvey(updatedSurvey);
     }
   };
@@ -287,15 +288,21 @@ export default function ResponseOptionsCard({
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      className="w-full rounded-lg border border-slate-300 bg-white">
+      className={cn(
+        open ? "" : "hover:bg-slate-50",
+        "w-full space-y-2 rounded-lg border border-slate-300 bg-white "
+      )}>
       <Collapsible.CollapsibleTrigger asChild className="h-full w-full cursor-pointer">
         <div className="inline-flex px-4 py-4">
           <div className="flex items-center pl-2 pr-5">
-            <CheckCircleIcon className="h-8 w-8 text-green-400" />
+            <CheckIcon
+              strokeWidth={3}
+              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+            />{" "}
           </div>
           <div>
             <p className="font-semibold text-slate-800">Response Options</p>
-            <p className="mt-1 text-sm text-slate-500">Decide how and how long people can respond.</p>
+            <p className="mt-1 text-sm text-slate-500">Response limits, redirections and more.</p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -306,7 +313,7 @@ export default function ResponseOptionsCard({
           <AdvancedOptionToggle
             htmlId="closeOnNumberOfResponse"
             isChecked={autoComplete}
-            onToggle={handleCheckMark}
+            onToggle={toggleAutocomplete}
             title="Close survey on response limit"
             description="Automatically close the survey after a certain number of responses."
             childBorder={true}>
@@ -407,7 +414,7 @@ export default function ResponseOptionsCard({
                 htmlId="singleUserSurveyOptions"
                 isChecked={!!localSurvey.singleUse?.enabled}
                 onToggle={handleSingleUseSurveyToggle}
-                title="Single-Use Survey Links"
+                title="Single-use survey links"
                 description="Allow only 1 response per survey link."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">
@@ -503,7 +510,7 @@ export default function ResponseOptionsCard({
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}
                 onToggle={handleProtectSurveyWithPinToggle}
-                title="Protect Survey with a PIN"
+                title="Protect survey with a PIN"
                 description="Only users who have the PIN can access the survey."
                 childBorder={true}>
                 <div className="flex w-full items-center space-x-1 p-4 pb-4">

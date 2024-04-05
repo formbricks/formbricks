@@ -8,7 +8,7 @@ interface RevalidateProps {
 
 export const actionClassCache = {
   tag: {
-    byNameAndEnvironmentId(environmentId: string, name: string): string {
+    byNameAndEnvironmentId(name: string, environmentId: string): string {
       return `environments-${environmentId}-actionClass-${name}`;
     },
     byEnvironmentId(environmentId: string): string {

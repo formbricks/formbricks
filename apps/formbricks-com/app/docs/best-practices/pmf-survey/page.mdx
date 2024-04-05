@@ -1,5 +1,5 @@
 import DemoPreview from "@/components/dummyUI/DemoPreview";
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import ActionCSS from "./action-css.webp";
 import ActionPageurl from "./action-pageurl.webp";
@@ -53,7 +53,7 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose one of the PMF survey templates. The first one is rather short, the latter builds on the ["Product-Market Fit Engine"](https://review.firstround.com/how-superhuman-built-an-engine-to-find-product-market-fit) developed by Superhuman:
 
-<Image
+<MdxImage
   src={CreateSurvey}
   alt="Create survey by template"
   quality="100"
@@ -64,7 +64,7 @@ Click on "Create Survey" and choose one of the PMF survey templates. The first o
 
 You’re free to update the question and answer options. However, based on our experience, we suggest giving the provided template a go 😊 Here is a very [detailed description](https://coda.io/@rahulvohra/superhuman-product-market-fit-engine) of what to do with the data you’re collecting.
 
-<Image
+<MdxImage
   src={ChangeText}
   alt="Change text content"
   quality="100"
@@ -100,13 +100,13 @@ You need a trigger to display the survey but in this case, the filtering does al
 
 <Col>
   <div>
-    <Image
+    <MdxImage
       src={ActionCSS}
       alt="Add CSS action"
       quality="100"
       className="max-w-full rounded-lg sm:max-w-3xl"
     />
-    <Image
+    <MdxImage
       src={ActionPageurl}
       alt="Add inner text action"
       quality="100"
@@ -116,7 +116,7 @@ You need a trigger to display the survey but in this case, the filtering does al
 </Col>
 ### 5. Select Action in the “When to ask” card
 <Col>
-  <Image
+  <MdxImage
     src={SelectAction}
     alt="Select PMF trigger button action"
     quality="100"
@@ -127,7 +127,7 @@ You need a trigger to display the survey but in this case, the filtering does al
 
 Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure your data remains of high quality. You want to make sure that this survey is only responded to once per user. It is up to you to decide if you want to display it several times until the user responds:
 
-<Image
+<MdxImage
   src={RecontactOptions}
   alt="Set recontact options"
   quality="100"
@@ -136,7 +136,7 @@ Lastly, scroll down to “Recontact Options”. Here you have to choose the corr
 
 ### 7. Congrats! You’re ready to publish your survey 💃
 
-<Image src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+<MdxImage src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
   ## Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box

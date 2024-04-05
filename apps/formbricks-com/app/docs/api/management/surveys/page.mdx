@@ -1,13 +1,14 @@
 import { Fence } from "@/components/shared/Fence";
-import {generateManagementApiMetadata} from "@/lib/utils"
+import { generateManagementApiMetadata } from "@/lib/utils";
 
-export const metadata = generateManagementApiMetadata("Surveys",["Fetch","Create","Update","Delete"])
+export const metadata = generateManagementApiMetadata("Surveys", ["Fetch", "Create", "Update", "Delete"]);
 
 #### Management API
 
 # Surveys API
 
 This set of API can be used to
+
 - [List All Surveys](#list-all-surveys)
 - [Get Survey](#get-survey-by-id)
 - [Create Survey](#create-survey)
@@ -22,8 +23,7 @@ This set of API can be used to
 
 <Row>
   <Col>
-
-    Retrieve all the surveys you have for the environment.
+    Retrieve all the surveys you have for the environment with pagination.
 
     ### Mandatory Headers
 
@@ -33,14 +33,26 @@ This set of API can be used to
       </Property>
     </Properties>
 
+    ### Query Parameters
+    <Properties>
+      <Property name="offset" type="number">
+        The number of surveys to skip before returning the results.
+      </Property>
+
+      <Property name="limit" type="number">
+        The number of surveys to return.
+      </Property>
+    </Properties>
+
   </Col>
   <Col sticky>
 
     <CodeGroup title="Request" tag="GET" label="/api/v1/management/surveys">
 
     ```bash {{ title: 'cURL' }}
+
     curl --location \
-    'https://app.formbricks.com/api/v1/management/surveys' \
+    'https://app.formbricks.com/api/v1/management/surveys?offset=20&limit=10' \
     --header \
     'x-api-key: <your-api-key>'
     ```
@@ -79,7 +91,7 @@ This set of API can be used to
                                 "destination": "end"
                             }
                         ],
-                        "html": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span>We would love to understand your user experience better. Sharing your insight helps a lot!</span></p>",
+                        "html": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>",
                         "buttonExternal": false,
                         "dismissButtonLabel": "No, thanks."
                     },
@@ -403,7 +415,6 @@ This set of API can be used to
     ```
     </CodeGroup>
 
-
   </Col>
   <Col sticky>
 
@@ -453,7 +464,7 @@ This set of API can be used to
         }
     }
     ```
-    
+
     ```json {{ title: '401 Not Authenticated' }}
     {
       "code": "not_authenticated",
@@ -496,7 +507,6 @@ This set of API can be used to
     }
     ```
     </CodeGroup>
-
 
   </Col>
   <Col sticky>
@@ -568,7 +578,7 @@ This set of API can be used to
         }
     }
     ```
-    
+
     ```json {{ title: '401 Not Authenticated' }}
     {
       "code": "not_authenticated",
@@ -584,7 +594,6 @@ This set of API can be used to
 </Row>
 
 ---
-
 
 ## Delete Survey by ID {{ tag: 'DELETE', label: '/api/v1/management/surveys/<survey-id>' }}
 

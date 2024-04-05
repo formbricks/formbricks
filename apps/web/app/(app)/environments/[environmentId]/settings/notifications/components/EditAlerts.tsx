@@ -1,27 +1,49 @@
-import { QuestionMarkCircleIcon, UsersIcon } from "@heroicons/react/24/solid";
+import { HelpCircleIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 
+import { TUser } from "@formbricks/types/user";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
-import { Membership, User } from "../types";
+import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
 
 interface EditAlertsProps {
   memberships: Membership[];
-  user: User;
+  user: TUser;
   environmentId: string;
+  autoDisableNotificationType: string;
+  autoDisableNotificationElementId: string;
 }
 
-export default function EditAlerts({ memberships, user, environmentId }: EditAlertsProps) {
+export default function EditAlerts({
+  memberships,
+  user,
+  environmentId,
+  autoDisableNotificationType,
+  autoDisableNotificationElementId,
+}: EditAlertsProps) {
   return (
     <>
       {memberships.map((membership) => (
         <>
-          <div className="mb-5 flex items-center space-x-3 font-semibold">
-            <div className="rounded-full bg-slate-100 p-1">
-              <UsersIcon className="h-6 w-7 text-slate-600" />
+          <div className="mb-5 grid grid-cols-6 items-center space-x-3">
+            <div className="col-span-3 flex items-center space-x-3">
+              <div className="rounded-full bg-slate-100 p-1">
+                <UsersIcon className="h-6 w-7 text-slate-600" />
+              </div>
+              <p className="font-semibold text-slate-800">{membership.team.name}</p>
             </div>
-            <p className="text-slate-800">{membership.team.name}</p>
+
+            <div className="col-span-3 flex items-center justify-end pr-2">
+              <p className="pr-4 text-sm text-slate-600">Auto-subscribe to new surveys</p>
+              <NotificationSwitch
+                surveyOrProductOrTeamId={membership.team.id}
+                notificationSettings={user.notificationSettings!}
+                notificationType={"unsubscribedTeamIds"}
+                autoDisableNotificationType={autoDisableNotificationType}
+                autoDisableNotificationElementId={autoDisableNotificationElementId}
+              />
+            </div>
           </div>
           <div className="mb-6 rounded-lg border border-slate-200">
             <div className="grid h-12 grid-cols-3 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
@@ -29,9 +51,9 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
               <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger>
-                    <div className="col-span-1 flex cursor-default items-center justify-center">
+                    <div className="col-span-1 flex cursor-default items-center justify-center space-x-2">
                       <span className="">Every Response</span>
-                      <QuestionMarkCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
+                      <HelpCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>Sends complete responses, no partials.</TooltipContent>
@@ -57,9 +79,11 @@ export default function EditAlerts({ memberships, user, environmentId }: EditAle
                             </div>
                             <div className="col-span-1 text-center">
                               <NotificationSwitch
-                                surveyOrProductId={survey.id}
-                                notificationSettings={user.notificationSettings}
+                                surveyOrProductOrTeamId={survey.id}
+                                notificationSettings={user.notificationSettings!}
                                 notificationType={"alert"}
+                                autoDisableNotificationType={autoDisableNotificationType}
+                                autoDisableNotificationElementId={autoDisableNotificationElementId}
                               />
                             </div>
                           </div>

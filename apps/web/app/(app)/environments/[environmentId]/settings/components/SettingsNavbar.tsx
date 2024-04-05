@@ -1,20 +1,22 @@
 "use client";
 
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import clsx from "clsx";
 import {
-  AdjustmentsVerticalIcon,
-  BellAlertIcon,
+  BellRingIcon,
+  BoltIcon,
+  BrushIcon,
+  ChevronDownIcon,
   CreditCardIcon,
-  DocumentCheckIcon,
-  DocumentMagnifyingGlassIcon,
-  HashtagIcon,
+  FileCheckIcon,
+  FileSearch2Icon,
+  HashIcon,
   KeyIcon,
+  LanguagesIcon,
   LinkIcon,
-  PaintBrushIcon,
+  SlidersIcon,
   UserCircleIcon,
   UsersIcon,
-} from "@heroicons/react/24/solid";
-import clsx from "clsx";
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -27,19 +29,23 @@ import { TProduct } from "@formbricks/types/product";
 import { TTeam } from "@formbricks/types/teams";
 import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover";
 
+interface SettingsNavbarProps {
+  environmentId: string;
+  isFormbricksCloud: boolean;
+  team: TTeam;
+  product: TProduct;
+  membershipRole?: TMembershipRole;
+  isMultiLanguageAllowed: boolean;
+}
+
 export default function SettingsNavbar({
   environmentId,
   isFormbricksCloud,
   team,
   product,
   membershipRole,
-}: {
-  environmentId: string;
-  isFormbricksCloud: boolean;
-  team: TTeam;
-  product: TProduct;
-  membershipRole?: TMembershipRole;
-}) {
+  isMultiLanguageAllowed,
+}: SettingsNavbarProps) {
   const pathname = usePathname();
   const [mobileNavMenuOpen, setMobileNavMenuOpen] = useState(false);
   const { isAdmin, isOwner, isViewer } = getAccessFlags(membershipRole);
@@ -75,7 +81,7 @@ export default function SettingsNavbar({
           {
             name: "Notifications",
             href: `/environments/${environmentId}/settings/notifications`,
-            icon: BellAlertIcon,
+            icon: BellRingIcon,
             current: pathname?.includes("/notifications"),
             hidden: false,
           },
@@ -88,16 +94,23 @@ export default function SettingsNavbar({
           {
             name: "Settings",
             href: `/environments/${environmentId}/settings/product`,
-            icon: AdjustmentsVerticalIcon,
+            icon: SlidersIcon,
             current: pathname?.includes("/product"),
             hidden: false,
           },
           {
             name: "Look & Feel",
             href: `/environments/${environmentId}/settings/lookandfeel`,
-            icon: PaintBrushIcon,
+            icon: BrushIcon,
             current: pathname?.includes("/lookandfeel"),
             hidden: isViewer,
+          },
+          {
+            name: "Survey Languages",
+            href: `/environments/${environmentId}/settings/language`,
+            icon: LanguagesIcon,
+            current: pathname?.includes("/language"),
+            hidden: !isMultiLanguageAllowed,
           },
           {
             name: "API Keys",
@@ -109,7 +122,7 @@ export default function SettingsNavbar({
           {
             name: "Tags",
             href: `/environments/${environmentId}/settings/tags`,
-            icon: HashtagIcon,
+            icon: HashIcon,
             current: pathname?.includes("/tags"),
             hidden: isViewer,
           },
@@ -133,6 +146,13 @@ export default function SettingsNavbar({
             hidden: !isFormbricksCloud || isPricingDisabled,
             current: pathname?.includes("/billing"),
           },
+          {
+            name: "Enterprise License",
+            href: `/environments/${environmentId}/settings/enterprise`,
+            icon: BoltIcon,
+            hidden: isFormbricksCloud || isPricingDisabled,
+            current: pathname?.includes("/enterprise"),
+          },
         ],
         hidden: false,
       },
@@ -142,14 +162,14 @@ export default function SettingsNavbar({
           {
             name: "Setup Checklist",
             href: `/environments/${environmentId}/settings/setup`,
-            icon: DocumentCheckIcon,
+            icon: FileCheckIcon,
             current: pathname?.includes("/setup"),
             hidden: false,
           },
           {
             name: "Documentation",
             href: "https://formbricks.com/docs",
-            icon: DocumentMagnifyingGlassIcon,
+            icon: FileSearch2Icon,
             target: "_blank",
             hidden: false,
           },
@@ -198,7 +218,7 @@ export default function SettingsNavbar({
         hidden: false,
       },
     ],
-    [environmentId, isFormbricksCloud, pathname, isPricingDisabled, isViewer]
+    [environmentId, pathname, isViewer, isMultiLanguageAllowed, isFormbricksCloud, isPricingDisabled]
   );
 
   if (!navigation) return null;

@@ -2,6 +2,7 @@ import AccountSecurity from "@/app/(app)/environments/[environmentId]/settings/p
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@formbricks/lib/authOptions";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsId } from "@formbricks/ui/SettingsId";
 
@@ -14,6 +15,9 @@ import { EditName } from "./components/EditName";
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const { environmentId } = params;
   const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error("Session not found");
+  }
   const user = session && session.user ? await getUser(session.user.id) : null;
 
   return (
@@ -36,7 +40,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           <SettingsCard
             title="Delete account"
             description="Delete your account with all of your personal information and data.">
-            <DeleteAccount session={session} />
+            <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} />
           </SettingsCard>
           <SettingsId title="Profile" id={user.id}></SettingsId>
         </div>

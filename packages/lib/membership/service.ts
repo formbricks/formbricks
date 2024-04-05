@@ -116,7 +116,6 @@ export const createMembership = async (
   data: Partial<TMembership>
 ): Promise<TMembership> => {
   validateInputs([teamId, ZString], [userId, ZString], [data, ZMembership.partial()]);
-  console.log("createMembership", teamId, userId, data);
 
   try {
     const membership = await prisma.membership.create({

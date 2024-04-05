@@ -1,7 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
+import createJiti from "jiti";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
-import "@formbricks/lib/env.mjs";
+const jiti = createJiti(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+
+jiti("@formbricks/lib/env");
 
 /** @type {import('next').NextConfig} */
 
@@ -15,7 +21,12 @@ const nextConfig = {
   output: "standalone",
   experimental: {
     serverComponentsExternalPackages: ["@aws-sdk"],
+    instrumentationHook: true,
+    outputFileTracingIncludes: {
+      "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
+    },
   },
+  cacheHandler: process.env.VERCEL !== "1" ? require.resolve("./cache-handler.mjs") : undefined,
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
@@ -113,11 +124,13 @@ if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
     allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
   };
-  nextConfig.images.remotePatterns.push({
-    protocol: "https",
-    hostname: getHostname(process.env.WEBAPP_URL),
-  });
 }
+
+// Allow all origins for next/image
+nextConfig.images.remotePatterns.push({
+  protocol: "https",
+  hostname: "**",
+});
 
 const sentryOptions = {
   // For all available options, see:

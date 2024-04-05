@@ -13,6 +13,14 @@ export const ZUserObjective = z.enum([
 
 export type TUserObjective = z.infer<typeof ZUserObjective>;
 
+export const ZUserNotificationSettings = z.object({
+  alert: z.record(z.boolean()),
+  weeklySummary: z.record(z.boolean()),
+  unsubscribedTeamIds: z.array(z.string()).optional(),
+});
+
+export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings>;
+
 export const ZUser = z.object({
   id: z.string(),
   name: z.string().nullable(),
@@ -20,11 +28,13 @@ export const ZUser = z.object({
   emailVerified: z.date().nullable(),
   imageUrl: z.string().url().nullable(),
   twoFactorEnabled: z.boolean(),
-  identityProvider: z.enum(["email", "google", "github", "azuread"]),
+  identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]),
   createdAt: z.date(),
   updatedAt: z.date(),
   onboardingCompleted: z.boolean(),
+  role: ZRole.nullable(),
   objective: ZUserObjective.nullable(),
+  notificationSettings: ZUserNotificationSettings,
 });
 
 export type TUser = z.infer<typeof ZUser>;
@@ -36,7 +46,8 @@ export const ZUserUpdateInput = z.object({
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
-  imageUrl: z.string().url().nullish(),
+  imageUrl: z.string().nullish(),
+  notificationSettings: ZUserNotificationSettings.optional(),
 });
 
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;
@@ -48,15 +59,8 @@ export const ZUserCreateInput = z.object({
   onboardingCompleted: z.boolean().optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
-  identityProvider: z.enum(["email", "google", "github", "azuread"]).optional(),
+  identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]).optional(),
   identityProviderAccountId: z.string().optional(),
 });
 
 export type TUserCreateInput = z.infer<typeof ZUserCreateInput>;
-
-export const ZUserNotificationSettings = z.object({
-  alert: z.record(z.boolean()),
-  weeklySummary: z.record(z.boolean()),
-});
-
-export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings>;

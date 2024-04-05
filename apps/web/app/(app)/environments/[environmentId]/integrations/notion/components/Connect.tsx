@@ -50,11 +50,11 @@ export default function Connect({ enabled, environmentId, webAppUrl }: ConnectPr
         </div>
         <p className="my-8">Sync responses directly with your Notion database.</p>
         {!enabled && (
-          <p className="mb-8 rounded border-gray-200 bg-gray-100 p-3 text-sm">
+          <p className="mb-8 rounded border-slate-200 bg-slate-100 p-3 text-sm">
             Notion Integration is not configured in your instance of Formbricks.
             <br />
             Please follow the{" "}
-            <Link href="https://formbricks.com/docs/integrations/google-sheets" className="underline">
+            <Link href="https://formbricks.com/docs/integrations/notion" className="underline">
               docs
             </Link>{" "}
             to configure it.

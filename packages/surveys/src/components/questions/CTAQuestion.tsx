@@ -6,45 +6,54 @@ import QuestionImage from "@/components/general/QuestionImage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "react";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCTAQuestion } from "@formbricks/types/surveys";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function CTAQuestion({
+export const CTAQuestion = ({
   question,
   onSubmit,
+  onChange,
   onBack,
   isFirstQuestion,
   isLastQuestion,
+  languageCode,
   ttc,
   setTtc,
-}: CTAQuestionProps) {
+  isInIframe,
+}: CTAQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   return (
-    <div>
+    <div key={question.id}>
       {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <HtmlBody htmlString={question.html} questionId={question.id} />
-
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -62,15 +71,16 @@ export default function CTAQuestion({
                 const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
                 setTtc(updatedTtcObj);
                 onSubmit({ [question.id]: "dismissed" }, updatedTtcObj);
+                onChange({ [question.id]: "dismissed" });
               }}
               className="text-heading focus:ring-focus mr-4 flex items-center rounded-md px-3 py-3 text-base font-medium leading-4 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2">
-              {question.dismissButtonLabel || "Skip"}
+              {getLocalizedValue(question.dismissButtonLabel, languageCode) || "Skip"}
             </button>
           )}
           <SubmitButton
-            buttonLabel={question.buttonLabel}
+            buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            focus={true}
+            focus={!isInIframe}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
                 window?.open(question.buttonUrl, "_blank")?.focus();
@@ -78,6 +88,7 @@ export default function CTAQuestion({
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
               onSubmit({ [question.id]: "clicked" }, updatedTtcObj);
+              onChange({ [question.id]: "clicked" });
             }}
             type="button"
           />
@@ -85,4 +96,4 @@ export default function CTAQuestion({
       </div>
     </div>
   );
-}
+};

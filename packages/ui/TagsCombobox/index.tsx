@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from "react";
 
 import { Button } from "../Button";
-import { Command, CommandGroup, CommandInput, CommandItem } from "../Command";
+import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "../Command";
 import { Popover, PopoverContent, PopoverTrigger } from "../Popover";
 
 interface ITagsComboboxProps {
@@ -81,8 +81,8 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && searchValue !== "") {
                   if (
-                    !tagsToSearch?.find(
-                      (tag) => tag?.label?.toLowerCase().includes(searchValue?.toLowerCase())
+                    !tagsToSearch?.find((tag) =>
+                      tag?.label?.toLowerCase().includes(searchValue?.toLowerCase())
                     )
                   ) {
                     createTag?.(searchValue);
@@ -91,34 +91,36 @@ const TagsCombobox: React.FC<ITagsComboboxProps> = ({
               }}
             />
           </div>
-          <CommandGroup>
-            {tagsToSearch?.map((tag) => {
-              return (
-                <CommandItem
-                  key={tag.value}
-                  value={tag.value}
-                  onSelect={(currentValue) => {
-                    setOpen(false);
-                    addTag(currentValue);
-                  }}
-                  className="hover:cursor-pointer hover:bg-slate-50">
-                  {tag.label}
-                </CommandItem>
-              );
-            })}
-            {searchValue !== "" &&
-              !currentTags.find((tag) => tag.label === searchValue) &&
-              !tagsToSearch.find((tag) => tag.label === searchValue) && (
-                <CommandItem value="_create">
-                  <button
-                    onClick={() => createTag?.(searchValue)}
-                    className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!!currentTags.find((tag) => tag.label === searchValue)}>
-                    + Add {searchValue}
-                  </button>
-                </CommandItem>
-              )}
-          </CommandGroup>
+          <CommandList>
+            <CommandGroup>
+              {tagsToSearch?.map((tag) => {
+                return (
+                  <CommandItem
+                    key={tag.value}
+                    value={tag.value}
+                    onSelect={(currentValue) => {
+                      setOpen(false);
+                      addTag(currentValue);
+                    }}
+                    className="hover:cursor-pointer hover:bg-slate-50">
+                    {tag.label}
+                  </CommandItem>
+                );
+              })}
+              {searchValue !== "" &&
+                !currentTags.find((tag) => tag.label === searchValue) &&
+                !tagsToSearch.find((tag) => tag.label === searchValue) && (
+                  <CommandItem value="_create">
+                    <button
+                      onClick={() => createTag?.(searchValue)}
+                      className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={!!currentTags.find((tag) => tag.label === searchValue)}>
+                      + Add {searchValue}
+                    </button>
+                  </CommandItem>
+                )}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
