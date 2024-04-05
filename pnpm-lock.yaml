@@ -475,9 +475,9 @@ importers:
       '@formbricks/types':
         specifier: workspace:*
         version: link:../types
-      eslint-config-prettier:
-        specifier: ^9.1.0
-        version: 9.1.0(eslint@8.57.0)
+      eslint-config-formbricks:
+        specifier: workspace:*
+        version: link:../eslint-config-formbricks
       terser:
         specifier: ^5.30.3
         version: 5.30.3
@@ -591,6 +591,9 @@ importers:
       '@formbricks/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      eslint-config-formbricks:
+        specifier: workspace:*
+        version: link:../eslint-config-formbricks
       terser:
         specifier: ^5.30.3
         version: 5.30.3
@@ -615,6 +618,9 @@ importers:
       '@formbricks/types':
         specifier: workspace:*
         version: link:../types
+      eslint-config-formbricks:
+        specifier: workspace:*
+        version: link:../eslint-config-formbricks
       terser:
         specifier: ^5.30.3
         version: 5.30.3
@@ -745,12 +751,9 @@ importers:
       concurrently:
         specifier: 8.2.2
         version: 8.2.2
-      eslint-config-prettier:
-        specifier: ^9.1.0
-        version: 9.1.0(eslint@8.57.0)
-      eslint-config-turbo:
-        specifier: 1.10.12
-        version: 1.10.12(eslint@8.57.0)
+      eslint-config-formbricks:
+        specifier: workspace:*
+        version: link:../eslint-config-formbricks
       isomorphic-dompurify:
         specifier: ^2.6.0
         version: 2.6.0
@@ -16433,7 +16436,6 @@ packages:
       lilconfig: 3.0.0
       postcss: 8.4.35
       yaml: 2.3.4
-    dev: false
 
   /postcss-load-config@4.0.2(postcss@8.4.38):
     resolution: {integrity: sha512-bSVhyJGL00wMVoPUzAVAnbEoWyqRxkjv64tUl427SKnPrENtq6hJwUojroMz2VB+Q1edmi4IfrAPpami5VVgMQ==}
@@ -16502,7 +16504,6 @@ packages:
       nanoid: 3.3.7
       picocolors: 1.0.0
       source-map-js: 1.0.2
-    dev: false
 
   /postcss@8.4.38:
     resolution: {integrity: sha512-Wglpdk03BSfXkHoQa3b/oulrotAkwrlLDRSOb9D0bN86FdRyE9lppSp33aHNPgBa0JKCoB+drFLZkQoRRYae5A==}
@@ -19242,7 +19243,7 @@ packages:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss-load-config: 4.0.2(postcss@8.4.38)
+      postcss-load-config: 4.0.2(postcss@8.4.35)
       resolve-from: 5.0.0
       rollup: 4.9.1
       source-map: 0.8.0-beta.0
