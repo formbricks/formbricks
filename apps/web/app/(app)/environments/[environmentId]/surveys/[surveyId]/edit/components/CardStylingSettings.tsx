@@ -6,7 +6,7 @@ import React, { useMemo } from "react";
 
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { TProductStyling } from "@formbricks/types/product";
+import { TProduct, TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys";
 import { Badge } from "@formbricks/ui/Badge";
 import { ColorPicker } from "@formbricks/ui/ColorPicker";
@@ -23,6 +23,7 @@ type CardStylingSettingsProps = {
   hideCheckmark?: boolean;
   surveyType?: TSurveyType;
   disabled?: boolean;
+  localProduct: TProduct;
 };
 
 const CardStylingSettings = ({
@@ -32,9 +33,15 @@ const CardStylingSettings = ({
   surveyType,
   disabled,
   open,
+  localProduct,
   setOpen,
 }: CardStylingSettingsProps) => {
   const cardBgColor = styling?.cardBackgroundColor?.light || COLOR_DEFAULTS.cardBackgroundColor;
+
+  const isLogoHidden = styling?.isLogoHidden ?? false;
+
+  const isLogoVisible = !isLogoHidden && !!localProduct.logo?.url;
+
   const setCardBgColor = (color: string) => {
     setStyling((prev) => ({
       ...prev,
@@ -109,6 +116,13 @@ const CardStylingSettings = ({
     setStyling({
       ...styling,
       hideProgressBar,
+    });
+  };
+
+  const toggleLogoVisibility = () => {
+    setStyling({
+      ...styling,
+      isLogoHidden: !isLogoHidden,
     });
   };
 
@@ -192,13 +206,30 @@ const CardStylingSettings = ({
               />
               <Label htmlFor="hideProgressBar" className="cursor-pointer">
                 <div className="ml-2">
-                  <h3 className="text-sm font-semibold text-slate-700">Hide Progress Bar</h3>
+                  <h3 className="text-sm font-semibold text-slate-700">Hide progress bar</h3>
                   <p className="text-xs font-normal text-slate-500">
                     Disable the visibility of survey progress.
                   </p>
                 </div>
               </Label>
             </div>
+
+            {isLogoVisible && (!surveyType || surveyType === "link") && (
+              <div className="flex items-center space-x-1">
+                <Switch id="isLogoHidden" checked={isLogoHidden} onCheckedChange={toggleLogoVisibility} />
+                <Label htmlFor="isLogoHidden" className="cursor-pointer">
+                  <div className="ml-2 flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-slate-700">Hide logo</h3>
+                      {hideCheckmark && <Badge text="Link Surveys" type="gray" size="normal" />}
+                    </div>
+                    <p className="text-xs font-normal text-slate-500">
+                      Hides the logo in this specific survey
+                    </p>
+                  </div>
+                </Label>
+              </div>
+            )}
 
             {(!surveyType || surveyType === "web") && (
               <div className="flex max-w-xs flex-col gap-4">
