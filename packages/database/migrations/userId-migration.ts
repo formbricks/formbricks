@@ -24,9 +24,15 @@ async function main() {
     });
 
     for (let person of personsWithUserIdAttribute) {
+      // if the person already has a userId column, skip
+      if (person.userId) {
+        continue;
+      }
+
       const userIdAttributeValue = person.attributes.find((attribute) => {
         if (attribute.attributeClass.name === "userId") {
           if (!userIdAttributeClassId) {
+            // store the attribute class id to delete it later
             userIdAttributeClassId = attribute.attributeClass.id;
           }
 
