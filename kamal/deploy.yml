@@ -191,7 +191,7 @@ accessories:
 healthcheck:
   path: /health
   port: 3000
-  max_attempts: 7
+  max_attempts: 15
   interval: 20s
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old

@@ -13,7 +13,7 @@ import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surv
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
-  value: string;
+  value?: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -93,7 +93,7 @@ export const MultipleChoiceSingleQuestion = ({
         e.preventDefault();
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value }, updatedTtcObj);
+        onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
       className="w-full">
       {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -165,7 +165,7 @@ export const MultipleChoiceSingleQuestion = ({
                 onKeyDown={(e) => {
                   // Accessibility: if spacebar was pressed pass this down to the input
                   if (e.key === " ") {
-                    e.preventDefault();
+                    if (otherSelected) return;
                     document.getElementById(otherOption.id)?.click();
                     document.getElementById(otherOption.id)?.focus();
                   }
