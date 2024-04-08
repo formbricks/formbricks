@@ -11,6 +11,9 @@ export const formatSurveyDateFields = (survey: TSurvey): TSurvey => {
   if (typeof survey.updatedAt === "string") {
     survey.updatedAt = new Date(survey.updatedAt);
   }
+  if (typeof survey.runOnDate === "string") {
+    survey.runOnDate = new Date(survey.runOnDate);
+  }
   if (typeof survey.closeOnDate === "string") {
     survey.closeOnDate = new Date(survey.closeOnDate);
   }

@@ -362,6 +362,35 @@ export default function Navigation({
 
                     <DropdownMenuSeparator />
 
+                    {/* Team Switch */}
+
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <div>
+                          <p>{currentTeamName}</p>
+                          <p className="block text-xs text-slate-500">Team</p>
+                        </div>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuRadioGroup
+                            value={currentTeamId}
+                            onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
+                            {teams?.map((team) => (
+                              <DropdownMenuRadioItem value={team.id} className="cursor-pointer" key={team.id}>
+                                {team.name}
+                              </DropdownMenuRadioItem>
+                            ))}
+                          </DropdownMenuRadioGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setShowCreateTeamModal(true)}>
+                            <PlusIcon className="mr-2 h-4 w-4" />
+                            <span>Create team</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+
                     {/* Product Switch */}
 
                     <DropdownMenuSub>

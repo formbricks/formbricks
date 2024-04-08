@@ -25,7 +25,6 @@ logger.debug("Create command queue");
 const queue = new CommandQueue();
 
 const init = async (initConfig: TJsConfigInput) => {
-  console.log("init in formbricks-js-core");
   ErrorHandler.init(initConfig.errorHandler);
   queue.add(false, initialize, initConfig);
   await queue.wait();
