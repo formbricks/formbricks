@@ -1,10 +1,10 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import EnvVar from "./env-variable.webp";
+import Metadata from "./metadata.webp";
 import ShareModal from "./share-modal.webp";
 import Settings from "./single-use-setting.webp";
 import Message from "./used-message.webp";
-import Metadata from "./metadata.webp";
 
 export const metadata = {
   title: "Single Use Links",
@@ -29,7 +29,7 @@ Using single-use links with Formbricks is quite straight-forward:
 
 1. In the survey settings, toggle "Single Use Link" on:
 
-   <Image
+   <MdxImage
      src={Settings}
      alt="Single use survey settings"
      quality="100"
@@ -37,7 +37,7 @@ Using single-use links with Formbricks is quite straight-forward:
    />
 
 2. When you publish your survey, the following modal will open:
-   <Image
+   <MdxImage
      src={ShareModal}
      alt="Share modal with 7 single use links which can be regenerated"
      quality="100"
@@ -50,7 +50,7 @@ Here, you can copy and generate as many single-use links as you need.
 
 You can encrypt single use URLs to assure information to be protected. To enable it, you have to set the correct environment variable:
 
-<Image
+<MdxImage
   src={EnvVar}
   alt="Set the right env var to be able to enable encryption."
   quality="100"
@@ -61,7 +61,7 @@ You can encrypt single use URLs to assure information to be protected. To enable
 
 You can find the suId of each submission in the submission meta data. To view it, simple hover over the Avatar:
 
-<Image
+<MdxImage
   src={Metadata}
   alt="View suId in the submission meta data."
   quality="100"
@@ -72,7 +72,7 @@ You can find the suId of each submission in the submission meta data. To view it
 
 You can customize the 'link used' messaging in the Survey Editor settings:
 
-<Image
+<MdxImage
   src={Message}
   alt="Adjust the message shown to people if a link was already used."
   quality="100"

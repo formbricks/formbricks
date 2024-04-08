@@ -197,6 +197,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Identify Users", href: "/docs/in-app-surveys/user-identification" },
       { title: "Actions", href: "/docs/in-app-surveys/actions" },
       { title: "Attributes", href: "/docs/in-app-surveys/attributes" },
+      { title: "Advanced Targeting", href: "/docs/in-app-surveys/advanced-targeting" },
     ],
   },
   {
@@ -208,7 +209,12 @@ export const navigation: Array<NavGroup> = [
       { title: "Single Use Links", href: "/docs/link-surveys/single-use-links" },
       { title: "Source Tracking", href: "/docs/link-surveys/source-tracking" },
       { title: "Hidden Fields", href: "/docs/link-surveys/hidden-fields" },
+      { title: "Start At Question", href: "/docs/link-surveys/start-at-question" },
     ],
+  },
+  {
+    title: "Additional Features",
+    links: [{ title: "Multi Language Surveys", href: "/docs/additional-features/multi-language-surveys" }],
   },
   {
     title: "Best Practices",

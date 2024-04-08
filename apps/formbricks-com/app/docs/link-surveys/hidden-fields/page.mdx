@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import FilledHiddenFields from "./filled-hidden-fields.webp";
 import HiddenFieldResponses from "./hidden-field-responses.webp";
@@ -23,7 +23,7 @@ Hidden fields are a powerful feature in Formbricks that allows you to add data t
 
 1. Edit the survey you want to add hidden fields to & open it's settings, make sure it's selected as a **Link Survey**.
 
-<Image
+<MdxImage
   src={SettingsPage}
   alt="Select the Survey Type as Link Survey"
   quality="100"
@@ -32,7 +32,7 @@ Hidden fields are a powerful feature in Formbricks that allows you to add data t
 
 2. Switch to the Questions tab and scroll down to the bottom of the page. You will see a section called **Hidden Fields**. Make sure to enable it by toggling the switch.
 
-<Image
+<MdxImage
   src={HiddenFields}
   alt="Enable Hidden Fields"
   quality="100"
@@ -41,14 +41,14 @@ Hidden fields are a powerful feature in Formbricks that allows you to add data t
 
 3. Now click on it to add a new hidden field ID. You can add as many hidden fields as you want.
 
-<Image
+<MdxImage
   src={InputHiddenFields}
   alt="Add Hidden Fields"
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-<Image
+<MdxImage
   src={FilledHiddenFields}
   alt="Filled Hidden Fields"
   quality="100"
@@ -83,7 +83,7 @@ https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=landing_page&job=Founder
 
 These hidden fields will now be visible in the responses tab just like other fields in the Summary as well as the Response Cards, and you can use them to filter and analyze your responses.
 
-<Image
+<MdxImage
   src={HiddenFieldResponses}
   alt="Hidden Field Responses"
   quality="100"

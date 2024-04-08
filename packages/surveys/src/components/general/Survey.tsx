@@ -19,6 +19,7 @@ import WelcomeCard from "./WelcomeCard";
 
 export function Survey({
   survey,
+  styling,
   isBrandingEnabled,
   activeQuestionId,
   onDisplay = () => {},
@@ -34,7 +35,9 @@ export function Survey({
   getSetIsResponseSendingFinished,
   onFileUpload,
   responseCount,
+  isCardBorderVisible = true,
 }: SurveyBaseProps) {
+  const isInIframe = window.self !== window.top;
   const [questionId, setQuestionId] = useState(
     activeQuestionId || (survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
   );
@@ -60,7 +63,7 @@ export function Survey({
     }
   }, [questionId, survey, history]);
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const showProgressBar = !survey.styling?.hideProgressBar;
+  const showProgressBar = !styling.hideProgressBar;
 
   useEffect(() => {
     if (activeQuestionId === "hidden" || activeQuestionId === "multiLanguage") return;
@@ -106,12 +109,12 @@ export function Survey({
   let currIdxTemp = currentQuestionIndex;
   let currQuesTemp = currentQuestion;
 
-  function getNextQuestionId(data: TResponseData, isFromPrefilling: Boolean = false): string {
+  const getNextQuestionId = (data: TResponseData, isFormPrefilling: Boolean = false): string => {
     const questions = survey.questions;
     const responseValue = data[questionId];
 
     if (questionId === "start") {
-      if (!isFromPrefilling) {
+      if (!isFormPrefilling) {
         return questions[0]?.id || "end";
       } else {
         currIdxTemp = 0;
@@ -172,17 +175,20 @@ export function Survey({
       }
     }
     return questions[currIdxTemp + 1]?.id || "end";
-  }
+  };
 
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
     setResponseData(updatedResponseData);
   };
 
-  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFromPrefilling: Boolean = false) => {
+  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFormPrefilling: Boolean = false) => {
     const questionId = Object.keys(responseData)[0];
+    if (isFormPrefilling && questionId === survey.questions[0].id) {
+      onChange(responseData);
+    }
     setLoadingElement(true);
-    const nextQuestionId = getNextQuestionId(responseData, isFromPrefilling);
+    const nextQuestionId = getNextQuestionId(responseData, isFormPrefilling);
     const finished = nextQuestionId === "end";
     onResponse({ data: responseData, ttc, finished });
     if (finished) {
@@ -253,7 +259,7 @@ export function Survey({
     onActiveQuestionChange(prevQuestionId);
   };
 
-  function getCardContent() {
+  const getCardContent = (): JSX.Element | undefined => {
     if (showError) {
       return (
         <ResponseErrorComponent responseData={responseData} questions={survey.questions} onRetry={onRetry} />
@@ -270,6 +276,7 @@ export function Survey({
           survey={survey}
           languageCode={languageCode}
           responseCount={responseCount}
+          isInIframe={isInIframe}
         />
       );
     } else if (questionId === "end" && survey.thankYouCard.enabled) {
@@ -281,10 +288,12 @@ export function Survey({
           buttonLabel={survey.thankYouCard.buttonLabel}
           buttonLink={survey.thankYouCard.buttonLink}
           imageUrl={survey.thankYouCard.imageUrl}
+          videoUrl={survey.thankYouCard.videoUrl}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
           languageCode={languageCode}
           replaceRecallInfo={replaceRecallInfo}
+          isInIframe={isInIframe}
         />
       );
     } else {
@@ -307,16 +316,22 @@ export function Survey({
             }
             isLastQuestion={currentQuestion.id === survey.questions[survey.questions.length - 1].id}
             languageCode={languageCode}
+            isInIframe={isInIframe}
           />
         )
       );
     }
-  }
+  };
 
   return (
     <>
       <AutoCloseWrapper survey={survey} onClose={onClose}>
-        <div className="no-scrollbar flex h-full w-full flex-col justify-between rounded-lg bg-[--fb-survey-background-color] px-6 pb-3 pt-6">
+        <div
+          className={cn(
+            "no-scrollbar rounded-custom bg-survey-bg flex h-full w-full flex-col justify-between px-6 pb-3 pt-6",
+            isCardBorderVisible ? "border-survey-border border" : "",
+            survey.type === "link" ? "fb-survey-shadow" : ""
+          )}>
           <div ref={contentRef} className={cn(loadingElement ? "animate-pulse opacity-60" : "", "my-auto")}>
             {survey.questions.length === 0 && !survey.welcomeCard.enabled && !survey.thankYouCard.enabled ? (
               // Handle the case when there are no questions and both welcome and thank you cards are disabled
@@ -325,7 +340,7 @@ export function Survey({
               getCardContent()
             )}
           </div>
-          <div className="mt-8">
+          <div className="mt-4">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>

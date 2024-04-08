@@ -1,24 +1,30 @@
 import { useEffect, useMemo } from "react";
 
-import { renderSurveyInline, renderSurveyModal } from "@formbricks/surveys";
 import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricksSurveys";
 
-const createContainerId = () => `formbricks-survey-container`;
+import { loadSurveyScript } from "./lib/loadScript";
 
-export const SurveyInline = (props: Omit<SurveyInlineProps & { brandColor: string }, "containerId">) => {
+const createContainerId = () => `formbricks-survey-container`;
+declare global {
+  interface Window {
+    formbricksSurveys: {
+      renderSurveyInline: (props: SurveyInlineProps) => void;
+      renderSurveyModal: (props: SurveyModalProps) => void;
+    };
+  }
+}
+
+export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
   useEffect(() => {
-    renderSurveyInline({
-      ...props,
-      containerId,
-    });
+    if (typeof window !== "undefined") {
+      const renderInline = () => window.formbricksSurveys.renderSurveyInline({ ...props, containerId });
+      if (!window.formbricksSurveys) {
+        loadSurveyScript().then(renderInline);
+      } else {
+        renderInline();
+      }
+    }
   }, [containerId, props]);
   return <div id={containerId} className="h-full w-full" />;
-};
-
-export const SurveyModal = (props: SurveyModalProps & { brandColor: string }) => {
-  useEffect(() => {
-    renderSurveyModal(props);
-  }, [props]);
-  return <div id="formbricks-survey"></div>;
 };
