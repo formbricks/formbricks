@@ -13,7 +13,7 @@ export async function POST() {
   }
 
   // close surveys that are in progress and have a closeOnDate in the past
-  const surveys = await prisma.survey.findMany({
+  const surveysToClose = await prisma.survey.findMany({
     where: {
       status: "inProgress",
       closeOnDate: {
@@ -25,11 +25,11 @@ export async function POST() {
     },
   });
 
-  if (surveys.length) {
+  if (surveysToClose.length) {
     await prisma.survey.updateMany({
       where: {
         id: {
-          in: surveys.map((survey) => survey.id),
+          in: surveysToClose.map((survey) => survey.id),
         },
       },
       data: {
@@ -65,6 +65,6 @@ export async function POST() {
   }
 
   return responses.successResponse({
-    message: `Updated ${surveys.length} surveys to completed and ${scheduledSurveys.length} surveys to inProgress.`,
+    message: `Updated ${surveysToClose.length} surveys to completed and ${scheduledSurveys.length} surveys to inProgress.`,
   });
 }

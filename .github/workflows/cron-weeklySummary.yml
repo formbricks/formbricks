@@ -16,7 +16,7 @@ jobs:
       - name: cURL request
         if: ${{ env.APP_URL && env.CRON_SECRET }}
         run: |
-          curl ${{ env.APP_URL }}/api/cron/weekly_summary \
+          curl ${{ env.APP_URL }}/api/cron/weekly-summary \
             -X POST \
             -H 'content-type: application/json' \
             -H 'x-api-key: ${{ env.CRON_SECRET }}' \
