@@ -4,7 +4,8 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.$transaction(async (tx) => {
-    let userIdAttributeClassId: string | null = null;
+    const userIdAttributeClassIds = new Set<string>();
+
     // get all the persons that have an attribute class with the name "userId"
     const personsWithUserIdAttribute = await tx.person.findMany({
       where: {
@@ -24,17 +25,15 @@ async function main() {
     });
 
     for (let person of personsWithUserIdAttribute) {
-      // if the person already has a userId column, skip
+      // If the person already has a userId, skip it
       if (person.userId) {
         continue;
       }
 
       const userIdAttributeValue = person.attributes.find((attribute) => {
         if (attribute.attributeClass.name === "userId") {
-          if (!userIdAttributeClassId) {
-            // store the attribute class id to delete it later
-            userIdAttributeClassId = attribute.attributeClass.id;
-          }
+          // Store the attribute class id to delete it later
+          userIdAttributeClassIds.add(attribute.attributeClass.id);
 
           return attribute;
         }
@@ -54,10 +53,11 @@ async function main() {
       });
     }
 
-    if (userIdAttributeClassId) {
+    // Delete all attributeClasses with the name "userId" that were collected in the Set
+    for (const id of userIdAttributeClassIds) {
       await tx.attributeClass.delete({
         where: {
-          id: userIdAttributeClassId,
+          id: id,
         },
       });
     }

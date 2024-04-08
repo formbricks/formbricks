@@ -51,7 +51,7 @@ export default async function AttributesSection({ personId }: { personId: string
       </div>
 
       {Object.entries(person.attributes)
-        .filter(([key, _]) => key !== "email" && key !== "userId" && key !== "language")
+        .filter(([key, _]) => key !== "email" && key !== "language")
         .map(([key, value]) => (
           <div key={key}>
             <dt className="text-sm font-medium text-slate-500">{capitalizeFirstLetter(key.toString())}</dt>
