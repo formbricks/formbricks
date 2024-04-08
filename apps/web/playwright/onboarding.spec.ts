@@ -30,7 +30,7 @@ test.describe("Onboarding Flow Test", async () => {
     await page.getByRole("button", { name: "Skip" }).click();
     await page.getByRole("button", { name: "Skip" }).click();
 
-    await page.getByRole("button", { name: "I am not sure how to do this" }).click();
+    await page.getByRole("button", { name: "Skip" }).click();
     await page.locator("input").click();
     await page.locator("input").fill("test@gmail.com");
     await page.getByRole("button", { name: "Invite" }).click();

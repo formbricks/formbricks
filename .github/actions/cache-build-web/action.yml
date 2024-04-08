@@ -46,6 +46,7 @@ runs:
       run: |
         SECRET=$(openssl rand -hex 32)
         echo "ENCRYPTION_KEY=$SECRET" >> $GITHUB_ENV
+        echo "ENTERPRISE_LICENSE_KEY=$SECRET" >> $GITHUB_ENV
       shell: bash
 
     - run: |

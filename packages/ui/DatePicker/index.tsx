@@ -16,7 +16,7 @@ export function DatePicker({
   date,
   handleDateChange,
 }: {
-  date?: Date;
+  date?: Date | null;
   handleDateChange: (date?: Date) => void;
 }) {
   let formattedDate = date ? new Date(date) : undefined;
