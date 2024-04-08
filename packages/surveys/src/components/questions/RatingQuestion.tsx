@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
@@ -26,7 +26,7 @@ import Subheader from "../general/Subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
-  value: number;
+  value?: number;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -52,21 +52,20 @@ export const RatingQuestion = ({
 }: RatingQuestionProps) => {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });
-    if (question.required) {
-      const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-      setTtc(updatedTtcObj);
-      onSubmit(
-        {
-          [question.id]: number,
-        },
-        updatedTtcObj
-      );
-    }
+    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+    onSubmit(
+      {
+        [question.id]: number,
+      },
+      updatedTtcObj
+    );
   };
 
   const HiddenRadioInput = ({ number, id }: { number: number; id?: string }) => (
@@ -93,10 +92,10 @@ export const RatingQuestion = ({
         e.preventDefault();
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value }, updatedTtcObj);
+        onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
@@ -129,10 +128,10 @@ export const RatingQuestion = ({
                     }}
                     className={cn(
                       value === number
-                        ? "bg-accent-selected-bg border-border-highlight z-10"
+                        ? "bg-accent-selected-bg border-border-highlight z-10 border"
                         : "border-border",
-                      a.length === number ? "rounded-r-md border-r" : "",
-                      number === 1 ? "rounded-l-md" : "",
+                      a.length === number ? "rounded-r-custom border-r" : "",
+                      number === 1 ? "rounded-l-custom" : "",
                       hoveredNumber === number ? "bg-accent-bg " : "",
                       "text-heading focus:border-brand relative flex min-h-[41px] w-full cursor-pointer items-center justify-center border-b border-l border-t focus:border-2 focus:outline-none"
                     )}>
@@ -207,7 +206,6 @@ export const RatingQuestion = ({
           </div>
         </fieldset>
       </div>
-
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton

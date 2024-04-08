@@ -1,6 +1,7 @@
 "use client";
 
 import { updateAvatarAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
+import { handleFileUpload } from "@/app/lib/fileUpload";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -8,8 +9,6 @@ import toast from "react-hot-toast";
 
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
-
-import { handleFileUpload } from "../lib";
 
 export function EditAvatar({ session, environmentId }: { session: Session; environmentId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);

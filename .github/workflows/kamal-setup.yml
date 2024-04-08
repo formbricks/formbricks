@@ -7,7 +7,7 @@ on:
   workflow_dispatch: # Only to be triggered when accessories are updated
 
 jobs:
-  Deploy:
+  Setup:
     runs-on: ubuntu-latest
     environment: production
     env:
@@ -16,6 +16,7 @@ jobs:
       WEBAPP_URL: ${{ vars.WEBAPP_URL }}
       NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      MIGRATE_DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
       ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
       SHORT_URL_BASE: ${{ vars.SHORT_URL_BASE }}
@@ -60,6 +61,7 @@ jobs:
       NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: ${{ vars.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID }}
       NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: ${{ vars.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID }}
       NEXT_PUBLIC_SENTRY_DSN: ${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       NODE_ENV: production
       CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
       CLOUDFLARE_DNS_API_TOKEN: ${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
@@ -69,8 +71,11 @@ jobs:
       S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
       OPENTELEMETRY_LISTENER_URL: ${{ vars.OPENTELEMETRY_LISTENER_URL }}
       RATE_LIMITING_DISABLED: ${{ vars.RATE_LIMITING_DISABLED }}
-      REDIS_CLIENT_URL: ${{ vars.REDIS_CLIENT_URL }}
       KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
 
     steps:
       - name: Checkout code
@@ -103,7 +108,7 @@ jobs:
           kamal() { command kamal "$@" -c kamal/deploy.yml; }
           kamal env push
 
-      - name: Run deploy command
+      - name: Run setup command
         run: |
           kamal() { command kamal "$@" -c kamal/deploy.yml; }
           set +e
