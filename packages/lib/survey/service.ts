@@ -58,6 +58,7 @@ export const selectSurvey = {
   displayOption: true,
   recontactDays: true,
   autoClose: true,
+  runOnDate: true,
   closeOnDate: true,
   delay: true,
   displayPercentage: true,
@@ -469,10 +470,24 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   }
 
   surveyData.updatedAt = new Date();
+
   data = {
     ...surveyData,
     ...data,
   };
+
+  // Remove scheduled status when runOnDate is not set
+  if (data.status === "scheduled" && data.runOnDate === null) {
+    data.status = "inProgress";
+  }
+  // Set scheduled status when runOnDate is set and in the future on completed surveys
+  if (
+    (data.status === "completed" || data.status === "paused" || data.status === "inProgress") &&
+    data.runOnDate &&
+    data.runOnDate > new Date()
+  ) {
+    data.status = "scheduled";
+  }
 
   try {
     const prismaSurvey = await prisma.survey.update({

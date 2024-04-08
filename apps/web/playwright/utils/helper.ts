@@ -64,7 +64,7 @@ export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean 
   await expect(page.getByText("My Product")).toBeVisible();
 
   let currentDir = process.cwd();
-  let htmlFilePath = currentDir + "/packages/js/index.html";
+  let htmlFilePath = currentDir + "/packages/js-core/index.html";
 
   const environmentId =
     /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??

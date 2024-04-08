@@ -10,18 +10,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SurveyStatusIndicator } from "@formbricks/ui/SurveyStatusIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
+interface SurveyStatusDropdownProps {
+  environment: TEnvironment;
+  updateLocalSurveyStatus?: (status: TSurvey["status"]) => void;
+  survey: TSurvey;
+}
+
 export default function SurveyStatusDropdown({
   environment,
   updateLocalSurveyStatus,
   survey,
-}: {
-  environment: TEnvironment;
-  updateLocalSurveyStatus?: (status: "draft" | "inProgress" | "paused" | "completed" | "archived") => void;
-  survey: TSurvey;
-}) {
+}: SurveyStatusDropdownProps) {
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
-  const isStatusChangeDisabled = (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date()) ?? false;
+  const isStatusChangeDisabled =
+    (survey.status === "scheduled" || (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date())) ??
+    false;
 
   return (
     <>
@@ -34,7 +38,7 @@ export default function SurveyStatusDropdown({
           value={survey.status}
           disabled={isStatusChangeDisabled}
           onValueChange={(value) => {
-            const castedValue = value as "draft" | "inProgress" | "paused" | "completed";
+            const castedValue = value as TSurvey["status"];
             updateSurveyAction({ ...survey, status: castedValue })
               .then(() => {
                 toast.success(
@@ -51,8 +55,7 @@ export default function SurveyStatusDropdown({
                 toast.error(`Error: ${error.message}`);
               });
 
-            if (updateLocalSurveyStatus)
-              updateLocalSurveyStatus(value as "draft" | "inProgress" | "paused" | "completed" | "archived");
+            if (updateLocalSurveyStatus) updateLocalSurveyStatus(value as TSurvey["status"]);
           }}>
           <TooltipProvider delayDuration={50}>
             <Tooltip open={isStatusChangeDisabled ? undefined : false}>
@@ -64,6 +67,7 @@ export default function SurveyStatusDropdown({
                         <SurveyStatusIndicator status={survey.status} />
                       )}
                       <span className="ml-2 text-sm text-slate-700">
+                        {survey.status === "scheduled" && "Scheduled"}
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
                         {survey.status === "completed" && "Completed"}
@@ -88,8 +92,8 @@ export default function SurveyStatusDropdown({
               </SelectContent>
 
               <TooltipContent>
-                To update the survey status, update the &ldquo;Close
-                <br /> survey on date&rdquo; setting in the Response Options.
+                To update the survey status, update the schedule and close setting in the survey response
+                options.
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

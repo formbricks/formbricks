@@ -34,6 +34,11 @@ export const users = {
       email: "survey3@formbricks.com",
       password: "Gj2DGji27D&M8u53V",
     },
+    {
+      name: "Survey User 4",
+      email: "survey4@formbricks.com",
+      password: "UU3efj8vJa&M8u5M1",
+    },
   ],
   js: [
     {
