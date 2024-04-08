@@ -424,7 +424,7 @@ export const ZSurveyType = z.enum(["web", "email", "link", "mobile"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 
-const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
+const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]);
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
@@ -473,6 +473,7 @@ export const ZSurvey = z.object({
   hiddenFields: ZSurveyHiddenFields,
   delay: z.number(),
   autoComplete: z.number().nullable(),
+  runOnDate: z.date().nullable(),
   closeOnDate: z.date().nullable(),
   productOverwrites: ZSurveyProductOverwrites.nullable(),
   styling: ZSurveyStyling.nullable(),
@@ -506,6 +507,7 @@ export const ZSurveyInput = z
     hiddenFields: ZSurveyHiddenFields.optional(),
     delay: z.number().optional(),
     autoComplete: z.number().nullish(),
+    runOnDate: z.date().nullish(),
     closeOnDate: z.date().nullish(),
     styling: ZSurveyStyling.optional(),
     surveyClosedMessage: ZSurveyClosedMessage.nullish(),
@@ -542,6 +544,7 @@ export type TSurvey = z.infer<typeof ZSurvey>;
 export type TSurveyDates = {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];
+  runOnDate: TSurvey["runOnDate"];
   closeOnDate: TSurvey["closeOnDate"];
 };
 

@@ -35,6 +35,7 @@ interface FilterDropdownProps {
 
 const statusOptions = [
   { label: "In Progress", value: "inProgress" },
+  { label: "Scheduled", value: "scheduled" },
   { label: "Paused", value: "paused" },
   { label: "Completed", value: "completed" },
   { label: "Draft", value: "draft" },
