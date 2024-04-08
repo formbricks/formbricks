@@ -124,7 +124,7 @@ export default function SummaryList({
               <MatrixQuestionSummary key={questionSummary.question.id} questionSummary={questionSummary} />
             );
           }
-          if (questionSummary.type === TSurveyQuestionType.address) {
+          if (questionSummary.type === TSurveyQuestionType.Address) {
             return (
               <AddressSummary
                 key={questionSummary.question.id}

@@ -26,6 +26,7 @@ import {
 } from "@formbricks/types/surveys";
 
 import { getLocalizedValue } from "../i18n/utils";
+import { processResponseData } from "../responses";
 import { sanitizeString } from "../strings";
 import { getTodaysDateTimeFormatted } from "../time";
 import { evaluateCondition } from "../utils/evaluateLogic";
@@ -410,7 +411,7 @@ export const getResponsesJson = (
     questions.forEach((question, i) => {
       const questionId = survey?.questions[i].id || "";
       const answer = response.data[questionId];
-      jsonData[idx][question] = Array.isArray(answer) ? answer.join("; ") : answer;
+      jsonData[idx][question] = processResponseData(answer);
     });
 
     // user attributes
@@ -424,7 +425,7 @@ export const getResponsesJson = (
       if (Array.isArray(value)) {
         jsonData[idx][field] = value.join("; ");
       } else {
-        jsonData[idx][field] = value;
+        jsonData[idx][field] = processResponseData(value);
       }
     });
   });

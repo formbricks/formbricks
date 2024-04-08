@@ -278,7 +278,10 @@ export default function SingleResponseCard({
             );
           });
         }
-
+      case TSurveyQuestionType.Address:
+        if (Array.isArray(responseData)) {
+          return <AddressResponse value={responseData} />;
+        }
       default:
         if (
           typeof responseData === "string" ||
@@ -441,40 +444,6 @@ export default function SingleResponseCard({
                           : "aborted"
                       }
                     />
-                  )}
-                  {typeof response.data[question.id] !== "object" ? (
-                    question.type === TSurveyQuestionType.Rating ? (
-                      <div>
-                        <RatingResponse
-                          scale={question.scale}
-                          answer={response.data[question.id]}
-                          range={question.range}
-                        />
-                      </div>
-                    ) : question.type === TSurveyQuestionType.Date ? (
-                      <DateResponse date={response.data[question.id] as string} />
-                    ) : question.type === TSurveyQuestionType.Cal ? (
-                      <p className="ph-no-capture my-1 font-semibold capitalize text-slate-700">
-                        {response.data[question.id]}
-                      </p>
-                    ) : (
-                      <p className="ph-no-capture my-1 whitespace-pre-line font-semibold text-slate-700">
-                        {response.data[question.id]}
-                      </p>
-                    )
-                  ) : question.type === TSurveyQuestionType.PictureSelection ? (
-                    <PictureSelectionResponse
-                      choices={question.choices}
-                      selected={response.data[question.id]}
-                    />
-                  ) : question.type === TSurveyQuestionType.FileUpload ? (
-                    <FileUploadResponse selected={response.data[question.id]} />
-                  ) : question.type === TSurveyQuestionType.address ? (
-                    <AddressResponse value={response.data[question.id] as string[]} />
-                  ) : (
-                    <p className="ph-no-capture my-1 font-semibold text-slate-700">
-                      {handleArray(response.data[question.id])}
-                    </p>
                   )}
                 </div>
               );

@@ -10,7 +10,7 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
-import { CalendarDaysIcon, UploadIcon } from "lucide-react";
+import { CalendarDaysIcon } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
