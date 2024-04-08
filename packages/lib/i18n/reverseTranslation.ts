@@ -37,7 +37,7 @@ export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "
 
   // check if the headline is an empty object, if so, add a "default" key
   // TODO: This is a temporary fix, should be handled propperly
-  if (Object.keys(reversedSurvey.welcomeCard.headline).length === 0) {
+  if (reversedSurvey.welcomeCard.headline && Object.keys(reversedSurvey.welcomeCard.headline).length === 0) {
     reversedSurvey.welcomeCard.headline = { default: "" };
   }
 
