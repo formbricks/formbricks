@@ -9,6 +9,7 @@ import { useRef, useState } from "react";
 import type { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
+import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 interface ThemeStylingPreviewSurveyProps {
@@ -165,7 +166,13 @@ export const ThemeStylingPreviewSurvey = ({
             </Modal>
           ) : (
             <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
-              <div className="z-0 w-full max-w-md rounded-lg p-4">
+              {!product.styling?.isLogoHidden && product.logo?.url && (
+                <div className="absolute left-5 top-5">
+                  <ClientLogo product={product} previewSurvey />
+                </div>
+              )}
+              <div
+                className={`${product.logo?.url && !product.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0  w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
                   survey={survey}
                   activeQuestionId={activeQuestionId || undefined}

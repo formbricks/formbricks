@@ -357,7 +357,7 @@ export const templates: TTemplate[] = [
           id: createId(),
           html: {
             default:
-              '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot!</span></p>',
+              '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
           },
           type: TSurveyQuestionType.CTA,
           logic: [{ condition: "skipped", destination: "end" }],
@@ -2623,6 +2623,7 @@ export const minimalSurvey: TSurvey = {
   delay: 0, // No delay
   displayPercentage: null,
   autoComplete: null,
+  runOnDate: null,
   closeOnDate: null,
   surveyClosedMessage: {
     enabled: false,

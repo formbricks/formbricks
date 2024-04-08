@@ -17,19 +17,19 @@
   },
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
-    "@storybook/addon-essentials": "^8.0.0",
-    "@storybook/addon-interactions": "^8.0.0",
-    "@storybook/addon-links": "^8.0.0",
-    "@storybook/addon-onboarding": "^8.0.0",
-    "@storybook/blocks": "^8.0.0",
-    "@storybook/react": "^8.0.0",
-    "@storybook/react-vite": "^8.0.0",
+    "@storybook/addon-essentials": "^8.0.6",
+    "@storybook/addon-interactions": "^8.0.6",
+    "@storybook/addon-links": "^8.0.6",
+    "@storybook/addon-onboarding": "^8.0.6",
+    "@storybook/blocks": "^8.0.6",
+    "@storybook/react": "^8.0.6",
+    "@storybook/react-vite": "^8.0.6",
     "@storybook/testing-library": "^0.2.2",
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "^7.5.0",
+    "@typescript-eslint/parser": "^7.5.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "esbuild": "^0.20.1",
+    "esbuild": "^0.20.2",
     "tsup": "^8.0.2",
-    "vite": "^5.1.6"
+    "vite": "^5.2.8"
   }
 }

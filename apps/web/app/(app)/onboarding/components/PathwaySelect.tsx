@@ -37,7 +37,7 @@ export default function PathwaySelect({
   };
 
   return (
-    <div className="space-y-16 text-center">
+    <div className="space-y-16 p-6 text-center">
       <OnboardingTitle
         title="How would you like to start?"
         subtitle="You can always use all types of surveys later on."
