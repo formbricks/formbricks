@@ -1113,7 +1113,6 @@ export const getQuestionWiseSummary = (
         let values: TSurveySummaryAddress["samples"] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
-          console.log(answer);
           if (Array.isArray(answer) && answer.length > 0) {
             values.push({
               id: response.id,

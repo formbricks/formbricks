@@ -24,7 +24,6 @@ test.describe("Survey Create & Submit Response", async () => {
     // Get URL
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
     url = await page.getByRole("textbox").inputValue();
-    console.log(url);
   });
 
   test("Create Survey with Custom Actions", async ({ page }) => {
