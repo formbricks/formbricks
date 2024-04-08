@@ -42,6 +42,11 @@ const setEmail = async (email: string): Promise<void> => {
 };
 
 const setAttribute = async (key: string, value: any): Promise<void> => {
+  if (key === "userId") {
+    logger.error("Cannot set userId as an attribute");
+    return;
+  }
+
   queue.add(true, setPersonAttribute, key, value);
   await queue.wait();
 };
