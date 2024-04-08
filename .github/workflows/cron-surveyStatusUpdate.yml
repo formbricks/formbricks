@@ -1,4 +1,4 @@
-name: Cron - Survey Status Update
+name: Cron - Survey status update
 
 on:
   # "Scheduled workflows run on the latest commit on the default or base branch."
