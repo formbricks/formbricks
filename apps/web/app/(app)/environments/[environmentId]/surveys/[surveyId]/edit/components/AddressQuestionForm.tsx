@@ -20,7 +20,7 @@ interface AddressQuestionFormProps {
   setSelectedLanguageCode: (language: string) => void;
 }
 
-export default function AddressQuestionForm({
+export const AddressQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -28,7 +28,7 @@ export default function AddressQuestionForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: AddressQuestionFormProps): JSX.Element {
+}: AddressQuestionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
@@ -140,4 +140,4 @@ export default function AddressQuestionForm({
       </div>
     </form>
   );
-}
+};

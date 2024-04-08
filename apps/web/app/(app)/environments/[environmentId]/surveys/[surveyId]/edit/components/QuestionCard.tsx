@@ -1,9 +1,19 @@
 "use client";
 
+import { AddressQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddressQuestionForm";
 import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
-import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
-import MatrixQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MatrixQuestionForm";
-import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
+import { CTAQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CTAQuestionForm";
+import { CalQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CalQuestionForm";
+import { ConsentQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/ConsentQuestionForm";
+import { DateQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
+import { FileUploadQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FileUploadQuestionForm";
+import { MatrixQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MatrixQuestionForm";
+import { MultipleChoiceMultiForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MultipleChoiceMultiForm";
+import { MultipleChoiceSingleForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MultipleChoiceSingleForm";
+import { NPSQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/NPSQuestionForm";
+import { OpenQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/OpenQuestionForm";
+import { PictureSelectionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
+import { RatingQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/RatingQuestionForm";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
@@ -34,17 +44,7 @@ import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
-import AddressQuestionForm from "./AddressQuestionForm";
-import CTAQuestionForm from "./CTAQuestionForm";
-import CalQuestionForm from "./CalQuestionForm";
-import ConsentQuestionForm from "./ConsentQuestionForm";
-import FileUploadQuestionForm from "./FileUploadQuestionForm";
-import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
-import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
-import NPSQuestionForm from "./NPSQuestionForm";
-import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
-import RatingQuestionForm from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
