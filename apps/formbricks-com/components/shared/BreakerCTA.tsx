@@ -27,7 +27,7 @@ export default function BreakerCTA({ inverted = false, teaser, headline, subhead
       <div className="relative px-4 py-8 sm:px-6 sm:pb-12 sm:pt-8 lg:px-8 lg:pt-12">
         <div className="xs:block xs:absolute xs:right-10 hidden md:top-1/2 md:-translate-y-1/2">
           <Button
-            variant="highlight"
+            variant="darkCTA"
             onClick={() => {
               plausible("Breaker_CTAs");
               router.push(`${href}`);

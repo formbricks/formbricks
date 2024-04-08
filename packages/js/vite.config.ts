@@ -2,20 +2,8 @@ import { resolve } from "path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
-import surveysPackageJson from "../surveys/package.json";
-import packageJson from "./package.json";
-
-const config = ({ mode }) => {
-  const isDevelopment = mode === "dev";
-  const formbricksSurveysScriptSrc = isDevelopment
-    ? "http://localhost:3003/index.umd.js"
-    : `https://unpkg.com/@formbricks/surveys@~${surveysPackageJson.version}/dist/index.umd.js`;
-
+const config = () => {
   return defineConfig({
-    define: {
-      "import.meta.env.FORMBRICKS_SURVEYS_SCRIPT_SRC": JSON.stringify(formbricksSurveysScriptSrc),
-      "import.meta.env.VERSION": JSON.stringify(packageJson.version),
-    },
     build: {
       emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
       minify: "terser",
@@ -23,8 +11,8 @@ const config = ({ mode }) => {
       lib: {
         // Could also be a dictionary or array of multiple entry points
         entry: resolve(__dirname, "src/index.ts"),
-        name: "formbricks",
-        formats: ["cjs", "es", "umd", "iife"],
+        name: "formbricksJsWrapper",
+        formats: ["es", "umd"],
         // the proper extensions will be added
         fileName: "index",
       },

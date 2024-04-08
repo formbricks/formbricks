@@ -9,8 +9,8 @@
   /* 2 */
   border-color: theme("borderColor.DEFAULT", currentColor);
   /* 2 */
-  
-  font-family: inherit, Arial, Helvetica, sans-serif;
+
+  font-family: Inter, Helvetica, Arial, sans-serif;
   font-size: 1em;
 }
 #fbjs ::before,

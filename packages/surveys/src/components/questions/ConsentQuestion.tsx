@@ -2,7 +2,7 @@ import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
 import HtmlBody from "@/components/general/HtmlBody";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
@@ -12,7 +12,7 @@ import type { TSurveyConsentQuestion } from "@formbricks/types/surveys";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -21,9 +21,10 @@ interface ConsentQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function ConsentQuestion({
+export const ConsentQuestion = ({
   question,
   value,
   onChange,
@@ -34,14 +35,15 @@ export default function ConsentQuestion({
   languageCode,
   ttc,
   setTtc,
-}: ConsentQuestionProps) {
+}: ConsentQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   return (
     <div key={question.id}>
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
@@ -57,9 +59,13 @@ export default function ConsentQuestion({
         }}>
         <label
           tabIndex={1}
+          id={`${question.id}-label`}
           onKeyDown={(e) => {
-            if (e.key == "Enter") {
-              onChange({ [question.id]: "accepted" });
+            // Accessibility: if spacebar was pressed pass this down to the input
+            if (e.key === " ") {
+              e.preventDefault();
+              document.getElementById(question.id)?.click();
+              document.getElementById(`${question.id}-label`)?.focus();
             }
           }}
           className="border-border bg-input-bg text-heading hover:bg-input-bg-selected focus:bg-input-bg-selected focus:ring-brand rounded-custom relative z-10 mt-4 flex w-full cursor-pointer items-center border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2">
@@ -103,10 +109,9 @@ export default function ConsentQuestion({
             tabIndex={2}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
-            onClick={() => {}}
           />
         </div>
       </form>
     </div>
   );
-}
+};

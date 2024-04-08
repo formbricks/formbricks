@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
@@ -14,7 +14,7 @@ import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -24,9 +24,10 @@ interface OpenTextQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function OpenTextQuestion({
+export const OpenTextQuestion = ({
   question,
   value,
   onChange,
@@ -35,11 +36,12 @@ export default function OpenTextQuestion({
   isFirstQuestion,
   isLastQuestion,
   languageCode,
-  autoFocus = true,
   ttc,
   setTtc,
-}: OpenTextQuestionProps) {
+  isInIframe,
+}: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -58,11 +60,11 @@ export default function OpenTextQuestion({
 
   const openTextRef = useCallback(
     (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-      if (question.id && currentElement && autoFocus) {
+      if (question.id && currentElement && !isInIframe) {
         currentElement.focus();
       }
     },
-    [question.id, autoFocus]
+    [question.id, isInIframe]
   );
 
   return (
@@ -75,7 +77,7 @@ export default function OpenTextQuestion({
         onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
@@ -98,7 +100,7 @@ export default function OpenTextQuestion({
             value={value ? (value as string) : ""}
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
-            autoFocus={autoFocus}
+            autoFocus={!isInIframe}
             className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
@@ -118,7 +120,7 @@ export default function OpenTextQuestion({
               handleInputChange(e.currentTarget.value);
               handleInputResize(e);
             }}
-            autoFocus={autoFocus}
+            autoFocus={!isInIframe}
             className="border-border placeholder:text-placeholder bg-input-bg text-subheading focus:border-border-highlight rounded-custom block w-full border p-2 shadow-sm  focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
             title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
@@ -145,4 +147,4 @@ export default function OpenTextQuestion({
       </div>
     </form>
   );
-}
+};

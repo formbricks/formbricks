@@ -119,6 +119,7 @@ const SummaryHeader = ({
                         <SurveyStatusIndicator status={survey.status} />
                       )}
                       <span className="ml-1 text-sm text-slate-700">
+                        {survey.status === "scheduled" && "Scheduled"}
                         {survey.status === "inProgress" && "In-progress"}
                         {survey.status === "paused" && "Paused"}
                         {survey.status === "completed" && "Completed"}

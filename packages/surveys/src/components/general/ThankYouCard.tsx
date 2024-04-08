@@ -1,9 +1,8 @@
 import Button from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import RedirectCountDown from "@/components/general/RedirectCountdown";
 import Subheader from "@/components/general/Subheader";
-import { useEffect } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TI18nString } from "@formbricks/types/surveys";
@@ -17,8 +16,10 @@ interface ThankYouCardProps {
   buttonLabel?: TI18nString;
   buttonLink?: string;
   imageUrl?: string;
+  videoUrl?: string;
   replaceRecallInfo: (text: string) => string;
   isResponseSendingFinished: boolean;
+  isInIframe: boolean;
 }
 
 export default function ThankYouCard({
@@ -30,26 +31,15 @@ export default function ThankYouCard({
   buttonLabel,
   buttonLink,
   imageUrl,
+  videoUrl,
   replaceRecallInfo,
   isResponseSendingFinished,
+  isInIframe,
 }: ThankYouCardProps) {
-  useEffect(() => {
-    if (!buttonLink || !isResponseSendingFinished) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Enter") {
-        window.top?.location.replace(buttonLink);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [buttonLink, isResponseSendingFinished]);
-
   return (
     <div className="text-center">
-      {imageUrl ? (
-        <QuestionImage imgUrl={imageUrl} />
+      {imageUrl || videoUrl ? (
+        <QuestionMedia imgUrl={imageUrl} videoUrl={videoUrl} />
       ) : (
         <div>
           <div className="text-brand flex items-center justify-center">
@@ -87,6 +77,7 @@ export default function ThankYouCard({
             <Button
               buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
               isLastQuestion={false}
+              focus={!isInIframe}
               onClick={() => {
                 if (!buttonLink) return;
                 window.location.replace(buttonLink);

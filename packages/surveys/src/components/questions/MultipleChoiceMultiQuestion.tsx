@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
@@ -13,7 +13,7 @@ import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surve
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
-  value: string | number | string[];
+  value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -22,9 +22,10 @@ interface MultipleChoiceMultiProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function MultipleChoiceMultiQuestion({
+export const MultipleChoiceMultiQuestion = ({
   question,
   value,
   onChange,
@@ -35,8 +36,10 @@ export default function MultipleChoiceMultiQuestion({
   languageCode,
   ttc,
   setTtc,
-}: MultipleChoiceMultiProps) {
+  isInIframe,
+}: MultipleChoiceMultiProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -131,7 +134,7 @@ export default function MultipleChoiceMultiQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
@@ -151,19 +154,19 @@ export default function MultipleChoiceMultiQuestion({
               <label
                 key={choice.id}
                 tabIndex={idx + 1}
-                onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    if (Array.isArray(value) && value.includes(choice.label)) {
-                      removeItem(choice.label);
-                    } else {
-                      addItem(choice.label);
-                    }
-                  }
-                }}
                 className={cn(
                   value === choice.label ? "border-border bg-input-selected-bg z-10" : "border-border",
                   "text-heading bg-input-bg focus-within:border-brand hover:bg-input-bg-selected focus:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
-                )}>
+                )}
+                onKeyDown={(e) => {
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    document.getElementById(choice.id)?.click();
+                    document.getElementById(choice.id)?.focus();
+                  }
+                }}
+                autoFocus={idx === 0 && !isInIframe}>
                 <span className="flex items-center text-sm">
                   <input
                     type="checkbox"
@@ -197,14 +200,17 @@ export default function MultipleChoiceMultiQuestion({
               <label
                 tabIndex={questionChoices.length + 1}
                 className={cn(
-                  value === getLocalizedValue(otherOption.label, languageCode)
+                  value.includes(getLocalizedValue(otherOption.label, languageCode))
                     ? "border-border bg-input-selected-bg z-10"
                     : "border-border",
-                  "text-heading focus-within:border-border focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
+                  "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
                 )}
                 onKeyDown={(e) => {
-                  if (e.key == "Enter") {
-                    setOtherSelected(!otherSelected);
+                  // Accessibility: if spacebar was pressed pass this down to the input
+                  if (e.key === " ") {
+                    if (otherSelected) return;
+                    document.getElementById(otherOption.id)?.click();
+                    document.getElementById(otherOption.id)?.focus();
                   }
                 }}>
                 <span className="flex items-center text-sm">
@@ -242,15 +248,6 @@ export default function MultipleChoiceMultiQuestion({
                       setOtherValue(e.currentTarget.value);
                       addItem(e.currentTarget.value);
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key == "Enter") {
-                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                        setTtc(updatedTtcObj);
-                        setTimeout(() => {
-                          onSubmit({ [question.id]: value }, updatedTtcObj);
-                        }, 100);
-                      }
-                    }}
                     className="placeholder:text-placeholder border-border bg-survey-bg text-heading focus:ring-focus rounded-custom mt-3 flex h-10 w-full border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder={
                       getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
@@ -281,9 +278,8 @@ export default function MultipleChoiceMultiQuestion({
           tabIndex={questionChoices.length + 2}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
         />
       </div>
     </form>
   );
-}
+};
