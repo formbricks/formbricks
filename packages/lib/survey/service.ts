@@ -482,7 +482,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   }
   // Set scheduled status when runOnDate is set and in the future on completed surveys
   if (
-    (data.status === "completed" || data.status === "inProgress") &&
+    (data.status === "completed" || data.status === "paused" || data.status === "inProgress") &&
     data.runOnDate &&
     data.runOnDate > new Date()
   ) {
