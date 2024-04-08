@@ -39,6 +39,7 @@ export async function POST(req: Request, context: Context): Promise<Response> {
       person = await createPerson(environmentId, userId);
     }
 
+    // If the userId is in the attributes, return an error
     if (inputValidation.data.attributes.userId) {
       return responses.badRequestResponse("Cannot update userId as an attribute");
     }
