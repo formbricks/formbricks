@@ -24,7 +24,7 @@ type QuestionFilterComboBoxProps = {
   onChangeFilterValue: (o: string) => void;
   onChangeFilterComboBoxValue: (o: string | string[]) => void;
   type:
-    | OptionsType.LANGUAGE
+    | OptionsType.OTHERS
     | TSurveyQuestionType
     | OptionsType.ATTRIBUTES
     | OptionsType.TAGS

@@ -19,9 +19,8 @@ import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
-import { TSurveyMetaFieldFilter, TSurveyPersonAttributes, TSurveySummary } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 

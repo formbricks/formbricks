@@ -167,18 +167,18 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
   }
 
   // For Language
-  if (filterCriteria?.language) {
-    const language: Prisma.ResponseWhereInput[] = [];
+  if (filterCriteria?.others) {
+    const others: Prisma.ResponseWhereInput[] = [];
 
-    Object.entries(filterCriteria.language).forEach(([key, val]) => {
+    Object.entries(filterCriteria.others).forEach(([key, val]) => {
       switch (val.op) {
         case "equals":
-          language.push({
+          others.push({
             [key.toLocaleLowerCase()]: val.value,
           });
           break;
         case "notEquals":
-          language.push({
+          others.push({
             [key.toLocaleLowerCase()]: {
               not: val.value,
             },
@@ -187,7 +187,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
       }
     });
     whereClause.push({
-      AND: language,
+      AND: others,
     });
   }
 

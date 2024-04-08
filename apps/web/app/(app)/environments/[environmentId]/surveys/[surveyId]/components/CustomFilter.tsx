@@ -5,20 +5,14 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import {
-  generateQuestionAndFilterOptions,
-  getFormattedFilters,
-  getTodayDate,
-} from "@/app/lib/surveys/surveys";
+import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { differenceInDays, format, startOfDay, subDays } from "date-fns";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurveyMetaFieldFilter, TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { Calendar } from "@formbricks/ui/Calendar";
 import {
   DropdownMenu,

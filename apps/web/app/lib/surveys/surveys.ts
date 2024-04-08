@@ -166,16 +166,16 @@ export const generateQuestionAndFilterOptions = (
 
   //can be extended to include more properties
   if (survey.languages?.length > 0) {
-    languageQuestion.push({ label: "Language", type: OptionsType.LANGUAGE, id: "language" });
+    languageQuestion.push({ label: "Language", type: OptionsType.OTHERS, id: "language" });
     const languageOptions = survey.languages.map((sl) => sl.language.code);
     questionFilterOptions.push({
-      type: "Language",
+      type: OptionsType.OTHERS,
       filterOptions: conditionOptions.languages,
       filterComboBoxOptions: languageOptions,
       id: "language",
     });
   }
-  questionOptions = [...questionOptions, { header: OptionsType.LANGUAGE, option: languageQuestion }];
+  questionOptions = [...questionOptions, { header: OptionsType.OTHERS, option: languageQuestion }];
 
   return { questionOptions: [...questionOptions], questionFilterOptions: [...questionFilterOptions] };
 };
@@ -187,7 +187,7 @@ export const getFormattedFilters = (
   dateRange: DateRange
 ): TResponseFilterCriteria => {
   const filters: TResponseFilterCriteria = {};
-  const [questions, tags, attributes, language, meta] = selectedFilter.filter.reduce(
+  const [questions, tags, attributes, others, meta] = selectedFilter.filter.reduce(
     (result: [FilterValue[], FilterValue[], FilterValue[], FilterValue[], FilterValue[]], filter) => {
       if (filter.questionType?.type === "Questions") {
         result[0].push(filter);
@@ -195,7 +195,7 @@ export const getFormattedFilters = (
         result[1].push(filter);
       } else if (filter.questionType?.type === "Attributes") {
         result[2].push(filter);
-      } else if (filter.questionType?.type === "Language") {
+      } else if (filter.questionType?.type === "Other Filters") {
         result[3].push(filter);
       } else if (filter.questionType?.type === "Meta") {
         result[4].push(filter);
@@ -374,17 +374,17 @@ export const getFormattedFilters = (
     });
   }
 
-  // for language
-  if (language.length) {
-    language.forEach(({ filterType, questionType }) => {
-      if (!filters.language) filters.language = {};
+  // for others
+  if (others.length) {
+    others.forEach(({ filterType, questionType }) => {
+      if (!filters.others) filters.others = {};
       if (filterType.filterValue === "Equals") {
-        filters.language[questionType.label ?? ""] = {
+        filters.others[questionType.label ?? ""] = {
           op: "equals",
           value: filterType.filterComboBoxValue as string,
         };
       } else if (filterType.filterValue === "Not equals") {
-        filters.language[questionType.label ?? ""] = {
+        filters.others[questionType.label ?? ""] = {
           op: "notEquals",
           value: filterType.filterComboBoxValue as string,
         };

@@ -37,7 +37,7 @@ export enum OptionsType {
   QUESTIONS = "Questions",
   TAGS = "Tags",
   ATTRIBUTES = "Attributes",
-  LANGUAGE = "Language",
+  OTHERS = "Other Filters",
   META = "Meta",
 }
 
@@ -94,8 +94,10 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <GlobeIcon width={18} height={18} className="text-white" />;
           case "source":
             return <GlobeIcon width={18} height={18} className="text-white" />;
+          case "action":
+            return <MousePointerClickIcon width={18} height={18} className="text-white" />;
         }
-      case OptionsType.LANGUAGE:
+      case OptionsType.OTHERS:
         switch (label) {
           case "Language":
             return <LanguagesIcon width={18} height={18} className="text-white" />;

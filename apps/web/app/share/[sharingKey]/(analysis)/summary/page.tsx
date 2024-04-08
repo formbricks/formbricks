@@ -4,9 +4,8 @@ import { notFound } from "next/navigation";
 import { REVALIDATION_INTERVAL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponseCountBySurveyId, getResponsePersonAttributes } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 export const revalidate = REVALIDATION_INTERVAL;
 

@@ -162,7 +162,7 @@ export const ZResponseFilterCriteria = z.object({
     })
     .optional(),
 
-  language: z
+  others: z
     .record(
       z.object({
         op: z.enum(["equals", "notEquals"]),
