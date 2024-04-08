@@ -127,7 +127,7 @@ export default function AddressQuestion({
             value={safeValue[index] || ""}
             onInput={(e) => handleInputChange(e.currentTarget.value, index)}
             autoFocus={autoFocus && index === 0}
-            className="border-border bg-survey-bg focus:border-border-highlight block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
+            className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
           />
         ))}
       </div>
