@@ -1,14 +1,15 @@
-import CTAQuestion from "@/components/questions/CTAQuestion";
-import CalQuestion from "@/components/questions/CalQuestion";
-import ConsentQuestion from "@/components/questions/ConsentQuestion";
-import DateQuestion from "@/components/questions/DateQuestion";
-import FileUploadQuestion from "@/components/questions/FileUploadQuestion";
-import MultipleChoiceMultiQuestion from "@/components/questions/MultipleChoiceMultiQuestion";
-import MultipleChoiceSingleQuestion from "@/components/questions/MultipleChoiceSingleQuestion";
-import NPSQuestion from "@/components/questions/NPSQuestion";
-import OpenTextQuestion from "@/components/questions/OpenTextQuestion";
-import PictureSelectionQuestion from "@/components/questions/PictureSelectionQuestion";
-import RatingQuestion from "@/components/questions/RatingQuestion";
+import { CTAQuestion } from "@/components/questions/CTAQuestion";
+import { CalQuestion } from "@/components/questions/CalQuestion";
+import { ConsentQuestion } from "@/components/questions/ConsentQuestion";
+import { DateQuestion } from "@/components/questions/DateQuestion";
+import { FileUploadQuestion } from "@/components/questions/FileUploadQuestion";
+import { MatrixQuestion } from "@/components/questions/MatrixQuestion";
+import { MultipleChoiceMultiQuestion } from "@/components/questions/MultipleChoiceMultiQuestion";
+import { MultipleChoiceSingleQuestion } from "@/components/questions/MultipleChoiceSingleQuestion";
+import { NPSQuestion } from "@/components/questions/NPSQuestion";
+import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
+import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
+import { RatingQuestion } from "@/components/questions/RatingQuestion";
 
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
@@ -16,7 +17,7 @@ import { TSurveyQuestion, TSurveyQuestionType } from "@formbricks/types/surveys"
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
-  value: string | number | string[];
+  value: string | number | string[] | Record<string, string>;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -49,7 +50,7 @@ export default function QuestionConditional({
     <OpenTextQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={typeof value === "string" ? value : ""}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -64,7 +65,7 @@ export default function QuestionConditional({
     <MultipleChoiceSingleQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={typeof value === "string" ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -79,7 +80,7 @@ export default function QuestionConditional({
     <MultipleChoiceMultiQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={Array.isArray(value) ? value : []}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -94,7 +95,7 @@ export default function QuestionConditional({
     <NPSQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={typeof value === "number" ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -109,7 +110,7 @@ export default function QuestionConditional({
     <CTAQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={typeof value === "string" ? value : ""}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -124,7 +125,7 @@ export default function QuestionConditional({
     <RatingQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={typeof value === "number" ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -139,7 +140,7 @@ export default function QuestionConditional({
     <ConsentQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={typeof value === "string" ? value : ""}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -154,7 +155,7 @@ export default function QuestionConditional({
     <DateQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={typeof value === "string" ? value : ""}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -169,7 +170,7 @@ export default function QuestionConditional({
     <PictureSelectionQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={Array.isArray(value) ? value : []}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -185,7 +186,7 @@ export default function QuestionConditional({
       key={question.id}
       surveyId={surveyId}
       question={question}
-      value={value}
+      value={Array.isArray(value) ? value : []}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -201,7 +202,21 @@ export default function QuestionConditional({
     <CalQuestion
       key={question.id}
       question={question}
-      value={value}
+      value={typeof value === "string" ? value : ""}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      isInIframe={isInIframe}
+      setTtc={setTtc}
+    />
+  ) : question.type === TSurveyQuestionType.Matrix ? (
+    <MatrixQuestion
+      question={question}
+      value={typeof value === "object" && !Array.isArray(value) ? value : {}}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
@@ -210,7 +225,6 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
-      isInIframe={isInIframe}
     />
   ) : null;
 }

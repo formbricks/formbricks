@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
@@ -13,7 +13,7 @@ import type { TSurveyMultipleChoiceMultiQuestion } from "@formbricks/types/surve
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceMultiQuestion;
-  value: string | number | string[];
+  value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -25,7 +25,7 @@ interface MultipleChoiceMultiProps {
   isInIframe: boolean;
 }
 
-export default function MultipleChoiceMultiQuestion({
+export const MultipleChoiceMultiQuestion = ({
   question,
   value,
   onChange,
@@ -37,8 +37,9 @@ export default function MultipleChoiceMultiQuestion({
   ttc,
   setTtc,
   isInIframe,
-}: MultipleChoiceMultiProps) {
+}: MultipleChoiceMultiProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -133,7 +134,7 @@ export default function MultipleChoiceMultiQuestion({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
@@ -199,7 +200,7 @@ export default function MultipleChoiceMultiQuestion({
               <label
                 tabIndex={questionChoices.length + 1}
                 className={cn(
-                  value === getLocalizedValue(otherOption.label, languageCode)
+                  value.includes(getLocalizedValue(otherOption.label, languageCode))
                     ? "border-border bg-input-selected-bg z-10"
                     : "border-border",
                   "text-heading focus-within:border-brand bg-input-bg focus-within:bg-input-bg-selected hover:bg-input-bg-selected rounded-custom relative flex cursor-pointer flex-col border p-4 focus:outline-none"
@@ -207,7 +208,7 @@ export default function MultipleChoiceMultiQuestion({
                 onKeyDown={(e) => {
                   // Accessibility: if spacebar was pressed pass this down to the input
                   if (e.key === " ") {
-                    e.preventDefault();
+                    if (otherSelected) return;
                     document.getElementById(otherOption.id)?.click();
                     document.getElementById(otherOption.id)?.focus();
                   }
@@ -281,4 +282,4 @@ export default function MultipleChoiceMultiQuestion({
       </div>
     </form>
   );
-}
+};

@@ -156,6 +156,10 @@ export function Onboarding({
         <button
           id="FB__INTERNAL__SKIP_ONBOARDING"
           onClick={async () => {
+            if (typeof localStorage !== undefined) {
+              localStorage.removeItem("onboardingPathway");
+              localStorage.removeItem("onboardingCurrentStep");
+            }
             await finishOnboardingAction();
             router.push(`/environments/${environment.id}/surveys`);
           }}>

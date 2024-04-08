@@ -224,10 +224,10 @@ export default function LinkSurveyPage() {
         />
         <SalesTestimonial
           quote="As a product-led growth company, we run surveys at key moments in our user journey. We spent a lot of time crafting our UX and I love how seamless Formbricks fits in! Should be a no-brainer for every product team."
-          author="Bailey Pumfleet, Co-CEO @ Cal.com"
+          author="Bailey Pumfleet, Co-Founder @ Cal.com"
           imgSrc={Bailey}
           imgAlt="Cal.com co-founder Bailey Pumfleet speaks about how Formbricks in-app surveys feel like a native part of the UI of their product."
-          textSize="large"
+          textSize="base"
         />
       </div>
       <SalesPageFeature

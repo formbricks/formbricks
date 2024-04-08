@@ -1,8 +1,7 @@
 "use client";
 
 import { replacePresetPlaceholders } from "@/app/lib/templates";
-import { PlusCircleIcon, SparklesIcon } from "lucide-react";
-import { SplitIcon } from "lucide-react";
+import { PlusCircleIcon, SparklesIcon, SplitIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -68,11 +67,9 @@ export default function TemplateList({
   const addSurvey = async (activeTemplate) => {
     setLoading(true);
     const surveyType = environment?.widgetSetupCompleted ? "web" : "link";
-    const autoComplete = surveyType === "web" ? 50 : null;
     const augmentedTemplate: TSurveyInput = {
       ...activeTemplate.preset,
       type: surveyType,
-      autoComplete,
       createdBy: user.id,
     };
     const survey = await createSurveyAction(environmentId, augmentedTemplate);
