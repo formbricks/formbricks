@@ -87,7 +87,7 @@ export const ImageFromThirdPartySurveyBg = ({
     setQuery(event.target.value);
   };
 
-  const handleImageSelected = async (imageUrl: string, _imageName: string) => {
+  const handleImageSelected = async (imageUrl: string) => {
     try {
       setUploading(true);
       handleBgChange(imageUrl, "image");
@@ -117,9 +117,7 @@ export const ImageFromThirdPartySurveyBg = ({
           </div>
         )}
         {background && !background.includes("images.unsplash.com") && (
-          <div
-            className="relative cursor-pointer rounded-lg"
-            onClick={() => handleImageSelected(background, "Selected Background")}>
+          <div className="relative cursor-pointer rounded-lg" onClick={() => handleImageSelected(background)}>
             <Image
               width={300}
               height={200}
@@ -141,7 +139,7 @@ export const ImageFromThirdPartySurveyBg = ({
                 height={200}
                 src={image.urls.regular}
                 alt={image.alt_description}
-                onClick={() => handleImageSelected(image.urls.regular, image.alt_description)}
+                onClick={() => handleImageSelected(image.urls.regular)}
                 className="cursor-pointer rounded-lg"
               />
             ))

@@ -43,8 +43,6 @@ export default function SurveyBgSelectorTab({
 
   useEffect(() => {
     const bgType = background?.bgType;
-    console.log("bgType?", bgType);
-
     if (bgType === "color") {
       setColorBackground(background?.bg);
       setAnimationBackground("");
