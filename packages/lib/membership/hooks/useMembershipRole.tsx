@@ -10,12 +10,14 @@ enum MembershipRole {
   Viewer = "viewer",
 }
 
-export const useMembershipRole = (environmentId: string) => {
+export const useMembershipRole = (environmentId: string, isSharingPage: boolean = false) => {
   const [membershipRole, setMembershipRole] = useState<MembershipRole>();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
+    if (isSharingPage) return;
+
     const getRole = async () => {
       try {
         setIsLoading(true);
@@ -28,7 +30,7 @@ export const useMembershipRole = (environmentId: string) => {
       }
     };
     getRole();
-  }, [environmentId]);
+  }, [environmentId, isSharingPage]);
 
   return { membershipRole, isLoading, error };
 };

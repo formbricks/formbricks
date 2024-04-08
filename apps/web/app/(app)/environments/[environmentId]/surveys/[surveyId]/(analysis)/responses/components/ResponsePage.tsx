@@ -199,6 +199,7 @@ const ResponsePage = ({
         isFetchingFirstPage={isFetchingFirstPage}
         responseCount={responseCount}
         totalResponseCount={totalResponseCount}
+        isSharingPage={isSharingPage}
       />
     </ContentWrapper>
   );

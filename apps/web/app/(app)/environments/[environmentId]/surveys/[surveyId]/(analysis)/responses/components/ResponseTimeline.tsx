@@ -28,6 +28,7 @@ interface ResponseTimelineProps {
   isFetchingFirstPage: boolean;
   responseCount: number | null;
   totalResponseCount: number;
+  isSharingPage?: boolean;
 }
 
 export default function ResponseTimeline({
@@ -43,6 +44,7 @@ export default function ResponseTimeline({
   isFetchingFirstPage,
   responseCount,
   totalResponseCount,
+  isSharingPage = false,
 }: ResponseTimelineProps) {
   const loadingRef = useRef(null);
 
@@ -69,7 +71,7 @@ export default function ResponseTimeline({
     };
   }, [fetchNextPage, hasMore]);
 
-  const { membershipRole } = useMembershipRole(survey.environmentId);
+  const { membershipRole } = useMembershipRole(survey.environmentId, isSharingPage);
   const { isViewer } = getAccessFlags(membershipRole);
 
   return (
