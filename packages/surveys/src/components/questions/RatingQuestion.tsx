@@ -58,16 +58,14 @@ export const RatingQuestion = ({
 
   const handleSelect = (number: number) => {
     onChange({ [question.id]: number });
-    if (question.required) {
-      const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-      setTtc(updatedTtcObj);
-      onSubmit(
-        {
-          [question.id]: number,
-        },
-        updatedTtcObj
-      );
-    }
+    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+    onSubmit(
+      {
+        [question.id]: number,
+      },
+      updatedTtcObj
+    );
   };
 
   const HiddenRadioInput = ({ number, id }: { number: number; id?: string }) => (

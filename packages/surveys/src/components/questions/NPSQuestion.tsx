@@ -96,16 +96,14 @@ export const NPSQuestion = ({
                     checked={value === number}
                     className="absolute h-full w-full cursor-pointer opacity-0"
                     onClick={() => {
-                      if (question.required) {
-                        const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-                        setTtc(updatedTtcObj);
-                        onSubmit(
-                          {
-                            [question.id]: number,
-                          },
-                          updatedTtcObj
-                        );
-                      }
+                      const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+                      setTtc(updatedTtcObj);
+                      onSubmit(
+                        {
+                          [question.id]: number,
+                        },
+                        updatedTtcObj
+                      );
                       onChange({ [question.id]: number });
                     }}
                     required={question.required}
