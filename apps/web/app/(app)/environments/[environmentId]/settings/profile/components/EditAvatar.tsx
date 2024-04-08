@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
 import { ProfileAvatar } from "@formbricks/ui/Avatars";
 import { Button } from "@formbricks/ui/Button";
 
@@ -45,17 +44,7 @@ export function EditAvatar({ session, environmentId }: { session: Session; envir
   };
 
   const handleRemove = async () => {
-    const imageUrl = session?.user?.imageUrl;
-    if (!imageUrl) {
-      return;
-    }
-
     setIsLoading(true);
-    const fileName = getFileNameWithIdFromUrl(imageUrl);
-    if (!fileName) {
-      setIsLoading(false);
-      return;
-    }
 
     try {
       await removeAvatarAction(environmentId);
