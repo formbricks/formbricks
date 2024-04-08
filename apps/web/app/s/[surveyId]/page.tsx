@@ -8,11 +8,14 @@ import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ZId } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 
@@ -26,6 +29,7 @@ interface LinkSurveyPageProps {
     suId?: string;
     userId?: string;
     verify?: string;
+    lang?: string;
   };
 }
 
@@ -47,15 +51,16 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
     throw new Error("Product not found");
   }
 
-  function getNameForURL(string) {
-    return string.replace(/ /g, "%20");
+  function getNameForURL(url: string) {
+    return url.replace(/ /g, "%20");
   }
 
-  function getBrandColorForURL(string) {
-    return string.replace(/#/g, "%23");
+  function getBrandColorForURL(url: string) {
+    return url.replace(/#/g, "%23");
   }
 
-  const brandColor = getBrandColorForURL(product.brandColor);
+  // const brandColor = getBrandColorForURL(product.brandColor);
+  const brandColor = getBrandColorForURL(survey.styling?.brandColor?.light || COLOR_DEFAULTS.brandColor);
   const surveyName = getNameForURL(survey.name);
 
   const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;
@@ -89,6 +94,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
   const survey = await getSurvey(params.surveyId);
 
   const suId = searchParams.suId;
+  const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
 
@@ -96,9 +102,11 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     notFound();
   }
 
-  // question pre filling: Check if the first question is prefilled and if it is valid
-  const prefillAnswer = searchParams[survey.questions[0].id];
-  const isPrefilledAnswerValid = prefillAnswer ? checkValidity(survey!.questions[0], prefillAnswer) : false;
+  const team = await getTeamByEnvironmentId(survey?.environmentId);
+  if (!team) {
+    throw new Error("Team not found");
+  }
+  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
 
   if (survey && survey.status !== "inProgress") {
     return (
@@ -162,6 +170,21 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
     throw new Error("Product not found");
   }
 
+  const getLanguageCode = (): string => {
+    if (!langParam || !isMultiLanguageAllowed) return "default";
+    else {
+      const selectedLanguage = survey.languages.find((surveyLanguage) => {
+        return surveyLanguage.language.code === langParam || surveyLanguage.language.alias === langParam;
+      });
+      if (selectedLanguage?.default || !selectedLanguage?.enabled) {
+        return "default";
+      }
+      return selectedLanguage ? selectedLanguage.language.code : "default";
+    }
+  };
+
+  const languageCode = getLanguageCode();
+
   const userId = searchParams.userId;
   if (userId) {
     // make sure the person exists or get's created
@@ -173,6 +196,13 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
+
+  // question pre filling: Check if the first question is prefilled and if it is valid
+  const prefillAnswer = searchParams[survey.questions[0].id];
+  const isPrefilledAnswerValid = prefillAnswer
+    ? checkValidity(survey!.questions[0], prefillAnswer, languageCode)
+    : false;
+
   if (isSurveyPinProtected) {
     return (
       <PinScreen
@@ -188,13 +218,14 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
+        languageCode={languageCode}
       />
     );
   }
 
   return survey ? (
     <div className="relative">
-      <MediaBackground survey={survey}>
+      <MediaBackground survey={survey} product={product}>
         <LinkSurvey
           survey={survey}
           product={product}
@@ -206,10 +237,10 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
           webAppUrl={WEBAPP_URL}
           responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
           verifiedEmail={verifiedEmail}
+          languageCode={languageCode}
         />
       </MediaBackground>
       <LegalFooter
-        bgColor={survey.styling?.background?.bg || "#ffff"}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}

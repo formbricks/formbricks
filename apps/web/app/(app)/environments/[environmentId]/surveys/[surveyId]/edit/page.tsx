@@ -1,10 +1,10 @@
 import { getServerSession } from "next-auth";
 
-import { getAdvancedTargetingPermission } from "@formbricks/ee/lib/service";
+import { getAdvancedTargetingPermission, getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { IS_FORMBRICKS_CLOUD, colours } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, SURVEY_BG_COLORS } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -60,6 +60,7 @@ export default async function SurveysEditPage({ params }) {
   const isSurveyCreationDeletionDisabled = isViewer;
 
   const isUserTargetingAllowed = getAdvancedTargetingPermission(team);
+  const isMultiLanguageAllowed = getMultiLanguagePermission(team);
 
   if (
     !survey ||
@@ -81,9 +82,10 @@ export default async function SurveysEditPage({ params }) {
       attributeClasses={attributeClasses}
       responseCount={responseCount}
       membershipRole={currentUserMembership?.role}
-      colours={colours}
+      colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
+      isMultiLanguageAllowed={isMultiLanguageAllowed}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
     />
   );

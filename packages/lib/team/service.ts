@@ -339,7 +339,6 @@ export const getMonthlyActiveTeamPeopleCount = async (teamId: string): Promise<n
     },
     [`getMonthlyActiveTeamPeopleCount-${teamId}`],
     {
-      tags: [],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();
@@ -376,7 +375,6 @@ export const getMonthlyTeamResponseCount = async (teamId: string): Promise<numbe
     },
     [`getMonthlyTeamResponseCount-${teamId}`],
     {
-      tags: [],
       revalidate: SERVICES_REVALIDATION_INTERVAL,
     }
   )();

@@ -10,16 +10,13 @@ import {
 import { PresignedPostOptions, createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
-import { add, isAfter, parseISO } from "date-fns";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
-import { unstable_cache } from "next/cache";
 import path, { join } from "path";
 
 import { TAccessType } from "@formbricks/types/storage";
 
 import {
-  IS_S3_CONFIGURED,
   MAX_SIZES,
   S3_ACCESS_KEY,
   S3_BUCKET_NAME,
@@ -28,25 +25,28 @@ import {
   S3_SECRET_KEY,
   UPLOADS_DIR,
   WEBAPP_URL,
+  isS3Configured,
 } from "../constants";
 import { generateLocalSignedUrl } from "../crypto";
 import { env } from "../env";
-import { storageCache } from "./cache";
 
 // S3Client Singleton
 let s3ClientInstance: S3Client | null = null;
 
 export const getS3Client = () => {
   if (!s3ClientInstance) {
+    const credentials =
+      S3_ACCESS_KEY && S3_SECRET_KEY
+        ? { accessKeyId: S3_ACCESS_KEY, secretAccessKey: S3_SECRET_KEY }
+        : undefined;
+
     s3ClientInstance = new S3Client({
-      credentials: {
-        accessKeyId: S3_ACCESS_KEY!,
-        secretAccessKey: S3_SECRET_KEY!,
-      },
+      credentials,
       region: S3_REGION,
       endpoint: S3_ENDPOINT_URL,
     });
   }
+
   return s3ClientInstance;
 };
 
@@ -63,7 +63,7 @@ export const testS3BucketAccess = async () => {
 
     return true;
   } catch (error) {
-    console.error("Failed to access S3 bucket:", error);
+    console.error(`Failed to access S3 bucket: ${error}`);
     throw new Error(`S3 Bucket Access Test Failed: ${error}`);
   }
 };
@@ -104,72 +104,22 @@ type TGetSignedUrlResponse =
 const getS3SignedUrl = async (fileKey: string): Promise<string> => {
   const [_, accessType] = fileKey.split("/");
   const expiresIn = accessType === "public" ? 60 * 60 : 10 * 60;
-  const revalidateAfter = accessType === "public" ? expiresIn - 60 * 5 : expiresIn - 60 * 2;
 
-  return unstable_cache(
-    async () => {
-      const getObjectCommand = new GetObjectCommand({
-        Bucket: S3_BUCKET_NAME,
-        Key: fileKey,
-      });
+  const getObjectCommand = new GetObjectCommand({
+    Bucket: S3_BUCKET_NAME,
+    Key: fileKey,
+  });
 
-      try {
-        const s3Client = getS3Client();
-        return await getSignedUrl(s3Client, getObjectCommand, { expiresIn });
-      } catch (err) {
-        throw err;
-      }
-    },
-    [`getFileFromS3-${fileKey}`],
-    {
-      revalidate: revalidateAfter,
-      tags: [storageCache.tag.byFileKey(fileKey)],
-    }
-  )();
+  try {
+    const s3Client = getS3Client();
+    return await getSignedUrl(s3Client, getObjectCommand, { expiresIn });
+  } catch (err) {
+    throw err;
+  }
 };
 
 export const getS3File = async (fileKey: string): Promise<string> => {
   const signedUrl = await getS3SignedUrl(fileKey);
-  const signedUrlObject = new URL(signedUrl);
-
-  // The logic below is to check if the signed url has expired.
-  // We do this by parsing the X-Amz-Date and Expires query parameters from the signed url
-  // and checking if the current time is past the expiration time.
-  // If it is, we generate a new signed url and return that instead.
-  // We do this because the time-based revalidation for the signed url is not working as expected. (mayve a bug in next.js caching?)
-
-  const amzDate = signedUrlObject.searchParams.get("X-Amz-Date");
-  const amzExpires = signedUrlObject.searchParams.get("X-Amz-Expires");
-
-  if (amzDate && amzExpires) {
-    const expiresAfterSeconds = parseInt(amzExpires, 10);
-    const currentDate = new Date();
-
-    // Get the UTC components
-    const yearUTC = currentDate.getUTCFullYear();
-    const monthUTC = (currentDate.getUTCMonth() + 1).toString().padStart(2, "0");
-    const dayUTC = currentDate.getUTCDate().toString().padStart(2, "0");
-    const hoursUTC = currentDate.getUTCHours().toString().padStart(2, "0");
-    const minutesUTC = currentDate.getUTCMinutes().toString().padStart(2, "0");
-    const secondsUTC = currentDate.getUTCSeconds().toString().padStart(2, "0");
-
-    // Construct the date-time string in UTC format
-    const currentDateTimeUTC = `${yearUTC}${monthUTC}${dayUTC}T${hoursUTC}${minutesUTC}${secondsUTC}Z`;
-
-    const amzSigningDate = parseISO(amzDate);
-    const amzExpiryDate = add(amzSigningDate, { seconds: expiresAfterSeconds });
-    const currentDateISO = parseISO(currentDateTimeUTC);
-
-    const isExpired = isAfter(currentDateISO, amzExpiryDate);
-
-    if (isExpired) {
-      // generate a new signed url
-      storageCache.revalidate({ fileKey });
-      const signedUrlAfterRefetch = await getS3SignedUrl(fileKey);
-      return signedUrlAfterRefetch;
-    }
-  }
-
   return signedUrl;
 };
 
@@ -215,7 +165,7 @@ export const getUploadSignedUrl = async (
   const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
 
   // handle the local storage case first
-  if (!IS_S3_CONFIGURED) {
+  if (!isS3Configured()) {
     try {
       const { signature, timestamp, uuid } = generateLocalSignedUrl(updatedFileName, environmentId, fileType);
 
@@ -230,7 +180,7 @@ export const getUploadSignedUrl = async (
           uuid,
         },
         updatedFileName,
-        fileUrl: `/storage/${environmentId}/${accessType}/${updatedFileName}`,
+        fileUrl: new URL(`${WEBAPP_URL}/storage/${environmentId}/${accessType}/${updatedFileName}`).href,
       };
     } catch (err) {
       throw err;
@@ -329,7 +279,7 @@ export const putFile = async (
   environmentId: string
 ) => {
   try {
-    if (!IS_S3_CONFIGURED) {
+    if (!isS3Configured()) {
       await putFileToLocalStorage(fileName, fileBuffer, accessType, environmentId, UPLOADS_DIR);
       return { success: true, message: "File uploaded" };
     } else {
@@ -350,7 +300,7 @@ export const putFile = async (
 };
 
 export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) => {
-  if (!IS_S3_CONFIGURED) {
+  if (!isS3Configured()) {
     try {
       await deleteLocalFile(path.join(UPLOADS_DIR, environmentId, accessType, fileName));
       return { success: true, message: "File deleted" };

@@ -1,7 +1,8 @@
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
 import { writeData } from "@formbricks/lib/googleSheet/service";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
+import { processResponseData } from "@formbricks/lib/responses";
 import { TIntegration } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
@@ -12,28 +13,32 @@ import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 export async function handleIntegrations(
   integrations: TIntegration[],
   data: TPipelineInput,
-  surveyData: TSurvey
+  survey: TSurvey
 ) {
   for (const integration of integrations) {
     switch (integration.type) {
       case "googleSheets":
-        await handleGoogleSheetsIntegration(integration as TIntegrationGoogleSheets, data);
+        await handleGoogleSheetsIntegration(integration as TIntegrationGoogleSheets, data, survey);
         break;
       case "airtable":
-        await handleAirtableIntegration(integration as TIntegrationAirtable, data);
+        await handleAirtableIntegration(integration as TIntegrationAirtable, data, survey);
         break;
       case "notion":
-        await handleNotionIntegration(integration as TIntegrationNotion, data, surveyData);
+        await handleNotionIntegration(integration as TIntegrationNotion, data, survey);
         break;
     }
   }
 }
 
-async function handleAirtableIntegration(integration: TIntegrationAirtable, data: TPipelineInput) {
+async function handleAirtableIntegration(
+  integration: TIntegrationAirtable,
+  data: TPipelineInput,
+  survey: TSurvey
+) {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[]);
+        const values = await extractResponses(data, element.questionIds as string[], survey);
 
         await airtableWriteData(integration.config.key, element, values);
       }
@@ -41,33 +46,39 @@ async function handleAirtableIntegration(integration: TIntegrationAirtable, data
   }
 }
 
-async function handleGoogleSheetsIntegration(integration: TIntegrationGoogleSheets, data: TPipelineInput) {
+async function handleGoogleSheetsIntegration(
+  integration: TIntegrationGoogleSheets,
+  data: TPipelineInput,
+  survey: TSurvey
+) {
   if (integration.config.data.length > 0) {
     for (const element of integration.config.data) {
       if (element.surveyId === data.surveyId) {
-        const values = await extractResponses(data, element.questionIds as string[]);
+        const values = await extractResponses(data, element.questionIds as string[], survey);
         await writeData(integration.config.key, element.spreadsheetId, values);
       }
     }
   }
 }
 
-async function extractResponses(data: TPipelineInput, questionIds: string[]): Promise<string[][]> {
+async function extractResponses(
+  data: TPipelineInput,
+  questionIds: string[],
+  survey: TSurvey
+): Promise<string[][]> {
   const responses: string[] = [];
   const questions: string[] = [];
-  const survey = await getSurvey(data.surveyId);
 
   for (const questionId of questionIds) {
     const responseValue = data.response.data[questionId];
 
     if (responseValue !== undefined) {
-      responses.push(Array.isArray(responseValue) ? responseValue.join("\n") : String(responseValue));
+      responses.push(processResponseData(responseValue));
     } else {
       responses.push("");
     }
-
     const question = survey?.questions.find((q) => q.id === questionId);
-    questions.push(question?.headline || "");
+    questions.push(getLocalizedValue(question?.headline, "default") || "");
   }
 
   return [responses, questions];
@@ -124,7 +135,7 @@ function buildNotionPayloadProperties(
 
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
-function getValue(colType: string, value: string | string[] | number) {
+function getValue(colType: string, value: string | string[] | number | Record<string, string>) {
   try {
     switch (colType) {
       case "select":

@@ -1,5 +1,5 @@
 import LFGLuigi from "@/images/blog/lfg-luigi-200px.webp";
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { XIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
@@ -70,7 +70,7 @@ const SlideInBanner: React.FC<Props> = ({ delay = 5000, scrollPercentage = 10, U
             setTimeout(() => setIsDismissed(true), 500);
           }}
           className="rounded-full p-2 hover:bg-slate-600 hover:bg-opacity-30">
-          <XMarkIcon className="h-6 w-6" />
+          <XIcon className="h-6 w-6" />
         </button>
       </div>
     </div>

@@ -1,17 +1,18 @@
-import {
-  ArrowUpTrayIcon,
-  CalendarDaysIcon,
-  ChatBubbleBottomCenterTextIcon,
-  CheckIcon,
-  CursorArrowRippleIcon,
-  ListBulletIcon,
-  PhoneIcon,
-  PhotoIcon,
-  PresentationChartBarIcon,
-  QueueListIcon,
-  StarIcon,
-} from "@heroicons/react/24/solid";
 import { createId } from "@paralleldrive/cuid2";
+import {
+  ArrowUpFromLine,
+  CalendarDaysIcon,
+  CheckIcon,
+  Grid3X3Icon,
+  ImageIcon,
+  ListIcon,
+  MessageSquareTextIcon,
+  MousePointerClickIcon,
+  PhoneIcon,
+  PresentationIcon,
+  Rows3Icon,
+  StarIcon,
+} from "lucide-react";
 
 import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
 
@@ -30,11 +31,11 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.OpenText,
     label: "Free text",
     description: "Ask for a text-based answer",
-    icon: ChatBubbleBottomCenterTextIcon,
+    icon: MessageSquareTextIcon,
     preset: {
-      headline: "Who let the dogs out?",
-      subheader: "Who? Who? Who?",
-      placeholder: "Type your answer here...",
+      headline: { default: "Who let the dogs out?" },
+      subheader: { default: "Who? Who? Who?" },
+      placeholder: { default: "Type your answer here..." },
       longAnswer: true,
       inputType: "text",
     },
@@ -43,13 +44,13 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.MultipleChoiceSingle,
     label: "Single-Select",
     description: "A single choice from a list of options (radio buttons)",
-    icon: QueueListIcon,
+    icon: Rows3Icon,
     preset: {
-      headline: "What do you do?",
-      subheader: "Can't do both.",
+      headline: { default: "What do you do?" },
+      subheader: { default: "Can't do both." },
       choices: [
-        { id: createId(), label: "Eat the cake 🍰" },
-        { id: createId(), label: "Have the cake 🎂" },
+        { id: createId(), label: { default: "Eat the cake 🍰" } },
+        { id: createId(), label: { default: "Have the cake 🎂" } },
       ],
       shuffleOption: "none",
     },
@@ -58,13 +59,13 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.MultipleChoiceMulti,
     label: "Multi-Select",
     description: "Number of choices from a list of options (checkboxes)",
-    icon: ListBulletIcon,
+    icon: ListIcon,
     preset: {
-      headline: "What's important on vacay?",
+      headline: { default: "What's important on vacay?" },
       choices: [
-        { id: createId(), label: "Sun ☀️" },
-        { id: createId(), label: "Ocean 🌊" },
-        { id: createId(), label: "Palms 🌴" },
+        { id: createId(), label: { default: "Sun ☀️" } },
+        { id: createId(), label: { default: "Ocean 🌊" } },
+        { id: createId(), label: { default: "Palms 🌴" } },
       ],
       shuffleOption: "none",
     },
@@ -73,10 +74,10 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.PictureSelection,
     label: "Picture Selection",
     description: "Ask respondents to select one or more pictures",
-    icon: PhotoIcon,
+    icon: ImageIcon,
     preset: {
-      headline: "Which is the cutest puppy?",
-      subheader: "You can also pick both.",
+      headline: { default: "Which is the cutest puppy?" },
+      subheader: { default: "You can also pick both." },
       allowMulti: true,
       choices: [
         {
@@ -96,33 +97,37 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask respondents for a rating",
     icon: StarIcon,
     preset: {
-      headline: "How would you rate {{productName}}",
-      subheader: "Don't worry, be honest.",
+      headline: { default: "How would you rate {{productName}}" },
+      subheader: { default: "Don't worry, be honest." },
       scale: "star",
       range: 5,
-      lowerLabel: "Not good",
-      upperLabel: "Very good",
+      lowerLabel: { default: "Not good" },
+      upperLabel: { default: "Very good" },
     },
   },
   {
     id: QuestionId.NPS,
     label: "Net Promoter Score (NPS)",
     description: "Rate satisfaction on a 0-10 scale",
-    icon: PresentationChartBarIcon,
+    icon: PresentationIcon,
     preset: {
-      headline: "How likely are you to recommend {{productName}} to a friend or colleague?",
-      lowerLabel: "Not at all likely",
-      upperLabel: "Extremely likely",
+      headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
+      lowerLabel: { default: "Not at all likely" },
+      upperLabel: { default: "Extremely likely" },
     },
   },
   {
     id: QuestionId.CTA,
     label: "Call-to-Action",
     description: "Prompt respondents to perform an action",
-    icon: CursorArrowRippleIcon,
+    icon: MousePointerClickIcon,
     preset: {
-      headline: "You are one of our power users!",
-      buttonLabel: "Book interview",
+      headline: { default: "You are one of our power users!" },
+      html: {
+        default:
+          '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
+      },
+      buttonLabel: { default: "Book interview" },
       buttonExternal: false,
       dismissButtonLabel: "Skip",
     },
@@ -133,9 +138,9 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask respondents for consent",
     icon: CheckIcon,
     preset: {
-      headline: "Terms and Conditions",
-      label: "I agree to the terms and conditions",
-      dismissButtonLabel: "Skip",
+      headline: { default: "Terms and Conditions" },
+      html: { default: "" },
+      label: { default: "I agree to the terms and conditions" },
     },
   },
   {
@@ -144,7 +149,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Ask your users to select a date",
     icon: CalendarDaysIcon,
     preset: {
-      headline: "When is your birthday?",
+      headline: { default: "When is your birthday?" },
       format: "M-d-y",
     },
   },
@@ -152,9 +157,9 @@ export const questionTypes: TSurveyQuestionType[] = [
     id: QuestionId.FileUpload,
     label: "File Upload",
     description: "Allow respondents to upload a file",
-    icon: ArrowUpTrayIcon,
+    icon: ArrowUpFromLine,
     preset: {
-      headline: "File Upload",
+      headline: { default: "File Upload" },
       allowMultipleFiles: false,
     },
   },
@@ -164,9 +169,20 @@ export const questionTypes: TSurveyQuestionType[] = [
     description: "Allow respondents to schedule a meet",
     icon: PhoneIcon,
     preset: {
-      headline: "Schedule a call with me",
-      buttonLabel: "Skip",
+      headline: { default: "Schedule a call with me" },
       calUserName: "rick/get-rick-rolled",
+    },
+  },
+  {
+    id: QuestionId.Matrix,
+    label: "Matrix",
+    description: "This is a matrix question",
+    icon: Grid3X3Icon,
+    preset: {
+      headline: { default: "How much do you love these flowers?" },
+      subheader: { default: "0: Not at all, 3: Love it" },
+      rows: [{ default: "Rose 🌹" }, { default: "Sunflower 🌻" }, { default: "Hibiscus 🌺" }],
+      columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
     },
   },
 ];

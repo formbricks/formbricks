@@ -1,7 +1,8 @@
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion } from "@formbricks/types/surveys";
@@ -14,7 +15,7 @@ import Subheader from "../general/Subheader";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;
-  value: string | number | string[];
+  value: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -22,11 +23,13 @@ interface FileUploadQuestionProps {
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
   surveyId: string;
+  languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
-export default function FileUploadQuestion({
+export const FileUploadQuestion = ({
   question,
   value,
   onChange,
@@ -36,10 +39,12 @@ export default function FileUploadQuestion({
   isLastQuestion,
   surveyId,
   onFileUpload,
+  languageCode,
   ttc,
   setTtc,
-}: FileUploadQuestionProps) {
+}: FileUploadQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -51,24 +56,30 @@ export default function FileUploadQuestion({
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
         if (question.required) {
-          if (value && (typeof value === "string" || Array.isArray(value)) && value.length > 0) {
-            onSubmit({ [question.id]: typeof value === "string" ? [value] : value }, updatedTtcObj);
+          if (value && value.length > 0) {
+            onSubmit({ [question.id]: value }, updatedTtcObj);
           } else {
             alert("Please upload a file");
           }
         } else {
           if (value) {
-            onSubmit({ [question.id]: typeof value === "string" ? [value] : value }, updatedTtcObj);
+            onSubmit({ [question.id]: value }, updatedTtcObj);
           } else {
             onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
           }
         }
       }}
       className="w-full ">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
-      <Headline headline={question.headline} questionId={question.id} required={question.required} />
-      <Subheader subheader={question.subheader} questionId={question.id} />
-
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+      <Headline
+        headline={getLocalizedValue(question.headline, languageCode)}
+        questionId={question.id}
+        required={question.required}
+      />
+      <Subheader
+        subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
+        questionId={question.id}
+      />
       <FileInput
         surveyId={surveyId}
         onFileUpload={onFileUpload}
@@ -86,19 +97,21 @@ export default function FileUploadQuestion({
           : {})}
         {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
       />
-
       <div className="mt-4 flex w-full justify-between">
         {!isFirstQuestion && (
           <BackButton
-            backButtonLabel={question.backButtonLabel}
+            backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             onClick={() => {
               onBack();
             }}
           />
         )}
         <div></div>
-        <SubmitButton buttonLabel={question.buttonLabel} isLastQuestion={isLastQuestion} onClick={() => {}} />
+        <SubmitButton
+          buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
+          isLastQuestion={isLastQuestion}
+        />
       </div>
     </form>
   );
-}
+};

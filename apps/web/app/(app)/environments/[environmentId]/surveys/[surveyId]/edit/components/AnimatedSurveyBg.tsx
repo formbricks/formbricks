@@ -5,8 +5,8 @@ interface AnimatedSurveyBgProps {
   background: string;
 }
 
-export default function AnimatedSurveyBg({ handleBgChange, background }: AnimatedSurveyBgProps) {
-  const [animation, setAnimation] = useState(background || "/animated-bgs/4K/1_4k.mp4");
+export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {
+  const [animation, setAnimation] = useState(background);
   const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
   const animationFiles = {
@@ -72,6 +72,7 @@ export default function AnimatedSurveyBg({ handleBgChange, background }: Animate
     setAnimation(x);
     handleBgChange(x, "animation");
   };
+
   return (
     <div>
       <div className="mt-4 grid grid-cols-6 gap-4">
@@ -103,4 +104,4 @@ export default function AnimatedSurveyBg({ handleBgChange, background }: Animate
       </div>
     </div>
   );
-}
+};

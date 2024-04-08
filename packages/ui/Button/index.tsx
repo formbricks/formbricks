@@ -83,7 +83,7 @@ export const Button: React.ForwardRefExoticComponent<
         variant === "minimal" &&
           (disabled
             ? "border border-slate-200 text-slate-400"
-            : "hover:text-slate-600 text-slate-700  focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:text-slate-700 dark:hover:text-slate-500"),
+            : "hover:text-slate-600 text-slate-700 border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-neutral-900 dark:text-slate-700 dark:hover:text-slate-500"),
         variant === "alert" &&
           (disabled
             ? "border border-transparent bg-slate-400 text-white"

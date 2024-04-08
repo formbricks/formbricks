@@ -5,12 +5,11 @@ import {
   generateResultShareUrlAction,
   getResultShareUrlAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { DocumentDuplicateIcon, GlobeAltIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { CopyIcon, GlobeIcon, LinkIcon } from "lucide-react";
 import { DownloadIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { TProduct } from "@formbricks/types/product";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TUser } from "@formbricks/types/user";
 import {
@@ -25,13 +24,11 @@ import ShareSurveyResults from "../(analysis)/summary/components/ShareSurveyResu
 
 interface ResultsShareButtonProps {
   survey: TSurvey;
-  className?: string;
   webAppUrl: string;
-  product: TProduct;
   user: TUser;
 }
 
-export default function ResultsShareButton({ survey, webAppUrl, product, user }: ResultsShareButtonProps) {
+export default function ResultsShareButton({ survey, webAppUrl, user }: ResultsShareButtonProps) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
@@ -114,7 +111,7 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
                 toast.success("Link to public results copied");
               }}>
               <p className="text-slate-700">
-                Copy link to public results <DocumentDuplicateIcon className="ml-1.5 inline h-4 w-4" />
+                Copy link to public results <CopyIcon className="ml-1.5 inline h-4 w-4" />
               </p>
             </DropdownMenuItem>
           ) : (
@@ -124,7 +121,7 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
                 copyUrlToClipboard();
               }}>
               <p className="text-slate-700">
-                Copy link <DocumentDuplicateIcon className="ml-1.5 inline h-4 w-4" />
+                Copy link <CopyIcon className="ml-1.5 inline h-4 w-4" />
               </p>
             </DropdownMenuItem>
           )}
@@ -135,7 +132,7 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
             }}>
             <p className="text-slate-700">
               {survey.resultShareKey ? "Unpublish from web" : "Publish to web"}
-              <GlobeAltIcon className="ml-1.5 inline h-4 w-4" />
+              <GlobeIcon className="ml-1.5 inline h-4 w-4" />
             </p>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -146,7 +143,6 @@ export default function ResultsShareButton({ survey, webAppUrl, product, user }:
           survey={survey}
           open={showLinkModal}
           setOpen={setShowLinkModal}
-          product={product}
           webAppUrl={webAppUrl}
           user={user}
         />

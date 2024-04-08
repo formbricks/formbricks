@@ -15,6 +15,7 @@ import {
   mockResponseWithMockPerson,
   mockSingleUseId,
   mockSurveyId,
+  mockSurveySummaryOutput,
   mockTags,
   mockUserId,
 } from "./__mocks__/data.mock";
@@ -45,6 +46,7 @@ import {
   getResponses,
   getResponsesByEnvironmentId,
   getResponsesByPersonId,
+  getSurveySummary,
   updateResponse,
 } from "../service";
 import { buildWhereClause } from "../util";
@@ -464,6 +466,44 @@ describe("Tests for getResponses service", () => {
       prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
 
       await expect(getResponses(mockSurveyId)).rejects.toThrow(Error);
+    });
+  });
+});
+
+describe("Tests for getSurveySummary service", () => {
+  describe("Happy Path", () => {
+    it("Returns a summary of the survey responses", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.response.findMany.mockResolvedValue([mockResponse]);
+
+      const summary = await getSurveySummary(mockSurveyId);
+      expect(summary).toEqual(mockSurveySummaryOutput);
+    });
+  });
+
+  describe("Sad Path", () => {
+    testInputValidation(getSurveySummary, 1);
+
+    it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
+      const mockErrorMessage = "Mock error message";
+      const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
+        code: "P2002",
+        clientVersion: "0.0.1",
+      });
+
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.response.findMany.mockRejectedValue(errToThrow);
+
+      await expect(getSurveySummary(mockSurveyId)).rejects.toThrow(DatabaseError);
+    });
+
+    it("Throws a generic Error for unexpected problems", async () => {
+      const mockErrorMessage = "Mock error message";
+
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
+
+      await expect(getSurveySummary(mockSurveyId)).rejects.toThrow(Error);
     });
   });
 });

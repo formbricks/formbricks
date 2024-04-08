@@ -2,24 +2,25 @@
 
 import FaveIcon from "@/app/favicon.ico";
 import { formbricksLogout } from "@/app/lib/formbricks";
+import clsx from "clsx";
 import {
-  AdjustmentsVerticalIcon,
-  ArrowRightOnRectangleIcon,
-  ChatBubbleBottomCenterTextIcon,
+  BrushIcon,
   ChevronDownIcon,
-  CodeBracketIcon,
+  CodeIcon,
   CreditCardIcon,
-  DocumentCheckIcon,
-  EnvelopeIcon,
+  FileCheckIcon,
   HeartIcon,
+  LanguagesIcon,
   LinkIcon,
-  PaintBrushIcon,
+  LogOutIcon,
+  MailIcon,
+  MenuIcon,
+  MessageSquareTextIcon,
   PlusIcon,
+  SlidersIcon,
   UserCircleIcon,
   UsersIcon,
-} from "@heroicons/react/24/solid";
-import clsx from "clsx";
-import { MenuIcon } from "lucide-react";
+} from "lucide-react";
 import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -69,6 +70,7 @@ interface NavigationProps {
   isFormbricksCloud: boolean;
   webAppUrl: string;
   membershipRole?: TMembershipRole;
+  isMultiLanguageAllowed: boolean;
 }
 
 export default function Navigation({
@@ -81,6 +83,7 @@ export default function Navigation({
   isFormbricksCloud,
   webAppUrl,
   membershipRole,
+  isMultiLanguageAllowed,
 }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -109,6 +112,14 @@ export default function Navigation({
       setCurrentTeamId(team.id);
     }
   }, [team]);
+
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
+  const sortedTeams = useMemo(() => {
+    return [...teams].sort((a, b) => a.name.localeCompare(b.name));
+  }, [teams]);
 
   const navigation = useMemo(
     () => [
@@ -155,16 +166,22 @@ export default function Navigation({
       title: "Survey",
       links: [
         {
-          icon: AdjustmentsVerticalIcon,
+          icon: SlidersIcon,
           label: "Product Settings",
           href: `/environments/${environment.id}/settings/product`,
           hidden: false,
         },
         {
-          icon: PaintBrushIcon,
+          icon: BrushIcon,
           label: "Look & Feel",
           href: `/environments/${environment.id}/settings/lookandfeel`,
           hidden: isViewer,
+        },
+        {
+          icon: LanguagesIcon,
+          label: "Survey Languages",
+          href: `/environments/${environment.id}/settings/language`,
+          hidden: !isMultiLanguageAllowed,
         },
       ],
     },
@@ -189,7 +206,7 @@ export default function Navigation({
       title: "Setup",
       links: [
         {
-          icon: DocumentCheckIcon,
+          icon: FileCheckIcon,
           label: "Setup checklist",
           href: `/environments/${environment.id}/settings/setup`,
           hidden: widgetSetupCompleted,
@@ -203,7 +220,7 @@ export default function Navigation({
           },
         },
         {
-          icon: CodeBracketIcon,
+          icon: CodeIcon,
           label: "Developer Docs",
           href: "https://formbricks.com/docs",
           target: "_blank",
@@ -313,17 +330,7 @@ export default function Navigation({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild id="userDropdownTrigger">
                     <div tabIndex={0} className="flex cursor-pointer flex-row items-center space-x-5">
-                      {session.user.imageUrl ? (
-                        <Image
-                          src={session.user.imageUrl}
-                          width="40"
-                          height="40"
-                          className="ph-no-capture h-10 w-10 rounded-full"
-                          alt="Profile picture"
-                        />
-                      ) : (
-                        <ProfileAvatar userId={session.user.id} />
-                      )}
+                      <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
 
                       <div>
                         <p className="ph-no-capture ph-no-capture -mb-0.5 text-sm font-bold text-slate-700">
@@ -383,7 +390,7 @@ export default function Navigation({
                           <DropdownMenuRadioGroup
                             value={product!.id}
                             onValueChange={(v) => handleEnvironmentChangeByProduct(v)}>
-                            {products.map((product) => (
+                            {sortedProducts.map((product) => (
                               <DropdownMenuRadioItem
                                 value={product.id}
                                 className="cursor-pointer break-all"
@@ -418,7 +425,7 @@ export default function Navigation({
                           <DropdownMenuRadioGroup
                             value={currentTeamId}
                             onValueChange={(teamId) => handleEnvironmentChangeByTeam(teamId)}>
-                            {teams?.map((team) => (
+                            {sortedTeams.map((team) => (
                               <DropdownMenuRadioItem value={team.id} className="cursor-pointer" key={team.id}>
                                 {team.name}
                               </DropdownMenuRadioItem>
@@ -483,7 +490,7 @@ export default function Navigation({
                           <DropdownMenuItem>
                             <a href="mailto:johannes@formbricks.com">
                               <div className="flex items-center">
-                                <EnvelopeIcon className="mr-2 h-4 w-4" />
+                                <MailIcon className="mr-2 h-4 w-4" />
                                 <span>Email us!</span>
                               </div>
                             </a>
@@ -494,7 +501,7 @@ export default function Navigation({
                                 formbricks.track("Top Menu: Product Feedback");
                               }}>
                               <div className="flex items-center">
-                                <ChatBubbleBottomCenterTextIcon className="mr-2 h-4 w-4" />
+                                <MessageSquareTextIcon className="mr-2 h-4 w-4" />
                                 <span>Product Feedback</span>
                               </div>
                             </button>
@@ -507,7 +514,7 @@ export default function Navigation({
                           await formbricksLogout();
                         }}>
                         <div className="flex h-full w-full items-center">
-                          <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
+                          <LogOutIcon className="mr-2 h-4 w-4" />
                           Logout
                         </div>
                       </DropdownMenuItem>

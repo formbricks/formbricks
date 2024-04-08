@@ -1,5 +1,5 @@
-import { CodeBracketIcon, CursorArrowRaysIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import { formatDistance } from "date-fns";
+import { CodeIcon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 
 import { TAction } from "@formbricks/types/actions";
 import { Label } from "@formbricks/ui/Label";
@@ -8,9 +8,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/Popover"
 export const ActivityItemIcon = ({ actionItem }: { actionItem: TAction }) => (
   <div className="h-12 w-12 rounded-full bg-white p-3 text-slate-500  duration-100 ease-in-out group-hover:scale-110 group-hover:text-slate-600">
     <div>
-      {actionItem.actionClass?.type === "code" && <CodeBracketIcon />}
-      {actionItem.actionClass?.type === "noCode" && <CursorArrowRaysIcon />}
-      {actionItem.actionClass?.type === "automatic" && <SparklesIcon />}
+      {actionItem.actionClass?.type === "code" && <CodeIcon className="h-5 w-5" />}
+      {actionItem.actionClass?.type === "noCode" && <MousePointerClickIcon className="h-5 w-5" />}
+      {actionItem.actionClass?.type === "automatic" && <SparklesIcon className="h-5 w-5" />}
     </div>
   </div>
 );

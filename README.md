@@ -138,6 +138,12 @@ You can deploy Formbricks on [Railway](https://railway.app) using the button bel
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/PPDzCd)
 
+##### RepoCloud
+
+Or you can also deploy Formbricks on [RepoCloud](https://repocloud.io) using the button below.
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploy.png)](https://repocloud.io/details/?app_id=254)
+
 <a id="development"></a>
 
 ## 👨‍💻 Development

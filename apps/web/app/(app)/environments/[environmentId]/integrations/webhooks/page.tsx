@@ -10,7 +10,7 @@ import GoBackButton from "@formbricks/ui/GoBackButton";
 export default async function CustomWebhookPage({ params }) {
   const [webhooksUnsorted, surveys, environment] = await Promise.all([
     getWebhooks(params.environmentId),
-    getSurveys(params.environmentId),
+    getSurveys(params.environmentId, 200), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
     getEnvironment(params.environmentId),
   ]);
   if (!environment) {

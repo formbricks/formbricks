@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/api",
   "license": "MIT",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Formbricks-api is an api wrapper for the Formbricks client API",
   "keywords": [
     "Formbricks",
@@ -13,14 +13,16 @@
   "files": [
     "dist"
   ],
-  "source": "./src/index.ts",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "type": "module",
+  "source": "src/index.ts",
+  "main": "dist/index.umd.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.umd.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
@@ -34,13 +36,9 @@
   "devDependencies": {
     "@formbricks/tsconfig": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-config-turbo": "1.10.12",
-    "terser": "^5.28.1",
-    "vite": "^5.1.4",
-    "vite-plugin-dts": "^3.7.3"
-  },
-  "dependencies": {
-    "@t3-oss/env-nextjs": "^0.9.2"
+    "eslint-config-formbricks": "workspace:*",
+    "terser": "^5.30.3",
+    "vite": "^5.2.8",
+    "vite-plugin-dts": "^3.8.1"
   }
 }

@@ -1,8 +1,12 @@
 "use client";
 
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { ArrowLeftIcon, Cog8ToothIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import {
+  isCardValid,
+  validateQuestion,
+} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { isEqual } from "lodash";
+import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -12,7 +16,9 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TProduct } from "@formbricks/types/product";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
+  TI18nString,
   TSurvey,
+  TSurveyEditorTabs,
   TSurveyQuestionType,
   ZSurveyInlineTriggers,
   surveyHasBothTriggers,
@@ -23,18 +29,19 @@ import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";
 
 import { updateSurveyAction } from "../actions";
-import { isValidUrl, validateQuestion } from "./Validation";
 
 interface SurveyMenuBarProps {
   localSurvey: TSurvey;
   survey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   environment: TEnvironment;
-  activeId: "questions" | "settings";
-  setActiveId: (id: "questions" | "settings") => void;
-  setInvalidQuestions: (invalidQuestions: String[]) => void;
+  activeId: TSurveyEditorTabs;
+  setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
+  setInvalidQuestions: (invalidQuestions: string[]) => void;
   product: TProduct;
   responseCount: number;
+  selectedLanguageCode: string;
+  setSelectedLanguageCode: (selectedLanguage: string) => void;
 }
 
 export default function SurveyMenuBar({
@@ -47,6 +54,8 @@ export default function SurveyMenuBar({
   setInvalidQuestions,
   product,
   responseCount,
+  selectedLanguageCode,
+  setSelectedLanguageCode,
 }: SurveyMenuBarProps) {
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -55,7 +64,7 @@ export default function SurveyMenuBar({
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const cautionText = "This survey received responses, make changes with caution.";
 
-  let faultyQuestions: String[] = [];
+  let faultyQuestions: string[] = [];
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -107,7 +116,10 @@ export default function SurveyMenuBar({
   };
 
   const handleBack = () => {
-    if (!isEqual(localSurvey, survey)) {
+    const { updatedAt, ...localSurveyRest } = localSurvey;
+    const { updatedAt: _, ...surveyRest } = survey;
+
+    if (!isEqual(localSurveyRest, surveyRest)) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
@@ -116,10 +128,22 @@ export default function SurveyMenuBar({
 
   const validateSurvey = (survey: TSurvey) => {
     const existingQuestionIds = new Set();
-
+    faultyQuestions = [];
     if (survey.questions.length === 0) {
       toast.error("Please add at least one question");
       return;
+    }
+
+    if (survey.welcomeCard.enabled) {
+      if (!isCardValid(survey.welcomeCard, "start", survey.languages)) {
+        faultyQuestions.push("start");
+      }
+    }
+
+    if (survey.thankYouCard.enabled) {
+      if (!isCardValid(survey.thankYouCard, "end", survey.languages)) {
+        faultyQuestions.push("end");
+      }
     }
 
     let pin = survey?.pin;
@@ -128,30 +152,9 @@ export default function SurveyMenuBar({
       return;
     }
 
-    const { thankYouCard } = localSurvey;
-    if (thankYouCard.enabled) {
-      const { buttonLabel, buttonLink } = thankYouCard;
-
-      if (buttonLabel && !buttonLink) {
-        toast.error("Button Link missing on Thank you card.");
-        return;
-      }
-
-      if (!buttonLabel && buttonLink) {
-        toast.error("Button Label missing on Thank you card.");
-        return;
-      }
-
-      if (buttonLink && !isValidUrl(buttonLink)) {
-        toast.error("Invalid URL on Thank You card.");
-        return;
-      }
-    }
-
-    faultyQuestions = [];
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
-      const isValid = validateQuestion(question);
+      const isValid = validateQuestion(question, survey.languages);
 
       if (!isValid) {
         faultyQuestions.push(question.id);
@@ -161,6 +164,7 @@ export default function SurveyMenuBar({
     // if there are any faulty questions, the user won't be allowed to save the survey
     if (faultyQuestions.length > 0) {
       setInvalidQuestions(faultyQuestions);
+      setSelectedLanguageCode("default");
       toast.error("Please fill all required fields.");
       return false;
     }
@@ -179,15 +183,50 @@ export default function SurveyMenuBar({
         question.type === TSurveyQuestionType.MultipleChoiceMulti
       ) {
         const haveSameChoices =
-          question.choices.some((element) => element.label.trim() === "") ||
+          question.choices.some((element) => element.label[selectedLanguageCode]?.trim() === "") ||
           question.choices.some((element, index) =>
             question.choices
               .slice(index + 1)
-              .some((nextElement) => nextElement.label.trim() === element.label.trim())
+              .some(
+                (nextElement) =>
+                  nextElement.label[selectedLanguageCode]?.trim() ===
+                  element.label[selectedLanguageCode].trim()
+              )
           );
 
         if (haveSameChoices) {
-          toast.error("You have two identical choices.");
+          toast.error("You have empty or duplicate choices.");
+          return false;
+        }
+      }
+
+      if (question.type === TSurveyQuestionType.Matrix) {
+        const hasDuplicates = (labels: TI18nString[]) => {
+          const flattenedLabels = labels
+            .map((label) => Object.keys(label).map((lang) => `${lang}:${label[lang].trim().toLowerCase()}`))
+            .flat();
+
+          return new Set(flattenedLabels).size !== flattenedLabels.length;
+        };
+
+        // Function to check for empty labels in each language
+        const hasEmptyLabels = (labels: TI18nString[]) => {
+          return labels.some((label) => Object.values(label).some((value) => value.trim() === ""));
+        };
+
+        if (hasEmptyLabels(question.rows) || hasEmptyLabels(question.columns)) {
+          toast.error("Empty row or column labels in one or more languages");
+          setInvalidQuestions([question.id]);
+          return false;
+        }
+
+        if (hasDuplicates(question.rows)) {
+          toast.error("You have duplicate row labels.");
+          return false;
+        }
+
+        if (hasDuplicates(question.columns)) {
+          toast.error("You have duplicate column labels.");
           return false;
         }
       }
@@ -237,7 +276,7 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
-    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey);
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
     if (questionWithEmptyFallback) {
       toast.error("Fallback missing");
       return;
@@ -310,6 +349,7 @@ export default function SurveyMenuBar({
 
     try {
       await updateSurveyAction({ ...strippedSurvey });
+
       setIsSurveySaving(false);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
@@ -372,7 +412,7 @@ export default function SurveyMenuBar({
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
-                  <ExclamationTriangleIcon className=" h-5 w-5 text-amber-400" />
+                  <AlertTriangleIcon className=" h-5 w-5 text-amber-400" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"} className="lg:hidden">
                   <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400 ">
@@ -393,7 +433,6 @@ export default function SurveyMenuBar({
             />
           </div>
           <Button
-            // disabled={isSurveyPublishing || (localSurvey.status !== "draft" && containsEmptyTriggers())}
             disabled={disableSave}
             variant={localSurvey.status === "draft" ? "secondary" : "darkCTA"}
             className="mr-3"
@@ -408,7 +447,7 @@ export default function SurveyMenuBar({
                 setAudiencePrompt(false);
                 setActiveId("settings");
               }}
-              EndIcon={Cog8ToothIcon}>
+              EndIcon={SettingsIcon}>
               Continue to Settings
             </Button>
           )}

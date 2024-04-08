@@ -15,7 +15,7 @@ import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
-import useClickOutside from "@formbricks/lib/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
@@ -64,7 +64,7 @@ const getDifferenceOfDays = (from, to) => {
 };
 
 const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps) => {
-  const { selectedFilter, setSelectedOptions, dateRange, setDateRange } = useResponseFilter();
+  const { selectedFilter, setSelectedOptions, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
       ? getDifferenceOfDays(dateRange.from, dateRange.to)
@@ -75,6 +75,21 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
+
+  const firstMountRef = useRef(true);
+
+  useEffect(() => {
+    if (!firstMountRef.current) {
+      firstMountRef.current = false;
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!firstMountRef.current) {
+      resetState();
+    }
+  }, [survey?.id, resetState]);
 
   // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
   useEffect(() => {

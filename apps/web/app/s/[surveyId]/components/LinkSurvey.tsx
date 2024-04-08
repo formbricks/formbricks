@@ -3,7 +3,7 @@
 import SurveyLinkUsed from "@/app/s/[surveyId]/components/SurveyLinkUsed";
 import VerifyEmail from "@/app/s/[surveyId]/components/VerifyEmail";
 import { getPrefillResponseData } from "@/app/s/[surveyId]/lib/prefilling";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { RefreshCcwIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -14,6 +14,7 @@ import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
+import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
@@ -31,6 +32,7 @@ interface LinkSurveyProps {
   webAppUrl: string;
   responseCount?: number;
   verifiedEmail?: string;
+  languageCode: string;
 }
 
 export default function LinkSurvey({
@@ -44,24 +46,43 @@ export default function LinkSurvey({
   webAppUrl,
   responseCount,
   verifiedEmail,
+  languageCode,
 }: LinkSurveyProps) {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
   const sourceParam = searchParams?.get("source");
   const suId = searchParams?.get("suId");
+  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
+    return surveyLanguage.default === true;
+  })?.language.code;
+
+  const startAt = searchParams?.get("startAt");
+  const isStartAtValid = useMemo(() => {
+    if (!startAt) return false;
+    if (survey?.welcomeCard.enabled && startAt === "start") return true;
+
+    const isValid = survey?.questions.some((question) => question.id === startAt);
+
+    // To remove startAt query param from URL if it is not valid:
+    if (!isValid && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("startAt");
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    return isValid;
+  }, [survey, startAt]);
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   const [surveyState, setSurveyState] = useState(new SurveyState(survey.id, singleUseId, responseId, userId));
   const [activeQuestionId, setActiveQuestionId] = useState<string>(
-    survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
+    startAt && isStartAtValid ? startAt : survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id
   );
 
   const prefillResponseData: TResponseData | undefined = prefillAnswer
-    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer)
+    ? getPrefillResponseData(survey.questions[0], survey, prefillAnswer, languageCode)
     : undefined;
-
-  const brandColor = survey.productOverwrites?.brandColor || product.brandColor;
 
   const responseQueue = useMemo(
     () =>
@@ -132,15 +153,36 @@ export default function LinkSurvey({
   }
   if (survey.verifyEmail && emailVerificationStatus !== "verified") {
     if (emailVerificationStatus === "fishy") {
-      return <VerifyEmail survey={survey} isErrorComponent={true} />;
+      return <VerifyEmail survey={survey} isErrorComponent={true} languageCode={languageCode} />;
     }
     //emailVerificationStatus === "not-verified"
-    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} />;
+    return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
   }
 
+  const determineStyling = () => {
+    // allow style overwrite is disabled from the product
+    if (!product.styling.allowStyleOverwrite) {
+      return product.styling;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteThemeStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    return product.styling;
+  };
+
   return (
-    <>
-      <ContentWrapper className="my-12 h-full w-full p-0 md:max-w-md">
+    <div className="flex h-screen items-center justify-center">
+      {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
+      <ContentWrapper className="w-11/12 p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
@@ -151,13 +193,15 @@ export default function LinkSurvey({
               onClick={() =>
                 setActiveQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id)
               }>
-              Restart <ArrowPathIcon className="ml-2 h-4 w-4" />
+              Restart <RefreshCcwIcon className="ml-2 h-4 w-4" />
             </button>
           </div>
         )}
+
         <SurveyInline
           survey={survey}
-          brandColor={brandColor}
+          styling={determineStyling()}
+          languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
             setIsError = f;
@@ -202,6 +246,8 @@ export default function LinkSurvey({
                 },
                 ttc: responseUpdate.ttc,
                 finished: responseUpdate.finished,
+                language:
+                  languageCode === "default" && defaultLanguageCode ? defaultLanguageCode : languageCode,
                 meta: {
                   url: window.location.href,
                   source: sourceParam || "",
@@ -224,6 +270,6 @@ export default function LinkSurvey({
           responseCount={responseCount}
         />
       </ContentWrapper>
-    </>
+    </div>
   );
 }

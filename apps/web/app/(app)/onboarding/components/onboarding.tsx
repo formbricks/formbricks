@@ -78,6 +78,7 @@ export function Onboarding({
         window.removeEventListener("message", handleMessageEvent, false);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeVisible, currentStep]); // Depend on iframeVisible and currentStep to re-evaluate when needed
 
   useEffect(() => {
@@ -155,6 +156,10 @@ export function Onboarding({
         <button
           id="FB__INTERNAL__SKIP_ONBOARDING"
           onClick={async () => {
+            if (typeof localStorage !== undefined) {
+              localStorage.removeItem("onboardingPathway");
+              localStorage.removeItem("onboardingCurrentStep");
+            }
             await finishOnboardingAction();
             router.push(`/environments/${environment.id}/surveys`);
           }}>

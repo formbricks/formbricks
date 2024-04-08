@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { XIcon } from "lucide-react";
 import { Fragment } from "react";
 
 import { cn } from "@formbricks/lib/cn";
@@ -56,7 +56,7 @@ export const Modal: React.FC<Modal> = ({
             />
           </Transition.Child>
 
-          <div className="fixed inset-0 z-10 mt-24 overflow-y-auto">
+          <div className="fixed inset-0 z-10 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
               <Transition.Child
                 as={Fragment}
@@ -83,7 +83,7 @@ export const Modal: React.FC<Modal> = ({
                       className="rounded-md bg-white text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 focus:ring-offset-2"
                       onClick={() => setOpen(false)}>
                       <span className="sr-only">Close</span>
-                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                      <XIcon className="h-6 w-6" aria-hidden="true" />
                     </button>
                   </div>
                   {title && <h3 className="mb-4 text-xl font-bold text-slate-500">{title}</h3>}

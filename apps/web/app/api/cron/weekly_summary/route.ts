@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
 import { EnvironmentData, NotificationResponse, ProductData, Survey, SurveyResponse } from "./types";
@@ -172,30 +174,30 @@ const getNotificationResponse = (environment: EnvironmentData, productName: stri
   };
 
   const surveys: Survey[] = [];
-
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
+    const parsedSurvey = checkForRecallInHeadline(survey, "default");
     const surveyData: Survey = {
-      id: survey.id,
-      name: survey.name,
-      status: survey.status,
-      responseCount: survey.responses.length,
+      id: parsedSurvey.id,
+      name: parsedSurvey.name,
+      status: parsedSurvey.status,
+      responseCount: parsedSurvey.responses.length,
       responses: [],
     };
     // iterate through the responses and calculate the survey insights
-    for (const response of survey.responses) {
+    for (const response of parsedSurvey.responses) {
       // only take the first 3 responses
       if (surveyData.responses.length >= 1) {
         break;
       }
       const surveyResponse: SurveyResponse = {};
-      for (const question of survey.questions) {
+      for (const question of parsedSurvey.questions) {
         const headline = question.headline;
         const answer = response.data[question.id]?.toString() || null;
         if (answer === null || answer === "" || answer?.length === 0) {
           continue;
         }
-        surveyResponse[headline] = answer;
+        surveyResponse[getLocalizedValue(headline, "default")] = answer;
       }
       surveyData.responses.push(surveyResponse);
     }
