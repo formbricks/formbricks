@@ -92,7 +92,7 @@ export function EditAvatar({ session, environmentId }: { session: Session; envir
           onClick={() => {
             inputRef.current?.click();
           }}>
-          {session?.user.imageUrl ? "Edit Image" : "Upload Image"}
+          {session?.user.imageUrl ? "Change Image" : "Upload Image"}
           <input
             type="file"
             id="hiddenFileInput"
