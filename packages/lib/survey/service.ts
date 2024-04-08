@@ -469,16 +469,21 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
   }
 
-  // Remove scheduled status when runOnDate is not set
-  if (updatedSurvey.status === "scheduled" && updatedSurvey.runOnDate === null) {
-    data.status = "inProgress";
-  }
-
   surveyData.updatedAt = new Date();
+
   data = {
     ...surveyData,
     ...data,
   };
+
+  // Remove scheduled status when runOnDate is not set
+  if (data.status === "scheduled" && data.runOnDate === null) {
+    data.status = "inProgress";
+  }
+  // Set scheduled status when runOnDate is set on completed surveys
+  if (data.status === "completed" && data.runOnDate) {
+    data.status = "scheduled";
+  }
 
   try {
     const prismaSurvey = await prisma.survey.update({
