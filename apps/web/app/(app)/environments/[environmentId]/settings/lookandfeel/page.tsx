@@ -1,3 +1,4 @@
+import { EditLogo } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/EditLogo";
 import { getServerSession } from "next-auth";
 
 import {
@@ -53,6 +54,9 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
         className="max-w-7xl"
         description="Create a style theme for all surveys. You can enable custom styling for each survey.">
         <ThemeStyling environmentId={params.environmentId} product={product} colors={SURVEY_BG_COLORS} />
+      </SettingsCard>{" "}
+      <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
+        <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
       </SettingsCard>
       <SettingsCard
         title="In-app Survey Placement"

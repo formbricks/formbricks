@@ -14,6 +14,7 @@ import { TProduct } from "@formbricks/types/product";
 import { TResponse, TResponseData, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys";
+import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
@@ -158,7 +159,7 @@ export default function LinkSurvey({
     return <VerifyEmail singleUseId={suId ?? ""} survey={survey} languageCode={languageCode} />;
   }
 
-  const getStyling = () => {
+  const determineStyling = () => {
     // allow style overwrite is disabled from the product
     if (!product.styling.allowStyleOverwrite) {
       return product.styling;
@@ -179,8 +180,9 @@ export default function LinkSurvey({
   };
 
   return (
-    <>
-      <ContentWrapper className="my-12 h-full w-full p-0 md:max-w-md">
+    <div className="flex h-screen items-center justify-center">
+      {!determineStyling().isLogoHidden && product.logo?.url && <ClientLogo product={product} />}
+      <ContentWrapper className="w-11/12 p-0 md:max-w-md">
         {isPreview && (
           <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
             <div />
@@ -195,9 +197,10 @@ export default function LinkSurvey({
             </button>
           </div>
         )}
+
         <SurveyInline
           survey={survey}
-          styling={getStyling()}
+          styling={determineStyling()}
           languageCode={languageCode}
           isBrandingEnabled={product.linkSurveyBranding}
           getSetIsError={(f: (value: boolean) => void) => {
@@ -267,6 +270,6 @@ export default function LinkSurvey({
           responseCount={responseCount}
         />
       </ContentWrapper>
-    </>
+    </div>
   );
 }
