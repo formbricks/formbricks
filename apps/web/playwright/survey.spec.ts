@@ -23,10 +23,8 @@ test.describe("Survey Create & Submit Response", async () => {
 
     // Get URL
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
-    url = await page
-      .locator("div")
-      .filter({ hasText: /^http:\/\/localhost:3000\/s\/[A-Za-z0-9]+$/ })
-      .innerText();
+    await page.getByLabel("Copy survey link to clipboard").click();
+    url = await page.evaluate("navigator.clipboard.readText()");
   });
 
   test("Create Survey with Custom Actions", async ({ page }) => {
@@ -217,7 +215,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("textbox", { name: "Search items" }).fill("German");
     await page.getByText("German").nth(1).click();
     await page.getByRole("button", { name: "Save Changes" }).click();
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await page.waitForTimeout(2000);
     await page.getByRole("link", { name: "Surveys" }).click();
     await page.getByRole("button", { name: "Start from scratch Create a" }).click();
     await page.locator("#multi-lang-toggle").click();
@@ -424,5 +422,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
+    await page.getByLabel("Copy survey link to clipboard").click();
+    const germanSurveyUrl = await page.evaluate("navigator.clipboard.readText()");
+    expect(germanSurveyUrl).toContain("lang=de");
   });
 });

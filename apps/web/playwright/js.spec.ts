@@ -46,8 +46,6 @@ test.describe("JS Package Test", async () => {
     expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
     await page.getByRole("link", { name: "Surveys" }).click();
     await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
-
-    await page.screenshot();
   });
 
   test("JS Display Survey on Page", async ({ page }) => {
