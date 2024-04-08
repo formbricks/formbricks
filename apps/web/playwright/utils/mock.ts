@@ -146,6 +146,10 @@ export const surveys = {
       rows: ["Rose 🌹", "Sunflower 🌻", "Hibiscus 🌺"],
       columns: ["0", "1", "2", "3"],
     },
+    address: {
+      question: "Where do you live?",
+      placeholder: "Address Line 1 e.g. Bay Street 69",
+    },
     thankYouCard: {
       headline: "This is my Thank You Card Headline!",
       description: "This is my Thank you Card Description!",
@@ -208,6 +212,9 @@ export const surveys = {
       description: "0: Überhaupt nicht, 3: Ich liebe es",
       rows: ["Rose", "Sunflower", "Hibiscus"],
       columns: ["0", "1", "2", "3"],
+    },
+    addressQuestion: {
+      question: "Wo wohnst du ?",
     },
     thankYouCard: {
       headline: "Dies ist meine Dankeskarte Überschrift!", // German translation
