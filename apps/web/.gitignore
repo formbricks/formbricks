@@ -45,3 +45,6 @@ certificates
 
 # Local Uploads
 uploads/
+
+# Sentry Config File
+.sentryclirc
