@@ -24,7 +24,7 @@ export default function AddressSummary({ questionSummary, environmentId }: Addre
         <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
-            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
+            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4" />}
             {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
@@ -75,7 +75,6 @@ export default function AddressSummary({ questionSummary, environmentId }: Addre
               }
 
               <div className="px-4 text-slate-500 md:px-6">
-                {" "}
                 {timeSince(new Date(response.updatedAt).toISOString())}
               </div>
             </div>

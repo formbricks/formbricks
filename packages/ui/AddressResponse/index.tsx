@@ -30,7 +30,7 @@ export const AddressResponse = ({ value }: AddressResponseProps) => {
         (item, index) =>
           item && (
             <div key={index}>
-              {getAddressKey(index)} : {item}
+              {getAddressKey(index)}: {item}
               <br />
             </div>
           )

@@ -12,7 +12,7 @@ import type { TSurveyAddressQuestion } from "@formbricks/types/surveys";
 
 interface AddressQuestionProps {
   question: TSurveyAddressQuestion;
-  value: string[];
+  value?: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -55,7 +55,12 @@ export default function AddressQuestion({
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    onSubmit({ [question.id]: value }, updatedTtc);
+    const containsAllEmptyStrings = value?.length === 6 && value.every((item) => item.trim() === "");
+    if (containsAllEmptyStrings) {
+      onSubmit({ [question.id]: [] }, updatedTtc);
+    } else {
+      onSubmit({ [question.id]: value ?? [] }, updatedTtc);
+    }
   };
 
   useEffect(() => {

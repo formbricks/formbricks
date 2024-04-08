@@ -230,7 +230,7 @@ export default function QuestionConditional({
   ) : question.type === TSurveyQuestionType.Address ? (
     <AddressQuestion
       question={question}
-      value={value as string[]}
+      value={Array.isArray(value) ? value : undefined}
       onChange={onChange}
       onSubmit={onSubmit}
       onBack={onBack}
