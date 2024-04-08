@@ -77,10 +77,9 @@ const SummaryHeader = ({
       {!isSharingPage && (
         <>
           <div className="hidden justify-end gap-x-1.5 sm:flex">
-            {/*  <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} /> */}
             {!isViewer &&
-            (environment?.widgetSetupCompleted || survey.type === "link") &&
-            survey?.status !== "draft" ? (
+            (environment.widgetSetupCompleted || survey.type === "link") &&
+            survey.status !== "draft" ? (
               <SurveyStatusDropdown environment={environment} survey={survey} />
             ) : null}
             {survey.type === "link" && (
