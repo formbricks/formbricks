@@ -49,16 +49,16 @@ export const getCardText = (
   return (card[id as keyof typeof card] as TI18nString) || createI18nString("", surveyLanguageCodes);
 };
 
-export const determineImageUploaderVisibility = (questionId: string, localSurvey: TSurvey) => {
-  switch (questionId) {
-    case "end": // Thank You Card
-      return !!localSurvey.thankYouCard.imageUrl;
-    case "start": // Welcome Card
-      return !!localSurvey.welcomeCard.fileUrl;
+export const determineImageUploaderVisibility = (questionIdx: number, localSurvey: TSurvey) => {
+  switch (questionIdx) {
+    case localSurvey.questions.length: // Thank You Card
+      return !!localSurvey.thankYouCard.imageUrl || !!localSurvey.thankYouCard.videoUrl;
+    case -1: // Welcome Card
+      return !!localSurvey.welcomeCard.fileUrl || !!localSurvey.welcomeCard.videoUrl;
     default:
       // Regular Survey Question
-      const question = localSurvey.questions.find((q) => q.id === questionId);
-      return !!question && !!question.imageUrl;
+      const question = localSurvey.questions[questionIdx];
+      return (!!question && !!question.imageUrl) || (!!question && !!question.videoUrl);
   }
 };
 

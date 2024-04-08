@@ -44,3 +44,5 @@ token.json
 # Local Uploads
 uploads/
 certificates
+# Sentry Config File
+.sentryclirc

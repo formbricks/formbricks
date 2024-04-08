@@ -200,6 +200,7 @@ export const ZResponseMeta = z.object({
     })
     .optional(),
   country: z.string().optional(),
+  action: z.string().optional(),
 });
 
 export type TResponseMeta = z.infer<typeof ZResponseMeta>;
@@ -244,6 +245,7 @@ export const ZResponseInput = z.object({
         })
         .optional(),
       country: z.string().optional(),
+      action: z.string().optional(),
     })
     .optional(),
 });
@@ -280,6 +282,7 @@ export const ZResponseUpdate = z.object({
     .object({
       url: z.string().optional(),
       source: z.string().optional(),
+      action: z.string().optional(),
     })
     .optional(),
 });

@@ -20,6 +20,7 @@ export const ZSurveyThankYouCard = z.object({
   buttonLabel: ZI18nString.optional(),
   buttonLink: z.optional(z.string()),
   imageUrl: z.string().optional(),
+  videoUrl: z.string().optional(),
 });
 
 export enum TSurveyQuestionType {
@@ -46,6 +47,7 @@ export const ZSurveyWelcomeCard = z
     buttonLabel: ZI18nString.optional(),
     timeToFinish: z.boolean().default(true),
     showResponseCount: z.boolean().default(false),
+    videoUrl: z.string().optional(),
   })
   .refine((schema) => !(schema.enabled && !schema.headline), {
     message: "Welcome card must have a headline",
@@ -253,6 +255,7 @@ export const ZSurveyQuestionBase = z.object({
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
   imageUrl: z.string().optional(),
+  videoUrl: z.string().optional(),
   required: z.boolean(),
   buttonLabel: ZI18nString.optional(),
   backButtonLabel: ZI18nString.optional(),
