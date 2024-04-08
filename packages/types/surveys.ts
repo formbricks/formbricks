@@ -392,12 +392,12 @@ export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionType.Address),
-  addressLine1Required: z.boolean().default(false),
-  addressLine2Required: z.boolean().default(false),
-  cityRequired: z.boolean().default(false),
-  stateRequired: z.boolean().default(false),
-  zipRequired: z.boolean().default(false),
-  countryRequired: z.boolean().default(false),
+  isAddressLine1Required: z.boolean().default(false),
+  isAddressLine2Required: z.boolean().default(false),
+  isCityRequired: z.boolean().default(false),
+  isStateRequired: z.boolean().default(false),
+  isZipRequired: z.boolean().default(false),
+  isCountryRequired: z.boolean().default(false),
 });
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 

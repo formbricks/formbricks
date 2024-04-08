@@ -1,7 +1,7 @@
 "use client";
 
 import { AddressQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddressQuestionForm";
-import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
+import { AdvancedSettings } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
 import { CTAQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CTAQuestionForm";
 import { CalQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CalQuestionForm";
 import { ConsentQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/ConsentQuestionForm";

@@ -13,7 +13,7 @@ interface AddressQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyAddressQuestion;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyAddressQuestion>) => void;
   lastQuestion: boolean;
   isInvalid: boolean;
   selectedLanguageCode: string;
@@ -88,51 +88,53 @@ export const AddressQuestionForm = ({
         )}
         <div className="mt-2 font-medium">Settings</div>
         <AdvancedOptionToggle
-          isChecked={question.addressLine1Required}
-          onToggle={() => updateQuestion(questionIdx, { addressRequired: !question.addressLine1Required })}
-          htmlId="addressRequired"
+          isChecked={question.isAddressLine1Required}
+          onToggle={() =>
+            updateQuestion(questionIdx, { isAddressLine1Required: !question.isAddressLine1Required })
+          }
+          htmlId="isAddressRequired"
           title="Required: Address Line 1"
           description=""
           childBorder
           customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
-          isChecked={question.addressLine2Required}
+          isChecked={question.isAddressLine2Required}
           onToggle={() =>
-            updateQuestion(questionIdx, { addressLine2Required: !question.addressLine2Required })
+            updateQuestion(questionIdx, { isAddressLine2Required: !question.isAddressLine2Required })
           }
-          htmlId="addressLine2Required"
+          htmlId="isAddressLine2Required"
           title="Required: Address Line 2"
           description=""
           childBorder
           customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
-          isChecked={question.cityRequired}
-          onToggle={() => updateQuestion(questionIdx, { cityRequired: !question.cityRequired })}
-          htmlId="cityRequired"
+          isChecked={question.isCityRequired}
+          onToggle={() => updateQuestion(questionIdx, { isCityRequired: !question.isCityRequired })}
+          htmlId="isCityRequired"
           title="Required: City / Town"
           description=""
           childBorder
           customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
-          isChecked={question.stateRequired}
-          onToggle={() => updateQuestion(questionIdx, { stateRequired: !question.stateRequired })}
-          htmlId="stateRequired"
+          isChecked={question.isStateRequired}
+          onToggle={() => updateQuestion(questionIdx, { isStateRequired: !question.isStateRequired })}
+          htmlId="isStateRequired"
           title="Required: State / Region"
           description=""
           childBorder
           customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
-          isChecked={question.zipRequired}
-          onToggle={() => updateQuestion(questionIdx, { zipRequired: !question.zipRequired })}
-          htmlId="zipRequired"
+          isChecked={question.isZipRequired}
+          onToggle={() => updateQuestion(questionIdx, { isZipRequired: !question.isZipRequired })}
+          htmlId="isZipRequired"
           title="Required: ZIP / Post Code"
           description=""
           childBorder
           customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
-          isChecked={question.countryRequired}
-          onToggle={() => updateQuestion(questionIdx, { countryRequired: !question.countryRequired })}
-          htmlId="countryRequired"
+          isChecked={question.isCountryRequired}
+          onToggle={() => updateQuestion(questionIdx, { isCountryRequired: !question.isCountryRequired })}
+          htmlId="iscountryRequired"
           title="Required: Country"
           description=""
           childBorder

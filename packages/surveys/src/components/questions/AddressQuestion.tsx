@@ -68,35 +68,39 @@ export default function AddressQuestion({
       placeholder: "Address Line 1 e.g. Bay Street 69",
       required: question.required
         ? hasFilled
-          ? question.addressLine1Required
+          ? question.isAddressLine1Required
           : true
         : hasFilled
-          ? question.addressLine1Required
+          ? question.isAddressLine1Required
           : false,
     },
     {
-      placeholder: "Address line 2",
+      placeholder: "Address Line 2 e.g. Apartment, Suite, Unit, Building",
       required: question.required
-        ? question.addressLine2Required
+        ? question.isAddressLine2Required
         : hasFilled
-          ? question.addressLine2Required
+          ? question.isAddressLine2Required
           : false,
     },
     {
-      placeholder: "City / Town",
-      required: question.required ? question.cityRequired : hasFilled ? question.cityRequired : false,
+      placeholder: "City / Town e.g. Springfield",
+      required: question.required ? question.isCityRequired : hasFilled ? question.isCityRequired : false,
     },
     {
-      placeholder: "State / Region",
-      required: question.required ? question.stateRequired : hasFilled ? question.stateRequired : false,
+      placeholder: "State / Region e.g. California",
+      required: question.required ? question.isStateRequired : hasFilled ? question.isStateRequired : false,
     },
     {
-      placeholder: "ZIP / Post Code",
-      required: question.required ? question.zipRequired : hasFilled ? question.zipRequired : false,
+      placeholder: "ZIP / Post Code e.g. 12345",
+      required: question.required ? question.isZipRequired : hasFilled ? question.isZipRequired : false,
     },
     {
-      placeholder: "Country",
-      required: question.required ? question.countryRequired : hasFilled ? question.countryRequired : false,
+      placeholder: "Country e.g. United States",
+      required: question.required
+        ? question.isCountryRequired
+        : hasFilled
+          ? question.isCountryRequired
+          : false,
     },
   ];
 
