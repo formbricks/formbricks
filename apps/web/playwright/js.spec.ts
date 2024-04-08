@@ -46,13 +46,11 @@ test.describe("JS Package Test", async () => {
     expect(page.getByRole("link", { name: "Surveys" })).toBeVisible();
     await page.getByRole("link", { name: "Surveys" }).click();
     await expect(page.getByRole("heading", { name: "Surveys" })).toBeVisible();
-
-    await page.screenshot();
   });
 
   test("JS Display Survey on Page", async ({ page }) => {
     let currentDir = process.cwd();
-    let htmlFilePath = currentDir + "/packages/js/index.html";
+    let htmlFilePath = currentDir + "/packages/js-core/index.html";
 
     let htmlFile = replaceEnvironmentIdInHtml(htmlFilePath, environmentId);
     await page.goto(htmlFile);
@@ -76,7 +74,7 @@ test.describe("JS Package Test", async () => {
 
   test("JS submits Response to Survey", async ({ page }) => {
     let currentDir = process.cwd();
-    let htmlFilePath = currentDir + "/packages/js/index.html";
+    let htmlFilePath = currentDir + "/packages/js-core/index.html";
 
     let htmlFile = "file:///" + htmlFilePath;
 
