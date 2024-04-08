@@ -28,6 +28,7 @@ const conditionOptions = {
   userAttributes: ["Equals", "Not equals"],
   consent: ["is"],
   matrix: [""],
+  address: ["is"],
 };
 const filterOptions = {
   openText: ["Filled out", "Skipped"],
@@ -36,6 +37,7 @@ const filterOptions = {
   cta: ["Clicked", "Dismissed"],
   tags: ["Applied", "Not applied"],
   consent: ["Accepted", "Dismissed"],
+  address: ["Filled out", "Skipped"],
 };
 
 // creating the options for the filtering to be selected there are 4 types questions, attributes, tags and metadata
@@ -210,7 +212,8 @@ export const getFormattedFilters = (
     questions.forEach(({ filterType, questionType }) => {
       if (!filters.data) filters.data = {};
       switch (questionType.questionType) {
-        case TSurveyQuestionType.OpenText: {
+        case TSurveyQuestionType.OpenText:
+        case TSurveyQuestionType.Address: {
           if (filterType.filterComboBoxValue === "Filled out") {
             filters.data[questionType.id ?? ""] = {
               op: "submitted",
