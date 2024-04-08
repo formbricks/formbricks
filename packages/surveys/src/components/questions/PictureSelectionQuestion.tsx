@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,7 @@ export const PictureSelectionQuestion = ({
   setTtc,
 }: PictureSelectionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -92,7 +93,7 @@ export const PictureSelectionQuestion = ({
         onSubmit({ [question.id]: value }, updatedTtcObj);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}

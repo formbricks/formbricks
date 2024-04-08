@@ -29,8 +29,8 @@ registry:
 env:
   # clear:
   #   DB_HOST: 192.168.0.2
-  clear:
-    REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
+  # clear:
+  # REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -92,6 +92,7 @@ env:
     - DB_USER
     - DB_PASSWORD
     - DB_NAME
+    - SENTRY_AUTH_TOKEN
 
 # Use a different ssh user than root
 ssh:
@@ -109,6 +110,7 @@ builder:
     - NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID
     - NEXT_PUBLIC_SENTRY_DSN
     - ASSET_PREFIX_URL
+    - SENTRY_AUTH_TOKEN
 
   multiarch: false
   cache:
@@ -173,8 +175,8 @@ accessories:
       clear:
         LISTEN_PORT: "5432"
         POOL_MODE: "transaction"
-        MAX_CLIENT_CONN: "200"
-        DEFAULT_POOL_SIZE: "50"
+        MAX_CLIENT_CONN: "300"
+        DEFAULT_POOL_SIZE: "70"
         AUTH_TYPE: "scram-sha-256"
       secret:
         - DB_USER
@@ -191,7 +193,7 @@ accessories:
 healthcheck:
   path: /health
   port: 3000
-  max_attempts: 7
+  max_attempts: 15
   interval: 20s
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old

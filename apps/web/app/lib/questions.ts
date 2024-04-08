@@ -123,7 +123,10 @@ export const questionTypes: TSurveyQuestionType[] = [
     icon: MousePointerClickIcon,
     preset: {
       headline: { default: "You are one of our power users!" },
-      html: { default: "" },
+      html: {
+        default:
+          '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
+      },
       buttonLabel: { default: "Book interview" },
       buttonExternal: false,
       dismissButtonLabel: "Skip",
