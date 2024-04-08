@@ -3,7 +3,6 @@
 import { MousePointerClickIcon } from "lucide-react";
 import { useState } from "react";
 
-import { cn } from "@formbricks/lib/cn";
 import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -51,11 +50,11 @@ export default function ActionClassesTable({
           <div className="mb-6 text-right">
             <Button
               variant="darkCTA"
-              className={cn(
+              className={
                 isLoading
                   ? "pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200"
                   : ""
-              )}
+              }
               onClick={() => {
                 setAddActionModalOpen(true);
               }}>
