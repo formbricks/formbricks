@@ -4,15 +4,16 @@ import Modal from "@/app/(app)/environments/[environmentId]/surveys/components/M
 import TabOption from "@/app/(app)/environments/[environmentId]/surveys/components/TabOption";
 import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import { Variants, motion } from "framer-motion";
-import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
-import { RefreshCcwIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { ExpandIcon, MonitorIcon, RefreshCcwIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct } from "@formbricks/types/product";
+import { TProductStyling } from "@formbricks/types/product";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey } from "@formbricks/types/surveys";
+import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
+import { ClientLogo } from "@formbricks/ui/ClientLogo";
 import { SurveyInline } from "@formbricks/ui/Survey";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -56,6 +57,7 @@ const previewParentContainerVariant: Variants = {
     zIndex: -1,
   },
 };
+
 export default function PreviewSurvey({
   setActiveQuestionId,
   activeQuestionId,
@@ -110,15 +112,29 @@ export default function PreviewSurvey({
     },
   };
 
-  const {
-    brandColor: surveyBrandColor,
-    highlightBorderColor: surveyHighlightBorderColor,
-    placement: surveyPlacement,
-  } = productOverwrites || {};
+  const { placement: surveyPlacement } = productOverwrites || {};
 
-  const brandColor = surveyBrandColor || product.brandColor;
   const placement = surveyPlacement || product.placement;
-  const highlightBorderColor = surveyHighlightBorderColor || product.highlightBorderColor;
+
+  const styling: TSurveyStyling | TProductStyling = useMemo(() => {
+    // allow style overwrite is disabled from the product
+    if (!product.styling.allowStyleOverwrite) {
+      return product.styling;
+    }
+
+    // allow style overwrite is enabled from the product
+    if (product.styling.allowStyleOverwrite) {
+      // survey style overwrite is disabled
+      if (!survey.styling?.overwriteThemeStyling) {
+        return product.styling;
+      }
+
+      // survey style overwrite is enabled
+      return survey.styling;
+    }
+
+    return product.styling;
+  }, [product.styling, survey.styling]);
 
   useEffect(() => {
     // close modal if there are no questions left
@@ -201,37 +217,43 @@ export default function PreviewSurvey({
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton resetQuestionProgress={resetQuestionProgress} />
             </div>
-            <MediaBackground survey={survey} ContentRef={ContentRef} isMobilePreview>
+            <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isMobilePreview>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
                   placement={placement}
-                  highlightBorderColor={highlightBorderColor}
-                  previewMode="mobile">
+                  highlightBorderColor={styling.highlightBorderColor?.light}
+                  previewMode="mobile"
+                  borderRadius={styling?.roundness ?? 8}
+                  background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
                     survey={survey}
-                    brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.inAppSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     onFileUpload={onFileUpload}
+                    styling={styling}
+                    isCardBorderVisible={!styling.highlightBorderColor?.light}
                     onClose={handlePreviewModalClose}
                   />
                 </Modal>
               ) : (
                 <div className="w-full px-3">
+                  <div className="absolute left-5 top-5">
+                    <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                  </div>
                   <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
                       survey={survey}
-                      brandColor={brandColor}
                       activeQuestionId={activeQuestionId || undefined}
                       isBrandingEnabled={product.linkSurveyBranding}
                       onActiveQuestionChange={setActiveQuestionId}
                       onFileUpload={onFileUpload}
                       languageCode={languageCode}
                       responseCount={42}
+                      styling={styling}
                     />
                   </div>
                 </div>
@@ -279,26 +301,31 @@ export default function PreviewSurvey({
               <Modal
                 isOpen={isModalOpen}
                 placement={placement}
-                highlightBorderColor={highlightBorderColor}
-                previewMode="desktop">
+                highlightBorderColor={styling.highlightBorderColor?.light}
+                previewMode="desktop"
+                borderRadius={styling.roundness ?? 8}
+                background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
                   survey={survey}
-                  brandColor={brandColor}
                   activeQuestionId={activeQuestionId || undefined}
                   isBrandingEnabled={product.inAppSurveyBranding}
                   onActiveQuestionChange={setActiveQuestionId}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
                   onFileUpload={onFileUpload}
+                  styling={styling}
+                  isCardBorderVisible={!styling.highlightBorderColor?.light}
                   onClose={handlePreviewModalClose}
                 />
               </Modal>
             ) : (
-              <MediaBackground survey={survey} ContentRef={ContentRef} isEditorView>
-                <div className="z-0 w-full max-w-md rounded-lg p-4">
+              <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
+                <div className="absolute left-5 top-5">
+                  <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                </div>
+                <div className="z-0 w-full max-w-md rounded-lg border-transparent">
                   <SurveyInline
                     survey={survey}
-                    brandColor={brandColor}
                     activeQuestionId={activeQuestionId || undefined}
                     isBrandingEnabled={product.linkSurveyBranding}
                     onActiveQuestionChange={setActiveQuestionId}
@@ -306,6 +333,7 @@ export default function PreviewSurvey({
                     onFileUpload={onFileUpload}
                     languageCode={languageCode}
                     responseCount={42}
+                    styling={styling}
                   />
                 </div>
               </MediaBackground>

@@ -12,7 +12,7 @@ interface IDateQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyDateQuestion;
   questionIdx: number;
-  updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
+  updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyDateQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
@@ -109,7 +109,9 @@ export default function DateQuestionForm({
           <OptionsSwitcher
             options={dateOptions}
             currentOption={question.format}
-            handleTypeChange={(value) => updateQuestion(questionIdx, { format: value })}
+            handleTypeChange={(value: "M-d-y" | "d-M-y" | "y-M-d") =>
+              updateQuestion(questionIdx, { format: value })
+            }
           />
         </div>
       </div>

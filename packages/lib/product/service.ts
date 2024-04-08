@@ -25,9 +25,7 @@ const selectProduct = {
   updatedAt: true,
   name: true,
   teamId: true,
-  brandColor: true,
   languages: true,
-  highlightBorderColor: true,
   recontactDays: true,
   linkSurveyBranding: true,
   inAppSurveyBranding: true,
@@ -35,6 +33,8 @@ const selectProduct = {
   clickOutsideClose: true,
   darkOverlay: true,
   environments: true,
+  styling: true,
+  logo: true,
 };
 
 export const getProducts = async (teamId: string, page?: number): Promise<TProduct[]> => {

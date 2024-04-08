@@ -34,6 +34,13 @@ export const reverseTranslateSurvey = (survey: TSurvey, languageCode: string = "
   reversedSurvey.questions = reversedSurvey.questions.map((question) =>
     reverseTranslateObject(question, languageCode)
   );
+
+  // check if the headline is an empty object, if so, add a "default" key
+  // TODO: This is a temporary fix, should be handled propperly
+  if (reversedSurvey.welcomeCard.headline && Object.keys(reversedSurvey.welcomeCard.headline).length === 0) {
+    reversedSurvey.welcomeCard.headline = { default: "" };
+  }
+
   reversedSurvey.welcomeCard = reverseTranslateObject(reversedSurvey.welcomeCard, languageCode);
   reversedSurvey.thankYouCard = reverseTranslateObject(reversedSurvey.thankYouCard, languageCode);
   // validate the type with zod

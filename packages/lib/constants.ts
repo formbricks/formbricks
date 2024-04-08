@@ -117,7 +117,7 @@ export const PRICING_USERTARGETING_FREE_MTU = 2500;
 export const PRICING_APPSURVEYS_FREE_RESPONSES = 250;
 
 // Colors for Survey Bg
-export const colours = [
+export const SURVEY_BG_COLORS = [
   "#FFF2D8",
   "#EAD7BB",
   "#BCA37F",
@@ -172,6 +172,7 @@ export const DEBUG = env.DEBUG === "1";
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
+export const REDIS_CLIENT_URL = env.REDIS_CLIENT_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 
 export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;

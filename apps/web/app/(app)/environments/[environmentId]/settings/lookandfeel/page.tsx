@@ -1,3 +1,4 @@
+import { EditLogo } from "@/app/(app)/environments/[environmentId]/settings/lookandfeel/components/EditLogo";
 import { getServerSession } from "next-auth";
 
 import {
@@ -5,7 +6,7 @@ import {
   getRemoveLinkBrandingPermission,
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
+import { SURVEY_BG_COLORS } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -14,10 +15,9 @@ import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 import SettingsCard from "../components/SettingsCard";
 import SettingsTitle from "../components/SettingsTitle";
-import { EditBrandColor } from "./components/EditBrandColor";
 import { EditFormbricksBranding } from "./components/EditBranding";
-import { EditHighlightBorder } from "./components/EditHighlightBorder";
 import { EditPlacement } from "./components/EditPlacement";
+import { ThemeStyling } from "./components/ThemeStyling";
 
 export default async function ProfileSettingsPage({ params }: { params: { environmentId: string } }) {
   const [session, team, product] = await Promise.all([
@@ -40,8 +40,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   const canRemoveLinkBranding = getRemoveLinkBrandingPermission(team);
 
   const currentUserMembership = await getMembershipByUserIdTeamId(session?.user.id, team.id);
-  const { isDeveloper, isViewer } = getAccessFlags(currentUserMembership?.role);
-  const isBrandColorEditDisabled = isDeveloper ? true : isViewer;
+  const { isViewer } = getAccessFlags(currentUserMembership?.role);
 
   if (isViewer) {
     return <ErrorComponent />;
@@ -50,27 +49,19 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
   return (
     <div>
       <SettingsTitle title="Look & Feel" />
-      <SettingsCard title="Brand Color" description="Match the surveys with your user interface.">
-        <EditBrandColor
-          product={product}
-          isBrandColorDisabled={isBrandColorEditDisabled}
-          environmentId={params.environmentId}
-        />
+      <SettingsCard
+        title="Theme"
+        className="max-w-7xl"
+        description="Create a style theme for all surveys. You can enable custom styling for each survey.">
+        <ThemeStyling environmentId={params.environmentId} product={product} colors={SURVEY_BG_COLORS} />
+      </SettingsCard>{" "}
+      <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">
+        <EditLogo product={product} environmentId={params.environmentId} isViewer={isViewer} />
       </SettingsCard>
       <SettingsCard
         title="In-app Survey Placement"
         description="Change where surveys will be shown in your web app.">
         <EditPlacement product={product} environmentId={params.environmentId} />
-      </SettingsCard>
-      <SettingsCard
-        noPadding
-        title="Highlight Border"
-        description="Make sure your users notice the survey you display">
-        <EditHighlightBorder
-          product={product}
-          defaultBrandColor={DEFAULT_BRAND_COLOR}
-          environmentId={params.environmentId}
-        />
       </SettingsCard>
       <SettingsCard
         title="Formbricks Branding"

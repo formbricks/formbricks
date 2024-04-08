@@ -64,7 +64,7 @@ export const finishOnboarding = async (page: Page, deleteExampleSurvey: boolean 
   await expect(page.getByText("My Product")).toBeVisible();
 
   let currentDir = process.cwd();
-  let htmlFilePath = currentDir + "/packages/js/index.html";
+  let htmlFilePath = currentDir + "/packages/js-core/index.html";
 
   const environmentId =
     /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
@@ -238,6 +238,31 @@ export const createSurvey = async (
     .click();
   await page.getByRole("button", { name: "File Upload" }).click();
   await page.getByLabel("Question").fill(params.fileUploadQuestion.question);
+
+  // Fill Matrix question in german
+  // File Upload Question
+  await page
+    .locator("div")
+    .filter({ hasText: new RegExp(`^${addQuestion}$`) })
+    .nth(1)
+    .click();
+  await page.getByRole("button", { name: "Matrix" }).click();
+  await page.getByLabel("Question").fill(params.matrix.question);
+  await page.getByLabel("Description").fill(params.matrix.description);
+  await page.locator("#row-0").click();
+  await page.locator("#row-0").fill(params.matrix.rows[0]);
+  await page.locator("#row-1").click();
+  await page.locator("#row-1").fill(params.matrix.rows[1]);
+  await page.locator("#row-2").click();
+  await page.locator("#row-2").fill(params.matrix.rows[2]);
+  await page.locator("#column-0").click();
+  await page.locator("#column-0").fill(params.matrix.columns[0]);
+  await page.locator("#column-1").click();
+  await page.locator("#column-1").fill(params.matrix.columns[1]);
+  await page.locator("#column-2").click();
+  await page.locator("#column-2").fill(params.matrix.columns[2]);
+  await page.locator("#column-3").click();
+  await page.locator("#column-3").fill(params.matrix.columns[3]);
 
   // Thank You Card
   await page.getByText("Thank You CardShownShow").click();
