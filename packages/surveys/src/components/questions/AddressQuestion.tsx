@@ -4,7 +4,7 @@ import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useMemo, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
@@ -43,7 +43,9 @@ export default function AddressQuestion({
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
-  const safeValue = Array.isArray(value) ? value : ["", "", "", "", "", ""];
+  const safeValue = useMemo(() => {
+    return Array.isArray(value) ? value : ["", "", "", "", "", ""];
+  }, [value]);
 
   const handleInputChange = (inputValue: string, index: number) => {
     const updatedValue = [...safeValue];

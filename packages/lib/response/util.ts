@@ -184,6 +184,13 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
                   equals: "dismissed",
                 },
               },
+              // For address question
+              {
+                data: {
+                  path: [key],
+                  equals: [],
+                },
+              },
             ],
           });
           break;
