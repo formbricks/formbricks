@@ -54,7 +54,7 @@ export const ZProduct = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
   languages: z.array(ZLanguage),
-  logo: ZLogo.optional(),
+  logo: ZLogo.nullish(),
 });
 
 export type TProduct = z.infer<typeof ZProduct>;
