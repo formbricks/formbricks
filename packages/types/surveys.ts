@@ -37,15 +37,19 @@ export enum TSurveyQuestionType {
   Matrix = "matrix",
 }
 
-export const ZSurveyWelcomeCard = z.object({
-  enabled: z.boolean(),
-  headline: ZI18nString.optional(),
-  html: ZI18nString.optional(),
-  fileUrl: z.string().optional(),
-  buttonLabel: ZI18nString.optional(),
-  timeToFinish: z.boolean().default(true),
-  showResponseCount: z.boolean().default(false),
-});
+export const ZSurveyWelcomeCard = z
+  .object({
+    enabled: z.boolean(),
+    headline: ZI18nString.optional(),
+    html: ZI18nString.optional(),
+    fileUrl: z.string().optional(),
+    buttonLabel: ZI18nString.optional(),
+    timeToFinish: z.boolean().default(true),
+    showResponseCount: z.boolean().default(false),
+  })
+  .refine((schema) => !(schema.enabled && !schema.headline), {
+    message: "Welcome card must have a headline",
+  });
 
 export const ZSurveyHiddenFields = z.object({
   enabled: z.boolean(),
