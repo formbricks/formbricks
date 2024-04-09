@@ -23,7 +23,8 @@ test.describe("Survey Create & Submit Response", async () => {
 
     // Get URL
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
-    url = await page.getByRole("textbox").inputValue();
+    await page.getByLabel("Copy survey link to clipboard").click();
+    url = await page.evaluate("navigator.clipboard.readText()");
   });
 
   test("Create Survey with Custom Actions", async ({ page }) => {
@@ -197,7 +198,7 @@ test.describe("Survey Create & Submit Response", async () => {
 
 test.describe("Multi Language Survey Create", async () => {
   test.describe.configure({ mode: "serial" });
-  const { name, email, password } = users.survey[2];
+  const { name, email, password } = users.survey[3];
   test("Create Survey", async ({ page }) => {
     await signUpAndLogin(page, name, email, password);
     await finishOnboarding(page);
@@ -219,7 +220,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("textbox", { name: "Search items" }).fill("German");
     await page.getByText("German").nth(1).click();
     await page.getByRole("button", { name: "Save Changes" }).click();
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await page.waitForTimeout(2000);
     await page.getByRole("link", { name: "Surveys" }).click();
     await page.getByRole("button", { name: "Start from scratch Create a" }).click();
     await page.locator("#multi-lang-toggle").click();
@@ -275,6 +276,8 @@ test.describe("Multi Language Survey Create", async () => {
       .filter({ hasText: /^Add QuestionAdd a new question to your survey$/ })
       .nth(1)
       .click();
+
+    await page.getByRole("button", { name: "Matrix" }).scrollIntoViewIfNeeded();
     await page.getByRole("button", { name: "Matrix" }).click();
     await page
       .locator("div")
@@ -437,5 +440,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
+    await page.getByLabel("Copy survey link to clipboard").click();
+    const germanSurveyUrl = await page.evaluate("navigator.clipboard.readText()");
+    expect(germanSurveyUrl).toContain("lang=de");
   });
 });

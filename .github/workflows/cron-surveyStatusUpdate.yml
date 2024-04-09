@@ -1,4 +1,4 @@
-name: Cron - closeOnDate
+name: Cron - Survey status update
 
 on:
   # "Scheduled workflows run on the latest commit on the default or base branch."
@@ -16,7 +16,7 @@ jobs:
       - name: cURL request
         if: ${{ env.APP_URL && env.CRON_SECRET }}
         run: |
-          curl ${{ env.APP_URL }}/api/cron/close_surveys \
+          curl ${{ env.APP_URL }}/api/cron/survey-status \
             -X POST \
             -H 'content-type: application/json' \
             -H 'x-api-key: ${{ env.CRON_SECRET }}' \
