@@ -3,6 +3,7 @@ import {
   ArrowUpFromLine,
   CalendarDaysIcon,
   CheckIcon,
+  Grid3X3Icon,
   ImageIcon,
   ListIcon,
   MessageSquareTextIcon,
@@ -122,7 +123,10 @@ export const questionTypes: TSurveyQuestionType[] = [
     icon: MousePointerClickIcon,
     preset: {
       headline: { default: "You are one of our power users!" },
-      html: { default: "" },
+      html: {
+        default:
+          '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
+      },
       buttonLabel: { default: "Book interview" },
       buttonExternal: false,
       dismissButtonLabel: "Skip",
@@ -167,6 +171,18 @@ export const questionTypes: TSurveyQuestionType[] = [
     preset: {
       headline: { default: "Schedule a call with me" },
       calUserName: "rick/get-rick-rolled",
+    },
+  },
+  {
+    id: QuestionId.Matrix,
+    label: "Matrix",
+    description: "This is a matrix question",
+    icon: Grid3X3Icon,
+    preset: {
+      headline: { default: "How much do you love these flowers?" },
+      subheader: { default: "0: Not at all, 3: Love it" },
+      rows: [{ default: "Rose 🌹" }, { default: "Sunflower 🌻" }, { default: "Hibiscus 🌺" }],
+      columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
     },
   },
 ];

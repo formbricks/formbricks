@@ -1,14 +1,12 @@
-import ResponsePage from "@/app/share/[sharingKey]/(analysis)/responses/components/ResponsePage";
+import ResponsePage from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { notFound } from "next/navigation";
 
-import { RESPONSES_PER_PAGE, REVALIDATION_INTERVAL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponseCountBySurveyId, getResponsePersonAttributes } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-
-export const revalidate = REVALIDATION_INTERVAL;
 
 export default async function Page({ params }) {
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
@@ -34,7 +32,6 @@ export default async function Page({ params }) {
   }
 
   const tags = await getTagsByEnvironmentId(environment.id);
-  const attributes = await getResponsePersonAttributes(surveyId);
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
 
   return (
@@ -45,9 +42,7 @@ export default async function Page({ params }) {
         surveyId={surveyId}
         webAppUrl={WEBAPP_URL}
         product={product}
-        sharingKey={params.sharingKey}
         environmentTags={tags}
-        attributes={attributes}
         responsesPerPage={RESPONSES_PER_PAGE}
         totalResponseCount={totalResponseCount}
       />

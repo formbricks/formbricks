@@ -1,8 +1,8 @@
 import AuthorJohannes from "@/images/blog/johannes-co-founder-formbricks-small.jpg";
-import AuthorOla from "@/images/blog/ola-content-writer.jpg";
 import AuthorShubham from "@/images/blog/shubham-engineer.png";
 import AuthorSudhanshu from "@/images/blog/sudhanshu-engineer.jpeg";
 import Image from "next/image";
+import Link from "next/link";
 
 interface AuthorBoxProps {
   name: string;
@@ -14,7 +14,6 @@ interface AuthorBoxProps {
 
 const authorImages = {
   Johannes: AuthorJohannes,
-  Ola: AuthorOla,
   Shubham: AuthorShubham,
   Sudhanshu: AuthorSudhanshu,
 };
@@ -34,7 +33,9 @@ export default function AuthorBox({ name, title, date, duration, author }: Autho
       />
       <div className="flex w-full items-end justify-between">
         <div>
-          <p className="leading-0 !m-0  font-medium text-slate-600 dark:text-slate-300">{name}</p>
+          <Link href={`/blog/author/${name.toLowerCase()}`}>
+            <p className="leading-0 !m-0  font-medium text-slate-600 dark:text-slate-300">{name}</p>
+          </Link>
           <p className="!m-0 text-sm text-slate-400">{title}</p>
         </div>
         <div className="text-right">

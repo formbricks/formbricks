@@ -13,9 +13,9 @@ export default function HeadingCentered({ teaser, heading, subheading }: Props) 
       <h2 className="text-3xl font-bold tracking-tight text-slate-800 sm:text-4xl dark:text-slate-100">
         {heading}
       </h2>
-      <p className="mx-auto mt-3 max-w-3xl text-xl text-slate-500 sm:mt-4 dark:text-slate-300">
+      <h4 className="mx-auto mt-3 max-w-3xl text-xl text-slate-500 sm:mt-4 dark:text-slate-300">
         {subheading}
-      </p>
+      </h4>
     </div>
   );
 }

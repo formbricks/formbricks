@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, shuffleQuestions } from "@/lib/utils";
@@ -13,7 +13,7 @@ import type { TSurveyMultipleChoiceSingleQuestion } from "@formbricks/types/surv
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceSingleQuestion;
-  value: string | number | string[];
+  value?: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -25,7 +25,7 @@ interface MultipleChoiceSingleProps {
   isInIframe: boolean;
 }
 
-export default function MultipleChoiceSingleQuestion({
+export const MultipleChoiceSingleQuestion = ({
   question,
   value,
   onChange,
@@ -37,11 +37,12 @@ export default function MultipleChoiceSingleQuestion({
   ttc,
   setTtc,
   isInIframe,
-}: MultipleChoiceSingleProps) {
+}: MultipleChoiceSingleProps) => {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
   const otherSpecify = useRef<HTMLInputElement | null>(null);
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -92,10 +93,10 @@ export default function MultipleChoiceSingleQuestion({
         e.preventDefault();
         const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
         setTtc(updatedTtcObj);
-        onSubmit({ [question.id]: value }, updatedTtcObj);
+        onSubmit({ [question.id]: value ?? "" }, updatedTtcObj);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
@@ -110,7 +111,7 @@ export default function MultipleChoiceSingleQuestion({
           <legend className="sr-only">Options</legend>
 
           <div
-            className="bg-survey-bg relative max-h-[33vh] space-y-2 overflow-y-auto py-0.5 pr-2"
+            className="bg-survey-bg relative max-h-[27vh] space-y-2 overflow-y-auto py-0.5 pr-2"
             role="radiogroup"
             ref={choicesContainerRef}>
             {questionChoices.map((choice, idx) => (
@@ -164,7 +165,7 @@ export default function MultipleChoiceSingleQuestion({
                 onKeyDown={(e) => {
                   // Accessibility: if spacebar was pressed pass this down to the input
                   if (e.key === " ") {
-                    e.preventDefault();
+                    if (otherSelected) return;
                     document.getElementById(otherOption.id)?.click();
                     document.getElementById(otherOption.id)?.focus();
                   }
@@ -232,4 +233,4 @@ export default function MultipleChoiceSingleQuestion({
       </div>
     </form>
   );
-}
+};

@@ -25,7 +25,7 @@ import ShareSurveyResults from "../(analysis)/summary/components/ShareSurveyResu
 interface ResultsShareButtonProps {
   survey: TSurvey;
   webAppUrl: string;
-  user: TUser;
+  user?: TUser;
 }
 
 export default function ResultsShareButton({ survey, webAppUrl, user }: ResultsShareButtonProps) {
@@ -138,7 +138,7 @@ export default function ResultsShareButton({ survey, webAppUrl, user }: ResultsS
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {showLinkModal && (
+      {showLinkModal && user && (
         <ShareEmbedSurvey
           survey={survey}
           open={showLinkModal}

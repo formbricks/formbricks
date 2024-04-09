@@ -2,18 +2,23 @@
 
 import clsx from "clsx";
 import {
+  AirplayIcon,
   CheckIcon,
   ChevronDown,
   ChevronUp,
+  GlobeIcon,
+  GridIcon,
   HashIcon,
   HelpCircleIcon,
   ImageIcon,
   LanguagesIcon,
   ListIcon,
+  MessageSquareTextIcon,
   MousePointerClickIcon,
   Rows3Icon,
   SmartphoneIcon,
   StarIcon,
+  User,
 } from "lucide-react";
 import * as React from "react";
 
@@ -34,7 +39,8 @@ export enum OptionsType {
   QUESTIONS = "Questions",
   TAGS = "Tags",
   ATTRIBUTES = "Attributes",
-  METADATA = "Metadata",
+  OTHERS = "Other Filters",
+  META = "Meta",
 }
 
 export type QuestionOption = {
@@ -59,31 +65,46 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
     switch (type) {
       case OptionsType.QUESTIONS:
         switch (questionType) {
-          case TSurveyQuestionType.Rating:
-            return <StarIcon width={18} className="text-white" />;
-          case TSurveyQuestionType.CTA:
-            return <MousePointerClickIcon width={18} className="text-white" />;
           case TSurveyQuestionType.OpenText:
-            return <HelpCircleIcon width={18} className="text-white" />;
+            return <MessageSquareTextIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionType.Rating:
+            return <StarIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionType.CTA:
+            return <MousePointerClickIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionType.OpenText:
+            return <HelpCircleIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.MultipleChoiceMulti:
-            return <ListIcon width={18} className="text-white" />;
+            return <ListIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.MultipleChoiceSingle:
-            return <Rows3Icon width={18} className="text-white" />;
+            return <Rows3Icon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.NPS:
             return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.Consent:
             return <CheckIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.PictureSelection:
             return <ImageIcon width={18} className="text-white" />;
+          case TSurveyQuestionType.Matrix:
+            return <GridIcon width={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
-        return <HashIcon width={18} className="text-white" />;
-      case OptionsType.METADATA:
+        return <User width={18} height={18} className="text-white" />;
+      case OptionsType.META:
+        switch (label) {
+          case "device":
+            return <SmartphoneIcon width={18} height={18} className="text-white" />;
+          case "os":
+            return <AirplayIcon width={18} height={18} className="text-white" />;
+          case "browser":
+            return <GlobeIcon width={18} height={18} className="text-white" />;
+          case "source":
+            return <GlobeIcon width={18} height={18} className="text-white" />;
+          case "action":
+            return <MousePointerClickIcon width={18} height={18} className="text-white" />;
+        }
+      case OptionsType.OTHERS:
         switch (label) {
           case "Language":
             return <LanguagesIcon width={18} height={18} className="text-white" />;
-          case "Device Type":
-            return <SmartphoneIcon width={18} height={18} className="text-white" />;
         }
       case OptionsType.TAGS:
         return <HashIcon width={18} className="text-white" />;

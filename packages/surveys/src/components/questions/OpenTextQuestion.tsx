@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/buttons/BackButton";
 import SubmitButton from "@/components/buttons/SubmitButton";
 import Headline from "@/components/general/Headline";
-import QuestionImage from "@/components/general/QuestionImage";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
@@ -14,7 +14,7 @@ import type { TSurveyOpenTextQuestion } from "@formbricks/types/surveys";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
-  value: string | number | string[];
+  value: string;
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
@@ -27,7 +27,7 @@ interface OpenTextQuestionProps {
   isInIframe: boolean;
 }
 
-export default function OpenTextQuestion({
+export const OpenTextQuestion = ({
   question,
   value,
   onChange,
@@ -39,8 +39,9 @@ export default function OpenTextQuestion({
   ttc,
   setTtc,
   isInIframe,
-}: OpenTextQuestionProps) {
+}: OpenTextQuestionProps) => {
   const [startTime, setStartTime] = useState(performance.now());
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
@@ -76,7 +77,7 @@ export default function OpenTextQuestion({
         onSubmit({ [question.id]: value, inputType: question.inputType }, updatedttc);
       }}
       className="w-full">
-      {question.imageUrl && <QuestionImage imgUrl={question.imageUrl} />}
+      {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
         questionId={question.id}
@@ -146,4 +147,4 @@ export default function OpenTextQuestion({
       </div>
     </form>
   );
-}
+};
