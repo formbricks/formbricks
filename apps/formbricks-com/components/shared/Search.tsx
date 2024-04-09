@@ -49,39 +49,50 @@ export function Search() {
     setModifierKey(/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl ");
   }, []);
 
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      :root {
+        --docsearch-primary-color: ${isLightMode ? "#00C4B8" : "#1F7066"};
+        --docsearch-modal-background: ${isLightMode ? "#FFFFFF" : "#121212"};
+        --docsearch-text-color: ${isLightMode ? "#121212" : "#FFFFFF"};
+        --docsearch-hit-background: ${isLightMode ? "#FFFFFF" : "#282828"};
+        --docsearch-footer-background: ${isLightMode ? "#D8F6F4" : "#121212"};
+        --docsearch-searchbox-focus-background: ${isLightMode ? "#D8F6F4" : "#121212"};
+        --docsearch-modal-shadow: ${isLightMode ? "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #D8F6F4" : "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #808080"};
+      }
+      .DocSearch-Hit-title {
+        color: #000000;
+      }
+      .DocSearch-Modal {
+        margin: 16rem auto auto;
+      }
+      [type='search']:focus {
+        --tw-ring-color: none;
+      }
+      .DocSearch-Button-Container {
+        width: 200px !important;
+      }
+      .DocSearch-Hit-Container {
+        color: var(--color-text-primary);
+      }
+      .DocSearch-Input {
+        outline: none;
+      }
+      .DocSearch-Screen-Icon {
+        visibility: hidden;
+      }
+      
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, [isLightMode]);
+
   return (
     <>
-      <style>
-        {`
-          :root {
-            --docsearch-primary-color: ${isLightMode ? "#00C4B8" : "#1F7066"};
-            --docsearch-modal-background: ${isLightMode ? "#FFFFFF" : "#121212"};
-            --docsearch-text-color: ${isLightMode ? "#121212" : "#FFFFFF"};
-            --docsearch-hit-background: ${isLightMode ? "#FFFFFF" : "#282828"};
-            --docsearch-footer-background: ${isLightMode ? "#D8F6F4" : "#121212"};
-            --docsearch-searchbox-focus-background: ${isLightMode ? "#D8F6F4" : "#121212"};
-            --docsearch-modal-shadow: ${isLightMode ? "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #D8F6F4" : "inset 1px 1px 0 0 hsla(0,0%,100%,0.5), 0 3px 8px 0 #808080"}';
-          }
-          .DocSearch-Hit-title {
-            color: #000000;
-          }
-          .DocSearch-Modal {
-            margin: 16rem auto auto;
-          }
-          [type='search']:focus {
-            --tw-ring-color: none;
-          }
-          .DocSearch-Button-Container {
-            width: 200px !important;
-          }
-          .DocSearch-Hit-Container {
-            color: var(--color-text-primary);
-          }
-          .DocSearch-Input {
-            outline: none;
-          }
-        `}
-      </style>
       <button
         type="button"
         className="group flex h-6 w-6 items-center justify-center sm:justify-start md:h-auto md:w-60 md:flex-none md:rounded-lg md:py-2.5 md:pl-4 md:pr-3.5 md:text-sm md:ring-1 md:ring-slate-200 md:hover:ring-slate-300 xl:w-80 dark:text-slate-400 dark:ring-inset dark:ring-white/10 dark:hover:ring-white/20"
