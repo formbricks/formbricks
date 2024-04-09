@@ -17,6 +17,7 @@ interface WelcomeCardProps {
   survey: TSurvey;
   languageCode: string;
   responseCount?: number;
+  isInIframe: boolean;
 }
 
 const TimerIcon = () => {
@@ -65,6 +66,7 @@ export default function WelcomeCard({
   languageCode,
   survey,
   responseCount,
+  isInIframe,
 }: WelcomeCardProps) {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
@@ -112,7 +114,7 @@ export default function WelcomeCard({
           <SubmitButton
             buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
             isLastQuestion={false}
-            focus={true}
+            focus={!isInIframe}
             onClick={() => {
               onSubmit({ ["welcomeCard"]: "clicked" }, {});
             }}

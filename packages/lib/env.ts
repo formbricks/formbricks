@@ -52,6 +52,7 @@ export const env = createEnv({
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
     OPENTELEMETRY_LISTENER_URL: z.string().optional(),
     ONBOARDING_DISABLED: z.enum(["1", "0"]).optional(),
+    REDIS_CLIENT_URL: z.string().optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     PRIVACY_URL: z
       .string()
@@ -66,6 +67,8 @@ export const env = createEnv({
     S3_ENDPOINT_URL: z.string().optional(),
     SHORT_URL_BASE: z.string().url().optional().or(z.string().length(0)),
     SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
+    SLACK_CLIENT_ID: z.string().optional(),
+    SLACK_CLIENT_SECRET: z.string().optional(),
     SMTP_HOST: z.string().min(1).optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     SMTP_PORT: z.string().min(1).optional(),
@@ -155,6 +158,7 @@ export const env = createEnv({
     OIDC_ISSUER: process.env.OIDC_ISSUER,
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
     ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,
+    REDIS_CLIENT_URL: process.env.REDIS_CLIENT_URL,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
@@ -165,6 +169,8 @@ export const env = createEnv({
     S3_ENDPOINT_URL: process.env.S3_ENDPOINT_URL,
     SHORT_URL_BASE: process.env.SHORT_URL_BASE,
     SIGNUP_DISABLED: process.env.SIGNUP_DISABLED,
+    SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
+    SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PASSWORD: process.env.SMTP_PASSWORD,
     SMTP_PORT: process.env.SMTP_PORT,

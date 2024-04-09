@@ -5,6 +5,7 @@ import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
 import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
+import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -38,50 +39,7 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
     notFound();
   }
 
-  const survey = await getSurvey(params.surveyId);
-
-  if (!survey || survey.type !== "link" || survey.status === "draft") {
-    notFound();
-  }
-
-  const product = await getProductByEnvironmentId(survey.environmentId);
-
-  if (!product) {
-    throw new Error("Product not found");
-  }
-
-  function getNameForURL(string) {
-    return string.replace(/ /g, "%20");
-  }
-
-  function getBrandColorForURL(string) {
-    return string.replace(/#/g, "%23");
-  }
-
-  const brandColor = getBrandColorForURL(product.brandColor);
-  const surveyName = getNameForURL(survey.name);
-
-  const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;
-
-  return {
-    title: survey.name,
-    metadataBase: new URL(WEBAPP_URL),
-    openGraph: {
-      title: survey.name,
-      description: "Create your own survey like this with Formbricks' open source survey suite.",
-      url: `/s/${survey.id}`,
-      siteName: "",
-      images: [ogImgURL],
-      locale: "en_US",
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: survey.name,
-      description: "Create your own survey like this with Formbricks' open source survey suite.",
-      images: [ogImgURL],
-    },
-  };
+  return getMetadataForLinkSurvey(params.surveyId);
 }
 
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {
@@ -223,7 +181,7 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
 
   return survey ? (
     <div className="relative">
-      <MediaBackground survey={survey}>
+      <MediaBackground survey={survey} product={product}>
         <LinkSurvey
           survey={survey}
           product={product}
@@ -239,7 +197,6 @@ export default async function LinkSurveyPage({ params, searchParams }: LinkSurve
         />
       </MediaBackground>
       <LegalFooter
-        bgColor={survey.styling?.background?.bg || "#ffff"}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}

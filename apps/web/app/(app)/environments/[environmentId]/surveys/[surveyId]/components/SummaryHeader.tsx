@@ -5,7 +5,7 @@ import ResultsShareButton from "@/app/(app)/environments/[environmentId]/surveys
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { updateSurveyAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { CircleEllipsisIcon, ShareIcon, SquarePenIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -39,7 +39,7 @@ interface SummaryHeaderProps {
   survey: TSurvey;
   webAppUrl: string;
   product: TProduct;
-  user: TUser;
+  user?: TUser;
   membershipRole?: TMembershipRole;
 }
 const SummaryHeader = ({
@@ -51,6 +51,10 @@ const SummaryHeader = ({
   user,
   membershipRole,
 }: SummaryHeaderProps) => {
+  const params = useParams();
+  const sharingKey = params.sharingKey as string;
+  const isSharingPage = !!sharingKey;
+
   const router = useRouter();
 
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
@@ -64,134 +68,142 @@ const SummaryHeader = ({
       <div>
         <div className="flex gap-4">
           <p className="text-3xl font-bold text-slate-800">{survey.name}</p>
-          {survey.resultShareKey && <Badge text="Results are public" type="warning" size="normal"></Badge>}
+          {survey.resultShareKey && !isSharingPage && (
+            <Badge text="Results are public" type="warning" size="normal"></Badge>
+          )}
         </div>
         <span className="text-base font-extralight text-slate-600">{product.name}</span>
       </div>
-      <div className="hidden justify-end gap-x-1.5 sm:flex">
-        {/*  <ResultsShareButton survey={survey} webAppUrl={webAppUrl} product={product} user={user} /> */}
-        {!isViewer &&
-        (environment?.widgetSetupCompleted || survey.type === "link") &&
-        survey?.status !== "draft" ? (
-          <SurveyStatusDropdown environment={environment} survey={survey} />
-        ) : null}
-        {survey.type === "link" && (
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setShowShareSurveyModal(true);
-            }}>
-            <ShareIcon className="h-5 w-5" />
-          </Button>
-        )}
-        {!isViewer && (
-          <Button
-            variant="darkCTA"
-            className="h-full w-full px-3 lg:px-6"
-            href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
-            Edit
-            <SquarePenIcon className="ml-1 h-4" />
-          </Button>
-        )}
-      </div>
-      <div className="block sm:hidden">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="secondary" className="h-full w-full rounded-md p-2">
-              <CircleEllipsisIcon className="h-6" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="p-2">
-            {survey.type === "link" && (
-              <>
-                <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />
-                <DropdownMenuSeparator />
-              </>
-            )}
-            {(environment?.widgetSetupCompleted || survey.type === "link") && survey?.status !== "draft" ? (
-              <>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger
-                    disabled={isStatusChangeDisabled}
-                    style={isStatusChangeDisabled ? { pointerEvents: "none", opacity: 0.5 } : {}}>
-                    <div className="flex items-center">
-                      {(survey.type === "link" || environment.widgetSetupCompleted) && (
-                        <SurveyStatusIndicator status={survey.status} />
-                      )}
-                      <span className="ml-1 text-sm text-slate-700">
-                        {survey.status === "inProgress" && "In-progress"}
-                        {survey.status === "paused" && "Paused"}
-                        {survey.status === "completed" && "Completed"}
-                      </span>
-                    </div>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuRadioGroup
-                        value={survey.status}
-                        onValueChange={(value) => {
-                          const castedValue = value as "draft" | "inProgress" | "paused" | "completed";
-                          updateSurveyAction({ ...survey, status: castedValue })
-                            .then(() => {
-                              toast.success(
-                                value === "inProgress"
-                                  ? "Survey live"
-                                  : value === "paused"
-                                    ? "Survey paused"
-                                    : value === "completed"
-                                      ? "Survey completed"
-                                      : ""
-                              );
-                              router.refresh();
-                            })
-                            .catch((error) => {
-                              toast.error(`Error: ${error.message}`);
-                            });
-                        }}>
-                        <DropdownMenuRadioItem
-                          value="inProgress"
-                          className="cursor-pointer break-all text-slate-600">
-                          In-progress
-                        </DropdownMenuRadioItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuRadioItem
-                          value="paused"
-                          className="cursor-pointer break-all text-slate-600">
-                          Paused
-                        </DropdownMenuRadioItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuRadioItem
-                          value="completed"
-                          className="cursor-pointer break-all text-slate-600">
-                          Completed
-                        </DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator />
-              </>
+      {!isSharingPage && (
+        <>
+          <div className="hidden justify-end gap-x-1.5 sm:flex">
+            {!isViewer &&
+            (environment.widgetSetupCompleted || survey.type === "link") &&
+            survey.status !== "draft" ? (
+              <SurveyStatusDropdown environment={environment} survey={survey} />
             ) : null}
-            <Button
-              variant="darkCTA"
-              size="sm"
-              className="flex h-full w-full justify-center px-3 lg:px-6"
-              href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
-              Edit
-              <SquarePenIcon className="ml-1 h-4" />
-            </Button>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <SuccessMessage environment={environment} survey={survey} webAppUrl={webAppUrl} user={user} />
-      {showShareSurveyModal && (
-        <ShareEmbedSurvey
-          survey={survey}
-          open={showShareSurveyModal}
-          setOpen={setShowShareSurveyModal}
-          webAppUrl={webAppUrl}
-          user={user}
-        />
+            {survey.type === "link" && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowShareSurveyModal(true);
+                }}>
+                <ShareIcon className="h-5 w-5" />
+              </Button>
+            )}
+            {!isViewer && (
+              <Button
+                variant="darkCTA"
+                className="h-full w-full px-3 lg:px-6"
+                href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
+                Edit
+                <SquarePenIcon className="ml-1 h-4" />
+              </Button>
+            )}
+          </div>
+          <div className="block sm:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="secondary" className="h-full w-full rounded-md p-2">
+                  <CircleEllipsisIcon className="h-6" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="p-2">
+                {survey.type === "link" && user && (
+                  <>
+                    <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {(environment?.widgetSetupCompleted || survey.type === "link") &&
+                survey?.status !== "draft" ? (
+                  <>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger
+                        disabled={isStatusChangeDisabled}
+                        style={isStatusChangeDisabled ? { pointerEvents: "none", opacity: 0.5 } : {}}>
+                        <div className="flex items-center">
+                          {(survey.type === "link" || environment.widgetSetupCompleted) && (
+                            <SurveyStatusIndicator status={survey.status} />
+                          )}
+                          <span className="ml-1 text-sm text-slate-700">
+                            {survey.status === "inProgress" && "In-progress"}
+                            {survey.status === "paused" && "Paused"}
+                            {survey.status === "completed" && "Completed"}
+                          </span>
+                        </div>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuRadioGroup
+                            value={survey.status}
+                            onValueChange={(value) => {
+                              const castedValue = value as "draft" | "inProgress" | "paused" | "completed";
+                              updateSurveyAction({ ...survey, status: castedValue })
+                                .then(() => {
+                                  toast.success(
+                                    value === "inProgress"
+                                      ? "Survey live"
+                                      : value === "paused"
+                                        ? "Survey paused"
+                                        : value === "completed"
+                                          ? "Survey completed"
+                                          : ""
+                                  );
+                                  router.refresh();
+                                })
+                                .catch((error) => {
+                                  toast.error(`Error: ${error.message}`);
+                                });
+                            }}>
+                            <DropdownMenuRadioItem
+                              value="inProgress"
+                              className="cursor-pointer break-all text-slate-600">
+                              In-progress
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuRadioItem
+                              value="paused"
+                              className="cursor-pointer break-all text-slate-600">
+                              Paused
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuRadioItem
+                              value="completed"
+                              className="cursor-pointer break-all text-slate-600">
+                              Completed
+                            </DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                  </>
+                ) : null}
+                <Button
+                  variant="darkCTA"
+                  size="sm"
+                  className="flex h-full w-full justify-center px-3 lg:px-6"
+                  href={`/environments/${environment.id}/surveys/${surveyId}/edit`}>
+                  Edit
+                  <SquarePenIcon className="ml-1 h-4" />
+                </Button>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {user && (
+            <SuccessMessage environment={environment} survey={survey} webAppUrl={webAppUrl} user={user} />
+          )}
+          {showShareSurveyModal && user && (
+            <ShareEmbedSurvey
+              survey={survey}
+              open={showShareSurveyModal}
+              setOpen={setShowShareSurveyModal}
+              webAppUrl={webAppUrl}
+              user={user}
+            />
+          )}
+        </>
       )}
     </div>
   );

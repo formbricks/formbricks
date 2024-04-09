@@ -29,7 +29,7 @@ export const capturePosthogEnvironmentEvent = async (
       groups: { environment: environmentId },
       properties,
     });
-    await client.shutdownAsync();
+    await client.shutdown();
   } catch (error) {
     console.error("error sending posthog event:", error);
   }

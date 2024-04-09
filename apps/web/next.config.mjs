@@ -1,9 +1,11 @@
 import { createId } from "@paralleldrive/cuid2";
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 
 jiti("@formbricks/lib/env");
 
@@ -21,15 +23,20 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@aws-sdk"],
     instrumentationHook: true,
     outputFileTracingIncludes: {
-      "app/api/js": ["../../packages/**/*"],
+      "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
     },
   },
+  cacheHandler: process.env.VERCEL !== "1" ? require.resolve("./cache-handler.mjs") : undefined,
   transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.slack-edge.com",
       },
       {
         protocol: "https",
@@ -108,6 +115,15 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+        ],
+      },
     ];
   },
   env: {
@@ -121,17 +137,13 @@ if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
     allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
   };
-  nextConfig.images.remotePatterns.push({
-    protocol: "https",
-    hostname: getHostname(process.env.WEBAPP_URL),
-  });
-} else {
-  // The WEBAPP_URL is not set, so we allow all origins
-  nextConfig.images.remotePatterns.push({
-    protocol: "https",
-    hostname: "**",
-  });
 }
+
+// Allow all origins for next/image
+nextConfig.images.remotePatterns.push({
+  protocol: "https",
+  hostname: "**",
+});
 
 const sentryOptions = {
   // For all available options, see:

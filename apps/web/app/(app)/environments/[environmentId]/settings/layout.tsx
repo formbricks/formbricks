@@ -49,7 +49,7 @@ export default async function SettingsLayout({ children, params }) {
           isMultiLanguageAllowed={isMultiLanguageAllowed}
         />
         <div className="w-full md:ml-64">
-          <div className="max-w-4xl px-20 pb-6 pt-14 md:pt-6">
+          <div className="max-w-7xl px-20 pb-6 pt-14 md:pt-6">
             <div>{children}</div>
           </div>
         </div>

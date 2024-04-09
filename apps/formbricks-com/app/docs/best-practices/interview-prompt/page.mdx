@@ -1,5 +1,5 @@
 import DemoPreview from "@/components/dummyUI/DemoPreview";
-import Image from "next/image";
+import { MdxImage } from "@/components/shared/MdxImage";
 
 import ActionCSS from "./action-css.webp";
 import ActionInner from "./action-innertext.webp";
@@ -48,8 +48,7 @@ To display an Interview Prompt in your app you want to proceed as follows:
 3. That’s it! 🎉
 
 <Note>
-  ## Formbricks Widget running?
-   We assume that you have already installed the Formbricks Widget in your web
+  ## Formbricks Widget running? We assume that you have already installed the Formbricks Widget in your web
   app. It’s required to display messages and surveys in your app. If not, please follow the [Quick Start Guide
   (15mins).](/docs/getting-started/quickstart-in-app-survey)
 </Note>
@@ -60,7 +59,7 @@ If you don't have an account yet, create one at [app.formbricks.com](https://app
 
 Click on "Create Survey" and choose the template “Interview Prompt”:
 
-<Image
+<MdxImage
   src={CreatePrompt}
   alt="Create interview prompt by template"
   quality="100"
@@ -71,7 +70,7 @@ Click on "Create Survey" and choose the template “Interview Prompt”:
 
 Update the prompt, description and button text to match your products tonality. You can also update the button color in the Product Settings.
 
-<Image
+<MdxImage
   src={ChangeText}
   alt="Change text content"
   quality="100"
@@ -80,7 +79,7 @@ Update the prompt, description and button text to match your products tonality. 
 
 In the button settings you have to make sure it is set to “External URL”. In the URL field, copy your booking link (e.g. https://cal.com/company/user-interview). If you don’t have a booking link yet, head over to [cal.com](http://cal.com) and get one - they have the best free plan out there!
 
-<Image
+<MdxImage
   src={InterviewExample}
   alt="Add CSS action"
   quality="100"
@@ -92,8 +91,7 @@ Save, and move over to the “Audience” tab.
 ### 3. Pre-segment your audience (coming soon)
 
 <Note>
-  ## Filter by attribute coming soon 
-  We're working on pre-segmenting users by attributes. We will update this
+  ## Filter by attribute coming soon We're working on pre-segmenting users by attributes. We will update this
   manual in the next few days.
 </Note>
 
@@ -107,11 +105,10 @@ Great, now only the “Power User” segment will see our Interview Prompt. But 
 
 To create the trigger to show your Interview Prompt, go to the “Audience” tab, find the “When to send” card and choose “Add Action”. We will now use our super cool No-Code User Action Tracker:
 
-<Image src={AddAction} alt="Add action" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+<MdxImage src={AddAction} alt="Add action" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
-  ## You can also add actions in your code
-   You can also create [Code Actions](/docs/actions/code) using
+  ## You can also add actions in your code You can also create [Code Actions](/docs/actions/code) using
   `formbricks.track("Eventname")` - they will automatically appear in your Actions overview as long as the SDK
   is embedded.
 </Note>
@@ -120,7 +117,7 @@ Generally, we have two types of user actions: Page views and clicks. The Intervi
 
 1. **pageURL:** Whenever a user visits a page the survey will be displayed, as long as the other conditions match. Other conditions are pre-segmentation, if this user has seen a survey in the past 2 weeks, etc.
 
-<Image
+<MdxImage
   src={ActionPageurl}
   alt="Add page URL action"
   quality="100"
@@ -130,8 +127,13 @@ Generally, we have two types of user actions: Page views and clicks. The Intervi
 2. **innerText & CSS-Selector:** When a user clicks an element (like a button) with a specific text content or CSS selector, the prompt will be displayed as long as the other conditions also match.
 
 <div className="flex max-w-full flex-col sm:max-w-3xl lg:gap-1">
-  <Image src={ActionCSS} alt="Add CSS action" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
-  <Image
+  <MdxImage
+    src={ActionCSS}
+    alt="Add CSS action"
+    quality="100"
+    className="max-w-full rounded-lg sm:max-w-3xl"
+  />
+  <MdxImage
     src={ActionInner}
     alt="Add inner text action"
     quality="100"
@@ -141,7 +143,7 @@ Generally, we have two types of user actions: Page views and clicks. The Intervi
 
 ### 5. Select action in the “When to ask” card
 
-<Image
+<MdxImage
   src={SelectAction}
   alt="Select feedback button action"
   quality="100"
@@ -152,7 +154,7 @@ Generally, we have two types of user actions: Page views and clicks. The Intervi
 
 Scroll down to “Recontact Options”. Here you have to choose the correct settings to strike the right balance between asking for user feedback and preventing survey fatigue. Your settings also depend on the size of your user base or segment. If you e.g. have thousands of “Power Users” you can easily afford to only display the prompt once. If you have a smaller user base you might want to ask twice to get a sufficient amount of bookings:
 
-<Image
+<MdxImage
   src={RecontactOptions}
   alt="Set recontact options"
   quality="100"
@@ -161,11 +163,10 @@ Scroll down to “Recontact Options”. Here you have to choose the correct sett
 
 ### 7. Congrats! You’re ready to publish your survey 💃 🤸
 
-<Image src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
+<MdxImage src={Publish} alt="Publish survey" quality="100" className="max-w-full rounded-lg sm:max-w-3xl" />
 
 <Note>
-  ## Formbricks Widget running?
-   You need to have the Formbricks Widget installed to display the Feedback Box
+  ## Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box
   in your app. Please follow [this tutorial (Step 4 onwards)](/docs/getting-started/quickstart-in-app-survey)
   to install the widget.
 </Note>

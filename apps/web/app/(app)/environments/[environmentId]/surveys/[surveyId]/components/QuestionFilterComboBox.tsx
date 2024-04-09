@@ -23,7 +23,13 @@ type QuestionFilterComboBoxProps = {
   filterComboBoxValue: string | string[] | undefined;
   onChangeFilterValue: (o: string) => void;
   onChangeFilterComboBoxValue: (o: string | string[]) => void;
-  type: OptionsType.METADATA | TSurveyQuestionType | OptionsType.ATTRIBUTES | OptionsType.TAGS | undefined;
+  type:
+    | OptionsType.OTHERS
+    | TSurveyQuestionType
+    | OptionsType.ATTRIBUTES
+    | OptionsType.TAGS
+    | OptionsType.META
+    | undefined;
   handleRemoveMultiSelect: (value: string[]) => void;
   disabled?: boolean;
 };
@@ -53,7 +59,12 @@ const QuestionFilterComboBox = ({
 
   // when question type is multi selection so we remove the option from the options which has been already selected
   const options = isMultiple
-    ? filterComboBoxOptions?.filter((o) => !filterComboBoxValue?.includes(o))
+    ? filterComboBoxOptions?.filter(
+        (o) =>
+          !filterComboBoxValue?.includes(
+            typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o
+          )
+      )
     : filterComboBoxOptions;
 
   // disable the combo box for selection of value when question type is nps or rating and selected value is submitted or skipped
