@@ -8,6 +8,7 @@ import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environ
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { differenceInDays, format, startOfDay, subDays } from "date-fns";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -56,6 +57,9 @@ const getDifferenceOfDays = (from, to) => {
 };
 
 const CustomFilter = ({ survey }: CustomFilterProps) => {
+  const params = useParams();
+  const isSharingPage = !!params.sharingKey;
+
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
@@ -246,55 +250,58 @@ const CustomFilter = ({ survey }: CustomFilterProps) => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <DropdownMenu
-            onOpenChange={(value) => {
-              value && handleDatePickerClose();
-              setIsDownloadDropDownOpen(value);
-            }}>
-            <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
-              <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
-                <div className="hidden w-full items-center justify-between sm:flex">
-                  <span className="text-sm text-slate-700">Download</span>
-                  {isDownloadDropDownOpen ? (
-                    <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
-                  ) : (
-                    <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                  )}
+          {!isSharingPage && (
+            <DropdownMenu
+              onOpenChange={(value) => {
+                value && handleDatePickerClose();
+                setIsDownloadDropDownOpen(value);
+              }}>
+              <DropdownMenuTrigger asChild className="focus:bg-muted cursor-pointer outline-none">
+                <div className="min-w-auto h-auto rounded-md border border-slate-200 bg-white p-3 hover:border-slate-300 sm:flex sm:min-w-[11rem] sm:px-6 sm:py-3">
+                  <div className="hidden w-full items-center justify-between sm:flex">
+                    <span className="text-sm text-slate-700">Download</span>
+                    {isDownloadDropDownOpen ? (
+                      <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
+                    ) : (
+                      <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                    )}
+                  </div>
+                  <DownloadIcon className="block h-4 sm:hidden" />
                 </div>
-                <DownloadIcon className="block h-4 sm:hidden" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.ALL, "csv");
-                }}>
-                <p className="text-slate-700">All responses (CSV)</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.ALL, "xlsx");
-                }}>
-                <p className="text-slate-700">All responses (Excel)</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.FILTER, "csv");
-                }}>
-                <p className="text-slate-700">Current selection (CSV)</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="hover:ring-0"
-                onClick={() => {
-                  handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
-                }}>
-                <p className="text-slate-700">Current selection (Excel)</p>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.ALL, "csv");
+                  }}>
+                  <p className="text-slate-700">All responses (CSV)</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.ALL, "xlsx");
+                  }}>
+                  <p className="text-slate-700">All responses (Excel)</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.FILTER, "csv");
+                  }}>
+                  <p className="text-slate-700">Current selection (CSV)</p>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="hover:ring-0"
+                  onClick={() => {
+                    handleDowndloadResponses(FilterDownload.FILTER, "xlsx");
+                  }}>
+                  <p className="text-slate-700">Current selection (Excel)</p>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         {isDatePickerOpen && (
           <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
