@@ -119,6 +119,7 @@ export default function SurveyMenuBar({
   const handleBack = () => {
     const { updatedAt, ...localSurveyRest } = localSurvey;
     const { updatedAt: _, ...surveyRest } = survey;
+    localSurveyRest.triggers = localSurveyRest.triggers.filter((trigger) => Boolean(trigger));
 
     if (!isEqual(localSurveyRest, surveyRest)) {
       setConfirmDialogOpen(true);
@@ -362,10 +363,12 @@ export default function SurveyMenuBar({
       }
     }
 
+    strippedSurvey.triggers = strippedSurvey.triggers.filter((trigger) => Boolean(trigger));
     try {
       await updateSurveyAction({ ...strippedSurvey });
 
       setIsSurveySaving(false);
+      setLocalSurvey(strippedSurvey);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
         router.back();
