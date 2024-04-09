@@ -51,7 +51,7 @@ interface SummaryPageProps {
   surveyId: string;
   webAppUrl: string;
   product: TProduct;
-  user: TUser;
+  user?: TUser;
   membershipRole?: TMembershipRole;
   totalResponseCount: number;
 }
