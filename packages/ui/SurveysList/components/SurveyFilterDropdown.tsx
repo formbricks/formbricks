@@ -1,8 +1,9 @@
 import { ChevronDownIcon } from "lucide-react";
 
+import { TFilterOption } from "@formbricks/types/surveys";
+
 import { Checkbox } from "../../Checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../DropdownMenu";
-import { TFilterOption } from "./SurveyFilters";
 
 interface SurveyFilterDropdownProps {
   title: string;

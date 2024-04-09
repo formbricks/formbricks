@@ -8,8 +8,8 @@ import { TSurvey, TSurveyFilters } from "@formbricks/types/surveys";
 
 import { Button } from "../v2/Button";
 import { getSurveysAction } from "./actions";
-import SurveyCard from "./components/SurveyCard";
-import SurveyFilters from "./components/SurveyFilters";
+import { SurveyCard } from "./components/SurveyCard";
+import { SurveyFilters } from "./components/SurveyFilters";
 import { getFormattedFilters } from "./util";
 
 interface SurveysListProps {
@@ -29,14 +29,14 @@ export const initialFilters: TSurveyFilters = {
   sortBy: "updatedAt",
 };
 
-export default function SurveysList({
+export const SurveysList = ({
   environment,
   otherEnvironment,
   isViewer,
   WEBAPP_URL,
   userId,
   surveysPerPage: surveysLimit,
-}: SurveysListProps) {
+}: SurveysListProps) => {
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -45,21 +45,28 @@ export default function SurveysList({
 
   const filters = useMemo(() => getFormattedFilters(surveyFilters, userId), [surveyFilters, userId]);
 
-  // Initialize orientation state with a function that checks if window is defined
-  const [orientation, setOrientation] = useState(() =>
-    typeof localStorage !== "undefined" ? localStorage.getItem("surveyOrientation") || "grid" : "grid"
-  );
+  const [orientation, setOrientation] = useState("");
 
-  // Save orientation to localStorage
   useEffect(() => {
-    localStorage.setItem("surveyOrientation", orientation);
-  }, [orientation]);
+    // Initialize orientation state with a function that checks if window is defined
+    const orientationFromLocalStorage = localStorage.getItem("surveyOrientation");
+    if (orientationFromLocalStorage) {
+      setOrientation(orientationFromLocalStorage);
+    } else {
+      setOrientation("grid");
+      localStorage.setItem("surveyOrientation", "grid");
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchInitialSurveys() {
       setIsFetching(true);
       const res = await getSurveysAction(environment.id, surveysLimit, undefined, filters);
-      if (res.length < surveysLimit) setHasMore(false);
+      if (res.length < surveysLimit) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
       setSurveys(res);
       setIsFetching(false);
     }
@@ -71,7 +78,10 @@ export default function SurveysList({
     const newSurveys = await getSurveysAction(environment.id, surveysLimit, surveys.length, filters);
     if (newSurveys.length === 0 || newSurveys.length < surveysLimit) {
       setHasMore(false);
+    } else {
+      setHasMore(true);
     }
+
     setSurveys([...surveys, ...newSurveys]);
     setIsFetching(false);
   }, [environment.id, surveys, surveysLimit, filters]);
@@ -168,4 +178,4 @@ export default function SurveysList({
       )}
     </div>
   );
-}
+};

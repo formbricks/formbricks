@@ -23,7 +23,7 @@ export const getSurveyAction = async (surveyId: string) => {
   return await getSurvey(surveyId);
 };
 
-export async function duplicateSurveyAction(environmentId: string, surveyId: string) {
+export const duplicateSurveyAction = async (environmentId: string, surveyId: string) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -32,13 +32,13 @@ export async function duplicateSurveyAction(environmentId: string, surveyId: str
 
   const duplicatedSurvey = await duplicateSurvey(environmentId, surveyId, session.user.id);
   return duplicatedSurvey;
-}
+};
 
-export async function copyToOtherEnvironmentAction(
+export const copyToOtherEnvironmentAction = async (
   environmentId: string,
   surveyId: string,
   targetEnvironmentId: string
-) {
+) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -196,7 +196,7 @@ export async function copyToOtherEnvironmentAction(
     environmentId: targetEnvironmentId,
   });
   return newSurvey;
-}
+};
 
 export const deleteSurveyAction = async (surveyId: string) => {
   const session = await getServerSession(authOptions);
@@ -213,7 +213,7 @@ export const deleteSurveyAction = async (surveyId: string) => {
   await deleteSurvey(surveyId);
 };
 
-export async function generateSingleUseIdAction(surveyId: string, isEncrypted: boolean): Promise<string> {
+export const generateSingleUseIdAction = async (surveyId: string, isEncrypted: boolean): Promise<string> => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -222,14 +222,14 @@ export async function generateSingleUseIdAction(surveyId: string, isEncrypted: b
   if (!hasUserSurveyAccess) throw new AuthorizationError("Not authorized");
 
   return generateSurveySingleUseId(isEncrypted);
-}
+};
 
-export async function getSurveysAction(
+export const getSurveysAction = async (
   environmentId: string,
   limit?: number,
   offset?: number,
   filterCriteria?: TSurveyFilterCriteria
-) {
+) => {
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthorizationError("Not authorized");
 
@@ -237,4 +237,4 @@ export async function getSurveysAction(
   if (!isAuthorized) throw new AuthorizationError("Not authorized");
 
   return await getSurveys(environmentId, limit, offset, filterCriteria);
-}
+};

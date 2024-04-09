@@ -595,12 +595,28 @@ export const ZSurveyFilterCriteria = z.object({
 
 export type TSurveyFilterCriteria = z.infer<typeof ZSurveyFilterCriteria>;
 
-export type TSurveyFilters = {
-  name: string;
-  createdBy: ("you" | "others")[];
-  status: TSurveyStatus[];
-  type: TSurveyType[];
-  sortBy: "createdAt" | "updatedAt" | "name";
-};
+const ZSurveyFilters = z.object({
+  name: z.string(),
+  createdBy: z.array(z.enum(["you", "others"])),
+  status: z.array(ZSurveyStatus),
+  type: z.array(ZSurveyType),
+  sortBy: z.enum(["createdAt", "updatedAt", "name"]),
+});
+
+export type TSurveyFilters = z.infer<typeof ZSurveyFilters>;
 
 export type TSurveyEditorTabs = "questions" | "settings" | "styling";
+
+const ZFilterOption = z.object({
+  label: z.string(),
+  value: z.string(),
+});
+
+export type TFilterOption = z.infer<typeof ZFilterOption>;
+
+const ZSortOption = z.object({
+  label: z.string(),
+  value: z.enum(["createdAt", "updatedAt", "name"]),
+});
+
+export type TSortOption = z.infer<typeof ZSortOption>;

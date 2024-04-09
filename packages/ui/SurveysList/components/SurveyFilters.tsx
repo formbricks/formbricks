@@ -2,7 +2,7 @@ import { ChevronDownIcon, Equal, Grid2X2, Search, X } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "react-use";
 
-import { TSurveyFilters } from "@formbricks/types/surveys";
+import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys";
 
 import { initialFilters } from "..";
 import { Button } from "../../Button";
@@ -16,14 +16,6 @@ interface SurveyFilterProps {
   setOrientation: (orientation: string) => void;
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
-}
-export interface TFilterOption {
-  label: string;
-  value: string;
-}
-export interface TSortOption {
-  label: string;
-  value: "createdAt" | "updatedAt" | "name";
 }
 
 const creatorOptions: TFilterOption[] = [
@@ -63,12 +55,12 @@ const getToolTipContent = (orientation: string) => {
   return <div>{orientation} View</div>;
 };
 
-export default function SurveyFilters({
+export const SurveyFilters = ({
   orientation,
   setOrientation,
   surveyFilters,
   setSurveyFilters,
-}: SurveyFilterProps) {
+}: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
 
@@ -112,6 +104,11 @@ export default function SurveyFilters({
 
   const handleSortChange = (option: TSortOption) => {
     setSurveyFilters((prev) => ({ ...prev, sortBy: option.value }));
+  };
+
+  const handleOrientationChange = (value: string) => {
+    setOrientation(value);
+    localStorage.setItem("surveyOrientation", value);
   };
 
   return (
@@ -183,7 +180,7 @@ export default function SurveyFilters({
           className="bg-slate-900 text-white">
           <div
             className={`flex  h-8 w-8  items-center justify-center  rounded-lg border  p-1 ${orientation === "list" ? "bg-slate-900 text-white" : "bg-white"}`}
-            onClick={() => setOrientation("list")}>
+            onClick={() => handleOrientationChange("list")}>
             <Equal className="h-5 w-5" />
           </div>
         </TooltipRenderer>
@@ -194,7 +191,7 @@ export default function SurveyFilters({
           className="bg-slate-900 text-white">
           <div
             className={`flex h-8 w-8  items-center justify-center rounded-lg border  p-1 ${orientation === "grid" ? "bg-slate-900 text-white" : "bg-white"}`}
-            onClick={() => setOrientation("grid")}>
+            onClick={() => handleOrientationChange("grid")}>
             <Grid2X2 className="h-5 w-5" />
           </div>
         </TooltipRenderer>
@@ -226,4 +223,4 @@ export default function SurveyFilters({
       </div>
     </div>
   );
-}
+};

@@ -9,7 +9,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 
 import { SurveyStatusIndicator } from "../../SurveyStatusIndicator";
 import { generateSingleUseIdAction } from "../actions";
-import SurveyDropDownMenu from "./SurveyDropdownMenu";
+import { SurveyDropDownMenu } from "./SurveyDropdownMenu";
 
 interface SurveyCardProps {
   survey: TSurvey;
@@ -21,7 +21,7 @@ interface SurveyCardProps {
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
 }
-export default function SurveyCard({
+export const SurveyCard = ({
   survey,
   environment,
   otherEnvironment,
@@ -30,7 +30,7 @@ export default function SurveyCard({
   orientation,
   deleteSurvey,
   duplicateSurvey,
-}: SurveyCardProps) {
+}: SurveyCardProps) => {
   const isSurveyCreationDeletionDisabled = isViewer;
 
   const surveyStatusLabel = useMemo(() => {
@@ -164,4 +164,4 @@ export default function SurveyCard({
   };
   if (orientation === "grid") return renderGridContent();
   else return renderListContent();
-}
+};
