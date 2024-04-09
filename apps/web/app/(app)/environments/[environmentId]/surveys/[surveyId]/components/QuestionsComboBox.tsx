@@ -13,10 +13,12 @@ import {
   ImageIcon,
   LanguagesIcon,
   ListIcon,
+  MessageSquareTextIcon,
   MousePointerClickIcon,
   Rows3Icon,
   SmartphoneIcon,
   StarIcon,
+  User,
 } from "lucide-react";
 import * as React from "react";
 
@@ -63,16 +65,18 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
     switch (type) {
       case OptionsType.QUESTIONS:
         switch (questionType) {
-          case TSurveyQuestionType.Rating:
-            return <StarIcon width={18} className="text-white" />;
-          case TSurveyQuestionType.CTA:
-            return <MousePointerClickIcon width={18} className="text-white" />;
           case TSurveyQuestionType.OpenText:
-            return <HelpCircleIcon width={18} className="text-white" />;
+            return <MessageSquareTextIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionType.Rating:
+            return <StarIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionType.CTA:
+            return <MousePointerClickIcon width={18} height={18} className="text-white" />;
+          case TSurveyQuestionType.OpenText:
+            return <HelpCircleIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.MultipleChoiceMulti:
-            return <ListIcon width={18} className="text-white" />;
+            return <ListIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.MultipleChoiceSingle:
-            return <Rows3Icon width={18} className="text-white" />;
+            return <Rows3Icon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.NPS:
             return <NetPromoterScoreIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionType.Consent:
@@ -83,7 +87,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <GridIcon width={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
-        return <HashIcon width={18} className="text-white" />;
+        return <User width={18} height={18} className="text-white" />;
       case OptionsType.META:
         switch (label) {
           case "device":
