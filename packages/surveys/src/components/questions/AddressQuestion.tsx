@@ -4,7 +4,7 @@ import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
@@ -41,7 +41,7 @@ export default function AddressQuestion({
   const [startTime, setStartTime] = useState(performance.now());
   const [hasFilled, setHasFilled] = useState(false);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
-
+  const formRef = useRef<HTMLFormElement>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime);
 
   const safeValue = useMemo(() => {
@@ -121,8 +121,25 @@ export default function AddressQuestion({
     [question.id, isInIframe]
   );
 
+  const handleKeyPress = (event: KeyboardEvent, currentIndex: number) => {
+    if (event.key === "Enter") {
+      event.preventDefault(); // Prevent the default form submission on Enter key
+
+      if (currentIndex < inputConfig.length - 1) {
+        // Focus the next input field
+        const nextInput = document.getElementById(`${question.id}-${currentIndex + 1}`);
+        if (nextInput) {
+          nextInput.focus();
+        }
+      } else {
+        // Submit the form if it's the last input field
+        formRef.current?.requestSubmit();
+      }
+    }
+  };
+
   return (
-    <form key={question.id} onSubmit={handleSubmit} className="w-full">
+    <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
       {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
       <Headline
         headline={getLocalizedValue(question.headline, languageCode)}
@@ -143,6 +160,7 @@ export default function AddressQuestion({
             placeholder={placeholder}
             tabIndex={index + 1}
             required={required}
+            onKeyPress={(e) => handleKeyPress(e, index)}
             value={safeValue[index] || ""}
             onInput={(e) => handleInputChange(e.currentTarget.value, index)}
             autoFocus={!isInIframe && index === 0}
