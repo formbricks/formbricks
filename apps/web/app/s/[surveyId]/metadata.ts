@@ -29,7 +29,7 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
     metadataBase: new URL(WEBAPP_URL),
     openGraph: {
       title: survey.name,
-      description: "Create your own survey like this with Formbricks' open source survey suite.",
+      description: "Thanks a lot for your time 🙏",
       url: `/s/${survey.id}`,
       siteName: "",
       images: [ogImgURL],
@@ -39,7 +39,7 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
     twitter: {
       card: "summary_large_image",
       title: survey.name,
-      description: "Create your own survey like this with Formbricks' open source survey suite.",
+      description: "Thanks a lot for your time 🙏",
       images: [ogImgURL],
     },
   };
