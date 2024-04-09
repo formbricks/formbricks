@@ -10,14 +10,18 @@ import ResponseTimeline from "@/app/(app)/environments/[environmentId]/surveys/[
 import CustomFilter from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import SummaryHeader from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SummaryHeader";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import { useSearchParams } from "next/navigation";
+import {
+  getResponseCountBySurveySharingKeyAction,
+  getResponsesBySurveySharingKeyAction,
+} from "@/app/share/[sharingKey]/action";
+import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TSurveyPersonAttributes } from "@formbricks/types/responses";
+import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
@@ -31,9 +35,8 @@ interface ResponsePageProps {
   surveyId: string;
   webAppUrl: string;
   product: TProduct;
-  user: TUser;
+  user?: TUser;
   environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
   responsesPerPage: number;
   membershipRole?: TMembershipRole;
   totalResponseCount: number;
@@ -47,11 +50,14 @@ const ResponsePage = ({
   product,
   user,
   environmentTags,
-  attributes,
   responsesPerPage,
   membershipRole,
   totalResponseCount,
 }: ResponsePageProps) => {
+  const params = useParams();
+  const sharingKey = params.sharingKey as string;
+  const isSharingPage = !!sharingKey;
+
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [responses, setResponses] = useState<TResponse[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -73,13 +79,26 @@ const ResponsePage = ({
 
   const fetchNextPage = useCallback(async () => {
     const newPage = page + 1;
-    const newResponses = await getResponsesAction(surveyId, newPage, responsesPerPage, filters);
+
+    let newResponses: TResponse[] = [];
+
+    if (isSharingPage) {
+      newResponses = await getResponsesBySurveySharingKeyAction(
+        sharingKey,
+        newPage,
+        responsesPerPage,
+        filters
+      );
+    } else {
+      newResponses = await getResponsesAction(surveyId, newPage, responsesPerPage, filters);
+    }
+
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
       setHasMore(false);
     }
     setResponses([...responses, ...newResponses]);
     setPage(newPage);
-  }, [filters, page, responses, responsesPerPage, surveyId]);
+  }, [filters, isSharingPage, page, responses, responsesPerPage, sharingKey, surveyId]);
 
   const deleteResponse = (responseId: string) => {
     setResponses(responses.filter((response) => response.id !== responseId));
@@ -100,17 +119,32 @@ const ResponsePage = ({
 
   useEffect(() => {
     const handleResponsesCount = async () => {
-      const responseCount = await getResponseCountAction(surveyId, filters);
+      let responseCount = 0;
+
+      if (isSharingPage) {
+        responseCount = await getResponseCountBySurveySharingKeyAction(sharingKey, filters);
+      } else {
+        responseCount = await getResponseCountAction(surveyId, filters);
+      }
+
       setResponseCount(responseCount);
     };
     handleResponsesCount();
-  }, [filters, surveyId]);
+  }, [filters, isSharingPage, sharingKey, surveyId]);
 
   useEffect(() => {
     const fetchInitialResponses = async () => {
       try {
         setFetchingFirstPage(true);
-        const responses = await getResponsesAction(surveyId, 1, responsesPerPage, filters);
+
+        let responses: TResponse[] = [];
+
+        if (isSharingPage) {
+          responses = await getResponsesBySurveySharingKeyAction(sharingKey, 1, responsesPerPage, filters);
+        } else {
+          responses = await getResponsesAction(surveyId, 1, responsesPerPage, filters);
+        }
+
         if (responses.length < responsesPerPage) {
           setHasMore(false);
         }
@@ -120,7 +154,7 @@ const ResponsePage = ({
       }
     };
     fetchInitialResponses();
-  }, [surveyId, filters, responsesPerPage]);
+  }, [surveyId, filters, responsesPerPage, sharingKey, isSharingPage]);
 
   useEffect(() => {
     setPage(1);
@@ -140,8 +174,8 @@ const ResponsePage = ({
         membershipRole={membershipRole}
       />
       <div className="flex gap-1.5">
-        <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
-        <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />
+        <CustomFilter survey={survey} />
+        {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
       </div>
       <SurveyResultsTabs
         activeId="responses"
@@ -163,6 +197,7 @@ const ResponsePage = ({
         isFetchingFirstPage={isFetchingFirstPage}
         responseCount={responseCount}
         totalResponseCount={totalResponseCount}
+        isSharingPage={isSharingPage}
       />
     </ContentWrapper>
   );
