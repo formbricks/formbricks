@@ -116,7 +116,16 @@ const nextConfig = {
         ],
       },
       {
-        source: "/(.*)",
+        source: "/environments/(.*)",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+        ],
+      },
+      {
+        source: "/auth/(.*)",
         headers: [
           {
             key: "X-Frame-Options",
