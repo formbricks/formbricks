@@ -166,13 +166,9 @@ export const ThemeStylingPreviewSurvey = ({
             </Modal>
           ) : (
             <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
-              {product.logo?.url && (
+              {!product.styling?.isLogoHidden && product.logo?.url && (
                 <div className="absolute left-5 top-5">
-                  <ClientLogo
-                    product={product}
-                    previewSurvey
-                    isLogoHidden={product.styling?.isLogoHidden ?? true}
-                  />
+                  <ClientLogo product={product} previewSurvey />
                 </div>
               )}
               <div
