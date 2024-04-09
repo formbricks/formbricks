@@ -132,7 +132,7 @@ export default function QuestionsView({
 
     // check if we are recalling from this question
     updatedSurvey.questions.forEach((question) => {
-      if (question.headline[selectedLanguageCode].includes(`recall:${questionId}`)) {
+      if (question.headline[selectedLanguageCode]?.includes(`recall:${questionId}`)) {
         const recallInfo = extractRecallInfo(getLocalizedValue(question.headline, selectedLanguageCode));
         if (recallInfo) {
           question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replace(

@@ -7,6 +7,7 @@ import {
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
   TSurveyLanguage,
+  TSurveyMatrixQuestion,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyOpenTextQuestion,
@@ -37,6 +38,14 @@ const handleI18nCheckForMultipleChoice = (
   return question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
 };
 
+const handleI18nCheckForMatrixLabels = (
+  question: TSurveyMatrixQuestion,
+  languages: TSurveyLanguage[]
+): boolean => {
+  const rowsAndColumns = [...question.rows, ...question.columns];
+  return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
+};
+
 // Validation rules
 export const validationRules = {
   openText: (question: TSurveyOpenTextQuestion, languages: TSurveyLanguage[]) => {
@@ -62,6 +71,9 @@ export const validationRules = {
     return !question.required && question.dismissButtonLabel
       ? isLabelValidForAllLanguages(question.dismissButtonLabel, languages)
       : true;
+  },
+  matrix: (question: TSurveyMatrixQuestion, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForMatrixLabels(question, languages);
   },
   // Assuming headline is of type TI18nString
   defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[]) => {
