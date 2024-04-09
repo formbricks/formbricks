@@ -126,6 +126,48 @@ export default function SurveyMenuBar({
     }
   };
 
+  // Checks if there is a cycle present in the survey data logic.
+  const hasCyclePresent = (surveyData) => {
+    const visited = {};
+    const recStack = {};
+
+    const isCycleUtil = (questionId) => {
+      if (!visited[questionId]) {
+        visited[questionId] = true;
+        recStack[questionId] = true;
+
+        const question = surveyData.find((q) => q.id === questionId);
+        if (question && question.logic && question.logic.length > 0) {
+          for (const logic of question.logic) {
+            const destination = logic.destination;
+            if (!visited[destination] && isCycleUtil(destination)) {
+              return true;
+            } else if (recStack[destination]) {
+              return true;
+            }
+          }
+        } else {
+          // Handle default behavior
+          const nextQuestionIndex = surveyData.findIndex((q) => q.id === questionId) + 1;
+          const nextQuestion = surveyData[nextQuestionIndex];
+          if (nextQuestion && !visited[nextQuestion.id] && isCycleUtil(nextQuestion.id)) {
+            return true;
+          }
+        }
+      }
+      recStack[questionId] = false;
+      return false;
+    };
+
+    for (const question of surveyData) {
+      const questionId = question.id;
+      if (isCycleUtil(questionId)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const validateSurvey = (survey: TSurvey) => {
     const existingQuestionIds = new Set();
     faultyQuestions = [];
@@ -282,6 +324,11 @@ export default function SurveyMenuBar({
       return;
     }
 
+    if (hasCyclePresent(localSurvey?.questions)) {
+      toast.error("Cycle present in logic. Cannot proceed.");
+      return;
+    }
+
     setIsSurveySaving(true);
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {
@@ -366,6 +413,13 @@ export default function SurveyMenuBar({
   const handleSurveyPublish = async () => {
     try {
       setIsSurveyPublishing(true);
+
+      if (hasCyclePresent(localSurvey?.questions)) {
+        toast.error("Cycle present in logic. Cannot proceed.");
+        setIsSurveyPublishing(false);
+        return;
+      }
+
       if (!validateSurvey(localSurvey)) {
         setIsSurveyPublishing(false);
         return;
