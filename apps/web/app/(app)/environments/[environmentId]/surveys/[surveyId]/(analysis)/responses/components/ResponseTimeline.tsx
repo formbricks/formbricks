@@ -1,9 +1,9 @@
 "use client";
 
 import { EmptyInAppSurveys } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/EmptyInAppSurveys";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { getMembershipByUserIdTeamIdAction } from "@formbricks/lib/membership/hooks/actions";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
@@ -46,6 +46,7 @@ export default function ResponseTimeline({
   totalResponseCount,
   isSharingPage = false,
 }: ResponseTimelineProps) {
+  const [isViewer, setIsViewer] = useState(false);
   const loadingRef = useRef(null);
 
   useEffect(() => {
@@ -71,8 +72,16 @@ export default function ResponseTimeline({
     };
   }, [fetchNextPage, hasMore]);
 
-  const { membershipRole } = useMembershipRole(survey.environmentId, isSharingPage);
-  const { isViewer } = getAccessFlags(membershipRole);
+  useEffect(() => {
+    const getRole = async () => {
+      if (isSharingPage) return setIsViewer(true);
+
+      const membershipRole = await getMembershipByUserIdTeamIdAction(survey.environmentId);
+      const { isViewer } = getAccessFlags(membershipRole);
+      setIsViewer(isViewer);
+    };
+    getRole();
+  }, [survey.environmentId, isSharingPage]);
 
   return (
     <div className="space-y-4">
