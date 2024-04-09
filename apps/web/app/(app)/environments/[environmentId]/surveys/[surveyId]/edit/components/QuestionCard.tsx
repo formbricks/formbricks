@@ -109,7 +109,7 @@ export default function QuestionCard({
     });
   };
 
-  const getIsRequiredToggledDisabled = (): boolean => {
+  const getIsRequiredToggleDisabled = (): boolean => {
     if (question.type === "address") {
       return [
         question.isAddressLine1Required,
@@ -473,7 +473,7 @@ export default function QuestionCard({
                     <Switch
                       id="required-toggle"
                       checked={question.required}
-                      disabled={getIsRequiredToggledDisabled()}
+                      disabled={getIsRequiredToggleDisabled()}
                       onClick={(e) => {
                         e.stopPropagation();
                         updateQuestion(questionIdx, { required: !question.required });
