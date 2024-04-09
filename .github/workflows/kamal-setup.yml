@@ -16,6 +16,7 @@ jobs:
       WEBAPP_URL: ${{ vars.WEBAPP_URL }}
       NEXTAUTH_URL: ${{ vars.NEXTAUTH_URL }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      MIGRATE_DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
       ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
       SHORT_URL_BASE: ${{ vars.SHORT_URL_BASE }}

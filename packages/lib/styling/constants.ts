@@ -114,6 +114,7 @@ export const PREVIEW_SURVEY = {
   displayOption: "displayOnce",
   recontactDays: null,
   autoClose: null,
+  runOnDate: null,
   closeOnDate: null,
   delay: 0,
   displayPercentage: null,

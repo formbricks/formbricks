@@ -129,19 +129,56 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
     });
   }
 
-  // For Metadata
-  if (filterCriteria?.metadata) {
-    const metadata: Prisma.ResponseWhereInput[] = [];
+  // for meta
+  if (filterCriteria?.meta) {
+    const meta: Prisma.ResponseWhereInput[] = [];
 
-    Object.entries(filterCriteria.metadata).forEach(([key, val]) => {
+    Object.entries(filterCriteria.meta).forEach(([key, val]) => {
+      let updatedKey: string[] = [];
+      if (["browser", "os", "device"].includes(key)) {
+        updatedKey = ["userAgent", key];
+      } else {
+        updatedKey = [key];
+      }
+
       switch (val.op) {
         case "equals":
-          metadata.push({
+          meta.push({
+            meta: {
+              path: updatedKey,
+              equals: val.value,
+            },
+          });
+          break;
+        case "notEquals":
+          meta.push({
+            meta: {
+              path: updatedKey,
+              not: val.value,
+            },
+          });
+          break;
+      }
+    });
+
+    whereClause.push({
+      AND: meta,
+    });
+  }
+
+  // For Language
+  if (filterCriteria?.others) {
+    const others: Prisma.ResponseWhereInput[] = [];
+
+    Object.entries(filterCriteria.others).forEach(([key, val]) => {
+      switch (val.op) {
+        case "equals":
+          others.push({
             [key.toLocaleLowerCase()]: val.value,
           });
           break;
         case "notEquals":
-          metadata.push({
+          others.push({
             [key.toLocaleLowerCase()]: {
               not: val.value,
             },
@@ -150,7 +187,7 @@ export const buildWhereClause = (filterCriteria?: TResponseFilterCriteria) => {
       }
     });
     whereClause.push({
-      AND: metadata,
+      AND: others,
     });
   }
 

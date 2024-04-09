@@ -118,6 +118,7 @@ export default function SurveyMenuBar({
   const handleBack = () => {
     const { updatedAt, ...localSurveyRest } = localSurvey;
     const { updatedAt: _, ...surveyRest } = survey;
+    localSurveyRest.triggers = localSurveyRest.triggers.filter((trigger) => Boolean(trigger));
 
     if (!isEqual(localSurveyRest, surveyRest)) {
       setConfirmDialogOpen(true);
@@ -347,10 +348,12 @@ export default function SurveyMenuBar({
       return;
     }
 
+    strippedSurvey.triggers = strippedSurvey.triggers.filter((trigger) => Boolean(trigger));
     try {
       await updateSurveyAction({ ...strippedSurvey });
 
       setIsSurveySaving(false);
+      setLocalSurvey(strippedSurvey);
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
         router.back();
@@ -370,7 +373,8 @@ export default function SurveyMenuBar({
         setIsSurveyPublishing(false);
         return;
       }
-      await updateSurveyAction({ ...localSurvey, status: "inProgress" });
+      const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
+      await updateSurveyAction({ ...localSurvey, status });
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
       toast.error("An error occured while publishing the survey.");

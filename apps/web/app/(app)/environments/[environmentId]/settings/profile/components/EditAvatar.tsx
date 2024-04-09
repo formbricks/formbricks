@@ -1,6 +1,9 @@
 "use client";
 
-import { updateAvatarAction } from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
+import {
+  removeAvatarAction,
+  updateAvatarAction,
+} from "@/app/(app)/environments/[environmentId]/settings/profile/actions";
 import { handleFileUpload } from "@/app/lib/fileUpload";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
@@ -18,6 +21,10 @@ export function EditAvatar({ session, environmentId }: { session: Session; envir
   const handleUpload = async (file: File, environmentId: string) => {
     setIsLoading(true);
     try {
+      if (session?.user.imageUrl) {
+        // If avatar image already exist, then remove it before update action
+        await removeAvatarAction(environmentId);
+      }
       const { url, error } = await handleFileUpload(file, environmentId);
 
       if (error) {
@@ -34,6 +41,18 @@ export function EditAvatar({ session, environmentId }: { session: Session; envir
     }
 
     setIsLoading(false);
+  };
+
+  const handleRemove = async () => {
+    setIsLoading(true);
+
+    try {
+      await removeAvatarAction(environmentId);
+    } catch (err) {
+      toast.error("Avatar update failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -55,27 +74,34 @@ export function EditAvatar({ session, environmentId }: { session: Session; envir
         <ProfileAvatar userId={session.user.id} imageUrl={session.user.imageUrl} />
       </div>
 
-      <Button
-        className="mt-4"
-        variant="darkCTA"
-        onClick={() => {
-          inputRef.current?.click();
-        }}>
-        Upload Image
-        <input
-          type="file"
-          id="hiddenFileInput"
-          ref={inputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              await handleUpload(file, environmentId);
-            }
-          }}
-        />
-      </Button>
+      <div className="mt-4">
+        <Button
+          className="mr-2"
+          variant="darkCTA"
+          onClick={() => {
+            inputRef.current?.click();
+          }}>
+          {session?.user.imageUrl ? "Change Image" : "Upload Image"}
+          <input
+            type="file"
+            id="hiddenFileInput"
+            ref={inputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                await handleUpload(file, environmentId);
+              }
+            }}
+          />
+        </Button>
+        {session?.user?.imageUrl && (
+          <Button className="mr-2" variant="warn" onClick={handleRemove}>
+            Remove Image
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
