@@ -1,6 +1,6 @@
-import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
+import SlackLogo from "@/images/slacklogo.png";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -8,10 +8,10 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
-  TIntegrationGoogleSheets,
-  TIntegrationGoogleSheetsConfigData,
-  TIntegrationGoogleSheetsInput,
-} from "@formbricks/types/integration/googleSheet";
+  TIntegrationSlack,
+  TIntegrationSlackConfigData,
+  TIntegrationSlackInput,
+} from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys";
 import { Button } from "@formbricks/ui/Button";
 import { Checkbox } from "@formbricks/ui/Checkbox";
@@ -19,50 +19,39 @@ import { DropdownSelector } from "@formbricks/ui/DropdownSelector";
 import { Label } from "@formbricks/ui/Label";
 import { Modal } from "@formbricks/ui/Modal";
 
-import GoogleSheetLogo from "../images/google-sheets-small.png";
+import { createOrUpdateIntegrationAction } from "../../actions";
 
-interface AddWebhookModalProps {
+interface AddChannelMappingModalProps {
   environmentId: string;
-  open: boolean;
   surveys: TSurvey[];
+  open: boolean;
   setOpen: (v: boolean) => void;
-  spreadsheets: TIntegrationItem[];
-  googleSheetIntegration: TIntegrationGoogleSheets;
-  selectedIntegration?: (TIntegrationGoogleSheetsConfigData & { index: number }) | null;
+  slackIntegration: TIntegrationSlack;
+  channels: TIntegrationItem[];
+  selectedIntegration?: (TIntegrationSlackConfigData & { index: number }) | null;
 }
 
-export default function AddIntegrationModal({
+export const AddChannelMappingModal = ({
   environmentId,
   surveys,
   open,
   setOpen,
-  spreadsheets,
-  googleSheetIntegration,
+  channels,
+  slackIntegration,
   selectedIntegration,
-}: AddWebhookModalProps) {
+}: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
 
-  const integrationData = {
-    spreadsheetId: "",
-    spreadsheetName: "",
-    surveyId: "",
-    surveyName: "",
-    questionIds: [""],
-    questions: "",
-    createdAt: new Date(),
-  };
-
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
-  const [isLinkingSheet, setIsLinkingSheet] = useState(false);
+  const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
-  const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<any>(null);
+  const [selectedChannel, setSelectedChannel] = useState<TIntegrationItem | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const existingIntegrationData = googleSheetIntegration?.config?.data;
-  const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
-    type: "googleSheets",
+  const existingIntegrationData = slackIntegration?.config?.data;
+  const slackIntegrationData: TIntegrationSlackInput = {
+    type: "slack",
     config: {
-      key: googleSheetIntegration?.config?.key,
-      email: googleSheetIntegration.config.email,
+      key: slackIntegration?.config?.key,
       data: existingIntegrationData || [],
     },
   };
@@ -78,9 +67,9 @@ export default function AddIntegrationModal({
 
   useEffect(() => {
     if (selectedIntegration) {
-      setSelectedSpreadsheet({
-        id: selectedIntegration.spreadsheetId,
-        name: selectedIntegration.spreadsheetName,
+      setSelectedChannel({
+        id: selectedIntegration.channelId,
+        name: selectedIntegration.channelName,
       });
       setSelectedSurvey(
         surveys.find((survey) => {
@@ -93,10 +82,10 @@ export default function AddIntegrationModal({
     resetForm();
   }, [selectedIntegration, surveys]);
 
-  const linkSheet = async () => {
+  const linkChannel = async () => {
     try {
-      if (!selectedSpreadsheet) {
-        throw new Error("Please select a spreadsheet");
+      if (!selectedChannel) {
+        throw new Error("Please select a Slack channel");
       }
       if (!selectedSurvey) {
         throw new Error("Please select a survey");
@@ -105,32 +94,34 @@ export default function AddIntegrationModal({
       if (selectedQuestions.length === 0) {
         throw new Error("Please select at least one question");
       }
-      setIsLinkingSheet(true);
-      integrationData.spreadsheetId = selectedSpreadsheet.id;
-      integrationData.spreadsheetName = selectedSpreadsheet.name;
-      integrationData.surveyId = selectedSurvey.id;
-      integrationData.surveyName = selectedSurvey.name;
-      integrationData.questionIds = selectedQuestions;
-      integrationData.questions =
-        selectedQuestions.length === selectedSurvey?.questions.length
-          ? "All questions"
-          : "Selected questions";
-      integrationData.createdAt = new Date();
+      setIsLinkingChannel(true);
+      const integrationData: TIntegrationSlackConfigData = {
+        channelId: selectedChannel.id,
+        channelName: selectedChannel.name,
+        surveyId: selectedSurvey.id,
+        surveyName: selectedSurvey.name,
+        questionIds: selectedQuestions,
+        questions:
+          selectedQuestions.length === selectedSurvey?.questions.length
+            ? "All questions"
+            : "Selected questions",
+        createdAt: new Date(),
+      };
       if (selectedIntegration) {
         // update action
-        googleSheetIntegrationData.config!.data[selectedIntegration.index] = integrationData;
+        slackIntegrationData.config!.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
-        googleSheetIntegrationData.config!.data.push(integrationData);
+        slackIntegrationData.config!.data.push(integrationData);
       }
-      await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
+      await createOrUpdateIntegrationAction(environmentId, slackIntegrationData);
       toast.success(`Integration ${selectedIntegration ? "updated" : "added"} successfully`);
       resetForm();
       setOpen(false);
     } catch (e) {
       toast.error(e.message);
     } finally {
-      setIsLinkingSheet(false);
+      setIsLinkingChannel(false);
     }
   };
 
@@ -147,16 +138,16 @@ export default function AddIntegrationModal({
   };
 
   const resetForm = () => {
-    setIsLinkingSheet(false);
-    setSelectedSpreadsheet("");
+    setIsLinkingChannel(false);
+    setSelectedChannel(null);
     setSelectedSurvey(null);
   };
 
   const deleteLink = async () => {
-    googleSheetIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
+    slackIntegrationData.config!.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await createOrUpdateIntegrationAction(environmentId, googleSheetIntegrationData);
+      await createOrUpdateIntegrationAction(environmentId, slackIntegrationData);
       toast.success("Integration removed successfully");
       setOpen(false);
     } catch (error) {
@@ -166,12 +157,16 @@ export default function AddIntegrationModal({
     }
   };
 
-  const hasMatchingId = googleSheetIntegration.config.data.some((configData) => {
-    if (!selectedSpreadsheet) {
-      return false;
-    }
-    return configData.spreadsheetId === selectedSpreadsheet.id;
-  });
+  const hasMatchingId = useMemo(
+    () =>
+      slackIntegration.config.data.some((configData) => {
+        if (!selectedChannel) {
+          return false;
+        }
+        return configData.channelId === selectedChannel.id && !selectedIntegration;
+      }),
+    [selectedChannel, selectedIntegration, slackIntegration.config.data]
+  );
 
   return (
     <Modal open={open} setOpen={setOpenWithStates} noPadding closeOnOutsideClick={false}>
@@ -180,36 +175,34 @@ export default function AddIntegrationModal({
           <div className="flex w-full items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="mr-1.5 h-6 w-6 text-slate-500">
-                <Image className="w-12" src={GoogleSheetLogo} alt="Google Sheet logo" />
+                <Image className="w-12" src={SlackLogo} alt="Slack logo" />
               </div>
               <div>
-                <div className="text-xl font-medium text-slate-700">Link Google Sheet</div>
-                <div className="text-sm text-slate-500">Sync responses with a Google Sheet</div>
+                <div className="text-xl font-medium text-slate-700">Link Slack Channel</div>
               </div>
             </div>
           </div>
         </div>
-        <form onSubmit={handleSubmit(linkSheet)}>
+        <form onSubmit={handleSubmit(linkChannel)}>
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
               <div>
                 <div className="mb-4">
                   <DropdownSelector
-                    label="Select Spreadsheet"
-                    items={spreadsheets}
-                    selectedItem={selectedSpreadsheet}
-                    setSelectedItem={setSelectedSpreadsheet}
-                    disabled={spreadsheets.length === 0}
+                    label="Select Channel"
+                    items={channels}
+                    selectedItem={selectedChannel}
+                    setSelectedItem={setSelectedChannel}
+                    disabled={channels.length === 0}
                   />
-                  {selectedSpreadsheet && hasMatchingId && (
+                  {selectedChannel && hasMatchingId && (
                     <p className="text-xs text-amber-700">
-                      <strong>Warning:</strong> You have already connected one survey with this sheet. Your
-                      data will be inconsistent
+                      <strong>Note:</strong> You have already connected another survey to this channel.
                     </p>
                   )}
                   <p className="m-1 text-xs text-slate-500">
-                    {spreadsheets.length === 0 &&
-                      "You have to create at least one spreadshseet to be able to setup this integration"}
+                    {channels.length === 0 &&
+                      "You have to create at least one channel to be able to setup this integration"}
                   </p>
                 </div>
                 <div>
@@ -231,7 +224,7 @@ export default function AddIntegrationModal({
                   <Label htmlFor="Surveys">Questions</Label>
                   <div className="mt-1 rounded-lg border border-slate-200">
                     <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                      {checkForRecallInHeadline(selectedSurvey, "default")?.questions.map((question) => (
+                      {checkForRecallInHeadline(selectedSurvey, "default")?.questions?.map((question) => (
                         <div key={question.id} className="my-1 flex items-center space-x-2">
                           <label htmlFor={question.id} className="flex cursor-pointer items-center">
                             <Checkbox
@@ -257,13 +250,7 @@ export default function AddIntegrationModal({
           <div className="flex justify-end border-t border-slate-200 p-6">
             <div className="flex space-x-2">
               {selectedIntegration ? (
-                <Button
-                  type="button"
-                  variant="warn"
-                  loading={isDeleting}
-                  onClick={() => {
-                    deleteLink();
-                  }}>
+                <Button type="button" variant="warn" loading={isDeleting} onClick={deleteLink}>
                   Delete
                 </Button>
               ) : (
@@ -277,8 +264,8 @@ export default function AddIntegrationModal({
                   Cancel
                 </Button>
               )}
-              <Button variant="darkCTA" type="submit" loading={isLinkingSheet}>
-                {selectedIntegration ? "Update" : "Link Sheet"}
+              <Button variant="darkCTA" type="submit" loading={isLinkingChannel}>
+                {selectedIntegration ? "Update" : "Link Channel"}
               </Button>
             </div>
           </div>
@@ -286,4 +273,4 @@ export default function AddIntegrationModal({
       </div>
     </Modal>
   );
-}
+};
