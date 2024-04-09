@@ -160,6 +160,7 @@ const baseSurveyProperties = {
   autoClose: 10,
   delay: 0,
   autoComplete: 7,
+  runOnDate: null,
   closeOnDate: currentDate,
   redirectUrl: "http://github.com/formbricks/formbricks",
   recontactDays: 3,

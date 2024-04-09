@@ -34,7 +34,8 @@ export default function SurveyCard({
   const isSurveyCreationDeletionDisabled = isViewer;
 
   const surveyStatusLabel = useMemo(() => {
-    if (survey.status === "inProgress") return "Active";
+    if (survey.status === "inProgress") return "In Progress";
+    else if (survey.status === "scheduled") return "Scheduled";
     else if (survey.status === "completed") return "Completed";
     else if (survey.status === "draft") return "Draft";
     else if (survey.status === "paused") return "Paused";
@@ -98,7 +99,8 @@ export default function SurveyCard({
           <div
             className={cn(
               "mt-3 flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-xs text-slate-800",
-              surveyStatusLabel === "Active" && "bg-emerald-50",
+              surveyStatusLabel === "Scheduled" && "bg-slate-200",
+              surveyStatusLabel === "In Progress" && "bg-emerald-50",
               surveyStatusLabel === "Completed" && "bg-slate-200",
               surveyStatusLabel === "Draft" && "bg-slate-100",
               surveyStatusLabel === "Paused" && "bg-slate-100"
@@ -123,7 +125,8 @@ export default function SurveyCard({
         <div
           className={cn(
             "flex w-fit items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm text-slate-800",
-            surveyStatusLabel === "Active" && "bg-emerald-50",
+            surveyStatusLabel === "Scheduled" && "bg-slate-200",
+            surveyStatusLabel === "In Progress" && "bg-emerald-50",
             surveyStatusLabel === "Completed" && "bg-slate-200",
             surveyStatusLabel === "Draft" && "bg-slate-100",
             surveyStatusLabel === "Paused" && "bg-slate-100"

@@ -370,7 +370,8 @@ export default function SurveyMenuBar({
         setIsSurveyPublishing(false);
         return;
       }
-      await updateSurveyAction({ ...localSurvey, status: "inProgress" });
+      const status = localSurvey.runOnDate ? "scheduled" : "inProgress";
+      await updateSurveyAction({ ...localSurvey, status });
       router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
       toast.error("An error occured while publishing the survey.");
