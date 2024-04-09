@@ -184,9 +184,7 @@ export function Survey({
 
   const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFormPrefilling: Boolean = false) => {
     const questionId = Object.keys(responseData)[0];
-    if (isFormPrefilling && questionId === survey.questions[0].id) {
-      onChange(responseData);
-    }
+
     setLoadingElement(true);
     const nextQuestionId = getNextQuestionId(responseData, isFormPrefilling);
     const finished = nextQuestionId === "end";
@@ -200,7 +198,11 @@ export function Survey({
     // add to history
     setHistory([...history, questionId]);
     setLoadingElement(false);
-    onActiveQuestionChange(nextQuestionId);
+    if (isFormPrefilling && questionId === survey.questions[0].id) {
+      onChange(responseData);
+    } else {
+      onActiveQuestionChange(nextQuestionId);
+    }
   };
 
   const replaceRecallInfo = (text: string): string => {
