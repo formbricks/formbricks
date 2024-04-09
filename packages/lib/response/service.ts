@@ -14,6 +14,7 @@ import {
   TResponseInput,
   TResponseLegacyInput,
   TResponseUpdateInput,
+  TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
   TSurveySummary,
   ZResponse,
@@ -455,6 +456,70 @@ export const getResponsePersonAttributes = async (surveyId: string): Promise<TSu
   )();
 
   return responses;
+};
+
+export const getResponseMeta = async (surveyId: string): Promise<TSurveyMetaFieldFilter> => {
+  const meta = await unstable_cache(
+    async () => {
+      validateInputs([surveyId, ZId]);
+
+      try {
+        const responseMeta = await prisma.response.findMany({
+          where: {
+            surveyId: surveyId,
+          },
+          select: {
+            meta: true,
+          },
+        });
+
+        const meta: { [key: string]: Set<string> } = {};
+
+        responseMeta.forEach((response) => {
+          Object.entries(response.meta).forEach(([key, value]) => {
+            // skip url
+            if (key === "url") return;
+
+            // Handling nested objects (like userAgent)
+            if (typeof value === "object" && value !== null) {
+              Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+                if (typeof nestedValue === "string" && nestedValue) {
+                  if (!meta[nestedKey]) {
+                    meta[nestedKey] = new Set();
+                  }
+                  meta[nestedKey].add(nestedValue);
+                }
+              });
+            } else if (typeof value === "string" && value) {
+              if (!meta[key]) {
+                meta[key] = new Set();
+              }
+              meta[key].add(value);
+            }
+          });
+        });
+
+        // Convert Set to Array
+        const result = Object.fromEntries(
+          Object.entries(meta).map(([key, valueSet]) => [key, Array.from(valueSet)])
+        );
+
+        return result;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
+    },
+    [`getResponseMeta-${surveyId}`],
+    {
+      tags: [responseCache.tag.bySurveyId(surveyId)],
+      revalidate: SERVICES_REVALIDATION_INTERVAL,
+    }
+  )();
+
+  return meta;
 };
 
 export const getResponses = async (

@@ -26,6 +26,7 @@ const navigation = {
     { name: "Terms", href: "/terms", status: true },
     { name: "GDPR FAQ", href: "/gdpr", status: true },
     { name: "GDPR Guide", href: "/gdpr-guide", status: true },
+    { name: "Feedback Icon", href: "/feedback-icon", status: true },
   ],
   bestPractices: [
     { name: "Interview Prompt", href: "/interview-prompt", status: true },

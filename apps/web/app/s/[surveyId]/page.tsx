@@ -5,6 +5,7 @@ import { MediaBackground } from "@/app/s/[surveyId]/components/MediaBackground";
 import PinScreen from "@/app/s/[surveyId]/components/PinScreen";
 import SurveyInactive from "@/app/s/[surveyId]/components/SurveyInactive";
 import { checkValidity } from "@/app/s/[surveyId]/lib/prefilling";
+import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -13,7 +14,6 @@ import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@form
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import { ZId } from "@formbricks/types/environment";
@@ -39,51 +39,7 @@ export async function generateMetadata({ params }: LinkSurveyPageProps): Promise
     notFound();
   }
 
-  const survey = await getSurvey(params.surveyId);
-
-  if (!survey || survey.type !== "link" || survey.status === "draft") {
-    notFound();
-  }
-
-  const product = await getProductByEnvironmentId(survey.environmentId);
-
-  if (!product) {
-    throw new Error("Product not found");
-  }
-
-  function getNameForURL(url: string) {
-    return url.replace(/ /g, "%20");
-  }
-
-  function getBrandColorForURL(url: string) {
-    return url.replace(/#/g, "%23");
-  }
-
-  // const brandColor = getBrandColorForURL(product.brandColor);
-  const brandColor = getBrandColorForURL(survey.styling?.brandColor?.light || COLOR_DEFAULTS.brandColor);
-  const surveyName = getNameForURL(survey.name);
-
-  const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;
-
-  return {
-    title: survey.name,
-    metadataBase: new URL(WEBAPP_URL),
-    openGraph: {
-      title: survey.name,
-      description: "Create your own survey like this with Formbricks' open source survey suite.",
-      url: `/s/${survey.id}`,
-      siteName: "",
-      images: [ogImgURL],
-      locale: "en_US",
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: survey.name,
-      description: "Create your own survey like this with Formbricks' open source survey suite.",
-      images: [ogImgURL],
-    },
-  };
+  return getMetadataForLinkSurvey(params.surveyId);
 }
 
 export default async function LinkSurveyPage({ params, searchParams }: LinkSurveyPageProps) {

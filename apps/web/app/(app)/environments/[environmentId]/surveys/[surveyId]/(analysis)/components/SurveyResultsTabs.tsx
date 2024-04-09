@@ -1,6 +1,7 @@
 import revalidateSurveyIdPath from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { InboxIcon, PresentationIcon } from "lucide-react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 import { cn } from "@formbricks/lib/cn";
 
@@ -17,18 +18,24 @@ export default function SurveyResultsTab({
   surveyId,
   responseCount,
 }: SurveyResultsTabProps) {
+  const params = useParams();
+  const sharingKey = params.sharingKey as string;
+  const isSharingPage = !!sharingKey;
+
+  const url = isSharingPage ? `/share/${sharingKey}` : `/environments/${environmentId}/surveys/${surveyId}`;
+
   const tabs = [
     {
       id: "summary",
       label: "Summary",
       icon: <PresentationIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/surveys/${surveyId}/summary?referer=true`,
+      href: `${url}/summary?referer=true`,
     },
     {
       id: "responses",
       label: `Responses ${responseCount !== null ? `(${responseCount})` : ""}`,
       icon: <InboxIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/surveys/${surveyId}/responses?referer=true`,
+      href: `${url}/responses?referer=true`,
     },
   ];
 
