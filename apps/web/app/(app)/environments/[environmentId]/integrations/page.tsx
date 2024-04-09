@@ -2,6 +2,7 @@ import JsLogo from "@/images/jslogo.png";
 import MakeLogo from "@/images/make-small.png";
 import n8nLogo from "@/images/n8n.png";
 import notionLogo from "@/images/notion.png";
+import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
 import { getServerSession } from "next-auth";
@@ -61,6 +62,7 @@ export default async function IntegrationsPage({ params }) {
   const isNotionIntegrationConnected = isIntegrationConnected("notion");
   const isAirtableIntegrationConnected = isIntegrationConnected("airtable");
   const isN8nIntegrationConnected = isIntegrationConnected("n8n");
+  const isSlackIntegrationConnected = isIntegrationConnected("slack");
 
   const integrationCards = [
     {
@@ -134,6 +136,19 @@ export default async function IntegrationsPage({ params }) {
       icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
       connected: isAirtableIntegrationConnected,
       statusText: isAirtableIntegrationConnected ? "Connected" : "Not Connected",
+    },
+    {
+      connectHref: `/environments/${params.environmentId}/integrations/slack`,
+      connectText: `${isSlackIntegrationConnected ? "Manage" : "Connect"}`,
+      connectNewTab: false,
+      docsHref: "https://formbricks.com/docs/integrations/slack",
+      docsText: "Docs",
+      docsNewTab: true,
+      label: "Slack",
+      description: "Instantly Connect your Slack Workspace with Formbricks",
+      icon: <Image src={SlackLogo} alt="Slack Logo" />,
+      connected: isSlackIntegrationConnected,
+      statusText: isSlackIntegrationConnected ? "Connected" : "Not Connected",
     },
     {
       docsHref: "https://formbricks.com/docs/integrations/n8n",

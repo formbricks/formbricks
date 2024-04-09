@@ -242,7 +242,9 @@ export default function PreviewSurvey({
               ) : (
                 <div className="w-full px-3">
                   <div className="absolute left-5 top-5">
-                    <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                    {!styling.isLogoHidden && product.logo?.url && (
+                      <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                    )}
                   </div>
                   <div className="no-scrollbar z-10 w-full max-w-md overflow-y-auto rounded-lg border border-transparent">
                     <SurveyInline
@@ -321,7 +323,9 @@ export default function PreviewSurvey({
             ) : (
               <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
                 <div className="absolute left-5 top-5">
-                  <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                  {!styling.isLogoHidden && product.logo?.url && (
+                    <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                  )}
                 </div>
                 <div className="z-0 w-full max-w-md rounded-lg border-transparent">
                   <SurveyInline

@@ -15,7 +15,9 @@ interface HomeProps {
   notionIntegration: TIntegrationNotion;
   setOpenAddIntegrationModal: React.Dispatch<React.SetStateAction<boolean>>;
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
-  setSelectedIntegration: (v: (TIntegrationNotionConfigData & { index: number }) | null) => void;
+  setSelectedIntegration: React.Dispatch<
+    React.SetStateAction<(TIntegrationNotionConfigData & { index: number }) | null>
+  >;
 }
 
 export default function Home({
@@ -48,10 +50,7 @@ export default function Home({
   };
 
   const editIntegration = (index: number) => {
-    setSelectedIntegration({
-      ...notionIntegration.config.data[index],
-      index: index,
-    });
+    setSelectedIntegration({ ...notionIntegration.config.data[index], index });
     setOpenAddIntegrationModal(true);
   };
 
