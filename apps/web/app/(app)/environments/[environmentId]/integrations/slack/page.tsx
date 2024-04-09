@@ -29,7 +29,7 @@ export default async function Slack({ params }) {
 
   return (
     <>
-      <GoBackButton url={`"/environments/${params.environmentId}/integrations`} />
+      <GoBackButton url={`/environments/${params.environmentId}/integrations`} />
       <div className="h-[75vh] w-full">
         <SlackWrapper
           isEnabled={isEnabled}
