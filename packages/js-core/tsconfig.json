@@ -1,10 +1,17 @@
 {
   "extends": "@formbricks/tsconfig/js-library.json",
-  "include": ["src", "package.json"],
+  "include": ["src", "package.json", "../types/**/*.ts"],
   "compilerOptions": {
+    "rootDir": "../",
+    "baseUrl": ".",
+    "composite": true,
+    "declaration": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@formbricks/types/*": ["../types/*"]
+    }
   }
 }

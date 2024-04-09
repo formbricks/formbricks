@@ -2,8 +2,11 @@
   "extends": "@formbricks/tsconfig/js-library.json",
   "include": ["src", "package.json"],
   "compilerOptions": {
+    "rootDir": "../",
+    "baseUrl": ".",
     "module": "ESNext",
     "declaration": true,
+    "composite": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

@@ -1,6 +1,8 @@
+import { FormbricksType } from "@formbricks/js-core";
+
 declare global {
   interface Window {
-    formbricks: any;
+    formbricks: FormbricksType;
   }
 }
 
@@ -31,7 +33,11 @@ async function loadSDK(apiHost: string) {
   }
 }
 
-const formbricksProxyHandler: ProxyHandler<any> = {
+type FormbricksMethods = {
+  [K in keyof FormbricksType]: FormbricksType[K] extends Function ? K : never;
+}[keyof FormbricksType];
+
+const formbricksProxyHandler: ProxyHandler<FormbricksType> = {
   get(_target, prop, _receiver) {
     return async (...args: any[]) => {
       if (!window.formbricks && !sdkLoadingPromise && !isErrorLoadingSdk) {
@@ -56,13 +62,13 @@ const formbricksProxyHandler: ProxyHandler<any> = {
         throw new Error("Formbricks SDK is not available");
       }
 
-      if (typeof window.formbricks[prop] !== "function") {
+      if (typeof window.formbricks[prop as FormbricksMethods] !== "function") {
         console.error(`🧱 Formbricks - SDK does not support method ${String(prop)}`);
         return;
       }
 
       try {
-        return window.formbricks[prop](...args);
+        return (window.formbricks[prop as FormbricksMethods] as Function)(...args);
       } catch (error) {
         console.error(error);
         throw error;
@@ -71,6 +77,6 @@ const formbricksProxyHandler: ProxyHandler<any> = {
   },
 };
 
-const formbricks = new Proxy({}, formbricksProxyHandler);
+const formbricks: FormbricksType = new Proxy({} as FormbricksType, formbricksProxyHandler);
 
 export default formbricks;

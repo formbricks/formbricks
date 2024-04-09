@@ -39,6 +39,9 @@
     "clean": "rimraf .turbo node_modules dist coverage"
   },
   "author": "Formbricks <hola@formbricks.com>",
+  "dependencies": {
+    "zod": "^3.22.4"
+  },
   "devDependencies": {
     "@formbricks/api": "workspace:*",
     "@formbricks/lib": "workspace:*",
