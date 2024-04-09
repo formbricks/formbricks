@@ -5,11 +5,7 @@ import {
   useResponseFilter,
 } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
-import {
-  generateQuestionAndFilterOptions,
-  getFormattedFilters,
-  getTodayDate,
-} from "@/app/lib/surveys/surveys";
+import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import { differenceInDays, format, startOfDay, subDays } from "date-fns";
 import { ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -17,9 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurveyPersonAttributes } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
-import { TTag } from "@formbricks/types/tags";
 import { Calendar } from "@formbricks/ui/Calendar";
 import {
   DropdownMenu,
@@ -48,8 +42,6 @@ enum FilterDropDownLabels {
 }
 
 interface CustomFilterProps {
-  environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
   survey: TSurvey;
 }
 
@@ -64,11 +56,11 @@ const getDifferenceOfDays = (from, to) => {
   }
 };
 
-const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps) => {
+const CustomFilter = ({ survey }: CustomFilterProps) => {
   const params = useParams();
   const isSharingPage = !!params.sharingKey;
 
-  const { selectedFilter, setSelectedOptions, dateRange, setDateRange, resetState } = useResponseFilter();
+  const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState<FilterDropDownLabels>(
     dateRange.from && dateRange.to
       ? getDifferenceOfDays(dateRange.from, dateRange.to)
@@ -94,16 +86,6 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
       resetState();
     }
   }, [survey?.id, resetState]);
-
-  // when the page loads we get total responses and iterate over the responses and questions, tags and attributes to create the filter options
-  useEffect(() => {
-    const { questionFilterOptions, questionOptions } = generateQuestionAndFilterOptions(
-      survey,
-      environmentTags,
-      attributes
-    );
-    setSelectedOptions({ questionFilterOptions, questionOptions });
-  }, [survey, setSelectedOptions, environmentTags, attributes]);
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
@@ -210,7 +192,7 @@ const CustomFilter = ({ environmentTags, attributes, survey }: CustomFilterProps
     <>
       <div className="relative mb-12 flex justify-between">
         <div className="flex justify-stretch gap-x-1.5">
-          <ResponseFilter />
+          <ResponseFilter survey={survey} />
           <DropdownMenu
             onOpenChange={(value) => {
               value && handleDatePickerClose();
