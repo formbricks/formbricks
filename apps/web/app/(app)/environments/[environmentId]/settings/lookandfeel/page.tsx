@@ -6,7 +6,7 @@ import {
   getRemoveLinkBrandingPermission,
 } from "@formbricks/ee/lib/service";
 import { authOptions } from "@formbricks/lib/authOptions";
-import { SURVEY_BG_COLORS, UNSPLASH_API_KEY } from "@formbricks/lib/constants";
+import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { getMembershipByUserIdTeamId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
@@ -57,7 +57,7 @@ export default async function ProfileSettingsPage({ params }: { params: { enviro
           environmentId={params.environmentId}
           product={product}
           colors={SURVEY_BG_COLORS}
-          unsplashApiKey={UNSPLASH_API_KEY}
+          isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
         />
       </SettingsCard>{" "}
       <SettingsCard title="Logo" description="Upload your company logo to brand surveys and link previews.">

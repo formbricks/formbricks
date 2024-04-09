@@ -20,7 +20,7 @@ interface BackgroundStylingCardProps {
   hideCheckmark?: boolean;
   disabled?: boolean;
   environmentId: string;
-  unsplashApiKey?: string;
+  isUnsplashConfigured: boolean;
 }
 
 export default function BackgroundStylingCard({
@@ -32,7 +32,7 @@ export default function BackgroundStylingCard({
   hideCheckmark,
   disabled,
   environmentId,
-  unsplashApiKey,
+  isUnsplashConfigured,
 }: BackgroundStylingCardProps) {
   const { bgType, brightness } = styling?.background ?? {};
 
@@ -115,7 +115,7 @@ export default function BackgroundStylingCard({
               colors={colors}
               bgType={bgType}
               environmentId={environmentId}
-              unsplashApiKey={unsplashApiKey}
+              isUnsplashConfigured={isUnsplashConfigured}
             />
           </div>
 

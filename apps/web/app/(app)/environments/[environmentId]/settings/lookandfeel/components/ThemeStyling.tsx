@@ -4,7 +4,7 @@ import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environment
 import BackgroundStylingCard from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
 import CardStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import FormStylingSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
-import { saveUnsplashImageToFormbricks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/ImageFromThirdPartySurveyBg";
+import { addUnsplashImageToStorage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/addUnsplashImageToStorage";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -23,10 +23,10 @@ type ThemeStylingProps = {
   product: TProduct;
   environmentId: string;
   colors: string[];
-  unsplashApiKey?: string;
+  isUnsplashConfigured: boolean;
 };
 
-export const ThemeStyling = ({ product, environmentId, colors, unsplashApiKey }: ThemeStylingProps) => {
+export const ThemeStyling = ({ product, environmentId, colors, isUnsplashConfigured }: ThemeStylingProps) => {
   const router = useRouter();
   const [localProduct, setLocalProduct] = useState(product);
   const [previewSurveyType, setPreviewSurveyType] = useState<"link" | "web">("link");
@@ -64,8 +64,12 @@ export const ThemeStyling = ({ product, environmentId, colors, unsplashApiKey }:
   }, [product]);
 
   const onSave = useCallback(async () => {
-    if (localProduct.styling) {
-      const unsplashUrl = await saveUnsplashImageToFormbricks(environmentId, localProduct.styling);
+    if (
+      localProduct.styling &&
+      localProduct.styling.background?.bg &&
+      localProduct.styling.background?.bgType === "image"
+    ) {
+      const unsplashUrl = await addUnsplashImageToStorage(environmentId, localProduct.styling.background?.bg);
       if (localProduct.styling.background?.bg && unsplashUrl) {
         localProduct.styling.background.bg = unsplashUrl;
       }
@@ -220,7 +224,7 @@ export const ThemeStyling = ({ product, environmentId, colors, unsplashApiKey }:
               colors={colors}
               key={styling.background?.bg}
               hideCheckmark
-              unsplashApiKey={unsplashApiKey}
+              isUnsplashConfigured={isUnsplashConfigured}
             />
           </div>
         </div>

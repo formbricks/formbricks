@@ -1,7 +1,7 @@
 "use client";
 
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { saveUnsplashImageToFormbricks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/ImageFromThirdPartySurveyBg";
+import { addUnsplashImageToStorage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/addUnsplashImageToStorage";
 import {
   isCardValid,
   validateQuestion,
@@ -348,9 +348,16 @@ export default function SurveyMenuBar({
       return;
     }
 
-    if (strippedSurvey.styling) {
-      const unsplashUrl = await saveUnsplashImageToFormbricks(environment.id, strippedSurvey.styling);
-      if (strippedSurvey.styling.background?.bg && unsplashUrl) {
+    if (
+      strippedSurvey.styling &&
+      strippedSurvey.styling.background?.bg &&
+      strippedSurvey.styling.background?.bgType === "image"
+    ) {
+      const unsplashUrl = await addUnsplashImageToStorage(
+        environment.id,
+        strippedSurvey.styling.background?.bg
+      );
+      if (unsplashUrl) {
         strippedSurvey.styling.background.bg = unsplashUrl;
       }
     }

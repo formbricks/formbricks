@@ -35,7 +35,7 @@ interface SurveyEditorProps {
   isUserTargetingAllowed?: boolean;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
-  unsplashApiKey?: string;
+  isUnsplashConfigured: boolean;
 }
 
 export default function SurveyEditor({
@@ -51,7 +51,7 @@ export default function SurveyEditor({
   isMultiLanguageAllowed,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
-  unsplashApiKey,
+  isUnsplashConfigured,
 }: SurveyEditorProps): JSX.Element {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -212,7 +212,7 @@ export default function SurveyEditor({
                 setStyling={setStyling}
                 localStylingChanges={localStylingChanges}
                 setLocalStylingChanges={setLocalStylingChanges}
-                unsplashApiKey={unsplashApiKey}
+                isUnsplashConfigured={isUnsplashConfigured}
               />
             )}
 
