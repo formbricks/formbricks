@@ -72,7 +72,7 @@ export default function AddressQuestion({
 
   const inputConfig = [
     {
-      placeholder: "Address Line 1 e.g. Bay Street 69",
+      placeholder: "Address Line 1",
       required: question.required
         ? hasFilled
           ? question.isAddressLine1Required
@@ -82,7 +82,7 @@ export default function AddressQuestion({
           : false,
     },
     {
-      placeholder: "Address Line 2 e.g. Apartment, Suite, Unit, Building",
+      placeholder: "Address Line 2",
       required: question.required
         ? question.isAddressLine2Required
         : hasFilled
@@ -90,19 +90,19 @@ export default function AddressQuestion({
           : false,
     },
     {
-      placeholder: "City / Town e.g. Springfield",
+      placeholder: "City / Town",
       required: question.required ? question.isCityRequired : hasFilled ? question.isCityRequired : false,
     },
     {
-      placeholder: "State / Region e.g. California",
+      placeholder: "State / Region",
       required: question.required ? question.isStateRequired : hasFilled ? question.isStateRequired : false,
     },
     {
-      placeholder: "ZIP / Post Code e.g. 12345",
+      placeholder: "ZIP / Post Code",
       required: question.required ? question.isZipRequired : hasFilled ? question.isZipRequired : false,
     },
     {
-      placeholder: "Country e.g. United States",
+      placeholder: "Country",
       required: question.required
         ? question.isCountryRequired
         : hasFilled

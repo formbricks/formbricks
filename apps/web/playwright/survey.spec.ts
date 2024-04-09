@@ -1,9 +1,7 @@
 import { surveys, users } from "@/playwright/utils/mock";
 import { expect, test } from "@playwright/test";
 
-import { signUpAndLogin } from "./utils/helper";
-import { finishOnboarding } from "./utils/helper";
-import { createSurvey } from "./utils/helper";
+import { createSurvey, finishOnboarding, signUpAndLogin } from "./utils/helper";
 
 test.describe("Survey Create & Submit Response", async () => {
   test.describe.configure({ mode: "serial" });
