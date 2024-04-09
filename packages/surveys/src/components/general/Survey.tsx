@@ -288,6 +288,7 @@ export function Survey({
           buttonLabel={survey.thankYouCard.buttonLabel}
           buttonLink={survey.thankYouCard.buttonLink}
           imageUrl={survey.thankYouCard.imageUrl}
+          videoUrl={survey.thankYouCard.videoUrl}
           redirectUrl={survey.redirectUrl}
           isRedirectDisabled={isRedirectDisabled}
           languageCode={languageCode}
@@ -339,7 +340,7 @@ export function Survey({
               getCardContent()
             )}
           </div>
-          <div className="mt-8">
+          <div className="mt-4">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={survey} questionId={questionId} />}
           </div>

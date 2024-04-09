@@ -11,7 +11,7 @@ const SurveyInactive = ({
   status,
   surveyClosedMessage,
 }: {
-  status: "paused" | "completed" | "link invalid";
+  status: "paused" | "completed" | "link invalid" | "scheduled";
   surveyClosedMessage?: TSurveyClosedMessage | null;
 }) => {
   const icons = {

@@ -150,6 +150,7 @@ const StylingView = ({
         setStyling={setStyling}
         surveyType={localSurvey.type}
         disabled={!overwriteThemeStyling}
+        localProduct={product}
       />
 
       {localSurvey.type === "link" && (

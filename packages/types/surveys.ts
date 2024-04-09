@@ -20,6 +20,7 @@ export const ZSurveyThankYouCard = z.object({
   buttonLabel: ZI18nString.optional(),
   buttonLink: z.optional(z.string()),
   imageUrl: z.string().optional(),
+  videoUrl: z.string().optional(),
 });
 
 export enum TSurveyQuestionType {
@@ -37,15 +38,20 @@ export enum TSurveyQuestionType {
   Matrix = "matrix",
 }
 
-export const ZSurveyWelcomeCard = z.object({
-  enabled: z.boolean(),
-  headline: ZI18nString,
-  html: ZI18nString.optional(),
-  fileUrl: z.string().optional(),
-  buttonLabel: ZI18nString.optional(),
-  timeToFinish: z.boolean().default(true),
-  showResponseCount: z.boolean().default(false),
-});
+export const ZSurveyWelcomeCard = z
+  .object({
+    enabled: z.boolean(),
+    headline: ZI18nString.optional(),
+    html: ZI18nString.optional(),
+    fileUrl: z.string().optional(),
+    buttonLabel: ZI18nString.optional(),
+    timeToFinish: z.boolean().default(true),
+    showResponseCount: z.boolean().default(false),
+    videoUrl: z.string().optional(),
+  })
+  .refine((schema) => !(schema.enabled && !schema.headline), {
+    message: "Welcome card must have a headline",
+  });
 
 export const ZSurveyHiddenFields = z.object({
   enabled: z.boolean(),
@@ -249,6 +255,7 @@ export const ZSurveyQuestionBase = z.object({
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
   imageUrl: z.string().optional(),
+  videoUrl: z.string().optional(),
   required: z.boolean(),
   buttonLabel: ZI18nString.optional(),
   backButtonLabel: ZI18nString.optional(),
@@ -421,7 +428,7 @@ export const ZSurveyType = z.enum(["web", "email", "link", "mobile"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 
-const ZSurveyStatus = z.enum(["draft", "inProgress", "paused", "completed"]);
+const ZSurveyStatus = z.enum(["draft", "scheduled", "inProgress", "paused", "completed"]);
 
 export type TSurveyStatus = z.infer<typeof ZSurveyStatus>;
 
@@ -470,6 +477,7 @@ export const ZSurvey = z.object({
   hiddenFields: ZSurveyHiddenFields,
   delay: z.number(),
   autoComplete: z.number().nullable(),
+  runOnDate: z.date().nullable(),
   closeOnDate: z.date().nullable(),
   productOverwrites: ZSurveyProductOverwrites.nullable(),
   styling: ZSurveyStyling.nullable(),
@@ -503,6 +511,7 @@ export const ZSurveyInput = z
     hiddenFields: ZSurveyHiddenFields.optional(),
     delay: z.number().optional(),
     autoComplete: z.number().nullish(),
+    runOnDate: z.date().nullish(),
     closeOnDate: z.date().nullish(),
     styling: ZSurveyStyling.optional(),
     surveyClosedMessage: ZSurveyClosedMessage.nullish(),
@@ -539,6 +548,7 @@ export type TSurvey = z.infer<typeof ZSurvey>;
 export type TSurveyDates = {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];
+  runOnDate: TSurvey["runOnDate"];
   closeOnDate: TSurvey["closeOnDate"];
 };
 
