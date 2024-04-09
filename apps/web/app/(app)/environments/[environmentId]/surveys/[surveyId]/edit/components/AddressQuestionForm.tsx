@@ -90,7 +90,10 @@ export const AddressQuestionForm = ({
         <AdvancedOptionToggle
           isChecked={question.isAddressLine1Required}
           onToggle={() =>
-            updateQuestion(questionIdx, { isAddressLine1Required: !question.isAddressLine1Required })
+            updateQuestion(questionIdx, {
+              isAddressLine1Required: !question.isAddressLine1Required,
+              required: true,
+            })
           }
           htmlId="isAddressRequired"
           title="Required: Address Line 1"
@@ -100,7 +103,10 @@ export const AddressQuestionForm = ({
         <AdvancedOptionToggle
           isChecked={question.isAddressLine2Required}
           onToggle={() =>
-            updateQuestion(questionIdx, { isAddressLine2Required: !question.isAddressLine2Required })
+            updateQuestion(questionIdx, {
+              isAddressLine2Required: !question.isAddressLine2Required,
+              required: true,
+            })
           }
           htmlId="isAddressLine2Required"
           title="Required: Address Line 2"
@@ -109,7 +115,9 @@ export const AddressQuestionForm = ({
           customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
           isChecked={question.isCityRequired}
-          onToggle={() => updateQuestion(questionIdx, { isCityRequired: !question.isCityRequired })}
+          onToggle={() =>
+            updateQuestion(questionIdx, { isCityRequired: !question.isCityRequired, required: true })
+          }
           htmlId="isCityRequired"
           title="Required: City / Town"
           description=""
@@ -117,7 +125,9 @@ export const AddressQuestionForm = ({
           customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
           isChecked={question.isStateRequired}
-          onToggle={() => updateQuestion(questionIdx, { isStateRequired: !question.isStateRequired })}
+          onToggle={() =>
+            updateQuestion(questionIdx, { isStateRequired: !question.isStateRequired, required: true })
+          }
           htmlId="isStateRequired"
           title="Required: State / Region"
           description=""
@@ -125,7 +135,9 @@ export const AddressQuestionForm = ({
           customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
           isChecked={question.isZipRequired}
-          onToggle={() => updateQuestion(questionIdx, { isZipRequired: !question.isZipRequired })}
+          onToggle={() =>
+            updateQuestion(questionIdx, { isZipRequired: !question.isZipRequired, required: true })
+          }
           htmlId="isZipRequired"
           title="Required: ZIP / Post Code"
           description=""
@@ -133,7 +145,9 @@ export const AddressQuestionForm = ({
           customContainerClass="p-0 mt-4"></AdvancedOptionToggle>
         <AdvancedOptionToggle
           isChecked={question.isCountryRequired}
-          onToggle={() => updateQuestion(questionIdx, { isCountryRequired: !question.isCountryRequired })}
+          onToggle={() =>
+            updateQuestion(questionIdx, { isCountryRequired: !question.isCountryRequired, required: true })
+          }
           htmlId="iscountryRequired"
           title="Required: Country"
           description=""

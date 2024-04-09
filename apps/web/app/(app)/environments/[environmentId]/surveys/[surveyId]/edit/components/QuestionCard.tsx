@@ -109,6 +109,20 @@ export default function QuestionCard({
     });
   };
 
+  const getIsRequiredToggledDisabled = (): boolean => {
+    if (question.type === "address") {
+      return [
+        question.isAddressLine1Required,
+        question.isAddressLine2Required,
+        question.isCityRequired,
+        question.isCountryRequired,
+        question.isStateRequired,
+        question.isZipRequired,
+      ].some((condition) => condition === true);
+    }
+    return false;
+  };
+
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -459,6 +473,7 @@ export default function QuestionCard({
                     <Switch
                       id="required-toggle"
                       checked={question.required}
+                      disabled={getIsRequiredToggledDisabled()}
                       onClick={(e) => {
                         e.stopPropagation();
                         updateQuestion(questionIdx, { required: !question.required });
