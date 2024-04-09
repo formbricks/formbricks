@@ -3,10 +3,12 @@ import { writeData } from "@formbricks/lib/googleSheet/service";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
 import { processResponseData } from "@formbricks/lib/responses";
+import { writeDataToSlack } from "@formbricks/lib/slack/service";
 import { TIntegration } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/googleSheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
+import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TSurvey, TSurveyQuestionType } from "@formbricks/types/surveys";
 
@@ -19,6 +21,9 @@ export async function handleIntegrations(
     switch (integration.type) {
       case "googleSheets":
         await handleGoogleSheetsIntegration(integration as TIntegrationGoogleSheets, data, survey);
+        break;
+      case "slack":
+        await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
         break;
       case "airtable":
         await handleAirtableIntegration(integration as TIntegrationAirtable, data, survey);
@@ -61,6 +66,17 @@ async function handleGoogleSheetsIntegration(
   }
 }
 
+async function handleSlackIntegration(integration: TIntegrationSlack, data: TPipelineInput, survey: TSurvey) {
+  if (integration.config.data.length > 0) {
+    for (const element of integration.config.data) {
+      if (element.surveyId === data.surveyId) {
+        const values = await extractResponses(data, element.questionIds as string[], survey);
+        await writeDataToSlack(integration.config.key, element.channelId, values, survey?.name);
+      }
+    }
+  }
+}
+
 async function extractResponses(
   data: TPipelineInput,
   questionIds: string[],
@@ -70,14 +86,29 @@ async function extractResponses(
   const questions: string[] = [];
 
   for (const questionId of questionIds) {
+    const question = survey?.questions.find((q) => q.id === questionId);
+    if (!question) {
+      continue;
+    }
+
     const responseValue = data.response.data[questionId];
 
     if (responseValue !== undefined) {
-      responses.push(processResponseData(responseValue));
+      let answer: typeof responseValue;
+      if (question.type === TSurveyQuestionType.PictureSelection) {
+        const selectedChoiceIds = responseValue as string[];
+        answer = question?.choices
+          .filter((choice) => selectedChoiceIds.includes(choice.id))
+          .map((choice) => choice.imageUrl)
+          .join("\n");
+      } else {
+        answer = responseValue;
+      }
+
+      responses.push(processResponseData(answer));
     } else {
       responses.push("");
     }
-    const question = survey?.questions.find((q) => q.id === questionId);
     questions.push(getLocalizedValue(question?.headline, "default") || "");
   }
 

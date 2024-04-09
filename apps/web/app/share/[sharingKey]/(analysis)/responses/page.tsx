@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponseCountBySurveyId, getResponsePersonAttributes } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
@@ -32,7 +32,6 @@ export default async function Page({ params }) {
   }
 
   const tags = await getTagsByEnvironmentId(environment.id);
-  const attributes = await getResponsePersonAttributes(surveyId);
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
 
   return (
@@ -44,7 +43,6 @@ export default async function Page({ params }) {
         webAppUrl={WEBAPP_URL}
         product={product}
         environmentTags={tags}
-        attributes={attributes}
         responsesPerPage={RESPONSES_PER_PAGE}
         totalResponseCount={totalResponseCount}
       />
