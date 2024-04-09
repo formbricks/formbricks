@@ -108,6 +108,7 @@ export default function QuestionCard({
   };
 
   const handleRequiredToggle = () => {
+    // Fix for NPS and Rating questions having missing translations when buttonLabel is not removed
     if (!question.required && (question.type === "nps" || question.type === "rating")) {
       updateQuestion(questionIdx, { required: true, buttonLabel: undefined });
     } else {
