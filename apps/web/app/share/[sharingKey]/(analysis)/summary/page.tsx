@@ -4,9 +4,8 @@ import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { getResponseCountBySurveyId, getResponsePersonAttributes } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
-import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 export default async function Page({ params }) {
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
@@ -31,8 +30,6 @@ export default async function Page({ params }) {
     throw new Error("Product not found");
   }
 
-  const tags = await getTagsByEnvironmentId(environment.id);
-  const attributes = await getResponsePersonAttributes(surveyId);
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
 
   return (
@@ -43,8 +40,6 @@ export default async function Page({ params }) {
         surveyId={survey.id}
         webAppUrl={WEBAPP_URL}
         product={product}
-        environmentTags={tags}
-        attributes={attributes}
         totalResponseCount={totalResponseCount}
       />
     </>

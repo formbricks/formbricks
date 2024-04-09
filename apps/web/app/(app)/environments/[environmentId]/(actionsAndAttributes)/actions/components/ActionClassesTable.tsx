@@ -7,7 +7,7 @@ import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershi
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/actionClasses";
 import { Button } from "@formbricks/ui/Button";
-import { LoadingWrapper } from "@formbricks/ui/LoadingWrapper";
+import { ErrorComponent } from "@formbricks/ui/ErrorComponent";
 
 import ActionDetailModal from "./ActionDetailModal";
 import AddNoCodeActionModal from "./AddActionModal";
@@ -42,23 +42,25 @@ export default function ActionClassesTable({
     setActiveActionClass(actionClass);
     setActionDetailModalOpen(true);
   };
-
+  if (error) {
+    return <ErrorComponent />;
+  }
   return (
     <>
-      <LoadingWrapper isLoading={isLoading} error={error}>
-        {!isViewer && (
-          <div className="mb-6 text-right">
-            <Button
-              variant="darkCTA"
-              onClick={() => {
-                setAddActionModalOpen(true);
-              }}>
-              <MousePointerClickIcon className="mr-2 h-5 w-5 text-white" />
-              Add Action
-            </Button>
-          </div>
-        )}
-      </LoadingWrapper>
+      {!isViewer && (
+        <div className="mb-6 text-right">
+          <Button
+            loading={isLoading}
+            variant="darkCTA"
+            onClick={() => {
+              setAddActionModalOpen(true);
+            }}>
+            <MousePointerClickIcon className="mr-2 h-5 w-5 text-white" />
+            {isLoading ? "Loading" : "Add Action"}
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-lg border border-slate-200">
         {TableHeading}
         <div className="grid-cols-7" id="actionClassesWrapper">
