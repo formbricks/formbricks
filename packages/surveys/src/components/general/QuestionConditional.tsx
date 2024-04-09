@@ -239,6 +239,7 @@ export default function QuestionConditional({
       languageCode={languageCode}
       ttc={ttc}
       setTtc={setTtc}
+      isInIframe={isInIframe}
     />
   ) : null;
 }

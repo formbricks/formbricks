@@ -4,7 +4,7 @@ import Headline from "@/components/general/Headline";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import Subheader from "@/components/general/Subheader";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
@@ -22,6 +22,7 @@ interface AddressQuestionProps {
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
+  isInIframe: boolean;
 }
 
 export default function AddressQuestion({
@@ -32,10 +33,10 @@ export default function AddressQuestion({
   onBack,
   isFirstQuestion,
   isLastQuestion,
-  autoFocus = true,
   languageCode,
   ttc,
   setTtc,
+  isInIframe,
 }: AddressQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hasFilled, setHasFilled] = useState(false);
@@ -111,6 +112,15 @@ export default function AddressQuestion({
     },
   ];
 
+  const addressTextRef = useCallback(
+    (currentElement: HTMLInputElement | null) => {
+      if (question.id && currentElement && !isInIframe) {
+        currentElement.focus();
+      }
+    },
+    [question.id, isInIframe]
+  );
+
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full">
       {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -126,6 +136,8 @@ export default function AddressQuestion({
       <div className="mt-4 space-y-2">
         {inputConfig.map(({ placeholder, required }, index) => (
           <input
+            ref={index === 0 ? addressTextRef : null}
+            key={index}
             name={`${question.id}-${index}`}
             id={`${question.id}-${index}`}
             placeholder={placeholder}
@@ -133,7 +145,7 @@ export default function AddressQuestion({
             required={required}
             value={safeValue[index] || ""}
             onInput={(e) => handleInputChange(e.currentTarget.value, index)}
-            autoFocus={autoFocus && index === 0}
+            autoFocus={!isInIframe && index === 0}
             className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
           />
         ))}
