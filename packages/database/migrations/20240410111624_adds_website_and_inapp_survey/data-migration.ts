@@ -9,7 +9,9 @@ async function main() {
       // If a web survey has a response with personId set, then it should be moved to "inApp"
       // otherwise it should be moved to "website"
       const webSurveys = await tx.survey.findMany({
-        where: { type: "web" },
+        where: {
+          type: "web",
+        },
         include: {
           segment: true,
         },
@@ -17,14 +19,16 @@ async function main() {
 
       for (const webSurvey of webSurveys) {
         // get the responses:
-        const identifiedResponse = await tx.response.findFirst({
+        const latestResponse = await tx.response.findFirst({
           where: {
             surveyId: webSurvey.id,
-            personId: { not: null },
+          },
+          orderBy: {
+            createdAt: "desc",
           },
         });
 
-        if (identifiedResponse) {
+        if (latestResponse?.personId) {
           await tx.survey.update({
             where: { id: webSurvey.id },
             data: { type: "inApp" },
