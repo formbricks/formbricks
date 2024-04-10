@@ -107,6 +107,15 @@ export default function QuestionCard({
     });
   };
 
+  const handleRequiredToggle = () => {
+    // Fix for NPS and Rating questions having missing translations when buttonLabel is not removed
+    if (!question.required && (question.type === "nps" || question.type === "rating")) {
+      updateQuestion(questionIdx, { required: true, buttonLabel: undefined });
+    } else {
+      updateQuestion(questionIdx, { required: !question.required });
+    }
+  };
+
   return (
     <Draggable draggableId={question.id} index={questionIdx}>
       {(provided) => (
@@ -446,7 +455,7 @@ export default function QuestionCard({
                       checked={question.required}
                       onClick={(e) => {
                         e.stopPropagation();
-                        updateQuestion(questionIdx, { required: !question.required });
+                        handleRequiredToggle();
                       }}
                     />
                   </div>
