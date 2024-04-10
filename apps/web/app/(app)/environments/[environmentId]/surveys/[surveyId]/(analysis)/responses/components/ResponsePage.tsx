@@ -21,7 +21,7 @@ import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TMembershipRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
-import { TResponse, TSurveyPersonAttributes } from "@formbricks/types/responses";
+import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
@@ -37,7 +37,6 @@ interface ResponsePageProps {
   product: TProduct;
   user?: TUser;
   environmentTags: TTag[];
-  attributes: TSurveyPersonAttributes;
   responsesPerPage: number;
   membershipRole?: TMembershipRole;
   totalResponseCount: number;
@@ -51,7 +50,6 @@ const ResponsePage = ({
   product,
   user,
   environmentTags,
-  attributes,
   responsesPerPage,
   membershipRole,
   totalResponseCount,
@@ -176,7 +174,7 @@ const ResponsePage = ({
         membershipRole={membershipRole}
       />
       <div className="flex gap-1.5">
-        <CustomFilter environmentTags={environmentTags} attributes={attributes} survey={survey} />
+        <CustomFilter survey={survey} />
         {!isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} user={user} />}
       </div>
       <SurveyResultsTabs

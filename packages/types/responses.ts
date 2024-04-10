@@ -38,6 +38,10 @@ export const ZSurveyPersonAttributes = z.record(z.array(z.string()));
 
 export type TSurveyPersonAttributes = z.infer<typeof ZSurveyPersonAttributes>;
 
+export const ZSurveyMetaFieldFilter = z.record(z.array(z.string()));
+
+export type TSurveyMetaFieldFilter = z.infer<typeof ZSurveyMetaFieldFilter>;
+
 const ZResponseFilterCriteriaDataLessThan = z.object({
   op: z.literal(ZSurveyLogicCondition.Values.lessThan),
   value: z.number(),
@@ -159,7 +163,16 @@ export const ZResponseFilterCriteria = z.object({
     })
     .optional(),
 
-  metadata: z
+  others: z
+    .record(
+      z.object({
+        op: z.enum(["equals", "notEquals"]),
+        value: z.union([z.string(), z.number()]),
+      })
+    )
+    .optional(),
+
+  meta: z
     .record(
       z.object({
         op: z.enum(["equals", "notEquals"]),
