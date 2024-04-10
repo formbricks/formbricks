@@ -64,7 +64,7 @@ export const SurveyFilters = ({
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
 
-  useDebounce(() => setSurveyFilters((prev) => ({ ...prev, name: name })), 300, [name]);
+  useDebounce(() => setSurveyFilters((prev) => ({ ...prev, name: name })), 800, [name]);
 
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());
 
