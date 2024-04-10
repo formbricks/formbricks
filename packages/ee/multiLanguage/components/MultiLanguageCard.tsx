@@ -97,7 +97,18 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
       );
     } else {
       // Add the new language
-      updatedLanguages = [...updatedLanguages, { enabled: true, default: false, language }];
+      updatedLanguages = [
+        ...updatedLanguages,
+        {
+          enabled: true,
+          default: false,
+          language: {
+            ...language,
+            createdAt: new Date(language.createdAt),
+            updatedAt: new Date(language.updatedAt),
+          },
+        },
+      ];
     }
     updateSurveyTranslations(localSurvey, updatedLanguages);
   };
