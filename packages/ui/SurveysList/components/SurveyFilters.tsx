@@ -83,7 +83,13 @@ export const SurveyFilters = ({
   };
 
   const handleStatusChange = (value: string) => {
-    if (value === "inProgress" || value === "paused" || value === "completed" || value === "draft") {
+    if (
+      value === "inProgress" ||
+      value === "paused" ||
+      value === "completed" ||
+      value === "draft" ||
+      value === "scheduled"
+    ) {
       if (status.includes(value)) {
         setSurveyFilters((prev) => ({ ...prev, status: prev.status.filter((v) => v !== value) }));
       } else {
