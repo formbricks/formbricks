@@ -69,7 +69,7 @@ export default function AddressQuestion({
   useEffect(() => {
     const filled = safeValue.some((val) => val.trim().length > 0);
     setHasFilled(filled);
-  }, [value]);
+  }, [value, safeValue]);
 
   const inputConfig = [
     {
