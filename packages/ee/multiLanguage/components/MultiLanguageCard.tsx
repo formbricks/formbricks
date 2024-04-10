@@ -74,13 +74,22 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     }
   };
 
+  const transformLanguageDateFields = (language: TLanguage): TLanguage => {
+    return {
+      ...language,
+      createdAt: new Date(language.createdAt),
+      updatedAt: new Date(language.updatedAt),
+    };
+  };
+
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = translateSurvey(survey, extractLanguageCodes(updatedLanguages));
-    const parsedSurvey = ZSurvey.safeParse(translatedSurveyResult);
-
-    if (parsedSurvey.success) {
-      setLocalSurvey({ ...parsedSurvey.data, languages: updatedLanguages });
-    } else {
+    try {
+      const parsedSurvey = ZSurvey.parse(translatedSurveyResult);
+      if (parsedSurvey) {
+        setLocalSurvey({ ...parsedSurvey, languages: updatedLanguages });
+      }
+    } catch (error) {
       toast.error("Some error occured while translating the survey");
     }
   };
@@ -102,11 +111,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         {
           enabled: true,
           default: false,
-          language: {
-            ...language,
-            createdAt: new Date(language.createdAt),
-            updatedAt: new Date(language.updatedAt),
-          },
+          language: transformLanguageDateFields(language),
         },
       ];
     }
@@ -135,7 +140,11 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
       if (!languageExists) {
         // If the language doesn't exist, add it as the default
-        newLanguages.push({ enabled: true, default: true, language });
+        newLanguages.push({
+          enabled: true,
+          default: true,
+          language: transformLanguageDateFields(language),
+        });
       }
 
       setDefaultLanguage(language);
