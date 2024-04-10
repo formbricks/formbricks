@@ -19,7 +19,7 @@ import { TSurvey } from "@formbricks/types/surveys";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
 import { SkeletonLoader } from "@formbricks/ui/SkeletonLoader";
 
-import AddressSummary from "./AddressSummary";
+import { AddressSummary } from "./AddressSummary";
 
 interface SummaryListProps {
   summary: TSurveySummary["summary"];

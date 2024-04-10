@@ -1,6 +1,7 @@
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
+import { useMemo } from "react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
@@ -16,8 +17,11 @@ interface AddressSummaryProps {
   environmentId: string;
 }
 
-export default function AddressSummary({ questionSummary, environmentId }: AddressSummaryProps) {
-  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
+export function AddressSummary({ questionSummary, environmentId }: AddressSummaryProps) {
+  const questionType = useMemo(
+    () => questionTypes.find((type) => type.id === questionSummary.question.type),
+    [questionSummary.question.type]
+  );
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
@@ -25,8 +29,8 @@ export default function AddressSummary({ questionSummary, environmentId }: Addre
         <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
         <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
-            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4" />}
-            {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
+            {questionType && <questionType.icon className="mr-2 h-4 w-4" />}
+            {questionType ? questionType.label : "Unknown Question Type"} Question
           </div>
           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
             <InboxIcon className="mr-2 h-4 w-4" />
