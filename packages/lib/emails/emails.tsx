@@ -1,4 +1,5 @@
 import { render } from "@react-email/render";
+import nodemailer from "nodemailer";
 
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys";
@@ -17,7 +18,7 @@ import { createInviteToken, createToken, createTokenForLinkSurvey } from "../jwt
 import { getTeamByEnvironmentId } from "../team/service";
 import { EmailTemplate } from "./EmailTemplate";
 import { EmbedSurveyPreviewEmail } from "./EmbedSurveyPreviewEmail";
-import { ForgetPasswordEmail } from "./ForgetPasswordEmail";
+import { ForgotPasswordEmail } from "./ForgotPasswordEmail";
 import { InviteAcceptedEmail } from "./InviteAcceptedEmail";
 import { InviteEmail } from "./InviteEmail";
 import { LinkSurveyEmail } from "./LinkSurveyEmail";
@@ -25,8 +26,6 @@ import { OnboardingInviteEmail } from "./OnboardingInviteEmail";
 import { PasswordResetNotifyEmail } from "./PasswordResetNotifyEmail";
 import { ResponseFinishedEmail } from "./ResponseFinishedEmail";
 import { VerificationEmail } from "./VerificationEmail";
-
-const nodemailer = require("nodemailer");
 
 export const IS_SMTP_CONFIGURED: boolean =
   SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD ? true : false;
@@ -112,7 +111,7 @@ export const sendForgotPasswordEmail = async (user: TEmailUser) => {
   await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
-    html: render(<EmailTemplate content={<ForgetPasswordEmail verifyLink={verifyLink} />} />),
+    html: render(<EmailTemplate content={<ForgotPasswordEmail verifyLink={verifyLink} />} />),
   });
 };
 

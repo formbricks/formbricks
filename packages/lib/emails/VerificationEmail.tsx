@@ -16,7 +16,7 @@ export const VerificationEmail = ({ verifyLink, verificationRequestLink }: Verif
       <Text>To start using Formbricks please verify your email below:</Text>
       <EmailButton href={verifyLink} label={"Verify email"} />
       <Text>You can also click on this link:</Text>
-      <Link href="${verifyLink}" className="break-all text-black">
+      <Link href={verifyLink} className="break-all text-black">
         {verifyLink}
       </Link>
       <Text className="font-bold">The link is valid for 24h.</Text>

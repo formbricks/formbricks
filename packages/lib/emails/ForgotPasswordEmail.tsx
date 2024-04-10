@@ -4,11 +4,11 @@ import React from "react";
 import { EmailButton } from "./EmailButton";
 import { EmailFooter } from "./EmailFooter";
 
-interface ForgetPasswordEmailProps {
+interface ForgotPasswordEmailProps {
   verifyLink: string;
 }
 
-export const ForgetPasswordEmail = ({ verifyLink }: ForgetPasswordEmailProps) => {
+export const ForgotPasswordEmail = ({ verifyLink }: ForgotPasswordEmailProps) => {
   return (
     <Container>
       <Heading>Change password</Heading>
