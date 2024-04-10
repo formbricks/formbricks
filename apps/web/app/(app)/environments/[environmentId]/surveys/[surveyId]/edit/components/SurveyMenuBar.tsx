@@ -155,7 +155,8 @@ export default function SurveyMenuBar({
 
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
-      const isValid = validateQuestion(question, survey.languages);
+      const isFirstQuestion = index === 0;
+      const isValid = validateQuestion(question, survey.languages, isFirstQuestion);
 
       if (!isValid) {
         faultyQuestions.push(question.id);
@@ -277,6 +278,7 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
+
     const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
     if (questionWithEmptyFallback) {
       toast.error("Fallback missing");
