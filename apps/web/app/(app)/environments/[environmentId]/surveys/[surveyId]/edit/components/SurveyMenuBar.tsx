@@ -155,7 +155,8 @@ export default function SurveyMenuBar({
 
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
-      const isValid = validateQuestion(question, survey.languages);
+      const isFirstQuestion = index === 0;
+      const isValid = validateQuestion(question, survey.languages, isFirstQuestion);
 
       if (!isValid) {
         faultyQuestions.push(question.id);
@@ -278,15 +279,6 @@ export default function SurveyMenuBar({
       return;
     }
 
-    // Update the first question to remove the backButtonLabel if it exists
-    const updatedQuestions = localSurvey.questions.map((question, index) => {
-      if (index === 0 && question.backButtonLabel) {
-        return { ...question, backButtonLabel: undefined };
-      }
-      return question;
-    });
-
-    const updatedLocalSurvey = { ...localSurvey, questions: updatedQuestions };
     const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
     if (questionWithEmptyFallback) {
       toast.error("Fallback missing");
@@ -296,14 +288,14 @@ export default function SurveyMenuBar({
     setIsSurveySaving(true);
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {
-      ...updatedLocalSurvey,
-      questions: updatedLocalSurvey.questions.map((question) => {
+      ...localSurvey,
+      questions: localSurvey.questions.map((question) => {
         const { isDraft, ...rest } = question;
         return rest;
       }),
     };
 
-    if (!validateSurvey(updatedLocalSurvey)) {
+    if (!validateSurvey(localSurvey)) {
       setIsSurveySaving(false);
       return;
     }

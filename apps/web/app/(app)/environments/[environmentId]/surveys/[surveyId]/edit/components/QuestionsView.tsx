@@ -82,8 +82,9 @@ export default function QuestionsView({
     if (invalidQuestions === null) {
       return;
     }
+    const isFirstQuestion = question.id === localSurvey.questions[0].id;
     let temp = structuredClone(invalidQuestions);
-    if (validateQuestion(question, surveyLanguages)) {
+    if (validateQuestion(question, surveyLanguages, isFirstQuestion)) {
       temp = invalidQuestions.filter((id) => id !== question.id);
       setInvalidQuestions(temp);
     } else if (!invalidQuestions.includes(question.id)) {
@@ -132,7 +133,7 @@ export default function QuestionsView({
 
     // check if we are recalling from this question
     updatedSurvey.questions.forEach((question) => {
-      if (question.headline[selectedLanguageCode]?.includes(`recall:${questionId}`)) {
+      if (question.headline[selectedLanguageCode].includes(`recall:${questionId}`)) {
         const recallInfo = extractRecallInfo(getLocalizedValue(question.headline, selectedLanguageCode));
         if (recallInfo) {
           question.headline[selectedLanguageCode] = question.headline[selectedLanguageCode].replace(
@@ -240,11 +241,12 @@ export default function QuestionsView({
     if (!invalidQuestions) return;
     let updatedInvalidQuestions: string[] = invalidQuestions;
     // Validate each question
-    localSurvey.questions.forEach((question) => {
+    localSurvey.questions.forEach((question, index) => {
       updatedInvalidQuestions = validateSurveyQuestionsInBatch(
         question,
         updatedInvalidQuestions,
-        surveyLanguages
+        surveyLanguages,
+        index === 0
       );
     });
 
