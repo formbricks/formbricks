@@ -20,6 +20,7 @@ import {
   TSurvey,
   TSurveyEditorTabs,
   TSurveyQuestionType,
+  TSurveyQuestions,
   ZSurveyInlineTriggers,
   surveyHasBothTriggers,
 } from "@formbricks/types/surveys";
@@ -128,20 +129,24 @@ export default function SurveyMenuBar({
   };
 
   // Checks if there is a cycle present in the survey data logic.
-  const hasCyclePresent = (surveyData) => {
-    const visited = {};
-    const recStack = {};
+  const isCyclic = (questions: TSurveyQuestions) => {
+    const visited: Record<string, boolean> = {};
+    const recStack: Record<string, boolean> = {};
 
-    const isCycleUtil = (questionId) => {
+    const checkForCycle = (questionId: string) => {
       if (!visited[questionId]) {
         visited[questionId] = true;
         recStack[questionId] = true;
 
-        const question = surveyData.find((q) => q.id === questionId);
+        const question = questions.find((question) => question.id === questionId);
         if (question && question.logic && question.logic.length > 0) {
           for (const logic of question.logic) {
             const destination = logic.destination;
-            if (!visited[destination] && isCycleUtil(destination)) {
+            if (!destination) {
+              return false;
+            }
+
+            if (!visited[destination] && checkForCycle(destination)) {
               return true;
             } else if (recStack[destination]) {
               return true;
@@ -149,23 +154,25 @@ export default function SurveyMenuBar({
           }
         } else {
           // Handle default behavior
-          const nextQuestionIndex = surveyData.findIndex((q) => q.id === questionId) + 1;
-          const nextQuestion = surveyData[nextQuestionIndex];
-          if (nextQuestion && !visited[nextQuestion.id] && isCycleUtil(nextQuestion.id)) {
+          const nextQuestionIndex = questions.findIndex((question) => question.id === questionId) + 1;
+          const nextQuestion = questions[nextQuestionIndex];
+          if (nextQuestion && !visited[nextQuestion.id] && checkForCycle(nextQuestion.id)) {
             return true;
           }
         }
       }
+
       recStack[questionId] = false;
       return false;
     };
 
-    for (const question of surveyData) {
+    for (const question of questions) {
       const questionId = question.id;
-      if (isCycleUtil(questionId)) {
+      if (checkForCycle(questionId)) {
         return true;
       }
     }
+
     return false;
   };
 
@@ -325,8 +332,8 @@ export default function SurveyMenuBar({
       return;
     }
 
-    if (hasCyclePresent(localSurvey?.questions)) {
-      toast.error("Cycle present in logic. Cannot proceed.");
+    if (isCyclic(localSurvey.questions)) {
+      toast.error("Cyclic logic detected. Please fix it before saving.");
       return;
     }
 
@@ -417,8 +424,8 @@ export default function SurveyMenuBar({
     try {
       setIsSurveyPublishing(true);
 
-      if (hasCyclePresent(localSurvey?.questions)) {
-        toast.error("Cycle present in logic. Cannot proceed.");
+      if (isCyclic(localSurvey.questions)) {
+        toast.error("Cyclic logic detected. Please fix it before saving.");
         setIsSurveyPublishing(false);
         return;
       }
