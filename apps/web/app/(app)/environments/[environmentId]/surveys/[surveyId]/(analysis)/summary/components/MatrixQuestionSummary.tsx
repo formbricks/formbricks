@@ -1,10 +1,11 @@
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveySummaryMatrix } from "@formbricks/types/responses";
 import { TooltipRenderer } from "@formbricks/ui/Tooltip";
+
+import { Headline } from "./Headline";
 
 interface MatrixQuestionSummaryProps {
   questionSummary: TSurveySummaryMatrix;

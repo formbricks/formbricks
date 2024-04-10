@@ -1,4 +1,3 @@
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
 import { questionTypes } from "@/app/lib/questions";
 import { CircleSlash2, InboxIcon, SmileIcon, StarIcon } from "lucide-react";
@@ -8,6 +7,8 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TSurveySummaryRating } from "@formbricks/types/responses";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 import { RatingResponse } from "@formbricks/ui/RatingResponse";
+
+import { Headline } from "./Headline";
 
 interface RatingSummaryProps {
   questionSummary: TSurveySummaryRating;

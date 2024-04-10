@@ -1,4 +1,3 @@
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
 import { FC } from "react";
 
@@ -7,6 +6,8 @@ import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveySummaryHiddenField } from "@formbricks/types/responses";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+
+import { Headline } from "./Headline";
 
 interface HiddenFieldsSummaryProps {
   environment: TEnvironment;

@@ -1,4 +1,3 @@
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
@@ -8,6 +7,8 @@ import { getPersonIdentifier } from "@formbricks/lib/person/util";
 import { timeSince } from "@formbricks/lib/time";
 import { TSurveySummaryOpenText } from "@formbricks/types/responses";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+
+import { Headline } from "./Headline";
 
 interface OpenTextSummaryProps {
   questionSummary: TSurveySummaryOpenText;

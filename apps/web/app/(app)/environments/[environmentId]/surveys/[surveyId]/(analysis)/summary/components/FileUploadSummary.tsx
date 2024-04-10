@@ -1,4 +1,3 @@
-import Headline from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/Headline";
 import { questionTypes } from "@/app/lib/questions";
 import { DownloadIcon, FileIcon, InboxIcon } from "lucide-react";
 import Link from "next/link";
@@ -9,6 +8,8 @@ import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TSurveySummaryFileUpload } from "@formbricks/types/responses";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
+
+import { Headline } from "./Headline";
 
 interface FileUploadSummaryProps {
   questionSummary: TSurveySummaryFileUpload;
