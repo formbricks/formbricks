@@ -239,10 +239,10 @@ model SurveyAttributeFilter {
 }
 
 enum SurveyType {
-  email
   link
-  mobile
   web
+  website
+  inApp
 }
 
 enum displayOptions {

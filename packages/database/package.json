@@ -28,7 +28,8 @@
     "data-migration:v1.7": "pnpm data-migration:mls && pnpm data-migration:styling",
     "data-migration:mls": "ts-node ./migrations/20240318050527_add_languages_and_survey_languages/data-migration.ts",
     "data-migration:mls-fix": "ts-node ./migrations/20240318050527_add_languages_and_survey_languages/data-migration-fix.ts",
-    "data-migration:mls-range-fix": "ts-node ./migrations/20240318050527_add_languages_and_survey_languages/data-migration-range-fix.ts"
+    "data-migration:mls-range-fix": "ts-node ./migrations/20240318050527_add_languages_and_survey_languages/data-migration-range-fix.ts",
+    "data-migration:website-surveys": "ts-node ./migrations/20240410111624_adds_website_and_inapp_survey/data-migration.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.12.1",
