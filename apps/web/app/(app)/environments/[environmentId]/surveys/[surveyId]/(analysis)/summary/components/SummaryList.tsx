@@ -13,7 +13,7 @@ import { PictureChoiceSummary } from "@/app/(app)/environments/[environmentId]/s
 import { RatingSummary } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
 
 import { TEnvironment } from "@formbricks/types/environment";
-import { TSurveySummary } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { TSurveyQuestionType } from "@formbricks/types/surveys";
 import { TSurvey } from "@formbricks/types/surveys";
 import EmptySpaceFiller from "@formbricks/ui/EmptySpaceFiller";
@@ -30,14 +30,14 @@ interface SummaryListProps {
   totalResponseCount: number;
 }
 
-export default function SummaryList({
+export const SummaryList = ({
   summary,
   environment,
   responseCount,
   survey,
   fetchingSummary,
   totalResponseCount,
-}: SummaryListProps) {
+}: SummaryListProps) => {
   return (
     <div className="mt-10 space-y-8">
       {survey.type === "web" && responseCount === 0 && !environment.widgetSetupCompleted ? (
@@ -136,7 +136,7 @@ export default function SummaryList({
           if (questionSummary.type === "hiddenField") {
             return (
               <HiddenFieldsSummary
-                key={questionSummary.question}
+                key={questionSummary.id}
                 questionSummary={questionSummary}
                 environment={environment}
               />
@@ -148,4 +148,4 @@ export default function SummaryList({
       )}
     </div>
   );
-}
+};

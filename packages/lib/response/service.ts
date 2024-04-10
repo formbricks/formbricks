@@ -16,7 +16,6 @@ import {
   TResponseUpdateInput,
   TSurveyMetaFieldFilter,
   TSurveyPersonAttributes,
-  TSurveySummary,
   ZResponse,
   ZResponseFilterCriteria,
   ZResponseInput,
@@ -24,6 +23,7 @@ import {
   ZResponseNote,
   ZResponseUpdateInput,
 } from "@formbricks/types/responses";
+import { TSurveySummary } from "@formbricks/types/surveys";
 import { TTag } from "@formbricks/types/tags";
 
 import { ITEMS_PER_PAGE, SERVICES_REVALIDATION_INTERVAL, WEBAPP_URL } from "../constants";

@@ -23,7 +23,7 @@ interface ShareEmbedSurveyProps {
   webAppUrl: string;
   user: TUser;
 }
-export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, user }: ShareEmbedSurveyProps) {
+export const ShareEmbedSurvey = ({ survey, open, setOpen, webAppUrl, user }: ShareEmbedSurveyProps) => {
   const router = useRouter();
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
@@ -161,4 +161,4 @@ export default function ShareEmbedSurvey({ survey, open, setOpen, webAppUrl, use
       </DialogContent>
     </Dialog>
   );
-}
+};
