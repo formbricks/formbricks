@@ -127,23 +127,6 @@ export default function AddressQuestion({
     [question.id, isInIframe]
   );
 
-  const handleKeyPress = (event: KeyboardEvent, currentIndex: number) => {
-    if (event.key === "Enter") {
-      event.preventDefault(); // Prevent the default form submission on Enter key
-
-      if (currentIndex < inputConfig.length - 1) {
-        // Focus the next input field
-        const nextInput = document.getElementById(`${question.id}-${currentIndex + 1}`);
-        if (nextInput) {
-          nextInput.focus();
-        }
-      } else {
-        // Submit the form if it's the last input field
-        formRef.current?.requestSubmit();
-      }
-    }
-  };
-
   return (
     <form key={question.id} onSubmit={handleSubmit} className="w-full" ref={formRef}>
       {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
@@ -167,7 +150,6 @@ export default function AddressQuestion({
             placeholder={placeholder}
             tabIndex={index + 1}
             required={required}
-            onKeyPress={(e) => handleKeyPress(e, index)}
             value={safeValue[index] || ""}
             onInput={(e) => handleInputChange(e.currentTarget.value, index)}
             autoFocus={!isInIframe && index === 0}
