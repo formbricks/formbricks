@@ -184,7 +184,7 @@ export function Survey({
 
   const onSubmit = (responseData: TResponseData, ttc: TResponseTtc, isFormPrefilling: Boolean = false) => {
     const questionId = Object.keys(responseData)[0];
-    if (isFormPrefilling && questionId === survey.questions[0].id) {
+    if (isFormPrefilling && activeQuestionId === survey.questions[0].id) {
       onChange(responseData);
     }
     setLoadingElement(true);
@@ -195,12 +195,12 @@ export function Survey({
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*");
       onFinished();
+      onActiveQuestionChange("end");
     }
     setQuestionId(nextQuestionId);
     // add to history
     setHistory([...history, questionId]);
     setLoadingElement(false);
-    onActiveQuestionChange(nextQuestionId);
   };
 
   const replaceRecallInfo = (text: string): string => {
