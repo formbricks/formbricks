@@ -4,7 +4,7 @@ import { ZMembershipRole } from "./memberships";
 
 export const ZInvite = z.object({
   id: z.string(),
-  email: z.string(),
+  email: z.string().email(),
   name: z.string().nullish(),
   teamId: z.string(),
   creatorId: z.string(),
@@ -17,7 +17,7 @@ export const ZInvite = z.object({
 export type TInvite = z.infer<typeof ZInvite>;
 
 export const ZInvitee = z.object({
-  email: z.string(),
+  email: z.string().email(),
   name: z.string().nullable(),
   role: ZMembershipRole,
 });
@@ -33,3 +33,12 @@ export const ZInviteUpdateInput = z.object({
   role: ZMembershipRole,
 });
 export type TInviteUpdateInput = z.infer<typeof ZInviteUpdateInput>;
+
+export const ZInviteeMembers = z.array(
+  z.object({
+    name: z.string(),
+    email: z.string().email(),
+    role: ZMembershipRole,
+  })
+);
+export type TInviteeMembers = z.infer<typeof ZInviteeMembers>;

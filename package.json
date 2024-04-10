@@ -64,6 +64,8 @@
   },
   "dependencies": {
     "@changesets/cli": "^2.27.1",
+    "@types/papaparse": "^5.3.14",
+    "papaparse": "^5.4.1",
     "playwright": "^1.42.1"
   }
 }
