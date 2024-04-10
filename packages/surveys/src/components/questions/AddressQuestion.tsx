@@ -73,6 +73,7 @@ export default function AddressQuestion({
 
   const inputConfig = [
     {
+      name: "address-line1",
       placeholder: "Address Line 1",
       required: question.required
         ? hasFilled
@@ -83,6 +84,7 @@ export default function AddressQuestion({
           : false,
     },
     {
+      name: "address-line2",
       placeholder: "Address Line 2",
       required: question.required
         ? question.isAddressLine2Required
@@ -91,18 +93,22 @@ export default function AddressQuestion({
           : false,
     },
     {
+      name: "address-level2",
       placeholder: "City / Town",
       required: question.required ? question.isCityRequired : hasFilled ? question.isCityRequired : false,
     },
     {
+      name: "address-level1",
       placeholder: "State / Region",
       required: question.required ? question.isStateRequired : hasFilled ? question.isStateRequired : false,
     },
     {
+      name: "postal-code",
       placeholder: "ZIP / Post Code",
       required: question.required ? question.isZipRequired : hasFilled ? question.isZipRequired : false,
     },
     {
+      name: "country-name",
       placeholder: "Country",
       required: question.required
         ? question.isCountryRequired
@@ -151,11 +157,12 @@ export default function AddressQuestion({
         questionId={question.id}
       />
       <div className="mt-4 space-y-2">
-        {inputConfig.map(({ placeholder, required }, index) => (
+        {inputConfig.map(({ name, placeholder, required }, index) => (
           <input
             ref={index === 0 ? addressTextRef : null}
             key={index}
-            name={`${question.id}-${index}`}
+            name={name}
+            autoComplete={name}
             id={`${question.id}-${index}`}
             placeholder={placeholder}
             tabIndex={index + 1}
