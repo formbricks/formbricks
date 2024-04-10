@@ -7,6 +7,7 @@ import {
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
   TSurveyLanguage,
+  TSurveyMatrixQuestion,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyOpenTextQuestion,
@@ -38,6 +39,14 @@ const handleI18nCheckForMultipleChoice = (
   return question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
 };
 
+const handleI18nCheckForMatrixLabels = (
+  question: TSurveyMatrixQuestion,
+  languages: TSurveyLanguage[]
+): boolean => {
+  const rowsAndColumns = [...question.rows, ...question.columns];
+  return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
+};
+
 // Validation rules
 export const validationRules = {
   openText: (question: TSurveyOpenTextQuestion, languages: TSurveyLanguage[]) => {
@@ -64,8 +73,11 @@ export const validationRules = {
       ? isLabelValidForAllLanguages(question.dismissButtonLabel, languages)
       : true;
   },
+  matrix: (question: TSurveyMatrixQuestion, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForMatrixLabels(question, languages);
+  },
   // Assuming headline is of type TI18nString
-  defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[]) => {
+  defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[], isFirstQuestion: boolean) => {
     // headline and subheader are default for every question
     const isHeadlineValid = isLabelValidForAllLanguages(question.headline, languages);
     const isSubheaderValid =
@@ -77,7 +89,12 @@ export const validationRules = {
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
     //question specific fields
-    const fieldsToValidate = ["html", "buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
+    let fieldsToValidate = ["html", "buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
+
+    // Remove backButtonLabel from validation if it is the first question
+    if (isFirstQuestion) {
+      fieldsToValidate = fieldsToValidate.filter((field) => field !== "backButtonLabel");
+    }
 
     for (const field of fieldsToValidate) {
       if (question[field] && typeof question[field][defaultLanguageCode] !== "undefined") {
@@ -90,12 +107,16 @@ export const validationRules = {
 };
 
 // Main validation function
-export const validateQuestion = (question: TSurveyQuestion, surveyLanguages: TSurveyLanguage[]): boolean => {
+export const validateQuestion = (
+  question: TSurveyQuestion,
+  surveyLanguages: TSurveyLanguage[],
+  isFirstQuestion: boolean
+): boolean => {
   const specificValidation = validationRules[question.type];
   const defaultValidation = validationRules.defaultValidation;
 
   const specificValidationResult = specificValidation ? specificValidation(question, surveyLanguages) : true;
-  const defaultValidationResult = defaultValidation(question, surveyLanguages);
+  const defaultValidationResult = defaultValidation(question, surveyLanguages, isFirstQuestion);
 
   // Return true only if both specific and default validation pass
   return specificValidationResult && defaultValidationResult;
@@ -104,13 +125,14 @@ export const validateQuestion = (question: TSurveyQuestion, surveyLanguages: TSu
 export const validateSurveyQuestionsInBatch = (
   question: TSurveyQuestion,
   invalidQuestions: string[] | null,
-  surveyLanguages: TSurveyLanguage[]
+  surveyLanguages: TSurveyLanguage[],
+  isFirstQuestion: boolean
 ) => {
   if (invalidQuestions === null) {
     return [];
   }
 
-  if (validateQuestion(question, surveyLanguages)) {
+  if (validateQuestion(question, surveyLanguages, isFirstQuestion)) {
     return invalidQuestions.filter((id) => id !== question.id);
   } else if (!invalidQuestions.includes(question.id)) {
     return [...invalidQuestions, question.id];
