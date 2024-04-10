@@ -87,7 +87,6 @@ export async function GET(
       getActionClasses(environmentId),
       getProductByEnvironmentId(environmentId),
     ]);
-
     if (!product) {
       throw new Error("Product not found");
     }

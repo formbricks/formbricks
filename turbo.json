@@ -127,6 +127,8 @@
         "SENTRY_DSN",
         "SHORT_URL_BASE",
         "SIGNUP_DISABLED",
+        "SLACK_CLIENT_ID",
+        "SLACK_CLIENT_SECRET",
         "SMTP_HOST",
         "SMTP_PASSWORD",
         "SMTP_PORT",
