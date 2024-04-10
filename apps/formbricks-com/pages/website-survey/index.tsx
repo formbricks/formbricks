@@ -60,11 +60,11 @@ const websiteSurveyFeatures = [
     imgLeft: false,
   },
   {
-    headline: "100% privacy-first",
+    headline: "Multi-language website surveys",
     subheadline:
-      "Formbricks can be self-hosted with one click. Prefer a managed service? We run our Cloud as a German company, hosted in Germany with full GDPR- and CCPA-compliance. Keeping survey data private has never been easier.",
-    imgSrc: Img4,
-    imgAlt: "GDPR and CCPA-compliant privacy-first online survey tool",
+      "You offer your website in several languages? No problem! Display your online surveys in the language your visitor prefers automatically. Easily manage multi-language survey translations with Formbricks.",
+    imgSrc: Img6,
+    imgAlt: "Multi-language online surveys for global audience engagement",
     imgLeft: true,
   },
   {
@@ -76,11 +76,11 @@ const websiteSurveyFeatures = [
     imgLeft: false,
   },
   {
-    headline: "Multi-language website surveys",
+    headline: "100% privacy-first",
     subheadline:
-      "You offer your website in several languages? No problem! Display your online surveys in the language your visitor prefers automatically. Easily manage multi-language survey translations with Formbricks.",
-    imgSrc: Img6,
-    imgAlt: "Multi-language online surveys for global audience engagement",
+      "Formbricks can be self-hosted with one click. Prefer a managed service? We run our Cloud as a German company, hosted in Germany with full GDPR- and CCPA-compliance. Keeping survey data private has never been easier.",
+    imgSrc: Img4,
+    imgAlt: "GDPR and CCPA-compliant privacy-first online survey tool",
     imgLeft: true,
   },
   {
@@ -298,6 +298,10 @@ export default function WebsiteSurveyPage() {
           dateModified="2024-03-12"
         />
       </div>
+      <SalesBreaker
+        headline="Launch website surveys in minutes 🚀"
+        subheadline="Optimize conversions and learn from your visitors. Get started in minutes."
+      />
     </LayoutLight>
   );
 }
