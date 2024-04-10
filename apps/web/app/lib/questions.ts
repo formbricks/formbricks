@@ -15,7 +15,22 @@ import {
   StarIcon,
 } from "lucide-react";
 
-import { TSurveyQuestionType as QuestionId } from "@formbricks/types/surveys";
+import {
+  TSurveyQuestionType as QuestionId,
+  TSurveyAddressQuestion,
+  TSurveyCTAQuestion,
+  TSurveyCalQuestion,
+  TSurveyConsentQuestion,
+  TSurveyDateQuestion,
+  TSurveyFileUploadQuestion,
+  TSurveyMatrixQuestion,
+  TSurveyMultipleChoiceMultiQuestion,
+  TSurveyMultipleChoiceSingleQuestion,
+  TSurveyNPSQuestion,
+  TSurveyOpenTextQuestion,
+  TSurveyPictureSelectionQuestion,
+  TSurveyRatingQuestion,
+} from "@formbricks/types/surveys";
 
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
@@ -39,7 +54,7 @@ export const questionTypes: TSurveyQuestionType[] = [
       placeholder: { default: "Type your answer here..." },
       longAnswer: true,
       inputType: "text",
-    },
+    } as Partial<TSurveyOpenTextQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceSingle,
@@ -54,7 +69,7 @@ export const questionTypes: TSurveyQuestionType[] = [
         { id: createId(), label: { default: "Have the cake 🎂" } },
       ],
       shuffleOption: "none",
-    },
+    } as Partial<TSurveyMultipleChoiceSingleQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceMulti,
@@ -69,7 +84,7 @@ export const questionTypes: TSurveyQuestionType[] = [
         { id: createId(), label: { default: "Palms 🌴" } },
       ],
       shuffleOption: "none",
-    },
+    } as Partial<TSurveyMultipleChoiceMultiQuestion>,
   },
   {
     id: QuestionId.PictureSelection,
@@ -90,7 +105,7 @@ export const questionTypes: TSurveyQuestionType[] = [
           imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
         },
       ],
-    },
+    } as Partial<TSurveyPictureSelectionQuestion>,
   },
   {
     id: QuestionId.Rating,
@@ -104,7 +119,7 @@ export const questionTypes: TSurveyQuestionType[] = [
       range: 5,
       lowerLabel: { default: "Not good" },
       upperLabel: { default: "Very good" },
-    },
+    } as Partial<TSurveyRatingQuestion>,
   },
   {
     id: QuestionId.NPS,
@@ -115,7 +130,7 @@ export const questionTypes: TSurveyQuestionType[] = [
       headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
       lowerLabel: { default: "Not at all likely" },
       upperLabel: { default: "Extremely likely" },
-    },
+    } as Partial<TSurveyNPSQuestion>,
   },
   {
     id: QuestionId.CTA,
@@ -130,8 +145,8 @@ export const questionTypes: TSurveyQuestionType[] = [
       },
       buttonLabel: { default: "Book interview" },
       buttonExternal: false,
-      dismissButtonLabel: "Skip",
-    },
+      dismissButtonLabel: { default: "Skip" },
+    } as Partial<TSurveyCTAQuestion>,
   },
   {
     id: QuestionId.Consent,
@@ -142,7 +157,7 @@ export const questionTypes: TSurveyQuestionType[] = [
       headline: { default: "Terms and Conditions" },
       html: { default: "" },
       label: { default: "I agree to the terms and conditions" },
-    },
+    } as Partial<TSurveyConsentQuestion>,
   },
   {
     id: QuestionId.Date,
@@ -152,7 +167,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     preset: {
       headline: { default: "When is your birthday?" },
       format: "M-d-y",
-    },
+    } as Partial<TSurveyDateQuestion>,
   },
   {
     id: QuestionId.FileUpload,
@@ -162,7 +177,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     preset: {
       headline: { default: "File Upload" },
       allowMultipleFiles: false,
-    },
+    } as Partial<TSurveyFileUploadQuestion>,
   },
   {
     id: QuestionId.Cal,
@@ -172,7 +187,7 @@ export const questionTypes: TSurveyQuestionType[] = [
     preset: {
       headline: { default: "Schedule a call with me" },
       calUserName: "rick/get-rick-rolled",
-    },
+    } as Partial<TSurveyCalQuestion>,
   },
   {
     id: QuestionId.Matrix,
@@ -184,7 +199,7 @@ export const questionTypes: TSurveyQuestionType[] = [
       subheader: { default: "0: Not at all, 3: Love it" },
       rows: [{ default: "Rose 🌹" }, { default: "Sunflower 🌻" }, { default: "Hibiscus 🌺" }],
       columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
-    },
+    } as Partial<TSurveyMatrixQuestion>,
   },
   {
     id: QuestionId.Address,
@@ -193,7 +208,13 @@ export const questionTypes: TSurveyQuestionType[] = [
     icon: HomeIcon,
     preset: {
       headline: { default: "Where do you live?" },
-    },
+      isAddressLine1Required: false,
+      isAddressLine2Required: false,
+      isCityRequired: false,
+      isStateRequired: false,
+      isZipRequired: false,
+      isCountryRequired: false,
+    } as Partial<TSurveyAddressQuestion>,
   },
 ];
 
