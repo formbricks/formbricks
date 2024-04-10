@@ -23,11 +23,98 @@ interface UnsplashImage {
   };
 }
 
+const defaultImages = [
+  {
+    id: "dog-1",
+    alt_description: "Dog",
+    urls: {
+      regular: "/image-backgrounds/dogs.webp",
+    },
+  },
+  {
+    id: "pencil",
+    alt_description: "Pencil",
+    urls: {
+      regular: "/image-backgrounds/pencil.webp",
+    },
+  },
+  {
+    id: "plant",
+    alt_description: "Plant",
+    urls: {
+      regular: "/image-backgrounds/plant.webp",
+    },
+  },
+  {
+    id: "dog-2",
+    alt_description: "Another Dog",
+    urls: {
+      regular: "/image-backgrounds/dog-2.webp",
+    },
+  },
+  {
+    id: "kitten-2",
+    alt_description: "Another Kitten",
+    urls: {
+      regular: "/image-backgrounds/kitten-2.webp",
+    },
+  },
+  {
+    id: "lollipop",
+    alt_description: "Lollipop",
+    urls: {
+      regular: "/image-backgrounds/lolipop.webp",
+    },
+  },
+  {
+    id: "oranges",
+    alt_description: "Oranges",
+    urls: {
+      regular: "/image-backgrounds/oranges.webp",
+    },
+  },
+  {
+    id: "flower",
+    alt_description: "Flower",
+    urls: {
+      regular: "/image-backgrounds/flowers.webp",
+    },
+  },
+  {
+    id: "supermario",
+    alt_description: "Super Mario",
+    urls: {
+      regular: "/image-backgrounds/supermario.webp",
+    },
+  },
+  {
+    id: "shapes",
+    alt_description: "Shapes",
+    urls: {
+      regular: "/image-backgrounds/shapes.webp",
+    },
+  },
+  {
+    id: "waves",
+    alt_description: "Waves",
+    urls: {
+      regular: "/image-backgrounds/waves.webp",
+    },
+  },
+  {
+    id: "kitten-1",
+    alt_description: "Kitten",
+    urls: {
+      regular: "/image-backgrounds/kittens.webp",
+    },
+  },
+];
+
 export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashSurveyBgProps) => {
   const inputFocus = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
-  const [images, setImages] = useState<UnsplashImage[]>([]);
+  const [images, setImages] = useState<UnsplashImage[]>(defaultImages);
 
   useEffect(() => {
     const fetchData = async (searchQuery: string) => {
@@ -76,9 +163,10 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
         <Input
           value={query}
           onChange={handleChange}
-          placeholder="Search free high-resolution photos from Unsplash"
+          placeholder="Try 'lollipop' or 'mountain'..."
           className="pl-8"
           ref={inputFocus}
+          aria-label="Search for images"
         />
       </div>
       <div className="relative mt-4 grid grid-cols-3 gap-1">
@@ -96,13 +184,13 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
                 src={image.urls.regular}
                 alt={image.alt_description}
                 onClick={() => handleImageSelected(image.urls.regular)}
-                className="cursor-pointer rounded-lg"
+                className="h-full cursor-pointer rounded-lg object-cover"
               />
             ))
           : !isLoading &&
             query.trim() !== "" && (
               <div className="col-span-3 flex items-center justify-center text-sm text-slate-500">
-                No images found!
+                No images found for &apos;{query}&apos;
               </div>
             )}
       </div>
