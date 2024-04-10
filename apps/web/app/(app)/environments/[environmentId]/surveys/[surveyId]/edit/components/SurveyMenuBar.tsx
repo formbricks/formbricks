@@ -3,6 +3,7 @@
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import {
   isCardValid,
+  isSurveyLogicCyclic,
   validateQuestion,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { isEqual } from "lodash";
@@ -20,7 +21,6 @@ import {
   TSurvey,
   TSurveyEditorTabs,
   TSurveyQuestionType,
-  TSurveyQuestions,
   ZSurveyInlineTriggers,
   surveyHasBothTriggers,
 } from "@formbricks/types/surveys";
@@ -126,54 +126,6 @@ export default function SurveyMenuBar({
     } else {
       router.back();
     }
-  };
-
-  // Checks if there is a cycle present in the survey data logic.
-  const isCyclic = (questions: TSurveyQuestions) => {
-    const visited: Record<string, boolean> = {};
-    const recStack: Record<string, boolean> = {};
-
-    const checkForCycle = (questionId: string) => {
-      if (!visited[questionId]) {
-        visited[questionId] = true;
-        recStack[questionId] = true;
-
-        const question = questions.find((question) => question.id === questionId);
-        if (question && question.logic && question.logic.length > 0) {
-          for (const logic of question.logic) {
-            const destination = logic.destination;
-            if (!destination) {
-              return false;
-            }
-
-            if (!visited[destination] && checkForCycle(destination)) {
-              return true;
-            } else if (recStack[destination]) {
-              return true;
-            }
-          }
-        } else {
-          // Handle default behavior
-          const nextQuestionIndex = questions.findIndex((question) => question.id === questionId) + 1;
-          const nextQuestion = questions[nextQuestionIndex];
-          if (nextQuestion && !visited[nextQuestion.id] && checkForCycle(nextQuestion.id)) {
-            return true;
-          }
-        }
-      }
-
-      recStack[questionId] = false;
-      return false;
-    };
-
-    for (const question of questions) {
-      const questionId = question.id;
-      if (checkForCycle(questionId)) {
-        return true;
-      }
-    }
-
-    return false;
   };
 
   const validateSurvey = (survey: TSurvey) => {
@@ -332,7 +284,7 @@ export default function SurveyMenuBar({
       return;
     }
 
-    if (isCyclic(localSurvey.questions)) {
+    if (isSurveyLogicCyclic(localSurvey.questions)) {
       toast.error("Cyclic logic detected. Please fix it before saving.");
       return;
     }
@@ -424,7 +376,7 @@ export default function SurveyMenuBar({
     try {
       setIsSurveyPublishing(true);
 
-      if (isCyclic(localSurvey.questions)) {
+      if (isSurveyLogicCyclic(localSurvey.questions)) {
         toast.error("Cyclic logic detected. Please fix it before saving.");
         setIsSurveyPublishing(false);
         return;
