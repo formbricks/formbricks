@@ -40,7 +40,7 @@ const CardStylingSettings = ({
 
   const isLogoHidden = styling?.isLogoHidden ?? false;
 
-  const isLogoVisible = !isLogoHidden && !!localProduct.logo?.url;
+  const isLogoVisible = !!localProduct.logo?.url;
 
   const setCardBgColor = (color: string) => {
     setStyling((prev) => ({
@@ -120,10 +120,10 @@ const CardStylingSettings = ({
   };
 
   const toggleLogoVisibility = () => {
-    setStyling({
-      ...styling,
-      isLogoHidden: !isLogoHidden,
-    });
+    setStyling((prev) => ({
+      ...prev,
+      isLogoHidden: !prev.isLogoHidden,
+    }));
   };
 
   const hideProgressBar = useMemo(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon } from "lucide-react";
 
 import { TSurveyLanguage } from "@formbricks/types/surveys";
 import {
