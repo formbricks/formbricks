@@ -1,5 +1,6 @@
 import {
   CalendarDaysIcon,
+  HomeIcon,
   ListIcon,
   MessageSquareTextIcon,
   PhoneIcon,
@@ -21,6 +22,7 @@ const questionIconMapping = {
   nps: PresentationIcon,
   date: CalendarDaysIcon,
   cal: PhoneIcon,
+  address: HomeIcon,
 };
 
 interface RecallQuestionSelectProps {

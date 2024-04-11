@@ -10,7 +10,7 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
-import { CalendarDaysIcon, UploadIcon } from "lucide-react";
+import { CalendarDaysIcon } from "lucide-react";
 
 import { cn } from "@formbricks/lib/cn";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
@@ -346,7 +346,7 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <EmailFooter />
         </EmailTemplateWrapper>
       );
-    case TSurveyQuestionType.FileUpload:
+    case TSurveyQuestionType.Address:
       return (
         <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
           <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
@@ -355,56 +355,12 @@ const EmailTemplate = ({ survey, surveyUrl, brandColor }: EmailTemplateProps) =>
           <Text className="m-0 block p-0 text-sm font-normal leading-6 text-slate-500">
             {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
           </Text>
-          <Section className="mt-4 flex w-full items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-5">
-            <UploadIcon className="mx-auto mb-1 block h-5 w-5" />
-            <Section>
-              <Text className="inline text-sm font-medium text-slate-500 ">Click to upload files</Text>
-            </Section>
-          </Section>
-          <EmailFooter />
-        </EmailTemplateWrapper>
-      );
-    case TSurveyQuestionType.Matrix:
-      return (
-        <EmailTemplateWrapper surveyUrl={url} brandColor={brandColor}>
-          <Text className="m-0 mr-8 block p-0 text-base font-semibold leading-6 text-slate-800">
-            {getLocalizedValue(firstQuestion.headline, "default")}
-          </Text>
-          <Text className="m-0 mb-2 block p-0 text-sm font-normal leading-6 text-slate-500">
-            {getLocalizedValue(firstQuestion.subheader, "default")}
-          </Text>
-          <Container className="mx-0">
-            <table className="w-full table-auto border-collapse border border-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2 text-gray-800"></th>
-                  {firstQuestion.columns.map((column, columnIndex) => {
-                    return (
-                      <th key={columnIndex} className="max-w-40 break-words px-4 py-2 text-gray-800">
-                        {getLocalizedValue(column, "default")}
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody className="overflow-auto">
-                {firstQuestion.rows.map((row, rowIndex) => {
-                  return (
-                    <tr key={rowIndex} className={`${rowIndex % 2 === 0 ? "bg-gray-100" : ""}`}>
-                      <td className="max-w-40 break-words px-4 py-2">{getLocalizedValue(row, "default")}</td>
-                      {firstQuestion.columns.map(() => {
-                        return (
-                          <th className="px-4 py-2 text-gray-800">
-                            <Section className="h-4 w-4 rounded-full bg-white p-2 outline"></Section>
-                          </th>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </Container>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Section
+              key={index}
+              className="mt-4 block h-10 w-full rounded-lg border border-solid border-slate-200 bg-slate-50"
+            />
+          ))}
           <EmailFooter />
         </EmailTemplateWrapper>
       );

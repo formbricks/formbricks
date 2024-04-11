@@ -12,7 +12,7 @@ import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attributeClasses";
 import { TBaseFilter, TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys";
-import AlertDialog from "@formbricks/ui/AlertDialog";
+import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import BasicAddFilterModal from "@formbricks/ui/Targeting/BasicAddFilterModal";
 import BasicSegmentEditor from "@formbricks/ui/Targeting/BasicSegmentEditor";
