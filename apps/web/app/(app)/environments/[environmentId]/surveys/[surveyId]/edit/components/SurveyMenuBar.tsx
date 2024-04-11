@@ -3,6 +3,7 @@
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import {
   isCardValid,
+  isSurveyLogicCyclic,
   validateQuestion,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { isEqual } from "lodash";
@@ -285,6 +286,11 @@ export default function SurveyMenuBar({
       return;
     }
 
+    if (isSurveyLogicCyclic(localSurvey.questions)) {
+      toast.error("Cyclic logic detected. Please fix it before saving.");
+      return;
+    }
+
     setIsSurveySaving(true);
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {
@@ -371,6 +377,13 @@ export default function SurveyMenuBar({
   const handleSurveyPublish = async () => {
     try {
       setIsSurveyPublishing(true);
+
+      if (isSurveyLogicCyclic(localSurvey.questions)) {
+        toast.error("Cyclic logic detected. Please fix it before saving.");
+        setIsSurveyPublishing(false);
+        return;
+      }
+
       if (!validateSurvey(localSurvey)) {
         setIsSurveyPublishing(false);
         return;

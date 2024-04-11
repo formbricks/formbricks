@@ -13,6 +13,7 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
+  TSurveyQuestions,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
@@ -216,4 +217,52 @@ export const validateId = (
   }
 
   return true;
+};
+
+// Checks if there is a cycle present in the survey data logic.
+export const isSurveyLogicCyclic = (questions: TSurveyQuestions) => {
+  const visited: Record<string, boolean> = {};
+  const recStack: Record<string, boolean> = {};
+
+  const checkForCycle = (questionId: string) => {
+    if (!visited[questionId]) {
+      visited[questionId] = true;
+      recStack[questionId] = true;
+
+      const question = questions.find((question) => question.id === questionId);
+      if (question && question.logic && question.logic.length > 0) {
+        for (const logic of question.logic) {
+          const destination = logic.destination;
+          if (!destination) {
+            return false;
+          }
+
+          if (!visited[destination] && checkForCycle(destination)) {
+            return true;
+          } else if (recStack[destination]) {
+            return true;
+          }
+        }
+      } else {
+        // Handle default behavior
+        const nextQuestionIndex = questions.findIndex((question) => question.id === questionId) + 1;
+        const nextQuestion = questions[nextQuestionIndex];
+        if (nextQuestion && !visited[nextQuestion.id] && checkForCycle(nextQuestion.id)) {
+          return true;
+        }
+      }
+    }
+
+    recStack[questionId] = false;
+    return false;
+  };
+
+  for (const question of questions) {
+    const questionId = question.id;
+    if (checkForCycle(questionId)) {
+      return true;
+    }
+  }
+
+  return false;
 };
