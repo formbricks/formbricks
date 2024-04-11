@@ -1,5 +1,5 @@
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyQuestion, TSurveyStatus } from "@formbricks/types/surveys";
+import { TSurveyQuestion, TSurveyQuestionType, TSurveyStatus } from "@formbricks/types/surveys";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 export interface TInsights {
@@ -10,14 +10,16 @@ export interface TInsights {
   numLiveSurvey: number;
 }
 
-export interface TSurveyResponse {
-  [headline: string]: string | number | boolean | Date | string[];
+export interface TSurveyResponseData {
+  headline: string;
+  responseValue: string | string[];
+  questionType: TSurveyQuestionType;
 }
 
 export interface TNotificationDataSurvey {
   id: string;
   name: string;
-  responses: TSurveyResponse[];
+  responses: TSurveyResponseData[];
   responseCount: number;
   status: string;
 }

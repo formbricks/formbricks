@@ -1,4 +1,4 @@
-import { Column, Container, Hr, Link, Row, Section, Text } from "@react-email/components";
+import { Column, Container, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
 import React from "react";
 
 import { TResponse } from "@formbricks/types/responses";
@@ -8,6 +8,42 @@ import { TTeam } from "@formbricks/types/teams";
 import { getQuestionResponseMapping } from "../responses";
 import { getOriginalFileNameFromUrl } from "../storage/utils";
 import { EmailButton } from "./EmailButton";
+
+export const renderEmailResponseValue = (response: string | string[], questionType: TSurveyQuestionType) => {
+  switch (questionType) {
+    case TSurveyQuestionType.FileUpload:
+      return (
+        <Container>
+          {typeof response !== "string" &&
+            response.map((response) => (
+              <Link
+                href={response}
+                key={response}
+                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-2 text-black shadow-sm">
+                <FileIcon />
+                <Text className="mb-0 truncate">{getOriginalFileNameFromUrl(response)}</Text>
+              </Link>
+            ))}
+        </Container>
+      );
+    case TSurveyQuestionType.PictureSelection:
+      return (
+        <Container className="flex">
+          <Row>
+            {typeof response !== "string" &&
+              response.map((response) => (
+                <Column>
+                  <Img src={response} id={response} alt={response.split("/").pop()} className="m-2 h-28" />
+                </Column>
+              ))}
+          </Row>
+        </Container>
+      );
+
+    default:
+      return <Text className="mt-0 whitespace-pre-wrap break-words font-bold">{response}</Text>;
+  }
+};
 
 interface ResponseFinishedEmailProps {
   survey: TSurvey;
@@ -38,29 +74,17 @@ export const ResponseFinishedEmail = ({
             <strong>{survey.name}</strong>:
           </Text>
           <Hr />
-          {questions.map((question) => (
-            <Row key={question.question}>
-              <Column className="w-full">
-                <Text className="mb-2 font-medium">{question.question}</Text>
-                {question.type === TSurveyQuestionType.FileUpload ? (
-                  <Container>
-                    {typeof question.answer !== "string" &&
-                      question.answer.map((answer) => (
-                        <Link
-                          href={answer}
-                          key={answer}
-                          className="mt-2 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-2 text-black shadow-sm">
-                          <FileIcon />
-                          <Text className="mb-0 truncate">{getOriginalFileNameFromUrl(answer)}</Text>
-                        </Link>
-                      ))}
-                  </Container>
-                ) : (
-                  <Text className="mt-0 whitespace-pre-wrap break-words font-bold">{question.answer}</Text>
-                )}
-              </Column>
-            </Row>
-          ))}
+          {questions.map((question) => {
+            if (!question.response) return;
+            return (
+              <Row key={question.question}>
+                <Column className="w-full">
+                  <Text className="mb-2 font-medium">{question.question}</Text>
+                  {renderEmailResponseValue(question.response, question.type)}
+                </Column>
+              </Row>
+            );
+          })}
           <EmailButton
             href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
             label={
@@ -104,9 +128,9 @@ const FileIcon = () => {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       className="lucide lucide-file">
       <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
       <path d="M14 2v4a2 2 0 0 0 2 2h4" />

@@ -1,7 +1,8 @@
-import { TNotificationDataSurvey, TSurveyResponse } from "@/app/api/cron/weekly-summary/types";
+import { TNotificationDataSurvey, TSurveyResponseData } from "@/app/api/cron/weekly-summary/types";
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
 
 import { EmailButton } from "@formbricks/lib/emails/EmailButton";
+import { renderEmailResponseValue } from "@formbricks/lib/emails/ResponseFinishedEmail";
 
 const getButtonLabel = (count: number): string => {
   if (count === 1) {
@@ -15,6 +16,8 @@ const convertSurveyStatus = (status: string): string => {
     inProgress: "Live",
     paused: "Paused",
     completed: "Completed",
+    draft: "Draft",
+    scheduled: "Scheduled",
   };
 
   return statusMap[status] || status;
@@ -31,7 +34,7 @@ export const LiveSurveyNotification = ({
   environmentId,
   surveys,
 }: LiveSurveyNotificationProps) => {
-  const createSurveyFields = (surveyResponses: TSurveyResponse[]) => {
+  const createSurveyFields = (surveyResponses: TSurveyResponseData[]) => {
     if (surveyResponses.length === 0) {
       return (
         <Container className="mt-4">
@@ -42,19 +45,17 @@ export const LiveSurveyNotification = ({
     let surveyFields: JSX.Element[] = [];
     const responseCount = surveyResponses.length;
 
-    surveyResponses.forEach((response, index) => {
-      if (!response) {
+    surveyResponses.forEach((surveyResponse, index) => {
+      if (!surveyResponse.responseValue) {
         return;
       }
 
-      for (const [headline, answer] of Object.entries(response)) {
-        surveyFields.push(
-          <Container className="mt-4" key={`${index}-${headline}`}>
-            <Text className="m-0">{headline}</Text>
-            <Text className="m-0 font-bold">{answer.toString()}</Text>
-          </Container>
-        );
-      }
+      surveyFields.push(
+        <Container className="mt-4" key={`${index}-${surveyResponse.headline}`}>
+          <Text className="m-0">{surveyResponse.headline}</Text>
+          {renderEmailResponseValue(surveyResponse.responseValue, surveyResponse.questionType)}
+        </Container>
+      );
 
       // Add <hr/> only when there are 2 or more responses to display, and it's not the last response
       if (responseCount >= 2 && index < responseCount - 1) {
@@ -83,7 +84,7 @@ export const LiveSurveyNotification = ({
           </Text>
 
           <Text
-            className={`ml-2 inline ${isLive ? "bg-green-400" : "bg-gray-300"} ${isLive ? "text-gray-100" : "text-blue-800"} rounded-full px-2 py-1 text-sm`}>
+            className={`ml-2 inline ${isLive ? "bg-green-400 text-gray-100" : "bg-gray-300 text-blue-800"} rounded-full px-2 py-1 text-sm`}>
             {displayStatus}
           </Text>
           {noResponseLastWeek ? (

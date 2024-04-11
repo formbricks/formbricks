@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { CRON_SECRET } from "@formbricks/lib/constants";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getResponseValue } from "@formbricks/lib/responses";
 import { checkForRecallInHeadline } from "@formbricks/lib/utils/recall";
 
 import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "./email";
@@ -12,7 +13,7 @@ import {
   ProductData,
   TNotificationDataSurvey,
   TNotificationResponse,
-  TSurveyResponse,
+  TSurveyResponseData,
 } from "./types";
 
 const BATCH_SIZE = 500;
@@ -196,19 +197,21 @@ const getNotificationResponse = (
     // iterate through the responses and calculate the survey insights
     for (const response of parsedSurvey.responses) {
       // only take the first 3 responses
-      if (surveyData.responses.length >= 1) {
+      if (surveyData.responses.length >= 3) {
         break;
       }
-      const surveyResponse: TSurveyResponse = {};
+      const surveyResponses: TSurveyResponseData[] = [];
       for (const question of parsedSurvey.questions) {
         const headline = question.headline;
-        const answer = response.data[question.id]?.toString() || null;
-        if (answer === null || answer === "" || answer?.length === 0) {
-          continue;
-        }
-        surveyResponse[getLocalizedValue(headline, "default")] = answer;
+        const responseValue = getResponseValue(response.data[question.id], question);
+        const surveyResponse: TSurveyResponseData = {
+          headline: getLocalizedValue(headline, "default"),
+          responseValue,
+          questionType: question.type,
+        };
+        surveyResponses.push(surveyResponse);
       }
-      surveyData.responses.push(surveyResponse);
+      surveyData.responses = surveyResponses;
     }
     surveys.push(surveyData);
     // calculate the overall insights

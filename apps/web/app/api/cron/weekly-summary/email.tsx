@@ -15,12 +15,12 @@ const getEmailSubject = (productName: string): string => {
   return `${productName} User Insights - Last Week by Formbricks`;
 };
 
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export const sendWeeklySummaryNotificationEmail = async (
   email: string,
   notificationData: TNotificationResponse
 ) => {
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
   const startDate = `${notificationData.lastWeekDate.getDate()} ${
     monthNames[notificationData.lastWeekDate.getMonth()]
   }`;
@@ -61,8 +61,6 @@ export const sendNoLiveSurveyNotificationEmail = async (
   email: string,
   notificationData: TNotificationResponse
 ) => {
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
   const startDate = `${notificationData.lastWeekDate.getDate()} ${
     monthNames[notificationData.lastWeekDate.getMonth()]
   }`;
