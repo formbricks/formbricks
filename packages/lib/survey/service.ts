@@ -11,7 +11,12 @@ import { ZId } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
 import { TSegment, ZSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyInput, ZSurveyWithRefinements } from "@formbricks/types/surveys";
+import {
+  TSurvey,
+  TSurveyFilterCriteria,
+  TSurveyInput,
+  ZSurveyWithRefinements,
+} from "@formbricks/types/surveys";
 
 import { getActionsByPersonId } from "../action/service";
 import { getActionClasses } from "../actionClass/service";
@@ -31,7 +36,7 @@ import { subscribeTeamMembersToSurveyResponses } from "../team/service";
 import { diffInDays, formatDateFields } from "../utils/datetime";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { anySurveyHasFilters, formatSurveyDateFields } from "./util";
+import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, formatSurveyDateFields } from "./util";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -283,7 +288,8 @@ export const getSurveysByActionClassId = async (actionClassId: string, page?: nu
 export const getSurveys = async (
   environmentId: string,
   limit?: number,
-  offset?: number
+  offset?: number,
+  filterCriteria?: TSurveyFilterCriteria
 ): Promise<TSurvey[]> => {
   const surveys = await unstable_cache(
     async () => {
@@ -294,13 +300,10 @@ export const getSurveys = async (
         surveysPrisma = await prisma.survey.findMany({
           where: {
             environmentId,
+            ...buildWhereClause(filterCriteria),
           },
           select: selectSurvey,
-          orderBy: [
-            {
-              updatedAt: "desc",
-            },
-          ],
+          orderBy: buildOrderByClause(filterCriteria?.sortBy),
           take: limit ? limit : undefined,
           skip: offset ? offset : undefined,
         });
@@ -335,7 +338,7 @@ export const getSurveys = async (
       }
       return surveys;
     },
-    [`getSurveys-${environmentId}-${limit}-${offset}`],
+    [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
     {
       tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       revalidate: SERVICES_REVALIDATION_INTERVAL,

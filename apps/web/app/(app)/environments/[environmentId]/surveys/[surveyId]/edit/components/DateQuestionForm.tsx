@@ -34,7 +34,7 @@ const dateOptions = [
   },
 ];
 
-export default function DateQuestionForm({
+export const DateQuestionForm = ({
   question,
   questionIdx,
   updateQuestion,
@@ -42,7 +42,7 @@ export default function DateQuestionForm({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-}: IDateQuestionFormProps): JSX.Element {
+}: IDateQuestionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
@@ -117,4 +117,4 @@ export default function DateQuestionForm({
       </div>
     </form>
   );
-}
+};

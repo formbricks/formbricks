@@ -101,7 +101,7 @@ export const OpenTextQuestion = ({
             type={question.inputType}
             onInput={(e) => handleInputChange(e.currentTarget.value)}
             autoFocus={!isInIframe}
-            className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg block w-full rounded-md border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
+            className="border-border placeholder:text-placeholder text-subheading focus:border-border-highlight bg-input-bg rounded-custom block w-full border p-2 shadow-sm focus:outline-none focus:ring-0 sm:text-sm"
             pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
             title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
           />
