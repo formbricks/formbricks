@@ -30,8 +30,8 @@ env:
   # clear:
   #   DB_HOST: 192.168.0.2
   clear:
-    REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
-    REDIS_HTTP_INTERFACE_URL: http://172.31.40.79:7379
+    REDIS_URL: redis://default:password@172.31.40.79:6379
+    REDIS_HTTP_URL: http://172.31.40.79:7379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
