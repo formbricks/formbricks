@@ -424,7 +424,7 @@ export const ZSurveyDisplayOption = z.enum(["displayOnce", "displayMultiple", "r
 
 export type TSurveyDisplayOption = z.infer<typeof ZSurveyDisplayOption>;
 
-export const ZSurveyType = z.enum(["link", "inApp", "website", "web"]);
+export const ZSurveyType = z.enum(["link", "inApp", "website"]);
 
 export type TSurveyType = z.infer<typeof ZSurveyType>;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon, SmartphoneIcon } from "lucide-react";
+import { AlertCircleIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon, SmartphoneIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -43,7 +43,15 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
 
   const options = [
     {
-      id: "web",
+      id: "website",
+      name: "Website Survey",
+      icon: EarthIcon,
+      description: "Run targeted surveys on public websites.",
+      comingSoon: false,
+      alert: !widgetSetupCompleted,
+    },
+    {
+      id: "inApp",
       name: "In-App Survey",
       icon: MonitorIcon,
       description: "Embed a survey in your web app to collect responses.",
@@ -97,7 +105,7 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
           <RadioGroup
-            defaultValue="web"
+            defaultValue="inApp"
             value={localSurvey.type}
             onValueChange={setSurveyType}
             className="flex flex-col space-y-3">

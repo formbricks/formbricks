@@ -137,7 +137,7 @@ export default function SurveyEditor({
   };
 
   useEffect(() => {
-    if (!localSurvey || localSurvey.type !== "web" || !!localSurvey.segment || createdSegmentRef.current) {
+    if (!localSurvey || localSurvey.type !== "inApp" || !!localSurvey.segment || createdSegmentRef.current) {
       return;
     }
 
@@ -236,7 +236,9 @@ export default function SurveyEditor({
               activeQuestionId={activeQuestionId}
               product={localProduct}
               environment={environment}
-              previewType={localSurvey.type === "web" ? "modal" : "fullwidth"}
+              previewType={
+                localSurvey.type === "inApp" || localSurvey.type === "website" ? "modal" : "fullwidth"
+              }
               languageCode={selectedLanguageCode}
               onFileUpload={async (file) => file.name}
             />

@@ -88,7 +88,7 @@ export default function SurveyMenuBar({
   }, [localSurvey, survey]);
 
   const containsEmptyTriggers = useMemo(() => {
-    if (localSurvey.type !== "web") return false;
+    if (localSurvey.type === "link") return false;
 
     const noTriggers = !localSurvey.triggers || localSurvey.triggers.length === 0 || !localSurvey.triggers[0];
     const noInlineTriggers =

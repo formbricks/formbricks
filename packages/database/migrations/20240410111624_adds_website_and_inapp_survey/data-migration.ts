@@ -18,7 +18,7 @@ async function main() {
       });
 
       for (const webSurvey of webSurveys) {
-        // get the responses:
+        // get the latest response
         const latestResponse = await tx.response.findFirst({
           where: {
             surveyId: webSurvey.id,
