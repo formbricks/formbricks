@@ -215,7 +215,7 @@ export function Survey({
           value = formatDateWithOrdinal(new Date(value));
         }
         if (Array.isArray(value)) {
-          value = value.join(", ");
+          value = value.filter((item) => item !== null && item !== undefined && item !== "").join(", ");
         }
         text = text.replace(recallInfo, value);
       }

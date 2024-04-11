@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@formbricks/ui/Button";
 import { Confetti } from "@formbricks/ui/Confetti";
-import ContentWrapper from "@formbricks/ui/ContentWrapper";
+import { ContentWrapper } from "@formbricks/ui/ContentWrapper";
 
 interface ConfirmationPageProps {
   environmentId: string;

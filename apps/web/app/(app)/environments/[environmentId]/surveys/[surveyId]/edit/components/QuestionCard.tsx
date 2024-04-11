@@ -1,9 +1,19 @@
 "use client";
 
-import AdvancedSettings from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
-import DateQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
-import MatrixQuestionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MatrixQuestionForm";
-import PictureSelectionForm from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
+import { AddressQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddressQuestionForm";
+import { AdvancedSettings } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/AdvancedSettings";
+import { CTAQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CTAQuestionForm";
+import { CalQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/CalQuestionForm";
+import { ConsentQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/ConsentQuestionForm";
+import { DateQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/DateQuestionForm";
+import { FileUploadQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/FileUploadQuestionForm";
+import { MatrixQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MatrixQuestionForm";
+import { MultipleChoiceMultiForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MultipleChoiceMultiForm";
+import { MultipleChoiceSingleForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/MultipleChoiceSingleForm";
+import { NPSQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/NPSQuestionForm";
+import { OpenQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/OpenQuestionForm";
+import { PictureSelectionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/PictureSelectionForm";
+import { RatingQuestionForm } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/RatingQuestionForm";
 import { getTSurveyQuestionTypeName } from "@/app/lib/questions";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
@@ -13,6 +23,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   Grid3X3Icon,
+  HomeIcon,
   ImageIcon,
   ListIcon,
   MessageSquareTextIcon,
@@ -33,16 +44,7 @@ import { Label } from "@formbricks/ui/Label";
 import { QuestionFormInput } from "@formbricks/ui/QuestionFormInput";
 import { Switch } from "@formbricks/ui/Switch";
 
-import CTAQuestionForm from "./CTAQuestionForm";
-import CalQuestionForm from "./CalQuestionForm";
-import ConsentQuestionForm from "./ConsentQuestionForm";
-import FileUploadQuestionForm from "./FileUploadQuestionForm";
-import MultipleChoiceMultiForm from "./MultipleChoiceMultiForm";
-import MultipleChoiceSingleForm from "./MultipleChoiceSingleForm";
-import NPSQuestionForm from "./NPSQuestionForm";
-import OpenQuestionForm from "./OpenQuestionForm";
 import QuestionDropdown from "./QuestionMenu";
-import RatingQuestionForm from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -105,6 +107,20 @@ export default function QuestionCard({
         updateQuestion(index, { buttonLabel: labelValue });
       }
     });
+  };
+
+  const getIsRequiredToggleDisabled = (): boolean => {
+    if (question.type === "address") {
+      return [
+        question.isAddressLine1Required,
+        question.isAddressLine2Required,
+        question.isCityRequired,
+        question.isCountryRequired,
+        question.isStateRequired,
+        question.isZipRequired,
+      ].some((condition) => condition === true);
+    }
+    return false;
   };
 
   const handleRequiredToggle = () => {
@@ -175,6 +191,8 @@ export default function QuestionCard({
                       <PhoneIcon className="h-5 w-5" />
                     ) : question.type === TSurveyQuestionType.Matrix ? (
                       <Grid3X3Icon className="h-5 w-5" />
+                    ) : question.type === TSurveyQuestionType.Address ? (
+                      <HomeIcon className="h-5 w-5" />
                     ) : null}
                   </div>
                   <div>
@@ -341,6 +359,17 @@ export default function QuestionCard({
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={isInvalid}
                 />
+              ) : question.type === TSurveyQuestionType.Address ? (
+                <AddressQuestionForm
+                  localSurvey={localSurvey}
+                  question={question}
+                  questionIdx={questionIdx}
+                  updateQuestion={updateQuestion}
+                  lastQuestion={lastQuestion}
+                  selectedLanguageCode={selectedLanguageCode}
+                  setSelectedLanguageCode={setSelectedLanguageCode}
+                  isInvalid={isInvalid}
+                />
               ) : null}
               <div className="mt-4">
                 <Collapsible.Root open={openAdvanced} onOpenChange={setOpenAdvanced} className="mt-5">
@@ -453,6 +482,7 @@ export default function QuestionCard({
                     <Switch
                       id="required-toggle"
                       checked={question.required}
+                      disabled={getIsRequiredToggleDisabled()}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRequiredToggle();

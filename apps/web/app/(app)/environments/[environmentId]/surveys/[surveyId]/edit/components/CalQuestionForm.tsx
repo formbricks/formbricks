@@ -19,7 +19,7 @@ interface CalQuestionFormProps {
   isInvalid: boolean;
 }
 
-export default function CalQuestionForm({
+export const CalQuestionForm = ({
   localSurvey,
   question,
   questionIdx,
@@ -27,7 +27,7 @@ export default function CalQuestionForm({
   selectedLanguageCode,
   setSelectedLanguageCode,
   isInvalid,
-}: CalQuestionFormProps): JSX.Element {
+}: CalQuestionFormProps): JSX.Element => {
   const [showSubheader, setShowSubheader] = useState(!!question.subheader);
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
 
@@ -99,4 +99,4 @@ export default function CalQuestionForm({
       </div>
     </form>
   );
-}
+};
