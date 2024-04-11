@@ -119,6 +119,7 @@
         "PRIVACY_URL",
         "RATE_LIMITING_DISABLED",
         "REDIS_CLIENT_URL",
+        "REDIS_HTTP_INTERFACE_URL",
         "S3_ACCESS_KEY",
         "S3_SECRET_KEY",
         "S3_REGION",

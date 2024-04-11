@@ -53,6 +53,7 @@ export const env = createEnv({
     OPENTELEMETRY_LISTENER_URL: z.string().optional(),
     ONBOARDING_DISABLED: z.enum(["1", "0"]).optional(),
     REDIS_CLIENT_URL: z.string().optional(),
+    REDIS_HTTP_INTERFACE_URL: z.string().optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     PRIVACY_URL: z
       .string()
@@ -159,6 +160,7 @@ export const env = createEnv({
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
     ONBOARDING_DISABLED: process.env.ONBOARDING_DISABLED,
     REDIS_CLIENT_URL: process.env.REDIS_CLIENT_URL,
+    REDIS_HTTP_INTERFACE_URL: process.env.REDIS_HTTP_INTERFACE_URL,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     PRIVACY_URL: process.env.PRIVACY_URL,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,

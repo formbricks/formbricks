@@ -79,8 +79,11 @@ x-environment: &environment
     # Uncomment and set to 1 to skip onboarding for new users
     # ONBOARDING_DISABLED: 1
 
-    # The below is used for Rate Limiting & Next Caching (uses In-Memory Next Cache if not provided)
+    # The below is used for Next Caching (uses In-Memory from Next Cache if not provided)
     # REDIS_CLIENT_URL:
+
+    # The below is used for Rate Limiting (uses In-Memory LRU Cache if not provided)
+    # REDIS_HTTP_INTERFACE_URL:
 
 services:
   postgres:

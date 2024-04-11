@@ -30,7 +30,8 @@ env:
   # clear:
   #   DB_HOST: 192.168.0.2
   # clear:
-  # REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
+  REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
+  REDIS_HTTP_INTERFACE_URL: http://172.31.40.79:7379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -170,6 +171,14 @@ accessories:
     port: "172.31.40.79:6379:6379"
     directories:
       - data:/data
+
+    webdis:
+    image: nicolas/webdis
+    host: 18.196.187.144
+    port: "172.31.40.79:7379:7379"
+    directories:
+      - data:/data
+
   pgbouncer:
     image: edoburu/pgbouncer:latest
     host: 18.196.187.144
