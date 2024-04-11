@@ -455,17 +455,53 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   }
 
   if (segment) {
-    // parse the segment filters:
-    const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-    if (!parsedFilters.success) {
-      throw new InvalidInputError("Invalid user segment filters");
-    }
+    // delete a segment in the following cases:
+    // 1. The survey is type "website" or "link" but still has a private segment
+    // 2. Above case is true but the segment is not private (disconnect the segment in this case)
 
-    try {
-      await updateSegment(segment.id, segment);
-    } catch (error) {
-      console.error(error);
-      throw new Error("Error updating survey");
+    if (updatedSurvey.type === "website" || updatedSurvey.type === "link") {
+      // get any private segment associated with the survey and delete it
+
+      const privateSegment = await prisma.segment.findFirst({
+        where: { title: surveyId, environmentId, isPrivate: true },
+      });
+
+      if (privateSegment) {
+        await prisma.segment.delete({
+          where: {
+            id: privateSegment.id,
+          },
+        });
+      }
+
+      if (!segment.isPrivate) {
+        await prisma.survey.update({
+          where: {
+            id: surveyId,
+          },
+          data: {
+            segment: {
+              disconnect: true,
+            },
+          },
+        });
+      }
+
+      segmentCache.revalidate({ id: segment.id, environmentId: segment.environmentId });
+      surveyCache.revalidate({ segmentId: segment.id, id: updatedSurvey.id });
+    } else {
+      // parse the segment filters:
+      const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+      if (!parsedFilters.success) {
+        throw new InvalidInputError("Invalid user segment filters");
+      }
+
+      try {
+        await updateSegment(segment.id, segment);
+      } catch (error) {
+        console.error(error);
+        throw new Error("Error updating survey");
+      }
     }
   }
 
@@ -515,6 +551,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       environmentId: modifiedSurvey.environmentId,
       segmentId: modifiedSurvey.segment?.id,
     });
+
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

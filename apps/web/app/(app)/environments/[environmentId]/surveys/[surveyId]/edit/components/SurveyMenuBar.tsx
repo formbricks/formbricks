@@ -277,6 +277,7 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
+
     const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
     if (questionWithEmptyFallback) {
       toast.error("Fallback missing");
@@ -284,6 +285,7 @@ export default function SurveyMenuBar({
     }
 
     setIsSurveySaving(true);
+
     // Create a copy of localSurvey with isDraft removed from every question
     const strippedSurvey: TSurvey = {
       ...localSurvey,
@@ -350,10 +352,11 @@ export default function SurveyMenuBar({
 
     strippedSurvey.triggers = strippedSurvey.triggers.filter((trigger) => Boolean(trigger));
     try {
-      await updateSurveyAction({ ...strippedSurvey });
+      const udpatedSurvey = await updateSurveyAction({ ...strippedSurvey });
 
       setIsSurveySaving(false);
-      setLocalSurvey(strippedSurvey);
+      setLocalSurvey({ ...strippedSurvey, segment: udpatedSurvey.segment });
+
       toast.success("Changes saved.");
       if (shouldNavigateBack) {
         router.back();

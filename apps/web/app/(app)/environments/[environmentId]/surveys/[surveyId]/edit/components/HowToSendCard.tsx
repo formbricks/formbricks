@@ -5,6 +5,7 @@ import { AlertCircleIcon, CheckIcon, EarthIcon, LinkIcon, MonitorIcon, Smartphon
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys";
@@ -29,6 +30,42 @@ export default function HowToSendCard({ localSurvey, setLocalSurvey, environment
       setWidgetSetupCompleted(false);
     }
   }, [environment]);
+
+  const handleCreateSegment = async () => {
+    if (!localSurvey) return;
+
+    try {
+      const createdSegment = await createSegmentAction({
+        title: localSurvey.id,
+        description: "",
+        environmentId: environment.id,
+        surveyId: localSurvey.id,
+        filters: [],
+        isPrivate: true,
+      });
+
+      const localSurveyClone = structuredClone(localSurvey);
+      localSurveyClone.segment = createdSegment;
+      setLocalSurvey(localSurveyClone);
+    } catch (err) {
+      // set the ref to false to retry during the next render
+      // createdSegmentRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    // when the type changes, we check if a segment is already created or not, if its not we create a new private segment
+    // we do this only for inApp surveys
+    if (localSurvey.type !== "inApp") {
+      return;
+    }
+
+    if (!localSurvey.segment) {
+      handleCreateSegment();
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localSurvey.type]);
 
   const setSurveyType = (type: TSurveyType) => {
     setLocalSurvey((prevSurvey) => ({

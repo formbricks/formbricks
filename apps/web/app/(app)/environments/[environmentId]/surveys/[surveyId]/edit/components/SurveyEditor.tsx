@@ -5,7 +5,6 @@ import { LoadingSkeleton } from "@/app/(app)/environments/[environmentId]/survey
 import StylingView from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/components/StylingView";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { createSegmentAction } from "@formbricks/ee/advancedTargeting/lib/actions";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import useDocumentVisibility from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/actionClasses";
@@ -62,8 +61,6 @@ export default function SurveyEditor({
   const [styling, setStyling] = useState(localSurvey?.styling);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
-  const createdSegmentRef = useRef(false);
-
   const fetchLatestProduct = useCallback(async () => {
     const latestProduct = await refetchProduct(localProduct.id);
     if (latestProduct) {
@@ -113,39 +110,6 @@ export default function SurveyEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type, survey?.questions]);
-
-  const handleCreateSegment = async () => {
-    if (!localSurvey) return;
-
-    try {
-      const createdSegment = await createSegmentAction({
-        title: localSurvey.id,
-        description: "",
-        environmentId: environment.id,
-        surveyId: localSurvey.id,
-        filters: [],
-        isPrivate: true,
-      });
-
-      const localSurveyClone = structuredClone(localSurvey);
-      localSurveyClone.segment = createdSegment;
-      setLocalSurvey(localSurveyClone);
-    } catch (err) {
-      // set the ref to false to retry during the next render
-      createdSegmentRef.current = false;
-    }
-  };
-
-  useEffect(() => {
-    if (!localSurvey || localSurvey.type !== "inApp" || !!localSurvey.segment || createdSegmentRef.current) {
-      return;
-    }
-
-    createdSegmentRef.current = true;
-    handleCreateSegment();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSurvey]);
 
   useEffect(() => {
     if (!localSurvey?.languages) return;
