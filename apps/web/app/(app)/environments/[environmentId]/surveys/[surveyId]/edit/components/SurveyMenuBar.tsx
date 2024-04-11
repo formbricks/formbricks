@@ -3,6 +3,7 @@
 import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import {
   isCardValid,
+  isSurveyLogicCyclic,
   validateQuestion,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/edit/lib/validation";
 import { isEqual } from "lodash";
@@ -155,7 +156,8 @@ export default function SurveyMenuBar({
 
     for (let index = 0; index < survey.questions.length; index++) {
       const question = survey.questions[index];
-      const isValid = validateQuestion(question, survey.languages);
+      const isFirstQuestion = index === 0;
+      const isValid = validateQuestion(question, survey.languages, isFirstQuestion);
 
       if (!isValid) {
         faultyQuestions.push(question.id);
@@ -277,9 +279,15 @@ export default function SurveyMenuBar({
       toast.error("Please add at least one question.");
       return;
     }
+
     const questionWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
     if (questionWithEmptyFallback) {
       toast.error("Fallback missing");
+      return;
+    }
+
+    if (isSurveyLogicCyclic(localSurvey.questions)) {
+      toast.error("Cyclic logic detected. Please fix it before saving.");
       return;
     }
 
@@ -369,6 +377,13 @@ export default function SurveyMenuBar({
   const handleSurveyPublish = async () => {
     try {
       setIsSurveyPublishing(true);
+
+      if (isSurveyLogicCyclic(localSurvey.questions)) {
+        toast.error("Cyclic logic detected. Please fix it before saving.");
+        setIsSurveyPublishing(false);
+        return;
+      }
+
       if (!validateSurvey(localSurvey)) {
         setIsSurveyPublishing(false);
         return;

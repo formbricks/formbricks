@@ -600,4 +600,43 @@ export interface TSurveyQuestionSummary<T> {
   }[];
 }
 
+export const ZSurveyFilterCriteria = z.object({
+  name: z.string().optional(),
+  status: z.array(ZSurveyStatus).optional(),
+  type: z.array(ZSurveyType).optional(),
+  createdBy: z
+    .object({
+      userId: z.string(),
+      value: z.array(z.enum(["you", "others"])),
+    })
+    .optional(),
+  sortBy: z.enum(["createdAt", "updatedAt", "name"]).optional(),
+});
+
+export type TSurveyFilterCriteria = z.infer<typeof ZSurveyFilterCriteria>;
+
+const ZSurveyFilters = z.object({
+  name: z.string(),
+  createdBy: z.array(z.enum(["you", "others"])),
+  status: z.array(ZSurveyStatus),
+  type: z.array(ZSurveyType),
+  sortBy: z.enum(["createdAt", "updatedAt", "name"]),
+});
+
+export type TSurveyFilters = z.infer<typeof ZSurveyFilters>;
+
 export type TSurveyEditorTabs = "questions" | "settings" | "styling";
+
+const ZFilterOption = z.object({
+  label: z.string(),
+  value: z.string(),
+});
+
+export type TFilterOption = z.infer<typeof ZFilterOption>;
+
+const ZSortOption = z.object({
+  label: z.string(),
+  value: z.enum(["createdAt", "updatedAt", "name"]),
+});
+
+export type TSortOption = z.infer<typeof ZSortOption>;

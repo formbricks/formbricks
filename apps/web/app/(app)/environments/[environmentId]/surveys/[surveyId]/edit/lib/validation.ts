@@ -7,11 +7,13 @@ import {
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
   TSurveyLanguage,
+  TSurveyMatrixQuestion,
   TSurveyMultipleChoiceMultiQuestion,
   TSurveyMultipleChoiceSingleQuestion,
   TSurveyOpenTextQuestion,
   TSurveyPictureSelectionQuestion,
   TSurveyQuestion,
+  TSurveyQuestions,
   TSurveyThankYouCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys";
@@ -35,6 +37,14 @@ const handleI18nCheckForMultipleChoice = (
   languages: TSurveyLanguage[]
 ): boolean => {
   return question.choices.every((choice) => isLabelValidForAllLanguages(choice.label, languages));
+};
+
+const handleI18nCheckForMatrixLabels = (
+  question: TSurveyMatrixQuestion,
+  languages: TSurveyLanguage[]
+): boolean => {
+  const rowsAndColumns = [...question.rows, ...question.columns];
+  return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
 };
 
 // Validation rules
@@ -63,8 +73,11 @@ export const validationRules = {
       ? isLabelValidForAllLanguages(question.dismissButtonLabel, languages)
       : true;
   },
+  matrix: (question: TSurveyMatrixQuestion, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForMatrixLabels(question, languages);
+  },
   // Assuming headline is of type TI18nString
-  defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[]) => {
+  defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[], isFirstQuestion: boolean) => {
     // headline and subheader are default for every question
     const isHeadlineValid = isLabelValidForAllLanguages(question.headline, languages);
     const isSubheaderValid =
@@ -76,7 +89,12 @@ export const validationRules = {
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
     //question specific fields
-    const fieldsToValidate = ["html", "buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
+    let fieldsToValidate = ["html", "buttonLabel", "upperLabel", "backButtonLabel", "lowerLabel"];
+
+    // Remove backButtonLabel from validation if it is the first question
+    if (isFirstQuestion) {
+      fieldsToValidate = fieldsToValidate.filter((field) => field !== "backButtonLabel");
+    }
 
     for (const field of fieldsToValidate) {
       if (question[field] && typeof question[field][defaultLanguageCode] !== "undefined") {
@@ -89,12 +107,16 @@ export const validationRules = {
 };
 
 // Main validation function
-export const validateQuestion = (question: TSurveyQuestion, surveyLanguages: TSurveyLanguage[]): boolean => {
+export const validateQuestion = (
+  question: TSurveyQuestion,
+  surveyLanguages: TSurveyLanguage[],
+  isFirstQuestion: boolean
+): boolean => {
   const specificValidation = validationRules[question.type];
   const defaultValidation = validationRules.defaultValidation;
 
   const specificValidationResult = specificValidation ? specificValidation(question, surveyLanguages) : true;
-  const defaultValidationResult = defaultValidation(question, surveyLanguages);
+  const defaultValidationResult = defaultValidation(question, surveyLanguages, isFirstQuestion);
 
   // Return true only if both specific and default validation pass
   return specificValidationResult && defaultValidationResult;
@@ -103,13 +125,14 @@ export const validateQuestion = (question: TSurveyQuestion, surveyLanguages: TSu
 export const validateSurveyQuestionsInBatch = (
   question: TSurveyQuestion,
   invalidQuestions: string[] | null,
-  surveyLanguages: TSurveyLanguage[]
+  surveyLanguages: TSurveyLanguage[],
+  isFirstQuestion: boolean
 ) => {
   if (invalidQuestions === null) {
     return [];
   }
 
-  if (validateQuestion(question, surveyLanguages)) {
+  if (validateQuestion(question, surveyLanguages, isFirstQuestion)) {
     return invalidQuestions.filter((id) => id !== question.id);
   } else if (!invalidQuestions.includes(question.id)) {
     return [...invalidQuestions, question.id];
@@ -194,4 +217,52 @@ export const validateId = (
   }
 
   return true;
+};
+
+// Checks if there is a cycle present in the survey data logic.
+export const isSurveyLogicCyclic = (questions: TSurveyQuestions) => {
+  const visited: Record<string, boolean> = {};
+  const recStack: Record<string, boolean> = {};
+
+  const checkForCycle = (questionId: string) => {
+    if (!visited[questionId]) {
+      visited[questionId] = true;
+      recStack[questionId] = true;
+
+      const question = questions.find((question) => question.id === questionId);
+      if (question && question.logic && question.logic.length > 0) {
+        for (const logic of question.logic) {
+          const destination = logic.destination;
+          if (!destination) {
+            return false;
+          }
+
+          if (!visited[destination] && checkForCycle(destination)) {
+            return true;
+          } else if (recStack[destination]) {
+            return true;
+          }
+        }
+      } else {
+        // Handle default behavior
+        const nextQuestionIndex = questions.findIndex((question) => question.id === questionId) + 1;
+        const nextQuestion = questions[nextQuestionIndex];
+        if (nextQuestion && !visited[nextQuestion.id] && checkForCycle(nextQuestion.id)) {
+          return true;
+        }
+      }
+    }
+
+    recStack[questionId] = false;
+    return false;
+  };
+
+  for (const question of questions) {
+    const questionId = question.id;
+    if (checkForCycle(questionId)) {
+      return true;
+    }
+  }
+
+  return false;
 };
