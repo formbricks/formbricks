@@ -24,13 +24,13 @@ const convertSurveyStatus = (status: string): string => {
 };
 
 interface LiveSurveyNotificationProps {
-  WEBAPP_URL: string;
+  webAppUrl: string;
   environmentId: string;
   surveys: TNotificationDataSurvey[];
 }
 
 export const LiveSurveyNotification = ({
-  WEBAPP_URL,
+  webAppUrl,
   environmentId,
   surveys,
 }: LiveSurveyNotificationProps) => {
@@ -77,7 +77,7 @@ export const LiveSurveyNotification = ({
         <Container className="mt-12">
           <Text className="mb-0 inline">
             <Link
-              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
+              href={`${webAppUrl}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
               className="text-xl text-black underline">
               {survey.name}
             </Link>
@@ -96,7 +96,7 @@ export const LiveSurveyNotification = ({
             <Container className="mt-4 block">
               <EmailButton
                 label={noResponseLastWeek ? "View previous responses" : getButtonLabel(survey.responseCount)}
-                href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
+                href={`${webAppUrl}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=weekly&utm_medium=email&utm_content=ViewResponsesCTA`}
               />
             </Container>
           )}

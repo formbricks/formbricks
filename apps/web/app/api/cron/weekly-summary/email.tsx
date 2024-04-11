@@ -45,11 +45,11 @@ export const sendWeeklySummaryNotificationEmail = async (
             />
             <NotificationInsight insights={notificationData.insights} />
             <LiveSurveyNotification
-              WEBAPP_URL={WEBAPP_URL}
+              webAppUrl={WEBAPP_URL}
               surveys={notificationData.surveys}
               environmentId={notificationData.environmentId}
             />
-            <NotificationFooter WEBAPP_URL={WEBAPP_URL} environmentId={notificationData.environmentId} />
+            <NotificationFooter webAppUrl={WEBAPP_URL} environmentId={notificationData.environmentId} />
           </div>
         }
       />
@@ -83,7 +83,7 @@ export const sendNoLiveSurveyNotificationEmail = async (
               startYear={startYear}
               endYear={endYear}
             />
-            <CreateReminderNotificationBody WEBAPP_URL={WEBAPP_URL} notificationData={notificationData} />
+            <CreateReminderNotificationBody webAppUrl={WEBAPP_URL} notificationData={notificationData} />
           </div>
         }
       />
