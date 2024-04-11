@@ -1,181 +1,126 @@
 version: "3.3"
 
-# # This should be the same as below if you are running via docker compose up
-# x-webapp-url: &webapp_url http://localhost:3000
+# This should be the same as below if you are running via docker compose up
+x-webapp-url: &webapp_url http://localhost:3000
 
-# # PostgreSQL DB for Formbricks to connect to
-# x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
+# PostgreSQL DB for Formbricks to connect to
+x-database-url: &database_url postgresql://postgres:postgres@postgres:5432/formbricks?schema=public
 
-# x-redis-url: &redis_url
-#   # NextJS Auth
-#   # @see: https://next-auth.js.org/configuration/options#nextauth_secret
-#   # You can use: `openssl rand -hex 32` to generate one
-# x-nextauth-secret: &nextauth_secret
-#   # Set this to your public-facing URL, e.g., https://example.com
-#   # You do not need the NEXTAUTH_URL environment variable in Vercel.
+x-redis-url: &redis_url
 
-# x-nextauth-url: &nextauth_url http://localhost:3000
+# NextJS Auth
+# @see: https://next-auth.js.org/configuration/options#nextauth_secret
+# You can use: `openssl rand -hex 32` to generate one
+x-nextauth-secret: &nextauth_secret
+  # Set this to your public-facing URL, e.g., https://example.com
+  # You do not need the NEXTAUTH_URL environment variable in Vercel.
 
-# # Encryption key
-# # You can use: `openssl rand -hex 32` to generate one
-# x-encryption-key: &encryption_key
+x-nextauth-url: &nextauth_url http://localhost:3000
 
-# x-mail-from: &mail_from
-# x-smtp-host: &smtp_host
-# x-smtp-port: &smtp_port
-# x-smtp-secure-enabled: &smtp_secure_enabled # Enable SMTP_SECURE_ENABLED for TLS (port 465)
+# Encryption key
+# You can use: `openssl rand -hex 32` to generate one
+x-encryption-key: &encryption_key
 
-# x-smtp-user: &smtp_user
-# x-smtp-password: &smtp_password
+x-mail-from: &mail_from
+x-smtp-host: &smtp_host
+x-smtp-port: &smtp_port
+x-smtp-secure-enabled: &smtp_secure_enabled # Enable SMTP_SECURE_ENABLED for TLS (port 465)
 
-# x-short-url-base:
-#   &short_url_base # Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
 
-# x-email-verification-disabled: &email_verification_disabled 1
+x-smtp-user: &smtp_user
+x-smtp-password: &smtp_password
 
-# # Password Reset. If you enable Password Reset functionality you have to setup SMTP-Settings, too.
-# x-password-reset-disabled: &password_reset_disabled 1
+x-short-url-base:
+  &short_url_base # Set the below value if you have and want to share a shorter base URL than the x-survey-base-url
 
-# # Signup. Disable the ability for new users to create an account.
-# x-signup-disabled: &signup_disabled 0
 
-# # Email login. Disable the ability for users to login with email.
-# x-auth-disabled: &email_auth_disabled 0
+x-email-verification-disabled: &email_verification_disabled 1
 
-# # Team Invite. Disable the ability for invited users to create an account.
-# x-invite-disabled: &invite_disabled 0
+# Password Reset. If you enable Password Reset functionality you have to setup SMTP-Settings, too.
+x-password-reset-disabled: &password_reset_disabled 1
 
-# # Set the below values to display privacy policy, imprint and terms of service links in the footer of signup & public pages.
-# x-privacy-url: &privacy_url
-# x-terms-url: &terms_url
-# x-imprint-url: &imprint_url
+# Signup. Disable the ability for new users to create an account.
+x-signup-disabled: &signup_disabled 0
 
-# x-github-id: &github_id
-# x-github-secret: &github_secret
+# Email login. Disable the ability for users to login with email.
+x-auth-disabled: &email_auth_disabled 0
 
-# x-google-client-id: &google_client_id
-# x-google-client-secret: &google_client_secret
+# Team Invite. Disable the ability for invited users to create an account.
+x-invite-disabled: &invite_disabled 0
 
-# x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Disable Sentry warning
+# Set the below values to display privacy policy, imprint and terms of service links in the footer of signup & public pages.
+x-privacy-url: &privacy_url
+x-terms-url: &terms_url
+x-imprint-url: &imprint_url
 
-# x-next-public-sentry-dsn: &next_public_sentry_dsn # Enable Sentry Error Tracking
+x-github-id: &github_id
+x-github-secret: &github_secret
 
-# x-cron-secret: &cron_secret # Set this to a random string to secure your cron endpoints
+x-google-client-id: &google_client_id
+x-google-client-secret: &google_client_secret
 
-# services:
-#   # postgres:
-#   #   restart: always
-#   #   image: postgres:15-alpine
-#   #   volumes:
-#   #     - postgres:/var/lib/postgresql/data
-#   #   ports:
-#   #     - 5432:5432
-#   #   environment:
-#   #     - POSTGRES_PASSWORD=postgres
+x-sentry-ignore-api-resolution-error: &sentry_ignore_api_resolution_error # Disable Sentry warning
 
-#   webdis:
-#     image: nicolas/webdis
-#     command: /usr/local/bin/webdis /kamal/webdis.json
-#     volumes:
-#       - ./kamal/webdis.json:/kamal/webdis.json
-#     networks:
-#       - shared
-#     ports:
-#       - 7379:7379
-#     # volumes:
-#     #   - data:/data
-#     restart: always
-#     depends_on:
-#       - redis
 
-#   redis:
-#     image: redis:alpine
-#     ports:
-#       - 6379:6379
-#     restart: always
-#     networks:
-#       - shared
+x-next-public-sentry-dsn: &next_public_sentry_dsn # Enable Sentry Error Tracking
 
-#   # formbricks:
-#   #   restart: always
-#   #   build:
-#   #     context: .
-#   #     dockerfile: ./apps/web/Dockerfile
-#   #   depends_on:
-#   #     - postgres
-#   #   ports:
-#   #     - 3000:3000
 
-#   #   environment:
-#   #     WEBAPP_URL: *webapp_url
-#   #     DATABASE_URL: *database_url
-#   #     NEXTAUTH_SECRET: *nextauth_secret
-#   #     NEXTAUTH_URL: *nextauth_url
-#   #     MAIL_FROM: *mail_from
-#   #     SMTP_HOST: *smtp_host
-#   #     SMTP_PORT: *smtp_port
-#   #     SMTP_SECURE_ENABLED: *smtp_secure_enabled
-#   #     SMTP_USER: *smtp_user
-#   #     SMTP_PASSWORD: *smtp_password
-#   #     ENCRYPTION_KEY: *encryption_key
-#   #     SHORT_URL_BASE: *short_url_base
-#   #     PRIVACY_URL: *privacy_url
-#   #     TERMS_URL: *terms_url
-#   #     IMPRINT_URL: *imprint_url
-#   #     EMAIL_VERIFICATION_DISABLED: *email_verification_disabled
-#   #     PASSWORD_RESET_DISABLED: *password_reset_disabled
-#   #     EMAIL_AUTH_DISABLED: *email_auth_disabled
-#   #     SIGNUP_DISABLED: *signup_disabled
-#   #     INVITE_DISABLED: *invite_disabled
-#   #     SENTRY_IGNORE_API_RESOLUTION_ERROR: *sentry_ignore_api_resolution_error
-#   #     NEXT_PUBLIC_SENTRY_DSN: *next_public_sentry_dsn
-#   #     GITHUB_ID: *github_id
-#   #     GITHUB_SECRET: *github_secret
-#   #     GOOGLE_CLIENT_ID: *google_client_id
-#   #     GOOGLE_CLIENT_SECRET: *google_client_secret
-#   #     CRON_SECRET: *cron_secret
-#   #     REDIS_CLIENT_URL: *redis_url
+x-cron-secret: &cron_secret # Set this to a random string to secure your cron endpoints
 
-#   #   volumes:
-#   #     - uploads:/home/nextjs/apps/web/uploads/
-
-# volumes:
-#   postgres:
-#     driver: local
-#   uploads:
-
-# networks:
-#   shared:
 
 services:
-  webdis:
-    image: nicolas/webdis:latest
-    # command: /usr/local/bin/webdis /config/webdis.json
-    # command: >
-    #   sh -c "
-    #   wget -O /tmp/webdis.json https://github.com/nicolasff/webdis/raw/0.1.19/webdis.json &&
-    #   awk '/\"redis_host\":/ {print \"\\t\\\"redis_host\\\": \\\"redis\\\",\"; next} /\"logfile\":/ {print \"\\t\\\"logfile\\\": \\\"/dev/stderr\\\"\"; next} {print}' /tmp/webdis.json > /tmp/webdis_modified.json &&
-    #   mv /tmp/webdis_modified.json /tmp/webdis.json &&
-    #   /usr/local/bin/webdis /tmp/webdis.json"
-    command: >
-      sh -c "
-      wget -O /usr/local/bin/webdis.json https://github.com/nicolasff/webdis/raw/0.1.19/webdis.json &&
-      awk '/\"redis_host\":/ {print \"\\t\\\"redis_host\\\": \\\"redis\\\",\"; next} /\"logfile\":/ {print \"\\t\\\"logfile\\\": \\\"/dev/stderr\\\"\"; next} {print}' /usr/local/bin/webdis.json > /usr/local/bin/webdis_modified.json &&
-      mv /usr/local/bin/webdis_modified.json /usr/local/bin/webdis.json &&
-      /usr/local/bin/webdis /usr/local/bin/webdis.json"
+  postgres:
+    restart: always
+    image: postgres:15-alpine
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
 
-    volumes: # mount volume containing the config file
-      - ./kamal:/config
-    depends_on: # make sure Redis starts first, so that Webdis can connect to it without retries
-      - redis
-    ports: # allow connections from the Docker host on localhost, port 7379
-      - "127.0.0.1:7379:7379"
+  formbricks:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - 3000:3000
 
-  redis:
-    image: redis:6.2.6
-    ports: # make the Redis port visible to Webdis
-      - "6379:6379"
-    restart: "always"
+    environment:
+      WEBAPP_URL: *webapp_url
+      DATABASE_URL: *database_url
+      NEXTAUTH_SECRET: *nextauth_secret
+      NEXTAUTH_URL: *nextauth_url
+      MAIL_FROM: *mail_from
+      SMTP_HOST: *smtp_host
+      SMTP_PORT: *smtp_port
+      SMTP_SECURE_ENABLED: *smtp_secure_enabled
+      SMTP_USER: *smtp_user
+      SMTP_PASSWORD: *smtp_password
+      ENCRYPTION_KEY: *encryption_key
+      SHORT_URL_BASE: *short_url_base
+      PRIVACY_URL: *privacy_url
+      TERMS_URL: *terms_url
+      IMPRINT_URL: *imprint_url
+      EMAIL_VERIFICATION_DISABLED: *email_verification_disabled
+      PASSWORD_RESET_DISABLED: *password_reset_disabled
+      EMAIL_AUTH_DISABLED: *email_auth_disabled
+      SIGNUP_DISABLED: *signup_disabled
+      INVITE_DISABLED: *invite_disabled
+      SENTRY_IGNORE_API_RESOLUTION_ERROR: *sentry_ignore_api_resolution_error
+      NEXT_PUBLIC_SENTRY_DSN: *next_public_sentry_dsn
+      GITHUB_ID: *github_id
+      GITHUB_SECRET: *github_secret
+      GOOGLE_CLIENT_ID: *google_client_id
+      GOOGLE_CLIENT_SECRET: *google_client_secret
+      CRON_SECRET: *cron_secret
+      REDIS_CLIENT_URL: *redis_url
 
-networks:
-  shared:
+    volumes:
+      - uploads:/home/nextjs/apps/web/uploads/
+
+volumes:
+  postgres:
+    driver: local
+  uploads:

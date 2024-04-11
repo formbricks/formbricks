@@ -2,23 +2,23 @@
 service: formbricks-kamal
 
 # Name of the container image.
-image: shubhampalriwala/formbricks-cloud
+image: formbricks/formbricks-cloud
 
 # Deploy to these servers.
 servers:
   web: # Use a named role, so it can be used as entrypoint by Traefik
     hosts:
-      - 34.247.22.186
+      - 18.196.187.144
     labels:
       traefik.http.routers.formbricks-kamal.entrypoints: websecure
-      traefik.http.routers.formbricks-kamal.rule: Host(`kamal.shubham.formbricks.com`)
+      traefik.http.routers.formbricks-kamal.rule: Host(`app.formbricks.com`)
       traefik.http.routers.formbricks-kamal.tls.certresolver: letsencrypt
 
 # Credentials for your image host.
 registry:
   # Specify the registry server, if you're not using Docker Hub
   server: ghcr.io
-  username: shubhampalriwala
+  username: mattinannt
 
   # Always use an access token rather than real password when possible.
   password:
@@ -30,8 +30,8 @@ env:
   # clear:
   #   DB_HOST: 192.168.0.2
   clear:
-    REDIS_CLIENT_URL: redis://default:password@172.31.35.53:6379
-    REDIS_HTTP_INTERFACE_URL: http://172.31.35.53:7379
+    REDIS_CLIENT_URL: redis://default:password@172.31.40.79:6379
+    REDIS_HTTP_INTERFACE_URL: http://172.31.40.79:7379
   secret:
     - IS_FORMBRICKS_CLOUD
     - WEBAPP_URL
@@ -138,21 +138,16 @@ traefik:
     entryPoints.web.http.redirections.entryPoint.to: websecure
     entryPoints.web.http.redirections.entryPoint.scheme: https
     entryPoints.web.http.redirections.entrypoint.permanent: true
-    certificatesResolvers.letsencrypt.acme.email: "shubham@formbricks.com"
-    certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json" # Must match the path in `volume`
-    certificatesResolvers.letsencrypt.acme.httpchallenge: true
-    certificatesResolvers.letsencrypt.acme.httpchallenge.entrypoint: web
-
-    # entrypoints.websecure.http.tls: true
-    # entrypoints.websecure.http.tls.domains[0].main: "app.formbricks.com"
-    # entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
-    # certificatesResolvers.letsencrypt.acme.email: "hola@formbricks.com"
-    # certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
-    # certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
-  # env:
-  #   secret:
-  #     - CLOUDFLARE_DNS_API_TOKEN
-  #     - CLOUDFLARE_EMAIL
+    entrypoints.websecure.http.tls: true
+    entrypoints.websecure.http.tls.domains[0].main: "app.formbricks.com"
+    entrypoints.websecure.http.tls.domains[0].sans: "*.formbricks.com"
+    certificatesResolvers.letsencrypt.acme.email: "hola@formbricks.com"
+    certificatesResolvers.letsencrypt.acme.storage: "/letsencrypt/acme.json"
+    certificatesresolvers.letsencrypt.acme.dnschallenge.provider: cloudflare
+  env:
+    secret:
+      - CLOUDFLARE_DNS_API_TOKEN
+      - CLOUDFLARE_EMAIL
 
 # Use accessory services (secrets come from .env).
 accessories:
@@ -172,29 +167,29 @@ accessories:
   #     - data:/var/lib/mysql
   redis:
     image: redis:7.0
-    host: 34.247.22.186
-    port: "172.31.35.53:6379:6379"
+    host: 18.196.187.144
+    port: "172.31.40.79:6379:6379"
     directories:
       - data:/data
 
   webdis:
     image: nicolas/webdis:latest
-    host: 34.247.22.186
+    host: 18.196.187.144
     cmd: >
       sh -c "
-      wget -O /usr/local/bin/webdis.json https://github.com/nicolasff/webdis/raw/0.1.19/webdis.json &&
-      awk '/\"redis_host\":/ {print \"\\t\\\"redis_host\\\": \\\"172.31.35.53\\\",\"; next} /\"logfile\":/ {print \"\\t\\\"logfile\\\": \\\"/dev/stderr\\\"\"; next} {print}' /usr/local/bin/webdis.json > /usr/local/bin/webdis_modified.json &&
+      wget -O /usr/local/bin/webdis.json https://github.com/nicolasff/webdis/raw/0.1.22/webdis.json &&
+      awk '/\"redis_host\":/ {print \"\\t\\\"redis_host\\\": \\\"172.31.40.79\\\",\"; next} /\"logfile\":/ {print \"\\t\\\"logfile\\\": \\\"/dev/stderr\\\"\"; next} {print}' /usr/local/bin/webdis.json > /usr/local/bin/webdis_modified.json &&
       mv /usr/local/bin/webdis_modified.json /usr/local/bin/webdis.json &&
       /usr/local/bin/webdis /usr/local/bin/webdis.json"
 
-    port: "172.31.35.53:7379:7379"
+    port: "172.31.40.79:7379:7379"
     directories:
       - data:/data
 
   pgbouncer:
     image: edoburu/pgbouncer:latest
-    host: 34.247.22.186
-    port: "172.31.35.53:5432:5432"
+    host: 18.196.187.144
+    port: "172.31.40.79:5432:5432"
     env:
       clear:
         LISTEN_PORT: "5432"
