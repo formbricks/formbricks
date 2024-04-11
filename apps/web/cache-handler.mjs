@@ -10,7 +10,7 @@ CacheHandler.onCreation(async () => {
       url: process.env.REDIS_URL,
     });
     client.on("error", (e) => {
-      console.log("Error in conncting to Redis client", e);
+      console.error("Error in conncting to Redis client", e);
     });
 
     await client.connect();

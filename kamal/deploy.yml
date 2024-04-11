@@ -173,7 +173,7 @@ accessories:
       - data:/data
 
   webdis:
-    image: nicolas/webdis:latest
+    image: nicolas/webdis:0.1.22
     host: 18.196.187.144
     cmd: >
       sh -c "
