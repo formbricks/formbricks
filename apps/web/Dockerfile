@@ -29,6 +29,8 @@ ENV DATABASE_URL="postgresql://placeholder:for@build:5432/gets_overwritten_at_ru
 ENV NEXTAUTH_SECRET="placeholder_for_next_auth_of_64_chars_get_overwritten_at_runtime"
 ENV ENCRYPTION_KEY="placeholder_for_build_key_of_64_chars_get_overwritten_at_runtime"
 
+ENV NEXT_PRIVATE_DEBUG_CACHE=1
+
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 

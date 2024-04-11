@@ -152,8 +152,8 @@ const sentryOptions = {
   // Suppresses source map uploading logs during build
   silent: true,
 
-  org: "formbricks",
-  project: "formbricks-cloud",
+  org: "shubham-kamal",
+  project: "javascript-nextjs",
 };
 
 const sentryConfig = {
