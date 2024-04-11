@@ -1,18 +1,15 @@
-import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/util";
-import { questionTypes } from "@/app/lib/questions";
-import { InboxIcon } from "lucide-react";
 import Link from "next/link";
 
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { getPersonIdentifier } from "@formbricks/lib/person/util";
-import { TSurveySummaryMultipleChoice } from "@formbricks/types/responses";
+import { TSurveyQuestionSummaryMultipleChoice } from "@formbricks/types/surveys";
 import { PersonAvatar } from "@formbricks/ui/Avatars";
 import { ProgressBar } from "@formbricks/ui/ProgressBar";
 
-import { Headline } from "./Headline";
+import { convertFloatToNDecimal } from "../lib/util";
+import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MultipleChoiceSummaryProps {
-  questionSummary: TSurveySummaryMultipleChoice;
+  questionSummary: TSurveyQuestionSummaryMultipleChoice;
   environmentId: string;
   surveyType: string;
 }
@@ -22,8 +19,6 @@ export const MultipleChoiceSummary = ({
   environmentId,
   surveyType,
 }: MultipleChoiceSummaryProps) => {
-  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
-
   // sort by count and transform to array
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     if (a.others) return 1; // Always put a after b if a has 'others'
@@ -35,27 +30,7 @@ export const MultipleChoiceSummary = ({
 
   return (
     <div className=" rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
-      <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
-
-        <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
-            Multiple-Choice {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
-          </div>
-          <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxIcon className="mr-2 h-4 w-4 " />
-            {questionSummary.responseCount} responses
-          </div>
-          {!questionSummary.question.required && (
-            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
-          )}
-          {/*           <div className=" flex items-center rounded-lg bg-slate-100 p-2">
-            <ArrowTrendingUpIcon className="mr-2 h-4 w-4" />
-            2.8 average
-          </div> */}
-        </div>
-      </div>
+      <QuestionSummaryHeader questionSummary={questionSummary} />
       <div className="space-y-5 rounded-b-lg bg-white px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
           <div key={result.value}>

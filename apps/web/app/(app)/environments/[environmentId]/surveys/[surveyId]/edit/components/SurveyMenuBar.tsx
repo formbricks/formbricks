@@ -1,6 +1,6 @@
 "use client";
 
-import SurveyStatusDropdown from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import {
   isCardValid,
   isSurveyLogicCyclic,
@@ -24,7 +24,7 @@ import {
   ZSurveyInlineTriggers,
   surveyHasBothTriggers,
 } from "@formbricks/types/surveys";
-import AlertDialog from "@formbricks/ui/AlertDialog";
+import { AlertDialog } from "@formbricks/ui/AlertDialog";
 import { Button } from "@formbricks/ui/Button";
 import { Input } from "@formbricks/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/Tooltip";

@@ -1,19 +1,13 @@
-import { questionTypes } from "@/app/lib/questions";
-import { InboxIcon } from "lucide-react";
-
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TSurveySummaryMatrix } from "@formbricks/types/responses";
+import { TSurveyQuestionSummaryMatrix } from "@formbricks/types/surveys";
 import { TooltipRenderer } from "@formbricks/ui/Tooltip";
 
-import { Headline } from "./Headline";
+import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {
-  questionSummary: TSurveySummaryMatrix;
+  questionSummary: TSurveyQuestionSummaryMatrix;
 }
 
 export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummaryProps) => {
-  const questionTypeInfo = questionTypes.find((type) => type.id === questionSummary.question.type);
-
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
     const opacity = parsedPercentage * 0.75 + 15;
@@ -33,22 +27,7 @@ export const MatrixQuestionSummary = ({ questionSummary }: MatrixQuestionSummary
 
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
-      <div className="space-y-2 px-4 pb-5 pt-6 md:px-6">
-        <Headline headline={getLocalizedValue(questionSummary.question.headline, "default")} />
-        <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
-          <div className="flex items-center rounded-lg bg-slate-100 p-2 ">
-            {questionTypeInfo && <questionTypeInfo.icon className="mr-2 h-4 w-4 " />}
-            {questionTypeInfo ? questionTypeInfo.label : "Unknown Question Type"} Question
-          </div>
-          <div className=" flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxIcon className="mr-2 h-4 w-4" />
-            {questionSummary.responseCount} Responses
-          </div>
-          {!questionSummary.question.required && (
-            <div className="flex items-center  rounded-lg bg-slate-100 p-2">Optional</div>
-          )}
-        </div>
-      </div>
+      <QuestionSummaryHeader questionSummary={questionSummary} />
       <div className="overflow-x-auto rounded-b-lg bg-white p-6">
         {/* Summary Table  */}
         <table className="mx-auto border-collapse cursor-default text-left">
