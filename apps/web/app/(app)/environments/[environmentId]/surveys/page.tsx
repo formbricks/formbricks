@@ -13,7 +13,7 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getTeamByEnvironmentId } from "@formbricks/lib/team/service";
 import ContentWrapper from "@formbricks/ui/ContentWrapper";
-import SurveysList from "@formbricks/ui/SurveysList";
+import { SurveysList } from "@formbricks/ui/SurveysList";
 
 export const metadata: Metadata = {
   title: "Your Surveys",
