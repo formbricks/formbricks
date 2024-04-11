@@ -107,17 +107,24 @@ import { createClient } from "redis";
 
 CacheHandler.onCreation(async () => {
   let redisHandler;
+  console.log("REDIS_CLIENT_URL in cache handler", process.env.REDIS_CLIENT_URL);
   if (process.env.REDIS_CLIENT_URL) {
+    console.log("creating client");
     const client = createClient({
       url: process.env.REDIS_CLIENT_URL,
     });
-    client.on("error", () => {});
+    client.on("error", (e) => {
+      console.log("Error in conncting to Redis client", e);
+    });
 
+    console.log("awaiting client connection");
     await client.connect();
+    console.log("client connected");
     redisHandler = createRedisHandler({
       client,
       timeoutMs: 5000,
     });
+    console.log("redisHandler created");
   }
 
   const localHandler = createLruHandler();

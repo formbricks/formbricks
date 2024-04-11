@@ -178,8 +178,15 @@ accessories:
       - data:/data
 
   webdis:
-    image: nicolas/webdis
+    image: nicolas/webdis:latest
     host: 34.247.22.186
+    cmd: >
+      sh -c "
+      wget -O /usr/local/bin/webdis.json https://github.com/nicolasff/webdis/raw/0.1.19/webdis.json &&
+      awk '/\"redis_host\":/ {print \"\\t\\\"redis_host\\\": \\\"172.31.35.53\\\",\"; next} /\"logfile\":/ {print \"\\t\\\"logfile\\\": \\\"/dev/stderr\\\"\"; next} {print}' /usr/local/bin/webdis.json > /usr/local/bin/webdis_modified.json &&
+      mv /usr/local/bin/webdis_modified.json /usr/local/bin/webdis.json &&
+      /usr/local/bin/webdis /usr/local/bin/webdis.json"
+
     port: "172.31.35.53:7379:7379"
     directories:
       - data:/data

@@ -43,6 +43,8 @@ export async function middleware(request: NextRequest) {
 
   if (ip) {
     try {
+      console.log(`checjing middlwarets IP: ${ip}`);
+
       if (loginRoute(request.nextUrl.pathname)) {
         await loginLimiter(`login-${ip}`);
       } else if (signupRoute(request.nextUrl.pathname)) {
@@ -58,8 +60,11 @@ export async function middleware(request: NextRequest) {
       } else if (shareUrlRoute(request.nextUrl.pathname)) {
         await shareUrlLimiter(`share-${ip}`);
       }
+      console.log(`checked middlwarets IP: ${ip}`);
       return NextResponse.next();
     } catch (e) {
+      console.log("err in middlewarets", e);
+
       console.log(`Rate Limiting IP: ${ip}`);
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
